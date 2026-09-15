@@ -1,0 +1,39 @@
+server:
+  port: 8082
+
+spring:
+  application:
+    name: link-verification-service
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/link_verification_db}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+    open-in-view: false
+
+phishunt:
+  base-url: ${PHISHUNT_BASE_URL:https://phishunt.io/api/v1}
+
+google:
+  safebrowsing:
+    api-key: ${GSB_API_KEY:}
+    endpoint: ${GSB_ENDPOINT:https://safebrowsing.googleapis.com/v4/threatMatches:find}
+
+phishtank:
+  app-key: ${PHISHTANK_APP_KEY:}
+  endpoint: ${PHISHTANK_ENDPOINT:https://checkurl.phishtank.com/checkurl/}
+
+verification:
+  mock-mode: ${VERIFICATION_MOCK_MODE:false}
+  internal-api-key: ${INTERNAL_API_KEY:}
+
+logging:
+  level:
+    com.antiphishing.linkverification: DEBUG

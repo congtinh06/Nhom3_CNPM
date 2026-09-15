@@ -1,0 +1,35 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: report-service
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/report_db}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+    open-in-view: false
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USERNAME:guest}
+    password: ${RABBITMQ_PASSWORD:guest}
+
+services:
+  link-verification:
+    url: ${LINK_VERIFICATION_SERVICE_URL:http://localhost:8082}
+
+internal:
+  api-key: ${INTERNAL_API_KEY:}
+
+logging:
+  level:
+    com.antiphishing.report: DEBUG

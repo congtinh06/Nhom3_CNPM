@@ -1,0 +1,114 @@
+# ====================================================================
+# Render Blueprint (Infrastructure-as-Code)
+# Tự động hóa triển khai 4 Spring Boot Microservices lên Render.com
+# ====================================================================
+
+services:
+  # 1. Link Verification Service
+  - type: web
+    name: link-verification-service
+    runtime: docker
+    dockerfilePath: ./link-verification-service/Dockerfile
+    dockerContext: ./link-verification-service
+    plan: free
+    envVars:
+      - key: DB_URL
+        sync: false
+      - key: DB_USERNAME
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: GSB_API_KEY
+        sync: false
+      - key: PHISHTANK_APP_KEY
+        sync: false
+      - key: VERIFICATION_MOCK_MODE
+        value: "true"
+      - key: INTERNAL_API_KEY
+        sync: false
+
+  # 2. Report Service
+  - type: web
+    name: report-service
+    runtime: docker
+    dockerfilePath: ./report-service/Dockerfile
+    dockerContext: ./report-service
+    plan: free
+    envVars:
+      - key: DB_URL
+        sync: false
+      - key: DB_USERNAME
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: RABBITMQ_HOST
+        sync: false
+      - key: RABBITMQ_PORT
+        value: "5672"
+      - key: RABBITMQ_USERNAME
+        sync: false
+      - key: RABBITMQ_PASSWORD
+        sync: false
+      - key: LINK_VERIFICATION_SERVICE_URL
+        fromService:
+          name: link-verification-service
+          type: web
+          property: hostport
+      - key: INTERNAL_API_KEY
+        sync: false
+
+  # 3. Notification Service
+  - type: web
+    name: notification-service
+    runtime: docker
+    dockerfilePath: ./notification-service/Dockerfile
+    dockerContext: ./notification-service
+    plan: free
+    envVars:
+      - key: DB_URL
+        sync: false
+      - key: DB_USERNAME
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: RABBITMQ_HOST
+        sync: false
+      - key: RABBITMQ_PORT
+        value: "5672"
+      - key: RABBITMQ_USERNAME
+        sync: false
+      - key: RABBITMQ_PASSWORD
+        sync: false
+      - key: MAIL_HOST
+        sync: false
+      - key: MAIL_PORT
+        sync: false
+      - key: MAIL_USERNAME
+        sync: false
+      - key: MAIL_PASSWORD
+        sync: false
+      - key: ADMIN_EMAIL
+        sync: false
+      - key: SMS_ENABLED
+        value: "false"
+
+  # 4. Spring Cloud API Gateway
+  - type: web
+    name: api-gateway
+    runtime: docker
+    dockerfilePath: ./api-gateway/Dockerfile
+    dockerContext: ./api-gateway
+    plan: free
+    envVars:
+      - key: REPORT_SERVICE_URL
+        fromService:
+          name: report-service
+          type: web
+          property: hostport
+      - key: LINK_VERIFICATION_SERVICE_URL
+        fromService:
+          name: link-verification-service
+          type: web
+          property: hostport
+      - key: FRONTEND_URL
+        sync: false

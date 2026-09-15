@@ -1,0 +1,195 @@
+version: "3.9"
+
+services:
+  # ==========================================
+  # 1. Message Broker (RabbitMQ + Management)
+  # ==========================================
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    healthcheck:
+      test: ["CMD", "rabbitmqctl", "status"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    networks:
+      - antiphishing-net
+
+  # ==========================================
+  # 2. PostgreSQL Databases (Mỗi service 1 DB riêng biệt)
+  # ==========================================
+  postgres-link:
+    image: postgres:16-alpine
+    container_name: postgres-link
+    environment:
+      POSTGRES_DB: link_verification_db
+      POSTGRES_USER: ${DB_USERNAME:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata-link:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - antiphishing-net
+
+  postgres-report:
+    image: postgres:16-alpine
+    container_name: postgres-report
+    environment:
+      POSTGRES_DB: report_db
+      POSTGRES_USER: ${DB_USERNAME:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+    ports:
+      - "5434:5432"
+    volumes:
+      - pgdata-report:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - antiphishing-net
+
+  postgres-notification:
+    image: postgres:16-alpine
+    container_name: postgres-notification
+    environment:
+      POSTGRES_DB: notification_db
+      POSTGRES_USER: ${DB_USERNAME:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+    ports:
+      - "5435:5432"
+    volumes:
+      - pgdata-notification:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - antiphishing-net
+
+  # ==========================================
+  # 3. Microservices Nghiệp Vụ
+  # ==========================================
+  link-verification-service:
+    build:
+      context: ./link-verification-service
+      dockerfile: Dockerfile
+    container_name: link-verification-service
+    ports:
+      - "8082:8082"
+    environment:
+      DB_URL: jdbc:postgresql://postgres-link:5432/link_verification_db
+      DB_USERNAME: ${DB_USERNAME:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-postgres}
+      GSB_API_KEY: ${GSB_API_KEY:-}
+      PHISHTANK_APP_KEY: ${PHISHTANK_APP_KEY:-}
+      VERIFICATION_MOCK_MODE: ${VERIFICATION_MOCK_MODE:-false}
+      INTERNAL_API_KEY: ${INTERNAL_API_KEY:-}
+    depends_on:
+      postgres-link:
+        condition: service_healthy
+    networks:
+      - antiphishing-net
+
+  report-service:
+    build:
+      context: ./report-service
+      dockerfile: Dockerfile
+    container_name: report-service
+    ports:
+      - "8081:8081"
+    environment:
+      DB_URL: jdbc:postgresql://postgres-report:5432/report_db
+      DB_USERNAME: ${DB_USERNAME:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-postgres}
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USERNAME: guest
+      RABBITMQ_PASSWORD: guest
+      LINK_VERIFICATION_SERVICE_URL: http://link-verification-service:8082
+      INTERNAL_API_KEY: ${INTERNAL_API_KEY:-}
+    depends_on:
+      postgres-report:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      link-verification-service:
+        condition: service_started
+    networks:
+      - antiphishing-net
+
+  notification-service:
+    build:
+      context: ./notification-service
+      dockerfile: Dockerfile
+    container_name: notification-service
+    ports:
+      - "8083:8083"
+    environment:
+      DB_URL: jdbc:postgresql://postgres-notification:5432/notification_db
+      DB_USERNAME: ${DB_USERNAME:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-postgres}
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USERNAME: guest
+      RABBITMQ_PASSWORD: guest
+      MAIL_HOST: ${MAIL_HOST:-sandbox.smtp.mailtrap.io}
+      MAIL_PORT: ${MAIL_PORT:-2525}
+      MAIL_USERNAME: ${MAIL_USERNAME:-}
+      MAIL_PASSWORD: ${MAIL_PASSWORD:-}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@anti-phishing-bank.example.com}
+      SMS_ENABLED: ${SMS_ENABLED:-false}
+      TWILIO_ACCOUNT_SID: ${TWILIO_ACCOUNT_SID:-}
+      TWILIO_AUTH_TOKEN: ${TWILIO_AUTH_TOKEN:-}
+      TWILIO_FROM_NUMBER: ${TWILIO_FROM_NUMBER:-}
+      TWILIO_TO_NUMBER_DEMO: ${TWILIO_TO_NUMBER_DEMO:-}
+    depends_on:
+      postgres-notification:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - antiphishing-net
+
+  api-gateway:
+    build:
+      context: ./api-gateway
+      dockerfile: Dockerfile
+    container_name: api-gateway
+    ports:
+      - "8080:8080"
+    environment:
+      REPORT_SERVICE_URL: http://report-service:8081
+      LINK_VERIFICATION_SERVICE_URL: http://link-verification-service:8082
+      NOTIFICATION_SERVICE_URL: http://notification-service:8083
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:5173}
+    depends_on:
+      - report-service
+      - link-verification-service
+      - notification-service
+    networks:
+      - antiphishing-net
+
+networks:
+  antiphishing-net:
+    driver: bridge
+
+volumes:
+  pgdata-link:
+  pgdata-report:
+  pgdata-notification:
