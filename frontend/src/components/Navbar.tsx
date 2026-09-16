@@ -6,9 +6,9 @@ export const Navbar: React.FC = () => {
   return (
     <header className="navbar">
       <NavLink to="/" className="brand-logo">
-        <ShieldCheck size={32} color="#3b82f6" />
+        <ShieldCheck size={30} color="#2563eb" />
         <span>BankShield</span>
-        <span className="brand-badge">Anti-Phishing</span>
+        <span className="brand-badge">Bảo Vệ Thương Hiệu</span>
       </NavLink>
 
       <nav className="nav-links">

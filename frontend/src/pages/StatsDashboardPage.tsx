@@ -92,7 +92,7 @@ export const StatsDashboardPage: React.FC = () => {
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.25rem' }}>
           <Cpu size={24} color="#3b82f6" />
           <div>
-            <h2 style={{ fontSize: '1.25rem', fontWeight: 700 }}>Sandbox Thử Nghiệm Trực Tiếp Link Verification API</h2>
+            <h2 style={{ fontSize: '1.25rem', fontWeight: 700 }}>Kiểm Tra Trực Tiếp API Kiểm Định Liên Kết</h2>
             <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
               Gọi trực tiếp tới <code>POST /api/v1/verify</code> thông qua Spring Cloud Gateway (:8080)
             </p>
@@ -130,7 +130,7 @@ export const StatsDashboardPage: React.FC = () => {
                 <strong>Domain: {verifyResult.domain}</strong>
               </div>
               <span className={`badge ${verifyResult.isPhishing ? 'badge-danger' : 'badge-success'}`}>
-                {verifyResult.isPhishing ? 'PHISHING CONFIRMED' : 'CLEAN'}
+                {verifyResult.isPhishing ? 'PHÁT HIỆN GIẢ MẠO' : 'AN TOÀN'}
               </span>
             </div>
 

@@ -86,8 +86,8 @@ export const ReportListPage: React.FC = () => {
               onChange={(e) => setFilterChannel(e.target.value)}
             >
               <option value="ALL">Tất cả kênh (Web & SMS)</option>
-              <option value="WEB">🌐 Chỉ kênh Web</option>
-              <option value="SMS">📱 Chỉ kênh SMS</option>
+              <option value="WEB">Kênh Web</option>
+              <option value="SMS">Kênh SMS</option>
             </select>
           </div>
 
@@ -99,9 +99,9 @@ export const ReportListPage: React.FC = () => {
               onChange={(e) => setFilterVerdict(e.target.value)}
             >
               <option value="ALL">Tất cả kết luận</option>
-              <option value="PHISHING">⚠️ Giả mạo / Phishing</option>
-              <option value="SAFE">✅ An toàn</option>
-              <option value="PENDING">⏳ Đang xử lý (Pending)</option>
+              <option value="PHISHING">Giả mạo (Phishing)</option>
+              <option value="SAFE">An toàn</option>
+              <option value="PENDING">Đang xử lý</option>
             </select>
           </div>
         </div>

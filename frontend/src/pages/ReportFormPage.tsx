@@ -159,8 +159,8 @@ export const ReportFormPage: React.FC = () => {
                 value={channel}
                 onChange={(e) => setChannel(e.target.value as ReportChannel)}
               >
-                <option value="WEB">🌐 Kênh WEB (Trang mạng / Trình duyệt)</option>
-                <option value="SMS">📱 Kênh SMS (Tin nhắn điện thoại mạo danh)</option>
+                <option value="WEB">Kênh Web (Website / Trình duyệt)</option>
+                <option value="SMS">Kênh SMS (Tin nhắn điện thoại)</option>
               </select>
             </div>
 
@@ -316,12 +316,12 @@ export const ReportFormPage: React.FC = () => {
               <p><strong>URL mục tiêu:</strong> <code style={{ color: 'var(--accent-blue)' }}>{result.targetUrl}</code></p>
               {result.isPhishing && (
                 <p style={{ marginTop: '0.5rem', color: 'var(--danger)' }}>
-                  ⚡ Sự kiện <code>ReportCreatedEvent</code> đã được phát lên RabbitMQ. Notification-service đang tự động gửi cảnh báo khẩn cấp tới hộp thư quản trị viên!
+                  Hệ thống đã phát sự kiện <code>ReportCreatedEvent</code> lên hàng đợi RabbitMQ. Dịch vụ thông báo đang tự động gửi email cảnh báo tới quản trị viên.
                 </p>
               )}
               {result.status === 'PENDING' && (
                 <p style={{ marginTop: '0.5rem', color: 'var(--warning)' }}>
-                  ⚠️ Hệ thống kiểm tra bên ngoài phản hồi chậm hoặc đang bảo trì. Báo cáo đã được lưu an toàn vào cơ sở dữ liệu để tái kiểm tra tự động.
+                  Hệ thống kiểm tra bên ngoài phản hồi chậm hoặc đang bảo trì. Báo cáo đã được lưu an toàn vào cơ sở dữ liệu để tiếp tục xử lý.
                 </p>
               )}
             </div>
