@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { api } from '../api/client';
-import { Report, ReportChannel } from '../types/report';
+import { Report } from '../types/report';
 import { RefreshCw, Search, ShieldAlert, ShieldCheck, Clock, ExternalLink, Globe, Smartphone } from 'lucide-react';
 
 export const ReportListPage: React.FC = () => {

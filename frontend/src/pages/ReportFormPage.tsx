@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { api } from '../api/client';
 import { Report, ReportChannel } from '../types/report';
-import { ShieldCheck, AlertTriangle, Clock, Send, Globe, Smartphone, CheckCircle, Info } from 'lucide-react';
+import { ShieldCheck, AlertTriangle, Clock, Send, CheckCircle } from 'lucide-react';
 
 export const ReportFormPage: React.FC = () => {
   const [targetUrl, setTargetUrl] = useState('');
