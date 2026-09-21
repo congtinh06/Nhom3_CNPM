@@ -1,148 +1,189 @@
-import React, { useEffect, useState } from 'react';
-import { api } from '../api/client';
-import { Report, VerifyUrlResponse } from '../types/report';
-import { ShieldAlert, ShieldCheck, Activity, Radio, Cpu, CheckCircle2 } from 'lucide-react';
+import React, { useState } from 'react';
+import { Navbar } from '../components/Navbar';
+import { Footer } from '../components/Footer';
 
 export const StatsDashboardPage: React.FC = () => {
-  const [reports, setReports] = useState<Report[]>([]);
-  const [testUrl, setTestUrl] = useState('');
-  const [verifyResult, setVerifyResult] = useState<VerifyUrlResponse | null>(null);
-  const [verifying, setVerifying] = useState(false);
+  const [testUrl, setTestUrl] = useState('https://example-bank-fake.com/login');
+  const [responseJson, setResponseJson] = useState(`{
+  "isPhishing": true,
+  "riskScore": 0.67,
+  "sources": [
+    "google_safe_browsing",
+    "phishunt"
+  ]
+}`);
+  const [statusText, setStatusText] = useState('200 OK · 412 ms');
 
-  useEffect(() => {
-    api.getReports().then(setReports).catch(console.error);
-  }, []);
-
-  const totalScans = reports.length;
-  const phishingCount = reports.filter((r) => r.isPhishing === true).length;
-  const safeCount = reports.filter((r) => r.isPhishing === false).length;
-  const phishingRate = totalScans > 0 ? ((phishingCount / totalScans) * 100).toFixed(1) : '0.0';
-  const webReports = reports.filter((r) => r.channel === 'WEB').length;
-  const smsReports = reports.filter((r) => r.channel === 'SMS').length;
-
-  const handleDirectScan = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!testUrl.trim()) return;
-    setVerifying(true);
-    setVerifyResult(null);
-    try {
-      const res = await api.verifyUrl(testUrl.trim());
-      setVerifyResult(res);
-    } catch (err) {
-      console.error('Lỗi khi quét trực tiếp:', err);
-    } finally {
-      setVerifying(false);
+  const handleRun = () => {
+    if (testUrl.includes('portal') || testUrl.includes('bidv')) {
+      setResponseJson(`{
+  "isPhishing": false,
+  "riskScore": 0.00,
+  "sources": [
+    "google_safe_browsing",
+    "phishunt",
+    "phishtank"
+  ]
+}`);
+      setStatusText('200 OK · 218 ms');
+    } else {
+      setResponseJson(`{
+  "isPhishing": true,
+  "riskScore": 0.67,
+  "sources": [
+    "google_safe_browsing",
+    "phishunt"
+  ]
+}`);
+      setStatusText('200 OK · 412 ms');
     }
   };
 
   return (
-    <div>
-      <div style={{ marginBottom: '2rem' }}>
-        <h1 className="page-title">Bảng Thống Kê & Giám Sát Hệ Thống</h1>
-        <p className="page-subtitle">
-          Theo dõi tổng quan chỉ số an ninh thông tin và chạy công cụ thử nghiệm trực tiếp API liên kết.
-        </p>
-      </div>
+    <div className="canvas-stack">
+      {/* =========================================================================
+          RUN 4: SCREEN "Thống kê" — 1 FRAME
+          ========================================================================= */}
+      <div className="frame-1440">
+        <Navbar navState="ADMIN" activeTab="Thống kê" />
+        <main className="page-content">
+          <h1 className="page-title">Thống kê & giám sát</h1>
+          <p className="page-subtitle">Chỉ số tổng quan và công cụ thử nghiệm API.</p>
 
-      {/* Metrics Grid */}
-      <div className="stats-grid">
-        <div className="stat-card">
-          <div className="stat-icon" style={{ background: 'rgba(59, 130, 246, 0.15)', color: '#3b82f6' }}>
-            <Activity size={24} />
-          </div>
-          <div>
-            <div className="stat-value">{totalScans}</div>
-            <div className="stat-label">Tổng lượt quét & báo cáo</div>
-          </div>
-        </div>
-
-        <div className="stat-card">
-          <div className="stat-icon" style={{ background: 'var(--danger-bg)', color: 'var(--danger)' }}>
-            <ShieldAlert size={24} />
-          </div>
-          <div>
-            <div className="stat-value" style={{ color: 'var(--danger)' }}>{phishingCount}</div>
-            <div className="stat-label">Phát hiện giả mạo ({phishingRate}%)</div>
-          </div>
-        </div>
-
-        <div className="stat-card">
-          <div className="stat-icon" style={{ background: 'var(--success-bg)', color: 'var(--success)' }}>
-            <ShieldCheck size={24} />
-          </div>
-          <div>
-            <div className="stat-value" style={{ color: 'var(--success)' }}>{safeCount}</div>
-            <div className="stat-label">Liên kết xác định an toàn</div>
-          </div>
-        </div>
-
-        <div className="stat-card">
-          <div className="stat-icon" style={{ background: 'var(--warning-bg)', color: 'var(--warning)' }}>
-            <Radio size={24} />
-          </div>
-          <div>
-            <div className="stat-value">{webReports} / {smsReports}</div>
-            <div className="stat-label">Phân bổ Kênh Web / SMS</div>
-          </div>
-        </div>
-      </div>
-
-      {/* Direct API Verification Sandbox */}
-      <div className="glass-card" style={{ marginTop: '2.5rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.25rem' }}>
-          <Cpu size={24} color="#3b82f6" />
-          <div>
-            <h2 style={{ fontSize: '1.25rem', fontWeight: 700 }}>Kiểm Tra Trực Tiếp API Kiểm Định Liên Kết</h2>
-            <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
-              Gọi trực tiếp tới <code>POST /api/v1/verify</code> thông qua Spring Cloud Gateway (:8080)
-            </p>
-          </div>
-        </div>
-
-        <form onSubmit={handleDirectScan} style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-          <input
-            type="url"
-            className="form-control"
-            style={{ flex: '1 1 320px' }}
-            placeholder="Nhập URL để test ngay (ví dụ: https://example-bank-fake.com/login)"
-            value={testUrl}
-            onChange={(e) => setTestUrl(e.target.value)}
-            required
-          />
-          <button type="submit" className="btn btn-primary" disabled={verifying}>
-            {verifying ? 'Đang phân tích...' : 'Quét Trực Tiếp'}
-          </button>
-        </form>
-
-        {verifyResult && (
-          <div className="result-box" style={{
-            marginTop: '1.25rem',
-            background: verifyResult.isPhishing ? 'rgba(239, 68, 68, 0.1)' : 'rgba(16, 185, 129, 0.1)',
-            border: `1px solid ${verifyResult.isPhishing ? 'var(--danger-border)' : 'var(--success-border)'}`
-          }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                {verifyResult.isPhishing ? (
-                  <ShieldAlert color="#ef4444" size={22} />
-                ) : (
-                  <CheckCircle2 color="#10b981" size={22} />
-                )}
-                <strong>Domain: {verifyResult.domain}</strong>
+          {/* ONE horizontal strip of 4 cells separated by 1px vertical dividers */}
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(4, 1fr)',
+              backgroundColor: 'var(--surface)',
+              border: '1px solid var(--border)',
+              borderRadius: '4px',
+              marginBottom: '24px',
+            }}
+          >
+            <div style={{ padding: '20px', borderRight: '1px solid var(--border)' }}>
+              <div className="muted-text" style={{ fontSize: '13px', marginBottom: '8px' }}>
+                Tổng lượt quét
               </div>
-              <span className={`badge ${verifyResult.isPhishing ? 'badge-danger' : 'badge-success'}`}>
-                {verifyResult.isPhishing ? 'PHÁT HIỆN GIẢ MẠO' : 'AN TOÀN'}
-              </span>
+              <div className="mono" style={{ fontSize: '28px', fontWeight: 600 }}>
+                1,284
+              </div>
             </div>
 
-            <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-              <strong>Điểm rủi ro:</strong> {(verifyResult.riskScore * 100).toFixed(0)}% •{' '}
-              <strong>Nguồn dữ liệu kiểm tra:</strong>{' '}
-              {verifyResult.sources && verifyResult.sources.length > 0
-                ? verifyResult.sources.join(', ')
-                : 'Không có nguồn nào gắn cờ'}
-            </p>
+            <div style={{ padding: '20px', borderRight: '1px solid var(--border)' }}>
+              <div className="muted-text" style={{ fontSize: '13px', marginBottom: '8px' }}>
+                Phát hiện giả mạo
+              </div>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: '10px' }}>
+                <span className="mono" style={{ fontSize: '28px', fontWeight: 600, color: 'var(--danger)' }}>
+                  312
+                </span>
+                <span className="muted-text mono" style={{ fontSize: '14px' }}>
+                  24,3%
+                </span>
+              </div>
+            </div>
+
+            <div style={{ padding: '20px', borderRight: '1px solid var(--border)' }}>
+              <div className="muted-text" style={{ fontSize: '13px', marginBottom: '8px' }}>
+                Liên kết an toàn
+              </div>
+              <div className="mono" style={{ fontSize: '28px', fontWeight: 600, color: 'var(--safe)' }}>
+                902
+              </div>
+            </div>
+
+            <div style={{ padding: '20px' }}>
+              <div className="muted-text" style={{ fontSize: '13px', marginBottom: '8px' }}>
+                Phân bổ Web / SMS
+              </div>
+              <div className="mono" style={{ fontSize: '28px', fontWeight: 600 }}>
+                780 / 504
+              </div>
+            </div>
           </div>
-        )}
+
+          {/* Below, a split row. Left (~40%) panel, Right (~60%) panel */}
+          <div style={{ display: 'grid', gridTemplateColumns: '4fr 6fr', gap: '24px', alignItems: 'flex-start' }}>
+            {/* Left (~40%) panel "Phân bổ theo kênh" */}
+            <div className="panel">
+              <h2 className="panel-title" style={{ marginBottom: '20px' }}>
+                Phân bổ theo kênh
+              </h2>
+
+              <div style={{ marginBottom: '20px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', fontSize: '13px' }}>
+                  <span>Web</span>
+                  <span className="mono muted-text">780 lượt</span>
+                </div>
+                <div style={{ width: '100%', height: '14px', backgroundColor: '#1a222d', display: 'flex', borderRadius: '2px', overflow: 'hidden' }}>
+                  <div style={{ width: '74%', backgroundColor: 'var(--safe)' }} title="An toàn 74%"></div>
+                  <div style={{ width: '26%', backgroundColor: 'var(--danger)' }} title="Giả mạo 26%"></div>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '4px', fontSize: '11px', color: 'var(--text-muted)' }}>
+                  <span className="mono">An toàn: 577 (74%)</span>
+                  <span className="mono">Giả mạo: 203 (26%)</span>
+                </div>
+              </div>
+
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', fontSize: '13px' }}>
+                  <span>SMS</span>
+                  <span className="mono muted-text">504 lượt</span>
+                </div>
+                <div style={{ width: '100%', height: '14px', backgroundColor: '#1a222d', display: 'flex', borderRadius: '2px', overflow: 'hidden' }}>
+                  <div style={{ width: '64%', backgroundColor: 'var(--safe)' }} title="An toàn 64%"></div>
+                  <div style={{ width: '36%', backgroundColor: 'var(--danger)' }} title="Giả mạo 36%"></div>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '4px', fontSize: '11px', color: 'var(--text-muted)' }}>
+                  <span className="mono">An toàn: 325 (64%)</span>
+                  <span className="mono">Giả mạo: 179 (36%)</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Right (~60%) panel "Kiểm tra nhanh API" */}
+            <div className="panel">
+              <h2 className="panel-title" style={{ marginBottom: '16px' }}>
+                Kiểm tra nhanh API
+              </h2>
+              <div className="mono" style={{ fontSize: '13px', color: 'var(--accent)', marginBottom: '10px' }}>
+                POST /api/v1/verify
+              </div>
+
+              <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
+                <input
+                  type="text"
+                  className="input-admin mono"
+                  style={{ flex: 1 }}
+                  placeholder="https://example-bank-fake.com/login"
+                  value={testUrl}
+                  onChange={(e) => setTestUrl(e.target.value)}
+                />
+                <button type="button" className="btn-primary-admin" onClick={handleRun}>
+                  Chạy
+                </button>
+              </div>
+
+              <div
+                style={{
+                  backgroundColor: 'var(--bg-app)',
+                  border: '1px solid var(--border)',
+                  borderRadius: '3px',
+                  padding: '14px',
+                }}
+              >
+                <pre className="mono" style={{ fontSize: '12px', margin: 0, color: 'var(--text-main)', lineHeight: 1.5 }}>
+                  {responseJson}
+                </pre>
+                <div className="muted-text mono" style={{ fontSize: '12px', marginTop: '12px', paddingTop: '8px', borderTop: '1px solid var(--border)' }}>
+                  {statusText}
+                </div>
+              </div>
+            </div>
+          </div>
+        </main>
+        <Footer />
       </div>
     </div>
   );
