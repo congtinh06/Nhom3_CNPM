@@ -1,15 +1,9 @@
 import React from 'react';
-import { Navbar } from '../components/Navbar';
-import { Footer } from '../components/Footer';
 
 export const ArchitecturePage: React.FC = () => {
   return (
-    <div className="canvas-stack">
-      {/* SCREEN "Kiến trúc" (PUBLIC nav, tab "Kiến trúc" active), 1 frame */}
-      <div className="frame-1440">
-        <Navbar navState="PUBLIC" activeTab="Kiến trúc" />
-        <main className="page-content">
-          <h1 className="page-title">Kiến trúc hệ thống</h1>
+    <div>
+      <h1 className="page-title">Kiến trúc hệ thống</h1>
           <p className="page-subtitle">Cách một báo cáo được xử lý từ lúc gửi đến lúc cảnh báo.</p>
 
           {/* Section 1: Flat Diagram */}
@@ -158,9 +152,6 @@ export const ArchitecturePage: React.FC = () => {
               </div>
             </div>
           </div>
-        </main>
-        <Footer />
-      </div>
-    </div>
+        </div>
   );
 };

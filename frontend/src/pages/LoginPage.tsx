@@ -1,75 +1,128 @@
-import React from 'react';
-import { NavLink } from 'react-router-dom';
-import { Navbar } from '../components/Navbar';
-import { Footer } from '../components/Footer';
+import React, { useState } from 'react';
+import { NavLink, useNavigate } from 'react-router-dom';
+import { useAuth, AuthUser } from '../context/AuthContext';
 
-interface LoginFormProps {
-  email?: string;
-  password?: string;
-  errorMessage?: string;
-  isLoading?: boolean;
-}
+export const LoginPage: React.FC = () => {
+  const navigate = useNavigate();
+  const { login, loginWithEmail } = useAuth();
 
-const LoginForm: React.FC<LoginFormProps> = ({
-  email = '',
-  password = '',
-  errorMessage,
-  isLoading = false,
-}) => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const res = loginWithEmail(email, password);
+    if (!res.success) {
+      setError(res.error || 'Đăng nhập thất bại.');
+    } else {
+      setError(null);
+      if (email.toLowerCase().includes('admin')) {
+        navigate('/reports');
+      } else {
+        navigate('/');
+      }
+    }
+  };
+
+  const handleSocialLogin = (name: string, socialEmail: string) => {
+    const u: AuthUser = { name, email: socialEmail, role: 'user' };
+    login(u);
+    navigate('/');
+  };
+
   return (
-    <div style={{ maxWidth: '1200px', width: '100%', margin: '0 auto', padding: '32px 24px' }}>
-      <div className="auth-panel-420">
+    <div className="auth-container">
+      <div className="auth-card">
         <h1 className="auth-title">Đăng nhập</h1>
-        <p className="auth-subtitle">Đăng nhập để xem lại lịch sử báo cáo của bạn.</p>
+        <p className="auth-subtitle">
+          Đăng nhập để xem lại lịch sử báo cáo của bạn hoặc quản trị hệ thống.
+        </p>
 
-        <form onSubmit={(e) => e.preventDefault()}>
+        <form onSubmit={handleSubmit}>
           <div className="form-group-public">
             <label className="form-label" style={{ display: 'block', marginBottom: '8px' }}>
               Email
             </label>
             <input
               type="email"
-              className="input-public"
-              defaultValue={email}
-              disabled={isLoading}
-              readOnly={!isLoading && email !== ''}
+              className={`input-public ${error ? 'has-error' : ''}`}
+              placeholder="admin@bank.vn hoặc user@bank.vn"
+              value={email}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                if (error) setError(null);
+              }}
             />
           </div>
 
-          <div className="form-group-public" style={{ marginBottom: '24px' }}>
+          <div className="form-group-public" style={{ marginBottom: '20px' }}>
             <label className="form-label" style={{ display: 'block', marginBottom: '8px' }}>
               Mật khẩu
             </label>
             <div style={{ position: 'relative' }}>
               <input
-                type={password ? 'password' : 'password'}
-                className="input-public"
+                type="password"
+                className={`input-public ${error ? 'has-error' : ''}`}
                 style={{ paddingRight: '56px' }}
-                defaultValue={password}
-                disabled={isLoading}
-                readOnly={!isLoading && password !== ''}
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  if (error) setError(null);
+                }}
               />
-              <button
-                type="button"
-                className="auth-text-toggle"
-                disabled={isLoading}
-              >
-                Hiện
-              </button>
             </div>
           </div>
 
-          <button
-            type="button"
-            className="btn-primary-public"
-            disabled={isLoading}
-          >
-            {isLoading ? 'Đang đăng nhập…' : 'Đăng nhập'}
+          <button type="submit" className="btn-primary-public">
+            Đăng nhập
           </button>
 
-          {errorMessage && (
+          {error && (
             <div className="validation-error-text" style={{ marginTop: '12px' }}>
-              {errorMessage}
+              {error}
+            </div>
+          )}
+
+          {import.meta.env.VITE_SHOW_VIEWER === 'true' && (
+            <div
+              style={{
+                marginTop: '16px',
+                padding: '12px',
+                backgroundColor: 'var(--surface-subtle)',
+                border: '1px solid var(--border)',
+                borderRadius: '4px',
+                fontSize: '12px',
+              }}
+            >
+              <div style={{ color: 'var(--text-muted)', marginBottom: '8px', fontWeight: 500 }}>
+                Tài khoản thử nghiệm nhanh:
+              </div>
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                <button
+                  type="button"
+                  className="demo-btn active"
+                  onClick={() => {
+                    setEmail('admin@bank.vn');
+                    setPassword('admin123');
+                    setError(null);
+                  }}
+                >
+                  🔑 Quản trị (admin@bank.vn)
+                </button>
+                <button
+                  type="button"
+                  className="demo-btn active"
+                  onClick={() => {
+                    setEmail('user@bank.vn');
+                    setPassword('user123');
+                    setError(null);
+                  }}
+                >
+                  👤 Người dùng (user@bank.vn)
+                </button>
+              </div>
             </div>
           )}
 
@@ -78,10 +131,22 @@ const LoginForm: React.FC<LoginFormProps> = ({
           </div>
 
           <div className="auth-social-row">
-            <button type="button" className="btn-secondary-public auth-social-btn" disabled={isLoading}>
+            <button
+              type="button"
+              className="btn-secondary-public auth-social-btn"
+              onClick={() => handleSocialLogin('Google User', 'google.user@bank.vn')}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0 5.867 0 .307 5.387.307 12s5.56 12 12.173 12c3.573 0 6.267-1.173 8.373-3.36 2.16-2.16 2.84-5.213 2.84-7.667 0-.76-.053-1.467-.173-2.053H12.48z" />
+              </svg>
               Đăng nhập với Google
             </button>
-            <button type="button" className="btn-secondary-public auth-social-btn" disabled={isLoading}>
+            <button
+              type="button"
+              className="btn-secondary-public auth-social-btn"
+              onClick={() => handleSocialLogin('Zalo User', 'zalo.user@bank.vn')}
+            >
+              <span style={{ fontWeight: 700, fontSize: '12px', color: '#0068ff' }}>Z</span>
               Đăng nhập với Zalo
             </button>
           </div>
@@ -93,242 +158,14 @@ const LoginForm: React.FC<LoginFormProps> = ({
             </NavLink>
           </div>
         </form>
-      </div>
 
-      <div style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '16px' }}>
-        Bạn không cần đăng nhập để{' '}
-        <NavLink to="/" className="accent-link">
-          kiểm tra liên kết
-        </NavLink>
-        .
-      </div>
-    </div>
-  );
-};
-
-interface RegisterFormProps {
-  fullName?: string;
-  email?: string;
-  password?: string;
-  confirmPassword?: string;
-  emailError?: string;
-  passwordError?: string;
-  confirmPasswordError?: string;
-  generalError?: string;
-}
-
-const RegisterForm: React.FC<RegisterFormProps> = ({
-  fullName = '',
-  email = '',
-  password = '',
-  confirmPassword = '',
-  emailError,
-  passwordError,
-  confirmPasswordError,
-  generalError,
-}) => {
-  return (
-    <div style={{ maxWidth: '1200px', width: '100%', margin: '0 auto', padding: '32px 24px' }}>
-      <div className="auth-panel-420">
-        <h1 className="auth-title">Tạo tài khoản</h1>
-
-        <form onSubmit={(e) => e.preventDefault()}>
-          <div className="form-group-public">
-            <label className="form-label" style={{ display: 'block', marginBottom: '8px' }}>
-              Họ và tên
-            </label>
-            <input
-              type="text"
-              className="input-public"
-              defaultValue={fullName}
-            />
-          </div>
-
-          <div className="form-group-public">
-            <label className="form-label" style={{ display: 'block', marginBottom: '8px' }}>
-              Email
-            </label>
-            <input
-              type="text"
-              className={`input-public ${emailError ? 'has-error' : ''}`}
-              defaultValue={email}
-            />
-            {emailError && <div className="validation-error-text">{emailError}</div>}
-          </div>
-
-          <div className="form-group-public">
-            <label className="form-label" style={{ display: 'block', marginBottom: '8px' }}>
-              Mật khẩu
-            </label>
-            <input
-              type="password"
-              className={`input-public ${passwordError ? 'has-error' : ''}`}
-              defaultValue={password}
-            />
-            {passwordError ? (
-              <div className="validation-error-text">{passwordError}</div>
-            ) : (
-              <div className="form-hint" style={{ marginTop: '4px' }}>Tối thiểu 8 ký tự.</div>
-            )}
-          </div>
-
-          <div className="form-group-public" style={{ marginBottom: '24px' }}>
-            <label className="form-label" style={{ display: 'block', marginBottom: '8px' }}>
-              Nhập lại mật khẩu
-            </label>
-            <input
-              type="password"
-              className={`input-public ${confirmPasswordError ? 'has-error' : ''}`}
-              defaultValue={confirmPassword}
-            />
-            {confirmPasswordError && <div className="validation-error-text">{confirmPasswordError}</div>}
-          </div>
-
-          <button type="button" className="btn-primary-public">
-            Đăng ký
-          </button>
-
-          {generalError && (
-            <div className="validation-error-text" style={{ marginTop: '12px' }}>
-              {generalError}
-            </div>
-          )}
-
-          <div className="auth-divider">
-            <span>hoặc</span>
-          </div>
-
-          <div className="auth-social-row">
-            <button type="button" className="btn-secondary-public auth-social-btn">
-              Tiếp tục với Google
-            </button>
-            <button type="button" className="btn-secondary-public auth-social-btn">
-              Tiếp tục với Zalo
-            </button>
-          </div>
-
-          <div style={{ fontSize: '14px', color: 'var(--text-muted)', textAlign: 'center' }}>
-            Đã có tài khoản?{' '}
-            <NavLink to="/login" className="accent-link">
-              Đăng nhập
-            </NavLink>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
-};
-
-export const LoginPage: React.FC = () => {
-  return (
-    <div className="canvas-stack">
-      {/* =========================================================================
-          RUN 2: SCREEN "Đăng nhập" — FRAME 1 (Default)
-          ========================================================================= */}
-      <div className="frame-1440">
-        <Navbar navState="PUBLIC" activeTab="Đăng nhập" />
-        <main className="page-content">
-          <LoginForm />
-        </main>
-        <Footer />
-      </div>
-
-      {/* =========================================================================
-          RUN 2: SCREEN "Đăng nhập" — FRAME 2 (Wrong credentials)
-          ========================================================================= */}
-      <div className="frame-1440">
-        <Navbar navState="PUBLIC" activeTab="Đăng nhập" />
-        <main className="page-content">
-          <LoginForm
-            email="user@example.com"
-            password="wrongpassword"
-            errorMessage="Email hoặc mật khẩu không đúng."
-          />
-        </main>
-        <Footer />
-      </div>
-
-      {/* =========================================================================
-          RUN 2: SCREEN "Đăng nhập" — FRAME 3 (Loading)
-          ========================================================================= */}
-      <div className="frame-1440">
-        <Navbar navState="PUBLIC" activeTab="Đăng nhập" />
-        <main className="page-content">
-          <LoginForm
-            email="user@domain.com"
-            password="••••••••"
-            isLoading={true}
-          />
-        </main>
-        <Footer />
-      </div>
-
-      {/* =========================================================================
-          RUN 2: SCREEN "Đăng ký" — FRAME 4 (Default)
-          ========================================================================= */}
-      <div className="frame-1440">
-        <Navbar navState="PUBLIC" activeTab="Đăng nhập" />
-        <main className="page-content">
-          <RegisterForm />
-        </main>
-        <Footer />
-      </div>
-
-      {/* =========================================================================
-          RUN 2: SCREEN "Đăng ký" — FRAME 5 (Validation errors)
-          ========================================================================= */}
-      <div className="frame-1440">
-        <Navbar navState="PUBLIC" activeTab="Đăng nhập" />
-        <main className="page-content">
-          <RegisterForm
-            fullName="Nguyễn Văn A"
-            email="invalid-email"
-            password="123"
-            confirmPassword="456"
-            emailError="Email không hợp lệ."
-            passwordError="Mật khẩu cần tối thiểu 8 ký tự."
-            confirmPasswordError="Mật khẩu nhập lại không khớp."
-          />
-        </main>
-        <Footer />
-      </div>
-
-      {/* =========================================================================
-          RUN 2: SCREEN "Đăng ký" — FRAME 6 (Email exists)
-          ========================================================================= */}
-      <div className="frame-1440">
-        <Navbar navState="PUBLIC" activeTab="Đăng nhập" />
-        <main className="page-content">
-          <RegisterForm
-            fullName="Trần Thị B"
-            email="existing@domain.com"
-            password="password123"
-            confirmPassword="password123"
-            generalError="Email này đã được đăng ký."
-          />
-        </main>
-        <Footer />
-      </div>
-
-      {/* =========================================================================
-          RUN 2: SCREEN "Không có quyền" — FRAME 7
-          ========================================================================= */}
-      <div className="frame-1440">
-        <Navbar navState="USER" />
-        <main className="page-content">
-          <div style={{ maxWidth: '1200px', width: '100%', margin: '0 auto', padding: '32px 24px' }}>
-            <div className="auth-panel-420">
-              <h1 className="auth-title">Không có quyền truy cập</h1>
-              <p className="auth-subtitle" style={{ marginBottom: '24px' }}>
-                Tài khoản của bạn chưa được cấp quyền quản trị.
-              </p>
-              <NavLink to="/" className="accent-link" style={{ fontSize: '15px' }}>
-                Về trang Kiểm tra
-              </NavLink>
-            </div>
-          </div>
-        </main>
-        <Footer />
+        <div style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '20px' }}>
+          Bạn không cần đăng nhập để{' '}
+          <NavLink to="/" className="accent-link">
+            kiểm tra liên kết
+          </NavLink>
+          .
+        </div>
       </div>
     </div>
   );

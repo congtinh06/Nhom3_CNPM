@@ -29,3 +29,40 @@ export interface VerifyUrlResponse {
   sources: string[];
   checkedAt: string;
 }
+
+export interface NotificationLogItem {
+  id: number;
+  reportId: number;
+  channel: 'EMAIL' | 'SMS' | string;
+  recipient: string;
+  status: 'SENT' | 'FAILED' | string;
+  sentAt: string;
+  errorMessage?: string | null;
+}
+
+export interface StatsData {
+  totalScans: number;
+  phishingDetected: number;
+  phishingPercentage: string;
+  safeLinks: number;
+  webScans: number;
+  smsScans: number;
+  webSafe: number;
+  webPhishing: number;
+  smsSafe: number;
+  smsPhishing: number;
+}
+
+export interface DailyStats {
+  todayScans: number;
+  phishingDetected: number;
+  avgResponseTimeMs: number;
+}
+
+export interface ReportFilterParams {
+  channel?: string;
+  verdict?: string;
+  url?: string;
+}
+
+

@@ -1,29 +1,91 @@
 import React, { useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { RoleKey, useAuth } from '../context/AuthContext';
 
 export interface ViewerBarProps {
-  activeRole: 'public' | 'user' | 'admin';
-  onSelectRole: (role: 'public' | 'user' | 'admin') => void;
-  activePage: string;
-  onSelectPage: (page: any) => void;
-  activeState: string;
-  onSelectState: (state: string) => void;
+  activeRole?: 'public' | 'user' | 'admin';
+  onSelectRole?: (role: 'public' | 'user' | 'admin') => void;
+  activePage?: string;
+  onSelectPage?: (page: string) => void;
+  activeState?: string;
+  onSelectState?: (state: string) => void;
 }
 
 export const ViewerBar: React.FC<ViewerBarProps> = ({
-  activeRole,
+  activeRole: propActiveRole,
   onSelectRole,
-  activePage,
+  activePage: propActivePage,
   onSelectPage,
-  activeState,
+  activeState = 'Mặc định',
   onSelectState,
 }) => {
   // Chỉ hiển thị khi biến môi trường VITE_SHOW_VIEWER là "true"
   const isEnabled = import.meta.env.VITE_SHOW_VIEWER === 'true';
   const [isOpen, setIsOpen] = useState(false);
+  const [internalState, setInternalState] = useState(activeState);
+
+  const { role, switchRole } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
 
   if (!isEnabled) {
     return null;
   }
+
+  const currentRole = propActiveRole || role;
+
+  const pageRouteMap: Record<string, string> = {
+    check: '/check',
+    arch: '/architecture',
+    login: '/login',
+    register: '/register',
+    history: '/history',
+    denied: '/403',
+    reports: '/reports',
+    stats: '/stats',
+    notifications: '/notifications',
+  };
+
+  const getActivePageKey = () => {
+    if (propActivePage) return propActivePage;
+    const p = location.pathname;
+    if (p === '/' || p === '/check') return 'check';
+    if (p === '/architecture') return 'arch';
+    if (p === '/login') return 'login';
+    if (p === '/register') return 'register';
+    if (p === '/history') return 'history';
+    if (p === '/403') return 'denied';
+    if (p === '/reports') return 'reports';
+    if (p === '/stats') return 'stats';
+    if (p === '/notifications') return 'notifications';
+    return '';
+  };
+
+  const currentPageKey = getActivePageKey();
+
+  const handleRoleClick = (newRole: 'public' | 'user' | 'admin') => {
+    if (onSelectRole) {
+      onSelectRole(newRole);
+    } else {
+      switchRole(newRole as RoleKey);
+    }
+  };
+
+  const handlePageClick = (pageKey: string) => {
+    if (onSelectPage) {
+      onSelectPage(pageKey);
+    } else {
+      const targetRoute = pageRouteMap[pageKey] || '/check';
+      navigate(targetRoute);
+    }
+  };
+
+  const handleStateClick = (state: string) => {
+    setInternalState(state);
+    if (onSelectState) {
+      onSelectState(state);
+    }
+  };
 
   const roleOptions: { key: 'public' | 'user' | 'admin'; label: string }[] = [
     { key: 'public', label: 'Khách' },
@@ -99,8 +161,8 @@ export const ViewerBar: React.FC<ViewerBarProps> = ({
                   <button
                     key={r.key}
                     type="button"
-                    className={`demo-btn ${activeRole === r.key ? 'active' : ''}`}
-                    onClick={() => onSelectRole(r.key)}
+                    className={`demo-btn ${currentRole === r.key ? 'active' : ''}`}
+                    onClick={() => handleRoleClick(r.key)}
                   >
                     {r.label}
                   </button>
@@ -116,8 +178,8 @@ export const ViewerBar: React.FC<ViewerBarProps> = ({
                   <button
                     key={p.key}
                     type="button"
-                    className={`demo-btn ${activePage === p.key ? 'active' : ''}`}
-                    onClick={() => onSelectPage(p.key)}
+                    className={`demo-btn ${currentPageKey === p.key ? 'active' : ''}`}
+                    onClick={() => handlePageClick(p.key)}
                   >
                     {p.label}
                   </button>
@@ -133,8 +195,8 @@ export const ViewerBar: React.FC<ViewerBarProps> = ({
                   <button
                     key={s}
                     type="button"
-                    className={`demo-btn ${activeState === s ? 'active' : ''}`}
-                    onClick={() => onSelectState(s)}
+                    className={`demo-btn ${(onSelectState ? activeState : internalState) === s ? 'active' : ''}`}
+                    onClick={() => handleStateClick(s)}
                   >
                     {s}
                   </button>
