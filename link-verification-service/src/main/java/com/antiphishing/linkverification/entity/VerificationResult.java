@@ -27,7 +27,7 @@ public class VerificationResult {
     @Column(name = "is_phishing", nullable = false)
     private boolean isPhishing;
 
-    @Column(name = "risk_score", nullable = false, precision = 3, scale = 2)
+    @Column(name = "risk_score", nullable = false, columnDefinition = "NUMERIC(3, 2)")
     private Double riskScore;
 
     @Column(columnDefinition = "TEXT")

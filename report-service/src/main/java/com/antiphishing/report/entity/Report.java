@@ -34,7 +34,7 @@ public class Report {
     @Column(name = "is_phishing")
     private Boolean isPhishing;
 
-    @Column(name = "risk_score", precision = 3, scale = 2)
+    @Column(name = "risk_score", columnDefinition = "NUMERIC(3, 2)")
     private Double riskScore;
 
     @Enumerated(EnumType.STRING)

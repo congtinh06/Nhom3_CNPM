@@ -7,12 +7,16 @@ services:
   rabbitmq:
     image: rabbitmq:3-management
     container_name: rabbitmq
+    hostname: rabbitmq
     ports:
       - "5672:5672"
       - "15672:15672"
     environment:
       RABBITMQ_DEFAULT_USER: guest
       RABBITMQ_DEFAULT_PASS: guest
+      RABBITMQ_ERLANG_COOKIE: antiphishing_secret_cookie_2026
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
     healthcheck:
       test: ["CMD", "rabbitmqctl", "status"]
       interval: 10s
@@ -193,3 +197,4 @@ volumes:
   pgdata-link:
   pgdata-report:
   pgdata-notification:
+  rabbitmq-data:
