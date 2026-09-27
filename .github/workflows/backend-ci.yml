@@ -14,10 +14,10 @@ jobs:
       fail-fast: false
       matrix:
         service:
-          - api-gateway
-          - report-service
-          - link-verification-service
-          - notification-service
+          - backend/api-gateway
+          - backend/report-service
+          - backend/link-verification-service
+          - backend/notification-service
 
     steps:
       - name: Checkout Source Code

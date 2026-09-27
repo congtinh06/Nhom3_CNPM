@@ -83,10 +83,11 @@ Hệ thống được thiết kế với các ràng buộc nghiêm ngặt ở m�
 
 ```
 anti-phishing-system/
-├── api-gateway/                 # Spring Cloud Gateway (:8080)
-├── report-service/              # Nghiệp vụ quản lý báo cáo, Feign, RabbitMQ (:8081)
-├── link-verification-service/   # Nghiệp vụ kiểm tra phishing, 3 clients (:8082)
-├── notification-service/        # Nghiệp vụ consumer gửi mail, SMS demo, audit (:8083)
+├── backend/                     # Toàn bộ microservices Spring Boot
+│   ├── api-gateway/             # Spring Cloud Gateway (:8080)
+│   ├── report-service/          # Nghiệp vụ quản lý báo cáo, Feign, RabbitMQ (:8081)
+│   ├── link-verification-service/ # Nghiệp vụ kiểm tra phishing, 3 clients (:8082)
+│   ├── notification-service/    # Nghiệp vụ consumer gửi mail, SMS demo, audit (:8083)
 ├── frontend/                    # Giao diện người dùng React + TS (Vite) (:5173)
 ├── docs/
 │   ├── architecture.md          # Tài liệu chi tiết kiến trúc & API contract
@@ -137,10 +138,10 @@ Cần có JDK 17, Maven và Node.js:
    docker compose up -d rabbitmq postgres-link postgres-report postgres-notification
    ```
 2. **Khởi chạy từng Microservice**:
-   - `link-verification-service`: `cd link-verification-service && ./mvnw spring-boot:run` (Cổng 8082)
-   - `report-service`: `cd report-service && ./mvnw spring-boot:run` (Cổng 8081)
-   - `notification-service`: `cd notification-service && ./mvnw spring-boot:run` (Cổng 8083)
-   - `api-gateway`: `cd api-gateway && ./mvnw spring-boot:run` (Cổng 8080)
+   - `link-verification-service`: `cd backend/link-verification-service && ./mvnw spring-boot:run` (Cổng 8082)
+   - `report-service`: `cd backend/report-service && ./mvnw spring-boot:run` (Cổng 8081)
+   - `notification-service`: `cd backend/notification-service && ./mvnw spring-boot:run` (Cổng 8083)
+   - `api-gateway`: `cd backend/api-gateway && ./mvnw spring-boot:run` (Cổng 8080)
 3. **Khởi chạy Frontend**:
    ```bash
    cd frontend
@@ -154,10 +155,10 @@ Cần có JDK 17, Maven và Node.js:
 
 ### 5.1. Chạy Tự Động Toàn Bộ Unit Test Backend
 ```bash
-mvn -f link-verification-service/pom.xml test
-mvn -f report-service/pom.xml test
-mvn -f notification-service/pom.xml test
-mvn -f api-gateway/pom.xml test
+mvn -f backend/link-verification-service/pom.xml test
+mvn -f backend/report-service/pom.xml test
+mvn -f backend/notification-service/pom.xml test
+mvn -f backend/api-gateway/pom.xml test
 ```
 
 ### 5.2. Kiểm Tra Ràng Buộc Đầu Vào Bằng `curl`

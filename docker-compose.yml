@@ -91,7 +91,7 @@ services:
   # ==========================================
   link-verification-service:
     build:
-      context: ./link-verification-service
+      context: ./backend/link-verification-service
       dockerfile: Dockerfile
     container_name: link-verification-service
     ports:
@@ -112,7 +112,7 @@ services:
 
   report-service:
     build:
-      context: ./report-service
+      context: ./backend/report-service
       dockerfile: Dockerfile
     container_name: report-service
     ports:
@@ -139,7 +139,7 @@ services:
 
   notification-service:
     build:
-      context: ./notification-service
+      context: ./backend/notification-service
       dockerfile: Dockerfile
     container_name: notification-service
     ports:
@@ -172,7 +172,7 @@ services:
 
   api-gateway:
     build:
-      context: ./api-gateway
+      context: ./backend/api-gateway
       dockerfile: Dockerfile
     container_name: api-gateway
     ports:
