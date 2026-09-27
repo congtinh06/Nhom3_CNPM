@@ -33,6 +33,13 @@ public class VerificationResult {
     @Column(columnDefinition = "TEXT")
     private String sources; // Format: "PHISHUNT,GOOGLE_SAFE_BROWSING"
 
+    /**
+     * Machine-readable signals explaining the verdict.
+     * Format: "BLACKLISTED_DOMAIN,NO_HTTPS" (TEXT column, backward compatible).
+     */
+    @Column(name = "reason_codes", columnDefinition = "TEXT")
+    private String reasonCodes;
+
     @Column(name = "checked_at", nullable = false)
     private Instant checkedAt;
 }

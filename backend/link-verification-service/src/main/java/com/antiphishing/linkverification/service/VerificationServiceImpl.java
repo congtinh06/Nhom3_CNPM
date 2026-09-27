@@ -25,17 +25,20 @@ public class VerificationServiceImpl implements VerificationService {
     private final GoogleSafeBrowsingClient googleSafeBrowsingClient;
     private final PhishTankClient phishTankClient;
     private final MockPhishingClient mockPhishingClient;
+    private final ReasonCodeDetector reasonCodeDetector;
     private final VerificationResultRepository repository;
 
     public VerificationServiceImpl(PhishuntClient phishuntClient,
                                    GoogleSafeBrowsingClient googleSafeBrowsingClient,
                                    PhishTankClient phishTankClient,
                                    MockPhishingClient mockPhishingClient,
+                                   ReasonCodeDetector reasonCodeDetector,
                                    VerificationResultRepository repository) {
         this.phishuntClient = phishuntClient;
         this.googleSafeBrowsingClient = googleSafeBrowsingClient;
         this.phishTankClient = phishTankClient;
         this.mockPhishingClient = mockPhishingClient;
+        this.reasonCodeDetector = reasonCodeDetector;
         this.repository = repository;
     }
 
@@ -96,8 +99,13 @@ public class VerificationServiceImpl implements VerificationService {
             riskScore = Math.round(riskScore * 100.0) / 100.0;
         }
 
+        // Sinh reason codes giải thích kết quả (dùng cho narration-service)
+        boolean blacklisted = !flaggedSources.isEmpty();
+        List<String> reasonCodes = reasonCodeDetector.detect(url, domain, blacklisted, null);
+
         Instant checkedAt = Instant.now();
         String sourcesString = String.join(",", flaggedSources);
+        String reasonCodesString = String.join(",", reasonCodes);
 
         // Lưu bản ghi vào PostgreSQL (ràng buộc không join chéo)
         VerificationResult entity = VerificationResult.builder()
@@ -106,13 +114,14 @@ public class VerificationServiceImpl implements VerificationService {
                 .isPhishing(isPhishing)
                 .riskScore(riskScore)
                 .sources(sourcesString)
+                .reasonCodes(reasonCodesString)
                 .checkedAt(checkedAt)
                 .build();
 
         repository.save(entity);
 
-        log.info("Xác thực URL: {} | Domain: {} | Phishing: {} | RiskScore: {} | Sources: [{}]",
-                url, domain, isPhishing, riskScore, sourcesString);
+        log.info("Xác thực URL: {} | Domain: {} | Phishing: {} | RiskScore: {} | Sources: [{}] | ReasonCodes: [{}]",
+                url, domain, isPhishing, riskScore, sourcesString, reasonCodesString);
 
         return VerifyResponse.builder()
                 .url(url)
@@ -120,6 +129,7 @@ public class VerificationServiceImpl implements VerificationService {
                 .isPhishing(isPhishing)
                 .riskScore(riskScore)
                 .sources(flaggedSources)
+                .reasonCodes(reasonCodes)
                 .checkedAt(checkedAt)
                 .build();
     }

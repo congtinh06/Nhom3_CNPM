@@ -45,6 +45,13 @@ twilio:
   from-number: ${TWILIO_FROM_NUMBER:}
   to-number-demo: ${TWILIO_TO_NUMBER_DEMO:}
 
+narration:
+  service:
+    url: ${NARRATION_SERVICE_URL:http://localhost:8084}
+
+internal:
+  api-key: ${INTERNAL_API_KEY:}
+
 logging:
   level:
     com.antiphishing.notification: DEBUG

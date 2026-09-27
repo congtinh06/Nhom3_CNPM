@@ -1,10 +1,10 @@
 package com.antiphishing.linkverification.dto;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.hibernate.validator.constraints.URL;
 
 @Data
 @NoArgsConstructor
@@ -12,6 +12,6 @@ import org.hibernate.validator.constraints.URL;
 public class VerifyRequest {
 
     @NotBlank(message = "URL không được để trống")
-    @URL(protocol = "http|https", message = "URL phải hợp lệ và bắt đầu bằng http:// hoặc https://")
+    @Pattern(regexp = "^https?://[^\\s]+$", message = "URL phải hợp lệ và bắt đầu bằng http:// hoặc https://")
     private String url;
 }

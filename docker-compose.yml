@@ -162,11 +162,25 @@ services:
       TWILIO_AUTH_TOKEN: ${TWILIO_AUTH_TOKEN:-}
       TWILIO_FROM_NUMBER: ${TWILIO_FROM_NUMBER:-}
       TWILIO_TO_NUMBER_DEMO: ${TWILIO_TO_NUMBER_DEMO:-}
+      NARRATION_SERVICE_URL: http://narration-service:8084
+      INTERNAL_API_KEY: ${INTERNAL_API_KEY:-}
     depends_on:
       postgres-notification:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
+    networks:
+      - antiphishing-net
+
+  narration-service:
+    build:
+      context: ./backend/narration-service
+      dockerfile: Dockerfile
+    container_name: narration-service
+    ports:
+      - "8084:8084"
+    environment:
+      INTERNAL_API_KEY: ${INTERNAL_API_KEY:-}
     networks:
       - antiphishing-net
 
@@ -181,11 +195,13 @@ services:
       REPORT_SERVICE_URL: http://report-service:8081
       LINK_VERIFICATION_SERVICE_URL: http://link-verification-service:8082
       NOTIFICATION_SERVICE_URL: http://notification-service:8083
+      NARRATION_SERVICE_URL: http://narration-service:8084
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost:5173}
     depends_on:
       - report-service
       - link-verification-service
       - notification-service
+      - narration-service
     networks:
       - antiphishing-net
 

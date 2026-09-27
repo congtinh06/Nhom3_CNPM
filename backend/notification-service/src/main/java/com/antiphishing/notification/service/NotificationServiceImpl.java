@@ -1,5 +1,8 @@
 package com.antiphishing.notification.service;
 
+import com.antiphishing.notification.client.NarrationClient;
+import com.antiphishing.notification.dto.NarrationRequest;
+import com.antiphishing.notification.dto.NarrationResponse;
 import com.antiphishing.notification.dto.ReportCreatedEvent;
 import com.antiphishing.notification.entity.NotificationLog;
 import com.antiphishing.notification.repository.NotificationLogRepository;
@@ -12,12 +15,14 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
+import java.util.List;
 
 @Slf4j
 @Service
 public class NotificationServiceImpl implements NotificationService {
 
     private final JavaMailSender mailSender;
+    private final NarrationClient narrationClient;
     private final NotificationLogRepository logRepository;
 
     @Value("${notification.admin-email:admin@anti-phishing-bank.example.com}")
@@ -33,8 +38,10 @@ public class NotificationServiceImpl implements NotificationService {
     private String twilioToNumberDemo;
 
     public NotificationServiceImpl(JavaMailSender mailSender,
+                                   NarrationClient narrationClient,
                                    NotificationLogRepository logRepository) {
         this.mailSender = mailSender;
+        this.narrationClient = narrationClient;
         this.logRepository = logRepository;
     }
 
@@ -48,21 +55,62 @@ public class NotificationServiceImpl implements NotificationService {
             return;
         }
 
+        // Sinh câu thuyết minh đa ngôn ngữ qua narration-service (có fallback an toàn)
+        String explanation = buildExplanation(event);
+
         // 1. Gửi Email cảnh báo tới Quản trị viên hệ thống
-        sendEmailAlert(event, adminEmail);
+        sendEmailAlert(event, adminEmail, explanation);
 
         // 2. Gửi Email thông báo tới người báo cáo nếu thông tin liên hệ là Email hợp lệ
         if (event.getReporterContact() != null && event.getReporterContact().contains("@")) {
-            sendEmailAlert(event, event.getReporterContact());
+            sendEmailAlert(event, event.getReporterContact(), explanation);
         }
 
         // 3. Gửi SMS demo qua Twilio nếu được bật
         if (smsEnabled) {
-            sendSmsAlert(event);
+            sendSmsAlert(event, explanation);
         }
     }
 
-    private void sendEmailAlert(ReportCreatedEvent event, String recipient) {
+    /**
+     * Gọi narration-service để sinh câu thuyết minh theo locale của người nhận.
+     * Nguyên tắc cô lập nguồn ngoài: nếu narration-service lỗi/không phản hồi,
+     * vẫn gửi cảnh báo với nội dung mặc định, không làm gián đoạn luồng gửi.
+     */
+    private String buildExplanation(ReportCreatedEvent event) {
+        try {
+            NarrationRequest request = NarrationRequest.builder()
+                    .reasonCodes(event.getReasonCodes() != null
+                            ? event.getReasonCodes()
+                            : List.of())
+                    .riskScore(event.getRiskScore())
+                    .locale(event.getLocale() != null && !event.getLocale().isBlank()
+                            ? event.getLocale()
+                            : "vi")
+                    .build();
+
+            NarrationResponse response = narrationClient.narrate(request);
+            if (response != null && response.getExplanation() != null && !response.getExplanation().isBlank()) {
+                log.info("Đã nhận thuyết minh từ narration-service (locale={}) cho Report ID: {}",
+                        response.getLocale(), event.getReportId());
+                return response.getExplanation();
+            }
+            log.warn("narration-service trả về rỗng cho Report ID: {}. Dùng nội dung mặc định.", event.getReportId());
+        } catch (Exception e) {
+            // Graceful degradation: không để lỗi 500 của service ngoài làm gián đoạn cảnh báo
+            log.warn("Không thể gọi narration-service cho Report ID: {} ({}). Dùng nội dung mặc định.",
+                    event.getReportId(), e.getMessage());
+        }
+        return buildDefaultExplanation(event);
+    }
+
+    private String buildDefaultExplanation(ReportCreatedEvent event) {
+        return String.format(
+                "Hệ thống phát hiện liên kết này có nguy cơ lừa đảo cao (Risk Score: %.2f).",
+                event.getRiskScore() != null ? event.getRiskScore() : 1.0);
+    }
+
+    private void sendEmailAlert(ReportCreatedEvent event, String recipient, String explanation) {
         NotificationLog notificationLog = NotificationLog.builder()
                 .reportId(event.getReportId())
                 .channel("EMAIL")
@@ -82,13 +130,17 @@ public class NotificationServiceImpl implements NotificationService {
                     "- Kênh tiếp nhận: %s\n" +
                     "- Điểm rủi ro (Risk Score): %.2f\n" +
                     "- Thời gian phát hiện: %s\n\n" +
+                    "Phân tích chi tiết (ngôn ngữ: %s):\n" +
+                    "%s\n\n" +
                     "Vui lòng kiểm tra và xử lý khóa tên miền khẩn cấp để bảo vệ người dùng.\n\n" +
                     "Hệ thống Brand Protection & Anti-Phishing",
                     event.getReportId(),
                     event.getTargetUrl(),
                     event.getChannel(),
                     event.getRiskScore() != null ? event.getRiskScore() : 1.0,
-                    event.getCreatedAt() != null ? event.getCreatedAt().toString() : Instant.now().toString()
+                    event.getCreatedAt() != null ? event.getCreatedAt().toString() : Instant.now().toString(),
+                    event.getLocale() != null ? event.getLocale() : "vi",
+                    explanation
             ));
 
             mailSender.send(message);
@@ -104,7 +156,7 @@ public class NotificationServiceImpl implements NotificationService {
         logRepository.save(notificationLog);
     }
 
-    private void sendSmsAlert(ReportCreatedEvent event) {
+    private void sendSmsAlert(ReportCreatedEvent event, String explanation) {
         String targetPhone = (twilioToNumberDemo != null && !twilioToNumberDemo.isBlank())
                 ? twilioToNumberDemo
                 : event.getReporterContact();
@@ -121,8 +173,10 @@ public class NotificationServiceImpl implements NotificationService {
                 throw new IllegalStateException("Số điện thoại gửi Twilio chưa được thiết lập.");
             }
 
-            String smsBody = String.format("[CANH BAO] Phat hien web mao danh ngan hang: %s. Diem rui ro: %.2f",
-                    event.getTargetUrl(), event.getRiskScore() != null ? event.getRiskScore() : 1.0);
+            String smsBody = String.format("[CANH BAO] Web mao danh: %s. Diem rui ro: %.2f. %s",
+                    event.getTargetUrl(),
+                    event.getRiskScore() != null ? event.getRiskScore() : 1.0,
+                    shortenForSms(explanation));
 
             Message.creator(
                     new PhoneNumber(targetPhone),
@@ -140,5 +194,12 @@ public class NotificationServiceImpl implements NotificationService {
 
         // Luôn ghi log audit cho kênh SMS
         logRepository.save(notificationLog);
+    }
+
+    private String shortenForSms(String explanation) {
+        if (explanation == null) {
+            return "";
+        }
+        return explanation.length() <= 300 ? explanation : explanation.substring(0, 297) + "...";
     }
 }

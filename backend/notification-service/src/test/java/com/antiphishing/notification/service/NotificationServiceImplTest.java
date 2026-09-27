@@ -1,5 +1,8 @@
 package com.antiphishing.notification.service;
 
+import com.antiphishing.notification.client.NarrationClient;
+import com.antiphishing.notification.dto.NarrationRequest;
+import com.antiphishing.notification.dto.NarrationResponse;
 import com.antiphishing.notification.dto.ReportCreatedEvent;
 import com.antiphishing.notification.entity.NotificationLog;
 import com.antiphishing.notification.repository.NotificationLogRepository;
@@ -16,6 +19,7 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.Instant;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -28,15 +32,32 @@ class NotificationServiceImplTest {
     private JavaMailSender mailSender;
 
     @Mock
+    private NarrationClient narrationClient;
+
+    @Mock
     private NotificationLogRepository logRepository;
 
     private NotificationServiceImpl notificationService;
 
     @BeforeEach
     void setUp() {
-        notificationService = new NotificationServiceImpl(mailSender, logRepository);
+        notificationService = new NotificationServiceImpl(mailSender, narrationClient, logRepository);
         ReflectionTestUtils.setField(notificationService, "adminEmail", "admin@bank-security.vn");
         ReflectionTestUtils.setField(notificationService, "smsEnabled", false);
+    }
+
+    private ReportCreatedEvent phishingEvent() {
+        return ReportCreatedEvent.builder()
+                .reportId(2L)
+                .targetUrl("https://fake-bank-login.com")
+                .channel("WEB")
+                .reporterContact("reporter@example.com")
+                .isPhishing(true)
+                .riskScore(0.85)
+                .reasonCodes(List.of("BRAND_KEYWORD_MATCH", "BLACKLISTED_DOMAIN"))
+                .locale("vi")
+                .createdAt(Instant.now())
+                .build();
     }
 
     @Test
@@ -50,41 +71,61 @@ class NotificationServiceImplTest {
 
         notificationService.handle(event);
 
+        verify(narrationClient, never()).narrate(any());
         verify(mailSender, never()).send(any(SimpleMailMessage.class));
         verify(logRepository, never()).save(any());
     }
 
     @Test
-    @DisplayName("Khi isPhishing = true -> gửi email thành công và ghi log SENT vào database")
-    void testHandle_WhenPhishing_ShouldSendEmailAndLogSuccess() {
-        ReportCreatedEvent event = ReportCreatedEvent.builder()
-                .reportId(2L)
-                .targetUrl("https://fake-bank-login.com")
-                .channel("WEB")
-                .reporterContact("reporter@example.com")
-                .isPhishing(true)
-                .riskScore(0.85)
-                .createdAt(Instant.now())
-                .build();
+    @DisplayName("Khi phishing -> gọi narration-service và ghép câu thuyết minh vào email")
+    void testHandle_WhenPhishing_ShouldEmbedNarrationInEmail() {
+        when(narrationClient.narrate(any(NarrationRequest.class))).thenReturn(NarrationResponse.builder()
+                .explanation("Địa chỉ chứa từ khóa giả danh thương hiệu ngân hàng, tên miền đã nằm trong danh sách đen.")
+                .locale("vi")
+                .reasonCodesUsed(List.of("BRAND_KEYWORD_MATCH", "BLACKLISTED_DOMAIN"))
+                .build());
 
-        notificationService.handle(event);
+        notificationService.handle(phishingEvent());
 
-        // Gửi cho admin và gửi cho reporter (vì là email hợp lệ) -> tổng 2 lần
-        verify(mailSender, times(2)).send(any(SimpleMailMessage.class));
+        ArgumentCaptor<NarrationRequest> narrationCaptor = ArgumentCaptor.forClass(NarrationRequest.class);
+        verify(narrationClient, times(1)).narrate(narrationCaptor.capture());
+        NarrationRequest sentRequest = narrationCaptor.getValue();
+        assertEquals(List.of("BRAND_KEYWORD_MATCH", "BLACKLISTED_DOMAIN"), sentRequest.getReasonCodes());
+        assertEquals("vi", sentRequest.getLocale());
 
-        ArgumentCaptor<NotificationLog> captor = ArgumentCaptor.forClass(NotificationLog.class);
-        verify(logRepository, times(2)).save(captor.capture());
+        ArgumentCaptor<SimpleMailMessage> mailCaptor = ArgumentCaptor.forClass(SimpleMailMessage.class);
+        verify(mailSender, times(2)).send(mailCaptor.capture());
+        assertTrue(mailCaptor.getAllValues().get(0).getText()
+                .contains("Địa chỉ chứa từ khóa giả danh thương hiệu ngân hàng"));
 
-        NotificationLog savedLog = captor.getAllValues().get(0);
-        assertEquals(2L, savedLog.getReportId());
-        assertEquals("EMAIL", savedLog.getChannel());
-        assertEquals("SENT", savedLog.getStatus());
-        assertNull(savedLog.getErrorMessage());
+        verify(logRepository, times(2)).save(any(NotificationLog.class));
+    }
+
+    @Test
+    @DisplayName("Graceful Degradation: narration-service lỗi -> vẫn gửi email với nội dung mặc định")
+    void testHandle_WhenNarrationFails_ShouldFallbackAndStillSend() {
+        when(narrationClient.narrate(any(NarrationRequest.class)))
+                .thenThrow(new RuntimeException("connection refused"));
+
+        notificationService.handle(phishingEvent());
+
+        // Vẫn gửi đủ 2 email (admin + reporter) dù narration-service đã sập
+        ArgumentCaptor<SimpleMailMessage> mailCaptor = ArgumentCaptor.forClass(SimpleMailMessage.class);
+        verify(mailSender, times(2)).send(mailCaptor.capture());
+        assertTrue(mailCaptor.getAllValues().get(0).getText().contains("nguy cơ lừa đảo cao"));
+        assertFalse(mailCaptor.getAllValues().get(0).getText().contains("thuyết minh"));
+
+        verify(logRepository, times(2)).save(any(NotificationLog.class));
     }
 
     @Test
     @DisplayName("Khi gửi mail gặp sự cố -> vẫn ghi log FAILED với thông báo lỗi chi tiết")
     void testHandle_WhenMailFails_ShouldRecordFailedLog() {
+        when(narrationClient.narrate(any(NarrationRequest.class))).thenReturn(NarrationResponse.builder()
+                .explanation("Explanation text")
+                .locale("vi")
+                .build());
+
         ReportCreatedEvent event = ReportCreatedEvent.builder()
                 .reportId(3L)
                 .targetUrl("https://fake-bank-login.com")
@@ -92,6 +133,7 @@ class NotificationServiceImplTest {
                 .reporterContact("0912345678") // không phải email -> chỉ gửi cho admin
                 .isPhishing(true)
                 .riskScore(0.90)
+                .locale("vi")
                 .createdAt(Instant.now())
                 .build();
 

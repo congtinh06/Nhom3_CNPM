@@ -43,6 +43,18 @@ Hệ thống chuyên dụng phát hiện, phân tích và phát cảnh báo tứ
             └────────────────────▶ RabbitMQ Broker ───────────────────┘
                                    routing key: report.created
                                    queue: report.created.queue
+
+                                        ┌────────────────────────┐
+                                        │   narration-service    │
+                                        │  Spring Boot (Port:8084│
+                                        │  - MessageSource i18n  │
+                                        │  - vi/en templates     │
+                                        └───────────▲────────────┘
+                                                    │ OpenFeign
+                                                    │ POST /api/v1/narrate
+                                        ┌───────────┴────────────┐
+                                        │    notification-svc    │
+                                        └────────────────────────┘
 ```
 
 ---
@@ -88,6 +100,7 @@ anti-phishing-system/
 │   ├── report-service/          # Nghiệp vụ quản lý báo cáo, Feign, RabbitMQ (:8081)
 │   ├── link-verification-service/ # Nghiệp vụ kiểm tra phishing, 3 clients (:8082)
 │   ├── notification-service/    # Nghiệp vụ consumer gửi mail, SMS demo, audit (:8083)
+│   └── narration-service/       # Thuyết minh tự động đa ngôn ngữ vi/en (:8084)
 ├── frontend/                    # Giao diện người dùng React + TS (Vite) (:5173)
 ├── docs/
 │   ├── architecture.md          # Tài liệu chi tiết kiến trúc & API contract
@@ -116,7 +129,7 @@ cd Nhom3_CNPM
 # 2. Tạo file cấu hình môi trường từ mẫu
 cp .env.example .env
 
-# 3. Dựng toàn bộ 8 containers (4 Spring Boot + 3 PostgreSQL + RabbitMQ)
+# 3. Dựng toàn bộ 9 containers (5 Spring Boot + 3 PostgreSQL + RabbitMQ)
 docker compose up --build -d
 
 # 4. Kiểm tra trạng thái toàn bộ containers
@@ -141,6 +154,7 @@ Cần có JDK 17, Maven và Node.js:
    - `link-verification-service`: `cd backend/link-verification-service && ./mvnw spring-boot:run` (Cổng 8082)
    - `report-service`: `cd backend/report-service && ./mvnw spring-boot:run` (Cổng 8081)
    - `notification-service`: `cd backend/notification-service && ./mvnw spring-boot:run` (Cổng 8083)
+   - `narration-service`: `cd backend/narration-service && ./mvnw spring-boot:run` (Cổng 8084)
    - `api-gateway`: `cd backend/api-gateway && ./mvnw spring-boot:run` (Cổng 8080)
 3. **Khởi chạy Frontend**:
    ```bash
@@ -158,6 +172,7 @@ Cần có JDK 17, Maven và Node.js:
 mvn -f backend/link-verification-service/pom.xml test
 mvn -f backend/report-service/pom.xml test
 mvn -f backend/notification-service/pom.xml test
+mvn -f backend/narration-service/pom.xml test
 mvn -f backend/api-gateway/pom.xml test
 ```
 
@@ -179,6 +194,54 @@ curl -X POST http://localhost:8080/api/v1/reports \
   -d '{"targetUrl":"https://example-bank-fake.com/login","channel":"WEB","reporterContact":"user@bank.com","description":"Mạo danh cổng đăng nhập"}'
 
 # Test 4: Kiểm tra Rate Limit (Gửi liên tiếp 6 lần -> Lần 6 nhận HTTP 429 Too Many Requests)
+```
+
+### 5.3. Test Luồng Thuyết Minh Tự Động Đa Ngôn Ngữ (narration-service)
+
+**Test trực tiếp narration-service (demo độc lập):**
+```bash
+# Thuyết minh tiếng Việt (Kỳ vọng: HTTP 200 với explanation tiếng Việt)
+curl -X POST http://localhost:8084/api/v1/narrate \
+  -H "Content-Type: application/json" \
+  -d '{"reasonCodes":["DOMAIN_TOO_NEW","SSL_INVALID","BRAND_KEYWORD_MATCH"],"riskScore":0.87,"locale":"vi"}'
+
+# Thuyết minh tiếng Anh (Kỳ vọng: HTTP 200 với explanation tiếng Anh)
+curl -X POST http://localhost:8084/api/v1/narrate \
+  -H "Content-Type: application/json" \
+  -d '{"reasonCodes":["DOMAIN_TOO_NEW","SSL_INVALID","BRAND_KEYWORD_MATCH"],"riskScore":0.87,"locale":"en"}'
+
+# Locale không hỗ trợ (Kỳ vọng: HTTP 400)
+curl -X POST http://localhost:8084/api/v1/narrate \
+  -H "Content-Type: application/json" \
+  -d '{"reasonCodes":["NO_HTTPS"],"riskScore":0.5,"locale":"fr"}'
+
+# reasonCodes rỗng (Kỳ vọng: HTTP 400)
+curl -X POST http://localhost:8084/api/v1/narrate \
+  -H "Content-Type: application/json" \
+  -d '{"reasonCodes":[],"riskScore":0.5,"locale":"vi"}'
+```
+
+**Demo qua API Gateway:**
+```bash
+curl -X POST http://localhost:8080/api/v1/narrate \
+  -H "Content-Type: application/json" \
+  -d '{"reasonCodes":["BLACKLISTED_DOMAIN","SHORT_URL_OBFUSCATION"],"riskScore":0.9,"locale":"en"}'
+```
+
+**Demo luồng end-to-end (report → verify → RabbitMQ → notification → narration):**
+```bash
+# 1. Gửi báo cáo kèm locale="en" (người nhận muốn nhận cảnh báo tiếng Anh)
+curl -X POST http://localhost:8080/api/v1/reports \
+  -H "Content-Type: application/json" \
+  -d '{"targetUrl":"https://vietcombank-login.fake.com/otp","channel":"WEB","reporterContact":"user@bank.com","description":"Mạo danh Vietcombank","locale":"en"}'
+
+# 2. Quan sát log notification-service: nó consume sự kiện từ RabbitMQ,
+#    gọi narration-service POST /api/v1/narrate (locale=en), rồi ghép câu
+#    thuyết minh tiếng Anh vào email cảnh báo gửi đi.
+#
+# 3. Xem email trong Mailtrap inbox (hoặc log của notification-service).
+#    Nếu dừng notification-service rồi gửi lại báo cáo, hệ thống vẫn gửi
+#    cảnh báo với nội dung mặc định (fallback) - chứng minh Graceful Degradation.
 ```
 
 ---

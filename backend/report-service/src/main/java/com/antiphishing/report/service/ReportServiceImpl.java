@@ -21,6 +21,8 @@ import java.util.List;
 @Service
 public class ReportServiceImpl implements ReportService {
 
+    private static final String DEFAULT_LOCALE = "vi";
+
     private final ReportRepository repository;
     private final LinkVerificationClient linkVerificationClient;
     private final ReportEventPublisher eventPublisher;
@@ -39,7 +41,11 @@ public class ReportServiceImpl implements ReportService {
         String targetUrl = request.getTargetUrl().trim();
         Boolean isPhishing = null;
         Double riskScore = null;
+        List<String> reasonCodes = null;
         ReportStatus status = ReportStatus.PENDING;
+        String locale = (request.getLocale() == null || request.getLocale().isBlank())
+                ? DEFAULT_LOCALE
+                : request.getLocale().trim().toLowerCase();
 
         // 1. Gọi đồng bộ sang link-verification-service qua OpenFeign
         try {
@@ -48,6 +54,7 @@ public class ReportServiceImpl implements ReportService {
             if (verifyRes != null) {
                 isPhishing = verifyRes.isPhishing();
                 riskScore = verifyRes.getRiskScore();
+                reasonCodes = verifyRes.getReasonCodes();
                 status = ReportStatus.VERIFIED;
             }
         } catch (Exception e) {
@@ -70,7 +77,7 @@ public class ReportServiceImpl implements ReportService {
 
         Report savedReport = repository.save(report);
 
-        // 3. Bắn sự kiện bất đồng bộ lên RabbitMQ
+        // 3. Bắn sự kiện bất đồng bộ lên RabbitMQ (kèm reasonCodes + locale cho narration-service)
         ReportCreatedEvent event = ReportCreatedEvent.builder()
                 .reportId(savedReport.getId())
                 .targetUrl(savedReport.getTargetUrl())
@@ -78,6 +85,8 @@ public class ReportServiceImpl implements ReportService {
                 .reporterContact(savedReport.getReporterContact())
                 .isPhishing(savedReport.getIsPhishing())
                 .riskScore(savedReport.getRiskScore())
+                .reasonCodes(reasonCodes)
+                .locale(locale)
                 .createdAt(savedReport.getCreatedAt())
                 .build();
 

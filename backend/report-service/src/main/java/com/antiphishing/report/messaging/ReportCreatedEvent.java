@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.time.Instant;
+import java.util.List;
 
 @Data
 @Builder
@@ -20,5 +21,7 @@ public class ReportCreatedEvent implements Serializable {
     private String reporterContact;
     private Boolean isPhishing;
     private Double riskScore;
+    private List<String> reasonCodes;
+    private String locale;
     private Instant createdAt;
 }

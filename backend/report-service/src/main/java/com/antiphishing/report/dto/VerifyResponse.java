@@ -18,5 +18,6 @@ public class VerifyResponse {
     private boolean isPhishing;
     private Double riskScore;
     private List<String> sources;
+    private List<String> reasonCodes;
     private Instant checkedAt;
 }
