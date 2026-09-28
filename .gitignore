@@ -50,3 +50,7 @@ dist-ssr/
 # Scratch & test outputs
 scratch/
 test-output/
+
+# Tai lieu no bo (khong dua len GitHub)
+*.docx
+*.pdf
