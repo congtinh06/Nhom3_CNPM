@@ -5,16 +5,20 @@ spring:
   application:
     name: report-service
   datasource:
-    url: ${DB_URL:jdbc:postgresql://localhost:5432/report_db}
-    username: ${DB_USERNAME:postgres}
-    password: ${DB_PASSWORD:postgres}
-    driver-class-name: org.postgresql.Driver
+    # Chuyển sang SQL Server (2026-09): cấu hình PostgreSQL cũ được comment lại (backup)
+    # url: ${DB_URL:jdbc:postgresql://localhost:5432/report_db}
+    url: ${DB_URL:jdbc:sqlserver://localhost:1433;databaseName=report_db;encrypt=true;trustServerCertificate=true}
+    username: ${DB_USERNAME:sa}
+    password: ${DB_PASSWORD:YourStrong!Passw0rd}
+    driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
   jpa:
     hibernate:
       ddl-auto: update
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.PostgreSQLDialect
+        # Chuyển sang SQL Server (2026-09): dialect cũ được comment lại (backup)
+        # dialect: org.hibernate.dialect.PostgreSQLDialect
+        dialect: org.hibernate.dialect.SQLServerDialect
         format_sql: true
     open-in-view: false
   rabbitmq:
@@ -22,6 +26,12 @@ spring:
     port: ${RABBITMQ_PORT:5672}
     username: ${RABBITMQ_USERNAME:guest}
     password: ${RABBITMQ_PASSWORD:guest}
+    # Publisher Confirm (2026-09): broker phải xác nhận (ack) mỗi message;
+    # nếu broker sập sau khi lưu DB, callback sẽ ghi log thay vì mất event im lặng
+    publisher-confirm-type: correlated
+    publisher-returns: true
+    template:
+      mandatory: true
 
 services:
   link-verification:

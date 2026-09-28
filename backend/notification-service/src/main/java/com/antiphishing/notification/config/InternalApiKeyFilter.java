@@ -16,6 +16,14 @@ public class InternalApiKeyFilter extends OncePerRequestFilter {
     @Value("${internal.api-key:}")
     private String expectedApiKey;
 
+    // Whitelist health endpoint: Docker/K8s healthcheck không cần API key
+    // (chỉ mở /actuator/health*, các endpoint actuator khác vẫn bắt xác thực)
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        String path = request.getRequestURI();
+        return path.equals("/actuator/health") || path.startsWith("/actuator/health/");
+    }
+
     @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,

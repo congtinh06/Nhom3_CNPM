@@ -5,16 +5,20 @@ spring:
   application:
     name: link-verification-service
   datasource:
-    url: ${DB_URL:jdbc:postgresql://localhost:5432/link_verification_db}
-    username: ${DB_USERNAME:postgres}
-    password: ${DB_PASSWORD:postgres}
-    driver-class-name: org.postgresql.Driver
+    # Chuyển sang SQL Server (2026-09): cấu hình PostgreSQL cũ được comment lại (backup)
+    # url: ${DB_URL:jdbc:postgresql://localhost:5432/link_verification_db}
+    url: ${DB_URL:jdbc:sqlserver://localhost:1433;databaseName=link_verification_db;encrypt=true;trustServerCertificate=true}
+    username: ${DB_USERNAME:sa}
+    password: ${DB_PASSWORD:YourStrong!Passw0rd}
+    driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
   jpa:
     hibernate:
       ddl-auto: update
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.PostgreSQLDialect
+        # Chuyển sang SQL Server (2026-09): dialect cũ được comment lại (backup)
+        # dialect: org.hibernate.dialect.PostgreSQLDialect
+        dialect: org.hibernate.dialect.SQLServerDialect
         format_sql: true
     open-in-view: false
 

@@ -6,6 +6,12 @@ spring:
     name: api-gateway
   cloud:
     gateway:
+      # Fix 401 (2026-09): gateway tu gan internal key cho moi request proxy sang
+      # cac service nghiep vu vi InternalApiKeyFilter phia downstream chan request
+      # khong key. Client goi TRUC TIEP vao 8082/8083 van bi chan 401 =>
+      # defense-in-depth giu nguyen (chi gateway moi vao duoc).
+      default-filters:
+        - AddRequestHeader=X-Internal-Api-Key,${INTERNAL_API_KEY:}
       routes:
         - id: report-service
           uri: ${REPORT_SERVICE_URL:http://localhost:8081}

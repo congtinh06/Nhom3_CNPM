@@ -1,9 +1,21 @@
 package com.antiphishing.report.messaging;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.amqp.AmqpException;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.amqp.rabbit.connection.CorrelationData;
 import org.springframework.stereotype.Component;
 
+/**
+ * Publisher sự kiện ReportCreatedEvent lên RabbitMQ.
+ *
+ * Publish an toàn (2026-09, ưu tiên CAO trong review):
+ *  - Truyền CorrelationData(reportId) để callback confirm trong RabbitMQConfig
+ *    ghi log truy vết được từng message (ACK/NACK/RETURN).
+ *  - Bọc try/catch: broker sập/không kết nối được thì chỉ log ERROR,
+ *    KHÔNG làm lỗi request người dùng (graceful degradation — giữ hành vi cũ),
+ *    nhưng giờ đây thất bại publish luôn hiện rõ trong log.
+ */
 @Slf4j
 @Component
 public class ReportEventPublisher {
@@ -16,12 +28,19 @@ public class ReportEventPublisher {
 
     public void publish(ReportCreatedEvent event) {
         try {
-            rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE, RabbitMQConfig.ROUTING_KEY, event);
-            log.info("Đã publish ReportCreatedEvent lên RabbitMQ: reportId={}, isPhishing={}", 
-                    event.getReportId(), event.getIsPhishing());
-        } catch (Exception e) {
-            log.error("Không thể publish sự kiện lên RabbitMQ (Broker có thể chưa sẵn sàng): {}", e.getMessage());
-            // Không ngắt luồng người dùng chỉ vì message broker offline
+            CorrelationData correlation = new CorrelationData("report-" + event.getReportId());
+            rabbitTemplate.convertAndSend(
+                    RabbitMQConfig.EXCHANGE,
+                    RabbitMQConfig.ROUTING_KEY,
+                    event,
+                    correlation);
+            log.info("Đã publish ReportCreatedEvent lên RabbitMQ: reportId={}, isPhishing={} (correlation=report-{})",
+                    event.getReportId(), event.getIsPhishing(), event.getReportId());
+        } catch (AmqpException e) {
+            // Broker offline/không kết nối được: không ngắt luồng người dùng,
+            // log ERROR kèm reportId để đối soát và tái phát hành khi cần
+            log.error("KHÔNG publish được ReportCreatedEvent reportId={} lên RabbitMQ: {}",
+                    event.getReportId(), e.getMessage());
         }
     }
 }

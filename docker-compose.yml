@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   # ==========================================
   # 1. Message Broker (RabbitMQ + Management)
@@ -27,62 +25,147 @@ services:
       - antiphishing-net
 
   # ==========================================
-  # 2. PostgreSQL Databases (Mỗi service 1 DB riêng biệt)
+  # 2. Microsoft SQL Server 2022 (Mỗi service 1 instance riêng biệt)
+  #    Chuyển đổi từ PostgreSQL (2026-09). Cấu hình PostgreSQL cũ được
+  #    comment lại ở cuối file làm backup.
   # ==========================================
-  postgres-link:
-    image: postgres:16-alpine
-    container_name: postgres-link
+  mssql-link:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: mssql-link
     environment:
-      POSTGRES_DB: link_verification_db
-      POSTGRES_USER: ${DB_USERNAME:-postgres}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD:-YourStrong!Passw0rd}
+      MSSQL_PID: ${MSSQL_PID:-Developer}   # Developer cho nội bộ; đổi thành Express nếu cần
     ports:
-      - "5433:5432"
+      - "1433:1433"
     volumes:
-      - pgdata-link:/var/lib/postgresql/data
+      - mssql-data-link:/var/opt/mssql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 5s
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P \"$${MSSQL_SA_PASSWORD}\" -C -Q 'SELECT 1' -b -o /dev/null"]
+      interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 10
+      start_period: 30s
     networks:
       - antiphishing-net
 
-  postgres-report:
-    image: postgres:16-alpine
-    container_name: postgres-report
+  mssql-report:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: mssql-report
     environment:
-      POSTGRES_DB: report_db
-      POSTGRES_USER: ${DB_USERNAME:-postgres}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD:-YourStrong!Passw0rd}
+      MSSQL_PID: ${MSSQL_PID:-Developer}
     ports:
-      - "5434:5432"
+      - "1434:1433"
     volumes:
-      - pgdata-report:/var/lib/postgresql/data
+      - mssql-data-report:/var/opt/mssql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 5s
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P \"$${MSSQL_SA_PASSWORD}\" -C -Q 'SELECT 1' -b -o /dev/null"]
+      interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 10
+      start_period: 30s
     networks:
       - antiphishing-net
 
-  postgres-notification:
-    image: postgres:16-alpine
-    container_name: postgres-notification
+  mssql-notification:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: mssql-notification
     environment:
-      POSTGRES_DB: notification_db
-      POSTGRES_USER: ${DB_USERNAME:-postgres}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD:-YourStrong!Passw0rd}
+      MSSQL_PID: ${MSSQL_PID:-Developer}
     ports:
-      - "5435:5432"
+      - "1435:1433"
     volumes:
-      - pgdata-notification:/var/lib/postgresql/data
+      - mssql-data-notification:/var/opt/mssql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 5s
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P \"$${MSSQL_SA_PASSWORD}\" -C -Q 'SELECT 1' -b -o /dev/null"]
+      interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 10
+      start_period: 30s
+    networks:
+      - antiphishing-net
+
+  # ==========================================
+  # 2b. Init + Seed databases (chạy 1 lần)
+  #     SQL Server không tự tạo database qua biến môi trường như PostgreSQL
+  #     (POSTGRES_DB), nên cần tạo DB bằng T-SQL sau khi container healthy.
+  #     Sau đó seed DDL + data từ docs/schema.sql (mount read-only; file được
+  #     tách theo marker "-- SECTION-DB: <ten_db>" để chạy với đúng database).
+  #     Script seed idempotent — chạy lại không lỗi, không nhân đôi data.
+  # ==========================================
+  mssql-db-init:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: mssql-db-init
+    depends_on:
+      mssql-link:
+        condition: service_healthy
+      mssql-report:
+        condition: service_healthy
+      mssql-notification:
+        condition: service_healthy
+    environment:
+      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD:-YourStrong!Passw0rd}
+    volumes:
+      - ./docs/schema.sql:/seed/schema.sql:ro
+    entrypoint: ["/bin/bash", "-c"]
+    command:
+      - |
+        set -e
+        SQLCMD=/opt/mssql-tools18/bin/sqlcmd
+        SEED_FILE=/seed/schema.sql
+        DB1=link_verification_db
+        DB2=report_db
+        DB3=notification_db
+
+        # ---------- Giai đoạn 1: tạo database nếu chưa có ----------
+        create_db() {
+          host=$$1; db=$$2
+          echo "Ensuring database [$$db] on $$host ..."
+          for i in $$(seq 1 60); do
+            if $$SQLCMD -S "$$host" -U sa -P "$${MSSQL_SA_PASSWORD}" -C -b -Q "IF DB_ID('$$db') IS NULL CREATE DATABASE [$$db]"; then
+              echo "Database [$$db] ready on $$host"
+              return 0
+            fi
+            sleep 5
+          done
+          echo "FAILED to create database [$$db] on $$host"
+          return 1
+        }
+        create_db mssql-link "$$DB1"
+        create_db mssql-report "$$DB2"
+        create_db mssql-notification "$$DB3"
+
+        # ---------- Giai đoạn 2: seed DDL + data từ docs/schema.sql ----------
+        # Tách phần của từng database theo marker "-- SECTION-DB: <ten_db>"
+        # rồi chạy với sqlcmd -d <db>.
+        seed_db() {
+          host=$$1; db=$$2
+          echo "Seeding [$$db] on $$host ..."
+          awk -v marker="-- SECTION-DB: $$db" '
+            index($$0, marker) == 1 { keep = 1; next }
+            /^-- SECTION-DB:/ { keep = 0 }
+            keep { print }
+          ' "$$SEED_FILE" > "/tmp/$$db.sql"
+          for i in $$(seq 1 30); do
+            if $$SQLCMD -S "$$host" -U sa -P "$${MSSQL_SA_PASSWORD}" -C -b -i "/tmp/$$db.sql"; then
+              echo "Seed [$$db] completed"
+              return 0
+            fi
+            echo "Seed [$$db] retry $$i/30 ..."
+            sleep 5
+          done
+          echo "FAILED seeding [$$db] on $$host"
+          return 1
+        }
+        seed_db mssql-link "$$DB1"
+        seed_db mssql-report "$$DB2"
+        seed_db mssql-notification "$$DB3"
+
+        echo "All databases are created and seeded."
     networks:
       - antiphishing-net
 
@@ -97,16 +180,16 @@ services:
     ports:
       - "8082:8082"
     environment:
-      DB_URL: jdbc:postgresql://postgres-link:5432/link_verification_db
-      DB_USERNAME: ${DB_USERNAME:-postgres}
-      DB_PASSWORD: ${DB_PASSWORD:-postgres}
+      DB_URL: jdbc:sqlserver://mssql-link:1433;databaseName=link_verification_db;encrypt=true;trustServerCertificate=true
+      DB_USERNAME: sa
+      DB_PASSWORD: ${MSSQL_SA_PASSWORD:-YourStrong!Passw0rd}
       GSB_API_KEY: ${GSB_API_KEY:-}
       PHISHTANK_APP_KEY: ${PHISHTANK_APP_KEY:-}
       VERIFICATION_MOCK_MODE: ${VERIFICATION_MOCK_MODE:-false}
       INTERNAL_API_KEY: ${INTERNAL_API_KEY:-}
     depends_on:
-      postgres-link:
-        condition: service_healthy
+      mssql-db-init:
+        condition: service_completed_successfully
     networks:
       - antiphishing-net
 
@@ -118,9 +201,9 @@ services:
     ports:
       - "8081:8081"
     environment:
-      DB_URL: jdbc:postgresql://postgres-report:5432/report_db
-      DB_USERNAME: ${DB_USERNAME:-postgres}
-      DB_PASSWORD: ${DB_PASSWORD:-postgres}
+      DB_URL: jdbc:sqlserver://mssql-report:1433;databaseName=report_db;encrypt=true;trustServerCertificate=true
+      DB_USERNAME: sa
+      DB_PASSWORD: ${MSSQL_SA_PASSWORD:-YourStrong!Passw0rd}
       RABBITMQ_HOST: rabbitmq
       RABBITMQ_PORT: 5672
       RABBITMQ_USERNAME: guest
@@ -128,8 +211,8 @@ services:
       LINK_VERIFICATION_SERVICE_URL: http://link-verification-service:8082
       INTERNAL_API_KEY: ${INTERNAL_API_KEY:-}
     depends_on:
-      postgres-report:
-        condition: service_healthy
+      mssql-db-init:
+        condition: service_completed_successfully
       rabbitmq:
         condition: service_healthy
       link-verification-service:
@@ -145,9 +228,9 @@ services:
     ports:
       - "8083:8083"
     environment:
-      DB_URL: jdbc:postgresql://postgres-notification:5432/notification_db
-      DB_USERNAME: ${DB_USERNAME:-postgres}
-      DB_PASSWORD: ${DB_PASSWORD:-postgres}
+      DB_URL: jdbc:sqlserver://mssql-notification:1433;databaseName=notification_db;encrypt=true;trustServerCertificate=true
+      DB_USERNAME: sa
+      DB_PASSWORD: ${MSSQL_SA_PASSWORD:-YourStrong!Passw0rd}
       RABBITMQ_HOST: rabbitmq
       RABBITMQ_PORT: 5672
       RABBITMQ_USERNAME: guest
@@ -165,8 +248,8 @@ services:
       NARRATION_SERVICE_URL: http://narration-service:8084
       INTERNAL_API_KEY: ${INTERNAL_API_KEY:-}
     depends_on:
-      postgres-notification:
-        condition: service_healthy
+      mssql-db-init:
+        condition: service_completed_successfully
       rabbitmq:
         condition: service_healthy
     networks:
@@ -197,6 +280,8 @@ services:
       NOTIFICATION_SERVICE_URL: http://notification-service:8083
       NARRATION_SERVICE_URL: http://narration-service:8084
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost:5173}
+      # Fix 401 (2026-09): gateway dung key nay de gan header X-Internal-Api-Key
+      INTERNAL_API_KEY: ${INTERNAL_API_KEY:-}
     depends_on:
       - report-service
       - link-verification-service
@@ -210,7 +295,81 @@ networks:
     driver: bridge
 
 volumes:
-  pgdata-link:
-  pgdata-report:
-  pgdata-notification:
+  mssql-data-link:
+  mssql-data-report:
+  mssql-data-notification:
   rabbitmq-data:
+
+# ==============================================================================
+# BACKUP — Cấu hình PostgreSQL cũ (chuyển sang SQL Server ngày 2026-09)
+# Giữ lại để rollback nếu cần. KHÔNG ảnh hưởng đến compose hiện tại.
+#
+# postgres-link:
+#   image: postgres:16-alpine
+#   container_name: postgres-link
+#   environment:
+#     POSTGRES_DB: link_verification_db
+#     POSTGRES_USER: ${DB_USERNAME:-postgres}
+#     POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+#   ports:
+#     - "5433:5432"
+#   volumes:
+#     - pgdata-link:/var/lib/postgresql/data
+#   healthcheck:
+#     test: ["CMD-SHELL", "pg_isready -U postgres"]
+#     interval: 5s
+#     timeout: 5s
+#     retries: 5
+#   networks:
+#     - antiphishing-net
+#
+# postgres-report:
+#   image: postgres:16-alpine
+#   container_name: postgres-report
+#   environment:
+#     POSTGRES_DB: report_db
+#     POSTGRES_USER: ${DB_USERNAME:-postgres}
+#     POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+#   ports:
+#     - "5434:5432"
+#   volumes:
+#     - pgdata-report:/var/lib/postgresql/data
+#   healthcheck:
+#     test: ["CMD-SHELL", "pg_isready -U postgres"]
+#     interval: 5s
+#     timeout: 5s
+#     retries: 5
+#   networks:
+#     - antiphishing-net
+#
+# postgres-notification:
+#   image: postgres:16-alpine
+#   container_name: postgres-notification
+#   environment:
+#     POSTGRES_DB: notification_db
+#     POSTGRES_USER: ${DB_USERNAME:-postgres}
+#     POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+#   ports:
+#     - "5435:5432"
+#   volumes:
+#     - pgdata-notification:/var/lib/postgresql/data
+#   healthcheck:
+#     test: ["CMD-SHELL", "pg_isready -U postgres"]
+#     interval: 5s
+#     timeout: 5s
+#     retries: 5
+#   networks:
+#     - antiphishing-net
+#
+# (Trong environment của 3 service app, giá trị cũ:)
+#   DB_URL: jdbc:postgresql://postgres-link:5432/link_verification_db
+#   DB_URL: jdbc:postgresql://postgres-report:5432/report_db
+#   DB_URL: jdbc:postgresql://postgres-notification:5432/notification_db
+#   DB_USERNAME: ${DB_USERNAME:-postgres}
+#   DB_PASSWORD: ${DB_PASSWORD:-postgres}
+#
+# (Volumes cũ:)
+#   pgdata-link:
+#   pgdata-report:
+#   pgdata-notification:
+# ==============================================================================
