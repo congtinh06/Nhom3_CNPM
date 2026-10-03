@@ -1,0 +1,14 @@
+package com.saigonvoice.translation.client;
+
+import com.saigonvoice.translation.dto.NarrationRequest;
+import com.saigonvoice.translation.dto.NarrationResponse;
+import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+
+@FeignClient(name = "narration-service", url = "${narration.service.url}")
+public interface NarrationClient {
+
+    @PostMapping("/api/v1/narrate")
+    NarrationResponse narrate(@RequestBody NarrationRequest request);
+}
