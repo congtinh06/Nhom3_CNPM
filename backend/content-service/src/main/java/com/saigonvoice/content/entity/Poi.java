@@ -1,0 +1,72 @@
+package com.saigonvoice.content.entity;
+
+import jakarta.persistence.*;
+import lombok.*;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+
+@Entity
+@Table(name = "poi")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class Poi {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "zone_id", nullable = false)
+    private Zone zone;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "category_id", nullable = false)
+    private Category category;
+
+    @Column(nullable = false, unique = true, length = 50)
+    private String code;
+
+    @Column(name = "qr_token", nullable = false, unique = true, length = 100)
+    private String qrToken;
+
+    @Column(nullable = false, length = 255)
+    private String name;
+
+    @Column(nullable = false, precision = 10, scale = 7)
+    private BigDecimal latitude;
+
+    @Column(nullable = false, precision = 10, scale = 7)
+    private BigDecimal longitude;
+
+    @Column(name = "trigger_radius_meters", nullable = false)
+    @Builder.Default
+    private Integer triggerRadiusMeters = 50;
+
+    @Column(length = 500)
+    private String address;
+
+    @Column(name = "thumbnail_url", length = 500)
+    private String thumbnailUrl;
+
+    @Column(nullable = false, length = 30)
+    @Builder.Default
+    private String status = "ACTIVE"; // ACTIVE, INACTIVE, MAINTENANCE
+
+    @Column(name = "created_at", nullable = false, updatable = false)
+    @Builder.Default
+    private LocalDateTime createdAt = LocalDateTime.now();
+
+    @Column(name = "updated_at", nullable = false)
+    @Builder.Default
+    private LocalDateTime updatedAt = LocalDateTime.now();
+
+    @OneToMany(mappedBy = "poi", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<PoiTranslation> translations = new ArrayList<>();
+}

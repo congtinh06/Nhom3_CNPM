@@ -6,8 +6,8 @@ spring:
     name: content-service
   datasource:
     url: ${DB_URL:jdbc:sqlserver://localhost:1433;databaseName=saigonvoice_content_db;encrypt=true;trustServerCertificate=true}
-    username: ${DB_USERNAME:sa}
-    password: ${DB_PASSWORD:YourStrong!Passw0rd}
+    username: ${DB_USERNAME:content_user}
+    password: ${DB_PASSWORD:Content!Pass2026}
     driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
   jpa:
     hibernate:
@@ -19,12 +19,26 @@ spring:
   flyway:
     enabled: true
     baseline-on-migrate: true
+    encoding: UTF-8
     locations: classpath:db/migration
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USERNAME:guest}
+    password: ${RABBITMQ_PASSWORD:guest}
 
-overpass:
-  url: ${OVERPASS_URL:https://overpass-api.de/api/interpreter}
-  timeout-seconds: 15
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always
+
+internal:
+  api-key: ${INTERNAL_API_KEY:}
 
 logging:
   level:
-    com.saigonvoice.content: INFO
+    com.saigonvoice.content: DEBUG
