@@ -15,9 +15,12 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import org.springframework.amqp.AmqpRejectAndDontRequeueException;
+
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -36,7 +39,7 @@ class PoiAudioUpdateServiceTest {
     @BeforeEach
     void setUp() {
         poi = Poi.builder().id(100L).code("POI_TEST").name("Điểm Test").build();
-        when(poiRepository.findById(100L)).thenReturn(Optional.of(poi));
+        lenient().when(poiRepository.findById(100L)).thenReturn(Optional.of(poi));
 
         // DB hiện tại đang lưu bản tiếng Việt phiên bản 2 (sau khi sửa lần 2)
         viTranslationV2 = PoiTranslation.builder()
@@ -50,7 +53,7 @@ class PoiAudioUpdateServiceTest {
                 .audioStatus("PENDING")
                 .build();
 
-        when(translationRepository.findByPoiIdAndLanguageCode(100L, "vi"))
+        lenient().when(translationRepository.findByPoiIdAndLanguageCode(100L, "vi"))
                 .thenReturn(Optional.of(viTranslationV2));
     }
 
@@ -113,5 +116,60 @@ class PoiAudioUpdateServiceTest {
         assertThat(saved.getAudioStatus()).isEqualTo("READY");
         assertThat(saved.getAudioUrl()).isEqualTo("http://localhost:8083/audio/en_v2.mp3");
         assertThat(saved.getContentHash()).isEqualTo(currentHashV2);
+    }
+
+    @Test
+    @DisplayName("applyAudioReady: thiếu contentHash (null hoặc rỗng) -> ném AmqpRejectAndDontRequeueException vào DLQ ngay")
+    void testApplyAudioReady_MissingContentHash_RejectsToDlq() {
+        PoiAudioReadyEvent nullHashEvent = PoiAudioReadyEvent.builder()
+                .poiId(100L)
+                .languageCode("en")
+                .title("Title")
+                .summary("Summary")
+                .description("Desc")
+                .audioUrl("http://localhost:8083/audio/en.mp3")
+                .contentHash(null)
+                .build();
+
+        assertThatThrownBy(() -> poiAudioUpdateService.applyAudioReady(nullHashEvent))
+                .isInstanceOf(AmqpRejectAndDontRequeueException.class)
+                .hasMessageContaining("missing [contentHash]");
+
+        PoiAudioReadyEvent emptyHashEvent = PoiAudioReadyEvent.builder()
+                .poiId(100L)
+                .languageCode("en")
+                .title("Title")
+                .summary("Summary")
+                .description("Desc")
+                .audioUrl("http://localhost:8083/audio/en.mp3")
+                .contentHash("   ")
+                .build();
+
+        assertThatThrownBy(() -> poiAudioUpdateService.applyAudioReady(emptyHashEvent))
+                .isInstanceOf(AmqpRejectAndDontRequeueException.class)
+                .hasMessageContaining("missing [contentHash]");
+    }
+
+    @Test
+    @DisplayName("applyAudioReady: không có bản dịch vi để đối chiếu hash -> ghi log WARN và ném AmqpRejectAndDontRequeueException vào DLQ")
+    void testApplyAudioReady_MissingViTranslation_LogsWarnAndRejectsToDlq() {
+        when(translationRepository.findByPoiIdAndLanguageCode(100L, "vi"))
+                .thenReturn(Optional.empty());
+
+        PoiAudioReadyEvent event = PoiAudioReadyEvent.builder()
+                .poiId(100L)
+                .languageCode("en")
+                .title("Title")
+                .summary("Summary")
+                .description("Desc")
+                .audioUrl("http://localhost:8083/audio/en.mp3")
+                .contentHash("somehash")
+                .build();
+
+        assertThatThrownBy(() -> poiAudioUpdateService.applyAudioReady(event))
+                .isInstanceOf(AmqpRejectAndDontRequeueException.class)
+                .hasMessageContaining("Missing source 'vi' translation");
+
+        verify(translationRepository, never()).save(any());
     }
 }
