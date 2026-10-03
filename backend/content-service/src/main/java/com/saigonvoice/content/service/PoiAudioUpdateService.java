@@ -31,6 +31,7 @@ public class PoiAudioUpdateService {
 
     public static final String STATUS_READY = "READY";
     public static final String STATUS_FAILED_TTS = "FAILED_TTS";
+    public static final String STATUS_FAILED = "FAILED";
 
     private final PoiRepository poiRepository;
     private final PoiTranslationRepository translationRepository;
@@ -132,9 +133,20 @@ public class PoiAudioUpdateService {
             return;
         }
 
+        PoiTranslation translation = translationRepository.findByPoiIdAndLanguageCode(poi.getId(), lang).orElse(null);
+
+        // Quy tắc 2: Nếu bản dịch hiện tại đã READY và content_hash của nó bằng đúng event.contentHash:
+        // bỏ qua event (failed đến muộn không được hạ cấp bản READY cùng phiên bản)
+        if (translation != null
+                && STATUS_READY.equalsIgnoreCase(translation.getAudioStatus())
+                && event.getContentHash().equalsIgnoreCase(translation.getContentHash())) {
+            log.info("Ignoring late poi.audio.failed for poiId={}, lang={}: translation is already READY with matching contentHash {}",
+                    poi.getId(), lang, event.getContentHash());
+            return;
+        }
+
         boolean hasText = !isBlank(event.getTitle()) && !isBlank(event.getSummary()) && !isBlank(event.getDescription());
 
-        PoiTranslation translation = translationRepository.findByPoiIdAndLanguageCode(poi.getId(), lang).orElse(null);
         if (translation == null && !hasText) {
             // Chưa có bản dịch và payload không kèm văn bản: không có gì để lưu, Frontend sẽ fallback bản 'vi'
             log.warn("poi.audio.failed for poiId={}, lang={} has no translation row and no text; nothing stored. error={}",
@@ -149,15 +161,21 @@ public class PoiAudioUpdateService {
             translation.setSummary(event.getSummary());
             translation.setDescription(event.getDescription());
             translation.setHistoricalSignificance(event.getHistoricalSignificance());
+            translation.setAudioStatus(STATUS_FAILED_TTS);
+        } else {
+            // Quy tắc 1: Event failed KHÔNG kèm text (hasText = false) mà bản dịch đã tồn tại: text hiện có là của phiên bản cũ,
+            // không được gắn FAILED_TTS (trạng thái dùng được). Thay vào đó đặt audio_status = 'FAILED', audio_url = null,
+            // cập nhật content_hash, giữ nguyên text.
+            translation.setAudioStatus(STATUS_FAILED);
         }
         translation.setContentHash(event.getContentHash());
         translation.setAudioUrl(null);
         translation.setAudioDurationSeconds(0);
-        translation.setAudioStatus(STATUS_FAILED_TTS);
         translation.setUpdatedAt(TimeUtils.nowUtc());
         translationRepository.save(translation);
 
-        log.warn("poi.audio.failed applied: poiId={}, lang={}, error={}", poi.getId(), lang, event.getErrorMessage());
+        log.warn("poi.audio.failed applied: poiId={}, lang={}, status={}, error={}",
+                poi.getId(), lang, translation.getAudioStatus(), event.getErrorMessage());
     }
 
     private Poi findPoiOrThrow(Long poiId, String eventName) {
