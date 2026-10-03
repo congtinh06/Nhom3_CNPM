@@ -2,6 +2,7 @@ package com.saigonvoice.content.service;
 
 import com.saigonvoice.content.entity.Poi;
 import com.saigonvoice.content.entity.PoiTranslation;
+import com.saigonvoice.content.event.PoiAudioFailedEvent;
 import com.saigonvoice.content.event.PoiAudioReadyEvent;
 import com.saigonvoice.content.repository.PoiRepository;
 import com.saigonvoice.content.repository.PoiTranslationRepository;
@@ -167,6 +168,107 @@ class PoiAudioUpdateServiceTest {
                 .build();
 
         assertThatThrownBy(() -> poiAudioUpdateService.applyAudioReady(event))
+                .isInstanceOf(AmqpRejectAndDontRequeueException.class)
+                .hasMessageContaining("Missing source 'vi' translation");
+
+        verify(translationRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("applyAudioFailed: contentHash khớp với phiên bản tiếng Việt hiện tại -> lưu FAILED_TTS thành công")
+    void testApplyAudioFailed_MatchingContentHash_SavesFailedTts() {
+        String currentHashV2 = ContentHashUtils.computeHash(
+                "en", "Tiêu đề tiếng Việt V2", "Tóm tắt V2", "Mô tả V2", "Ý nghĩa V2");
+
+        PoiAudioFailedEvent event = PoiAudioFailedEvent.builder()
+                .poiId(100L)
+                .languageCode("en")
+                .audioStatus("FAILED_TTS")
+                .errorMessage("Edge TTS error")
+                .title("Title V2 EN")
+                .summary("Summary V2 EN")
+                .description("Description V2 EN")
+                .contentHash(currentHashV2)
+                .build();
+
+        when(translationRepository.findByPoiIdAndLanguageCode(100L, "en"))
+                .thenReturn(Optional.empty());
+
+        poiAudioUpdateService.applyAudioFailed(event);
+
+        ArgumentCaptor<PoiTranslation> captor = ArgumentCaptor.forClass(PoiTranslation.class);
+        verify(translationRepository).save(captor.capture());
+        PoiTranslation saved = captor.getValue();
+
+        assertThat(saved.getLanguageCode()).isEqualTo("en");
+        assertThat(saved.getTitle()).isEqualTo("Title V2 EN");
+        assertThat(saved.getAudioStatus()).isEqualTo("FAILED_TTS");
+        assertThat(saved.getAudioUrl()).isNull();
+        assertThat(saved.getContentHash()).isEqualTo(currentHashV2);
+    }
+
+    @Test
+    @DisplayName("applyAudioFailed: event của phiên bản cũ (stale hash) gửi đến sau khi đã cập nhật -> bị bỏ qua")
+    void testApplyAudioFailed_StaleEventFromPreviousVersion_IsIgnored() {
+        String staleHashV1 = ContentHashUtils.computeHash(
+                "en", "Tiêu đề tiếng Việt V1", "Tóm tắt V1", "Mô tả V1", "Ý nghĩa V1");
+
+        PoiAudioFailedEvent staleEvent = PoiAudioFailedEvent.builder()
+                .poiId(100L)
+                .languageCode("en")
+                .audioStatus("FAILED_TTS")
+                .errorMessage("Edge TTS error")
+                .contentHash(staleHashV1)
+                .build();
+
+        poiAudioUpdateService.applyAudioFailed(staleEvent);
+
+        verify(translationRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("applyAudioFailed: thiếu contentHash (null hoặc rỗng) -> ném AmqpRejectAndDontRequeueException vào DLQ ngay")
+    void testApplyAudioFailed_MissingContentHash_RejectsToDlq() {
+        PoiAudioFailedEvent nullHashEvent = PoiAudioFailedEvent.builder()
+                .poiId(100L)
+                .languageCode("en")
+                .audioStatus("FAILED_TTS")
+                .errorMessage("Edge TTS error")
+                .contentHash(null)
+                .build();
+
+        assertThatThrownBy(() -> poiAudioUpdateService.applyAudioFailed(nullHashEvent))
+                .isInstanceOf(AmqpRejectAndDontRequeueException.class)
+                .hasMessageContaining("missing [contentHash]");
+
+        PoiAudioFailedEvent emptyHashEvent = PoiAudioFailedEvent.builder()
+                .poiId(100L)
+                .languageCode("en")
+                .audioStatus("FAILED_TTS")
+                .errorMessage("Edge TTS error")
+                .contentHash("   ")
+                .build();
+
+        assertThatThrownBy(() -> poiAudioUpdateService.applyAudioFailed(emptyHashEvent))
+                .isInstanceOf(AmqpRejectAndDontRequeueException.class)
+                .hasMessageContaining("missing [contentHash]");
+    }
+
+    @Test
+    @DisplayName("applyAudioFailed: không có bản dịch vi để đối chiếu hash -> ghi log WARN và ném AmqpRejectAndDontRequeueException vào DLQ")
+    void testApplyAudioFailed_MissingViTranslation_LogsWarnAndRejectsToDlq() {
+        when(translationRepository.findByPoiIdAndLanguageCode(100L, "vi"))
+                .thenReturn(Optional.empty());
+
+        PoiAudioFailedEvent event = PoiAudioFailedEvent.builder()
+                .poiId(100L)
+                .languageCode("en")
+                .audioStatus("FAILED_TTS")
+                .errorMessage("Edge TTS error")
+                .contentHash("somehash")
+                .build();
+
+        assertThatThrownBy(() -> poiAudioUpdateService.applyAudioFailed(event))
                 .isInstanceOf(AmqpRejectAndDontRequeueException.class)
                 .hasMessageContaining("Missing source 'vi' translation");
 

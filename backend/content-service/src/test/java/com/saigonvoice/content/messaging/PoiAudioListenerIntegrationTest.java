@@ -223,9 +223,10 @@ class PoiAudioListenerIntegrationTest {
     @DisplayName("poi.audio.failed không có __TypeId__ -> bản dịch có sẵn chuyển FAILED_TTS")
     void failedWithoutTypeIdIsApplied() throws Exception {
         long id = poiId("POI_THIEN_HAU_01");
+        String hash = expectedHashFor(id, "vi");
         String json = """
-                {"poiId": %d, "languageCode": "vi", "audioStatus": "FAILED_TTS", "errorMessage": "Edge TTS timeout"}
-                """.formatted(id);
+                {"poiId": %d, "languageCode": "vi", "audioStatus": "FAILED_TTS", "errorMessage": "Edge TTS timeout", "contentHash": "%s"}
+                """.formatted(id, hash);
 
         publishRaw(RabbitMQConfig.ROUTING_KEY_POI_AUDIO_FAILED, json, jsonNoTypeId());
 
