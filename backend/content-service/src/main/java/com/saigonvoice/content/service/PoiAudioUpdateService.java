@@ -47,6 +47,7 @@ public class PoiAudioUpdateService {
         if (isBlank(event.getSummary())) missing.add("summary");
         if (isBlank(event.getDescription())) missing.add("description");
         if (isBlank(event.getAudioUrl())) missing.add("audioUrl");
+        if (isBlank(event.getContentHash())) missing.add("contentHash");
         if (!missing.isEmpty()) {
             throw new AmqpRejectAndDontRequeueException("Invalid poi.audio.ready payload, missing " + missing);
         }
@@ -57,19 +58,23 @@ public class PoiAudioUpdateService {
         // Kiểm tra contentHash so với nội dung tiếng Việt hiện tại trong DB
         PoiTranslation viTranslation = translationRepository.findByPoiIdAndLanguageCode(poi.getId(), "vi")
                 .orElse(null);
-        if (viTranslation != null) {
-            String expectedHash = ContentHashUtils.computeHash(
-                    lang,
-                    viTranslation.getTitle(),
-                    viTranslation.getSummary(),
-                    viTranslation.getDescription(),
-                    viTranslation.getHistoricalSignificance()
-            );
-            if (event.getContentHash() != null && !event.getContentHash().equalsIgnoreCase(expectedHash)) {
-                log.info("Ignoring stale poi.audio.ready for poiId={}, lang={}: event hash {} does not match current content hash {}",
-                        poi.getId(), lang, event.getContentHash(), expectedHash);
-                return;
-            }
+        if (viTranslation == null) {
+            log.warn("Missing source 'vi' translation for POI id={}, cannot verify contentHash for poi.audio.ready (lang={}). Rejecting to DLQ.",
+                    poi.getId(), lang);
+            throw new AmqpRejectAndDontRequeueException("Missing source 'vi' translation for POI id=" + poi.getId());
+        }
+
+        String expectedHash = ContentHashUtils.computeHash(
+                lang,
+                viTranslation.getTitle(),
+                viTranslation.getSummary(),
+                viTranslation.getDescription(),
+                viTranslation.getHistoricalSignificance()
+        );
+        if (!event.getContentHash().equalsIgnoreCase(expectedHash)) {
+            log.info("Ignoring stale poi.audio.ready for poiId={}, lang={}: event hash {} does not match current content hash {}",
+                    poi.getId(), lang, event.getContentHash(), expectedHash);
+            return;
         }
 
         PoiTranslation translation = translationRepository.findByPoiIdAndLanguageCode(poi.getId(), lang)

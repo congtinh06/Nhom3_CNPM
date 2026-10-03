@@ -232,7 +232,7 @@ Cấu trúc giống hệt sự kiện `poi.created`:
 ```
 
 #### Quy tắc Retry & Khử Mâu Thuẫn Phiên Bản:
-- **Kiểm tra hợp lệ**: Nếu thiếu bất kỳ trường bắt buộc nào (`poiId`, `languageCode`, `title`, `summary`, `description`, `audioUrl`), ném `AmqpRejectAndDontRequeueException` để đẩy message ngay lập tức vào `poi.audio.ready.dlq`, **không thử lại**.
+- **Kiểm tra hợp lệ**: Nếu thiếu bất kỳ trường bắt buộc nào (`poiId`, `languageCode`, `title`, `summary`, `description`, `audioUrl`, `contentHash`) hoặc không tìm thấy bản dịch tiếng Việt ("vi") trong DB để đối chiếu, ném `AmqpRejectAndDontRequeueException` để đẩy message ngay lập tức vào `poi.audio.ready.dlq`, **không thử lại**.
 - **Không tìm thấy POI**: Ném `ResourceNotFoundException`, kích hoạt Spring AMQP retry tối đa 3 lần. Nếu vẫn không thấy, message được chuyển vào DLQ.
 - **Khử trùng lặp / lệch phiên bản (contentHash mismatch)**: Khi nhận sự kiện, `PoiAudioUpdateService` tính lại `expectedHash` từ nội dung tiếng Việt hiện tại của POI trong DB. Nếu `event.contentHash` không khớp với `expectedHash` (do POI đã bị cập nhật sang phiên bản mới trong lúc dịch), service **bỏ qua event (ghi log INFO, không ném lỗi, không cập nhật DB, không vào DLQ)**.
 - **Xử lý thành công**: Nếu `contentHash` khớp, `PoiAudioUpdateService` cập nhật bản ghi `poi_translation` với `audio_status = 'READY'`, lưu `audio_url`, `content_hash` và cập nhật `updated_at`.

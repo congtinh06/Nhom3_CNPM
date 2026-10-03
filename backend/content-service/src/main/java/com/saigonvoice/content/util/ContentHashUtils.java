@@ -38,6 +38,6 @@ public final class ContentHashUtils {
     }
 
     public static String clean(String s) {
-        return s == null ? "" : s.trim();
+        return (s == null || s.trim().isEmpty()) ? "" : s.trim();
     }
 }
