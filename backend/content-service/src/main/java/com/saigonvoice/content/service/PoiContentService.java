@@ -3,6 +3,7 @@ package com.saigonvoice.content.service;
 import com.saigonvoice.content.dto.CreatePoiRequest;
 import com.saigonvoice.content.dto.PoiBoundingBoxDto;
 import com.saigonvoice.content.dto.PoiDetailDto;
+import com.saigonvoice.content.dto.PoiInternalQrDto;
 import com.saigonvoice.content.dto.PoiPublishStatusDto;
 import com.saigonvoice.content.dto.PoiSummaryDto;
 import com.saigonvoice.content.dto.UpdatePoiRequest;
@@ -17,6 +18,8 @@ public interface PoiContentService {
     PoiDetailDto getPoiDetail(Long id, String lang);
 
     PoiDetailDto getPoiByQrToken(String qrToken, String lang);
+
+    PoiInternalQrDto getInternalPoiByQrToken(String qrToken);
 
     List<PoiBoundingBoxDto> getPoisInBoundingBox(Long zoneId, BigDecimal minLat, BigDecimal maxLat, BigDecimal minLng, BigDecimal maxLng);
 

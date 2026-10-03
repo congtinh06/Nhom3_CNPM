@@ -4,6 +4,7 @@ import com.saigonvoice.content.config.RabbitMQConfig;
 import com.saigonvoice.content.dto.CreatePoiRequest;
 import com.saigonvoice.content.dto.PoiBoundingBoxDto;
 import com.saigonvoice.content.dto.PoiDetailDto;
+import com.saigonvoice.content.dto.PoiInternalQrDto;
 import com.saigonvoice.content.dto.PoiPublishStatusDto;
 import com.saigonvoice.content.dto.PoiSummaryDto;
 import com.saigonvoice.content.dto.UpdatePoiRequest;
@@ -75,6 +76,26 @@ public class PoiContentServiceImpl implements PoiContentService {
         Poi poi = poiRepository.findByQrToken(qrToken)
                 .orElseThrow(() -> new ResourceNotFoundException("POI not found with QR token: " + qrToken));
         return resolveDetailDto(poi, lang);
+    }
+
+    @Override
+    public PoiInternalQrDto getInternalPoiByQrToken(String qrToken) {
+        Poi poi = poiRepository.findByQrToken(qrToken)
+                .orElseThrow(() -> new ResourceNotFoundException("POI not found with QR token: " + qrToken));
+
+        String title = translationRepository.findByPoiIdAndLanguageCode(poi.getId(), "vi")
+                .map(PoiTranslation::getTitle)
+                .orElse(poi.getName());
+
+        return PoiInternalQrDto.builder()
+                .poiId(poi.getId())
+                .poiCode(poi.getCode())
+                .zoneId(poi.getZone() != null ? poi.getZone().getId() : null)
+                .latitude(poi.getLatitude())
+                .longitude(poi.getLongitude())
+                .triggerRadiusMeters(poi.getTriggerRadiusMeters())
+                .title(title)
+                .build();
     }
 
     @Override

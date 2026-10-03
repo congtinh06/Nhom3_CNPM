@@ -3,6 +3,7 @@ package com.saigonvoice.content.controller;
 import com.saigonvoice.content.dto.CreatePoiRequest;
 import com.saigonvoice.content.dto.PoiBoundingBoxDto;
 import com.saigonvoice.content.dto.PoiDetailDto;
+import com.saigonvoice.content.dto.PoiInternalQrDto;
 import com.saigonvoice.content.dto.PoiPublishStatusDto;
 import com.saigonvoice.content.dto.PoiSummaryDto;
 import com.saigonvoice.content.dto.UpdatePoiRequest;
@@ -50,6 +51,11 @@ public class PoiController {
             @RequestParam BigDecimal minLng,
             @RequestParam BigDecimal maxLng) {
         return ResponseEntity.ok(poiContentService.getPoisInBoundingBox(zoneId, minLat, maxLat, minLng, maxLng));
+    }
+
+    @GetMapping("/api/content/internal/pois/qr/{qrToken}")
+    public ResponseEntity<PoiInternalQrDto> getInternalPoiByQrToken(@PathVariable String qrToken) {
+        return ResponseEntity.ok(poiContentService.getInternalPoiByQrToken(qrToken));
     }
 
     @PostMapping("/api/content/admin/pois")

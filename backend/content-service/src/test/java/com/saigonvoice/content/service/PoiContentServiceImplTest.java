@@ -3,6 +3,7 @@ package com.saigonvoice.content.service;
 import com.saigonvoice.content.dto.CreatePoiRequest;
 import com.saigonvoice.content.dto.PoiBoundingBoxDto;
 import com.saigonvoice.content.dto.PoiDetailDto;
+import com.saigonvoice.content.dto.PoiInternalQrDto;
 import com.saigonvoice.content.dto.PoiSummaryDto;
 import com.saigonvoice.content.dto.UpdatePoiRequest;
 import com.saigonvoice.content.entity.Category;
@@ -556,5 +557,32 @@ class PoiContentServiceImplTest {
 
         verify(translationRepository).save(enTranslation);
         verify(translationRepository).save(jaTranslation);
+    }
+
+    @Test
+    @DisplayName("getInternalPoiByQrToken: returns minimal POI internal info with vi title")
+    void testGetInternalPoiByQrToken_Success() {
+        when(poiRepository.findByQrToken("qr-buu-dien-01")).thenReturn(Optional.of(samplePoi));
+        when(translationRepository.findByPoiIdAndLanguageCode(100L, "vi")).thenReturn(Optional.of(viTranslation));
+
+        PoiInternalQrDto result = poiContentService.getInternalPoiByQrToken("qr-buu-dien-01");
+
+        assertThat(result.getPoiId()).isEqualTo(100L);
+        assertThat(result.getPoiCode()).isEqualTo("POI_TEST_01");
+        assertThat(result.getZoneId()).isEqualTo(1L);
+        assertThat(result.getLatitude()).isEqualTo(new BigDecimal("10.7799000"));
+        assertThat(result.getLongitude()).isEqualTo(new BigDecimal("106.7001000"));
+        assertThat(result.getTriggerRadiusMeters()).isEqualTo(50);
+        assertThat(result.getTitle()).isEqualTo("Buu Dien Trung Tam");
+    }
+
+    @Test
+    @DisplayName("getInternalPoiByQrToken: throws ResourceNotFoundException when token not found")
+    void testGetInternalPoiByQrToken_NotFound() {
+        when(poiRepository.findByQrToken("unknown-token")).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> poiContentService.getInternalPoiByQrToken("unknown-token"))
+                .isInstanceOf(ResourceNotFoundException.class)
+                .hasMessageContaining("POI not found with QR token: unknown-token");
     }
 }
