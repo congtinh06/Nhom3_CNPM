@@ -4,6 +4,7 @@ import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import lombok.*;
 
 import java.math.BigDecimal;
@@ -45,6 +46,12 @@ public class CreatePoiRequest {
 
     private String address;
     private String thumbnailUrl;
+
+    // Tùy chọn: gán POI vào tuyến. routeId và stopOrder phải cùng có hoặc cùng bỏ trống
+    private Long routeId;
+
+    @Positive(message = "stopOrder must be > 0")
+    private Integer stopOrder;
 
     // Vietnamese initial text
     @NotBlank(message = "title is required")

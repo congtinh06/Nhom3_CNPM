@@ -22,6 +22,8 @@ public class PoiDetailDto {
     private Long zoneId;
     private String zoneCode;
     private String categoryCode;
+    private Long routeId;
+    private Integer stopOrder;
 
     // Multilingual detail fields
     private String languageCode;

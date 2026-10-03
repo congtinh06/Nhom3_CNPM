@@ -3,6 +3,7 @@ package com.saigonvoice.content.controller;
 import com.saigonvoice.content.dto.CreatePoiRequest;
 import com.saigonvoice.content.dto.PoiBoundingBoxDto;
 import com.saigonvoice.content.dto.PoiDetailDto;
+import com.saigonvoice.content.dto.PoiPublishStatusDto;
 import com.saigonvoice.content.dto.PoiSummaryDto;
 import com.saigonvoice.content.service.PoiContentService;
 import jakarta.validation.Valid;
@@ -54,5 +55,22 @@ public class PoiController {
     public ResponseEntity<PoiDetailDto> createPoi(@Valid @RequestBody CreatePoiRequest request) {
         PoiDetailDto created = poiContentService.createPoi(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
+    }
+
+    // Danh sách POI theo trạng thái gửi event (mặc định FAILED) để admin biết POI nào kẹt
+    @GetMapping("/api/content/admin/pois/publish-status")
+    public ResponseEntity<List<PoiPublishStatusDto>> getPublishStatuses(
+            @RequestParam(defaultValue = "FAILED") String status) {
+        return ResponseEntity.ok(poiContentService.getPublishStatuses(status));
+    }
+
+    @GetMapping("/api/content/admin/pois/{id}/publish-status")
+    public ResponseEntity<PoiPublishStatusDto> getPublishStatus(@PathVariable Long id) {
+        return ResponseEntity.ok(poiContentService.getPublishStatus(id));
+    }
+
+    @PostMapping("/api/content/admin/pois/{id}/republish")
+    public ResponseEntity<PoiPublishStatusDto> republish(@PathVariable Long id) {
+        return ResponseEntity.ok(poiContentService.republish(id));
     }
 }

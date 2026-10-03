@@ -23,4 +23,6 @@ public class PoiSummaryDto {
     private String zoneCode;
     private String categoryCode;
     private String categoryNameVi;
+    private Long routeId;
+    private Integer stopOrder;
 }

@@ -3,6 +3,7 @@ package com.saigonvoice.content.service;
 import com.saigonvoice.content.dto.CreatePoiRequest;
 import com.saigonvoice.content.dto.PoiBoundingBoxDto;
 import com.saigonvoice.content.dto.PoiDetailDto;
+import com.saigonvoice.content.dto.PoiPublishStatusDto;
 import com.saigonvoice.content.dto.PoiSummaryDto;
 
 import java.math.BigDecimal;
@@ -19,4 +20,10 @@ public interface PoiContentService {
     List<PoiBoundingBoxDto> getPoisInBoundingBox(Long zoneId, BigDecimal minLat, BigDecimal maxLat, BigDecimal minLng, BigDecimal maxLng);
 
     PoiDetailDto createPoi(CreatePoiRequest request);
+
+    PoiPublishStatusDto getPublishStatus(Long poiId);
+
+    List<PoiPublishStatusDto> getPublishStatuses(String status);
+
+    PoiPublishStatusDto republish(Long poiId);
 }
