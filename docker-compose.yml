@@ -10,9 +10,9 @@ services:
       - "5672:5672"
       - "15672:15672"
     environment:
-      RABBITMQ_DEFAULT_USER: guest
-      RABBITMQ_DEFAULT_PASS: guest
-      RABBITMQ_ERLANG_COOKIE: antiphishing_secret_cookie_2026
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER:-guest}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS:-guest}
+      RABBITMQ_ERLANG_COOKIE: saigonvoice_secret_cookie_2026
     volumes:
       - rabbitmq-data:/var/lib/rabbitmq
     healthcheck:
@@ -22,156 +22,117 @@ services:
       retries: 5
       start_period: 15s
     networks:
-      - antiphishing-net
+      - saigonvoice-net
 
   # ==========================================
-  # 2. Microsoft SQL Server 2022 (Mỗi service 1 instance riêng biệt)
-  #    Chuyển đổi từ PostgreSQL (2026-09). Cấu hình PostgreSQL cũ được
-  #    comment lại ở cuối file làm backup.
+  # 2. Microsoft SQL Server 2022 (1 Instance duy nhất trên port 1433)
+  #    Chạy 3 database độc lập: content, translation, analytics
   # ==========================================
-  mssql-link:
+  mssql:
     image: mcr.microsoft.com/mssql/server:2022-latest
-    container_name: mssql-link
+    container_name: mssql
     environment:
       ACCEPT_EULA: "Y"
-      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD:-YourStrong!Passw0rd}
-      MSSQL_PID: ${MSSQL_PID:-Developer}   # Developer cho nội bộ; đổi thành Express nếu cần
+      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD:-YourStrong!Passw0rd2026}
+      MSSQL_PID: ${MSSQL_PID:-Developer}
+      MSSQL_MEMORY_LIMIT_MB: ${MSSQL_MEMORY_LIMIT_MB:-2048}
     ports:
       - "1433:1433"
     volumes:
-      - mssql-data-link:/var/opt/mssql
+      - mssql-data:/var/opt/mssql
     healthcheck:
       test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P \"$${MSSQL_SA_PASSWORD}\" -C -Q 'SELECT 1' -b -o /dev/null"]
       interval: 10s
       timeout: 5s
       retries: 10
-      start_period: 30s
+      start_period: 25s
     networks:
-      - antiphishing-net
-
-  mssql-report:
-    image: mcr.microsoft.com/mssql/server:2022-latest
-    container_name: mssql-report
-    environment:
-      ACCEPT_EULA: "Y"
-      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD:-YourStrong!Passw0rd}
-      MSSQL_PID: ${MSSQL_PID:-Developer}
-    ports:
-      - "1434:1433"
-    volumes:
-      - mssql-data-report:/var/opt/mssql
-    healthcheck:
-      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P \"$${MSSQL_SA_PASSWORD}\" -C -Q 'SELECT 1' -b -o /dev/null"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
-      start_period: 30s
-    networks:
-      - antiphishing-net
-
-  mssql-notification:
-    image: mcr.microsoft.com/mssql/server:2022-latest
-    container_name: mssql-notification
-    environment:
-      ACCEPT_EULA: "Y"
-      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD:-YourStrong!Passw0rd}
-      MSSQL_PID: ${MSSQL_PID:-Developer}
-    ports:
-      - "1435:1433"
-    volumes:
-      - mssql-data-notification:/var/opt/mssql
-    healthcheck:
-      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P \"$${MSSQL_SA_PASSWORD}\" -C -Q 'SELECT 1' -b -o /dev/null"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
-      start_period: 30s
-    networks:
-      - antiphishing-net
+      - saigonvoice-net
 
   # ==========================================
-  # 2b. Init + Seed databases (chạy 1 lần)
-  #     SQL Server không tự tạo database qua biến môi trường như PostgreSQL
-  #     (POSTGRES_DB), nên cần tạo DB bằng T-SQL sau khi container healthy.
-  #     Sau đó seed DDL + data từ docs/schema.sql (mount read-only; file được
-  #     tách theo marker "-- SECTION-DB: <ten_db>" để chạy với đúng database).
-  #     Script seed idempotent — chạy lại không lỗi, không nhân đôi data.
+  # 2b. Khởi tạo 3 Databases & 3 Logins riêng biệt (Chạy 1 lần)
+  #     Đợi mssql healthy -> chạy docker/init-databases.sql qua sqlcmd
+  #     Phân quyền cô lập: mỗi user chỉ có quyền trên database của mình
   # ==========================================
   mssql-db-init:
     image: mcr.microsoft.com/mssql/server:2022-latest
     container_name: mssql-db-init
     depends_on:
-      mssql-link:
-        condition: service_healthy
-      mssql-report:
-        condition: service_healthy
-      mssql-notification:
+      mssql:
         condition: service_healthy
     environment:
-      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD:-YourStrong!Passw0rd}
+      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD:-YourStrong!Passw0rd2026}
+      CONTENT_DB_USER: ${CONTENT_DB_USER:-content_user}
+      CONTENT_DB_PASSWORD: ${CONTENT_DB_PASSWORD:-Content!Pass2026}
+      TRANSLATION_DB_USER: ${TRANSLATION_DB_USER:-translation_user}
+      TRANSLATION_DB_PASSWORD: ${TRANSLATION_DB_PASSWORD:-Translation!Pass2026}
+      ANALYTICS_DB_USER: ${ANALYTICS_DB_USER:-analytics_user}
+      ANALYTICS_DB_PASSWORD: ${ANALYTICS_DB_PASSWORD:-Analytics!Pass2026}
     volumes:
-      - ./docs/schema.sql:/seed/schema.sql:ro
+      - ./docker/init-databases.sql:/init/init-databases.sql:ro
     entrypoint: ["/bin/bash", "-c"]
     command:
       - |
         set -e
         SQLCMD=/opt/mssql-tools18/bin/sqlcmd
-        SEED_FILE=/seed/schema.sql
-        DB1=link_verification_db
-        DB2=report_db
-        DB3=notification_db
+        echo "Waiting for SQL Server to be ready on mssql:1433..."
+        for i in $$(seq 1 30); do
+          if $$SQLCMD -S mssql -U sa -P "$${MSSQL_SA_PASSWORD}" -C -b -Q "SELECT 1" > /dev/null 2>&1; then
+            echo "SQL Server connection verified!"
+            break
+          fi
+          echo "SQL Server retry $$i/30..."
+          sleep 3
+        done
 
-        # ---------- Giai đoạn 1: tạo database nếu chưa có ----------
-        create_db() {
-          host=$$1; db=$$2
-          echo "Ensuring database [$$db] on $$host ..."
-          for i in $$(seq 1 60); do
-            if $$SQLCMD -S "$$host" -U sa -P "$${MSSQL_SA_PASSWORD}" -C -b -Q "IF DB_ID('$$db') IS NULL CREATE DATABASE [$$db]"; then
-              echo "Database [$$db] ready on $$host"
-              return 0
-            fi
-            sleep 5
-          done
-          echo "FAILED to create database [$$db] on $$host"
-          return 1
-        }
-        create_db mssql-link "$$DB1"
-        create_db mssql-report "$$DB2"
-        create_db mssql-notification "$$DB3"
+        echo "Executing init-databases.sql..."
+        $$SQLCMD -S mssql -U sa -P "$${MSSQL_SA_PASSWORD}" -C -b \
+          -v CONTENT_DB_USER="$${CONTENT_DB_USER}" \
+          -v CONTENT_DB_PASSWORD="$${CONTENT_DB_PASSWORD}" \
+          -v TRANSLATION_DB_USER="$${TRANSLATION_DB_USER}" \
+          -v TRANSLATION_DB_PASSWORD="$${TRANSLATION_DB_PASSWORD}" \
+          -v ANALYTICS_DB_USER="$${ANALYTICS_DB_USER}" \
+          -v ANALYTICS_DB_PASSWORD="$${ANALYTICS_DB_PASSWORD}" \
+          -i /init/init-databases.sql
 
-        # ---------- Giai đoạn 2: seed DDL + data từ docs/schema.sql ----------
-        # Tách phần của từng database theo marker "-- SECTION-DB: <ten_db>"
-        # rồi chạy với sqlcmd -d <db>.
-        seed_db() {
-          host=$$1; db=$$2
-          echo "Seeding [$$db] on $$host ..."
-          awk -v marker="-- SECTION-DB: $$db" '
-            index($$0, marker) == 1 { keep = 1; next }
-            /^-- SECTION-DB:/ { keep = 0 }
-            keep { print }
-          ' "$$SEED_FILE" > "/tmp/$$db.sql"
-          for i in $$(seq 1 30); do
-            if $$SQLCMD -S "$$host" -U sa -P "$${MSSQL_SA_PASSWORD}" -C -b -i "/tmp/$$db.sql"; then
-              echo "Seed [$$db] completed"
-              return 0
-            fi
-            echo "Seed [$$db] retry $$i/30 ..."
-            sleep 5
-          done
-          echo "FAILED seeding [$$db] on $$host"
-          return 1
-        }
-        seed_db mssql-link "$$DB1"
-        seed_db mssql-report "$$DB2"
-        seed_db mssql-notification "$$DB3"
-
-        echo "All databases are created and seeded."
+        echo "3 databases, logins, and isolated permissions initialized successfully!"
     networks:
-      - antiphishing-net
+      - saigonvoice-net
 
   # ==========================================
   # 3. Microservices Nghiệp Vụ (SaigonVoice)
   # ==========================================
+  content-service:
+    build:
+      context: ./backend/content-service
+      dockerfile: Dockerfile
+    container_name: content-service
+    ports:
+      - "8085:8085"
+    environment:
+      JAVA_TOOL_OPTIONS: "-Xms128m -Xmx256m"
+      DB_URL: jdbc:sqlserver://mssql:1433;databaseName=saigonvoice_content_db;encrypt=true;trustServerCertificate=true
+      DB_USERNAME: ${CONTENT_DB_USER:-content_user}
+      DB_PASSWORD: ${CONTENT_DB_PASSWORD:-Content!Pass2026}
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USERNAME: ${RABBITMQ_DEFAULT_USER:-guest}
+      RABBITMQ_PASSWORD: ${RABBITMQ_DEFAULT_PASS:-guest}
+      INTERNAL_API_KEY: ${INTERNAL_API_KEY:-}
+    depends_on:
+      mssql-db-init:
+        condition: service_completed_successfully
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8085/actuator/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - saigonvoice-net
+
   location-service:
     build:
       context: ./backend/location-service
@@ -181,44 +142,25 @@ services:
       - "8082:8082"
     environment:
       JAVA_TOOL_OPTIONS: "-Xms128m -Xmx256m"
-      DB_URL: jdbc:sqlserver://mssql-link:1433;databaseName=link_verification_db;encrypt=true;trustServerCertificate=true
-      DB_USERNAME: sa
-      DB_PASSWORD: ${MSSQL_SA_PASSWORD:-YourStrong!Passw0rd}
       CONTENT_SERVICE_URL: http://content-service:8085
-      INTERNAL_API_KEY: ${INTERNAL_API_KEY:-}
-    depends_on:
-      mssql-db-init:
-        condition: service_completed_successfully
-    networks:
-      - antiphishing-net
-
-  analytics-service:
-    build:
-      context: ./backend/analytics-service
-      dockerfile: Dockerfile
-    container_name: analytics-service
-    ports:
-      - "8081:8081"
-    environment:
-      JAVA_TOOL_OPTIONS: "-Xms128m -Xmx256m"
-      DB_URL: jdbc:sqlserver://mssql-report:1433;databaseName=report_db;encrypt=true;trustServerCertificate=true
-      DB_USERNAME: sa
-      DB_PASSWORD: ${MSSQL_SA_PASSWORD:-YourStrong!Passw0rd}
       RABBITMQ_HOST: rabbitmq
       RABBITMQ_PORT: 5672
-      RABBITMQ_USERNAME: guest
-      RABBITMQ_PASSWORD: guest
-      LOCATION_SERVICE_URL: http://location-service:8082
+      RABBITMQ_USERNAME: ${RABBITMQ_DEFAULT_USER:-guest}
+      RABBITMQ_PASSWORD: ${RABBITMQ_DEFAULT_PASS:-guest}
       INTERNAL_API_KEY: ${INTERNAL_API_KEY:-}
     depends_on:
-      mssql-db-init:
-        condition: service_completed_successfully
       rabbitmq:
         condition: service_healthy
-      location-service:
+      content-service:
         condition: service_started
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8082/actuator/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
     networks:
-      - antiphishing-net
+      - saigonvoice-net
 
   translation-tts-service:
     build:
@@ -229,41 +171,63 @@ services:
       - "8083:8083"
     environment:
       JAVA_TOOL_OPTIONS: "-Xms128m -Xmx256m"
-      DB_URL: jdbc:sqlserver://mssql-notification:1433;databaseName=notification_db;encrypt=true;trustServerCertificate=true
-      DB_USERNAME: sa
-      DB_PASSWORD: ${MSSQL_SA_PASSWORD:-YourStrong!Passw0rd}
+      DB_URL: jdbc:sqlserver://mssql:1433;databaseName=saigonvoice_translation_db;encrypt=true;trustServerCertificate=true
+      DB_USERNAME: ${TRANSLATION_DB_USER:-translation_user}
+      DB_PASSWORD: ${TRANSLATION_DB_PASSWORD:-Translation!Pass2026}
       RABBITMQ_HOST: rabbitmq
       RABBITMQ_PORT: 5672
-      RABBITMQ_USERNAME: guest
-      RABBITMQ_PASSWORD: guest
+      RABBITMQ_USERNAME: ${RABBITMQ_DEFAULT_USER:-guest}
+      RABBITMQ_PASSWORD: ${RABBITMQ_DEFAULT_PASS:-guest}
       CONTENT_SERVICE_URL: http://content-service:8085
+      SAIGONVOICE_STORAGE_TYPE: ${SAIGONVOICE_STORAGE_TYPE:-local}
+      INTERNAL_API_KEY: ${INTERNAL_API_KEY:-}
+    volumes:
+      - audio-storage-data:/app/storage/audio
+    depends_on:
+      mssql-db-init:
+        condition: service_completed_successfully
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8083/actuator/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - saigonvoice-net
+
+  analytics-service:
+    build:
+      context: ./backend/analytics-service
+      dockerfile: Dockerfile
+    container_name: analytics-service
+    ports:
+      - "8081:8081"
+    environment:
+      JAVA_TOOL_OPTIONS: "-Xms128m -Xmx256m"
+      DB_URL: jdbc:sqlserver://mssql:1433;databaseName=saigonvoice_analytics_db;encrypt=true;trustServerCertificate=true
+      DB_USERNAME: ${ANALYTICS_DB_USER:-analytics_user}
+      DB_PASSWORD: ${ANALYTICS_DB_PASSWORD:-Analytics!Pass2026}
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USERNAME: ${RABBITMQ_DEFAULT_USER:-guest}
+      RABBITMQ_PASSWORD: ${RABBITMQ_DEFAULT_PASS:-guest}
+      LOCATION_SERVICE_URL: http://location-service:8082
       INTERNAL_API_KEY: ${INTERNAL_API_KEY:-}
     depends_on:
       mssql-db-init:
         condition: service_completed_successfully
       rabbitmq:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8081/actuator/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
     networks:
-      - antiphishing-net
-
-  content-service:
-    build:
-      context: ./backend/content-service
-      dockerfile: Dockerfile
-    container_name: content-service
-    ports:
-      - "8085:8085"
-    environment:
-      JAVA_TOOL_OPTIONS: "-Xms128m -Xmx256m"
-      DB_URL: jdbc:sqlserver://mssql-link:1433;databaseName=link_verification_db;encrypt=true;trustServerCertificate=true
-      DB_USERNAME: sa
-      DB_PASSWORD: ${MSSQL_SA_PASSWORD:-YourStrong!Passw0rd}
-      INTERNAL_API_KEY: ${INTERNAL_API_KEY:-}
-    depends_on:
-      mssql-db-init:
-        condition: service_completed_successfully
-    networks:
-      - antiphishing-net
+      - saigonvoice-net
 
   api-gateway:
     build:
@@ -281,93 +245,28 @@ services:
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost:5173}
       INTERNAL_API_KEY: ${INTERNAL_API_KEY:-}
     depends_on:
-      - analytics-service
-      - location-service
-      - translation-tts-service
-      - content-service
+      content-service:
+        condition: service_started
+      location-service:
+        condition: service_started
+      translation-tts-service:
+        condition: service_started
+      analytics-service:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/actuator/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
     networks:
-      - antiphishing-net
+      - saigonvoice-net
 
 networks:
-  antiphishing-net:
+  saigonvoice-net:
     driver: bridge
 
 volumes:
-  mssql-data-link:
-  mssql-data-report:
-  mssql-data-notification:
+  mssql-data:
   rabbitmq-data:
-
-# ==============================================================================
-# BACKUP — Cấu hình PostgreSQL cũ (chuyển sang SQL Server ngày 2026-09)
-# Giữ lại để rollback nếu cần. KHÔNG ảnh hưởng đến compose hiện tại.
-#
-# postgres-link:
-#   image: postgres:16-alpine
-#   container_name: postgres-link
-#   environment:
-#     POSTGRES_DB: link_verification_db
-#     POSTGRES_USER: ${DB_USERNAME:-postgres}
-#     POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
-#   ports:
-#     - "5433:5432"
-#   volumes:
-#     - pgdata-link:/var/lib/postgresql/data
-#   healthcheck:
-#     test: ["CMD-SHELL", "pg_isready -U postgres"]
-#     interval: 5s
-#     timeout: 5s
-#     retries: 5
-#   networks:
-#     - antiphishing-net
-#
-# postgres-report:
-#   image: postgres:16-alpine
-#   container_name: postgres-report
-#   environment:
-#     POSTGRES_DB: report_db
-#     POSTGRES_USER: ${DB_USERNAME:-postgres}
-#     POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
-#   ports:
-#     - "5434:5432"
-#   volumes:
-#     - pgdata-report:/var/lib/postgresql/data
-#   healthcheck:
-#     test: ["CMD-SHELL", "pg_isready -U postgres"]
-#     interval: 5s
-#     timeout: 5s
-#     retries: 5
-#   networks:
-#     - antiphishing-net
-#
-# postgres-notification:
-#   image: postgres:16-alpine
-#   container_name: postgres-notification
-#   environment:
-#     POSTGRES_DB: notification_db
-#     POSTGRES_USER: ${DB_USERNAME:-postgres}
-#     POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
-#   ports:
-#     - "5435:5432"
-#   volumes:
-#     - pgdata-notification:/var/lib/postgresql/data
-#   healthcheck:
-#     test: ["CMD-SHELL", "pg_isready -U postgres"]
-#     interval: 5s
-#     timeout: 5s
-#     retries: 5
-#   networks:
-#     - antiphishing-net
-#
-# (Trong environment của 3 service app, giá trị cũ:)
-#   DB_URL: jdbc:postgresql://postgres-link:5432/link_verification_db
-#   DB_URL: jdbc:postgresql://postgres-report:5432/report_db
-#   DB_URL: jdbc:postgresql://postgres-notification:5432/notification_db
-#   DB_USERNAME: ${DB_USERNAME:-postgres}
-#   DB_PASSWORD: ${DB_PASSWORD:-postgres}
-#
-# (Volumes cũ:)
-#   pgdata-link:
-#   pgdata-report:
-#   pgdata-notification:
-# ==============================================================================
+  audio-storage-data:
