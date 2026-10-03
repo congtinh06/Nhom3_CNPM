@@ -3,9 +3,9 @@ server:
 
 spring:
   application:
-    name: poi-service
+    name: content-service
   datasource:
-    url: ${DB_URL:jdbc:sqlserver://localhost:1433;databaseName=link_verification_db;encrypt=true;trustServerCertificate=true}
+    url: ${DB_URL:jdbc:sqlserver://localhost:1433;databaseName=saigonvoice_content_db;encrypt=true;trustServerCertificate=true}
     username: ${DB_USERNAME:sa}
     password: ${DB_PASSWORD:YourStrong!Passw0rd}
     driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
@@ -23,4 +23,4 @@ overpass:
 
 logging:
   level:
-    com.antiphishing.poi: INFO
+    com.saigonvoice.content: INFO

@@ -1,38 +1,28 @@
 # ====================================================================
-# Render Blueprint (Infrastructure-as-Code)
-# Tự động hóa triển khai 4 Spring Boot Microservices lên Render.com
+# Render Blueprint (Infrastructure-as-Code) - SaigonVoice
+# Tự động hóa triển khai Spring Boot Microservices lên Render.com (Dự phòng)
 # ====================================================================
 
 services:
-  # 1. Link Verification Service
+  # 1. Location Service
   - type: web
-    name: link-verification-service
+    name: location-service
     runtime: docker
-    dockerfilePath: ./backend/link-verification-service/Dockerfile
-    dockerContext: ./backend/link-verification-service
+    dockerfilePath: ./backend/location-service/Dockerfile
+    dockerContext: ./backend/location-service
     plan: free
     envVars:
-      - key: DB_URL
+      - key: CONTENT_SERVICE_URL
         sync: false
-      - key: DB_USERNAME
-        sync: false
-      - key: DB_PASSWORD
-        sync: false
-      - key: GSB_API_KEY
-        sync: false
-      - key: PHISHTANK_APP_KEY
-        sync: false
-      - key: VERIFICATION_MOCK_MODE
-        value: "true"
       - key: INTERNAL_API_KEY
         sync: false
 
-  # 2. Report Service
+  # 2. Analytics Service
   - type: web
-    name: report-service
+    name: analytics-service
     runtime: docker
-    dockerfilePath: ./backend/report-service/Dockerfile
-    dockerContext: ./backend/report-service
+    dockerfilePath: ./backend/analytics-service/Dockerfile
+    dockerContext: ./backend/analytics-service
     plan: free
     envVars:
       - key: DB_URL
@@ -49,20 +39,20 @@ services:
         sync: false
       - key: RABBITMQ_PASSWORD
         sync: false
-      - key: LINK_VERIFICATION_SERVICE_URL
+      - key: LOCATION_SERVICE_URL
         fromService:
-          name: link-verification-service
+          name: location-service
           type: web
           property: hostport
       - key: INTERNAL_API_KEY
         sync: false
 
-  # 3. Notification Service
+  # 3. Translation & TTS Service
   - type: web
-    name: notification-service
+    name: translation-tts-service
     runtime: docker
-    dockerfilePath: ./backend/notification-service/Dockerfile
-    dockerContext: ./backend/notification-service
+    dockerfilePath: ./backend/translation-tts-service/Dockerfile
+    dockerContext: ./backend/translation-tts-service
     plan: free
     envVars:
       - key: DB_URL
@@ -79,20 +69,29 @@ services:
         sync: false
       - key: RABBITMQ_PASSWORD
         sync: false
-      - key: MAIL_HOST
+      - key: CONTENT_SERVICE_URL
         sync: false
-      - key: MAIL_PORT
+      - key: INTERNAL_API_KEY
         sync: false
-      - key: MAIL_USERNAME
-        sync: false
-      - key: MAIL_PASSWORD
-        sync: false
-      - key: ADMIN_EMAIL
-        sync: false
-      - key: SMS_ENABLED
-        value: "false"
 
-  # 4. Spring Cloud API Gateway
+  # 4. Content Service
+  - type: web
+    name: content-service
+    runtime: docker
+    dockerfilePath: ./backend/content-service/Dockerfile
+    dockerContext: ./backend/content-service
+    plan: free
+    envVars:
+      - key: DB_URL
+        sync: false
+      - key: DB_USERNAME
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: INTERNAL_API_KEY
+        sync: false
+
+  # 5. Spring Cloud API Gateway
   - type: web
     name: api-gateway
     runtime: docker
@@ -100,15 +99,27 @@ services:
     dockerContext: ./backend/api-gateway
     plan: free
     envVars:
-      - key: REPORT_SERVICE_URL
+      - key: CONTENT_SERVICE_URL
         fromService:
-          name: report-service
+          name: content-service
           type: web
           property: hostport
-      - key: LINK_VERIFICATION_SERVICE_URL
+      - key: LOCATION_SERVICE_URL
         fromService:
-          name: link-verification-service
+          name: location-service
+          type: web
+          property: hostport
+      - key: TRANSLATION_TTS_SERVICE_URL
+        fromService:
+          name: translation-tts-service
+          type: web
+          property: hostport
+      - key: ANALYTICS_SERVICE_URL
+        fromService:
+          name: analytics-service
           type: web
           property: hostport
       - key: FRONTEND_URL
+        sync: false
+      - key: INTERNAL_API_KEY
         sync: false

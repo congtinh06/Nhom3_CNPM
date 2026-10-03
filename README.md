@@ -1,10 +1,10 @@
-# HỆ THỐNG KIỂM TRA & CẢNH BÁO WEB/SMS GIẢ MẠO NGÂN HÀNG
-## (Anti-Phishing / Brand Protection Microservices System)
+# SAIGONVOICE — HỆ THỐNG HƯỚNG DẪN VIÊN DU LỊCH ĐA NGÔN NGỮ TỰ ĐỘNG
+## (Multilingual Audio Tourist Guide Microservices System)
 
 [![Backend CI](https://github.com/congtinh06/Nhom3_CNPM/actions/workflows/backend-ci.yml/badge.svg)](https://github.com/congtinh06/Nhom3_CNPM/actions/workflows/backend-ci.yml)
 [![Frontend CI](https://github.com/congtinh06/Nhom3_CNPM/actions/workflows/frontend-ci.yml/badge.svg)](https://github.com/congtinh06/Nhom3_CNPM/actions/workflows/frontend-ci.yml)
 
-Hệ thống chuyên dụng phát hiện, phân tích và phát cảnh báo tức thời đối với các trang web lừa đảo và tin nhắn SMS mạo danh thương hiệu ngân hàng. Dự án được thiết kế chuẩn theo mô hình kiến trúc **Microservices** (Java 17, Spring Boot 3.3.4, Spring Cloud 2023.0.3) kết hợp giao diện hiện đại **React + TypeScript (Vite)**, lưu trữ trên **3 PostgreSQL databases độc lập**, điều phối thông điệp qua **RabbitMQ**, và triển khai tự động hóa qua **Docker Compose / GitHub Actions / Render / Vercel**.
+Hệ thống thuyết minh và chỉ dẫn du lịch tự động tại TP.HCM qua mã QR và định vị GPS. Dự án được thiết kế chuẩn theo mô hình kiến trúc **Microservices** (Java 17, Spring Boot 3.3.4, Spring Cloud 2023.0.3), CSDL **Microsoft SQL Server 2022**, điều phối sự kiện qua **RabbitMQ**, lưu trữ âm thanh local offline first (và Supabase Storage), cùng giao diện **React + TypeScript (Vite)**.
 
 ---
 

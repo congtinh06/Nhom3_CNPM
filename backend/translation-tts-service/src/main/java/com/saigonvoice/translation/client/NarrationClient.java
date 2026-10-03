@@ -6,7 +6,7 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
-@FeignClient(name = "narration-service", url = "${narration.service.url}")
+@FeignClient(name = "content-service", url = "${content.service.url:http://localhost:8085}")
 public interface NarrationClient {
 
     @PostMapping("/api/v1/narrate")

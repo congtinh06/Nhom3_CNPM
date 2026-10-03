@@ -170,22 +170,21 @@ services:
       - antiphishing-net
 
   # ==========================================
-  # 3. Microservices Nghiệp Vụ
+  # 3. Microservices Nghiệp Vụ (SaigonVoice)
   # ==========================================
-  link-verification-service:
+  location-service:
     build:
-      context: ./backend/link-verification-service
+      context: ./backend/location-service
       dockerfile: Dockerfile
-    container_name: link-verification-service
+    container_name: location-service
     ports:
       - "8082:8082"
     environment:
+      JAVA_TOOL_OPTIONS: "-Xms128m -Xmx256m"
       DB_URL: jdbc:sqlserver://mssql-link:1433;databaseName=link_verification_db;encrypt=true;trustServerCertificate=true
       DB_USERNAME: sa
       DB_PASSWORD: ${MSSQL_SA_PASSWORD:-YourStrong!Passw0rd}
-      GSB_API_KEY: ${GSB_API_KEY:-}
-      PHISHTANK_APP_KEY: ${PHISHTANK_APP_KEY:-}
-      VERIFICATION_MOCK_MODE: ${VERIFICATION_MOCK_MODE:-false}
+      CONTENT_SERVICE_URL: http://content-service:8085
       INTERNAL_API_KEY: ${INTERNAL_API_KEY:-}
     depends_on:
       mssql-db-init:
@@ -193,14 +192,15 @@ services:
     networks:
       - antiphishing-net
 
-  report-service:
+  analytics-service:
     build:
-      context: ./backend/report-service
+      context: ./backend/analytics-service
       dockerfile: Dockerfile
-    container_name: report-service
+    container_name: analytics-service
     ports:
       - "8081:8081"
     environment:
+      JAVA_TOOL_OPTIONS: "-Xms128m -Xmx256m"
       DB_URL: jdbc:sqlserver://mssql-report:1433;databaseName=report_db;encrypt=true;trustServerCertificate=true
       DB_USERNAME: sa
       DB_PASSWORD: ${MSSQL_SA_PASSWORD:-YourStrong!Passw0rd}
@@ -208,26 +208,27 @@ services:
       RABBITMQ_PORT: 5672
       RABBITMQ_USERNAME: guest
       RABBITMQ_PASSWORD: guest
-      LINK_VERIFICATION_SERVICE_URL: http://link-verification-service:8082
+      LOCATION_SERVICE_URL: http://location-service:8082
       INTERNAL_API_KEY: ${INTERNAL_API_KEY:-}
     depends_on:
       mssql-db-init:
         condition: service_completed_successfully
       rabbitmq:
         condition: service_healthy
-      link-verification-service:
+      location-service:
         condition: service_started
     networks:
       - antiphishing-net
 
-  notification-service:
+  translation-tts-service:
     build:
-      context: ./backend/notification-service
+      context: ./backend/translation-tts-service
       dockerfile: Dockerfile
-    container_name: notification-service
+    container_name: translation-tts-service
     ports:
       - "8083:8083"
     environment:
+      JAVA_TOOL_OPTIONS: "-Xms128m -Xmx256m"
       DB_URL: jdbc:sqlserver://mssql-notification:1433;databaseName=notification_db;encrypt=true;trustServerCertificate=true
       DB_USERNAME: sa
       DB_PASSWORD: ${MSSQL_SA_PASSWORD:-YourStrong!Passw0rd}
@@ -235,17 +236,7 @@ services:
       RABBITMQ_PORT: 5672
       RABBITMQ_USERNAME: guest
       RABBITMQ_PASSWORD: guest
-      MAIL_HOST: ${MAIL_HOST:-sandbox.smtp.mailtrap.io}
-      MAIL_PORT: ${MAIL_PORT:-2525}
-      MAIL_USERNAME: ${MAIL_USERNAME:-}
-      MAIL_PASSWORD: ${MAIL_PASSWORD:-}
-      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@anti-phishing-bank.example.com}
-      SMS_ENABLED: ${SMS_ENABLED:-false}
-      TWILIO_ACCOUNT_SID: ${TWILIO_ACCOUNT_SID:-}
-      TWILIO_AUTH_TOKEN: ${TWILIO_AUTH_TOKEN:-}
-      TWILIO_FROM_NUMBER: ${TWILIO_FROM_NUMBER:-}
-      TWILIO_TO_NUMBER_DEMO: ${TWILIO_TO_NUMBER_DEMO:-}
-      NARRATION_SERVICE_URL: http://narration-service:8084
+      CONTENT_SERVICE_URL: http://content-service:8085
       INTERNAL_API_KEY: ${INTERNAL_API_KEY:-}
     depends_on:
       mssql-db-init:
@@ -255,26 +246,15 @@ services:
     networks:
       - antiphishing-net
 
-  narration-service:
+  content-service:
     build:
-      context: ./backend/narration-service
+      context: ./backend/content-service
       dockerfile: Dockerfile
-    container_name: narration-service
-    ports:
-      - "8084:8084"
-    environment:
-      INTERNAL_API_KEY: ${INTERNAL_API_KEY:-}
-    networks:
-      - antiphishing-net
-
-  poi-service:
-    build:
-      context: ./backend/poi-service
-      dockerfile: Dockerfile
-    container_name: poi-service
+    container_name: content-service
     ports:
       - "8085:8085"
     environment:
+      JAVA_TOOL_OPTIONS: "-Xms128m -Xmx256m"
       DB_URL: jdbc:sqlserver://mssql-link:1433;databaseName=link_verification_db;encrypt=true;trustServerCertificate=true
       DB_USERNAME: sa
       DB_PASSWORD: ${MSSQL_SA_PASSWORD:-YourStrong!Passw0rd}
@@ -293,20 +273,18 @@ services:
     ports:
       - "8080:8080"
     environment:
-      REPORT_SERVICE_URL: http://report-service:8081
-      LINK_VERIFICATION_SERVICE_URL: http://link-verification-service:8082
-      NOTIFICATION_SERVICE_URL: http://notification-service:8083
-      NARRATION_SERVICE_URL: http://narration-service:8084
-      POI_SERVICE_URL: http://poi-service:8085
+      JAVA_TOOL_OPTIONS: "-Xms128m -Xmx256m"
+      CONTENT_SERVICE_URL: http://content-service:8085
+      LOCATION_SERVICE_URL: http://location-service:8082
+      TRANSLATION_TTS_SERVICE_URL: http://translation-tts-service:8083
+      ANALYTICS_SERVICE_URL: http://analytics-service:8081
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost:5173}
-      # Fix 401 (2026-09): gateway dung key nay de gan header X-Internal-Api-Key
       INTERNAL_API_KEY: ${INTERNAL_API_KEY:-}
     depends_on:
-      - report-service
-      - link-verification-service
-      - notification-service
-      - narration-service
-      - poi-service
+      - analytics-service
+      - location-service
+      - translation-tts-service
+      - content-service
     networks:
       - antiphishing-net
 

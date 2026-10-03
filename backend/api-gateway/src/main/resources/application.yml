@@ -6,41 +6,28 @@ spring:
     name: api-gateway
   cloud:
     gateway:
-      # Fix 401 (2026-09): gateway tu gan internal key cho moi request proxy sang
-      # cac service nghiep vu vi InternalApiKeyFilter phia downstream chan request
-      # khong key. Client goi TRUC TIEP vao 8082/8083 van bi chan 401 =>
-      # defense-in-depth giu nguyen (chi gateway moi vao duoc).
       default-filters:
         - AddRequestHeader=X-Internal-Api-Key,${INTERNAL_API_KEY:}
       routes:
-        - id: report-service
-          uri: ${REPORT_SERVICE_URL:http://localhost:8081}
+        - id: content-service
+          uri: ${CONTENT_SERVICE_URL:http://localhost:8085}
           predicates:
-            - Path=/api/v1/reports/**
-        - id: link-verification-service
-          uri: ${LINK_VERIFICATION_SERVICE_URL:http://localhost:8082}
+            - Path=/api/content/**, /api/poi/**, /api/v1/poi/**
+        - id: location-service
+          uri: ${LOCATION_SERVICE_URL:http://localhost:8082}
           predicates:
-            - Path=/api/v1/verify/**
-        - id: report-service-stats
-          uri: ${REPORT_SERVICE_URL:http://localhost:8081}
+            - Path=/api/location/**, /api/v1/verify/**
+        - id: translation-tts-service
+          uri: ${TRANSLATION_TTS_SERVICE_URL:http://localhost:8083}
           predicates:
-            - Path=/api/v1/stats/**
-
-        - id: notification-service
-          uri: ${NOTIFICATION_SERVICE_URL:http://localhost:8083}
+            - Path=/api/tts/**, /api/translation/**, /api/v1/notifications/**
+        - id: analytics-service
+          uri: ${ANALYTICS_SERVICE_URL:http://localhost:8081}
           predicates:
-            - Path=/api/v1/notifications/**
-        - id: narration-service
-          uri: ${NARRATION_SERVICE_URL:http://localhost:8084}
-          predicates:
-            - Path=/api/v1/narrate/**
-        - id: poi-service
-          uri: ${POI_SERVICE_URL:http://localhost:8085}
-          predicates:
-            - Path=/api/poi/**, /api/v1/poi/**, /api/tts/**, /api/v1/tts/**
+            - Path=/api/analytics/**, /api/v1/reports/**, /api/v1/stats/**
 
 frontend:
-  url: ${FRONTEND_URL:https://your-app.vercel.app}
+  url: ${FRONTEND_URL:http://localhost:5173}
 
 management:
   endpoints:
@@ -54,4 +41,4 @@ management:
 logging:
   level:
     org.springframework.cloud.gateway: INFO
-    com.antiphishing.gateway: DEBUG
+    com.saigonvoice.gateway: DEBUG

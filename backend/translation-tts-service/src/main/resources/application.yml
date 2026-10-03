@@ -3,7 +3,7 @@ server:
 
 spring:
   application:
-    name: notification-service
+    name: translation-tts-service
   datasource:
     # Chuyển sang SQL Server (2026-09): cấu hình PostgreSQL cũ được comment lại (backup)
     # url: ${DB_URL:jdbc:postgresql://localhost:5432/notification_db}
@@ -58,4 +58,4 @@ internal:
 
 logging:
   level:
-    com.antiphishing.notification: DEBUG
+    com.saigonvoice.translation: DEBUG

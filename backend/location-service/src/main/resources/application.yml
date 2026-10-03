@@ -3,7 +3,7 @@ server:
 
 spring:
   application:
-    name: link-verification-service
+    name: location-service
   datasource:
     # Chuyển sang SQL Server (2026-09): cấu hình PostgreSQL cũ được comment lại (backup)
     # url: ${DB_URL:jdbc:postgresql://localhost:5432/link_verification_db}
@@ -40,4 +40,4 @@ verification:
 
 logging:
   level:
-    com.antiphishing.linkverification: DEBUG
+    com.saigonvoice.location: DEBUG

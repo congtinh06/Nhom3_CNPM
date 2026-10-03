@@ -9,11 +9,11 @@
         <version>3.3.4</version>
         <relativePath/>
     </parent>
-    <groupId>com.antiphishing</groupId>
-    <artifactId>notification-service</artifactId>
+    <groupId>com.saigonvoice</groupId>
+    <artifactId>translation-tts-service</artifactId>
     <version>1.0.0</version>
-    <name>notification-service</name>
-    <description>Notification and Alert Consumer Microservice</description>
+    <name>translation-tts-service</name>
+    <description>SaigonVoice Translation and TTS Consumer Microservice</description>
 
     <properties>
         <java.version>17</java.version>

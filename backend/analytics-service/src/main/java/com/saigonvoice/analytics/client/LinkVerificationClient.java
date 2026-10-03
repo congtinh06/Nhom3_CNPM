@@ -7,8 +7,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
 @FeignClient(
-        name = "link-verification-service",
-        url = "${services.link-verification.url}",
+        name = "location-service",
+        url = "${services.location-service.url:${services.link-verification.url}}",
         configuration = FeignClientConfig.class
 )
 public interface LinkVerificationClient {

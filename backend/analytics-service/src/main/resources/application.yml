@@ -3,7 +3,7 @@ server:
 
 spring:
   application:
-    name: report-service
+    name: analytics-service
   datasource:
     # Chuyển sang SQL Server (2026-09): cấu hình PostgreSQL cũ được comment lại (backup)
     # url: ${DB_URL:jdbc:postgresql://localhost:5432/report_db}
@@ -42,4 +42,4 @@ internal:
 
 logging:
   level:
-    com.antiphishing.report: DEBUG
+    com.saigonvoice.analytics: DEBUG
