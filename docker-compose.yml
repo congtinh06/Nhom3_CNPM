@@ -267,6 +267,24 @@ services:
     networks:
       - antiphishing-net
 
+  poi-service:
+    build:
+      context: ./backend/poi-service
+      dockerfile: Dockerfile
+    container_name: poi-service
+    ports:
+      - "8085:8085"
+    environment:
+      DB_URL: jdbc:sqlserver://mssql-link:1433;databaseName=link_verification_db;encrypt=true;trustServerCertificate=true
+      DB_USERNAME: sa
+      DB_PASSWORD: ${MSSQL_SA_PASSWORD:-YourStrong!Passw0rd}
+      INTERNAL_API_KEY: ${INTERNAL_API_KEY:-}
+    depends_on:
+      mssql-db-init:
+        condition: service_completed_successfully
+    networks:
+      - antiphishing-net
+
   api-gateway:
     build:
       context: ./backend/api-gateway
@@ -279,6 +297,7 @@ services:
       LINK_VERIFICATION_SERVICE_URL: http://link-verification-service:8082
       NOTIFICATION_SERVICE_URL: http://notification-service:8083
       NARRATION_SERVICE_URL: http://narration-service:8084
+      POI_SERVICE_URL: http://poi-service:8085
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost:5173}
       # Fix 401 (2026-09): gateway dung key nay de gan header X-Internal-Api-Key
       INTERNAL_API_KEY: ${INTERNAL_API_KEY:-}
@@ -287,6 +306,7 @@ services:
       - link-verification-service
       - notification-service
       - narration-service
+      - poi-service
     networks:
       - antiphishing-net
 

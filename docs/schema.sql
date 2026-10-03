@@ -37,6 +37,25 @@ IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'idx_verification_checked_
     CREATE INDEX idx_verification_checked_at ON dbo.verification_result(checked_at DESC);
 GO
 
+-- Bảng cache dữ liệu Overpass POI cho poi-service (TTL 24h)
+IF OBJECT_ID('dbo.poi_cache', 'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.poi_cache (
+        id BIGINT IDENTITY(1,1) PRIMARY KEY,
+        cache_key NVARCHAR(255) NOT NULL UNIQUE,
+        response_json NVARCHAR(MAX) NOT NULL,
+        created_at DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+        expires_at DATETIME2 NOT NULL
+    );
+END
+GO
+
+IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'idx_poi_cache_key' AND object_id = OBJECT_ID('dbo.poi_cache'))
+    CREATE INDEX idx_poi_cache_key ON dbo.poi_cache(cache_key);
+IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'idx_poi_cache_expires_at' AND object_id = OBJECT_ID('dbo.poi_cache'))
+    CREATE INDEX idx_poi_cache_expires_at ON dbo.poi_cache(expires_at);
+GO
+
 -- ==============================================================================
 -- SECTION-DB: report_db
 -- ==============================================================================

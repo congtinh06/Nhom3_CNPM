@@ -65,4 +65,6 @@ export interface ReportFilterParams {
   url?: string;
 }
 
+export * from './poi';
+
 

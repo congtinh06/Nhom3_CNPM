@@ -2,6 +2,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { NavLink } from 'react-router-dom';
 import { api } from '../api/client';
 import { Report } from '../types/report';
+import { useTranslation } from '../locales/i18n';
+import { Inbox, ArrowRight, Search, X, Copy, Check } from 'lucide-react';
 
 export interface HistoryItem {
   id: number;
@@ -131,6 +133,7 @@ const mapReportToHistoryItem = (r: Report): HistoryItem => {
 };
 
 export const HistoryPage: React.FC = () => {
+  const { t } = useTranslation();
   const [data, setData] = useState<HistoryItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -146,13 +149,12 @@ export const HistoryPage: React.FC = () => {
 
   // Selected row for detail drawer
   const [selectedItem, setSelectedItem] = useState<HistoryItem | null>(null);
-  const [copyNotification, setCopyNotification] = useState('');
+  const [copied, setCopied] = useState(false);
 
   const fetchHistory = useCallback(async () => {
     setIsLoading(true);
     setError(null);
 
-    // Build filter parameters to transmit down to API
     const params: { channel?: string; verdict?: string; url?: string } = {};
     if (channelFilter !== 'Tất cả') {
       params.channel = channelFilter.toUpperCase();
@@ -173,7 +175,6 @@ export const HistoryPage: React.FC = () => {
       const reports = await api.getReports(params);
       let mapped = reports.map(mapReportToHistoryItem);
 
-      // Client-side guard filter in case backend returns unfiltered collection
       if (params.channel) {
         mapped = mapped.filter((item) => item.channel === params.channel);
       }
@@ -201,7 +202,7 @@ export const HistoryPage: React.FC = () => {
         }
         setData(filtered);
       } else {
-        setError('Không thể kết nối đến máy chủ. Vui lòng kiểm tra lại dịch vụ hoặc thử lại sau.');
+        setError('Không thể kết nối máy chủ. Vui lòng thử lại sau.');
       }
     } finally {
       setIsLoading(false);
@@ -214,8 +215,8 @@ export const HistoryPage: React.FC = () => {
 
   const handleCopy = (text: string) => {
     navigator.clipboard?.writeText(text);
-    setCopyNotification('Đã sao chép!');
-    setTimeout(() => setCopyNotification(''), 2000);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
 
   const totalItems = data.length;
@@ -227,392 +228,454 @@ export const HistoryPage: React.FC = () => {
   const displayTo = Math.min(startIndex + itemsPerPage, totalItems);
 
   return (
-    <div>
-      {/* 1. Tiêu đề chuẩn 28px, font-weight 600, subtitle --muted */}
-      <h1 className="page-title">Lịch sử của tôi</h1>
-      <p className="page-subtitle">Nhật ký các liên kết bạn đã gửi yêu cầu phân tích và đối soát an ninh.</p>
+    <div className="app-container" style={{ paddingBottom: '32px' }}>
+      {/* 1. Header */}
+      <div style={{ marginBottom: '18px' }}>
+        <h1 className="page-title" style={{ fontSize: '26px', fontWeight: 700, margin: '0 0 6px', color: 'var(--text)' }}>
+          {t.history.title}
+        </h1>
+        <p className="page-subtitle" style={{ fontSize: '15px', color: 'var(--text-muted)', margin: 0 }}>
+          {t.history.subtitle}
+        </p>
+      </div>
 
-      {/* 2. Khung bảng luôn hiển thị */}
-      <div
-        className="panel"
-        style={{
-          padding: 0,
-          minHeight: '320px',
-          display: 'flex',
-          flexDirection: 'column',
-          backgroundColor: 'var(--panel)',
-          border: '1px solid var(--line)',
-          borderRadius: '2px',
-          overflow: 'hidden',
-        }}
-      >
-        {/* Thanh trên bảng: Bộ lọc kênh, kết luận và ô tìm kiếm */}
+      {/* 2. Search & Filters Bar */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '16px' }}>
+        {/* Search input */}
         <div
           style={{
-            padding: '12px 16px',
-            borderBottom: '1px solid var(--line)',
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'space-between',
-            flexWrap: 'wrap',
-            gap: '12px',
+            backgroundColor: 'var(--surface)',
+            border: '1px solid var(--border)',
+            borderRadius: 'var(--radius-sm)',
+            padding: '0 12px',
+            height: '42px',
+            maxWidth: '480px',
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
-            {/* Bộ lọc kênh */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <span
-                style={{
-                  fontSize: '11px',
-                  fontWeight: 600,
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.08em',
-                  color: 'var(--muted)',
-                }}
-              >
-                KÊNH:
-              </span>
-              {['Tất cả', 'Web', 'SMS'].map((c) => (
+          <Search size={16} style={{ color: 'var(--text-muted)', marginRight: '8px', flexShrink: 0 }} />
+          <input
+            type="text"
+            placeholder="Tìm theo URL hoặc tên miền…"
+            value={searchUrl}
+            onChange={(e) => {
+              setSearchUrl(e.target.value);
+              setPage(1);
+            }}
+            style={{
+              width: '100%',
+              border: 'none',
+              outline: 'none',
+              fontSize: '14px',
+              fontFamily: 'inherit',
+              backgroundColor: 'transparent',
+              color: 'var(--text)',
+            }}
+          />
+          {searchUrl && (
+            <button
+              type="button"
+              onClick={() => {
+                setSearchUrl('');
+                setPage(1);
+              }}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '2px', color: 'var(--text-muted)' }}
+            >
+              <X size={14} />
+            </button>
+          )}
+        </div>
+
+        {/* Filter Chips (Kênh & Kết luận) — High Contrast WCAG AA */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
+          {/* Channel Chips */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <span style={{ fontSize: '13px', color: 'var(--text-muted)', fontWeight: 500 }}>Kênh:</span>
+            {['Tất cả', 'Web', 'SMS'].map((c) => {
+              const isSelected = channelFilter === c;
+              return (
                 <button
                   key={c}
                   type="button"
-                  className={`filter-btn ${channelFilter === c ? 'active' : ''}`}
                   onClick={() => {
                     setChannelFilter(c);
                     setPage(1);
                   }}
+                  style={{
+                    padding: '4px 10px',
+                    borderRadius: 'var(--radius-pill)',
+                    fontSize: '12px',
+                    fontWeight: isSelected ? 600 : 400,
+                    backgroundColor: isSelected ? 'var(--primary)' : 'var(--surface)',
+                    color: isSelected ? '#ffffff' : 'var(--text)',
+                    border: isSelected ? '1px solid var(--primary)' : '1px solid var(--border)',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease',
+                  }}
                 >
                   {c}
                 </button>
-              ))}
-            </div>
+              );
+            })}
+          </div>
 
-            <div style={{ width: '1px', height: '16px', backgroundColor: 'var(--line)' }} />
+          <div style={{ width: '1px', height: '18px', backgroundColor: 'var(--border)' }} />
 
-            {/* Bộ lọc kết luận */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <span
-                style={{
-                  fontSize: '11px',
-                  fontWeight: 600,
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.08em',
-                  color: 'var(--muted)',
-                }}
-              >
-                KẾT LUẬN:
-              </span>
-              {['Tất cả', 'Giả mạo', 'An toàn', 'Đang chờ'].map((v) => (
+          {/* Verdict Chips */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <span style={{ fontSize: '13px', color: 'var(--text-muted)', fontWeight: 500 }}>Kết luận:</span>
+            {['Tất cả', 'Giả mạo', 'An toàn', 'Đang chờ'].map((v) => {
+              const isSelected = verdictFilter === v;
+              return (
                 <button
                   key={v}
                   type="button"
-                  className={`filter-btn ${verdictFilter === v ? 'active' : ''}`}
                   onClick={() => {
                     setVerdictFilter(v);
                     setPage(1);
                   }}
+                  style={{
+                    padding: '4px 10px',
+                    borderRadius: 'var(--radius-pill)',
+                    fontSize: '12px',
+                    fontWeight: isSelected ? 600 : 400,
+                    backgroundColor: isSelected ? 'var(--primary)' : 'var(--surface)',
+                    color: isSelected ? '#ffffff' : 'var(--text)',
+                    border: isSelected ? '1px solid var(--primary)' : '1px solid var(--border)',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease',
+                  }}
                 >
                   {v}
                 </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Ô tìm kiếm theo URL */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <input
-              type="text"
-              className="input-search mono"
-              placeholder="Tìm theo URL…"
-              value={searchUrl}
-              onChange={(e) => {
-                setSearchUrl(e.target.value);
-                setPage(1);
-              }}
-            />
+              );
+            })}
           </div>
         </div>
+      </div>
 
-        {/* Hàng tiêu đề cột */}
-        <table className="console-table" style={{ width: '100%' }}>
-          <thead>
-            <tr>
-              <th style={{ width: '40%' }}>URL</th>
-              <th style={{ width: '12%' }}>KÊNH</th>
-              <th style={{ width: '16%' }}>KẾT LUẬN</th>
-              <th style={{ width: '16%' }}>RỦI RO</th>
-              <th style={{ width: '16%' }}>THỜI GIAN</th>
-            </tr>
-          </thead>
-          <tbody>
-            {/* 4. Trạng thái đang tải: 5 dòng skeleton phẳng, không animation lòe loẹt */}
-            {isLoading && (
-              <>
-                {[1, 2, 3, 4, 5].map((idx) => (
-                  <tr key={`skeleton-${idx}`} style={{ height: '48px' }}>
-                    <td>
-                      <div className="skeleton-bar" style={{ width: `${60 + (idx % 3) * 15}%` }} />
-                    </td>
-                    <td>
-                      <div className="skeleton-bar" style={{ width: '32px' }} />
-                    </td>
-                    <td>
-                      <div className="skeleton-bar" style={{ width: '56px' }} />
-                    </td>
-                    <td>
-                      <div className="skeleton-bar" style={{ width: '40px' }} />
-                    </td>
-                    <td>
-                      <div className="skeleton-bar" style={{ width: '70px' }} />
-                    </td>
-                  </tr>
-                ))}
-              </>
-            )}
-
-            {/* Dữ liệu thật khi đã tải xong */}
-            {!isLoading && !error && paginatedData.length > 0 && (
-              <>
-                {paginatedData.map((item) => {
-                  const isPhishing = item.verdict === 'PHISHING';
-                  const isSafe = item.verdict === 'SAFE';
-
-                  const dotColor = isPhishing
-                    ? 'var(--danger)'
-                    : isSafe
-                    ? 'var(--safe)'
-                    : 'var(--warn)';
-
-                  return (
-                    <tr
-                      key={item.id}
-                      style={{ cursor: 'pointer', height: '48px' }}
-                      onClick={() => setSelectedItem(item)}
-                      title="Bấm để xem chi tiết bản ghi"
-                    >
-                      <td>
-                        <span className="mono" style={{ fontSize: '13px', color: 'var(--text)' }}>
-                          {item.url.length > 46 ? item.url.slice(0, 46) + '…' : item.url}
-                        </span>
-                      </td>
-                      <td>
-                        <span className="mono" style={{ fontSize: '12px', color: 'var(--muted)' }}>
-                          {item.channel}
-                        </span>
-                      </td>
-                      <td>
-                        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
-                          <span
-                            className="status-dot"
-                            style={{ backgroundColor: dotColor }}
-                          />
-                          <span
-                            style={{
-                              fontSize: '13px',
-                              color: isPhishing
-                                ? 'var(--danger)'
-                                : isSafe
-                                ? 'var(--safe)'
-                                : 'var(--warn)',
-                            }}
-                          >
-                            {item.verdictLabel}
-                          </span>
-                        </div>
-                      </td>
-                      <td>
-                        {item.riskScore !== null ? (
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <div
-                              style={{
-                                width: '54px',
-                                height: '2px',
-                                backgroundColor: 'var(--line)',
-                                overflow: 'hidden',
-                              }}
-                            >
-                              <div
-                                style={{
-                                  width: `${Math.round(item.riskScore * 100)}%`,
-                                  height: '100%',
-                                  backgroundColor:
-                                    item.riskScore > 0.5 ? 'var(--danger)' : 'var(--safe)',
-                                }}
-                              />
-                            </div>
-                            <span className="mono" style={{ fontSize: '12px' }}>
-                              {Math.round(item.riskScore * 100)}%
-                            </span>
-                          </div>
-                        ) : (
-                          <span className="mono" style={{ fontSize: '12px', color: 'var(--muted)' }}>
-                            —
-                          </span>
-                        )}
-                      </td>
-                      <td>
-                        <span className="mono" style={{ fontSize: '12px', color: 'var(--muted)' }}>
-                          {formatRelativeTime(item.createdAt)}
-                        </span>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </>
-            )}
-          </tbody>
-        </table>
-
-        {/* 5. Trạng thái lỗi */}
-        {error && !isLoading && (
-          <div
-            style={{
-              padding: '32px 24px',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '12px',
-              flex: 1,
-            }}
-          >
-            <span style={{ color: 'var(--danger)', fontSize: '13px' }}>{error}</span>
-            <button
-              type="button"
-              className="btn-secondary"
-              onClick={fetchHistory}
-            >
-              Thử lại
-            </button>
+      {/* 3. Main Data Container */}
+      <div
+        style={{
+          backgroundColor: 'var(--surface)',
+          border: '1px solid var(--border)',
+          borderRadius: 'var(--radius-md)',
+          boxShadow: 'var(--shadow-card)',
+          overflow: 'hidden',
+        }}
+      >
+        {/* Loading Skeleton */}
+        {isLoading && (
+          <div style={{ padding: '16px' }}>
+            {[1, 2, 3, 4, 5].map((idx) => (
+              <div
+                key={`sk-${idx}`}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '12px',
+                  padding: '12px 0',
+                  borderBottom: idx < 5 ? '1px solid var(--border)' : 'none',
+                }}
+              >
+                <div style={{ width: `${50 + (idx % 3) * 15}%`, height: '16px', backgroundColor: 'var(--bg-subtle)', borderRadius: '4px' }} />
+                <div style={{ width: '40px', height: '16px', backgroundColor: 'var(--bg-subtle)', borderRadius: '4px', marginLeft: 'auto' }} />
+                <div style={{ width: '60px', height: '16px', backgroundColor: 'var(--bg-subtle)', borderRadius: '4px' }} />
+              </div>
+            ))}
           </div>
         )}
 
-        {/* 3. Trạng thái trống: ngay dưới hàng tiêu đề, canh giữa, một câu và nút vừa nội dung */}
+        {/* Empty State */}
         {!isLoading && !error && paginatedData.length === 0 && (
-          <div
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: '48px 24px',
-              flex: 1,
-              gap: '16px',
-            }}
-          >
-            <div style={{ color: 'var(--muted)', fontSize: '13px' }}>
+          <div style={{ padding: '56px 20px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <div
+              style={{
+                width: '56px',
+                height: '56px',
+                borderRadius: '50%',
+                backgroundColor: 'var(--primary-light)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: 'var(--primary)',
+                marginBottom: '14px',
+              }}
+            >
+              <Inbox size={28} />
+            </div>
+            <h3 style={{ fontSize: '17px', fontWeight: 600, color: 'var(--text)', margin: '0 0 6px 0' }}>
+              Bạn chưa kiểm tra link nào
+            </h3>
+            <p style={{ fontSize: '14px', color: 'var(--text-muted)', margin: '0 0 20px 0', maxWidth: '360px', lineHeight: 1.5 }}>
               {searchUrl.trim() || channelFilter !== 'Tất cả' || verdictFilter !== 'Tất cả'
                 ? 'Không tìm thấy liên kết nào khớp với tiêu chí tìm kiếm.'
-                : 'Chưa có liên kết nào được gửi kiểm tra.'}
-            </div>
+                : 'Mọi liên kết và tin nhắn bạn kiểm tra sẽ được lưu tại đây để tiện theo dõi.'}
+            </p>
             <NavLink
               to="/check"
               className="btn-primary"
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
-                justifyContent: 'center',
-                padding: '10px 20px',
-                width: 'auto',
+                gap: '8px',
+                minHeight: '40px',
+                padding: '0 18px',
+                fontSize: '13px',
+                textDecoration: 'none',
               }}
             >
-              Kiểm tra liên kết đầu tiên
+              <span>Kiểm tra link ngay</span>
+              <ArrowRight size={15} />
             </NavLink>
           </div>
         )}
 
-        {/* Phân trang phía dưới: "Hiển thị 1-10 / tổng" */}
-        {!isLoading && !error && totalItems > 0 && (
-          <div
-            style={{
-              marginTop: 'auto',
-              padding: '10px 16px',
-              borderTop: '1px solid var(--line)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              fontSize: '12px',
-              color: 'var(--muted)',
-              fontFamily: 'var(--font-mono)',
-            }}
-          >
-            <div>
-              Hiển thị {displayFrom}-{displayTo} / {totalItems}
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <button
-                type="button"
-                className="filter-btn"
-                disabled={page <= 1}
-                style={{ opacity: page <= 1 ? 0.4 : 1, cursor: page <= 1 ? 'not-allowed' : 'pointer' }}
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-              >
-                Trước
-              </button>
-              <button
-                type="button"
-                className="filter-btn"
-                disabled={page >= totalPages}
-                style={{
-                  opacity: page >= totalPages ? 0.4 : 1,
-                  cursor: page >= totalPages ? 'not-allowed' : 'pointer',
-                }}
-                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-              >
-                Sau
-              </button>
-            </div>
+        {/* Error State */}
+        {error && !isLoading && (
+          <div style={{ padding: '40px 20px', textAlign: 'center' }}>
+            <p style={{ color: 'var(--danger)', fontSize: '14px', marginBottom: '12px' }}>{error}</p>
+            <button type="button" className="btn-secondary" onClick={fetchHistory} style={{ fontSize: '13px' }}>
+              Thử lại
+            </button>
           </div>
+        )}
+
+        {/* Data List: Desktop Table vs Mobile Cards */}
+        {!isLoading && !error && paginatedData.length > 0 && (
+          <>
+            {/* Desktop Table View (>= 768px) */}
+            <div className="desktop-only" style={{ overflowX: 'auto' }}>
+              <table className="flat-table">
+                <thead>
+                  <tr>
+                    <th style={{ width: '45%' }}>Đường link (URL)</th>
+                    <th style={{ width: '12%' }}>Kênh</th>
+                    <th style={{ width: '18%' }}>Kết luận</th>
+                    <th style={{ width: '12%' }}>Mức rủi ro</th>
+                    <th style={{ width: '13%' }}>Thời gian</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {paginatedData.map((item) => {
+                    const isPhishing = item.verdict === 'PHISHING';
+                    const isSafe = item.verdict === 'SAFE';
+
+                    return (
+                      <tr
+                        key={item.id}
+                        style={{ cursor: 'pointer' }}
+                        onClick={() => setSelectedItem(item)}
+                        title="Bấm để xem chi tiết"
+                      >
+                        <td>
+                          <span style={{ fontSize: '13px', color: 'var(--text)', fontWeight: 500 }}>
+                            {item.url.length > 50 ? item.url.slice(0, 50) + '…' : item.url}
+                          </span>
+                        </td>
+                        <td>
+                          <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{item.channel}</span>
+                        </td>
+                        <td>
+                          <span
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '6px',
+                              fontSize: '13px',
+                              fontWeight: 600,
+                              color: isPhishing ? 'var(--danger)' : isSafe ? 'var(--safe)' : 'var(--warning)',
+                            }}
+                          >
+                            <span
+                              style={{
+                                width: '7px',
+                                height: '7px',
+                                borderRadius: '50%',
+                                backgroundColor: isPhishing ? 'var(--danger)' : isSafe ? 'var(--safe)' : 'var(--warning)',
+                              }}
+                            />
+                            <span>{item.verdictLabel}</span>
+                          </span>
+                        </td>
+                        <td>
+                          <span style={{ fontSize: '13px', color: 'var(--text)' }}>
+                            {item.riskScore !== null ? `${Math.round(item.riskScore * 100)}%` : '—'}
+                          </span>
+                        </td>
+                        <td>
+                          <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                            {formatRelativeTime(item.createdAt)}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile Card List (< 768px) */}
+            <div className="mobile-only" style={{ padding: '10px' }}>
+              {paginatedData.map((item) => {
+                const isPhishing = item.verdict === 'PHISHING';
+                const isSafe = item.verdict === 'SAFE';
+
+                return (
+                  <div
+                    key={item.id}
+                    onClick={() => setSelectedItem(item)}
+                    style={{
+                      padding: '12px',
+                      borderRadius: 'var(--radius-sm)',
+                      border: '1px solid var(--border)',
+                      backgroundColor: 'var(--surface)',
+                      marginBottom: '8px',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
+                      <span
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '5px',
+                          fontSize: '12px',
+                          fontWeight: 600,
+                          color: isPhishing ? 'var(--danger)' : isSafe ? 'var(--safe)' : 'var(--warning)',
+                        }}
+                      >
+                        <span
+                          style={{
+                            width: '6px',
+                            height: '6px',
+                            borderRadius: '50%',
+                            backgroundColor: isPhishing ? 'var(--danger)' : isSafe ? 'var(--safe)' : 'var(--warning)',
+                          }}
+                        />
+                        <span>{item.verdictLabel}</span>
+                      </span>
+                      <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                        {formatRelativeTime(item.createdAt)}
+                      </span>
+                    </div>
+
+                    <div
+                      style={{
+                        fontSize: '14px',
+                        color: 'var(--text)',
+                        fontWeight: 500,
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                        marginBottom: '6px',
+                      }}
+                    >
+                      {item.url}
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: 'var(--text-muted)' }}>
+                      <span>Kênh: {item.channel}</span>
+                      {item.riskScore !== null && <span>· Rủi ro: {Math.round(item.riskScore * 100)}%</span>}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Pagination footer */}
+            <div
+              style={{
+                padding: '10px 16px',
+                borderTop: '1px solid var(--border)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                fontSize: '13px',
+                color: 'var(--text-muted)',
+              }}
+            >
+              <div>
+                Hiển thị {displayFrom}-{displayTo} / {totalItems}
+              </div>
+              <div style={{ display: 'flex', gap: '6px' }}>
+                <button
+                  type="button"
+                  className="btn-secondary"
+                  disabled={page <= 1}
+                  style={{ padding: '4px 10px', fontSize: '12px', opacity: page <= 1 ? 0.4 : 1, cursor: page <= 1 ? 'default' : 'pointer' }}
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                >
+                  Trước
+                </button>
+                <button
+                  type="button"
+                  className="btn-secondary"
+                  disabled={page >= totalPages}
+                  style={{
+                    padding: '4px 10px',
+                    fontSize: '12px',
+                    opacity: page >= totalPages ? 0.4 : 1,
+                    cursor: page >= totalPages ? 'default' : 'pointer',
+                  }}
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                >
+                  Sau
+                </button>
+              </div>
+            </div>
+          </>
         )}
       </div>
 
-      {/* Chi tiết bản ghi khi bấm vào dòng (480px Drawer) */}
+      {/* Detail Drawer Modal */}
       {selectedItem && (
         <div
           style={{
             position: 'fixed',
             inset: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.6)',
+            backgroundColor: 'rgba(15, 23, 42, 0.45)',
             display: 'flex',
             justifyContent: 'flex-end',
-            zIndex: 1000,
+            zIndex: 2000,
           }}
           onClick={() => setSelectedItem(null)}
         >
           <div
             style={{
-              width: '480px',
+              width: '100%',
+              maxWidth: '440px',
               height: '100%',
-              backgroundColor: 'var(--panel)',
-              borderLeft: '1px solid var(--line)',
+              backgroundColor: 'var(--surface)',
+              borderLeft: '1px solid var(--border)',
               padding: '24px',
               display: 'flex',
               flexDirection: 'column',
-              gap: '20px',
+              gap: '16px',
               overflowY: 'auto',
+              boxSizing: 'border-box',
             }}
             onClick={(e) => e.stopPropagation()}
           >
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <span className="mono" style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text)' }}>
-                Bản ghi #{selectedItem.id}
+              <span style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text)' }}>
+                Chi tiết bản ghi #{selectedItem.id}
               </span>
               <button
                 type="button"
-                className="btn-secondary"
-                style={{ height: '28px', padding: '0 10px', fontSize: '12px' }}
                 onClick={() => setSelectedItem(null)}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px', color: 'var(--text-muted)' }}
               >
-                Đóng
+                <X size={18} />
               </button>
             </div>
 
-            {/* URL đầy đủ */}
+            {/* URL full box */}
             <div
               style={{
-                backgroundColor: 'var(--bg)',
-                border: '1px solid var(--line)',
-                borderRadius: '2px',
+                backgroundColor: 'var(--bg-subtle)',
+                borderRadius: 'var(--radius-sm)',
                 padding: '10px 12px',
                 display: 'flex',
                 alignItems: 'center',
@@ -620,104 +683,91 @@ export const HistoryPage: React.FC = () => {
                 gap: '8px',
               }}
             >
-              <span className="mono" style={{ fontSize: '12px', wordBreak: 'break-all', color: 'var(--text)' }}>
+              <span style={{ fontSize: '13px', wordBreak: 'break-all', color: 'var(--text)' }}>
                 {selectedItem.url}
               </span>
               <button
                 type="button"
-                className="filter-btn"
+                className="btn-secondary"
                 onClick={() => handleCopy(selectedItem.url)}
+                style={{ flexShrink: 0, padding: '4px 8px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}
               >
-                {copyNotification || 'Sao chép'}
+                {copied ? <Check size={13} /> : <Copy size={13} />}
+                <span>{copied ? 'Đã chép' : 'Chép'}</span>
               </button>
             </div>
 
-            {/* Kết luận & Rủi ro */}
+            {/* Verdict Card */}
             <div
-              className={`verdict-box ${
-                selectedItem.verdict === 'PHISHING'
-                  ? 'danger'
-                  : selectedItem.verdict === 'SAFE'
-                  ? 'safe'
-                  : 'warn'
-              }`}
+              style={{
+                borderRadius: 'var(--radius-sm)',
+                padding: '14px',
+                backgroundColor:
+                  selectedItem.verdict === 'PHISHING'
+                    ? 'rgba(179,38,30,0.06)'
+                    : selectedItem.verdict === 'SAFE'
+                    ? 'rgba(26,107,58,0.06)'
+                    : 'rgba(122,82,0,0.06)',
+                border: `1px solid ${
+                  selectedItem.verdict === 'PHISHING'
+                    ? 'rgba(179,38,30,0.25)'
+                    : selectedItem.verdict === 'SAFE'
+                    ? 'rgba(26,107,58,0.25)'
+                    : 'rgba(122,82,0,0.25)'
+                }`,
+              }}
             >
-              <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span
-                  className="mono"
                   style={{
-                    fontSize: '18px',
-                    fontWeight: 600,
+                    fontSize: '16px',
+                    fontWeight: 700,
                     color:
                       selectedItem.verdict === 'PHISHING'
                         ? 'var(--danger)'
                         : selectedItem.verdict === 'SAFE'
                         ? 'var(--safe)'
-                        : 'var(--warn)',
+                        : 'var(--warning)',
                   }}
                 >
-                  {selectedItem.verdictLabel.toUpperCase()}
+                  {selectedItem.verdictLabel}
                 </span>
-                <span className="mono" style={{ fontSize: '20px', fontWeight: 600 }}>
-                  {selectedItem.riskScore !== null ? `${Math.round(selectedItem.riskScore * 100)}%` : '—'}
-                </span>
-              </div>
-              <div className="risk-bar-slim">
-                <div
-                  className={`risk-bar-fill ${
-                    selectedItem.verdict === 'PHISHING'
-                      ? 'danger'
-                      : selectedItem.verdict === 'SAFE'
-                      ? 'safe'
-                      : 'warn'
-                  }`}
-                  style={{
-                    width: `${
-                      selectedItem.riskScore !== null ? Math.round(selectedItem.riskScore * 100) : 0
-                    }%`,
-                  }}
-                />
+                {selectedItem.riskScore !== null && (
+                  <span style={{ fontSize: '15px', fontWeight: 600 }}>
+                    Mức rủi ro: {Math.round(selectedItem.riskScore * 100)}%
+                  </span>
+                )}
               </div>
             </div>
 
-            {/* Thông số kỹ thuật */}
-            <table className="console-table">
-              <tbody>
-                <tr>
-                  <td style={{ width: '130px', color: 'var(--muted)', fontSize: '11px', textTransform: 'uppercase' }}>
-                    Kênh tiếp nhận
-                  </td>
-                  <td className="mono">{selectedItem.channel}</td>
-                </tr>
-                <tr>
-                  <td style={{ color: 'var(--muted)', fontSize: '11px', textTransform: 'uppercase' }}>
-                    Người báo cáo
-                  </td>
-                  <td>{selectedItem.reporterContact || 'Ẩn danh'}</td>
-                </tr>
-                <tr>
-                  <td style={{ color: 'var(--muted)', fontSize: '11px', textTransform: 'uppercase' }}>
-                    Thời gian tạo
-                  </td>
-                  <td className="mono">{selectedItem.createdAt ? selectedItem.createdAt.replace('T', ' ').slice(0, 19) : '—'}</td>
-                </tr>
-                <tr>
-                  <td style={{ color: 'var(--muted)', fontSize: '11px', textTransform: 'uppercase' }}>
-                    Trạng thái hệ thống
-                  </td>
-                  <td className="mono">{selectedItem.status || 'VERIFIED'}</td>
-                </tr>
-              </tbody>
-            </table>
+            {/* Info Table */}
+            <div className="kv-list">
+              <div className="kv-row">
+                <div className="kv-key">Kênh tiếp nhận</div>
+                <div className="kv-value">{selectedItem.channel}</div>
+              </div>
+              <div className="kv-row">
+                <div className="kv-key">Người gửi</div>
+                <div className="kv-value">{selectedItem.reporterContact || 'Ẩn danh'}</div>
+              </div>
+              <div className="kv-row">
+                <div className="kv-key">Thời gian kiểm tra</div>
+                <div className="kv-value">{selectedItem.createdAt ? selectedItem.createdAt.replace('T', ' ').slice(0, 19) : '—'}</div>
+              </div>
+              <div className="kv-row">
+                <div className="kv-key">Trạng thái</div>
+                <div className="kv-value">{selectedItem.status || 'Đã kiểm tra'}</div>
+              </div>
+            </div>
 
             {selectedItem.description && (
               <div>
-                <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--muted)', textTransform: 'uppercase', marginBottom: '6px' }}>
-                  Ghi chú mô tả
+                <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text)', marginBottom: '4px' }}>
+                  Ghi chú mô tả:
                 </div>
-                <div style={{ fontSize: '13px', color: 'var(--text)', lineHeight: 1.5 }}>
+                <p style={{ fontSize: '13px', color: 'var(--text-muted)', lineHeight: 1.5, margin: 0 }}>
                   {selectedItem.description}
-                </div>
+                </p>
               </div>
             )}
           </div>

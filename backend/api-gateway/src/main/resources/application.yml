@@ -21,6 +21,11 @@ spring:
           uri: ${LINK_VERIFICATION_SERVICE_URL:http://localhost:8082}
           predicates:
             - Path=/api/v1/verify/**
+        - id: report-service-stats
+          uri: ${REPORT_SERVICE_URL:http://localhost:8081}
+          predicates:
+            - Path=/api/v1/stats/**
+
         - id: notification-service
           uri: ${NOTIFICATION_SERVICE_URL:http://localhost:8083}
           predicates:
@@ -29,6 +34,10 @@ spring:
           uri: ${NARRATION_SERVICE_URL:http://localhost:8084}
           predicates:
             - Path=/api/v1/narrate/**
+        - id: poi-service
+          uri: ${POI_SERVICE_URL:http://localhost:8085}
+          predicates:
+            - Path=/api/poi/**, /api/v1/poi/**, /api/tts/**, /api/v1/tts/**
 
 frontend:
   url: ${FRONTEND_URL:https://your-app.vercel.app}

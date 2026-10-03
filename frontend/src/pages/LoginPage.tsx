@@ -109,7 +109,7 @@ export const LoginPage: React.FC = () => {
                     setError(null);
                   }}
                 >
-                  🔑 Quản trị (admin@bank.vn)
+                  Quản trị (admin@bank.vn)
                 </button>
                 <button
                   type="button"
@@ -120,7 +120,7 @@ export const LoginPage: React.FC = () => {
                     setError(null);
                   }}
                 >
-                  👤 Người dùng (user@bank.vn)
+                  Người dùng (user@bank.vn)
                 </button>
               </div>
             </div>

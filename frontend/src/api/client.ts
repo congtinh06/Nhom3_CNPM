@@ -7,16 +7,28 @@ import {
   StatsData,
   DailyStats,
   ReportFilterParams,
-} from '../types/report';
+  Locale,
+  NearbyResponse,
+  NearbyParams,
+  VisitStats,
+} from '../types';
+import {
+  mockLocales,
+  mockPois,
+  mockNarrations,
+  mockVisitStats,
+  calculateHaversineDistance,
+  getMockNearby,
+} from './poiMock';
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:18080';
 
 export const apiClient = axios.create({
   baseURL: BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 10000,
+  timeout: 5000,
 });
 
 export const api = {
@@ -70,4 +82,93 @@ export const api = {
       };
     }
   },
+
+  // Lấy danh sách ngôn ngữ hỗ trợ thuyết minh (GET /api/v1/narrate/locales)
+  getLocales: async (): Promise<Locale[]> => {
+    if (import.meta.env.VITE_DEMO_FALLBACK === 'true') {
+      return mockLocales;
+    }
+    try {
+      const response = await apiClient.get<Locale[]>('/api/v1/narrate/locales');
+      return response.data;
+    } catch {
+      return mockLocales;
+    }
+  },
+
+  // Quét điểm POI gần nhất và lấy thuyết minh đa ngôn ngữ (GET /api/poi/nearby)
+  // HTTP 204 = không có điểm gần (trả null)
+  getNearby: async (
+    paramsOrLat: NearbyParams | number,
+    lng?: number,
+    lang?: string,
+    radius?: number,
+    bank?: string
+  ): Promise<NearbyResponse | null> => {
+    let lat: number;
+    let long: number;
+    let language: string | undefined;
+    let rad: number | undefined;
+    let bankName: string | undefined;
+
+    if (typeof paramsOrLat === 'number') {
+      lat = paramsOrLat;
+      long = lng ?? 0;
+      language = lang;
+      rad = radius;
+      bankName = bank;
+    } else {
+      lat = paramsOrLat.lat;
+      long = paramsOrLat.lng;
+      language = paramsOrLat.lang;
+      rad = paramsOrLat.radius;
+      bankName = paramsOrLat.bank;
+    }
+
+    if (import.meta.env.VITE_DEMO_FALLBACK === 'true') {
+      return getMockNearby(lat, long, language, rad, bankName);
+    }
+
+    try {
+      const response = await apiClient.get<NearbyResponse | ''>('/api/poi/nearby', {
+        params: {
+          lat,
+          lng: long,
+          ...(language ? { lang: language } : {}),
+          ...(rad !== undefined ? { radius: rad } : {}),
+          ...(bankName ? { bank: bankName } : {}),
+        },
+        validateStatus: (status) => (status >= 200 && status < 300) || status === 204,
+      });
+
+      if (response.status === 204 || !response.data) {
+        return null;
+      }
+      return response.data as NearbyResponse;
+    } catch {
+      return getMockNearby(lat, long, language, rad, bankName);
+    }
+  },
+
+  // Lấy thống kê lượt ghé thăm điểm POI (GET /api/v1/visits/stats)
+  getVisitStats: async (): Promise<VisitStats> => {
+    if (import.meta.env.VITE_DEMO_FALLBACK === 'true') {
+      return mockVisitStats;
+    }
+    try {
+      const response = await apiClient.get<VisitStats>('/api/v1/visits/stats');
+      return response.data;
+    } catch {
+      return mockVisitStats;
+    }
+  },
+};
+
+export {
+  mockLocales,
+  mockPois,
+  mockNarrations,
+  mockVisitStats,
+  calculateHaversineDistance,
+  getMockNearby,
 };

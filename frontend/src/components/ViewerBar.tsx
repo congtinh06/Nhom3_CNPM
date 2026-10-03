@@ -35,7 +35,9 @@ export const ViewerBar: React.FC<ViewerBarProps> = ({
   const currentRole = propActiveRole || role;
 
   const pageRouteMap: Record<string, string> = {
+    guide: '/guide',
     check: '/check',
+    visits: '/admin/visits',
     arch: '/architecture',
     login: '/login',
     register: '/register',
@@ -49,7 +51,9 @@ export const ViewerBar: React.FC<ViewerBarProps> = ({
   const getActivePageKey = () => {
     if (propActivePage) return propActivePage;
     const p = location.pathname;
-    if (p === '/' || p === '/check') return 'check';
+    if (p === '/' || p === '/guide') return 'guide';
+    if (p === '/check') return 'check';
+    if (p === '/admin/visits' || p === '/visits') return 'visits';
     if (p === '/architecture') return 'arch';
     if (p === '/login') return 'login';
     if (p === '/register') return 'register';
@@ -94,7 +98,9 @@ export const ViewerBar: React.FC<ViewerBarProps> = ({
   ];
 
   const pageOptions: { key: string; label: string }[] = [
+    { key: 'guide', label: 'Hướng dẫn viên' },
     { key: 'check', label: 'Kiểm tra' },
+    { key: 'visits', label: 'Lượt nghe POI' },
     { key: 'arch', label: 'Kiến trúc' },
     { key: 'login', label: 'Đăng nhập' },
     { key: 'register', label: 'Đăng ký' },
