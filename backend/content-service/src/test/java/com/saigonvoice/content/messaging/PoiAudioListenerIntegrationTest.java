@@ -7,6 +7,7 @@ import com.saigonvoice.content.config.RabbitMQConfig;
 import com.saigonvoice.content.dto.CreatePoiRequest;
 import com.saigonvoice.content.dto.PoiDetailDto;
 import com.saigonvoice.content.dto.PoiPublishStatusDto;
+import com.saigonvoice.content.dto.UpdatePoiRequest;
 import com.saigonvoice.content.entity.PublishStatus;
 import com.saigonvoice.content.event.PoiAudioReadyEvent;
 import com.saigonvoice.content.service.PoiAudioUpdateService;
@@ -122,13 +123,31 @@ class PoiAudioListenerIntegrationTest {
         return new AMQP.BasicProperties.Builder().contentType("application/json").contentEncoding("UTF-8").build();
     }
 
-    private static String readyJson(long poiId, String lang, String title) {
+    private String readyJson(long poiId, String lang, String title) {
+        String hash = expectedHashFor(poiId, lang);
         return """
                 {"poiId": %d, "languageCode": "%s", "title": "%s",
                  "summary": "summary %s", "description": "description %s", "historicalSignificance": null,
                  "audioUrl": "http://localhost:8083/api/tts/audio/poi_%d_%s.mp3",
-                 "audioDurationSeconds": 95, "audioStatus": "READY", "contentHash": "hash-%s"}
-                """.formatted(poiId, lang, title, lang, lang, poiId, lang, lang);
+                 "audioDurationSeconds": 95, "audioStatus": "READY", "contentHash": "%s"}
+                """.formatted(poiId, lang, title, lang, lang, poiId, lang, hash);
+    }
+
+    private String expectedHashFor(long poiId, String lang) {
+        List<Map<String, Object>> rows = jdbc.queryForList(
+                "SELECT title, summary, description, historical_significance FROM dbo.poi_translation WHERE poi_id = ? AND language_code = 'vi'",
+                poiId);
+        if (rows.isEmpty()) {
+            return "hash-" + lang;
+        }
+        Map<String, Object> r = rows.get(0);
+        return com.saigonvoice.content.util.ContentHashUtils.computeHash(
+                lang,
+                (String) r.get("title"),
+                (String) r.get("summary"),
+                (String) r.get("description"),
+                (String) r.get("historical_significance")
+        );
     }
 
     private Message awaitDeadLetter(String dlq, Predicate<String> bodyMatches) {
@@ -310,6 +329,83 @@ class PoiAudioListenerIntegrationTest {
         // Admin republish: vẫn PUBLISHED và gửi message mới
         PoiPublishStatusDto repub = poiContentService.republish(created.getId());
         assertThat(repub.getPublishStatus()).isEqualTo(PublishStatus.PUBLISHED);
+    }
+
+    @Test
+    @DisplayName("Cập nhật POI: đổi nội dung tiếng Việt -> xuất hiện đúng 1 message trên poi.updated.queue; chỉ đổi tọa độ -> không có message")
+    void updatePoiPublishesOnlyWhenVietnameseContentChanges() throws Exception {
+        Long zoneId = jdbc.queryForObject("SELECT id FROM dbo.zone WHERE code = 'D1_HISTORIC'", Long.class);
+        Long categoryId = jdbc.queryForObject("SELECT id FROM dbo.category WHERE code = 'HISTORIC'", Long.class);
+
+        // 1. Tạo POI ban đầu
+        PoiDetailDto created = poiContentService.createPoi(CreatePoiRequest.builder()
+                .zoneId(zoneId).categoryId(categoryId)
+                .code("POI_IT_UPDATE").qrToken("qr-it-update").name("Bảo tàng Cũ")
+                .latitude(new BigDecimal("10.7760000")).longitude(new BigDecimal("106.7000000"))
+                .title("Bảo tàng Cũ").summary("Tóm tắt cũ").description("Mô tả cũ")
+                .historicalSignificance("Ý nghĩa cũ")
+                .build());
+
+        // Lấy message poi.created để dọn sạch queue
+        Message createdMsg = rabbitTemplate.receive(RabbitMQConfig.QUEUE_POI_CREATED, 5000);
+        assertThat(createdMsg).isNotNull();
+
+        // 2. Chỉ đổi tọa độ / địa chỉ / thumbnail / category (nội dung tiếng Việt giữ nguyên)
+        UpdatePoiRequest coordOnlyReq = UpdatePoiRequest.builder()
+                .categoryId(categoryId)
+                .name("Bảo tàng Cũ")
+                .latitude(new BigDecimal("10.7780000"))
+                .longitude(new BigDecimal("106.7020000"))
+                .triggerRadiusMeters(60)
+                .address("Địa chỉ mới")
+                .thumbnailUrl("/images/new.jpg")
+                .title("Bảo tàng Cũ")
+                .summary("Tóm tắt cũ")
+                .description("Mô tả cũ")
+                .historicalSignificance("Ý nghĩa cũ")
+                .build();
+
+        poiContentService.updatePoi(created.getId(), coordOnlyReq);
+
+        // Đảm bảo KHÔNG có message nào trên poi.updated.queue
+        Message noMsg = rabbitTemplate.receive(RabbitMQConfig.QUEUE_POI_UPDATED, 1000);
+        assertThat(noMsg).isNull();
+
+        // 3. Đổi nội dung tiếng Việt (title, summary, description, historicalSignificance)
+        UpdatePoiRequest contentReq = UpdatePoiRequest.builder()
+                .categoryId(categoryId)
+                .name("Bảo tàng Mới")
+                .latitude(new BigDecimal("10.7780000"))
+                .longitude(new BigDecimal("106.7020000"))
+                .triggerRadiusMeters(60)
+                .address("Địa chỉ mới")
+                .thumbnailUrl("/images/new.jpg")
+                .title("Bảo tàng Mới Cập Nhật")
+                .summary("Tóm tắt mới")
+                .description("Mô tả chi tiết mới")
+                .historicalSignificance("Ý nghĩa lịch sử mới")
+                .build();
+
+        poiContentService.updatePoi(created.getId(), contentReq);
+
+        // Chờ publishStatus chuyển PUBLISHED
+        await().atMost(WAIT).untilAsserted(() -> {
+            PoiPublishStatusDto status = poiContentService.getPublishStatus(created.getId());
+            assertThat(status.getPublishStatus()).isEqualTo(PublishStatus.PUBLISHED);
+            assertThat(status.getLastPublishError()).isNull();
+        });
+
+        // Kiểm tra xuất hiện ĐÚNG 1 message trên poi.updated.queue
+        Message updatedMsg = rabbitTemplate.receive(RabbitMQConfig.QUEUE_POI_UPDATED, 5000);
+        assertThat(updatedMsg).isNotNull();
+        String body = new String(updatedMsg.getBody(), StandardCharsets.UTF_8);
+        assertThat(body).contains("\"poiId\":" + created.getId())
+                .contains("Bảo tàng Mới Cập Nhật")
+                .contains("Tóm tắt mới");
+
+        // Đảm bảo không còn message thừa nào khác trên queue
+        Message extraMsg = rabbitTemplate.receive(RabbitMQConfig.QUEUE_POI_UPDATED, 500);
+        assertThat(extraMsg).isNull();
     }
 
     @Test

@@ -2,6 +2,7 @@ package com.saigonvoice.content.service;
 
 import com.saigonvoice.content.entity.Poi;
 import com.saigonvoice.content.entity.PoiTranslation;
+import com.saigonvoice.content.entity.PublishEventType;
 import com.saigonvoice.content.entity.PublishStatus;
 import com.saigonvoice.content.entity.Zone;
 import com.saigonvoice.content.event.PoiCreatedEvent;
@@ -102,5 +103,45 @@ class PoiPublishServiceTest {
 
         verifyNoInteractions(eventPublisher);
         verify(poiRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("publishPoiUpdated: broker ACK + routed -> PUBLISHED with PoiUpdatedEvent")
+    void publishPoiUpdated_Success() {
+        String status = service.publishPoiUpdated(1L);
+
+        assertThat(status).isEqualTo(PublishStatus.PUBLISHED);
+        assertThat(poi.getPublishAttempts()).isEqualTo(1);
+        assertThat(poi.getLastPublishError()).isNull();
+        verify(eventPublisher).publish(eq("poi.updated"), any(com.saigonvoice.content.event.PoiUpdatedEvent.class));
+        verify(poiRepository).save(poi);
+    }
+
+    @Test
+    @DisplayName("retryPendingPublish: POI created with error, only address updated -> retry sends poi.created")
+    void retryPendingPublish_PoiCreated_SendsPoiCreated() {
+        poi.setPublishStatus(PublishStatus.PENDING);
+        poi.setPublishEventType(PublishEventType.POI_CREATED);
+        poi.setPublishAttempts(1);
+
+        String status = service.retryPendingPublish(1L);
+
+        assertThat(status).isEqualTo(PublishStatus.PUBLISHED);
+        verify(eventPublisher).publish(eq("poi.created"), any(PoiCreatedEvent.class));
+        verify(eventPublisher, never()).publish(eq("poi.updated"), any());
+    }
+
+    @Test
+    @DisplayName("retryPendingPublish: POI was PUBLISHED, content updated with error -> retry sends poi.updated")
+    void retryPendingPublish_PoiUpdated_SendsPoiUpdated() {
+        poi.setPublishStatus(PublishStatus.PENDING);
+        poi.setPublishEventType(PublishEventType.POI_UPDATED);
+        poi.setPublishAttempts(1);
+
+        String status = service.retryPendingPublish(1L);
+
+        assertThat(status).isEqualTo(PublishStatus.PUBLISHED);
+        verify(eventPublisher).publish(eq("poi.updated"), any(com.saigonvoice.content.event.PoiUpdatedEvent.class));
+        verify(eventPublisher, never()).publish(eq("poi.created"), any());
     }
 }

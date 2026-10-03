@@ -4,9 +4,12 @@ import com.saigonvoice.content.dto.CreatePoiRequest;
 import com.saigonvoice.content.dto.PoiBoundingBoxDto;
 import com.saigonvoice.content.dto.PoiDetailDto;
 import com.saigonvoice.content.dto.PoiSummaryDto;
+import com.saigonvoice.content.dto.UpdatePoiRequest;
 import com.saigonvoice.content.entity.Category;
 import com.saigonvoice.content.entity.Poi;
 import com.saigonvoice.content.entity.PoiTranslation;
+import com.saigonvoice.content.entity.PublishEventType;
+import com.saigonvoice.content.entity.PublishStatus;
 import com.saigonvoice.content.entity.Route;
 import com.saigonvoice.content.entity.Zone;
 import com.saigonvoice.content.exception.BadRequestException;
@@ -121,6 +124,84 @@ class PoiContentServiceImplTest {
 
         PoiDetailDto detail = poiContentService.getPoiDetail(100L, "ja");
 
+        assertThat(detail.getTitle()).isEqualTo("Buu Dien Trung Tam");
+        assertThat(detail.isFallbackLanguage()).isTrue();
+    }
+
+    @Test
+    @DisplayName("getPoiDetail: returns translation when audioStatus is READY (usable)")
+    void testGetPoiDetail_UsableStatus_Ready() {
+        PoiTranslation en = PoiTranslation.builder().poi(samplePoi).languageCode("en")
+                .title("Central Post Office").audioStatus("READY").build();
+        when(poiRepository.findById(100L)).thenReturn(Optional.of(samplePoi));
+        when(translationRepository.findByPoiIdAndLanguageCode(100L, "en")).thenReturn(Optional.of(en));
+
+        PoiDetailDto detail = poiContentService.getPoiDetail(100L, "en");
+
+        assertThat(detail.getLanguageCode()).isEqualTo("en");
+        assertThat(detail.getTitle()).isEqualTo("Central Post Office");
+        assertThat(detail.isFallbackLanguage()).isFalse();
+    }
+
+    @Test
+    @DisplayName("getPoiDetail: returns translation when audioStatus is FAILED_TTS (usable)")
+    void testGetPoiDetail_UsableStatus_FailedTts() {
+        PoiTranslation en = PoiTranslation.builder().poi(samplePoi).languageCode("en")
+                .title("Central Post Office").audioStatus("FAILED_TTS").build();
+        when(poiRepository.findById(100L)).thenReturn(Optional.of(samplePoi));
+        when(translationRepository.findByPoiIdAndLanguageCode(100L, "en")).thenReturn(Optional.of(en));
+
+        PoiDetailDto detail = poiContentService.getPoiDetail(100L, "en");
+
+        assertThat(detail.getLanguageCode()).isEqualTo("en");
+        assertThat(detail.getTitle()).isEqualTo("Central Post Office");
+        assertThat(detail.isFallbackLanguage()).isFalse();
+    }
+
+    @Test
+    @DisplayName("getPoiDetail: falls back to Vietnamese when audioStatus is PENDING (unusable)")
+    void testGetPoiDetail_UnusableStatus_Pending() {
+        PoiTranslation en = PoiTranslation.builder().poi(samplePoi).languageCode("en")
+                .title("Central Post Office Old").audioStatus("PENDING").build();
+        when(poiRepository.findById(100L)).thenReturn(Optional.of(samplePoi));
+        when(translationRepository.findByPoiIdAndLanguageCode(100L, "en")).thenReturn(Optional.of(en));
+        when(translationRepository.findByPoiIdAndLanguageCode(100L, "vi")).thenReturn(Optional.of(viTranslation));
+
+        PoiDetailDto detail = poiContentService.getPoiDetail(100L, "en");
+
+        assertThat(detail.getLanguageCode()).isEqualTo("vi");
+        assertThat(detail.getTitle()).isEqualTo("Buu Dien Trung Tam");
+        assertThat(detail.isFallbackLanguage()).isTrue();
+    }
+
+    @Test
+    @DisplayName("getPoiDetail: falls back to Vietnamese when audioStatus is PROCESSING (unusable)")
+    void testGetPoiDetail_UnusableStatus_Processing() {
+        PoiTranslation en = PoiTranslation.builder().poi(samplePoi).languageCode("en")
+                .title("Central Post Office Old").audioStatus("PROCESSING").build();
+        when(poiRepository.findById(100L)).thenReturn(Optional.of(samplePoi));
+        when(translationRepository.findByPoiIdAndLanguageCode(100L, "en")).thenReturn(Optional.of(en));
+        when(translationRepository.findByPoiIdAndLanguageCode(100L, "vi")).thenReturn(Optional.of(viTranslation));
+
+        PoiDetailDto detail = poiContentService.getPoiDetail(100L, "en");
+
+        assertThat(detail.getLanguageCode()).isEqualTo("vi");
+        assertThat(detail.getTitle()).isEqualTo("Buu Dien Trung Tam");
+        assertThat(detail.isFallbackLanguage()).isTrue();
+    }
+
+    @Test
+    @DisplayName("getPoiDetail: falls back to Vietnamese when audioStatus is FAILED (unusable)")
+    void testGetPoiDetail_UnusableStatus_Failed() {
+        PoiTranslation en = PoiTranslation.builder().poi(samplePoi).languageCode("en")
+                .title("Central Post Office Old").audioStatus("FAILED").build();
+        when(poiRepository.findById(100L)).thenReturn(Optional.of(samplePoi));
+        when(translationRepository.findByPoiIdAndLanguageCode(100L, "en")).thenReturn(Optional.of(en));
+        when(translationRepository.findByPoiIdAndLanguageCode(100L, "vi")).thenReturn(Optional.of(viTranslation));
+
+        PoiDetailDto detail = poiContentService.getPoiDetail(100L, "en");
+
+        assertThat(detail.getLanguageCode()).isEqualTo("vi");
         assertThat(detail.getTitle()).isEqualTo("Buu Dien Trung Tam");
         assertThat(detail.isFallbackLanguage()).isTrue();
     }
@@ -243,5 +324,237 @@ class PoiContentServiceImplTest {
         assertThatThrownBy(() -> poiContentService.createPoi(request))
                 .isInstanceOf(BadRequestException.class)
                 .hasMessageContaining("already used");
+    }
+
+    private UpdatePoiRequest.UpdatePoiRequestBuilder baseUpdateRequest() {
+        return UpdatePoiRequest.builder()
+                .categoryId(1L)
+                .name("Buu Dien Trung Tam")
+                .latitude(new BigDecimal("10.7799000"))
+                .longitude(new BigDecimal("106.7001000"))
+                .triggerRadiusMeters(50)
+                .address("So 2 Cong xa Paris")
+                .thumbnailUrl("/images/buudien.jpg")
+                .title("Buu Dien Trung Tam")
+                .summary("Tom tat")
+                .description("Mo ta chi tiet")
+                .historicalSignificance("Gia tri lich su");
+    }
+
+    @Test
+    @DisplayName("updatePoi: throws ResourceNotFoundException if POI does not exist (404)")
+    void testUpdatePoi_NotFound() {
+        UpdatePoiRequest request = baseUpdateRequest().build();
+        when(poiRepository.findById(999L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> poiContentService.updatePoi(999L, request))
+                .isInstanceOf(ResourceNotFoundException.class)
+                .hasMessageContaining("POI not found");
+
+        verify(poiRepository, never()).save(any());
+        verifyNoInteractions(applicationEventPublisher);
+    }
+
+    @Test
+    @DisplayName("updatePoi: throws BadRequestException if category does not exist (400)")
+    void testUpdatePoi_CategoryNotFound() {
+        UpdatePoiRequest request = baseUpdateRequest().categoryId(999L).build();
+        when(poiRepository.findById(100L)).thenReturn(Optional.of(samplePoi));
+        when(categoryRepository.findById(999L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> poiContentService.updatePoi(100L, request))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessageContaining("Category not found");
+
+        verify(poiRepository, never()).save(any());
+        verifyNoInteractions(applicationEventPublisher);
+    }
+
+    @Test
+    @DisplayName("updatePoi: changes in Vietnamese content publish poi.updated and reset status to PENDING")
+    void testUpdatePoi_VietnameseContentChanged_PublishesEvent() {
+        UpdatePoiRequest request = baseUpdateRequest()
+                .title("Buu Dien Trung Tam Cap Nhat")
+                .description("Mo ta moi hoan toan")
+                .build();
+
+        when(poiRepository.findById(100L)).thenReturn(Optional.of(samplePoi));
+        when(categoryRepository.findById(1L)).thenReturn(Optional.of(sampleCategory));
+        when(translationRepository.findByPoiIdAndLanguageCode(100L, "vi")).thenReturn(Optional.of(viTranslation));
+
+        samplePoi.setPublishStatus(PublishStatus.PUBLISHED);
+        samplePoi.setPublishAttempts(2);
+
+        PoiDetailDto result = poiContentService.updatePoi(100L, request);
+
+        assertThat(result.getTitle()).isEqualTo("Buu Dien Trung Tam Cap Nhat");
+        assertThat(samplePoi.getPublishStatus()).isEqualTo(PublishStatus.PENDING);
+        assertThat(samplePoi.getPublishEventType()).isEqualTo(PublishEventType.POI_UPDATED);
+        assertThat(samplePoi.getPublishAttempts()).isEqualTo(0);
+        assertThat(viTranslation.getAudioStatus()).isEqualTo("PENDING");
+
+        verify(poiRepository).save(samplePoi);
+        verify(translationRepository).save(viTranslation);
+
+        ArgumentCaptor<PoiPublishRequestedEvent> captor = ArgumentCaptor.forClass(PoiPublishRequestedEvent.class);
+        verify(applicationEventPublisher).publishEvent(captor.capture());
+        assertThat(captor.getValue().poiId()).isEqualTo(100L);
+        assertThat(captor.getValue().routingKey()).isEqualTo("poi.updated");
+    }
+
+    @Test
+    @DisplayName("updatePoi: only updating coordinates/address/thumbnail does NOT publish event")
+    void testUpdatePoi_OnlyMetadataChanged_DoesNotPublish() {
+        UpdatePoiRequest request = baseUpdateRequest()
+                .latitude(new BigDecimal("10.7812000"))
+                .longitude(new BigDecimal("106.7055000"))
+                .address("Dia chi moi")
+                .thumbnailUrl("/images/new.png")
+                .triggerRadiusMeters(70)
+                .build();
+
+        when(poiRepository.findById(100L)).thenReturn(Optional.of(samplePoi));
+        when(categoryRepository.findById(1L)).thenReturn(Optional.of(sampleCategory));
+        when(translationRepository.findByPoiIdAndLanguageCode(100L, "vi")).thenReturn(Optional.of(viTranslation));
+
+        samplePoi.setPublishStatus(PublishStatus.PUBLISHED);
+        samplePoi.setPublishAttempts(1);
+
+        PoiDetailDto result = poiContentService.updatePoi(100L, request);
+
+        assertThat(result.getLatitude()).isEqualTo(new BigDecimal("10.7812000"));
+        assertThat(samplePoi.getAddress()).isEqualTo("Dia chi moi");
+        assertThat(samplePoi.getPublishStatus()).isEqualTo(PublishStatus.PUBLISHED);
+        assertThat(samplePoi.getPublishAttempts()).isEqualTo(1);
+        assertThat(viTranslation.getAudioStatus()).isEqualTo("READY");
+
+        verify(poiRepository).save(samplePoi);
+        verify(translationRepository).save(viTranslation);
+        verifyNoInteractions(applicationEventPublisher);
+    }
+
+    @Test
+    @DisplayName("updatePoi: does not allow modifying code and qrToken")
+    void testUpdatePoi_DoesNotChangeCodeAndQrToken() {
+        UpdatePoiRequest request = baseUpdateRequest()
+                .name("Ten moi")
+                .build();
+
+        when(poiRepository.findById(100L)).thenReturn(Optional.of(samplePoi));
+        when(categoryRepository.findById(1L)).thenReturn(Optional.of(sampleCategory));
+        when(translationRepository.findByPoiIdAndLanguageCode(100L, "vi")).thenReturn(Optional.of(viTranslation));
+
+        poiContentService.updatePoi(100L, request);
+
+        assertThat(samplePoi.getCode()).isEqualTo("POI_TEST_01");
+        assertThat(samplePoi.getQrToken()).isEqualTo("qr-test-01");
+        assertThat(samplePoi.getName()).isEqualTo("Ten moi");
+    }
+
+    @Test
+    @DisplayName("updatePoi: POI created with error, admin updates only address -> keeps POI_CREATED event type, no event published")
+    void testUpdatePoi_PoiCreatedWithError_OnlyAddressChanged_KeepsPoiCreatedEventType() {
+        samplePoi.setPublishStatus(PublishStatus.PENDING);
+        samplePoi.setPublishEventType(PublishEventType.POI_CREATED);
+        samplePoi.setPublishAttempts(1);
+
+        UpdatePoiRequest request = baseUpdateRequest()
+                .address("Dia chi moi sau khi loi publish")
+                .build();
+
+        when(poiRepository.findById(100L)).thenReturn(Optional.of(samplePoi));
+        when(categoryRepository.findById(1L)).thenReturn(Optional.of(sampleCategory));
+        when(translationRepository.findByPoiIdAndLanguageCode(100L, "vi")).thenReturn(Optional.of(viTranslation));
+
+        PoiDetailDto result = poiContentService.updatePoi(100L, request);
+
+        assertThat(result.getAddress()).isEqualTo("Dia chi moi sau khi loi publish");
+        assertThat(samplePoi.getPublishEventType()).isEqualTo(PublishEventType.POI_CREATED);
+        assertThat(samplePoi.getPublishStatus()).isEqualTo(PublishStatus.PENDING);
+        assertThat(samplePoi.getPublishAttempts()).isEqualTo(1);
+        verifyNoInteractions(applicationEventPublisher);
+    }
+
+    @Test
+    @DisplayName("updatePoi: POI in PENDING status, content changed -> retains POI_CREATED event type and publishes poi.created")
+    void testUpdatePoi_PoiCreatedWithPendingStatus_ContentChanged_KeepsPoiCreatedEventType() {
+        samplePoi.setPublishStatus(PublishStatus.PENDING);
+        samplePoi.setPublishEventType(PublishEventType.POI_CREATED);
+        samplePoi.setPublishAttempts(1);
+
+        UpdatePoiRequest request = baseUpdateRequest()
+                .title("Tieu de moi khi van dang PENDING")
+                .build();
+
+        when(poiRepository.findById(100L)).thenReturn(Optional.of(samplePoi));
+        when(categoryRepository.findById(1L)).thenReturn(Optional.of(sampleCategory));
+        when(translationRepository.findByPoiIdAndLanguageCode(100L, "vi")).thenReturn(Optional.of(viTranslation));
+
+        poiContentService.updatePoi(100L, request);
+
+        assertThat(samplePoi.getPublishEventType()).isEqualTo(PublishEventType.POI_CREATED);
+        assertThat(samplePoi.getPublishStatus()).isEqualTo(PublishStatus.PENDING);
+        assertThat(samplePoi.getPublishAttempts()).isEqualTo(0);
+
+        ArgumentCaptor<PoiPublishRequestedEvent> captor = ArgumentCaptor.forClass(PoiPublishRequestedEvent.class);
+        verify(applicationEventPublisher).publishEvent(captor.capture());
+        assertThat(captor.getValue().routingKey()).isEqualTo("poi.created");
+    }
+
+    @Test
+    @DisplayName("updatePoi: content changed -> other language translations set audioStatus to PENDING and preserve audioUrl/content")
+    void testUpdatePoi_ContentChanged_OtherTranslationsSetPendingAndPreserveAudioUrl() {
+        PoiTranslation enTranslation = PoiTranslation.builder()
+                .id(201L)
+                .poi(samplePoi)
+                .languageCode("en")
+                .title("Central Post Office")
+                .summary("Summary EN")
+                .description("Description EN")
+                .audioUrl("http://localhost:8083/audio/en.mp3")
+                .audioDurationSeconds(90)
+                .audioStatus("READY")
+                .build();
+
+        PoiTranslation jaTranslation = PoiTranslation.builder()
+                .id(202L)
+                .poi(samplePoi)
+                .languageCode("ja")
+                .title("サイゴン中央郵便局")
+                .summary("Summary JA")
+                .description("Description JA")
+                .audioUrl("http://localhost:8083/audio/ja.mp3")
+                .audioDurationSeconds(95)
+                .audioStatus("READY")
+                .build();
+
+        when(poiRepository.findById(100L)).thenReturn(Optional.of(samplePoi));
+        when(categoryRepository.findById(1L)).thenReturn(Optional.of(sampleCategory));
+        when(translationRepository.findByPoiIdAndLanguageCode(100L, "vi")).thenReturn(Optional.of(viTranslation));
+        when(translationRepository.findByPoiId(100L)).thenReturn(List.of(viTranslation, enTranslation, jaTranslation));
+
+        UpdatePoiRequest request = baseUpdateRequest()
+                .title("Buu Dien Trung Tam Moi")
+                .build();
+
+        samplePoi.setPublishStatus(PublishStatus.PUBLISHED);
+
+        poiContentService.updatePoi(100L, request);
+
+        // vi audioStatus is PENDING
+        assertThat(viTranslation.getAudioStatus()).isEqualTo("PENDING");
+
+        // en and ja audioStatus set to PENDING
+        assertThat(enTranslation.getAudioStatus()).isEqualTo("PENDING");
+        assertThat(jaTranslation.getAudioStatus()).isEqualTo("PENDING");
+
+        // title, summary, description, audioUrl are preserved
+        assertThat(enTranslation.getTitle()).isEqualTo("Central Post Office");
+        assertThat(enTranslation.getAudioUrl()).isEqualTo("http://localhost:8083/audio/en.mp3");
+        assertThat(jaTranslation.getTitle()).isEqualTo("サイゴン中央郵便局");
+        assertThat(jaTranslation.getAudioUrl()).isEqualTo("http://localhost:8083/audio/ja.mp3");
+
+        verify(translationRepository).save(enTranslation);
+        verify(translationRepository).save(jaTranslation);
     }
 }
