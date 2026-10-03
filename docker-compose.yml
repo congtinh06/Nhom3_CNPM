@@ -10,8 +10,9 @@ services:
       - "5672:5672"
       - "15672:15672"
     environment:
-      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER:-guest}
-      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS:-guest}
+      # User riêng thay guest. Chỉ được tạo khi volume rabbitmq-data còn trống (lần đầu / sau down -v)
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER:?RABBITMQ_DEFAULT_USER is required in .env}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS:?RABBITMQ_DEFAULT_PASS is required in .env}
       RABBITMQ_ERLANG_COOKIE: saigonvoice_secret_cookie_2026
     volumes:
       - rabbitmq-data:/var/lib/rabbitmq
@@ -33,7 +34,7 @@ services:
     container_name: mssql
     environment:
       ACCEPT_EULA: "Y"
-      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD:-YourStrong!Passw0rd2026}
+      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD:?MSSQL_SA_PASSWORD is required in .env}
       MSSQL_PID: ${MSSQL_PID:-Developer}
       MSSQL_MEMORY_LIMIT_MB: ${MSSQL_MEMORY_LIMIT_MB:-2048}
     ports:
@@ -61,13 +62,13 @@ services:
       mssql:
         condition: service_healthy
     environment:
-      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD:-YourStrong!Passw0rd2026}
+      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD:?MSSQL_SA_PASSWORD is required in .env}
       CONTENT_DB_USER: ${CONTENT_DB_USER:-content_user}
-      CONTENT_DB_PASSWORD: ${CONTENT_DB_PASSWORD:-Content!Pass2026}
+      CONTENT_DB_PASSWORD: ${CONTENT_DB_PASSWORD:?CONTENT_DB_PASSWORD is required in .env}
       TRANSLATION_DB_USER: ${TRANSLATION_DB_USER:-translation_user}
-      TRANSLATION_DB_PASSWORD: ${TRANSLATION_DB_PASSWORD:-Translation!Pass2026}
+      TRANSLATION_DB_PASSWORD: ${TRANSLATION_DB_PASSWORD:?TRANSLATION_DB_PASSWORD is required in .env}
       ANALYTICS_DB_USER: ${ANALYTICS_DB_USER:-analytics_user}
-      ANALYTICS_DB_PASSWORD: ${ANALYTICS_DB_PASSWORD:-Analytics!Pass2026}
+      ANALYTICS_DB_PASSWORD: ${ANALYTICS_DB_PASSWORD:?ANALYTICS_DB_PASSWORD is required in .env}
     volumes:
       - ./docker/init-databases.sql:/init/init-databases.sql:ro
     entrypoint: ["/bin/bash", "-c"]
@@ -113,11 +114,11 @@ services:
       JAVA_TOOL_OPTIONS: "-Xms128m -Xmx256m"
       DB_URL: jdbc:sqlserver://mssql:1433;databaseName=saigonvoice_content_db;encrypt=true;trustServerCertificate=true
       DB_USERNAME: ${CONTENT_DB_USER:-content_user}
-      DB_PASSWORD: ${CONTENT_DB_PASSWORD:-Content!Pass2026}
+      DB_PASSWORD: ${CONTENT_DB_PASSWORD:?CONTENT_DB_PASSWORD is required in .env}
       RABBITMQ_HOST: rabbitmq
       RABBITMQ_PORT: 5672
-      RABBITMQ_USERNAME: ${RABBITMQ_DEFAULT_USER:-guest}
-      RABBITMQ_PASSWORD: ${RABBITMQ_DEFAULT_PASS:-guest}
+      RABBITMQ_USERNAME: ${RABBITMQ_DEFAULT_USER:?RABBITMQ_DEFAULT_USER is required in .env}
+      RABBITMQ_PASSWORD: ${RABBITMQ_DEFAULT_PASS:?RABBITMQ_DEFAULT_PASS is required in .env}
       INTERNAL_API_KEY: ${INTERNAL_API_KEY:-}
     depends_on:
       mssql-db-init:
@@ -145,8 +146,8 @@ services:
       CONTENT_SERVICE_URL: http://content-service:8085
       RABBITMQ_HOST: rabbitmq
       RABBITMQ_PORT: 5672
-      RABBITMQ_USERNAME: ${RABBITMQ_DEFAULT_USER:-guest}
-      RABBITMQ_PASSWORD: ${RABBITMQ_DEFAULT_PASS:-guest}
+      RABBITMQ_USERNAME: ${RABBITMQ_DEFAULT_USER:?RABBITMQ_DEFAULT_USER is required in .env}
+      RABBITMQ_PASSWORD: ${RABBITMQ_DEFAULT_PASS:?RABBITMQ_DEFAULT_PASS is required in .env}
       INTERNAL_API_KEY: ${INTERNAL_API_KEY:-}
     depends_on:
       rabbitmq:
@@ -173,11 +174,11 @@ services:
       JAVA_TOOL_OPTIONS: "-Xms128m -Xmx256m"
       DB_URL: jdbc:sqlserver://mssql:1433;databaseName=saigonvoice_translation_db;encrypt=true;trustServerCertificate=true
       DB_USERNAME: ${TRANSLATION_DB_USER:-translation_user}
-      DB_PASSWORD: ${TRANSLATION_DB_PASSWORD:-Translation!Pass2026}
+      DB_PASSWORD: ${TRANSLATION_DB_PASSWORD:?TRANSLATION_DB_PASSWORD is required in .env}
       RABBITMQ_HOST: rabbitmq
       RABBITMQ_PORT: 5672
-      RABBITMQ_USERNAME: ${RABBITMQ_DEFAULT_USER:-guest}
-      RABBITMQ_PASSWORD: ${RABBITMQ_DEFAULT_PASS:-guest}
+      RABBITMQ_USERNAME: ${RABBITMQ_DEFAULT_USER:?RABBITMQ_DEFAULT_USER is required in .env}
+      RABBITMQ_PASSWORD: ${RABBITMQ_DEFAULT_PASS:?RABBITMQ_DEFAULT_PASS is required in .env}
       CONTENT_SERVICE_URL: http://content-service:8085
       SAIGONVOICE_STORAGE_TYPE: ${SAIGONVOICE_STORAGE_TYPE:-local}
       INTERNAL_API_KEY: ${INTERNAL_API_KEY:-}
@@ -208,11 +209,11 @@ services:
       JAVA_TOOL_OPTIONS: "-Xms128m -Xmx256m"
       DB_URL: jdbc:sqlserver://mssql:1433;databaseName=saigonvoice_analytics_db;encrypt=true;trustServerCertificate=true
       DB_USERNAME: ${ANALYTICS_DB_USER:-analytics_user}
-      DB_PASSWORD: ${ANALYTICS_DB_PASSWORD:-Analytics!Pass2026}
+      DB_PASSWORD: ${ANALYTICS_DB_PASSWORD:?ANALYTICS_DB_PASSWORD is required in .env}
       RABBITMQ_HOST: rabbitmq
       RABBITMQ_PORT: 5672
-      RABBITMQ_USERNAME: ${RABBITMQ_DEFAULT_USER:-guest}
-      RABBITMQ_PASSWORD: ${RABBITMQ_DEFAULT_PASS:-guest}
+      RABBITMQ_USERNAME: ${RABBITMQ_DEFAULT_USER:?RABBITMQ_DEFAULT_USER is required in .env}
+      RABBITMQ_PASSWORD: ${RABBITMQ_DEFAULT_PASS:?RABBITMQ_DEFAULT_PASS is required in .env}
       LOCATION_SERVICE_URL: http://location-service:8082
       INTERNAL_API_KEY: ${INTERNAL_API_KEY:-}
     depends_on:

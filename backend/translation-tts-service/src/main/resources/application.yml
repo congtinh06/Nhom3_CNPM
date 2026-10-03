@@ -9,7 +9,7 @@ spring:
     # url: ${DB_URL:jdbc:postgresql://localhost:5432/notification_db}
     url: ${DB_URL:jdbc:sqlserver://localhost:1433;databaseName=notification_db;encrypt=true;trustServerCertificate=true}
     username: ${DB_USERNAME:sa}
-    password: ${DB_PASSWORD:YourStrong!Passw0rd}
+    password: ${DB_PASSWORD:Saigon@123}
     driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
   jpa:
     hibernate:
