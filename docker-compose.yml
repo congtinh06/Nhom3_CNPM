@@ -144,14 +144,8 @@ services:
     environment:
       JAVA_TOOL_OPTIONS: "-Xms128m -Xmx256m"
       CONTENT_SERVICE_URL: http://content-service:8085
-      RABBITMQ_HOST: rabbitmq
-      RABBITMQ_PORT: 5672
-      RABBITMQ_USERNAME: ${RABBITMQ_DEFAULT_USER:?RABBITMQ_DEFAULT_USER is required in .env}
-      RABBITMQ_PASSWORD: ${RABBITMQ_DEFAULT_PASS:?RABBITMQ_DEFAULT_PASS is required in .env}
       INTERNAL_API_KEY: ${INTERNAL_API_KEY:-}
     depends_on:
-      rabbitmq:
-        condition: service_healthy
       content-service:
         condition: service_started
     healthcheck:
