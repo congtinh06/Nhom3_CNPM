@@ -11,4 +11,5 @@ import java.util.Optional;
 public interface ZoneRepository extends JpaRepository<Zone, Long> {
     List<Zone> findByIsActiveTrue();
     Optional<Zone> findByCode(String code);
+    boolean existsByCode(String code);
 }

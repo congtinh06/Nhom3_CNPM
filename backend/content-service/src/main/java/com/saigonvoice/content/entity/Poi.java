@@ -29,6 +29,14 @@ public class Poi {
     @JoinColumn(name = "category_id", nullable = false)
     private Category category;
 
+    // Tuyến (NULL được) + thứ tự điểm dừng trong tuyến
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "route_id")
+    private Route route;
+
+    @Column(name = "stop_order")
+    private Integer stopOrder;
+
     @Column(nullable = false, unique = true, length = 50)
     private String code;
 
@@ -57,6 +65,21 @@ public class Poi {
     @Column(nullable = false, length = 30)
     @Builder.Default
     private String status = "ACTIVE"; // ACTIVE, INACTIVE, MAINTENANCE
+
+    // Theo dõi việc gửi event poi.created (xem PublishStatus)
+    @Column(name = "publish_status", nullable = false, length = 30)
+    @Builder.Default
+    private String publishStatus = PublishStatus.PENDING;
+
+    @Column(name = "publish_attempts", nullable = false)
+    @Builder.Default
+    private Integer publishAttempts = 0;
+
+    @Column(name = "last_publish_error", length = 1000)
+    private String lastPublishError;
+
+    @Column(name = "last_publish_attempt_at")
+    private LocalDateTime lastPublishAttemptAt;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     @Builder.Default
