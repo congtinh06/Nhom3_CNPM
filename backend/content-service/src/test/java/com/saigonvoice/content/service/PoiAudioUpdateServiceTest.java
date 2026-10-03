@@ -175,7 +175,7 @@ class PoiAudioUpdateServiceTest {
     }
 
     @Test
-    @DisplayName("applyAudioFailed: contentHash khớp với phiên bản tiếng Việt hiện tại -> lưu FAILED_TTS thành công")
+    @DisplayName("applyAudioFailed: failed có text, hash khớp -> FAILED_TTS như hiện tại")
     void testApplyAudioFailed_MatchingContentHash_SavesFailedTts() {
         String currentHashV2 = ContentHashUtils.computeHash(
                 "en", "Tiêu đề tiếng Việt V2", "Tóm tắt V2", "Mô tả V2", "Ý nghĩa V2");
@@ -205,6 +205,83 @@ class PoiAudioUpdateServiceTest {
         assertThat(saved.getAudioStatus()).isEqualTo("FAILED_TTS");
         assertThat(saved.getAudioUrl()).isNull();
         assertThat(saved.getContentHash()).isEqualTo(currentHashV2);
+    }
+
+    @Test
+    @DisplayName("applyAudioFailed: failed không text trên bản PENDING có text cũ -> status FAILED, không phải FAILED_TTS, giữ nguyên text")
+    void testApplyAudioFailed_NoTextOnPendingWithOldText_SetsStatusFailed() {
+        String currentHashV2 = ContentHashUtils.computeHash(
+                "en", "Tiêu đề tiếng Việt V2", "Tóm tắt V2", "Mô tả V2", "Ý nghĩa V2");
+
+        // Bản dịch en đã tồn tại (đang PENDING từ đợt update trước, có text cũ)
+        PoiTranslation existingPending = PoiTranslation.builder()
+                .id(20L)
+                .poi(poi)
+                .languageCode("en")
+                .title("Old Title EN")
+                .summary("Old Summary EN")
+                .description("Old Desc EN")
+                .historicalSignificance("Old Hist EN")
+                .audioStatus("PENDING")
+                .build();
+
+        when(translationRepository.findByPoiIdAndLanguageCode(100L, "en"))
+                .thenReturn(Optional.of(existingPending));
+
+        // Event failed KHÔNG có text (hasText = false)
+        PoiAudioFailedEvent eventNoText = PoiAudioFailedEvent.builder()
+                .poiId(100L)
+                .languageCode("en")
+                .audioStatus("FAILED_TTS")
+                .errorMessage("Edge TTS timeout")
+                .contentHash(currentHashV2)
+                .build();
+
+        poiAudioUpdateService.applyAudioFailed(eventNoText);
+
+        ArgumentCaptor<PoiTranslation> captor = ArgumentCaptor.forClass(PoiTranslation.class);
+        verify(translationRepository).save(captor.capture());
+        PoiTranslation saved = captor.getValue();
+
+        assertThat(saved.getAudioStatus()).isEqualTo("FAILED");
+        assertThat(saved.getAudioUrl()).isNull();
+        assertThat(saved.getContentHash()).isEqualTo(currentHashV2);
+        // Text cũ được giữ nguyên
+        assertThat(saved.getTitle()).isEqualTo("Old Title EN");
+        assertThat(saved.getSummary()).isEqualTo("Old Summary EN");
+    }
+
+    @Test
+    @DisplayName("applyAudioFailed: failed đến sau khi bản dịch đã READY cùng hash -> bỏ qua, không gọi save")
+    void testApplyAudioFailed_ArrivesAfterReadyWithSameHash_IsIgnored() {
+        String currentHashV2 = ContentHashUtils.computeHash(
+                "en", "Tiêu đề tiếng Việt V2", "Tóm tắt V2", "Mô tả V2", "Ý nghĩa V2");
+
+        // Bản dịch en đã READY với cùng hash
+        PoiTranslation existingReady = PoiTranslation.builder()
+                .id(20L)
+                .poi(poi)
+                .languageCode("en")
+                .title("Title V2 EN")
+                .audioUrl("http://audio.mp3")
+                .audioStatus("READY")
+                .contentHash(currentHashV2)
+                .build();
+
+        when(translationRepository.findByPoiIdAndLanguageCode(100L, "en"))
+                .thenReturn(Optional.of(existingReady));
+
+        PoiAudioFailedEvent lateEvent = PoiAudioFailedEvent.builder()
+                .poiId(100L)
+                .languageCode("en")
+                .audioStatus("FAILED_TTS")
+                .errorMessage("Edge TTS timeout")
+                .contentHash(currentHashV2)
+                .build();
+
+        poiAudioUpdateService.applyAudioFailed(lateEvent);
+
+        verify(translationRepository, never()).save(any());
     }
 
     @Test

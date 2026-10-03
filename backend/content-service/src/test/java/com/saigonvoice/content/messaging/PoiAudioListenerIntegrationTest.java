@@ -220,7 +220,7 @@ class PoiAudioListenerIntegrationTest {
     }
 
     @Test
-    @DisplayName("poi.audio.failed không có __TypeId__ -> bản dịch có sẵn chuyển FAILED_TTS")
+    @DisplayName("poi.audio.failed không có __TypeId__, không kèm text -> bản dịch có sẵn chuyển FAILED")
     void failedWithoutTypeIdIsApplied() throws Exception {
         long id = poiId("POI_THIEN_HAU_01");
         String hash = expectedHashFor(id, "vi");
@@ -233,7 +233,7 @@ class PoiAudioListenerIntegrationTest {
         await().atMost(WAIT).untilAsserted(() -> {
             List<Map<String, Object>> rows = translation(id, "vi");
             assertThat(rows).hasSize(1);
-            assertThat(rows.get(0).get("audio_status")).isEqualTo("FAILED_TTS");
+            assertThat(rows.get(0).get("audio_status")).isEqualTo("FAILED");
             assertThat(rows.get(0).get("audio_url")).isNull();
         });
     }
