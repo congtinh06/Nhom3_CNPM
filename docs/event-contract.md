@@ -241,7 +241,7 @@ Cấu trúc giống hệt sự kiện `poi.created`:
 
 ### 3.4. Sự kiện `poi.audio.failed`
 - **Bên phát (Publisher)**: `translation-tts-service` (phát khi xảy ra lỗi trong quá trình dịch hoặc sinh âm thanh).
-- **Bên nhận (Consumer)**: `content-service` (`PoiAudioListener.onAudioFailed`).
+- **Bên nhận (Consumer)**: `content-service` (`PoiAudioEventListener.onAudioFailed`).
 - **Routing Key**: `poi.audio.failed`
 - **Queue chính**: `poi.audio.failed.queue`
 - **Dead Letter Queue (DLQ)**: `poi.audio.failed.dlq`
@@ -250,14 +250,14 @@ Cấu trúc giống hệt sự kiện `poi.created`:
 | Tên Field | Kiểu Dữ Liệu | Bắt Buộc | Mô Tả |
 | :--- | :--- | :--- | :--- |
 | `poiId` | `Long` | Có | ID của POI |
-| `languageCode` | `String` | Có | Mã ngôn ngữ bị lỗi |
+| `languageCode` | `String` | Có | Mã ngôn ngữ bị lỗi (ví dụ: `"en"`, `"ja"`, `"ko"`, `"vi"`) |
 | `audioStatus` | `String` | Có | Trạng thái lỗi (ví dụ: `"FAILED_TTS"`) |
 | `errorMessage` | `String` | Có | Chi tiết thông điệp lỗi kỹ thuật |
+| `contentHash` | `String` | Có | Giá trị SHA-256 tính theo công thức mục 2 (Bắt buộc để đối chiếu phiên bản) |
 | `title` | `String` | Không | Tiêu đề đã dịch (nếu dịch thành công trước khi TTS lỗi) |
 | `summary` | `String` | Không | Tóm tắt đã dịch (tùy chọn) |
 | `description` | `String` | Không | Mô tả đã dịch (tùy chọn) |
 | `historicalSignificance` | `String` | Không | Ý nghĩa lịch sử đã dịch (tùy chọn) |
-| `contentHash` | `String` | Không | Giá trị hash nội dung (tùy chọn) |
 
 #### JSON mẫu (Dữ liệu trung tính):
 ```json
@@ -266,15 +266,16 @@ Cấu trúc giống hệt sự kiện `poi.created`:
   "languageCode": "en",
   "audioStatus": "FAILED_TTS",
   "errorMessage": "Edge TTS synthesis timeout after 15000ms",
+  "contentHash": "c6058aa86f5e0249240ce39c549bc35cbb64f58bd3cadd00ec4f7cf61206ee2c",
   "title": "Sample Sightseeing Point",
   "summary": "Sample summary of the sightseeing point",
   "description": "Detailed sample description",
-  "historicalSignificance": null,
-  "contentHash": "c6058aa86f5e0249240ce39c549bc35cbb64f58bd3cadd00ec4f7cf61206ee2c"
+  "historicalSignificance": null
 }
 ```
 
-#### Quy tắc Retry:
-- **Kiểm tra hợp lệ**: Bắt buộc có `poiId` và `languageCode`. Nếu thiếu, ném `AmqpRejectAndDontRequeueException` chuyển thẳng sang DLQ, không retry.
-- **Không tìm thấy POI**: Retry 3 lần rồi vào DLQ.
-- **Xử lý**: `PoiAudioUpdateService` cập nhật bản ghi `poi_translation` sang `audio_status = 'FAILED_TTS'`, đặt `audio_url = NULL` để bảo đảm client không phát âm thanh hỏng.
+#### Quy tắc Retry & Khử Mâu Thuẫn Phiên Bản:
+- **Kiểm tra hợp lệ**: Bắt buộc có các trường `poiId`, `languageCode`, `contentHash`. Nếu thiếu bất kỳ trường bắt buộc nào hoặc không tìm thấy bản dịch tiếng Việt ("vi") trong DB để đối chiếu hash, ném `AmqpRejectAndDontRequeueException` để đẩy message ngay lập tức vào `poi.audio.failed.dlq`, **không thử lại**.
+- **Không tìm thấy POI**: Ném `ResourceNotFoundException`, kích hoạt Spring AMQP retry tối đa 3 lần. Nếu vẫn không thấy, message được chuyển vào DLQ.
+- **Khử trùng lặp / lệch phiên bản (contentHash mismatch)**: Khi nhận sự kiện, `PoiAudioUpdateService` tính lại `expectedHash` từ nội dung tiếng Việt hiện tại của POI trong DB. Nếu `event.contentHash` không khớp với `expectedHash` (do POI đã bị cập nhật sang phiên bản mới trong lúc dịch/TTS), service **bỏ qua event (ghi log INFO, không ném lỗi, không cập nhật DB, không vào DLQ)**.
+- **Xử lý thành công**: Nếu `contentHash` khớp, `PoiAudioUpdateService` cập nhật bản ghi `poi_translation` với `audio_status = 'FAILED_TTS'`, đặt `audio_url = NULL`, gán `content_hash` và cập nhật `updated_at`. Nếu payload có kèm văn bản đã dịch (`title`, `summary`, `description`), lưu văn bản đó để Frontend hiển thị và đọc bằng Web Speech API.

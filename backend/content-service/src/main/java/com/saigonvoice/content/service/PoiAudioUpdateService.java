@@ -96,12 +96,42 @@ public class PoiAudioUpdateService {
 
     @Transactional
     public void applyAudioFailed(PoiAudioFailedEvent event) {
-        if (event == null || event.getPoiId() == null || isBlank(event.getLanguageCode())) {
-            throw new AmqpRejectAndDontRequeueException("Invalid poi.audio.failed payload, poiId and languageCode are required");
+        if (event == null) {
+            throw new AmqpRejectAndDontRequeueException("Invalid poi.audio.failed payload: empty body");
+        }
+        List<String> missing = new ArrayList<>();
+        if (event.getPoiId() == null) missing.add("poiId");
+        if (isBlank(event.getLanguageCode())) missing.add("languageCode");
+        if (isBlank(event.getContentHash())) missing.add("contentHash");
+        if (!missing.isEmpty()) {
+            throw new AmqpRejectAndDontRequeueException("Invalid poi.audio.failed payload, missing " + missing);
         }
 
         String lang = normalizeLang(event.getLanguageCode());
         Poi poi = findPoiOrThrow(event.getPoiId(), "poi.audio.failed");
+
+        // Kiểm tra contentHash so với nội dung tiếng Việt hiện tại trong DB
+        PoiTranslation viTranslation = translationRepository.findByPoiIdAndLanguageCode(poi.getId(), "vi")
+                .orElse(null);
+        if (viTranslation == null) {
+            log.warn("Missing source 'vi' translation for POI id={}, cannot verify contentHash for poi.audio.failed (lang={}). Rejecting to DLQ.",
+                    poi.getId(), lang);
+            throw new AmqpRejectAndDontRequeueException("Missing source 'vi' translation for POI id=" + poi.getId());
+        }
+
+        String expectedHash = ContentHashUtils.computeHash(
+                lang,
+                viTranslation.getTitle(),
+                viTranslation.getSummary(),
+                viTranslation.getDescription(),
+                viTranslation.getHistoricalSignificance()
+        );
+        if (!event.getContentHash().equalsIgnoreCase(expectedHash)) {
+            log.info("Ignoring stale poi.audio.failed for poiId={}, lang={}: event hash {} does not match current content hash {}",
+                    poi.getId(), lang, event.getContentHash(), expectedHash);
+            return;
+        }
+
         boolean hasText = !isBlank(event.getTitle()) && !isBlank(event.getSummary()) && !isBlank(event.getDescription());
 
         PoiTranslation translation = translationRepository.findByPoiIdAndLanguageCode(poi.getId(), lang).orElse(null);
@@ -119,8 +149,8 @@ public class PoiAudioUpdateService {
             translation.setSummary(event.getSummary());
             translation.setDescription(event.getDescription());
             translation.setHistoricalSignificance(event.getHistoricalSignificance());
-            translation.setContentHash(event.getContentHash());
         }
+        translation.setContentHash(event.getContentHash());
         translation.setAudioUrl(null);
         translation.setAudioDurationSeconds(0);
         translation.setAudioStatus(STATUS_FAILED_TTS);
