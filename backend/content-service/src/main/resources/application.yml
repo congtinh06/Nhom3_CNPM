@@ -7,25 +7,48 @@ spring:
   datasource:
     url: ${DB_URL:jdbc:sqlserver://localhost:1433;databaseName=saigonvoice_content_db;encrypt=true;trustServerCertificate=true}
     username: ${DB_USERNAME:content_user}
-    password: ${DB_PASSWORD:Content!Pass2026}
+    password: ${DB_PASSWORD:Saigon@123}
     driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
   jpa:
+    open-in-view: false
     hibernate:
       ddl-auto: validate
     show-sql: false
-    properties:
-      hibernate:
-        format_sql: false
   flyway:
     enabled: true
-    baseline-on-migrate: true
     encoding: UTF-8
     locations: classpath:db/migration
   rabbitmq:
     host: ${RABBITMQ_HOST:localhost}
     port: ${RABBITMQ_PORT:5672}
-    username: ${RABBITMQ_USERNAME:guest}
-    password: ${RABBITMQ_PASSWORD:guest}
+    username: ${RABBITMQ_USERNAME:saigonvoice_app}
+    password: ${RABBITMQ_PASSWORD:SgVoice_Rabbit!2026}
+    # Publisher: chờ broker ACK và nhận lại message không route được (PoiEventPublisher kiểm tra cả hai)
+    publisher-confirm-type: correlated
+    publisher-returns: true
+    template:
+      mandatory: true
+    listener:
+      simple:
+        acknowledge-mode: auto
+        # Lỗi không bao giờ requeue vô hạn: hết retry -> reject -> x-dead-letter-exchange -> DLQ
+        default-requeue-rejected: false
+        retry:
+          enabled: true
+          max-attempts: 3        # tổng số lần xử lý (1 lần đầu + 2 lần thử lại)
+          initial-interval: 1s
+          multiplier: 2.0
+          max-interval: 5s
+
+saigonvoice:
+  messaging:
+    confirm-timeout: PT5S
+  publish-retry:
+    enabled: true
+    initial-delay: PT30S
+    interval: PT60S
+    min-age: PT30S
+    max-attempts: 5
 
 management:
   endpoints:
@@ -36,9 +59,10 @@ management:
     health:
       show-details: always
 
+# Rỗng = endpoint /api/content/internal/** bị tắt (503), xem InternalApiKeyFilter
 internal:
   api-key: ${INTERNAL_API_KEY:}
 
 logging:
   level:
-    com.saigonvoice.content: DEBUG
+    com.saigonvoice.content: INFO
