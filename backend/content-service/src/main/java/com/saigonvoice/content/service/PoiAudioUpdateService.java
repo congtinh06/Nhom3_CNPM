@@ -7,6 +7,7 @@ import com.saigonvoice.content.event.PoiAudioReadyEvent;
 import com.saigonvoice.content.exception.ResourceNotFoundException;
 import com.saigonvoice.content.repository.PoiRepository;
 import com.saigonvoice.content.repository.PoiTranslationRepository;
+import com.saigonvoice.content.util.ContentHashUtils;
 import com.saigonvoice.content.util.TimeUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -52,6 +53,24 @@ public class PoiAudioUpdateService {
 
         String lang = normalizeLang(event.getLanguageCode());
         Poi poi = findPoiOrThrow(event.getPoiId(), "poi.audio.ready");
+
+        // Kiểm tra contentHash so với nội dung tiếng Việt hiện tại trong DB
+        PoiTranslation viTranslation = translationRepository.findByPoiIdAndLanguageCode(poi.getId(), "vi")
+                .orElse(null);
+        if (viTranslation != null) {
+            String expectedHash = ContentHashUtils.computeHash(
+                    lang,
+                    viTranslation.getTitle(),
+                    viTranslation.getSummary(),
+                    viTranslation.getDescription(),
+                    viTranslation.getHistoricalSignificance()
+            );
+            if (event.getContentHash() != null && !event.getContentHash().equalsIgnoreCase(expectedHash)) {
+                log.info("Ignoring stale poi.audio.ready for poiId={}, lang={}: event hash {} does not match current content hash {}",
+                        poi.getId(), lang, event.getContentHash(), expectedHash);
+                return;
+            }
+        }
 
         PoiTranslation translation = translationRepository.findByPoiIdAndLanguageCode(poi.getId(), lang)
                 .orElseGet(() -> PoiTranslation.builder().poi(poi).languageCode(lang).build());

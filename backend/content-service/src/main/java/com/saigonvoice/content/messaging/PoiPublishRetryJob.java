@@ -13,7 +13,7 @@ import java.time.Duration;
 import java.util.List;
 
 /**
- * Job gửi lại poi.created cho các POI còn PENDING (lần gửi trước lỗi, hoặc service tắt giữa commit và publish).
+ * Job gửi lại poi.created / poi.updated cho các POI còn PENDING (lần gửi trước lỗi, hoặc service tắt giữa commit và publish).
  * POI vượt max-attempts chuyển FAILED và job bỏ qua; admin dùng POST /api/content/admin/pois/{id}/republish.
  * Chạy 1 instance (đồ án); nếu scale nhiều instance cần khóa phân tán (vd. ShedLock).
  */
@@ -41,10 +41,10 @@ public class PoiPublishRetryJob {
         if (ids.isEmpty()) {
             return;
         }
-        log.info("Retrying poi.created for {} pending POI(s): {}", ids.size(), ids);
+        log.info("Retrying pending publishes for {} POI(s): {}", ids.size(), ids);
         for (Long id : ids) {
             try {
-                poiPublishService.publishPoiCreated(id);
+                poiPublishService.retryPendingPublish(id);
             } catch (RuntimeException ex) {
                 log.error("Retry publish crashed for POI id={}: {}", id, ex.getMessage(), ex);
             }

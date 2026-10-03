@@ -1,8 +1,13 @@
 package com.saigonvoice.content.messaging;
 
+import com.saigonvoice.content.config.RabbitMQConfig;
+
 /**
- * Spring application event nội bộ (KHÔNG gửi lên RabbitMQ).
- * Được phát trong transaction tạo POI; PoiPublishRelay chỉ xử lý sau khi transaction COMMIT.
+ * Spring application event nội bộ (KHÔNG gửi trực tiếp lên RabbitMQ).
+ * Được phát trong transaction tạo/cập nhật POI; PoiPublishRelay chỉ xử lý sau khi transaction COMMIT.
  */
-public record PoiPublishRequestedEvent(Long poiId) {
+public record PoiPublishRequestedEvent(Long poiId, String routingKey) {
+    public PoiPublishRequestedEvent(Long poiId) {
+        this(poiId, RabbitMQConfig.ROUTING_KEY_POI_CREATED);
+    }
 }

@@ -1,13 +1,16 @@
 package com.saigonvoice.content.service;
 
+import com.saigonvoice.content.config.RabbitMQConfig;
 import com.saigonvoice.content.dto.CreatePoiRequest;
 import com.saigonvoice.content.dto.PoiBoundingBoxDto;
 import com.saigonvoice.content.dto.PoiDetailDto;
 import com.saigonvoice.content.dto.PoiPublishStatusDto;
 import com.saigonvoice.content.dto.PoiSummaryDto;
+import com.saigonvoice.content.dto.UpdatePoiRequest;
 import com.saigonvoice.content.entity.Category;
 import com.saigonvoice.content.entity.Poi;
 import com.saigonvoice.content.entity.PoiTranslation;
+import com.saigonvoice.content.entity.PublishEventType;
 import com.saigonvoice.content.entity.PublishStatus;
 import com.saigonvoice.content.entity.Route;
 import com.saigonvoice.content.entity.Zone;
@@ -42,6 +45,7 @@ public class PoiContentServiceImpl implements PoiContentService {
 
     private static final String DEFAULT_LANG = "vi";
     private static final Set<String> PUBLISH_STATUSES = Set.of(PublishStatus.PENDING, PublishStatus.PUBLISHED, PublishStatus.FAILED);
+    private static final Set<String> USABLE_AUDIO_STATUSES = Set.of("READY", "FAILED_TTS");
 
     private final PoiRepository poiRepository;
     private final PoiTranslationRepository translationRepository;
@@ -123,6 +127,7 @@ public class PoiContentServiceImpl implements PoiContentService {
                 .thumbnailUrl(request.getThumbnailUrl())
                 .status("ACTIVE")
                 .publishStatus(PublishStatus.PENDING)
+                .publishEventType(PublishEventType.POI_CREATED)
                 .publishAttempts(0)
                 .createdAt(now)
                 .updatedAt(now)
@@ -146,6 +151,93 @@ public class PoiContentServiceImpl implements PoiContentService {
         applicationEventPublisher.publishEvent(new PoiPublishRequestedEvent(savedPoi.getId()));
 
         return mapToDetailDto(savedPoi, savedTranslation, false);
+    }
+
+    @Override
+    @Transactional
+    public PoiDetailDto updatePoi(Long id, UpdatePoiRequest request) {
+        Poi poi = poiRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("POI not found with id: " + id));
+
+        Category category = categoryRepository.findById(request.getCategoryId())
+                .orElseThrow(() -> new BadRequestException("Category not found with id: " + request.getCategoryId()));
+
+        poi.setName(request.getName());
+        poi.setCategory(category);
+        poi.setLatitude(request.getLatitude());
+        poi.setLongitude(request.getLongitude());
+        if (request.getTriggerRadiusMeters() != null) {
+            poi.setTriggerRadiusMeters(request.getTriggerRadiusMeters());
+        }
+        poi.setAddress(request.getAddress());
+        poi.setThumbnailUrl(request.getThumbnailUrl());
+
+        PoiTranslation viTranslation = translationRepository.findByPoiIdAndLanguageCode(poi.getId(), DEFAULT_LANG)
+                .orElse(null);
+
+        boolean contentChanged = viTranslation == null
+                || !Objects.equals(viTranslation.getTitle(), request.getTitle())
+                || !Objects.equals(viTranslation.getSummary(), request.getSummary())
+                || !Objects.equals(viTranslation.getDescription(), request.getDescription())
+                || !Objects.equals(emptyToNull(viTranslation.getHistoricalSignificance()), emptyToNull(request.getHistoricalSignificance()));
+
+        LocalDateTime now = TimeUtils.nowUtc();
+        poi.setUpdatedAt(now);
+
+        if (viTranslation == null) {
+            viTranslation = PoiTranslation.builder()
+                    .poi(poi)
+                    .languageCode(DEFAULT_LANG)
+                    .audioStatus("PENDING")
+                    .build();
+        }
+
+        viTranslation.setTitle(request.getTitle());
+        viTranslation.setSummary(request.getSummary());
+        viTranslation.setDescription(request.getDescription());
+        viTranslation.setHistoricalSignificance(request.getHistoricalSignificance());
+        viTranslation.setUpdatedAt(now);
+
+        if (contentChanged) {
+            if (PublishStatus.PUBLISHED.equals(poi.getPublishStatus())) {
+                poi.setPublishEventType(PublishEventType.POI_UPDATED);
+            }
+            // nếu đang PENDING hoặc FAILED thì giữ nguyên loại cũ
+
+            viTranslation.setAudioStatus("PENDING");
+            poi.setPublishStatus(PublishStatus.PENDING);
+            poi.setPublishAttempts(0);
+            poi.setLastPublishError(null);
+            poi.setLastPublishAttemptAt(null);
+
+            // Đặt audio_status = 'PENDING' cho các hàng poi_translation của ngôn ngữ khác (en, ja, ko)
+            // nhưng KHÔNG xóa title/summary/description/audio_url cũ
+            List<PoiTranslation> otherTranslations = translationRepository.findByPoiId(poi.getId());
+            for (PoiTranslation trans : otherTranslations) {
+                if (!DEFAULT_LANG.equalsIgnoreCase(trans.getLanguageCode())) {
+                    trans.setAudioStatus("PENDING");
+                    trans.setUpdatedAt(now);
+                    translationRepository.save(trans);
+                }
+            }
+        }
+
+        poiRepository.save(poi);
+        translationRepository.save(viTranslation);
+
+        if (contentChanged) {
+            String routingKey = PublishEventType.POI_UPDATED.equals(poi.getPublishEventType())
+                    ? RabbitMQConfig.ROUTING_KEY_POI_UPDATED
+                    : RabbitMQConfig.ROUTING_KEY_POI_CREATED;
+            applicationEventPublisher.publishEvent(
+                    new PoiPublishRequestedEvent(poi.getId(), routingKey));
+        }
+
+        return mapToDetailDto(poi, viTranslation, false);
+    }
+
+    private static String emptyToNull(String s) {
+        return (s == null || s.isBlank()) ? null : s.trim();
     }
 
     @Override
@@ -206,11 +298,13 @@ public class PoiContentServiceImpl implements PoiContentService {
         boolean isFallback = false;
 
         PoiTranslation translation;
-        if (translationOpt.isPresent()) {
+        if (DEFAULT_LANG.equalsIgnoreCase(lang)) {
+            translation = translationOpt.orElse(null);
+        } else if (translationOpt.isPresent() && USABLE_AUDIO_STATUSES.contains(translationOpt.get().getAudioStatus())) {
             translation = translationOpt.get();
         } else {
-            // Fallback sang tiếng Việt nếu không có ngôn ngữ yêu cầu
-            isFallback = !DEFAULT_LANG.equalsIgnoreCase(lang);
+            // Fallback sang tiếng Việt nếu không có hàng bản dịch hoặc audio_status không thuộc nhóm dùng được (PENDING, PROCESSING, FAILED...)
+            isFallback = true;
             translation = translationRepository.findByPoiIdAndLanguageCode(poi.getId(), DEFAULT_LANG)
                     .orElse(null);
         }

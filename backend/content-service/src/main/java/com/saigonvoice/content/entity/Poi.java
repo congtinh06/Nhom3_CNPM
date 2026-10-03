@@ -66,10 +66,14 @@ public class Poi {
     @Builder.Default
     private String status = "ACTIVE"; // ACTIVE, INACTIVE, MAINTENANCE
 
-    // Theo dõi việc gửi event poi.created (xem PublishStatus)
+    // Theo dõi việc gửi event poi.created / poi.updated (xem PublishStatus)
     @Column(name = "publish_status", nullable = false, length = 30)
     @Builder.Default
     private String publishStatus = PublishStatus.PENDING;
+
+    @Column(name = "publish_event_type", nullable = false, length = 30)
+    @Builder.Default
+    private String publishEventType = PublishEventType.POI_CREATED;
 
     @Column(name = "publish_attempts", nullable = false)
     @Builder.Default

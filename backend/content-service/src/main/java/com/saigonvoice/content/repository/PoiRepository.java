@@ -51,9 +51,9 @@ public interface PoiRepository extends JpaRepository<Poi, Long> {
             @Param("maxLng") BigDecimal maxLng
     );
 
-    // POI chưa gửi được event và đã "nguội" (không đụng tới POI vừa tạo đang được AFTER_COMMIT xử lý)
+    // POI chưa gửi được event và đã "nguội" (không đụng tới POI vừa tạo/cập nhật đang được AFTER_COMMIT xử lý)
     @Query("SELECT p.id FROM Poi p WHERE p.publishStatus = 'PENDING' " +
-           "AND p.createdAt < :cutoff " +
+           "AND (p.updatedAt IS NULL OR p.updatedAt < :cutoff) " +
            "AND (p.lastPublishAttemptAt IS NULL OR p.lastPublishAttemptAt < :cutoff)")
     List<Long> findPendingPublishIds(@Param("cutoff") LocalDateTime cutoff);
 }

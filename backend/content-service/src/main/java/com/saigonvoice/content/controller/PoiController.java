@@ -5,6 +5,7 @@ import com.saigonvoice.content.dto.PoiBoundingBoxDto;
 import com.saigonvoice.content.dto.PoiDetailDto;
 import com.saigonvoice.content.dto.PoiPublishStatusDto;
 import com.saigonvoice.content.dto.PoiSummaryDto;
+import com.saigonvoice.content.dto.UpdatePoiRequest;
 import com.saigonvoice.content.service.PoiContentService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -55,6 +56,13 @@ public class PoiController {
     public ResponseEntity<PoiDetailDto> createPoi(@Valid @RequestBody CreatePoiRequest request) {
         PoiDetailDto created = poiContentService.createPoi(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
+    }
+
+    @PutMapping("/api/content/admin/pois/{id}")
+    public ResponseEntity<PoiDetailDto> updatePoi(
+            @PathVariable Long id,
+            @Valid @RequestBody UpdatePoiRequest request) {
+        return ResponseEntity.ok(poiContentService.updatePoi(id, request));
     }
 
     // Danh sách POI theo trạng thái gửi event (mặc định FAILED) để admin biết POI nào kẹt
