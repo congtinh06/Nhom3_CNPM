@@ -6,7 +6,9 @@ import com.saigonvoice.translation.exception.TranslationProviderException;
 import com.saigonvoice.translation.exception.TranslationQuotaExceededException;
 import com.saigonvoice.translation.exception.TranslationTimeoutException;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
@@ -35,6 +37,7 @@ import java.util.Locale;
  */
 @Slf4j
 @Component
+@ConditionalOnProperty(name = "app.translation.provider", havingValue = "mymemory")
 public class MyMemoryTranslationProvider implements TranslationProvider {
 
     public static final String PROVIDER_NAME = "mymemory";
@@ -46,6 +49,7 @@ public class MyMemoryTranslationProvider implements TranslationProvider {
     private final String email;
     private final int maxChunkBytes;
 
+    @Autowired
     public MyMemoryTranslationProvider(
             RestClient.Builder restClientBuilder,
             ObjectMapper objectMapper,

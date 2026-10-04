@@ -1,10 +1,12 @@
 package com.saigonvoice.translation.provider;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 import java.util.Locale;
 
 @Component
+@ConditionalOnProperty(name = "app.translation.provider", havingValue = "seed")
 public class SeedTranslationProvider implements TranslationProvider {
 
     public static final String PROVIDER_NAME = "seed";
