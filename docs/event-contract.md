@@ -224,7 +224,7 @@ Cấu trúc giống hệt sự kiện `poi.created`:
   "summary": "Sample summary of the sightseeing point",
   "description": "Detailed sample description for system integration testing",
   "historicalSignificance": "Sample historical significance",
-  "audioUrl": "/api/tts/audio/poi_101_en.mp3",
+  "audioUrl": "/api/tts/audio/poi_101_en_c6058aa8.mp3",
   "audioDurationSeconds": 120,
   "audioStatus": "READY",
   "contentHash": "c6058aa86f5e0249240ce39c549bc35cbb64f58bd3cadd00ec4f7cf61206ee2c"

@@ -55,7 +55,13 @@ app:
       max-chunk-bytes: ${MYMEMORY_MAX_CHUNK_BYTES:450}
     timeout-ms: ${TRANSLATION_TIMEOUT_MS:10000}
   tts:
+    command: ${TTS_COMMAND:edge-tts}
     timeout-ms: ${TTS_TIMEOUT_MS:30000}
+    voices:
+      vi: ${TTS_VOICE_VI:vi-VN-HoaiMyNeural}
+      en: ${TTS_VOICE_EN:en-US-AvaNeural}
+      ja: ${TTS_VOICE_JA:ja-JP-NanamiNeural}
+      ko: ${TTS_VOICE_KO:ko-KR-SunHiNeural}
 
 management:
   endpoints:
