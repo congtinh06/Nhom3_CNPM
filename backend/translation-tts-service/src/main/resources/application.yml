@@ -40,13 +40,19 @@ spring:
           initial-interval: 1s
           multiplier: 2.0
           max-interval: 5s
-
 app:
   audio:
     storage-dir: ${AUDIO_STORAGE_DIR}
     public-base-url: ${AUDIO_PUBLIC_BASE_URL:}
   translation:
-    mymemory-email: ${MYMEMORY_EMAIL:}
+    provider: ${TRANSLATION_PROVIDER:seed}
+    mymemory:
+      base-url: ${MYMEMORY_BASE_URL:https://api.mymemory.translated.net}
+      email: ${MYMEMORY_EMAIL:}
+      connect-timeout-ms: ${MYMEMORY_CONNECT_TIMEOUT_MS:5000}
+      read-timeout-ms: ${MYMEMORY_READ_TIMEOUT_MS:10000}
+      # MyMemory official limit: 'q' max 500 bytes (source: https://mymemory.translated.net/doc/spec.php)
+      max-chunk-bytes: ${MYMEMORY_MAX_CHUNK_BYTES:450}
     timeout-ms: ${TRANSLATION_TIMEOUT_MS:10000}
   tts:
     timeout-ms: ${TTS_TIMEOUT_MS:30000}
