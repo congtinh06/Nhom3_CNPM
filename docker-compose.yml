@@ -178,6 +178,7 @@ services:
       AUDIO_PUBLIC_BASE_URL: ${AUDIO_PUBLIC_BASE_URL:-}
       MYMEMORY_EMAIL: ${MYMEMORY_EMAIL:-}
       TRANSLATION_PROVIDER: ${TRANSLATION_PROVIDER:-seed}
+      TTS_TIMEOUT_MS: ${TTS_TIMEOUT_MS:-120000}
     volumes:
       - audio-storage-data:/app/storage/audio
     depends_on:
