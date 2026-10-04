@@ -41,6 +41,14 @@ spring:
           multiplier: 2.0
           max-interval: 5s
 app:
+  rabbitmq:
+    exchange: ${RABBITMQ_EXCHANGE:saigonvoice.topic}
+    queues:
+      poi-created: ${RABBITMQ_QUEUE_POI_CREATED:poi.created.queue}
+      poi-updated: ${RABBITMQ_QUEUE_POI_UPDATED:poi.updated.queue}
+    routing-keys:
+      poi-audio-ready: ${RABBITMQ_ROUTING_KEY_AUDIO_READY:poi.audio.ready}
+      poi-audio-failed: ${RABBITMQ_ROUTING_KEY_AUDIO_FAILED:poi.audio.failed}
   audio:
     storage-dir: ${AUDIO_STORAGE_DIR}
     public-base-url: ${AUDIO_PUBLIC_BASE_URL:}

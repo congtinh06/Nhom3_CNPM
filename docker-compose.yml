@@ -177,6 +177,7 @@ services:
       AUDIO_STORAGE_DIR: /app/storage/audio
       AUDIO_PUBLIC_BASE_URL: ${AUDIO_PUBLIC_BASE_URL:-}
       MYMEMORY_EMAIL: ${MYMEMORY_EMAIL:-}
+      TRANSLATION_PROVIDER: ${TRANSLATION_PROVIDER:-seed}
     volumes:
       - audio-storage-data:/app/storage/audio
     depends_on:
