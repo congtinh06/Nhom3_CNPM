@@ -173,15 +173,18 @@ services:
       RABBITMQ_PORT: 5672
       RABBITMQ_USERNAME: ${RABBITMQ_DEFAULT_USER:?RABBITMQ_DEFAULT_USER is required in .env}
       RABBITMQ_PASSWORD: ${RABBITMQ_DEFAULT_PASS:?RABBITMQ_DEFAULT_PASS is required in .env}
-      CONTENT_SERVICE_URL: http://content-service:8085
       SAIGONVOICE_STORAGE_TYPE: ${SAIGONVOICE_STORAGE_TYPE:-local}
-      INTERNAL_API_KEY: ${INTERNAL_API_KEY:-}
+      AUDIO_STORAGE_DIR: /app/storage/audio
+      AUDIO_PUBLIC_BASE_URL: ${AUDIO_PUBLIC_BASE_URL:-}
+      MYMEMORY_EMAIL: ${MYMEMORY_EMAIL:-}
     volumes:
       - audio-storage-data:/app/storage/audio
     depends_on:
       mssql-db-init:
         condition: service_completed_successfully
       rabbitmq:
+        condition: service_healthy
+      content-service:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8083/actuator/health"]

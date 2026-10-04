@@ -7,7 +7,7 @@ Tài liệu đặc tả hợp đồng sự kiện (Event Contract) giữa `conte
 ## 1. Kiến trúc Trao đổi Message
 
 - **Exchange**: `saigonvoice.topic` (Loại `TopicExchange`, durable = true).
-- **Dead Letter Exchange (DLX)**: `saigonvoice.dlx` (Loại `TopicExchange`).
+- **Dead Letter Exchange (DLX)**: `saigonvoice.dlx` (Loại `DirectExchange`).
 - **Encoding**: UTF-8.
 - **Content-Type**: `application/json`.
 - **Nguyên tắc đồng bộ**:
@@ -196,7 +196,7 @@ Cấu trúc giống hệt sự kiện `poi.created`:
 
 ### 3.3. Sự kiện `poi.audio.ready`
 - **Bên phát (Publisher)**: `translation-tts-service` (phát khi hoàn tất dịch và tổng hợp âm thanh thành công cho một ngôn ngữ).
-- **Bên nhận (Consumer)**: `content-service` (`PoiAudioListener.onAudioReady`).
+- **Bên nhận (Consumer)**: `content-service` (`PoiAudioEventListener.onAudioReady`).
 - **Routing Key**: `poi.audio.ready`
 - **Queue chính**: `poi.audio.ready.queue`
 - **Dead Letter Queue (DLQ)**: `poi.audio.ready.dlq`
@@ -224,7 +224,7 @@ Cấu trúc giống hệt sự kiện `poi.created`:
   "summary": "Sample summary of the sightseeing point",
   "description": "Detailed sample description for system integration testing",
   "historicalSignificance": "Sample historical significance",
-  "audioUrl": "http://localhost:8083/api/tts/audio/poi_101_en.mp3",
+  "audioUrl": "/api/tts/audio/poi_101_en.mp3",
   "audioDurationSeconds": 120,
   "audioStatus": "READY",
   "contentHash": "c6058aa86f5e0249240ce39c549bc35cbb64f58bd3cadd00ec4f7cf61206ee2c"
