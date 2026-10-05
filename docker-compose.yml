@@ -213,8 +213,7 @@ services:
       RABBITMQ_PORT: 5672
       RABBITMQ_USERNAME: ${RABBITMQ_DEFAULT_USER:?RABBITMQ_DEFAULT_USER is required in .env}
       RABBITMQ_PASSWORD: ${RABBITMQ_DEFAULT_PASS:?RABBITMQ_DEFAULT_PASS is required in .env}
-      LOCATION_SERVICE_URL: http://location-service:8082
-      INTERNAL_API_KEY: ${INTERNAL_API_KEY:-}
+      CONTENT_SERVICE_URL: http://content-service:8085
     depends_on:
       mssql-db-init:
         condition: service_completed_successfully

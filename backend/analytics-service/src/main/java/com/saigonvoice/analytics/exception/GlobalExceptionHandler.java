@@ -1,59 +1,52 @@
 package com.saigonvoice.analytics.exception;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.amqp.AmqpException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
+import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import java.time.Instant;
-import java.util.HashMap;
+import java.time.LocalDateTime;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
-@Slf4j
 @RestControllerAdvice
+@Slf4j
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<Map<String, Object>> handleValidationExceptions(MethodArgumentNotValidException ex) {
-        Map<String, String> errors = new HashMap<>();
-        ex.getBindingResult().getAllErrors().forEach(error -> {
-            if (error instanceof FieldError fieldError) {
-                errors.put(fieldError.getField(), fieldError.getDefaultMessage());
-            } else {
-                errors.put(error.getObjectName(), error.getDefaultMessage());
-            }
-        });
+    public ResponseEntity<Map<String, Object>> handleValidationException(MethodArgumentNotValidException ex) {
+        Map<String, String> fieldErrors = new LinkedHashMap<>();
+        for (FieldError fe : ex.getBindingResult().getFieldErrors()) {
+            fieldErrors.put(fe.getField(), fe.getDefaultMessage());
+        }
+        for (ObjectError ge : ex.getBindingResult().getGlobalErrors()) {
+            fieldErrors.put(ge.getObjectName(), ge.getDefaultMessage());
+        }
 
-        Map<String, Object> response = new HashMap<>();
-        response.put("timestamp", Instant.now().toString());
-        response.put("status", HttpStatus.BAD_REQUEST.value());
-        response.put("error", "Bad Request / Dữ liệu không hợp lệ");
-        response.put("errors", errors);
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("timestamp", LocalDateTime.now());
+        body.put("status", HttpStatus.BAD_REQUEST.value());
+        body.put("error", "Bad Request");
+        body.put("message", "Validation failed for one or more fields");
+        body.put("fieldErrors", fieldErrors);
 
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
     }
 
-    @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<Map<String, Object>> handleIllegalArgument(IllegalArgumentException ex) {
-        Map<String, Object> response = new HashMap<>();
-        response.put("timestamp", Instant.now().toString());
-        response.put("status", HttpStatus.NOT_FOUND.value());
-        response.put("message", ex.getMessage());
+    @ExceptionHandler({AnalyticsPublishException.class, AmqpException.class})
+    public ResponseEntity<Map<String, Object>> handlePublishException(Exception ex) {
+        log.error("Failed to publish analytics event to RabbitMQ: {}", ex.getMessage());
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("timestamp", LocalDateTime.now());
+        body.put("status", HttpStatus.SERVICE_UNAVAILABLE.value());
+        body.put("error", "Service Unavailable");
+        body.put("message", "Service is temporarily unable to process event due to message broker unavailability");
 
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
-    }
-
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<Map<String, Object>> handleGenericException(Exception ex) {
-        log.error("Internal Server Error: ", ex);
-        Map<String, Object> response = new HashMap<>();
-        response.put("timestamp", Instant.now().toString());
-        response.put("status", HttpStatus.INTERNAL_SERVER_ERROR.value());
-        response.put("message", "Đã xảy ra sự cố trong quá trình tiếp nhận báo cáo, vui lòng thử lại sau.");
-
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(body);
     }
 }

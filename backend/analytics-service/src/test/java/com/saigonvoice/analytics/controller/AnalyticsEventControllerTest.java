@@ -1,0 +1,113 @@
+package com.saigonvoice.analytics.controller;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.saigonvoice.analytics.dto.CreateEventRequest;
+import com.saigonvoice.analytics.exception.AnalyticsPublishException;
+import com.saigonvoice.analytics.exception.GlobalExceptionHandler;
+import com.saigonvoice.analytics.service.AnalyticsEventService;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.MockMvc;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+
+@WebMvcTest(AnalyticsEventController.class)
+@Import(GlobalExceptionHandler.class)
+class AnalyticsEventControllerTest {
+
+    @Autowired
+    private MockMvc mockMvc;
+
+    @Autowired
+    private ObjectMapper objectMapper;
+
+    @MockBean
+    private AnalyticsEventService analyticsEventService;
+
+    @Test
+    @DisplayName("POST /api/analytics/events returns 202 Accepted when valid SCAN event")
+    void testRecordEvent_validScan_returns202() throws Exception {
+        CreateEventRequest request = CreateEventRequest.builder()
+                .eventType("SCAN")
+                .poiId(1L)
+                .languageCode("vi")
+                .triggerType("QR")
+                .sessionId("sess-123")
+                .build();
+
+        doNothing().when(analyticsEventService).processAndPublish(any(CreateEventRequest.class));
+
+        mockMvc.perform(post("/api/analytics/events")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isAccepted());
+    }
+
+    @Test
+    @DisplayName("POST /api/analytics/events returns 202 Accepted when valid AUDIO_PLAY event")
+    void testRecordEvent_validAudioPlay_returns202() throws Exception {
+        CreateEventRequest request = CreateEventRequest.builder()
+                .eventType("AUDIO_PLAY")
+                .poiId(2L)
+                .languageCode("en")
+                .completed(true)
+                .build();
+
+        doNothing().when(analyticsEventService).processAndPublish(any(CreateEventRequest.class));
+
+        mockMvc.perform(post("/api/analytics/events")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isAccepted());
+    }
+
+    @Test
+    @DisplayName("POST /api/analytics/events returns 400 Bad Request on invalid request body")
+    void testRecordEvent_invalidRequest_returns400() throws Exception {
+        CreateEventRequest request = CreateEventRequest.builder()
+                .eventType("SCAN")
+                .poiId(1L)
+                .languageCode("vi")
+                // Missing triggerType for SCAN
+                .build();
+
+        mockMvc.perform(post("/api/analytics/events")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.error").value("Bad Request"))
+                .andExpect(jsonPath("$.fieldErrors").isMap());
+    }
+
+    @Test
+    @DisplayName("POST /api/analytics/events returns 503 Service Unavailable when broker publish fails")
+    void testRecordEvent_brokerPublishFails_returns503() throws Exception {
+        CreateEventRequest request = CreateEventRequest.builder()
+                .eventType("SCAN")
+                .poiId(1L)
+                .languageCode("vi")
+                .triggerType("GPS")
+                .build();
+
+        doThrow(new AnalyticsPublishException("Broker connection error", new RuntimeException("connection refused")))
+                .when(analyticsEventService).processAndPublish(any(CreateEventRequest.class));
+
+        mockMvc.perform(post("/api/analytics/events")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isServiceUnavailable())
+                .andExpect(jsonPath("$.status").value(503))
+                .andExpect(jsonPath("$.error").value("Service Unavailable"))
+                .andExpect(jsonPath("$.message").value("Service is temporarily unable to process event due to message broker unavailability"));
+    }
+}
