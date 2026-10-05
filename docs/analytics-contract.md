@@ -119,7 +119,7 @@ Serialized as JSON using Spring AMQP `Jackson2JsonMessageConverter` with inferre
 | `triggerType` | String | `QR`, `GPS`, `MANUAL`, or `null`. |
 | `completed` | Boolean | `true`, `false`, or `null`. |
 | `sessionId` | String | Client anonymous session identifier or `null`. |
-| `occurredAt` | LocalDateTime | Server UTC/local reception timestamp. |
+| `occurredAt` | LocalDateTime | Server UTC reception timestamp (explicit UTC). |
 
 ### 2.3 Consumer Behavior & Idempotency
 

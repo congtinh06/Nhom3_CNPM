@@ -4,26 +4,38 @@ import com.saigonvoice.analytics.config.RabbitMQConfig;
 import com.saigonvoice.analytics.dto.CreateEventRequest;
 import com.saigonvoice.analytics.exception.AnalyticsPublishException;
 import com.saigonvoice.analytics.messaging.AnalyticsEventMessage;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.AmqpException;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.Clock;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.UUID;
 
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class AnalyticsEventServiceImpl implements AnalyticsEventService {
 
     private final RabbitTemplate rabbitTemplate;
+    private final Clock clock;
+
+    @Autowired
+    public AnalyticsEventServiceImpl(RabbitTemplate rabbitTemplate, @Autowired(required = false) Clock clock) {
+        this.rabbitTemplate = rabbitTemplate;
+        this.clock = (clock != null) ? clock : Clock.systemUTC();
+    }
+
+    public AnalyticsEventServiceImpl(RabbitTemplate rabbitTemplate) {
+        this(rabbitTemplate, Clock.systemUTC());
+    }
 
     @Override
     public void processAndPublish(CreateEventRequest request) {
         String eventId = UUID.randomUUID().toString();
-        LocalDateTime occurredAt = LocalDateTime.now();
+        LocalDateTime occurredAt = LocalDateTime.now(clock.withZone(ZoneOffset.UTC));
 
         Boolean completed = request.getCompleted();
         if ("AUDIO_PLAY".equalsIgnoreCase(request.getEventType()) && completed == null) {

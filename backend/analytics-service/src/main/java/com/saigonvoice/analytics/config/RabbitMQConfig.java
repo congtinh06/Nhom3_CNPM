@@ -106,4 +106,9 @@ public class RabbitMQConfig {
     public org.springframework.boot.autoconfigure.amqp.ConnectionFactoryCustomizer connectionFactoryCustomizer() {
         return connectionFactory -> connectionFactory.setConnectionTimeout(2000);
     }
+
+    @Bean
+    public java.time.Clock clock() {
+        return java.time.Clock.systemUTC();
+    }
 }
