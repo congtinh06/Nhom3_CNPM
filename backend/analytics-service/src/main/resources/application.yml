@@ -25,6 +25,7 @@ spring:
     port: ${RABBITMQ_PORT:5672}
     username: ${RABBITMQ_USERNAME:saigonvoice_app}
     password: ${RABBITMQ_PASSWORD:SgVoice_Rabbit!2026}
+    connection-timeout: 2s
     publisher-confirm-type: correlated
     publisher-returns: true
     template:
@@ -50,6 +51,11 @@ feign:
       default:
         connectTimeout: 2000
         readTimeout: 2000
+        retryer: feign.Retryer.NEVER_RETRY
+      content-service:
+        connectTimeout: 2000
+        readTimeout: 2000
+        retryer: feign.Retryer.NEVER_RETRY
 
 management:
   endpoints:

@@ -1,6 +1,7 @@
 package com.saigonvoice.analytics.client;
 
 import feign.Request;
+import feign.Retryer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -12,5 +13,10 @@ public class FeignConfig {
     @Bean
     public Request.Options requestOptions() {
         return new Request.Options(2000, TimeUnit.MILLISECONDS, 2000, TimeUnit.MILLISECONDS, true);
+    }
+
+    @Bean
+    public Retryer feignRetryer() {
+        return Retryer.NEVER_RETRY;
     }
 }

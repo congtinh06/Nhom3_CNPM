@@ -101,4 +101,9 @@ public class RabbitMQConfig {
             }
         };
     }
+
+    @Bean
+    public org.springframework.boot.autoconfigure.amqp.ConnectionFactoryCustomizer connectionFactoryCustomizer() {
+        return connectionFactory -> connectionFactory.setConnectionTimeout(2000);
+    }
 }

@@ -169,5 +169,7 @@ Aggregated analytics metrics for administrative dashboards.
 ### 3.2 Content Service Feign Integration
 
 - **Endpoint**: `GET /api/content/pois/{id}?lang=vi` on `CONTENT_SERVICE_URL`
-- **Timeout**: 2000ms connect / 2000ms read.
+- **Timeout**: 2000ms connect / 2000ms read. Feign retry is disabled (`Retryer.NEVER_RETRY`).
+- **In-Memory Cache**: Resolved POI names are cached in-memory with a TTL of 5 minutes. Failed or timed-out calls are also cached (`null` name) to guarantee that an unavailable content service costs at most one timeout per POI per TTL window.
+- **Budget Limit**: Total time spent resolving POI names during summary aggregation is capped at a ~3000ms budget. If the budget is exhausted, any remaining POIs will have `name: null` without blocking the summary response.
 - **Resilience / Fallback**: If `content-service` is unreachable or returns 404/5xx, `name` is returned as `null` in the POI object; the summary endpoint still succeeds with `200 OK`.

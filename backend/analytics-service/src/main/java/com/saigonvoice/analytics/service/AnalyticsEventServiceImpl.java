@@ -52,6 +52,9 @@ public class AnalyticsEventServiceImpl implements AnalyticsEventService {
         } catch (AmqpException ex) {
             log.error("RabbitMQ publish failed for eventId={}: {}", eventId, ex.getMessage(), ex);
             throw new AnalyticsPublishException("Failed to publish event to message broker", ex);
+        } catch (Exception ex) {
+            log.error("Unexpected error publishing eventId={}: {}", eventId, ex.getMessage(), ex);
+            throw new AnalyticsPublishException("Failed to publish event to message broker", ex);
         }
     }
 }
