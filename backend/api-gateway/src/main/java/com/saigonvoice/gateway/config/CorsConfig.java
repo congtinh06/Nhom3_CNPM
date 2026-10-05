@@ -8,7 +8,9 @@ import org.springframework.web.cors.reactive.CorsWebFilter;
 import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
 
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 @Configuration
 public class CorsConfig {
@@ -20,20 +22,24 @@ public class CorsConfig {
     public CorsWebFilter corsWebFilter() {
         CorsConfiguration config = new CorsConfiguration();
 
-        List<String> allowedOrigins = new ArrayList<>(List.of(
-                "http://localhost:5173",
-                "http://localhost:3000",
-                "http://127.0.0.1:5173"
-        ));
+        Set<String> allowedOrigins = new LinkedHashSet<>();
+        allowedOrigins.add("http://localhost:5173");
 
         if (frontendUrl != null && !frontendUrl.isBlank()) {
             allowedOrigins.add(frontendUrl.trim());
         }
 
-        config.setAllowedOrigins(allowedOrigins);
+        config.setAllowedOrigins(new ArrayList<>(allowedOrigins));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
-        config.setAllowedHeaders(List.of("*"));
-        config.setAllowCredentials(true);
+        config.setAllowedHeaders(List.of(
+                "X-Admin-Key",
+                "Content-Type",
+                "Authorization",
+                "Accept",
+                "Origin",
+                "X-Requested-With"
+        ));
+        config.setAllowCredentials(false);
         config.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

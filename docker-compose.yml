@@ -242,15 +242,11 @@ services:
       TRANSLATION_TTS_SERVICE_URL: http://translation-tts-service:8083
       ANALYTICS_SERVICE_URL: http://analytics-service:8081
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost:5173}
-      INTERNAL_API_KEY: ${INTERNAL_API_KEY:-}
+      ADMIN_API_KEY: ${ADMIN_API_KEY:-}
     depends_on:
       content-service:
         condition: service_started
       location-service:
-        condition: service_started
-      translation-tts-service:
-        condition: service_started
-      analytics-service:
         condition: service_started
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/actuator/health"]
