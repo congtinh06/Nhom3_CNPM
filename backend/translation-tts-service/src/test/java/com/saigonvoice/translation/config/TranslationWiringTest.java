@@ -13,6 +13,7 @@ import com.saigonvoice.translation.service.PoiPipelineService;
 import com.saigonvoice.translation.service.PoiPipelineServiceImpl;
 import com.saigonvoice.translation.service.TranslationCacheService;
 import com.saigonvoice.translation.service.TranslationCacheServiceImpl;
+import com.saigonvoice.translation.service.TranslationGlossary;
 import com.saigonvoice.translation.tts.SubtitleDurationParser;
 import com.saigonvoice.translation.tts.TtsVoiceProvider;
 import com.saigonvoice.translation.tts.runner.EdgeTtsRunner;
@@ -100,6 +101,7 @@ class TranslationWiringTest {
                         TranslationConfig.class,
                         SeedTranslationProvider.class,
                         MyMemoryTranslationProvider.class,
+                        TranslationGlossary.class,
                         TranslationCacheServiceImpl.class,
                         TtsVoiceProvider.class,
                         SubtitleDurationParser.class,
@@ -125,6 +127,7 @@ class TranslationWiringTest {
                     assertThat(context).hasSingleBean(TranslationCacheService.class);
                     assertThat(context).hasSingleBean(AudioStorageService.class);
                     assertThat(context).hasSingleBean(PoiAudioEventPublisher.class);
+                    assertThat(context).hasSingleBean(TranslationGlossary.class);
                     assertThat(context.getBean("translationProvider")).isInstanceOf(SeedTranslationProvider.class);
                     assertThat(context.getBean(TranslationProvider.class)).isInstanceOf(SeedTranslationProvider.class);
                     assertThat(context).doesNotHaveBean(MyMemoryTranslationProvider.class);
