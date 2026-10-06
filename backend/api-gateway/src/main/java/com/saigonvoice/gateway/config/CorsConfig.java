@@ -30,7 +30,7 @@ public class CorsConfig {
         }
 
         config.setAllowedOrigins(new ArrayList<>(allowedOrigins));
-        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "OPTIONS"));
         config.setAllowedHeaders(List.of(
                 "X-Admin-Key",
                 "Content-Type",
@@ -39,6 +39,7 @@ public class CorsConfig {
                 "Origin",
                 "X-Requested-With"
         ));
+        config.setExposedHeaders(List.of("Retry-After"));
         config.setAllowCredentials(false);
         config.setMaxAge(3600L);
 

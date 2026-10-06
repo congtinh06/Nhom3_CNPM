@@ -13,7 +13,12 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.cloud.gateway.route.RouteLocator;
+import org.springframework.cloud.gateway.route.builder.RouteLocatorBuilder;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
@@ -21,21 +26,53 @@ import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.reactive.server.WebTestClient;
 
+import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.UncheckedIOException;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.io.UncheckedIOException;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureWebTestClient
+@Import(ApiGatewayApplicationTest.TestRouteConfig.class)
 class ApiGatewayApplicationTest {
+
+    private static final int REFUSED_PORT = allocateRefusedPort();
+    private static ExecutorService mockServerExecutor;
+
+    private static int allocateRefusedPort() {
+        try (ServerSocket socket = new ServerSocket(0, 50, InetAddress.getByName("127.0.0.1"))) {
+            return socket.getLocalPort();
+        } catch (IOException e) {
+            throw new UncheckedIOException("Unable to allocate closed port", e);
+        }
+    }
+
+    @TestConfiguration
+    static class TestRouteConfig {
+        @Bean
+        public RouteLocator testRoutes(RouteLocatorBuilder builder) {
+            return builder.routes()
+                    .route("refused-service", r -> r.path("/api/location/refused/**")
+                            .uri("http://127.0.0.1:" + REFUSED_PORT))
+                    .route("unknown-host-service", r -> r.path("/api/location/unknown-host/**")
+                            .uri("http://nonexistent-host.invalid:8080"))
+                    .build();
+        }
+    }
 
     @LocalServerPort
     private int port;
@@ -91,6 +128,18 @@ class ApiGatewayApplicationTest {
                 os.write(responseBytes);
             }
         });
+        mockDownstreamServer.createContext("/api/location/timeout", exchange -> {
+            try {
+                Thread.sleep(10000);
+            } catch (InterruptedException ignored) {
+            }
+        });
+        mockServerExecutor = Executors.newCachedThreadPool(r -> {
+            Thread t = new Thread(r, "mock-downstream-worker");
+            t.setDaemon(true);
+            return t;
+        });
+        mockDownstreamServer.setExecutor(mockServerExecutor);
         mockDownstreamServer.start();
         mockPort = mockDownstreamServer.getAddress().getPort();
         } catch (IOException exception) {
@@ -103,6 +152,9 @@ class ApiGatewayApplicationTest {
         if (mockDownstreamServer != null) {
             mockDownstreamServer.stop(0);
         }
+        if (mockServerExecutor != null) {
+            mockServerExecutor.shutdownNow();
+        }
     }
 
     @DynamicPropertySource
@@ -113,6 +165,8 @@ class ApiGatewayApplicationTest {
         registry.add("TRANSLATION_TTS_SERVICE_URL", () -> "http://127.0.0.1:" + mockPort);
         registry.add("ANALYTICS_SERVICE_URL", () -> "http://127.0.0.1:" + mockPort);
         registry.add("ADMIN_API_KEY", () -> TEST_ADMIN_KEY);
+        registry.add("GATEWAY_RESPONSE_TIMEOUT", () -> "2s");
+        registry.add("GATEWAY_CONNECT_TIMEOUT_MS", () -> "1000");
     }
 
     @BeforeEach
@@ -212,65 +266,39 @@ class ApiGatewayApplicationTest {
                 .isFalse();
     }
 
-    @Test
-    void testPublicPathsRouting() {
-        // Content service public paths
-        webTestClient.get().uri("/api/content/categories")
-                .exchange()
-                .expectStatus().isOk();
+    @ParameterizedTest(name = "[{index}] {0}")
+    @MethodSource("publicPathsCases")
+    void testPublicPathsRouting(String name, HttpMethod method, String uri, String jsonBody) {
+        WebTestClient.RequestHeadersSpec<?> requestSpec;
+        if (HttpMethod.POST.equals(method)) {
+            requestSpec = webTestClient.post().uri(uri)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue(jsonBody);
+        } else {
+            requestSpec = webTestClient.get().uri(uri);
+        }
 
-        webTestClient.get().uri("/api/content/pois")
-                .exchange()
+        requestSpec.exchange()
                 .expectStatus().isOk();
+    }
 
-        webTestClient.get().uri("/api/content/pois/10")
-                .exchange()
-                .expectStatus().isOk();
-
-        webTestClient.get().uri("/api/content/pois/qr/sample-token")
-                .exchange()
-                .expectStatus().isOk();
-
-        webTestClient.get().uri("/api/content/routes")
-                .exchange()
-                .expectStatus().isOk();
-
-        webTestClient.get().uri("/api/content/routes/5")
-                .exchange()
-                .expectStatus().isOk();
-
-        webTestClient.get().uri("/api/content/zones")
-                .exchange()
-                .expectStatus().isOk();
-
-        webTestClient.get().uri("/api/content/zones/2")
-                .exchange()
-                .expectStatus().isOk();
-
-        // Location service public paths
-        webTestClient.get().uri("/api/location/nearby?lat=10.77&lng=106.69&radius=500")
-                .exchange()
-                .expectStatus().isOk();
-
-        webTestClient.get().uri("/api/location/resolve?lat=10.77&lng=106.69")
-                .exchange()
-                .expectStatus().isOk();
-
-        webTestClient.get().uri("/api/location/qr/test-token")
-                .exchange()
-                .expectStatus().isOk();
-
-        // TTS audio public path
-        webTestClient.get().uri("/api/tts/audio/poi_1_vi_12345678.mp3")
-                .exchange()
-                .expectStatus().isOk();
-
-        // Analytics events public path
-        webTestClient.post().uri("/api/analytics/events")
-                .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue("{\"eventType\":\"SCAN\",\"poiId\":1,\"languageCode\":\"vi\",\"triggerType\":\"QR\"}")
-                .exchange()
-                .expectStatus().isOk();
+    private static Stream<Arguments> publicPathsCases() {
+        return Stream.of(
+                Arguments.of("content-categories", HttpMethod.GET, "/api/content/categories", null),
+                Arguments.of("content-pois", HttpMethod.GET, "/api/content/pois", null),
+                Arguments.of("content-pois-by-id", HttpMethod.GET, "/api/content/pois/10", null),
+                Arguments.of("content-pois-qr", HttpMethod.GET, "/api/content/pois/qr/sample-token", null),
+                Arguments.of("content-routes", HttpMethod.GET, "/api/content/routes", null),
+                Arguments.of("content-routes-by-id", HttpMethod.GET, "/api/content/routes/5", null),
+                Arguments.of("content-zones", HttpMethod.GET, "/api/content/zones", null),
+                Arguments.of("content-zones-by-id", HttpMethod.GET, "/api/content/zones/2", null),
+                Arguments.of("location-nearby", HttpMethod.GET, "/api/location/nearby?lat=10.77&lng=106.69&radius=500", null),
+                Arguments.of("location-resolve", HttpMethod.GET, "/api/location/resolve?lat=10.77&lng=106.69", null),
+                Arguments.of("location-qr", HttpMethod.GET, "/api/location/qr/test-token", null),
+                Arguments.of("tts-audio", HttpMethod.GET, "/api/tts/audio/poi_1_vi_12345678.mp3", null),
+                Arguments.of("analytics-events", HttpMethod.POST, "/api/analytics/events",
+                        "{\"eventType\":\"SCAN\",\"poiId\":1,\"languageCode\":\"vi\",\"triggerType\":\"QR\"}")
+        );
     }
 
     @Test
@@ -453,6 +481,162 @@ class ApiGatewayApplicationTest {
         assertThat(downstreamReceivedAdminKey.get())
                 .as("X-Admin-Key must NOT be forwarded downstream")
                 .isFalse();
+    }
+
+    // ==========================================
+    // Task 1 & 2: Timeouts and Backend Down Tests
+    // ==========================================
+
+    @Test
+    void backendNeverAnswersTimesOutWithinConfiguredTime() {
+        long start = System.currentTimeMillis();
+        webTestClient.get().uri("/api/location/timeout")
+                .exchange()
+                .expectStatus().isEqualTo(504);
+        long elapsed = System.currentTimeMillis() - start;
+        assertThat(elapsed)
+                .as("Gateway must answer within configured timeout, not hang")
+                .isLessThan(8000L);
+    }
+
+    @Test
+    void backendDownConnectionRefusedReturns503() {
+        webTestClient.get().uri("/api/location/refused/service")
+                .exchange()
+                .expectStatus().isEqualTo(503)
+                .expectHeader().contentType(MediaType.APPLICATION_JSON)
+                .expectBody()
+                .jsonPath("$.status").isEqualTo(503)
+                .jsonPath("$.error").isEqualTo("Service Unavailable")
+                .jsonPath("$.message").isEqualTo("Service Unavailable")
+                .jsonPath("$.trace").doesNotExist();
+    }
+
+    @Test
+    void backendDownTimeoutReturns504() {
+        webTestClient.get().uri("/api/location/timeout")
+                .exchange()
+                .expectStatus().isEqualTo(504)
+                .expectHeader().contentType(MediaType.APPLICATION_JSON)
+                .expectBody()
+                .jsonPath("$.status").isEqualTo(504)
+                .jsonPath("$.error").isEqualTo("Gateway Timeout")
+                .jsonPath("$.message").isEqualTo("Gateway Timeout")
+                .jsonPath("$.trace").doesNotExist();
+    }
+
+    @Test
+    void backendUnknownHostReturns503() {
+        webTestClient.get().uri("/api/location/unknown-host/service")
+                .exchange()
+                .expectStatus().isEqualTo(503)
+                .expectHeader().contentType(MediaType.APPLICATION_JSON)
+                .expectBody()
+                .jsonPath("$.status").isEqualTo(503)
+                .jsonPath("$.error").isEqualTo("Service Unavailable")
+                .jsonPath("$.message").isEqualTo("Service Unavailable")
+                .jsonPath("$.trace").doesNotExist();
+    }
+
+    // ==========================================
+    // Task 3: CORS Hardening Tests
+    // ==========================================
+
+    @Test
+    void disallowedOriginGetsNoAccessControlAllowOrigin() {
+        webTestClient.get().uri("/api/content/pois")
+                .header("Origin", "http://disallowed-evil.com")
+                .exchange()
+                .expectHeader().doesNotExist("Access-Control-Allow-Origin");
+    }
+
+    @Test
+    void deletePreflightNotAllowed() {
+        webTestClient.options().uri("http://localhost:" + port + "/api/content/pois")
+                .header("Origin", "http://localhost:5173")
+                .header("Access-Control-Request-Method", "DELETE")
+                .exchange()
+                .expectStatus().isForbidden()
+                .expectHeader().doesNotExist("Access-Control-Allow-Origin");
+    }
+
+    // ==========================================
+    // Task 5: PathGuardFilter Uncovered Path Variants Tests
+    // ==========================================
+
+    @Test
+    void backslashEncodedPathReturns400() {
+        int before = downstreamRequestCount.get();
+        webTestClient.get().uri("http://localhost:" + port + "/api/content/pois%5Ctest")
+                .exchange()
+                .expectStatus().isBadRequest();
+        assertThat(downstreamRequestCount.get())
+                .as("Downstream receives nothing for %5C backslash")
+                .isEqualTo(before);
+    }
+
+    @Test
+    void backslashRawPathReturns400() throws Exception {
+        int before = downstreamRequestCount.get();
+        try (Socket socket = new Socket("127.0.0.1", port)) {
+            OutputStream os = socket.getOutputStream();
+            os.write("GET /api/content/pois\\test HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n"
+                    .getBytes(StandardCharsets.US_ASCII));
+            os.flush();
+            BufferedReader reader = new BufferedReader(
+                    new InputStreamReader(socket.getInputStream(), StandardCharsets.US_ASCII));
+            String statusLine = reader.readLine();
+            assertThat(statusLine)
+                    .as("Gateway must return 400 Bad Request for raw backslash")
+                    .contains("400");
+        }
+        assertThat(downstreamRequestCount.get())
+                .as("Downstream receives nothing for raw backslash")
+                .isEqualTo(before);
+    }
+
+    @Test
+    void controlCharEncodedPathReturns400() {
+        int before = downstreamRequestCount.get();
+        webTestClient.get().uri("http://localhost:" + port + "/api/content/pois%00test")
+                .exchange()
+                .expectStatus().isBadRequest();
+        assertThat(downstreamRequestCount.get())
+                .as("Downstream receives nothing for %00 control char")
+                .isEqualTo(before);
+    }
+
+    @Test
+    void nonAsciiEncodedPathReturns400() {
+        int before = downstreamRequestCount.get();
+        webTestClient.get().uri("http://localhost:" + port + "/api/content/pois%E2%80%AEtest")
+                .exchange()
+                .expectStatus().isBadRequest();
+        assertThat(downstreamRequestCount.get())
+                .as("Downstream receives nothing for non-ASCII %E2%80%AE")
+                .isEqualTo(before);
+    }
+
+    @Test
+    void pathEndingWithSlashDotReturns400() {
+        int before = downstreamRequestCount.get();
+        webTestClient.get().uri("http://localhost:" + port + "/api/content/pois/.")
+                .exchange()
+                .expectStatus().isBadRequest();
+        assertThat(downstreamRequestCount.get())
+                .as("Downstream receives nothing for path ending with /.")
+                .isEqualTo(before);
+    }
+
+    @Test
+    void pathEndingWithSlashDotDotReturns400() {
+        int before = downstreamRequestCount.get();
+        webTestClient.get().uri("http://localhost:" + port + "/api/content/pois/..")
+                .exchange()
+                .expectStatus().isBadRequest();
+        assertThat(downstreamRequestCount.get())
+                .as("Downstream receives nothing for path ending with /..")
+                .isEqualTo(before);
     }
 }
 
