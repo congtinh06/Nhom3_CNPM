@@ -19,7 +19,6 @@ import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
 public class PoiController {
 
     private final PoiContentService poiContentService;

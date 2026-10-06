@@ -17,9 +17,11 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -106,5 +108,27 @@ class PoiInternalQrControllerTest {
                 .andExpect(jsonPath("$.status").value(404))
                 .andExpect(jsonPath("$.error").value("Not Found"))
                 .andExpect(jsonPath("$.message").value("POI not found with QR token: unknown-qr"));
+    }
+
+    @Test
+    @DisplayName("GET /api/content/pois: request có Origin: http://evil.example không nhận Access-Control-Allow-Origin")
+    void noWildcardCorsHeaderOnPublicGet() throws Exception {
+        when(poiContentService.getPois(null)).thenReturn(List.of());
+
+        mockMvc.perform(get("/api/content/pois")
+                        .header("Origin", "http://evil.example"))
+                .andExpect(status().isOk())
+                .andExpect(header().doesNotExist("Access-Control-Allow-Origin"));
+    }
+
+    @Test
+    @DisplayName("GET /api/content/admin/pois/publish-status: request có Origin: http://evil.example không nhận Access-Control-Allow-Origin")
+    void noWildcardCorsHeaderOnAdminGet() throws Exception {
+        when(poiContentService.getPublishStatuses("FAILED")).thenReturn(List.of());
+
+        mockMvc.perform(get("/api/content/admin/pois/publish-status")
+                        .header("Origin", "http://evil.example"))
+                .andExpect(status().isOk())
+                .andExpect(header().doesNotExist("Access-Control-Allow-Origin"));
     }
 }
