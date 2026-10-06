@@ -1,4 +1,4 @@
-# Multi-stage Dockerfile cho poi-service (Java 17)
+# Multi-stage Dockerfile cho content-service (Java 17)
 # Stage 1: Build JAR
 FROM maven:3.9-eclipse-temurin-17 AS build
 WORKDIR /app
