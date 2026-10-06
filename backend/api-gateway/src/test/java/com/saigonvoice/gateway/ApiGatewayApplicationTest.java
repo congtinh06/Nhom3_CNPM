@@ -406,4 +406,53 @@ class ApiGatewayApplicationTest {
                 .exchange()
                 .expectStatus().isNotFound();
     }
+
+    @Test
+    void headAnalyticsSummaryWithoutKeyReturns401() {
+        int before = downstreamRequestCount.get();
+        webTestClient.head().uri("/api/analytics/summary")
+                .exchange()
+                .expectStatus().isUnauthorized();
+        assertThat(downstreamRequestCount.get())
+                .as("Downstream must receive NOTHING for unauthorized HEAD request")
+                .isEqualTo(before);
+    }
+
+    @Test
+    void postAnalyticsSummaryWithoutKeyReturns401() {
+        int before = downstreamRequestCount.get();
+        webTestClient.post().uri("/api/analytics/summary")
+                .exchange()
+                .expectStatus().isUnauthorized();
+        assertThat(downstreamRequestCount.get())
+                .as("Downstream must receive NOTHING for unauthorized POST request")
+                .isEqualTo(before);
+    }
+
+    @Test
+    void deleteAnalyticsSummaryWithoutKeyReturns401() {
+        int before = downstreamRequestCount.get();
+        webTestClient.delete().uri("/api/analytics/summary")
+                .exchange()
+                .expectStatus().isUnauthorized();
+        assertThat(downstreamRequestCount.get())
+                .as("Downstream must receive NOTHING for unauthorized DELETE request")
+                .isEqualTo(before);
+    }
+
+    @Test
+    void headAnalyticsSummaryWithValidKeyIsForwarded() {
+        int before = downstreamRequestCount.get();
+        webTestClient.head().uri("/api/analytics/summary")
+                .header("X-Admin-Key", TEST_ADMIN_KEY)
+                .exchange()
+                .expectStatus().isOk();
+        assertThat(downstreamRequestCount.get())
+                .as("Request with valid key must reach stub downstream backend")
+                .isEqualTo(before + 1);
+        assertThat(downstreamReceivedAdminKey.get())
+                .as("X-Admin-Key must NOT be forwarded downstream")
+                .isFalse();
+    }
 }
+

@@ -56,7 +56,7 @@ public class AdminAuthGlobalFilter implements GlobalFilter, Ordered {
 
         // 2. Identify protected paths: any method on /api/content/admin/** and GET /api/analytics/summary
         boolean isAdminContent = path != null && (path.equals(ADMIN_CONTENT_PREFIX) || path.startsWith(ADMIN_CONTENT_PREFIX + "/"));
-        boolean isAnalyticsSummary = HttpMethod.GET.equals(method) && ANALYTICS_SUMMARY_PATH.equals(path);
+        boolean isAnalyticsSummary = ANALYTICS_SUMMARY_PATH.equals(path);
 
         if (!isAdminContent && !isAnalyticsSummary) {
             return chain.filter(exchange);
