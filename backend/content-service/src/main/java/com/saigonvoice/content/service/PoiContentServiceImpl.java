@@ -274,8 +274,7 @@ public class PoiContentServiceImpl implements PoiContentService {
         if (!PUBLISH_STATUSES.contains(normalized)) {
             throw new BadRequestException("status must be one of " + PUBLISH_STATUSES);
         }
-        return poiRepository.findAll().stream()
-                .filter(p -> normalized.equals(p.getPublishStatus()))
+        return poiRepository.findByPublishStatus(normalized).stream()
                 .map(PoiMapper::toPublishStatus)
                 .toList();
     }

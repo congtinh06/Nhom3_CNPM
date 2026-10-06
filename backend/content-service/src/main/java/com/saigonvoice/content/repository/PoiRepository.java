@@ -19,6 +19,8 @@ public interface PoiRepository extends JpaRepository<Poi, Long> {
 
     List<Poi> findByStatus(String status);
 
+    List<Poi> findByPublishStatus(String publishStatus);
+
     Optional<Poi> findByQrToken(String qrToken);
 
     Optional<Poi> findByCode(String code);

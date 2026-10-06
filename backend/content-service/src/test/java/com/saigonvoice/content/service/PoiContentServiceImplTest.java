@@ -4,6 +4,7 @@ import com.saigonvoice.content.dto.CreatePoiRequest;
 import com.saigonvoice.content.dto.PoiBoundingBoxDto;
 import com.saigonvoice.content.dto.PoiDetailDto;
 import com.saigonvoice.content.dto.PoiInternalQrDto;
+import com.saigonvoice.content.dto.PoiPublishStatusDto;
 import com.saigonvoice.content.dto.PoiSummaryDto;
 import com.saigonvoice.content.dto.UpdatePoiRequest;
 import com.saigonvoice.content.entity.Category;
@@ -584,5 +585,18 @@ class PoiContentServiceImplTest {
         assertThatThrownBy(() -> poiContentService.getInternalPoiByQrToken("unknown-token"))
                 .isInstanceOf(ResourceNotFoundException.class)
                 .hasMessageContaining("POI not found with QR token: unknown-token");
+    }
+
+    @Test
+    @DisplayName("getPublishStatuses: queries by status using findByPublishStatus and never calls findAll")
+    void getPublishStatusesQueriesByStatusInsteadOfFindAll() {
+        when(poiRepository.findByPublishStatus(PublishStatus.FAILED)).thenReturn(List.of(samplePoi));
+
+        List<PoiPublishStatusDto> result = poiContentService.getPublishStatuses("FAILED");
+
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).getPoiId()).isEqualTo(100L);
+        verify(poiRepository).findByPublishStatus(PublishStatus.FAILED);
+        verify(poiRepository, never()).findAll();
     }
 }
