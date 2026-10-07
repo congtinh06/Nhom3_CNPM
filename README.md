@@ -12,13 +12,13 @@
 
 ---
 
-## 📖 1. Giới Thiệu Dự Án (Overview)
+## 1. Giới thiệu dự án (Overview)
 
 **SaigonVoice** là giải pháp nền tảng du lịch số thông minh dành cho du khách khám phá Thành phố Hồ Chí Minh. Dự án tích hợp công nghệ định vị GPS, bản đồ tương tác mã nguồn mở **Leaflet + OpenStreetMap**, mã QR tại điểm dừng, và hệ thống **thuyết minh âm thanh tự động đa ngôn ngữ** (`vi`, `en`, `ko`, `ja`, `zh`).
 
 Bên cạnh trải nghiệm tham quan di sản, hệ thống còn cung cấp module **Văn hóa ẩm thực & Thức uống bản địa**, cho phép du khách tìm hiểu các món ngon đặc trưng Sài Gòn (cơm tấm, bánh mì, cà phê vợt...), đặt món giao tận nơi hoặc trải nghiệm thanh toán trực tuyến thuận tiện.
 
-### 🌟 Tính Năng Nổi Bật
+### Tính năng nổi bật
 
 1. **Bản đồ Di sản Tương tác (Leaflet + OpenStreetMap)**:
    - Hiển thị 5 điểm di sản nổi tiếng tại trung tâm Sài Gòn (Dinh Độc Lập, Nhà thờ Đức Bà, Bưu điện Trung tâm, Chợ Bến Thành, Bảo tàng Chứng tích Chiến tranh).
@@ -45,7 +45,7 @@ Bên cạnh trải nghiệm tham quan di sản, hệ thống còn cung cấp mod
 
 ---
 
-## 🏛️ 2. Sơ Đồ Kiến Trúc Hệ Thống (Architecture)
+## 2. Kiến trúc hệ thống (Architecture)
 
 ```
                             ┌──────────────────────────────────────────────┐
@@ -86,7 +86,7 @@ Bên cạnh trải nghiệm tham quan di sản, hệ thống còn cung cấp mod
 
 ---
 
-## 📁 3. Cấu Trúc Thư Mục Dự Án (Repository Structure)
+## 3. Cấu trúc thư mục (Repository Structure)
 
 ```
 Nhom3_CNPM/
@@ -120,7 +120,7 @@ Nhom3_CNPM/
 
 ---
 
-## 🔌 4. Bảng Phân Bổ Cổng Dịch Vụ (Service Ports)
+## 4. Bảng phân bổ cổng dịch vụ (Service Ports)
 
 | Dịch vụ / Ứng dụng | Cổng Host | Cổng Nội bộ | Công nghệ chính | Chức năng chính |
 |---|---|---|---|---|
@@ -137,9 +137,7 @@ Nhom3_CNPM/
 
 ---
 
----
-
-## 🌐 5. Danh Sách API Endpoints Chính (Core REST APIs)
+## 5. Danh sách API Endpoints chính (Core REST APIs)
 
 Toàn bộ các yêu cầu từ Client đều đi qua **API Gateway** (`http://localhost:18080`):
 
@@ -161,9 +159,9 @@ Toàn bộ các yêu cầu từ Client đều đi qua **API Gateway** (`http://l
 
 ---
 
-## 🚀 6. Hướng Dẫn Cài Đặt & Khởi Chạy (Getting Started)
+## 6. Hướng dẫn cài đặt và khởi chạy (Getting Started)
 
-### 6.1. Cấu hình Biến Môi trường (.env)
+### 6.1. Cấu hình biến môi trường (.env)
 
 Sao chép file cấu hình mẫu từ thư mục gốc:
 
@@ -209,7 +207,7 @@ Truy cập giao diện tại: **http://localhost:5173**
 
 ---
 
-## 🧪 7. Kiểm Thử Hệ Thống (Automated Testing)
+## 7. Kiểm thử hệ thống (Automated Testing)
 
 Dự án trang bị hệ thống kiểm thử tự động toàn diện cho cả Backend và Frontend:
 
@@ -248,7 +246,7 @@ mvn -f backend/api-gateway/pom.xml test
 
 ---
 
-## 👥 8. Thông Tin Đồ Án & Thành Viên (Team Members)
+## 8. Thông tin đồ án (Project Information)
 
 - **Môn học**: Công nghệ Phần mềm (CNPM) — Nhóm 3
 - **Đề tài**: Nền tảng hướng dẫn viên du lịch số tự động thuyết minh Sài Gòn (SaigonVoice)
