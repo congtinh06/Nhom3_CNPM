@@ -1,5 +1,6 @@
 {
-  "name": "anti-phishing-frontend",
+  "name": "saigonvoice-frontend",
+  "description": "Frontend giao diện người dùng cho hệ thống thuyết minh du lịch tự động SaigonVoice",
   "private": true,
   "version": "1.0.0",
   "type": "module",
