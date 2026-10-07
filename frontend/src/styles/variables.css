@@ -1,0 +1,27 @@
+:root {
+  --cream: #fff1c7;
+  --brown: #8a2f12;
+  --black: #000000;
+  --white: #ffffff;
+  --page: #f1ece2;
+  --ink: #1c1410;
+  box-sizing: border-box;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --page: #17110d;
+  }
+}
+
+:root[data-theme="dark"] {
+  --page: #17110d;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: inherit;
+}

@@ -40,7 +40,9 @@ public class CorsConfig {
                 "X-Requested-With"
         ));
         config.setExposedHeaders(List.of("Retry-After"));
-        config.setAllowCredentials(false);
+        // BẮT BUỘC true để trình duyệt nhận được cookie refresh (HttpOnly) từ /api/auth/**.
+        // Chỉ an toàn vì allowedOrigins là danh sách tường minh, không phải "*".
+        config.setAllowCredentials(true);
         config.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

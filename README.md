@@ -1,181 +1,256 @@
 # SAIGONVOICE — HỆ THỐNG HƯỚNG DẪN VIÊN DU LỊCH ĐA NGÔN NGỮ TỰ ĐỘNG
-## (Multilingual Automated Tourist Audio Guide System)
+## Multilingual Automated Tourist Audio Guide & Local Experience Platform
 
-[![Content Service CI](https://github.com/congtinh06/Nhom3_CNPM/actions/workflows/content-service.yml/badge.svg)](https://github.com/congtinh06/Nhom3_CNPM/actions/workflows/content-service.yml)
-[![Location Service CI](https://github.com/congtinh06/Nhom3_CNPM/actions/workflows/location-service.yml/badge.svg)](https://github.com/congtinh06/Nhom3_CNPM/actions/workflows/location-service.yml)
-[![Translation & TTS Service CI](https://github.com/congtinh06/Nhom3_CNPM/actions/workflows/translation-tts-service.yml/badge.svg)](https://github.com/congtinh06/Nhom3_CNPM/actions/workflows/translation-tts-service.yml)
-[![Analytics Service CI](https://github.com/congtinh06/Nhom3_CNPM/actions/workflows/analytics-service.yml/badge.svg)](https://github.com/congtinh06/Nhom3_CNPM/actions/workflows/analytics-service.yml)
-[![API Gateway CI](https://github.com/congtinh06/Nhom3_CNPM/actions/workflows/api-gateway.yml/badge.svg)](https://github.com/congtinh06/Nhom3_CNPM/actions/workflows/api-gateway.yml)
-
-Hệ thống thuyết minh tự động đa ngôn ngữ cho các điểm du lịch tại TP.HCM. Du khách quét mã QR tại điểm dừng (hoặc đi vào vùng định vị GPS 30–50 m); một trang WEB (không cần cài đặt ứng dụng) sẽ tự động phát âm thanh thuyết minh. Quản trị viên chỉ cần nhập nội dung tiếng Việt một lần; hệ thống tự động dịch đa ngôn ngữ (`en`, `ja`, `ko`), tạo tệp âm thanh (TTS), và xuất mã QR.
-
-Mô hình dữ liệu phân cấp: **Zone (Khu vực)** ➔ **Route (Tuyến tham quan)** ➔ **POI (Điểm dừng du lịch)**.
-
-Dự án được xây dựng theo kiến trúc Microservices với:
-- **Công nghệ nền tảng**: Java 17, Spring Boot 3.3.4, Spring Cloud Gateway 2023.0.3, OpenFeign, Maven.
-- **Hệ cơ sở dữ liệu**: Microsoft SQL Server 2022 (1 instance trên cổng `1433`, gồm 3 database độc lập: `saigonvoice_content_db`, `saigonvoice_translation_db`, `saigonvoice_analytics_db`), quản lý migration qua Flyway.
-- **Message Broker**: RabbitMQ điều phối bất đồng bộ.
-- **Giao diện**: Frontend React + TypeScript (chưa được xây dựng).
+[![Vite Build](https://img.shields.io/badge/Vite-5.4.21-646CFF?logo=vite&logoColor=white)](https://vitejs.dev/)
+[![React 18](https://img.shields.io/badge/React-18.3.1-61DAFB?logo=react&logoColor=black)](https://react.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.5.3-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Spring Boot](https://img.shields.io/badge/Spring_Boot-3.3.4-6DB33F?logo=springboot&logoColor=white)](https://spring.io/projects/spring-boot)
+[![SQL Server 2022](https://img.shields.io/badge/SQL_Server-2022-CC292B?logo=microsoftsqlserver&logoColor=white)](https://www.microsoft.com/sql-server)
+[![RabbitMQ](https://img.shields.io/badge/RabbitMQ-3.13-FF6600?logo=rabbitmq&logoColor=white)](https://www.rabbitmq.com/)
+[![Leaflet](https://img.shields.io/badge/Leaflet-1.9.4-199900?logo=leaflet&logoColor=white)](https://leafletjs.com/)
+[![Vitest](https://img.shields.io/badge/Vitest-62_Tests_Passed-green?logo=vitest&logoColor=white)](https://vitest.dev/)
 
 ---
 
-## 1. Sơ Đồ Kiến Trúc Hệ Thống (Architecture Overview)
+## 📖 1. Giới Thiệu Dự Án (Overview)
+
+**SaigonVoice** là giải pháp nền tảng du lịch số thông minh dành cho du khách khám phá Thành phố Hồ Chí Minh. Dự án tích hợp công nghệ định vị GPS, bản đồ tương tác mã nguồn mở **Leaflet + OpenStreetMap**, mã QR tại điểm dừng, và hệ thống **thuyết minh âm thanh tự động đa ngôn ngữ** (`vi`, `en`, `ko`, `ja`, `zh`).
+
+Bên cạnh trải nghiệm tham quan di sản, hệ thống còn cung cấp module **Văn hóa ẩm thực & Thức uống bản địa**, cho phép du khách tìm hiểu các món ngon đặc trưng Sài Gòn (cơm tấm, bánh mì, cà phê vợt...), đặt món giao tận nơi hoặc trải nghiệm thanh toán trực tuyến thuận tiện.
+
+### 🌟 Tính Năng Nổi Bật
+
+1. **Bản đồ Di sản Tương tác (Leaflet + OpenStreetMap)**:
+   - Hiển thị 5 điểm di sản nổi tiếng tại trung tâm Sài Gòn (Dinh Độc Lập, Nhà thờ Đức Bà, Bưu điện Trung tâm, Chợ Bến Thành, Bảo tàng Chứng tích Chiến tranh).
+   - Đánh dấu Marker tròn 1–5 màu nâu đỏ `#8B2E16` sang trọng, phóng to và đổi màu cam vàng `#E9A23B` khi chọn hoặc phát âm thanh.
+   - Tự động căn chỉnh vòng bán kính GPS của du khách (`map.fitBounds`) và chống lỗi xám bản đồ (`map.invalidateSize`).
+
+2. **Thuyết minh Tự động & Đa ngôn ngữ (Auto Narration & Multilingual Sync)**:
+   - Tự động kích hoạt giọng đọc khi du khách di chuyển vào bán kính kích hoạt (trigger radius 40–55 m).
+   - Kiểm soát phát âm thanh chặt chẽ: hàng đợi tuần tự, không phát chồng âm thanh, chống phát lặp lại cùng một địa điểm trong vòng 10 phút.
+   - Đồng bộ ngôn ngữ 2 chiều toàn diện giữa Navbar và Audio Player. Hỗ trợ 5 ngôn ngữ (`vi`, `en`, `ko`, `ja`, `zh`) với cơ chế fallback thông minh về tiếng Việt kèm thông báo.
+   - Tích hợp Web Speech API chuẩn ngữ điệu bản xứ và tùy chỉnh tốc độ đọc (0.75x, 1x, 1.25x), thanh tua tiến trình và xem văn bản thuyết minh.
+
+3. **Chế độ Thử nghiệm Tọa độ (GPS Simulation Mode)**:
+   - Hỗ trợ nhập tọa độ kiểm thử hoặc chọn nhanh các vị trí mẫu (Sát Dinh Độc Lập ≈10m, Sát Nhà thờ Đức Bà ≈10m, Giữa tour, Xa tour) để kích hoạt logic tự động thuyết minh như GPS thực tế.
+
+4. **Khám phá Ẩm thực & Thức uống Sài Gòn**:
+   - Danh mục sản phẩm (món ăn đường phố & thức uống thanh nhiệt).
+   - Trang chi tiết món ăn, gợi ý món cùng loại, giỏ hàng lưu `localStorage`.
+   - Đặt hàng với thông tin giao nhận, ghi chú đơn hàng và hỗ trợ thanh toán (COD hoặc Cổng thanh toán giả lập).
+
+5. **Xác thực Người dùng Hiện đại (Auth Modal & Security)**:
+   - Đăng nhập, Đăng ký, Quên mật khẩu, Xác thực email kích hoạt dưới dạng Modal nền nổi (Background Location) không reload trang.
+   - Bảo mật phiên làm việc với JWT access token ngắn hạn và Refresh Token lưu trữ an toàn trong `HttpOnly Cookie`, chống tấn công XSS/CSRF.
+
+---
+
+## 🏛️ 2. Sơ Đồ Kiến Trúc Hệ Thống (Architecture)
 
 ```
-                            ┌────────────────────────┐
-                            │    Trình duyệt WEB     │
-                            │ (Khách quét QR / GPS)  │
-                            └───────────┬────────────┘
-                                        │ HTTP / REST
-                                        ▼
-                            ┌────────────────────────┐
-                            │      api-gateway       │
-                            │  Spring Cloud Gateway  │
-                            │ Host: 18080 (Port:8080)│
-                            └─────┬───────────┬──────┘
-                                  │           │
-         ┌────────────────────────┼───────────┼────────────────────────┐
-         ▼                        ▼           ▼                        ▼
-┌──────────────────┐    ┌──────────────────┐┌──────────────────┐┌──────────────────┐
-│ content-service  │    │ location-service ││translation-tts-  ││analytics-service │
-│ (Port: 8085)     │◀───│ (Port: 8082)     ││service           ││ (Port: 8081)     │
-│ - Quản lý POI,   │Feign- Tính toán GPS,  ││ (Port: 8083)     ││ - Thu thập sự    │
-│   Zone, Route    │    │   resolve POI    ││ - Dịch tự động   ││   kiện quét QR,  │
-│ - Publisher sự   │    └──────────────────┘│ - Sinh audio TTS ││   phát âm thanh  │
-│   kiện xuất bản  │                        └────────┬─────────┘└────────┬─────────┘
-└────────┬─────────┘                                 │                   │
-         │                                           │                   │
-         │ saigonvoice.topic (poi.created / updated) │                   │
-         ├──────────────────────────────────────────▶│                   │
-         │◀──────────────────────────────────────────┤                   │
-         │ (poi.audio.ready / poi.audio.failed)      │                   │
-         │                                                               │
-         │                                       saigonvoice.analytics   │
-         │                                       (analytics.event.queue) │
-         │                                                               ▼
-         └───────────────────▶ RabbitMQ Broker ◀─────────────────────────┘
-                               Host: 5672 | UI: 15800
-                               DLX: saigonvoice.dlx
+                            ┌──────────────────────────────────────────────┐
+                            │      Frontend SPA (React 18 + TS + Vite)     │
+                            │  Bản đồ Leaflet, Web Speech Audio, Giỏ hàng  │
+                            └──────────────────────┬───────────────────────┘
+                                                   │ HTTP / REST (Port 5173)
+                                                   ▼
+                            ┌──────────────────────────────────────────────┐
+                            │            api-gateway (Spring Cloud)        │
+                            │  CORS, Path Guard, Rate Limiting, Admin Auth │
+                            │           Host: 18080 (Container: 8080)      │
+                            └───────┬──────────────┬──────────────┬────────┘
+                                    │              │              │
+      ┌─────────────────────────────┼──────────────┼──────────────┼────────────────────────┐
+      ▼                             ▼              ▼              ▼                        ▼
+┌──────────────────┐  ┌──────────────────┐┌──────────────────┐┌──────────────────┐┌──────────────────┐
+│  auth-service    │  │ content-service  ││ location-service ││translation-tts-  ││ analytics-service│
+│  (Port: 8086)    │  │ (Port: 8085)     ││ (Port: 8082)     ││service (Port:8083││ (Port: 8081)     │
+│ - JWT / Cookie   │  │ - Zone, Route,POI││ - GPS Haversine, ││ - Dịch tự động   ││ - Thu thập sự    │
+│ - Xác thực email │  │ - Món ăn/Thức uốn││   quét mã QR     ││ - edge-tts audio ││   kiện quét & play│
+└────────┬─────────┘  └────────┬─────────┘└────────┬─────────┘└────────┬─────────┘└────────┬─────────┘
+         │                     │                   │                   │                   │
+         │                     │  saigonvoice.topic│                   │                   │
+         │                     ├───────────────────┼──────────────────▶│                   │
+         │                     │ (poi.created/upd) │                   │                   │
+         │                     │◀──────────────────┼───────────────────┤                   │
+         │                     │ (audio.ready/fail)│                   │                   │
+         │                     │                   │                   │                   │
+         │                     │                   │                   │                   ▼
+         │                     └───────────────────┼───────────────────┼────────▶ RabbitMQ Broker
+         │                                         ▼                   ▼           Host: 5672
+         ▼                                  OpenFeign Service     AMQP Event       UI: 15800
+   Microsoft SQL Server 2022                Communication         Exchange
+   Host: 1433 (4 DBs riêng biệt:
+   auth, content, translation, analytics)
 ```
 
-Xem tài liệu hợp đồng sự kiện chi tiết tại [docs/event-contract.md](docs/event-contract.md).
-
 ---
 
-## 2. Hệ Thống Ràng Buộc Kỹ Thuật & Bảo Mật (Constraints & Defense-in-Depth)
-
-Hệ thống tuân thủ mô hình phòng thủ theo chiều sâu (Defense-in-Depth):
-
-### 2.1. Phân Lập Cơ Sở Dữ Liệu (Database Isolation)
-- **1 Instance SQL Server 2022** sở hữu 3 cơ sở dữ liệu riêng biệt:
-  - `saigonvoice_content_db`: quản lý dữ liệu khu vực (`zone`), danh mục (`category`), tuyến (`route`), điểm dừng (`poi`), và bản dịch gốc.
-  - `saigonvoice_translation_db`: quản lý bản dịch (`poi_translation`), cache âm thanh TTS (`tts_audio_cache`).
-  - `saigonvoice_analytics_db`: lưu trữ nhật ký sự kiện tương tác (`analytics_event`).
-- **Tài khoản riêng biệt**: Mỗi service chỉ được cấp quyền trên database tương ứng (`content_user`, `translation_user`, `analytics_user`), ngăn chặn hoàn toàn truy cập chéo.
-
-### 2.2. Kiểm Soát Cổng Vào Tại API Gateway
-- **Chặn đường dẫn bất thường (`PathGuardFilter`)**: Chạy ở mức ưu tiên cao nhất (`HIGHEST_PRECEDENCE`), từ chối ngay lập tức với mã `HTTP 400 Bad Request` đối với các request chứa ký tự mã hóa URL (`%`), tham số ma trận (`;`), ký tự gạch chéo ngược (`\`), dấu chấm lùi thư mục (`/../`, `/./`), ký tự điều khiển hoặc ký tự non-ASCII.
-- **Tuyến công khai giới hạn**: Dưới tiền tố `/api/content`, chỉ cho phép phương thức `GET` đối với các tài nguyên `categories`, `pois`, `routes`, `zones`.
-- **Bảo vệ endpoint nội bộ (`InternalPathBlockFilter`)**: Mọi request từ bên ngoài vào `/api/content/internal/**` đều bị chặn và trả về `HTTP 404 Not Found`. Header `X-Internal-Api-Key` từ client bị loại bỏ trước khi chuyển tiếp.
-- **Xác thực quản trị viên (`AdminAuthGlobalFilter`)**: Các tuyến `/api/content/admin/**` và `/api/analytics/summary` bắt buộc phải có header `X-Admin-Key` hợp lệ (so sánh bằng `MessageDigest.isEqual` theo thời gian hằng số để chống timing attack). Header này không được chuyển tiếp downstream.
-- **Giới hạn tần suất gọi (`AnalyticsRateLimitGlobalFilter`)**: Tuyến `POST /api/analytics/events` áp dụng bộ lọc giới hạn 60 request/phút theo từng địa chỉ IP của client. Request vượt ngưỡng sẽ nhận mã lỗi `HTTP 429 Too Many Requests` kèm header `Retry-After`.
-
----
-
-## 3. Cấu Trúc Thư Mục Dự Án
+## 📁 3. Cấu Trúc Thư Mục Dự Án (Repository Structure)
 
 ```
 Nhom3_CNPM/
 ├── backend/
-│   ├── api-gateway/              # Spring Cloud Gateway (Port container: 8080, host: 18080)
-│   ├── content-service/          # Quản lý Zone, Route, POI, xuất bản sự kiện (Port: 8085)
-│   ├── location-service/         # Xử lý tọa độ GPS, tìm điểm lân cận, quét QR (Port: 8082)
-│   ├── translation-tts-service/  # Dịch (provider MyMemory qua email trong .env, fallback "seed" ghi placeholder "[en] ..."), TTS (edge-tts; nếu lỗi TTS thì POI nhận trạng thái FAILED_TTS và frontend fallback sang Web Speech API) (Port: 8083)
-│   └── analytics-service/        # Thu thập và tổng hợp sự kiện tương tác (Port: 8081)
+│   ├── api-gateway/              # Spring Cloud Gateway định tuyến, bảo mật và rate limiting
+│   ├── auth-service/             # Quản lý tài khoản, JWT token, xác thực email qua SMTP
+│   ├── content-service/          # Quản lý POI, Zone, Route, Danh mục & Sản phẩm Ẩm thực
+│   ├── location-service/         # Xử lý tọa độ GPS, bán kính kích hoạt và tra cứu mã QR
+│   ├── translation-tts-service/  # Dịch thuật đa ngôn ngữ và tạo file âm thanh TTS
+│   └── analytics-service/        # Thống kê lượt nghe, lượt quét QR theo thời gian thực
+├── frontend/
+│   ├── src/
+│   │   ├── api/                  # Axios HTTP client, token store và xử lý lỗi tập trung
+│   │   ├── components/           # UI Components (Header, AuthModal, CartDialog...)
+│   │   ├── content/              # Dữ liệu 5 POIs Sài Gòn, từ điển đa ngôn ngữ (vi, en, ko, ja, zh)
+│   │   ├── context/              # React Context (AuthContext, CartContext, ToastContext)
+│   │   ├── hooks/                # Custom React hooks (useAudioPlayer, useNavbarLanguage...)
+│   │   ├── pages/                # Các trang: NearbyPage (Bản đồ), ScanPage, Shop, Orders...
+│   │   ├── styles/               # Design System CSS (bảng màu di sản Sài Gòn, responsive)
+│   │   ├── test/                 # 13 Test suites (62 unit & integration tests với Vitest)
+│   │   └── types/                # TypeScript type definitions
+│   ├── package.json
+│   └── vite.config.ts
 ├── docker/
-│   └── init-databases.sql        # Script khởi tạo 3 CSDL và 3 user trên SQL Server
-├── docs/
-│   ├── architecture.md           # Tài liệu kiến trúc hệ thống chi tiết
-│   ├── event-contract.md         # Đặc tả hợp đồng sự kiện RabbitMQ giữa các service
-│   ├── analytics-contract.md     # Đặc tả API và sự kiện của analytics-service
-│   └── LOCAL_DEV.md              # Hướng dẫn quy ước chạy môi trường local
-├── .github/workflows/            # 5 CI workflows kiểm thử và build Docker cho từng service
-├── docker-compose.yml            # Khởi chạy toàn bộ hạ tầng và các microservices
-├── .env.example                  # File mẫu khai báo các biến môi trường
+│   └── init-databases.sql        # Script khởi tạo các CSDL phân lập trên SQL Server
+├── docs/                         # Tài liệu đặc tả kiến trúc, API và hợp đồng sự kiện
+├── docker-compose.yml            # Khởi chạy toàn bộ hệ thống Microservices & Hạ tầng
+├── .env.example                  # Mẫu biến môi trường cấu hình
 └── README.md
 ```
 
 ---
 
-## 4. Hướng Dẫn Chạy Toàn Bộ Hệ Thống (Local Run)
+## 🔌 4. Bảng Phân Bổ Cổng Dịch Vụ (Service Ports)
 
-### 4.1. Khởi chạy bằng Docker Compose
-Yêu cầu: Đã cài đặt **Docker Desktop**.
-
-```bash
-# 1. Tạo file cấu hình môi trường từ mẫu
-cp .env.example .env
-
-# 2. Khởi chạy toàn bộ stack hạ tầng và services
-docker compose up -d --build
-
-# 3. Hoặc khởi chạy từng service theo tên
-docker compose up -d rabbitmq mssql mssql-db-init content-service location-service translation-tts-service analytics-service api-gateway
-```
-
-### 4.2. Bảng Phân Bổ Cổng Dịch Vụ
-
-| Service | Cổng Host | Cổng Container | Ghi chú |
-|---|---|---|---|
-| `api-gateway` | `18080` | `8080` | Điểm tiếp nhận request tập trung |
-| `content-service` | `8085` | `8085` | Quản lý nội dung và xuất bản sự kiện |
-| `location-service` | `8082` | `8082` | Xử lý tọa độ GPS và QR token |
-| `translation-tts-service` | `8083` | `8083` | Dịch thuật đa ngôn ngữ (provider MyMemory cấu hình qua email trong .env, fallback "seed" ghi placeholder "[en] ..."); sinh âm thanh qua edge-tts (nếu lỗi TTS thì POI nhận trạng thái FAILED_TTS và frontend fallback sang Web Speech API) |
-| `analytics-service` | `8081` | `8081` | Thống kê và theo dõi tương tác |
-| `mssql` | `1433` | `1433` | Microsoft SQL Server 2022 (chứa 3 DB) |
-| `rabbitmq` | `5672` | `5672` | AMQP Message Broker |
-| RabbitMQ Management | `15800` | `15672` | Dashboard quản trị hàng đợi |
-
-### 4.3. Trạng Thái Triển Khai
-Deploy: chưa chốt
+| Dịch vụ / Ứng dụng | Cổng Host | Cổng Nội bộ | Công nghệ chính | Chức năng chính |
+|---|---|---|---|---|
+| **Frontend Web** | `5173` | `5173` | React 18, Vite, TypeScript | Giao diện du khách & bản đồ du lịch |
+| **API Gateway** | `18080` | `8080` | Spring Cloud Gateway | Điểm tiếp nhận request tập trung |
+| **Content Service** | `8085` | `8085` | Spring Boot 3, Flyway, JPA | Quản lý điểm tham quan, ẩm thực |
+| **Location Service** | `8082` | `8082` | Spring Boot 3, OpenFeign | Tính toán GPS và mã QR |
+| **Translation & TTS** | `8083` | `8083` | Spring Boot 3, Edge-TTS | Dịch thuật tự động và tạo giọng đọc |
+| **Analytics Service** | `8081` | `8081` | Spring Boot 3, RabbitMQ | Thống kê phân tích dữ liệu du lịch |
+| **Auth Service** | `8086` | `8086` | Spring Boot 3, JJWT, Mail | Đăng ký, đăng nhập, bảo mật JWT |
+| **SQL Server 2022** | `1433` | `1433` | MS SQL Server 2022 | Lưu trữ dữ liệu phân lập (4 DB) |
+| **RabbitMQ Broker** | `5672` | `5672` | RabbitMQ 3.13 | Điều phối sự kiện bất đồng bộ |
+| **RabbitMQ Dashboard** | `15800` | `15672` | RabbitMQ Management UI | Giao diện giám sát hàng đợi tin nhắn |
 
 ---
 
-## 5. Hướng Dẫn Kiểm Thử & Xác Minh (Verification)
+---
 
-### 5.1. Chạy Kiểm Thử Tự Động (Maven)
-Tests run: NOT EXECUTED (chạy trong môi trường container JDK 17).
+## 🌐 5. Danh Sách API Endpoints Chính (Core REST APIs)
 
-Các lệnh chạy kiểm thử cho từng module khi có Maven:
+Toàn bộ các yêu cầu từ Client đều đi qua **API Gateway** (`http://localhost:18080`):
+
+| Phân hệ / Service | Phương thức | Endpoint | Mô tả chức năng |
+|---|---|---|---|
+| **Auth Service** | `POST` | `/api/v1/auth/register` | Đăng ký tài khoản du khách mới |
+| | `POST` | `/api/v1/auth/login` | Đăng nhập, nhận JWT Access Token & Refresh Cookie |
+| | `POST` | `/api/v1/auth/refresh` | Làm mới phiên đăng nhập bằng Refresh Token |
+| | `POST` | `/api/v1/auth/logout` | Đăng xuất và thu hồi Refresh Token |
+| | `GET` | `/api/v1/auth/me` | Lấy thông tin tài khoản đang đăng nhập |
+| **Content Service** | `GET` | `/api/v1/content/pois` | Danh sách các điểm tham quan di sản Sài Gòn |
+| | `GET` | `/api/v1/content/pois/{slug}` | Chi tiết điểm tham quan và bản dịch đa ngữ |
+| | `GET` | `/api/v1/content/products` | Danh sách món ăn ẩm thực và thức uống |
+| | `GET` | `/api/v1/content/products/{slug}` | Chi tiết món ăn kèm giá và mô tả |
+| **Location Service** | `GET` | `/api/v1/locations/nearby` | Tìm điểm du lịch gần nhất dựa theo GPS du khách |
+| | `GET` | `/api/v1/locations/scan/{code}` | Lấy thông tin thuyết minh khi quét mã QR tại điểm |
+| **TTS & Dịch thuật** | `POST` | `/api/v1/tts/synthesize` | Tạo âm thanh thuyết minh đa ngữ qua edge-tts |
+| **Analytics Service**| `POST` | `/api/v1/analytics/events` | Ghi nhận lượt nghe thuyết minh và quét mã QR |
+
+---
+
+## 🚀 6. Hướng Dẫn Cài Đặt & Khởi Chạy (Getting Started)
+
+### 6.1. Cấu hình Biến Môi trường (.env)
+
+Sao chép file cấu hình mẫu từ thư mục gốc:
+
 ```bash
+cp .env.example .env
+```
+
+Các biến môi trường quan trọng:
+- `MSSQL_SA_PASSWORD`: Mật khẩu tài khoản quản trị `sa` của SQL Server.
+- `CONTENT_DB_USER` / `CONTENT_DB_PASSWORD`: Thông tin truy cập CSDL Content.
+- `AUTH_DB_USER` / `AUTH_DB_PASSWORD`: Thông tin truy cập CSDL Auth.
+- `JWT_SECRET`: Khóa bí mật dùng ký và xác thực mã JWT Token.
+- `RABBITMQ_DEFAULT_USER` / `RABBITMQ_DEFAULT_PASS`: Tài khoản RabbitMQ Broker.
+
+### 6.2. Khởi chạy Backend bằng Docker Compose
+
+**Yêu cầu**: Đã cài đặt Docker Desktop.
+
+```bash
+# Khởi chạy toàn bộ hạ tầng CSDL, Message Queue và các Microservices
+docker compose up -d --build
+
+# Kiểm tra trạng thái các container đang chạy
+docker compose ps
+```
+
+### 6.3. Khởi chạy Frontend (React + Vite)
+
+**Yêu cầu**: Node.js 18+ và npm.
+
+```bash
+# 1. Di chuyển vào thư mục frontend
+cd frontend
+
+# 2. Cài đặt các thư viện phụ thuộc
+npm install
+
+# 3. Khởi chạy môi trường phát triển (Dev Server)
+npm run dev
+```
+
+Truy cập giao diện tại: **http://localhost:5173**
+
+---
+
+## 🧪 7. Kiểm Thử Hệ Thống (Automated Testing)
+
+Dự án trang bị hệ thống kiểm thử tự động toàn diện cho cả Backend và Frontend:
+
+### 7.1. Kiểm thử Frontend (Vitest & React Testing Library)
+
+```bash
+cd frontend
+
+# Chạy toàn bộ 13 test suites (62 tests)
+npm test -- --run
+
+# Kiểm tra kiểu dữ liệu TypeScript và build bundle sản xuất
+npm run build
+```
+
+> **Kết quả kiểm thử Frontend**:
+> - **13/13 Test Files passed (100%)**
+> - **62/62 Tests passed (100%)** bao gồm:
+>   - Kiểm tra bản đồ di sản Leaflet & OpenStreetMap.
+>   - Kiểm tra chuyển đổi đa ngôn ngữ và phát thuyết minh tiếng Anh `en-US`.
+>   - Kiểm tra fallback ngôn ngữ khi thiếu file giọng đọc.
+>   - Kiểm tra giả lập GPS và tự động thuyết minh khi tới gần.
+>   - Kiểm tra luồng xác thực Auth Modal, giỏ hàng CartContext, và điều hướng Header.
+
+### 7.2. Kiểm thử Backend (Maven)
+
+```bash
+# Chạy kiểm thử cho từng microservice
 mvn -f backend/content-service/pom.xml test
 mvn -f backend/location-service/pom.xml test
 mvn -f backend/translation-tts-service/pom.xml test
 mvn -f backend/analytics-service/pom.xml test
+mvn -f backend/auth-service/pom.xml test
 mvn -f backend/api-gateway/pom.xml test
-```
-
-### 5.2. Kiểm Tra Các Tuyến API Qua Gateway
-```bash
-# 1. Lấy danh mục điểm dừng (Công khai - HTTP 200)
-curl -X GET http://localhost:18080/api/content/categories
-
-# 2. Lấy danh sách điểm dừng du lịch (Công khai - HTTP 200)
-curl -X GET http://localhost:18080/api/content/pois
-
-# 3. Tra cứu điểm dừng theo mã QR qua location-service (HTTP 200 hoặc HTTP 404 nếu không tìm thấy)
-curl -X GET http://localhost:18080/api/location/qr/sample-token
-
-# 4. Gọi endpoint quản trị không kèm header khóa (Kỳ vọng: HTTP 401 Unauthorized)
-curl -X GET http://localhost:18080/api/analytics/summary
-
-# 5. Gửi sự kiện thống kê tương tác (Kỳ vọng: HTTP 202 Accepted)
-curl -X POST http://localhost:18080/api/analytics/events \
-  -H "Content-Type: application/json" \
-  -d '{"eventType":"SCAN","poiId":1,"languageCode":"vi","triggerType":"QR"}'
 ```
 
 ---
 
-## 6. Kịch Bản Thuyết Trình & Chấm Điểm Đồ Án
-Sẽ viết sau khi chạy E2E
+## 👥 8. Thông Tin Đồ Án & Thành Viên (Team Members)
+
+- **Môn học**: Công nghệ Phần mềm (CNPM) — Nhóm 3
+- **Đề tài**: Nền tảng hướng dẫn viên du lịch số tự động thuyết minh Sài Gòn (SaigonVoice)
+- **Repository**: [https://github.com/congtinh06/Nhom3_CNPM](https://github.com/congtinh06/Nhom3_CNPM)
+- **Công nghệ**: React 18, TypeScript, Vite, Spring Boot 3, SQL Server 2022, RabbitMQ, Docker Compose, Leaflet OSM.

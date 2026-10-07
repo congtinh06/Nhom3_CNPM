@@ -1,10 +1,10 @@
 -- ==============================================================================
--- SaigonVoice — Script khởi tạo 3 Databases & 3 Logins độc lập trên SQL Server 2022
+-- SaigonVoice — Script khởi tạo 4 Databases & 4 Logins độc lập trên SQL Server 2022
 -- Đảm bảo Idempotent (chạy lại không lỗi).
 -- Collation: Vietnamese_100_CI_AS (chuẩn Unicode phân biệt dấu thanh tiếng Việt)
 -- ==============================================================================
 
--- 1. TẠO 3 DATABASE ĐỘC LẬP
+-- 1. TẠO 4 DATABASE ĐỘC LẬP
 IF DB_ID('saigonvoice_content_db') IS NULL
 BEGIN
     PRINT 'Creating database [saigonvoice_content_db]...';
@@ -23,6 +23,13 @@ IF DB_ID('saigonvoice_analytics_db') IS NULL
 BEGIN
     PRINT 'Creating database [saigonvoice_analytics_db]...';
     CREATE DATABASE saigonvoice_analytics_db COLLATE Vietnamese_100_CI_AS;
+END
+GO
+
+IF DB_ID('saigonvoice_auth_db') IS NULL
+BEGIN
+    PRINT 'Creating database [saigonvoice_auth_db]...';
+    CREATE DATABASE saigonvoice_auth_db COLLATE Vietnamese_100_CI_AS;
 END
 GO
 
@@ -66,6 +73,19 @@ BEGIN
 END
 GO
 
+-- auth_user
+IF NOT EXISTS (SELECT * FROM sys.server_principals WHERE name = '$(AUTH_DB_USER)')
+BEGIN
+    PRINT 'Creating login [$(AUTH_DB_USER)]...';
+    CREATE LOGIN [$(AUTH_DB_USER)] WITH PASSWORD = '$(AUTH_DB_PASSWORD)', DEFAULT_DATABASE = saigonvoice_auth_db, CHECK_POLICY = OFF;
+END
+ELSE
+BEGIN
+    PRINT 'Updating password for login [$(AUTH_DB_USER)]...';
+    ALTER LOGIN [$(AUTH_DB_USER)] WITH PASSWORD = '$(AUTH_DB_PASSWORD)';
+END
+GO
+
 -- 3. GÁN USER VÀ PHÂN QUYỀN CÔ LẬP TRÊN TỪNG DATABASE (KHÔNG TRUY CẬP CHÉO)
 -- saigonvoice_content_db: Chỉ content_user có quyền
 USE saigonvoice_content_db;
@@ -100,5 +120,16 @@ GO
 ALTER ROLE db_owner ADD MEMBER [$(ANALYTICS_DB_USER)];
 GO
 
-PRINT 'All 3 databases, logins, and isolated permissions configured successfully!';
+-- saigonvoice_auth_db: Chỉ auth_user có quyền
+USE saigonvoice_auth_db;
+GO
+IF NOT EXISTS (SELECT * FROM sys.database_principals WHERE name = '$(AUTH_DB_USER)')
+BEGIN
+    CREATE USER [$(AUTH_DB_USER)] FOR LOGIN [$(AUTH_DB_USER)];
+END
+GO
+ALTER ROLE db_owner ADD MEMBER [$(AUTH_DB_USER)];
+GO
+
+PRINT 'All 4 databases, logins, and isolated permissions configured successfully!';
 GO

@@ -1,115 +1,95 @@
-import React, { useEffect, useState } from 'react';
-import { api } from './api/client';
-import { PoiSummary } from './types';
-import { MapPin, Volume2, Compass, QrCode, RefreshCw } from 'lucide-react';
+import React, { Suspense, lazy } from 'react';
+import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
+import { ToastProvider } from './context/ToastContext';
+import { CartProvider } from './context/CartContext';
+import { AuthProvider } from './context/AuthContext';
+import { Header } from './components/layout/Header';
+import { Footer } from './components/layout/Footer';
+import { CartDialog } from './components/cart/CartDialog';
+import { BackToTop } from './components/common/BackToTop';
+import { HomePage } from './pages/HomePage';
+import { OrdersPage } from './pages/OrdersPage';
+import { ScanPage } from './pages/ScanPage';
+import { NotFoundPage } from './pages/NotFoundPage';
+import { ResetPasswordPage } from './pages/ResetPasswordPage';
+import { VerifyEmailPage } from './pages/VerifyEmailPage';
+import { AccountPage } from './pages/AccountPage';
+import { ProductListPage } from './pages/ProductListPage';
+import { ProductDetailPage } from './pages/ProductDetailPage';
+import { CheckoutPage } from './pages/CheckoutPage';
+import { PaymentResultPage } from './pages/PaymentResultPage';
+import { AuthModal } from './components/auth/AuthModal';
 
-export const App: React.FC = () => {
-  const [pois, setPois] = useState<PoiSummary[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
+import { useSmoothScroll } from './hooks/useSmoothScroll';
 
-  const fetchPois = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await api.getPois();
-      setPois(data);
-    } catch (err: any) {
-      console.error('Lỗi khi tải danh sách POI:', err);
-      setError(err?.message || 'Không thể kết nối đến máy chủ API Gateway.');
-    } finally {
-      setLoading(false);
-    }
-  };
+const NearbyPage = lazy(() => import('./pages/NearbyPage'));
+const AdminPage = lazy(() => import('./pages/AdminPage'));
 
-  useEffect(() => {
-    fetchPois();
-  }, []);
+const AppContent: React.FC = () => {
+  useSmoothScroll();
+  const location = useLocation();
+
+  const state = location.state as {
+    backgroundLocation?: { pathname: string; search?: string; hash?: string };
+    from?: string;
+  } | null;
+
+  const isAuthModalRoute = ['/dang-nhap', '/dang-ky', '/quen-mat-khau'].includes(location.pathname);
+
+  // Background location pattern:
+  // If on an auth modal route, render either the previous backgroundLocation or fallback to homepage
+  const backgroundLocation = isAuthModalRoute
+    ? (state?.backgroundLocation || { pathname: '/', search: '', hash: '' })
+    : undefined;
 
   return (
-    <div className="container">
-      <header className="header">
-        <div className="logo-badge">
-          <Volume2 size={16} />
-          <span>SaigonVoice Audio Guide</span>
-        </div>
-        <h1 className="title">Thuyết Minh Du Lịch Tự Động TP.HCM</h1>
-        <p className="subtitle">
-          Hướng dẫn du lịch bằng giọng nói đa ngôn ngữ (Việt, Anh, Nhật, Hàn) thông qua định vị GPS và mã QR.
-        </p>
-      </header>
-
-      <div className="status-card">
-        <div className="status-item">
-          <div className={`indicator ${loading ? 'loading' : error ? 'error' : ''}`} />
-          <span>
-            {loading
-              ? 'Đang kết nối API Gateway...'
-              : error
-              ? 'Mất kết nối máy chủ'
-              : `Máy chủ hoạt động bình thường (${pois.length} điểm tham quan)`}
-          </span>
-        </div>
-        <button className="btn" onClick={fetchPois} disabled={loading}>
-          <RefreshCw size={14} className={loading ? 'spin' : ''} />
-          <span>Làm mới</span>
-        </button>
-      </div>
-
+    <>
+      <Header />
       <main>
-        <h2 className="section-title">
-          <Compass size={20} />
-          <span>Danh sách điểm du lịch (POIs)</span>
-        </h2>
-
-        {error && (
-          <div className="empty-state" style={{ color: 'var(--error)' }}>
-            <p>Lỗi tải dữ liệu: {error}</p>
-            <p style={{ marginTop: '0.5rem', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-              Hãy kiểm tra chắc chắn API Gateway cổng 18080 và content-service đang hoạt động.
-            </p>
-          </div>
-        )}
-
-        {!error && !loading && pois.length === 0 && (
-          <div className="empty-state">
-            <p>Chưa có dữ liệu điểm du lịch nào trong hệ thống.</p>
-          </div>
-        )}
-
-        <div className="poi-grid">
-          {pois.map((poi) => (
-            <div key={poi.id} className="poi-card">
-              <div className="poi-header">
-                <span className="poi-code">{poi.code}</span>
-                <h3 className="poi-name">{poi.name}</h3>
-              </div>
-
-              <div className="poi-meta">
-                {poi.address && (
-                  <div className="meta-row">
-                    <MapPin size={14} color="var(--accent)" />
-                    <span>{poi.address}</span>
-                  </div>
-                )}
-                <div className="meta-row">
-                  <QrCode size={14} color="var(--text-muted)" />
-                  <span>Token QR: <code>{poi.qrToken}</code></span>
-                </div>
-                <div className="meta-row" style={{ marginTop: '0.25rem' }}>
-                  <span className="badge">Khu vực: {poi.zoneCode}</span>
-                  {poi.categoryNameVi && (
-                    <span className="badge" style={{ marginLeft: '0.25rem' }}>
-                      {poi.categoryNameVi}
-                    </span>
-                  )}
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
+        <Suspense fallback={<div className="s sp" style={{ minHeight: '60vh', marginTop: 100 }}><p>Đang tải dữ liệu...</p></div>}>
+          <Routes location={backgroundLocation || location}>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/am-thuc" element={<ProductListPage category="FOOD" />} />
+            <Route path="/thuc-uong" element={<ProductListPage category="DRINK" />} />
+            <Route path="/am-thuc/:slug" element={<ProductDetailPage category="FOOD" />} />
+            <Route path="/thuc-uong/:slug" element={<ProductDetailPage category="DRINK" />} />
+            <Route path="/thanh-toan" element={<CheckoutPage />} />
+            <Route path="/thanh-toan/ket-qua" element={<PaymentResultPage />} />
+            <Route path="/don-hang" element={<OrdersPage />} />
+            <Route path="/qr/:token" element={<ScanPage />} />
+            <Route path="/quet-ma" element={<ScanPage />} />
+            <Route path="/thuyet-minh" element={<ScanPage />} />
+            <Route path="/diem-du-lich" element={<NearbyPage />} />
+            <Route path="/gan-toi" element={<NearbyPage />} />
+            <Route path="/quan-tri" element={<AdminPage />} />
+            <Route path="/dat-lai-mat-khau" element={<ResetPasswordPage />} />
+            <Route path="/xac-thuc-email" element={<VerifyEmailPage />} />
+            <Route path="/tai-khoan" element={<AccountPage />} />
+            <Route path="*" element={<NotFoundPage />} />
+          </Routes>
+        </Suspense>
       </main>
-    </div>
+      <Footer />
+      <CartDialog />
+      <BackToTop />
+
+      {/* Auth Modal renders as floating layer above the current / background route */}
+      {isAuthModalRoute && <AuthModal />}
+    </>
+  );
+};
+
+export const App: React.FC = () => {
+  return (
+    <BrowserRouter>
+      <AuthProvider>
+        <ToastProvider>
+          <CartProvider>
+            <AppContent />
+          </CartProvider>
+        </ToastProvider>
+      </AuthProvider>
+    </BrowserRouter>
   );
 };
 

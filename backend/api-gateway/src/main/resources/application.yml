@@ -10,10 +10,18 @@ spring:
         connect-timeout: ${GATEWAY_CONNECT_TIMEOUT_MS:3000}
         response-timeout: ${GATEWAY_RESPONSE_TIMEOUT:5s}
       routes:
+        - id: auth-service
+          uri: ${AUTH_SERVICE_URL:http://localhost:8086}
+          predicates:
+            - Path=/api/auth/**
         - id: content-service
           uri: ${CONTENT_SERVICE_URL:http://localhost:8085}
           predicates:
             - Path=/api/content/**
+        - id: content-service-admin-products
+          uri: ${CONTENT_SERVICE_URL:http://localhost:8085}
+          predicates:
+            - Path=/api/admin/products/**
         - id: location-service
           uri: ${LOCATION_SERVICE_URL:http://localhost:8082}
           predicates:

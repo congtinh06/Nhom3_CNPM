@@ -27,7 +27,7 @@ services:
 
   # ==========================================
   # 2. Microsoft SQL Server 2022 (1 Instance duy nhất trên port 1433)
-  #    Chạy 3 database độc lập: content, translation, analytics
+  #    Chạy 4 database độc lập: content, translation, analytics, auth
   # ==========================================
   mssql:
     image: mcr.microsoft.com/mssql/server:2022-latest
@@ -51,7 +51,7 @@ services:
       - saigonvoice-net
 
   # ==========================================
-  # 2b. Khởi tạo 3 Databases & 3 Logins riêng biệt (Chạy 1 lần)
+  #   2b. Khởi tạo 4 Databases & 4 Logins riêng biệt (Chạy 1 lần)
   #     Đợi mssql healthy -> chạy docker/init-databases.sql qua sqlcmd
   #     Phân quyền cô lập: mỗi user chỉ có quyền trên database của mình
   # ==========================================
@@ -69,6 +69,8 @@ services:
       TRANSLATION_DB_PASSWORD: ${TRANSLATION_DB_PASSWORD:?TRANSLATION_DB_PASSWORD is required in .env}
       ANALYTICS_DB_USER: ${ANALYTICS_DB_USER:-analytics_user}
       ANALYTICS_DB_PASSWORD: ${ANALYTICS_DB_PASSWORD:?ANALYTICS_DB_PASSWORD is required in .env}
+      AUTH_DB_USER: ${AUTH_DB_USER:-auth_user}
+      AUTH_DB_PASSWORD: ${AUTH_DB_PASSWORD:?AUTH_DB_PASSWORD is required in .env}
     volumes:
       - ./docker/init-databases.sql:/init/init-databases.sql:ro
     entrypoint: ["/bin/bash", "-c"]
@@ -94,9 +96,11 @@ services:
           -v TRANSLATION_DB_PASSWORD="$${TRANSLATION_DB_PASSWORD}" \
           -v ANALYTICS_DB_USER="$${ANALYTICS_DB_USER}" \
           -v ANALYTICS_DB_PASSWORD="$${ANALYTICS_DB_PASSWORD}" \
+          -v AUTH_DB_USER="$${AUTH_DB_USER}" \
+          -v AUTH_DB_PASSWORD="$${AUTH_DB_PASSWORD}" \
           -i /init/init-databases.sql
 
-        echo "3 databases, logins, and isolated permissions initialized successfully!"
+        echo "4 databases, logins, and isolated permissions initialized successfully!"
     networks:
       - saigonvoice-net
 
@@ -228,6 +232,45 @@ services:
     networks:
       - saigonvoice-net
 
+  # ==========================================
+  # 3b. Auth Service — Đăng ký / Đăng nhập / JWT (port 8086)
+  # ==========================================
+  auth-service:
+    build:
+      context: ./backend/auth-service
+      dockerfile: Dockerfile
+    container_name: auth-service
+    ports:
+      - "8086:8086"
+    environment:
+      JAVA_TOOL_OPTIONS: "-Xms128m -Xmx256m"
+      DB_URL: jdbc:sqlserver://mssql:1433;databaseName=saigonvoice_auth_db;encrypt=true;trustServerCertificate=true
+      DB_USERNAME: ${AUTH_DB_USER:-auth_user}
+      DB_PASSWORD: ${AUTH_DB_PASSWORD:?AUTH_DB_PASSWORD is required in .env}
+      # Bắt buộc: secret >= 32 ký tự. Để trống thì service không khởi động được (fail-closed).
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required in .env}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:5173}
+      # Cookie Secure=true chỉ chạy được sau HTTPS -> mặc định false cho môi trường dev.
+      REFRESH_COOKIE_SECURE: ${REFRESH_COOKIE_SECURE:-false}
+      MAIL_HOST: ${MAIL_HOST:-}
+      MAIL_PORT: ${MAIL_PORT:-587}
+      MAIL_USERNAME: ${MAIL_USERNAME:-}
+      MAIL_PASSWORD: ${MAIL_PASSWORD:-}
+      MAIL_FROM: ${MAIL_FROM:-SaigonVoice <no-reply@saigonvoice.local>}
+      SEED_ADMIN_EMAIL: ${SEED_ADMIN_EMAIL:-}
+      SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD:-}
+    depends_on:
+      mssql-db-init:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8086/actuator/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+    networks:
+      - saigonvoice-net
+
   api-gateway:
     build:
       context: ./backend/api-gateway
@@ -241,12 +284,15 @@ services:
       LOCATION_SERVICE_URL: http://location-service:8082
       TRANSLATION_TTS_SERVICE_URL: http://translation-tts-service:8083
       ANALYTICS_SERVICE_URL: http://analytics-service:8081
+      AUTH_SERVICE_URL: http://auth-service:8086
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost:5173}
       ADMIN_API_KEY: ${ADMIN_API_KEY:-}
     depends_on:
       content-service:
         condition: service_started
       location-service:
+        condition: service_started
+      auth-service:
         condition: service_started
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/actuator/health"]

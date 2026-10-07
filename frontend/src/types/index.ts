@@ -1,6 +1,20 @@
-// ============================================================================
-// SaigonVoice Types & DTO Interfaces (khớp trực tiếp với Backend Spring Boot)
-// ============================================================================
+export interface Category {
+  id: number;
+  code: string;
+  nameVi: string;
+  nameEn?: string;
+  iconUrl?: string | null;
+}
+
+export interface Zone {
+  id: number;
+  code: string;
+  name: string;
+  description?: string | null;
+  centerLat: number;
+  centerLng: number;
+  radiusMeters: number;
+}
 
 export interface PoiSummary {
   id: number;
@@ -34,31 +48,6 @@ export interface PoiDetail extends PoiSummary {
   fallbackLanguage: boolean;
 }
 
-export interface Zone {
-  id: number;
-  code: string;
-  name: string;
-  description?: string | null;
-  centerLat: number;
-  centerLng: number;
-  radiusMeters: number;
-}
-
-export interface Route {
-  id: number;
-  zoneId: number;
-  zoneCode: string;
-  name: string;
-  description?: string | null;
-  displayOrder: number;
-  status: string;
-  stopCount: number;
-}
-
-export interface RouteDetail extends Route {
-  stops: PoiSummary[];
-}
-
 export interface NearbyPoi {
   poiId: number;
   poiCode: string;
@@ -76,7 +65,7 @@ export interface ResolvePoiResponse {
 }
 
 export type AnalyticsEventType = 'SCAN' | 'AUDIO_PLAY';
-export type SupportedLanguage = 'vi' | 'en' | 'ja' | 'ko';
+export type SupportedLanguage = 'vi' | 'en' | 'ja' | 'ko' | 'zh';
 export type TriggerType = 'QR' | 'GPS' | 'MANUAL';
 
 export interface CreateAnalyticsEventRequest {
@@ -102,4 +91,172 @@ export interface AnalyticsSummaryResponse {
   audioCompleted: number;
   playsByLanguage: Record<string, number>;
   topPois: TopPoiStat[];
+}
+
+export type ProductCategory = 'FOOD' | 'DRINK';
+
+export interface Product {
+  id: number;
+  slug: string;
+  name: string;
+  category: ProductCategory;
+  shortDescription: string;
+  description: string;
+  price: number;
+  imagePath: string;
+  isActive: boolean;
+  sortOrder: number;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface PageResponse<T> {
+  content: T[];
+  totalPages: number;
+  totalElements: number;
+  number: number;
+  size: number;
+  first: boolean;
+  last: boolean;
+  empty: boolean;
+}
+
+export interface Drink {
+  id: number;
+  name: string;
+  price: number;
+  hue: number;
+  description: string;
+}
+
+export interface CartItem {
+  id: number;
+  name: string;
+  price: number;
+  quantity: number;
+  slug?: string;
+  category?: ProductCategory;
+  imagePath?: string;
+}
+
+export type OrderStatus = 'Chờ xác nhận' | 'Đã hủy';
+
+export type BackendOrderStatus =
+  | 'PENDING_PAYMENT'
+  | 'PAID'
+  | 'PROCESSING'
+  | 'COMPLETED'
+  | 'CANCELLED';
+
+export type PaymentMethod = 'COD' | 'MOCK_GATEWAY';
+export type PaymentStatus = 'PENDING' | 'SUCCESS' | 'FAILED';
+
+export interface BackendOrderItem {
+  productId: number;
+  productName: string;
+  unitPrice: number;
+  quantity: number;
+}
+
+export interface BackendOrder {
+  id: number;
+  orderCode: string;
+  userId?: number;
+  totalAmount: number;
+  status: BackendOrderStatus;
+  receiverName: string;
+  phone: string;
+  address: string;
+  note?: string;
+  paymentMethod?: PaymentMethod;
+  paymentStatus?: PaymentStatus;
+  items: BackendOrderItem[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateOrderPayload {
+  receiverName: string;
+  phone: string;
+  address: string;
+  note?: string;
+  paymentMethod: PaymentMethod;
+  items: {
+    productId: number;
+    quantity: number;
+  }[];
+}
+
+export interface OrderItem {
+  key: number;
+  name: string;
+  quantity: number;
+  price: number;
+}
+
+export interface Order {
+  id: string;
+  date: string;
+  status: OrderStatus;
+  total: number;
+  name: string;
+  phone: string;
+  address: string;
+  items: OrderItem[];
+}
+
+export interface SamplePlace {
+  id: number;
+  name: string;
+  group: 'ls' | 'tl' | 'cp' | 'hd';
+  hue: number;
+  description: string;
+  tip: string;
+}
+
+export type AuthRole = 'USER' | 'ADMIN';
+
+export interface AuthUser {
+  id: number;
+  fullName: string;
+  email: string;
+  role: AuthRole;
+  emailVerified: boolean;
+  createdAt?: string;
+}
+
+export interface AuthSession {
+  accessToken: string;
+  expiresIn: number;
+  tokenType: string;
+  user: AuthUser;
+}
+
+export interface AuthMessage {
+  message: string;
+}
+
+export interface RegisterPayload {
+  fullName: string;
+  email: string;
+  password: string;
+  confirmPassword: string;
+}
+
+export interface LoginPayload {
+  email: string;
+  password: string;
+  rememberMe?: boolean;
+}
+
+export interface ResetPasswordPayload {
+  token: string;
+  newPassword: string;
+  confirmPassword: string;
+}
+
+export interface ChangePasswordPayload {
+  oldPassword: string;
+  newPassword: string;
+  confirmPassword: string;
 }

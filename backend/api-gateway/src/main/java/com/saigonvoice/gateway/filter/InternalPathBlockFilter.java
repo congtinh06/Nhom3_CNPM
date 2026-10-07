@@ -82,7 +82,8 @@ public class InternalPathBlockFilter implements GlobalFilter, Ordered {
         return path.equals("/api/content/categories") ||
                 path.equals("/api/content/pois") || path.startsWith("/api/content/pois/") ||
                 path.equals("/api/content/routes") || path.startsWith("/api/content/routes/") ||
-                path.equals("/api/content/zones") || path.startsWith("/api/content/zones/");
+                path.equals("/api/content/zones") || path.startsWith("/api/content/zones/") ||
+                path.equals("/api/content/products") || path.startsWith("/api/content/products/");
     }
 
     private Mono<Void> sendNotFound(ServerWebExchange exchange) {

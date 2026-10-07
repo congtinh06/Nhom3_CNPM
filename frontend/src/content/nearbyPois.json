@@ -1,0 +1,177 @@
+[
+  {
+    "id": "poi-1",
+    "name": {
+      "vi": "Dinh Độc Lập",
+      "en": "Independence Palace",
+      "ko": "통일궁",
+      "ja": "統一会堂",
+      "zh": "统一宫"
+    },
+    "lat": 10.7770,
+    "lng": 106.6954,
+    "triggerRadius": 50,
+    "category": {
+      "vi": "Di tích lịch sử",
+      "en": "Historical Landmark",
+      "ko": "역사 유적지",
+      "ja": "歴史的史跡",
+      "zh": "历史遗迹"
+    },
+    "image": "https://images.unsplash.com/photo-1583417319070-4a69db38a482?auto=format&fit=crop&w=800&q=80",
+    "audio": {
+      "vi": "https://actions.google.com/sounds/v1/ambiences/outdoor_water_fountain.ogg",
+      "en": "https://actions.google.com/sounds/v1/ambiences/outdoor_water_fountain.ogg",
+      "ko": "https://actions.google.com/sounds/v1/ambiences/outdoor_water_fountain.ogg",
+      "ja": "https://actions.google.com/sounds/v1/ambiences/outdoor_water_fountain.ogg",
+      "zh": "https://actions.google.com/sounds/v1/ambiences/outdoor_water_fountain.ogg"
+    },
+    "transcript": {
+      "vi": "Dinh Độc Lập là biểu tượng lịch sử quốc gia đặc biệt, nơi chứng kiến thời khắc kết thúc chiến tranh Việt Nam vào ngày 30 tháng 4 năm 1975.",
+      "en": "The Independence Palace is a landmark national monument that witnessed the historic conclusion of the Vietnam War on April 30, 1975.",
+      "ko": "통일궁은 1975년 4월 30일 베트남 전쟁 종결을 목격한 국가 특별 역사적 상징입니다.",
+      "ja": "統一会堂は、1975年4月30日のベトナム戦争終結を見届けた国家の特別な歴史的象徴です。",
+      "zh": "统一宫是国家特别历史象征，见证了1975年4月30日越南战争结束的历史时刻。"
+    }
+  },
+  {
+    "id": "poi-2",
+    "name": {
+      "vi": "Nhà thờ Đức Bà Sài Gòn",
+      "en": "Notre Dame Cathedral of Saigon",
+      "ko": "사이공 노트르담 대성당",
+      "ja": "サイゴン大聖堂",
+      "zh": "西贡圣母大教堂"
+    },
+    "lat": 10.7798,
+    "lng": 106.6990,
+    "triggerRadius": 45,
+    "category": {
+      "vi": "Tâm linh & Kiến trúc",
+      "en": "Spiritual & Architectural",
+      "ko": "영적 & 건축",
+      "ja": "精神＆建築",
+      "zh": "宗教与建筑"
+    },
+    "image": "https://images.unsplash.com/photo-1596422846543-75c6fc197f07?auto=format&fit=crop&w=800&q=80",
+    "audio": {
+      "vi": "https://actions.google.com/sounds/v1/ambiences/church_bells_distant.ogg",
+      "en": "https://actions.google.com/sounds/v1/ambiences/church_bells_distant.ogg",
+      "ko": "",
+      "ja": "https://actions.google.com/sounds/v1/ambiences/church_bells_distant.ogg",
+      "zh": ""
+    },
+    "transcript": {
+      "vi": "Nhà thờ Đức Bà là công trình kiến trúc Gothic và Roman tráng lệ, được xây dựng bằng gạch đỏ vận chuyển trực tiếp từ cảng Marseille của Pháp.",
+      "en": "Notre Dame Cathedral is a magnificent blend of Romanesque and Gothic architecture, built with red bricks shipped directly from Marseille, France.",
+      "ko": "사이공 노트르담 대성당은 프랑스 마르세유에서 직수입한 붉은 벽돌로 지어진 로마네스크와 고딕 양식의 웅장한 건축물입니다.",
+      "ja": "サイゴン大聖堂は、フランスのマルセイユ港から直輸入された赤レンガで建設された、ロマネスク様式とゴシック様式の壮大な建築物です。",
+      "zh": "西贡圣母大教堂是一座宏伟的罗马式和哥特式建筑，采用直接从法国马赛港运来的红砖建造。"
+    }
+  },
+  {
+    "id": "poi-3",
+    "name": {
+      "vi": "Bưu điện Trung tâm Sài Gòn",
+      "en": "Saigon Central Post Office",
+      "ko": "사이공 중앙 우체국",
+      "ja": "サイゴン中央郵便局",
+      "zh": "西贡中心邮局"
+    },
+    "lat": 10.7800,
+    "lng": 106.6999,
+    "triggerRadius": 40,
+    "category": {
+      "vi": "Kiến trúc Pháp cổ",
+      "en": "French Colonial Architecture",
+      "ko": "프랑스 고전 건축",
+      "ja": "フランス古典建築",
+      "zh": "法国古典建筑"
+    },
+    "image": "https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?auto=format&fit=crop&w=800&q=80",
+    "audio": {
+      "vi": "https://actions.google.com/sounds/v1/ambiences/office_ambience.ogg",
+      "en": "https://actions.google.com/sounds/v1/ambiences/office_ambience.ogg",
+      "ko": "https://actions.google.com/sounds/v1/ambiences/office_ambience.ogg",
+      "ja": "",
+      "zh": "https://actions.google.com/sounds/v1/ambiences/office_ambience.ogg"
+    },
+    "transcript": {
+      "vi": "Bưu điện Trung tâm Sài Gòn nổi bật với mái vòm cong cổ điển, sàn gạch hoa văn tinh tế và các bức bản đồ địa lý lịch sử vẽ tay trên tường.",
+      "en": "Saigon Central Post Office is famed for its grand vaulted ceilings, ornate tile floors, and vintage hand-drawn wall maps of historical Indochina.",
+      "ko": "사이공 중앙 우체국은 고전적인 아치형 천장, 정교한 타일 바닥, 벽에 그려진 역사적인 손그림 지도로 유명합니다.",
+      "ja": "サイゴン中央郵便局は、クラシックなアーチ型の天井、繊細な模様のタイル床、壁に手描きされた歴史的な地理地図で有名です。",
+      "zh": "西贡中心邮局以古典的拱形穹顶、精致的花砖地板以及墙上手绘的历史地理地图而著称。"
+    }
+  },
+  {
+    "id": "poi-4",
+    "name": {
+      "vi": "Chợ Bến Thành",
+      "en": "Ben Thanh Market",
+      "ko": "벤탄 시장",
+      "ja": "ベンタイン市場",
+      "zh": "滨城市场"
+    },
+    "lat": 10.7725,
+    "lng": 106.6980,
+    "triggerRadius": 55,
+    "category": {
+      "vi": "Văn hóa & Mua sắm",
+      "en": "Culture & Shopping",
+      "ko": "문화 & 쇼핑",
+      "ja": "文化＆ショッピング",
+      "zh": "文化与购物"
+    },
+    "image": "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=800&q=80",
+    "audio": {
+      "vi": "https://actions.google.com/sounds/v1/ambiences/mall_indoor_walking.ogg",
+      "en": "https://actions.google.com/sounds/v1/ambiences/mall_indoor_walking.ogg",
+      "ko": "https://actions.google.com/sounds/v1/ambiences/mall_indoor_walking.ogg",
+      "ja": "https://actions.google.com/sounds/v1/ambiences/mall_indoor_walking.ogg",
+      "zh": ""
+    },
+    "transcript": {
+      "vi": "Chợ Bến Thành là khu chợ sầm uất với tháp đồng hồ bốn mặt biểu tượng, nơi hội tụ đủ loại quà lưu niệm, đồ thủ công và ẩm thực đường phố Sài Gòn.",
+      "en": "Ben Thanh Market is a bustling shopping hub featuring the iconic four-dial clock tower, packed with crafts, textiles, and quintessential street food.",
+      "ko": "벤탄 시장은 상징적인 4면 시계탑이 있는 번화한 시장으로, 기념품, 공예품, 사이공의 정통 길거리 음식이 모여 있는 곳입니다.",
+      "ja": "ベンタイン市場は、象徴的な4面時計台を持つ賑やかな市場で、お土産、工芸品、サイゴンの代表的な屋台グルメが集まっています。",
+      "zh": "滨城市场是一个繁华的综合市场，拥有标志性的四面钟楼，汇聚了各类纪念品、手工艺品以及正宗的西贡街头美食。"
+    }
+  },
+  {
+    "id": "poi-5",
+    "name": {
+      "vi": "Bảo tàng Chứng tích Chiến tranh",
+      "en": "War Remnants Museum",
+      "ko": "전쟁 증적 박물관",
+      "ja": "戦争証跡博物館",
+      "zh": "战争遗迹博物馆"
+    },
+    "lat": 10.7794,
+    "lng": 106.6923,
+    "triggerRadius": 45,
+    "category": {
+      "vi": "Bảo tàng lịch sử",
+      "en": "War History Museum",
+      "ko": "역사 박물관",
+      "ja": "歴史博物館",
+      "zh": "历史博物馆"
+    },
+    "image": "https://images.unsplash.com/photo-1579783902614-a3fb3927b675?auto=format&fit=crop&w=800&q=80",
+    "audio": {
+      "vi": "https://actions.google.com/sounds/v1/ambiences/hallway_ambient.ogg",
+      "en": "https://actions.google.com/sounds/v1/ambiences/hallway_ambient.ogg",
+      "ko": "",
+      "ja": "https://actions.google.com/sounds/v1/ambiences/hallway_ambient.ogg",
+      "zh": "https://actions.google.com/sounds/v1/ambiences/hallway_ambient.ogg"
+    },
+    "transcript": {
+      "vi": "Bảo tàng Chứng tích Chiến tranh lưu giữ hàng ngàn tư liệu, hình ảnh và hiện vật phản ánh khát vọng hòa bình và hàn gắn vết thương sau chiến tranh.",
+      "en": "The War Remnants Museum houses thousands of photographic records and military artifacts depicting the pursuit of lasting peace and reconciliation.",
+      "ko": "전쟁 증적 박물관은 평화에 대한 갈망과 전쟁의 상처 치유를 보여주는 수천 점의 기록, 사진, 유물을 소장하고 있습니다.",
+      "ja": "戦争証跡博物館は、平和への希求と戦争の傷跡の癒しを伝える数千点に及ぶ資料、写真、遺物を収蔵しています。",
+      "zh": "战争遗迹博物馆收藏了数千份珍贵史料、历史照片和实物展品，展现了人们对和平的渴望与战后创伤的弥合。"
+    }
+  }
+]

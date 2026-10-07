@@ -43,8 +43,14 @@ public class AnalyticsEventListener {
             log.info("Successfully persisted analytics event: eventId={}, eventType={}, poiId={}",
                     entity.getEventId(), entity.getEventType(), entity.getPoiId());
         } catch (DataIntegrityViolationException ex) {
-            log.warn("Duplicate event_id caught during save (DataIntegrityViolationException), skipping: {}",
-                    message.getEventId());
+            if (message.getEventId() != null && analyticsEventRepository.existsByEventId(message.getEventId())) {
+                log.info("Duplicate event_id caught during save (DataIntegrityViolationException), skipping: {}",
+                        message.getEventId());
+                return;
+            }
+            log.error("DataIntegrityViolationException during save for eventId={}, eventType={}: {}",
+                    message.getEventId(), message.getEventType(), ex.getMessage(), ex);
+            throw ex;
         }
     }
 }

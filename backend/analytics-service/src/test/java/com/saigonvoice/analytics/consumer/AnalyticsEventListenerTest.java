@@ -16,6 +16,7 @@ import java.time.LocalDateTime;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -88,11 +89,35 @@ class AnalyticsEventListenerTest {
                 .occurredAt(LocalDateTime.now())
                 .build();
 
-        when(analyticsEventRepository.existsByEventId("conflict-uuid")).thenReturn(false);
+        // First check returns false, re-check in catch returns true (concurrent insert)
+        when(analyticsEventRepository.existsByEventId("conflict-uuid")).thenReturn(false, true);
         when(analyticsEventRepository.save(any(AnalyticsEvent.class)))
                 .thenThrow(new DataIntegrityViolationException("Violation of UNIQUE KEY constraint"));
 
         assertDoesNotThrow(() -> analyticsEventListener.handleAnalyticsEvent(message));
+
+        verify(analyticsEventRepository, times(1)).save(any(AnalyticsEvent.class));
+    }
+
+    @Test
+    @DisplayName("DataIntegrityViolationException on non-duplicate error (CHECK or NOT NULL) is rethrown to DLQ")
+    void testHandleAnalyticsEvent_dataIntegrityViolation_nonDuplicate_rethrows() {
+        AnalyticsEventMessage message = AnalyticsEventMessage.builder()
+                .eventId("invalid-check-uuid")
+                .eventType("INVALID_TYPE")
+                .poiId(3L)
+                .languageCode("ja")
+                .triggerType("GPS")
+                .occurredAt(LocalDateTime.now())
+                .build();
+
+        // Both checks return false (not a duplicate eventId)
+        when(analyticsEventRepository.existsByEventId("invalid-check-uuid")).thenReturn(false);
+        when(analyticsEventRepository.save(any(AnalyticsEvent.class)))
+                .thenThrow(new DataIntegrityViolationException("Violation of CHECK constraint"));
+
+        assertThrows(DataIntegrityViolationException.class,
+                () -> analyticsEventListener.handleAnalyticsEvent(message));
 
         verify(analyticsEventRepository, times(1)).save(any(AnalyticsEvent.class));
     }

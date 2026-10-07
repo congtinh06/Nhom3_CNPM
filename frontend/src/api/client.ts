@@ -1,12 +1,19 @@
-import axios from 'axios';
+import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 import {
+  Category,
+  Zone,
   PoiSummary,
   PoiDetail,
   NearbyPoi,
   ResolvePoiResponse,
   CreateAnalyticsEventRequest,
   AnalyticsSummaryResponse,
+  AuthSession,
+  Product,
+  ProductCategory,
+  PageResponse,
 } from '../types';
+import { tokenStore, notifyLoggedOut } from './tokenStore';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 
@@ -15,69 +22,133 @@ export const apiClient = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 10000,
+  // Bắt buộc để trình duyệt gửi/nhận cookie refresh HttpOnly khi API khác origin.
+  withCredentials: true,
+  timeout: 15000,
 });
 
+type RetriableConfig = InternalAxiosRequestConfig & { _retried?: boolean };
+
+// Các endpoint tự thân đã xử lý 401 (hoặc không nên thử refresh khi thất bại).
+const NO_REFRESH_PATHS = [
+  '/api/auth/login',
+  '/api/auth/refresh',
+  '/api/auth/logout',
+  '/api/auth/logout-all',
+];
+
+let refreshPromise: Promise<string> | null = null;
+
+function refreshAccessToken(): Promise<string> {
+  if (!refreshPromise) {
+    refreshPromise = apiClient
+      .post<AuthSession>('/api/auth/refresh', {})
+      .then((response) => {
+        tokenStore.set(response.data.accessToken);
+        return response.data.accessToken;
+      })
+      .finally(() => {
+        refreshPromise = null;
+      });
+  }
+  return refreshPromise;
+}
+
+apiClient.interceptors.request.use((config) => {
+  const token = tokenStore.get();
+  if (token && !config.headers.has?.('Authorization')) {
+    config.headers.set('Authorization', `Bearer ${token}`);
+  }
+  return config;
+});
+
+apiClient.interceptors.response.use(
+  (response) => response,
+  async (error: AxiosError) => {
+    const config = error.config as RetriableConfig | undefined;
+    const status = error.response?.status;
+    const url = config?.url ?? '';
+    const isSelfRefreshing = NO_REFRESH_PATHS.some((path) => url.includes(path));
+
+    if (status !== 401 || !config || config._retried || isSelfRefreshing || !tokenStore.get()) {
+      return Promise.reject(error);
+    }
+
+    config._retried = true;
+
+    try {
+      const newToken = await refreshAccessToken();
+      const headers = config.headers as unknown as {
+        set?: (key: string, value: string) => void;
+      };
+      if (typeof headers?.set === 'function') {
+        headers.set('Authorization', `Bearer ${newToken}`);
+      }
+      return apiClient.request(config);
+    } catch {
+      notifyLoggedOut();
+      return Promise.reject(error);
+    }
+  }
+);
+
+
 export const api = {
-  /**
-   * Lấy danh sách điểm du lịch POI (tùy chọn lọc theo zoneId)
-   * GET /api/content/pois
-   */
-  getPois: async (zoneId?: number): Promise<PoiSummary[]> => {
+  getCategories: async (signal?: AbortSignal): Promise<Category[]> => {
+    const response = await apiClient.get<Category[]>('/api/content/categories', { signal });
+    return response.data;
+  },
+
+  getZones: async (signal?: AbortSignal): Promise<Zone[]> => {
+    const response = await apiClient.get<Zone[]>('/api/content/zones', { signal });
+    return response.data;
+  },
+
+  getPois: async (zoneId?: number, signal?: AbortSignal): Promise<PoiSummary[]> => {
     const response = await apiClient.get<PoiSummary[]>('/api/content/pois', {
       params: zoneId !== undefined ? { zoneId } : undefined,
+      signal,
     });
     return response.data;
   },
 
-  /**
-   * Lấy chi tiết điểm du lịch theo ID kèm nội dung ngôn ngữ yêu cầu
-   * GET /api/content/pois/{id}?lang=vi|en|ja|ko
-   */
-  getPoiDetail: async (id: number, lang: string = 'vi'): Promise<PoiDetail> => {
+  getPoiDetail: async (id: number, lang: string = 'vi', signal?: AbortSignal): Promise<PoiDetail> => {
     const response = await apiClient.get<PoiDetail>(`/api/content/pois/${id}`, {
       params: { lang },
+      signal,
     });
     return response.data;
   },
 
-  /**
-   * Tra cứu thông tin thuyết minh POI qua mã quét QR
-   * GET /api/content/pois/qr/{qrToken}?lang=vi|en|ja|ko
-   */
-  getPoiByQr: async (qrToken: string, lang: string = 'vi'): Promise<PoiDetail> => {
+  getPoiByQr: async (qrToken: string, lang: string = 'vi', signal?: AbortSignal): Promise<PoiDetail> => {
     const response = await apiClient.get<PoiDetail>(`/api/content/pois/qr/${encodeURIComponent(qrToken)}`, {
       params: { lang },
+      signal,
     });
     return response.data;
   },
 
-  /**
-   * Tìm kiếm các điểm du lịch lân cận theo bán kính GPS (mét)
-   * GET /api/location/nearby?lat=...&lng=...&radius=...
-   */
-  getNearbyPois: async (lat: number, lng: number, radius: number): Promise<NearbyPoi[]> => {
+  getNearbyPois: async (
+    lat: number,
+    lng: number,
+    radius: number,
+    signal?: AbortSignal
+  ): Promise<NearbyPoi[]> => {
     const response = await apiClient.get<NearbyPoi[]>('/api/location/nearby', {
       params: { lat, lng, radius },
+      signal,
     });
     return response.data;
   },
 
-  /**
-   * Xác định điểm du lịch khớp vùng kích hoạt tại tọa độ hiện tại
-   * GET /api/location/resolve?lat=...&lng=...
-   */
-  resolvePoi: async (lat: number, lng: number): Promise<ResolvePoiResponse> => {
+  resolvePoi: async (lat: number, lng: number, signal?: AbortSignal): Promise<ResolvePoiResponse> => {
     const response = await apiClient.get<ResolvePoiResponse>('/api/location/resolve', {
       params: { lat, lng },
+      signal,
     });
     return response.data;
   },
 
-  /**
-   * Tạo URL hoàn chỉnh để phát tệp âm thanh thuyết minh
-   * /api/tts/audio/{fileName}
-   */
   getAudioUrl: (audioPathOrFileName: string): string => {
     if (!audioPathOrFileName) return '';
     if (audioPathOrFileName.startsWith('http://') || audioPathOrFileName.startsWith('https://')) {
@@ -89,22 +160,37 @@ export const api = {
     return `${BASE_URL}${cleanPath}`;
   },
 
-  /**
-   * Gửi sự kiện thống kê tương tác du khách (quét QR / phát audio)
-   * POST /api/analytics/events
-   */
   recordAnalyticsEvent: async (event: CreateAnalyticsEventRequest): Promise<void> => {
     await apiClient.post<void>('/api/analytics/events', event);
   },
 
-  /**
-   * Lấy báo cáo thống kê tổng quan (yêu cầu header X-Admin-Key)
-   * GET /api/analytics/summary
-   */
-  getAnalyticsSummary: async (adminKey?: string): Promise<AnalyticsSummaryResponse> => {
-    const key = adminKey || import.meta.env.VITE_ADMIN_API_KEY || '';
+  getAnalyticsSummary: async (adminKey: string, signal?: AbortSignal): Promise<AnalyticsSummaryResponse> => {
     const response = await apiClient.get<AnalyticsSummaryResponse>('/api/analytics/summary', {
-      headers: key ? { 'X-Admin-Key': key } : undefined,
+      headers: { 'X-Admin-Key': adminKey },
+      signal,
+    });
+    return response.data;
+  },
+
+  getProducts: async (
+    params?: {
+      category?: ProductCategory;
+      search?: string;
+      page?: number;
+      size?: number;
+    },
+    signal?: AbortSignal
+  ): Promise<PageResponse<Product>> => {
+    const response = await apiClient.get<PageResponse<Product>>('/api/content/products', {
+      params,
+      signal,
+    });
+    return response.data;
+  },
+
+  getProductBySlug: async (slug: string, signal?: AbortSignal): Promise<Product> => {
+    const response = await apiClient.get<Product>(`/api/content/products/${encodeURIComponent(slug)}`, {
+      signal,
     });
     return response.data;
   },
