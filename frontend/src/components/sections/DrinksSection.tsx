@@ -40,8 +40,8 @@ export const DrinksSection: React.FC = () => {
         ))}
       </div>
       <div style={{ textAlign: 'center', marginTop: 32 }}>
-        <Link to="/thuc-uong" className="tb" style={{ textDecoration: 'none', padding: '10px 24px', fontSize: 15 }}>
-          Xem toàn bộ thực đơn thức uống
+        <Link to="/am-thuc-thuc-uong?cat=dr" className="tb" style={{ textDecoration: 'none', padding: '10px 24px', fontSize: 15 }}>
+          Xem toàn bộ Ẩm thực & Thức uống
         </Link>
       </div>
     </section>

@@ -4,6 +4,7 @@ import { render, screen, fireEvent, act } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import { NearbyPage } from '../pages/NearbyPage';
 import { setStoredLanguage } from '../content/languages';
+import { api } from '../api/client';
 
 // Mock react-leaflet components since jsdom doesn't support canvas/WebGL
 vi.mock('react-leaflet', () => ({
@@ -123,12 +124,43 @@ describe('NearbyPage - Clean Multilingual & Audio Narration Integration', () => 
     ).toBeInTheDocument();
   });
 
-  it('triggers auto narration simulation when coordinates match a POI radius', () => {
+  it('triggers auto narration and calculates distance when real GPS position matches a POI radius', () => {
+    // Mock navigator.geolocation with real GPS coordinates near Independence Palace
+    const mockGeolocation = {
+      getCurrentPosition: vi.fn((success) => {
+        success({
+          coords: {
+            latitude: 10.77709,
+            longitude: 106.6954,
+            accuracy: 10,
+            altitude: null,
+            altitudeAccuracy: null,
+            heading: null,
+            speed: null,
+          },
+          timestamp: Date.now(),
+        });
+      }),
+      watchPosition: vi.fn(),
+      clearWatch: vi.fn(),
+    };
+    Object.defineProperty(navigator, 'geolocation', {
+      value: mockGeolocation,
+      writable: true,
+      configurable: true,
+    });
+
     render(
       <BrowserRouter>
         <NearbyPage />
       </BrowserRouter>
     );
+
+    // Initial state without GPS: displays no location tour message, distance is hidden
+    expect(
+      screen.getByText(/Chưa có vị trí của bạn. Danh sách xếp theo thứ tự tour/i)
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/Cách bạn/i)).not.toBeInTheDocument();
 
     // Enable auto-narration switch
     const autoSwitch = screen.getByRole('switch');
@@ -136,10 +168,10 @@ describe('NearbyPage - Clean Multilingual & Audio Narration Integration', () => 
       fireEvent.click(autoSwitch);
     });
 
-    // Click preset chip right near Independence Palace (≈10 m)
-    const presetBtn = screen.getByText('Sát Dinh Độc Lập (≈10 m)');
+    // Click "Vị trí của tôi" button to request real GPS
+    const gpsBtn = screen.getByRole('button', { name: /Vị trí của tôi/i });
     act(() => {
-      fireEvent.click(presetBtn);
+      fireEvent.click(gpsBtn);
     });
 
     // Check that auto narration triggered playback for Independence Palace
@@ -147,5 +179,72 @@ describe('NearbyPage - Clean Multilingual & Audio Narration Integration', () => 
     expect(
       screen.getByText(/Bạn đã tới gần Dinh Độc Lập, tự động phát thuyết minh/i)
     ).toBeInTheDocument();
+
+    // Nearest status and distance are now calculated and displayed
+    expect(screen.getByText(/điểm gần nhất là/i)).toBeInTheDocument();
+  });
+
+  it('calls getPoiDetail with requested language and plays backend audioUrl when audioStatus is READY', async () => {
+    const playMock = vi.fn().mockResolvedValue(undefined);
+    const pauseMock = vi.fn();
+    const loadMock = vi.fn();
+    (window as any).Audio = vi.fn().mockImplementation((src: string) => ({
+      src,
+      play: playMock,
+      pause: pauseMock,
+      load: loadMock,
+      playbackRate: 1,
+      currentTime: 0,
+      duration: 60,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    }));
+
+    const getPoiDetailSpy = vi.spyOn(api, 'getPoiDetail').mockResolvedValueOnce({
+      id: 1,
+      code: 'poi-1',
+      qrToken: 'qr-1',
+      name: 'Independence Palace',
+      latitude: 10.777,
+      longitude: 106.6954,
+      triggerRadiusMeters: 50,
+      zoneId: 1,
+      zoneCode: 'D1',
+      categoryCode: 'HISTORIC',
+      languageCode: 'en',
+      title: 'Independence Palace',
+      summary: 'Summary',
+      description: 'Description',
+      audioUrl: '/api/tts/audio/poi_1_en_sample.mp3',
+      audioDurationSeconds: 60,
+      audioStatus: 'READY',
+      fallbackLanguage: false,
+    });
+
+    render(
+      <BrowserRouter>
+        <NearbyPage />
+      </BrowserRouter>
+    );
+
+    // Switch to English
+    const langSelect = screen.getByLabelText('Ngôn ngữ') as HTMLSelectElement;
+    act(() => {
+      fireEvent.change(langSelect, { target: { value: 'en' } });
+    });
+
+    // Click Listen on first spot
+    const listenButtons = screen.getAllByRole('button', { name: /▶ Listen/i });
+    await act(async () => {
+      fireEvent.click(listenButtons[0]!);
+    });
+
+    // Verify getPoiDetail was requested with poiId=1 and lang='en'
+    expect(getPoiDetailSpy).toHaveBeenCalledWith(1, 'en');
+
+    // Verify Audio element was initialized with full URL
+    expect((window as any).Audio).toHaveBeenCalledWith(
+      expect.stringContaining('/api/tts/audio/poi_1_en_sample.mp3')
+    );
   });
 });

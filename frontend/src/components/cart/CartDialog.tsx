@@ -54,7 +54,7 @@ export const CartDialog: React.FC = () => {
 
   const handleBrowseFood = () => {
     closeCart();
-    navigate('/am-thuc');
+    navigate('/am-thuc-thuc-uong');
   };
 
   return (
@@ -66,11 +66,12 @@ export const CartDialog: React.FC = () => {
       onClose={closeCart}
       aria-label={t.shop.cartTitle}
     >
+      {/* Header Giỏ hàng */}
       <div className="cart-dialog-header">
         <div className="cart-dialog-title-wrap">
-          <ShoppingBag size={22} strokeWidth={1.75} className="cart-header-icon" aria-hidden="true" />
+          <ShoppingBag size={22} strokeWidth={1.8} className="cart-header-icon" aria-hidden="true" />
           <h3>{t.shop.cartTitle}</h3>
-          {totalCount > 0 && <span className="cart-count-pill">{totalCount}</span>}
+          {totalCount > 0 && <span className="cart-count-pill">{totalCount} món</span>}
         </div>
         <button
           type="button"
@@ -82,11 +83,13 @@ export const CartDialog: React.FC = () => {
         </button>
       </div>
 
+      {/* Danh sách món trong giỏ */}
       <div id="cl" className="cart-item-list">
         {cartItems.length === 0 ? (
           <div className="cart-empty-box">
-            <ShoppingBag size={44} strokeWidth={1.5} className="cart-empty-icon" aria-hidden="true" />
-            <p>{t.shop.cartEmpty}</p>
+            <ShoppingBag size={48} strokeWidth={1.5} className="cart-empty-icon" aria-hidden="true" />
+            <p className="empty-text">{t.shop.cartEmpty}</p>
+            <p className="empty-subtext">Khám phá thực đơn đặc sản Sài Gòn và chọn món bạn yêu thích.</p>
             <button
               type="button"
               className="tb cart-browse-btn"
@@ -98,11 +101,24 @@ export const CartDialog: React.FC = () => {
         ) : (
           cartItems.map((item) => (
             <div key={item.id} className="cart-item-row">
+              {/* Ảnh nhỏ của món nếu có */}
+              {item.imagePath ? (
+                <div className="cart-item-thumbnail">
+                  <img src={item.imagePath} alt={item.name} />
+                </div>
+              ) : (
+                <div className="cart-item-thumbnail placeholder-thumb">
+                  <span>SG</span>
+                </div>
+              )}
+
+              {/* Thông tin món */}
               <div className="cart-item-info">
                 <span className="cart-item-name">{item.name}</span>
                 <span className="cart-item-unit-price">{formatPrice(item.price)}</span>
               </div>
 
+              {/* Bộ điều khiển số lượng & thành tiền */}
               <div className="cart-item-actions">
                 <div className="cart-qty-ctrls">
                   <button
@@ -137,7 +153,7 @@ export const CartDialog: React.FC = () => {
                   aria-label={`Xóa ${item.name} khỏi giỏ hàng`}
                   title="Xóa món này"
                 >
-                  <Trash2 size={15} strokeWidth={1.75} aria-hidden="true" />
+                  <Trash2 size={16} strokeWidth={1.8} aria-hidden="true" />
                 </button>
               </div>
             </div>
@@ -145,13 +161,24 @@ export const CartDialog: React.FC = () => {
         )}
       </div>
 
+      {/* Footer & Tạm tính */}
       {cartItems.length > 0 && (
         <div className="cart-dialog-footer">
-          <div className="cart-total-bar">
-            <span className="cart-total-label">{t.shop.total}:</span>
-            <b id="ctt" className="cart-total-value">
-              {formatPrice(totalAmount)}
-            </b>
+          <div className="cart-cost-breakdown">
+            <div className="cart-cost-row">
+              <span>Tạm tính:</span>
+              <span>{formatPrice(totalAmount)}</span>
+            </div>
+            <div className="cart-cost-row">
+              <span>Phí giao hàng:</span>
+              <span className="free-shipping-tag">Miễn phí</span>
+            </div>
+            <div className="cart-total-bar">
+              <span className="cart-total-label">{t.shop.total}:</span>
+              <b id="ctt" className="cart-total-value">
+                {formatPrice(totalAmount)}
+              </b>
+            </div>
           </div>
 
           <div className="cart-footer-buttons">

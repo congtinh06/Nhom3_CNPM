@@ -43,6 +43,18 @@ public class Product {
     @Column(name = "image_path", length = 500)
     private String imagePath;
 
+    @Column(name = "rating", precision = 2, scale = 1)
+    @Builder.Default
+    private BigDecimal rating = BigDecimal.valueOf(5.0);
+
+    @Column(name = "reviews_count")
+    @Builder.Default
+    private Integer reviewsCount = 0;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "category_id")
+    private Category categoryEntity;
+
     @Column(name = "is_active", nullable = false)
     @Builder.Default
     private Boolean isActive = true;

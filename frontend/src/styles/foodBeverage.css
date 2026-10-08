@@ -1,0 +1,2675 @@
+/* ==========================================================================
+   ẨM THỰC & THỨC UỐNG SÀI GÒN - E-COMMERCE DESIGN SYSTEM
+   Colors:
+   --fb-dark-brown: #17110D;
+   --fb-deep-brown: #2A1810;
+   --fb-saigon-red: #9E3516;
+   --fb-orange-brown: #C85A20;
+   --fb-cream: #F5E6C8;
+   --fb-off-white: #FFF9F0;
+   --fb-text-dark: #241A15;
+   ========================================================================== */
+
+:root {
+  /* Editorial Color Palette */
+  --fb-bg-primary: #FDFBF7;
+  --fb-surface: #FFFFFF;
+  --fb-accent: #C2410C;
+  --fb-accent-hover: #9A3412;
+  --fb-secondary-accent: #78350F;
+  --fb-text-primary: #1C1917;
+  --fb-text-secondary: #78716C;
+  --fb-border: #E7E5E4;
+  --fb-border-subtle: #F5F5F4;
+  --fb-star-gold: #D97706;
+
+  /* Typography System */
+  --font-display: "Playfair Display", Georgia, serif;
+  --font-body: "Be Vietnam Pro", -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-accent: "Space Grotesk", sans-serif;
+
+  /* Legacy variable mappings for clean compatibility */
+  --fb-dark-brown: #1C1917;
+  --fb-deep-brown: #78350F;
+  --fb-saigon-red: #C2410C;
+  --fb-orange-brown: #C2410C;
+  --fb-cream: #F5E6C8;
+  --fb-off-white: #FDFBF7;
+  --fb-text-dark: #1C1917;
+  --fb-text-muted: #78716C;
+  --fb-card-bg: #FFFFFF;
+  --fb-radius-sm: 6px;
+  --fb-radius-md: 10px;
+  --fb-radius-lg: 14px;
+  --fb-shadow-subtle: 0 1px 3px rgba(28, 25, 23, 0.05), 0 1px 2px rgba(28, 25, 23, 0.03);
+  --fb-shadow-hover: 0 10px 25px -5px rgba(28, 25, 23, 0.08), 0 8px 10px -6px rgba(28, 25, 23, 0.04);
+  --fb-transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Container chính của toàn bộ trang */
+.food-beverage-page-container {
+  width: 100%;
+  min-height: 100vh;
+  background-color: var(--fb-bg-primary);
+  color: var(--fb-text-primary);
+  font-family: var(--font-body);
+}
+
+/* ==========================================================================
+   1. HERO SECTION (Gọn gàng, tinh tế, không chiếm quá nhiều chiều cao)
+   ========================================================================== */
+.food-hero-section {
+  position: relative;
+  background: linear-gradient(135deg, #17110D 0%, #2A1810 50%, #381E13 100%);
+  color: var(--fb-off-white);
+  padding: 120px 20px 40px;
+  overflow: hidden;
+  border-bottom: 2px solid rgba(200, 90, 32, 0.3);
+}
+
+.food-hero-section::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: radial-gradient(circle at 80% 20%, rgba(200, 90, 32, 0.15) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+.food-hero-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 2;
+}
+
+.food-hero-content {
+  max-width: 760px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.food-hero-badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--fb-cream);
+  background: rgba(200, 90, 32, 0.25);
+  border: 1px solid rgba(245, 230, 200, 0.25);
+  padding: 4px 14px;
+  border-radius: 999px;
+  margin-bottom: 12px;
+}
+
+.food-hero-title {
+  font-family: Anton, Impact, "Times New Roman", sans-serif;
+  font-size: clamp(28px, 4.5vw, 44px);
+  line-height: 1.15;
+  letter-spacing: 0.02em;
+  color: #FFF9F0;
+  margin: 0 0 10px;
+  text-transform: uppercase;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+.food-hero-desc {
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--fb-cream);
+  opacity: 0.92;
+  margin: 0 auto 24px;
+  max-width: 580px;
+}
+
+/* Thanh tìm kiếm lớn ở Hero */
+.food-hero-search-box {
+  display: flex;
+  align-items: center;
+  background: #FFFFFF;
+  border-radius: var(--fb-radius-md);
+  padding: 6px;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35);
+  max-width: 640px;
+  margin: 0 auto 16px;
+}
+
+.food-search-input-wrap {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  padding: 0 12px;
+  position: relative;
+}
+
+.food-search-input-wrap .search-icon {
+  color: var(--fb-orange-brown);
+  flex-shrink: 0;
+  margin-right: 10px;
+}
+
+.food-hero-input {
+  width: 100%;
+  border: none;
+  outline: none;
+  font-size: 15px;
+  color: var(--fb-text-dark);
+  background: transparent;
+  padding: 10px 0;
+}
+
+.food-hero-input::placeholder {
+  color: #9C8E84;
+}
+
+.food-search-input-wrap .search-clear-btn {
+  background: #EFE8DC;
+  border: none;
+  border-radius: 50%;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--fb-text-dark);
+  padding: 0;
+  transition: var(--fb-transition);
+}
+
+.food-search-input-wrap .search-clear-btn:hover {
+  background: var(--fb-saigon-red);
+  color: #FFF;
+}
+
+.food-hero-submit-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--fb-orange-brown);
+  color: #FFF;
+  border: none;
+  border-radius: var(--fb-radius-sm);
+  padding: 11px 22px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--fb-transition);
+  flex-shrink: 0;
+}
+
+.food-hero-submit-btn:hover {
+  background: var(--fb-saigon-red);
+  transform: translateY(-1px);
+}
+
+/* Quick chips gợi ý món */
+.food-hero-quick-chips {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.food-hero-quick-chips .chips-label {
+  font-size: 12.5px;
+  color: var(--fb-cream);
+  opacity: 0.8;
+}
+
+.quick-chip-btn {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(245, 230, 200, 0.2);
+  color: var(--fb-cream);
+  font-size: 12px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: var(--fb-transition);
+}
+
+.quick-chip-btn:hover {
+  background: rgba(200, 90, 32, 0.35);
+  border-color: var(--fb-orange-brown);
+  color: #FFF;
+}
+
+/* Dải đặc điểm dịch vụ */
+.food-hero-features {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 20px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(245, 230, 200, 0.12);
+}
+
+.food-hero-features .feature-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  color: var(--fb-cream);
+  opacity: 0.9;
+}
+
+.food-hero-features .feature-item svg {
+  color: #F5A623;
+}
+
+/* ==========================================================================
+   2. CATEGORY BAR (Thanh tab danh mục bên dưới hero)
+   ========================================================================== */
+.food-category-bar-section {
+  background: #FFF;
+  border-bottom: 1px solid var(--fb-border);
+  position: sticky;
+  top: 65px;
+  z-index: 30;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+}
+
+.food-category-bar-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 10px 20px;
+}
+
+.food-category-tabs-scroll {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  padding: 2px 0;
+}
+
+.food-category-tabs-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.food-category-tab-btn {
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+  background: var(--fb-off-white);
+  border: 1px solid var(--fb-border);
+  color: var(--fb-text-dark);
+  font-size: 13.5px;
+  font-weight: 500;
+  padding: 8px 18px;
+  border-radius: var(--fb-radius-md);
+  cursor: pointer;
+  transition: var(--fb-transition);
+  flex-shrink: 0;
+}
+
+.food-category-tab-btn:hover {
+  background: #F3EAE0;
+  border-color: var(--fb-orange-brown);
+  color: var(--fb-orange-brown);
+}
+
+/* Tab đang chọn: Sử dụng màu cam đất #C85A20 theo yêu cầu */
+.food-category-tab-btn.is-active {
+  background-color: var(--fb-orange-brown) !important;
+  border-color: var(--fb-orange-brown) !important;
+  color: #FFFFFF !important;
+  font-weight: 600;
+  box-shadow: 0 3px 10px rgba(200, 90, 32, 0.25);
+}
+
+/* ==========================================================================
+   3. KHU VỰC SHOP (Layout 2 cột: Sidebar Bộ lọc + Catalog Sản phẩm)
+   ========================================================================== */
+.food-shop-main-layout {
+  margin-top: 24px;
+  scroll-margin-top: 24px;
+  padding: 0 20px 64px;
+}
+
+.food-shop-container {
+  max-width: 1240px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  gap: 32px;
+  align-items: start;
+}
+
+/* SIDEBAR BỘ LỌC (DESKTOP) */
+.food-desktop-sidebar {
+  position: sticky;
+  top: 80px;
+  align-self: flex-start;
+  z-index: 10;
+}
+
+.food-sidebar-card {
+  background: var(--fb-card-bg);
+  border: 1px solid var(--fb-border);
+  border-radius: var(--fb-radius-lg);
+  padding: 22px;
+  box-shadow: var(--fb-shadow-subtle);
+}
+
+.food-sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 14px;
+  margin-bottom: 18px;
+  border-bottom: 1px solid var(--fb-border-light);
+}
+
+.food-sidebar-header .header-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--fb-deep-brown);
+}
+
+.food-sidebar-header .sidebar-title {
+  font-family: Anton, Impact, sans-serif;
+  font-size: 16px;
+  letter-spacing: 0.04em;
+  margin: 0;
+  color: var(--fb-deep-brown);
+}
+
+.sidebar-reset-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: transparent;
+  border: none;
+  color: var(--fb-saigon-red);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: var(--fb-radius-sm);
+  transition: var(--fb-transition);
+}
+
+.sidebar-reset-btn:hover {
+  background: #FBEFE9;
+}
+
+.sidebar-filter-group {
+  margin-bottom: 22px;
+}
+
+.sidebar-filter-group .group-heading {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--fb-text-dark);
+  margin: 0 0 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.filter-options-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.filter-radio-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13.5px;
+  color: var(--fb-text-muted);
+  cursor: pointer;
+  user-select: none;
+  padding: 3px 0;
+  transition: var(--fb-transition);
+}
+
+.filter-radio-label:hover {
+  color: var(--fb-deep-brown);
+}
+
+.filter-radio-label input[type="radio"] {
+  display: none;
+}
+
+.custom-indicator {
+  width: 17px;
+  height: 17px;
+  border-radius: 50%;
+  border: 1.5px solid #C4B6A6;
+  background: #FFF;
+  flex-shrink: 0;
+  position: relative;
+  transition: var(--fb-transition);
+}
+
+.filter-radio-label input[type="radio"]:checked + .custom-indicator {
+  border-color: var(--fb-orange-brown);
+  background: var(--fb-orange-brown);
+}
+
+.filter-radio-label input[type="radio"]:checked + .custom-indicator::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #FFF;
+}
+
+.filter-radio-label input[type="radio"]:checked ~ .label-text {
+  color: var(--fb-deep-brown);
+  font-weight: 600;
+}
+
+.rating-radio .label-stars-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.rating-radio .stars-icons {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.star-icon.star-filled {
+  color: var(--fb-star-gold);
+  fill: var(--fb-star-gold);
+}
+
+.star-icon.star-empty {
+  color: #D6CBC0;
+}
+
+.sidebar-bottom-actions {
+  padding-top: 12px;
+  border-top: 1px solid var(--fb-border-light);
+}
+
+.bottom-reset-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border: 1px dashed var(--fb-border);
+  background: var(--fb-off-white);
+  color: var(--fb-text-muted);
+  font-size: 12.5px;
+  font-weight: 500;
+  border-radius: var(--fb-radius-md);
+  cursor: pointer;
+  transition: var(--fb-transition);
+}
+
+.bottom-reset-btn:hover:not(:disabled) {
+  border-color: var(--fb-saigon-red);
+  color: var(--fb-saigon-red);
+  background: #FBEFE9;
+}
+
+.bottom-reset-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ==========================================================================
+   4. CATALOG HEADER & TOOLBAR
+   ========================================================================== */
+.food-catalog-section {
+  display: flex;
+  flex-direction: column;
+}
+
+.food-catalog-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  background: #FFF;
+  border: 1px solid var(--fb-border);
+  border-radius: var(--fb-radius-lg);
+  padding: 14px 20px;
+  margin-bottom: 16px;
+  box-shadow: var(--fb-shadow-subtle);
+}
+
+.toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.catalog-heading {
+  font-family: Anton, Impact, sans-serif;
+  font-size: 22px;
+  letter-spacing: 0.02em;
+  color: var(--fb-deep-brown);
+  margin: 0;
+}
+
+.catalog-counter-badge {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--fb-orange-brown);
+  background: #FDF1EA;
+  border: 1px solid rgba(200, 90, 32, 0.2);
+  padding: 3px 10px;
+  border-radius: 999px;
+}
+
+.mobile-filter-open-btn {
+  display: none;
+  align-items: center;
+  gap: 6px;
+  background: var(--fb-off-white);
+  border: 1px solid var(--fb-border);
+  color: var(--fb-text-dark);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 6px 14px;
+  border-radius: var(--fb-radius-sm);
+  cursor: pointer;
+  position: relative;
+}
+
+.filter-active-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--fb-saigon-red);
+}
+
+/* Dropdown sắp xếp */
+.toolbar-right {
+  display: flex;
+  align-items: center;
+}
+
+.sort-dropdown-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sort-label {
+  font-size: 13px;
+  color: var(--fb-text-muted);
+  font-weight: 500;
+}
+
+.sort-select-wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.sort-native-select {
+  appearance: none;
+  -webkit-appearance: none;
+  background: var(--fb-off-white);
+  border: 1px solid var(--fb-border);
+  color: var(--fb-text-dark);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 7px 32px 7px 12px;
+  border-radius: var(--fb-radius-sm);
+  cursor: pointer;
+  outline: none;
+  transition: var(--fb-transition);
+}
+
+.sort-native-select:focus {
+  border-color: var(--fb-orange-brown);
+}
+
+.select-chevron {
+  position: absolute;
+  right: 10px;
+  color: var(--fb-text-muted);
+  pointer-events: none;
+}
+
+/* Dải filter pills đang áp dụng */
+.active-filters-bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 6px 4px 16px;
+}
+
+.active-label {
+  font-size: 12.5px;
+  color: var(--fb-text-muted);
+}
+
+.filter-pills-list {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.active-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #FFF;
+  border: 1px solid var(--fb-border);
+  color: var(--fb-text-dark);
+  font-size: 12px;
+  padding: 3px 10px;
+  border-radius: 999px;
+}
+
+.active-pill button {
+  background: none;
+  border: none;
+  color: var(--fb-text-muted);
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  padding: 0;
+}
+
+.active-pill button:hover {
+  color: var(--fb-saigon-red);
+}
+
+.clear-all-link {
+  background: none;
+  border: none;
+  color: var(--fb-saigon-red);
+  font-size: 12px;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 2px 4px;
+}
+
+/* ==========================================================================
+   5. PRODUCT GRID & PRODUCT CARD (Phần quan trọng nhất)
+   - Nền trắng/kem
+   - Border radius 10px - 16px
+   - Shadow nhẹ và tinh tế
+   - Hover zoom ảnh rất nhẹ, card nâng lên nhẹ, shadow tăng nhẹ
+   - Desktop: 4 sản phẩm / hàng (hoặc 3 khi có sidebar)
+   ========================================================================== */
+.food-product-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 22px;
+}
+
+@media (min-width: 1400px) {
+  .food-product-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.food-product-card {
+  background: var(--fb-card-bg);
+  border: 1px solid var(--fb-border);
+  border-radius: var(--fb-radius-lg);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--fb-shadow-subtle);
+  cursor: pointer;
+  transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
+  position: relative;
+}
+
+.food-product-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--fb-shadow-hover);
+  border-color: #D8C7B0;
+}
+
+.food-product-card:focus-visible {
+  outline: 2px solid var(--fb-orange-brown);
+  outline-offset: 2px;
+}
+
+/* Media Wrap & Hình ảnh */
+.food-card-media-wrap {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  background: #F0E9DD;
+}
+
+.food-card-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.food-product-card:hover .food-card-img {
+  transform: scale(1.03);
+}
+
+/* Placeholder khi ảnh lỗi / fallback */
+.food-card-placeholder {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #2A1810 0%, #17110D 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  text-align: center;
+  color: var(--fb-cream);
+}
+
+.food-card-placeholder .placeholder-brand {
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  color: var(--fb-orange-brown);
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.food-card-placeholder .placeholder-name {
+  font-family: Anton, sans-serif;
+  font-size: 16px;
+  color: #FFF;
+}
+
+/* Badges trên Card */
+.food-card-badge {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3.5px 9px;
+  border-radius: var(--fb-radius-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  z-index: 2;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.food-badge-specialty {
+  background: #D97706;
+  color: #FFFFFF;
+}
+
+.food-badge-bestseller {
+  background: var(--fb-saigon-red);
+  color: #FFFFFF;
+}
+
+.food-badge-new {
+  background: var(--fb-orange-brown);
+  color: #FFFFFF;
+}
+
+.food-badge-stock {
+  top: 38px;
+  background: rgba(23, 17, 13, 0.85);
+  color: #FFF;
+}
+
+/* Nút Yêu thích SVG góc trên bên phải */
+.food-favorite-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 3;
+  transition: var(--fb-transition);
+  color: var(--fb-text-muted);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.food-favorite-btn:hover {
+  background: #FFF;
+  color: var(--fb-saigon-red);
+  transform: scale(1.1);
+}
+
+.food-favorite-btn.is-active .heart-icon {
+  color: var(--fb-saigon-red);
+  fill: var(--fb-saigon-red);
+}
+
+/* Nội dung Body của Card */
+.food-card-body {
+  padding: 14px 16px 16px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.food-card-rating-row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-bottom: 6px;
+}
+
+.food-stars-wrap {
+  display: flex;
+  align-items: center;
+  gap: 1.5px;
+}
+
+.food-rating-score {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--fb-text-dark);
+}
+
+.food-reviews-count {
+  font-size: 11.5px;
+  color: #8C7E74;
+}
+
+.food-card-title {
+  font-family: Anton, Impact, sans-serif;
+  font-size: 18px;
+  line-height: 1.25;
+  color: var(--fb-deep-brown);
+  margin: 0 0 6px;
+  letter-spacing: 0.01em;
+}
+
+.food-card-desc {
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--fb-text-muted);
+  margin: 0 0 14px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  flex: 1;
+}
+
+/* Chân card: Giá & Nút Thêm vào giỏ */
+.food-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding-top: 10px;
+  border-top: 1px solid var(--fb-border-light);
+  margin-top: auto;
+}
+
+.food-price-wrap {
+  display: flex;
+  flex-direction: column;
+}
+
+.food-current-price {
+  font-size: 16.5px;
+  font-weight: 800;
+  color: var(--fb-saigon-red);
+}
+
+.food-old-price-row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 1px;
+}
+
+.food-old-price {
+  font-size: 11.5px;
+  color: #9C8E84;
+  text-decoration: line-through;
+}
+
+.food-discount-tag {
+  font-size: 10px;
+  font-weight: 700;
+  color: #B42318;
+  background: #FEE4E2;
+  padding: 1px 4px;
+  border-radius: 3px;
+}
+
+.food-add-cart-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--fb-off-white);
+  border: 1px solid var(--fb-orange-brown);
+  color: var(--fb-orange-brown);
+  padding: 7px 12px;
+  border-radius: var(--fb-radius-md);
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--fb-transition);
+  flex-shrink: 0;
+}
+
+.food-add-cart-btn:hover:not(:disabled) {
+  background: var(--fb-orange-brown);
+  color: #FFFFFF;
+}
+
+.food-add-cart-btn.is-added {
+  background: #12B76A;
+  border-color: #12B76A;
+  color: #FFFFFF;
+}
+
+.food-add-cart-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  border-color: #CCC;
+  color: #888;
+}
+
+/* ==========================================================================
+   6. EMPTY STATE (Khi không có sản phẩm phù hợp)
+   ========================================================================== */
+.food-empty-state-card {
+  background: #FFF;
+  border: 1px dashed var(--fb-border);
+  border-radius: var(--fb-radius-lg);
+  padding: 50px 24px;
+  text-align: center;
+  margin-top: 16px;
+}
+
+.food-empty-state-card .empty-icon-wrap {
+  width: 72px;
+  height: 72px;
+  margin: 0 auto 16px;
+  border-radius: 50%;
+  background: #F8F1E7;
+  color: var(--fb-orange-brown);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.food-empty-state-card .empty-title {
+  font-family: Anton, sans-serif;
+  font-size: 20px;
+  color: var(--fb-deep-brown);
+  margin: 0 0 8px;
+}
+
+.food-empty-state-card .empty-desc {
+  font-size: 14px;
+  color: var(--fb-text-muted);
+  max-width: 440px;
+  margin: 0 auto 20px;
+}
+
+.empty-reset-btn,
+.empty-clear-filter-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--fb-orange-brown);
+  color: #FFF;
+  border: none;
+  border-radius: var(--fb-radius-md);
+  padding: 12px 28px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: var(--fb-transition);
+  box-shadow: 0 4px 14px rgba(200, 90, 32, 0.25);
+}
+
+.empty-reset-btn:hover,
+.empty-clear-filter-btn:hover {
+  background: var(--fb-saigon-red);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(158, 53, 22, 0.35);
+}
+
+/* ==========================================================================
+   7. PAGINATION (Phân trang chuẩn e-commerce)
+   ========================================================================== */
+.editorial-pagination-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 48px;
+  width: 100%;
+  padding-top: 24px;
+  border-top: 1px solid var(--fb-border);
+  background: transparent;
+}
+
+@media (max-width: 640px) {
+  .editorial-pagination-container {
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    text-align: center;
+  }
+}
+
+.pagination-context-label {
+  font-size: 13.5px;
+  color: var(--fb-text-secondary);
+  font-family: var(--font-body);
+}
+
+.pagination-context-label .text-primary {
+  color: var(--fb-text-primary);
+  font-weight: 600;
+}
+
+.pagination-controls-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+@media (max-width: 640px) {
+  .pagination-controls-row {
+    justify-content: center;
+  }
+}
+
+.pagination-numbers-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Standalone Page Number Button (w-10 h-10, rounded-md) */
+.editorial-page-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid var(--fb-border);
+  color: var(--fb-text-secondary);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: var(--font-accent);
+  font-variant-numeric: tabular-nums;
+  user-select: none;
+}
+
+.editorial-page-btn:hover:not(:disabled):not(.is-active) {
+  border-color: var(--fb-accent);
+  color: var(--fb-accent);
+  background: transparent;
+}
+
+.editorial-page-btn.is-active {
+  background-color: var(--fb-accent);
+  border-color: var(--fb-accent);
+  color: #FFFFFF;
+  font-weight: 600;
+  cursor: default;
+}
+
+/* Previous / Next Nav Buttons */
+.editorial-nav-btn {
+  height: 40px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 14px;
+  background: transparent;
+  border: 1px solid var(--fb-border);
+  color: var(--fb-text-secondary);
+  font-size: 13.5px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: var(--font-body);
+  user-select: none;
+}
+
+.editorial-nav-btn:hover:not(:disabled) {
+  border-color: var(--fb-accent);
+  color: var(--fb-accent);
+}
+
+.editorial-nav-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+@media (max-width: 640px) {
+  .editorial-nav-btn {
+    padding: 0 10px;
+  }
+  .editorial-nav-btn .nav-btn-text {
+    display: none;
+  }
+}
+
+/* Ellipsis span */
+.editorial-ellipsis-span {
+  width: 40px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--fb-text-secondary);
+  font-size: 14px;
+  cursor: default;
+  user-select: none;
+  border: none;
+  background: transparent;
+}
+
+/* ==========================================================================
+   8. PRODUCT DETAIL MODAL (Chi tiết món & Tùy chọn đặt hàng)
+   ========================================================================== */
+.food-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(23, 17, 13, 0.7);
+  backdrop-filter: blur(4px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.food-modal-card {
+  background: #FFF;
+  border-radius: var(--fb-radius-lg);
+  max-width: 820px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--fb-border);
+}
+
+.food-modal-close-btn {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid var(--fb-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--fb-text-dark);
+  cursor: pointer;
+  z-index: 10;
+  transition: var(--fb-transition);
+}
+
+.food-modal-close-btn:hover {
+  background: var(--fb-saigon-red);
+  color: #FFF;
+}
+
+.food-modal-content-grid {
+  display: grid;
+  grid-template-columns: 340px 1fr;
+  gap: 28px;
+  padding: 28px;
+}
+
+.food-modal-media-col {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.food-modal-image-wrap {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border-radius: var(--fb-radius-md);
+  overflow: hidden;
+  background: #F0E9DD;
+}
+
+.food-modal-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.food-modal-badge {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  background: var(--fb-saigon-red);
+  color: #FFF;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: var(--fb-radius-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.food-modal-fav-btn {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.9);
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--fb-text-muted);
+  transition: var(--fb-transition);
+}
+
+.food-modal-fav-btn:hover {
+  color: var(--fb-saigon-red);
+}
+
+.food-modal-fav-btn.is-active .heart-icon {
+  color: var(--fb-saigon-red);
+  fill: var(--fb-saigon-red);
+}
+
+.food-modal-meta-pills {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.food-modal-meta-pills .meta-pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--fb-off-white);
+  border: 1px solid var(--fb-border-light);
+  padding: 8px 12px;
+  border-radius: var(--fb-radius-sm);
+  font-size: 12.5px;
+  color: var(--fb-text-muted);
+}
+
+.food-modal-meta-pills .meta-pill svg {
+  color: var(--fb-orange-brown);
+}
+
+/* Info Column trong Modal */
+.food-modal-info-col {
+  display: flex;
+  flex-direction: column;
+}
+
+.food-modal-rating-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.food-modal-rating-row .rating-num {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--fb-text-dark);
+}
+
+.food-modal-rating-row .reviews-num {
+  font-size: 12px;
+  color: #8C7E74;
+}
+
+.food-modal-title {
+  font-family: Anton, Impact, sans-serif;
+  font-size: 26px;
+  color: var(--fb-deep-brown);
+  margin: 0 0 10px;
+  letter-spacing: 0.01em;
+}
+
+.food-modal-price-row {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--fb-border-light);
+}
+
+.food-modal-current-price {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--fb-saigon-red);
+}
+
+.food-modal-old-price {
+  font-size: 14px;
+  color: #9C8E84;
+  text-decoration: line-through;
+}
+
+.food-modal-surcharge-note {
+  font-size: 12px;
+  color: var(--fb-orange-brown);
+  font-weight: 600;
+}
+
+.food-modal-short-desc {
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--fb-deep-brown);
+  font-weight: 500;
+  margin: 0 0 8px;
+}
+
+.food-modal-full-desc {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--fb-text-muted);
+  margin: 0 0 18px;
+}
+
+/* Options Section */
+.food-modal-options-section {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 14px;
+  background: var(--fb-off-white);
+  border: 1px solid var(--fb-border-light);
+  border-radius: var(--fb-radius-md);
+  margin-bottom: 18px;
+}
+
+.option-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.option-group .option-title {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--fb-deep-brown);
+}
+
+.option-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.option-btn {
+  background: #FFF;
+  border: 1px solid var(--fb-border);
+  color: var(--fb-text-dark);
+  font-size: 12px;
+  font-weight: 500;
+  padding: 5px 12px;
+  border-radius: var(--fb-radius-sm);
+  cursor: pointer;
+  transition: var(--fb-transition);
+}
+
+.option-btn:hover {
+  border-color: var(--fb-orange-brown);
+}
+
+.option-btn.selected {
+  background: var(--fb-deep-brown);
+  border-color: var(--fb-deep-brown);
+  color: #FFF;
+  font-weight: 600;
+}
+
+/* Quantity & Subtotal Row */
+.food-modal-quantity-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  padding: 10px 0;
+  border-top: 1px solid var(--fb-border-light);
+  border-bottom: 1px solid var(--fb-border-light);
+}
+
+.quantity-control-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.quantity-control-group .quantity-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--fb-text-dark);
+}
+
+.quantity-buttons-wrap {
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--fb-border);
+  border-radius: var(--fb-radius-sm);
+  background: #FFF;
+  overflow: hidden;
+}
+
+.quantity-buttons-wrap .qty-btn {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--fb-text-dark);
+  transition: var(--fb-transition);
+}
+
+.quantity-buttons-wrap .qty-btn:hover:not(:disabled) {
+  background: var(--fb-off-white);
+  color: var(--fb-orange-brown);
+}
+
+.quantity-buttons-wrap .qty-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.quantity-buttons-wrap .qty-value {
+  width: 36px;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--fb-text-dark);
+}
+
+.modal-subtotal-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.modal-subtotal-box .subtotal-label {
+  font-size: 13px;
+  color: var(--fb-text-muted);
+}
+
+.modal-subtotal-box .subtotal-value {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--fb-saigon-red);
+}
+
+/* Action Buttons */
+.food-modal-actions-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.food-modal-add-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: var(--fb-off-white);
+  border: 1.5px solid var(--fb-orange-brown);
+  color: var(--fb-orange-brown);
+  padding: 12px;
+  border-radius: var(--fb-radius-md);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: var(--fb-transition);
+}
+
+.food-modal-add-btn:hover {
+  background: var(--fb-orange-brown);
+  color: #FFF;
+}
+
+.food-modal-add-btn.is-success {
+  background: #12B76A;
+  border-color: #12B76A;
+  color: #FFF;
+}
+
+.food-modal-buy-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: var(--fb-orange-brown);
+  border: 1.5px solid var(--fb-orange-brown);
+  color: #FFF;
+  padding: 12px;
+  border-radius: var(--fb-radius-md);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: var(--fb-transition);
+}
+
+.food-modal-buy-btn:hover {
+  background: var(--fb-saigon-red);
+  border-color: var(--fb-saigon-red);
+}
+
+/* ==========================================================================
+   9. MOBILE FILTER DRAWER
+   ========================================================================== */
+.food-mobile-filter-drawer-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(23, 17, 13, 0.65);
+  backdrop-filter: blur(2px);
+  z-index: 1000;
+  display: flex;
+  justify-content: flex-start;
+}
+
+.food-mobile-filter-drawer {
+  width: 310px;
+  max-width: 85vw;
+  height: 100%;
+  background: #FFF;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.25);
+  animation: slideDrawer 0.25s ease-out;
+}
+
+@keyframes slideDrawer {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+.drawer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+  border-bottom: 1px solid var(--fb-border);
+  background: var(--fb-off-white);
+}
+
+.drawer-header .header-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: Anton, sans-serif;
+  font-size: 16px;
+  color: var(--fb-deep-brown);
+}
+
+.drawer-close-btn {
+  background: none;
+  border: none;
+  color: var(--fb-text-dark);
+  cursor: pointer;
+  padding: 4px;
+}
+
+.drawer-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+}
+
+.drawer-body .food-sidebar-card {
+  border: none;
+  padding: 0;
+  box-shadow: none;
+}
+
+.drawer-footer {
+  padding: 14px 16px;
+  border-top: 1px solid var(--fb-border);
+  background: var(--fb-off-white);
+}
+
+.drawer-apply-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: var(--fb-orange-brown);
+  color: #FFF;
+  border: none;
+  padding: 12px;
+  border-radius: var(--fb-radius-md);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* ==========================================================================
+   10. RESPONSIVE BREAKPOINTS (Desktop, Tablet, Mobile)
+   ========================================================================== */
+@media (max-width: 1023px) {
+  .food-shop-container {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+
+  .food-desktop-sidebar,
+  .editorial-desktop-sidebar {
+    display: none !important;
+  }
+
+  .mobile-filter-open-btn {
+    display: inline-flex;
+  }
+
+  .editorial-catalog-toolbar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  .toolbar-right-content {
+    align-self: stretch;
+    width: 100%;
+    justify-content: space-between;
+    margin-bottom: 0;
+  }
+
+  .food-modal-content-grid {
+    grid-template-columns: 1fr;
+    gap: 18px;
+    padding: 20px;
+  }
+
+  .food-modal-image-wrap {
+    max-height: 260px;
+  }
+}
+
+@media (max-width: 600px) {
+  .food-hero-section {
+    padding: 95px 16px 28px;
+  }
+
+  .food-hero-search-box {
+    flex-direction: column;
+    padding: 4px;
+    gap: 6px;
+  }
+
+  .food-hero-submit-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .food-product-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
+  .food-card-body {
+    padding: 10px 10px 12px;
+  }
+
+  .food-card-title {
+    font-size: 15px;
+  }
+
+  .food-current-price {
+    font-size: 14px;
+  }
+
+  .food-add-cart-btn {
+    padding: 6px 8px;
+    font-size: 11px;
+  }
+
+  .food-add-cart-btn .btn-label {
+    display: none;
+  }
+
+  .food-modal-actions-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 400px) {
+  .food-product-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .food-add-cart-btn .btn-label {
+    display: inline;
+  }
+}
+
+/* ==========================================================================
+   EDITORIAL FOOD & BEVERAGE DESIGN SYSTEM (SECTIONS A - H)
+   ========================================================================== */
+
+/* 1. HERO SECTION REDESIGN (Section C) */
+.editorial-hero-section {
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding: 100px 24px 36px;
+  color: #FFFFFF;
+  overflow: hidden;
+  background-color: #1C1917;
+}
+
+.editorial-hero-bg-overlay {
+  position: absolute;
+  inset: 0;
+  background-image: 
+    linear-gradient(to right, rgba(28, 25, 23, 0.88) 0%, rgba(28, 25, 23, 0.65) 60%, rgba(28, 25, 23, 0.4) 100%),
+    url('https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=1920&q=80');
+  background-size: cover;
+  background-position: center;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.editorial-hero-container {
+  max-width: 1240px;
+  margin: 0 auto;
+  width: 100%;
+  position: relative;
+  z-index: 2;
+}
+
+.editorial-hero-content {
+  max-width: 820px;
+  text-align: left;
+}
+
+.editorial-hero-eyebrow {
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--fb-accent);
+  margin-bottom: 12px;
+  font-family: var(--font-accent);
+}
+
+.editorial-hero-title {
+  font-family: var(--font-display);
+  font-size: clamp(34px, 5.2vw, 56px);
+  font-weight: 800;
+  line-height: 1.14;
+  color: #FFFFFF;
+  margin: 0 0 14px;
+  max-width: 85%;
+  letter-spacing: -0.01em;
+}
+
+.editorial-hero-subtitle {
+  font-size: 15.5px;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.82);
+  margin: 0 0 28px;
+  max-width: 600px;
+  font-family: var(--font-body);
+}
+
+.editorial-search-bar {
+  display: flex;
+  align-items: center;
+  background: #FFFFFF;
+  border-radius: 8px;
+  padding: 5px 6px;
+  box-shadow: 0 14px 38px rgba(0, 0, 0, 0.35);
+  max-width: 720px;
+  margin-bottom: 22px;
+  width: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.search-category-dropdown-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  padding-left: 6px;
+}
+
+.search-category-select {
+  appearance: none;
+  -webkit-appearance: none;
+  background: transparent;
+  border: none;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--fb-text-primary);
+  padding: 8px 24px 8px 8px;
+  cursor: pointer;
+  outline: none;
+  font-family: var(--font-body);
+}
+
+.dropdown-chevron-icon {
+  position: absolute;
+  right: 6px;
+  color: var(--fb-text-secondary);
+  pointer-events: none;
+}
+
+.search-divider {
+  width: 1px;
+  height: 24px;
+  background: var(--fb-border);
+  margin: 0 8px;
+  flex-shrink: 0;
+}
+
+.search-input-wrap {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  padding: 0 8px;
+  min-width: 0;
+}
+
+.search-input-icon {
+  color: var(--fb-accent);
+  margin-right: 8px;
+  flex-shrink: 0;
+}
+
+.search-native-input {
+  width: 100%;
+  border: none;
+  outline: none;
+  font-size: 14.5px;
+  color: var(--fb-text-primary);
+  background: transparent;
+  font-family: var(--font-body);
+}
+
+.search-input-clear-btn {
+  background: #F5F5F4;
+  border: none;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--fb-text-secondary);
+  padding: 0;
+  margin-left: 6px;
+}
+
+.search-submit-accent-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--fb-accent);
+  color: #FFFFFF;
+  border: none;
+  border-radius: 6px;
+  padding: 10px 22px;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--fb-transition);
+  flex-shrink: 0;
+  font-family: var(--font-body);
+}
+
+.search-submit-accent-btn:hover {
+  background: var(--fb-accent-hover);
+  transform: translateY(-1px);
+}
+
+.editorial-hero-chips-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.editorial-hero-chips-row .chips-label {
+  font-size: 12.5px;
+  color: rgba(255, 255, 255, 0.75);
+  margin-right: 4px;
+}
+
+.editorial-chip-pill {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  color: #FFFFFF;
+  font-size: 12px;
+  padding: 4px 14px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: var(--fb-transition);
+  font-family: var(--font-body);
+}
+
+.editorial-chip-pill:hover {
+  background: var(--fb-accent);
+  border-color: var(--fb-accent);
+  color: #FFFFFF;
+  transform: translateY(-1px);
+}
+
+/* 2. SIDEBAR REDESIGN (Section D) */
+.editorial-desktop-sidebar {
+  position: sticky;
+  top: 80px;
+  max-height: calc(100vh - 100px);
+  overflow-y: auto;
+  align-self: start;
+  z-index: 10;
+  width: 100%;
+  margin: 0;
+  transition: top 0.25s cubic-bezier(0.16, 1, 0.3, 1), max-height 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Khi Header bị ẩn khi cuộn trang xuống: tự động bám sát đỉnh viewport 20px, loại bỏ hoàn toàn khoảng trống chết */
+body:has(.hd.hide) .editorial-desktop-sidebar,
+body.header-hidden .editorial-desktop-sidebar {
+  top: 20px;
+  max-height: calc(100vh - 40px);
+}
+
+.editorial-sidebar-card {
+  background: var(--fb-surface);
+  border: 1px solid var(--fb-border);
+  border-radius: 8px;
+  padding: 22px 18px;
+  box-shadow: var(--fb-shadow-subtle);
+}
+
+.editorial-sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 12px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--fb-border);
+}
+
+.editorial-sidebar-header .header-title-box {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--fb-secondary-accent);
+}
+
+.editorial-sidebar-header .header-title {
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--fb-secondary-accent);
+  font-family: var(--font-accent);
+  margin: 0;
+}
+
+.sidebar-clear-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: transparent;
+  border: none;
+  color: var(--fb-accent);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 2px 4px;
+  transition: var(--fb-transition);
+}
+
+.sidebar-clear-link:hover {
+  color: var(--fb-accent-hover);
+  text-decoration: underline;
+}
+
+.editorial-filter-section {
+  margin-bottom: 22px;
+}
+
+.editorial-filter-section .section-heading-row {
+  padding-bottom: 8px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid var(--fb-border);
+}
+
+.editorial-filter-section .section-heading {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--fb-text-secondary);
+  margin: 0;
+  font-family: var(--font-accent);
+}
+
+/* Custom 16px circle radio button with border-2 */
+.custom-circle-radio {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid var(--fb-border);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: var(--fb-transition);
+}
+
+.custom-circle-radio .radio-inner-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--fb-accent);
+}
+
+.category-tree-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.tree-select-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  text-align: left;
+  padding: 6px 8px;
+  border-radius: 6px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--fb-text-primary);
+  font-size: 13.5px;
+  transition: var(--fb-transition);
+}
+
+.tree-select-btn:hover {
+  background: #FAF7F2;
+}
+
+.tree-select-btn.is-selected .custom-circle-radio,
+.tree-select-btn.is-active-parent .custom-circle-radio {
+  border-color: var(--fb-accent);
+}
+
+.tree-parent-row {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.tree-chevron-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 6px 4px;
+  color: var(--fb-text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tree-children-list {
+  padding-left: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-top: 2px;
+}
+
+.editorial-radio-row {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  text-align: left;
+  padding: 6px 8px;
+  border-radius: 6px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--fb-text-primary);
+  font-size: 13.5px;
+  transition: var(--fb-transition);
+}
+
+.editorial-radio-row:hover {
+  background: #FAF7F2;
+}
+
+.editorial-radio-row.is-checked .custom-circle-radio {
+  border-color: var(--fb-accent);
+}
+
+.stars-and-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.stars-cluster {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.star-gold-fill {
+  fill: var(--fb-star-gold);
+  color: var(--fb-star-gold);
+}
+
+.star-dim {
+  color: #D6D3D1;
+}
+
+/* 3. PRODUCT LIST HEADER REDESIGN (Section C, D, E) */
+.food-catalog-section {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-width: 0;
+}
+
+.editorial-catalog-toolbar {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 0;
+  margin: 0;
+  border: none;
+  background: transparent;
+  width: 100%;
+}
+
+.toolbar-left-content {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 0;
+}
+
+/* Breadcrumb: Trang chủ / Thực đơn */
+.editorial-breadcrumb {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+  line-height: 1;
+}
+
+.breadcrumb-link {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--fb-text-secondary);
+  text-decoration: none;
+  transition: color 0.15s ease;
+  font-family: var(--font-accent);
+  cursor: pointer;
+}
+
+.breadcrumb-link:hover {
+  color: var(--fb-accent);
+}
+
+.breadcrumb-separator-icon {
+  color: #A8A29E;
+  flex-shrink: 0;
+}
+
+.breadcrumb-current-text {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--fb-accent);
+  font-family: var(--font-accent);
+}
+
+/* Tiêu đề mục: Playfair Display, text-4xl (36px), font-bold, text-primary */
+.editorial-catalog-heading {
+  font-family: var(--font-display);
+  font-size: clamp(28px, 3.5vw, 36px);
+  font-weight: 700;
+  color: var(--fb-text-primary);
+  margin: 0 0 8px;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+
+/* Subtitle & Badge row */
+.editorial-catalog-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.editorial-count-badge {
+  display: inline-flex;
+  align-items: center;
+  background-color: rgba(194, 65, 12, 0.1);
+  color: var(--fb-accent);
+  font-size: 12px;
+  font-weight: 500;
+  padding: 2.5px 10px;
+  border-radius: 2px;
+  font-family: var(--font-accent);
+  letter-spacing: 0.02em;
+  line-height: 1.4;
+}
+
+.editorial-meta-bullet {
+  color: var(--fb-border);
+  font-size: 11px;
+}
+
+.editorial-catalog-subtitle {
+  font-size: 14px;
+  color: var(--fb-text-secondary);
+  margin: 0;
+  font-family: var(--font-body);
+  line-height: 1.4;
+}
+
+/* Cột phải: Canh đáy với tiêu đề (aligned to bottom of the title) */
+.toolbar-right-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  align-self: flex-end;
+  flex-shrink: 0;
+  margin-bottom: 2px;
+}
+
+.editorial-sort-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.editorial-sort-label {
+  font-size: 14px;
+  color: var(--fb-text-secondary);
+  font-weight: 500;
+  white-space: nowrap;
+  font-family: var(--font-body);
+}
+
+.editorial-sort-select-box {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.editorial-clean-select {
+  appearance: none;
+  -webkit-appearance: none;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid var(--fb-border);
+  border-radius: 0;
+  padding: 4px 26px 4px 4px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--fb-text-primary);
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.2s ease;
+  font-family: var(--font-body);
+}
+
+.editorial-clean-select:focus {
+  border-bottom-color: var(--fb-accent);
+}
+
+.clean-select-chevron {
+  position: absolute;
+  right: 4px;
+  pointer-events: none;
+  color: var(--fb-text-secondary);
+}
+
+/* Thin horizontal divider below header */
+.editorial-catalog-divider {
+  width: 100%;
+  border-top: 1px solid var(--fb-border);
+  margin: 24px 0;
+}
+
+/* Pagination container below grid with mt-12 */
+.editorial-pagination-container {
+  margin-top: 48px;
+  width: 100%;
+}
+
+/* 4. PRODUCT GRID & CARD REDESIGN (Section E - 3 columns, Gap-6) */
+.food-product-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr) !important;
+  gap: 24px !important;
+}
+
+@media (max-width: 1024px) {
+  .food-product-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 18px !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .food-product-grid {
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+  }
+}
+
+.editorial-product-card {
+  background: var(--fb-surface);
+  border: 1px solid var(--fb-border);
+  border-radius: 8px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--fb-shadow-subtle);
+  cursor: pointer;
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+  position: relative;
+}
+
+.editorial-product-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--fb-shadow-hover);
+  border-color: #D6D3D1;
+}
+
+.editorial-card-media-wrap {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  background: #F5F5F4;
+}
+
+.editorial-card-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.editorial-product-card:hover .editorial-card-img {
+  transform: scale(1.05);
+}
+
+.editorial-badge-rect {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background: var(--fb-accent);
+  color: #FFFFFF;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 2px;
+  font-family: var(--font-accent);
+  z-index: 2;
+}
+
+.editorial-badge-rect.badge-stock-out {
+  background: #78716C;
+}
+
+.editorial-heart-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #FFFFFF;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--fb-text-secondary);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+  transition: var(--fb-transition);
+  z-index: 2;
+}
+
+.editorial-heart-btn:hover {
+  color: var(--fb-accent);
+  transform: scale(1.08);
+}
+
+.editorial-heart-btn .heart-filled {
+  fill: var(--fb-accent);
+  color: var(--fb-accent);
+}
+
+.editorial-card-content {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.editorial-rating-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11.5px;
+  color: var(--fb-text-secondary);
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.editorial-product-name {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--fb-text-primary);
+  margin: 0 0 6px;
+  line-height: 1.3;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+}
+
+.editorial-product-desc {
+  font-size: 13px;
+  color: var(--fb-text-secondary);
+  line-height: 1.5;
+  margin: 0 0 16px;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  font-family: var(--font-body);
+}
+
+.editorial-card-bottom-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: auto;
+  padding-top: 12px;
+  border-top: 1px solid var(--fb-border);
+}
+
+.editorial-price-amount {
+  font-family: var(--font-accent);
+  font-size: 17.5px;
+  font-weight: 700;
+  color: var(--fb-accent);
+  font-variant-numeric: tabular-nums;
+}
+
+.editorial-old-price {
+  font-size: 11px;
+  color: #A8A29E;
+  text-decoration: line-through;
+  margin-left: 6px;
+}
+
+.editorial-add-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: transparent;
+  border: 1.5px solid var(--fb-accent);
+  color: var(--fb-accent);
+  padding: 5px 14px;
+  border-radius: 999px;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--fb-transition);
+  font-family: var(--font-body);
+}
+
+.editorial-add-btn:hover {
+  background: var(--fb-accent);
+  color: #FFFFFF;
+}
+
+.editorial-add-btn.is-added {
+  background: #15803D;
+  border-color: #15803D;
+  color: #FFFFFF;
+}
+
+/* 5. EMPTY STATE REDESIGN (Section G) */
+.editorial-empty-state-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  background: var(--fb-surface);
+  border: 1px dashed var(--fb-border);
+  border-radius: 8px;
+  padding: 64px 24px;
+  margin: 24px 0;
+  width: 100%;
+}
+
+.empty-state-illustration-box {
+  width: 120px;
+  height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.empty-bowl-svg {
+  width: 100px;
+  height: 100px;
+}
+
+.empty-state-title {
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--fb-secondary-accent);
+  margin: 0 0 8px;
+}
+
+.empty-state-subtitle {
+  font-size: 14.5px;
+  color: var(--fb-text-secondary);
+  max-width: 440px;
+  margin: 0 0 28px;
+  line-height: 1.6;
+  font-family: var(--font-body);
+}
+
+.empty-state-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--fb-accent);
+  color: #FFFFFF;
+  border: none;
+  border-radius: 6px;
+  padding: 12px 28px;
+  font-size: 14.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--fb-transition);
+  font-family: var(--font-body);
+}
+
+.empty-state-action-btn:hover {
+  background: var(--fb-accent-hover);
+  transform: translateY(-1px);
+}
+

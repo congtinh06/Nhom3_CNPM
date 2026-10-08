@@ -16,11 +16,19 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.saigonvoice.content.entity.Category;
+import com.saigonvoice.content.repository.CategoryRepository;
+import com.saigonvoice.content.repository.ProductSpecification;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -31,9 +39,41 @@ import java.util.stream.Collectors;
 public class ProductServiceImpl implements ProductService {
 
     private final ProductRepository productRepository;
+    private final CategoryRepository categoryRepository;
 
     @Value("${app.product.upload-dir:uploads/products}")
     private String uploadDir;
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<ProductDto> getActiveProducts(ProductFilterRequest request) {
+        List<Long> targetCategoryIds = null;
+        if (request.getCategoryId() != null) {
+            targetCategoryIds = new ArrayList<>();
+            targetCategoryIds.add(request.getCategoryId());
+            List<Category> subCategories = categoryRepository.findByParentId(request.getCategoryId());
+            if (subCategories != null && !subCategories.isEmpty()) {
+                for (Category sub : subCategories) {
+                    targetCategoryIds.add(sub.getId());
+                }
+            }
+        }
+
+        Sort sort = switch (request.getSortBy() != null ? request.getSortBy() : "popular") {
+            case "price-asc" -> Sort.by(Sort.Direction.ASC, "price");
+            case "price-desc" -> Sort.by(Sort.Direction.DESC, "price");
+            case "rating-desc" -> Sort.by(Sort.Direction.DESC, "rating");
+            case "newest" -> Sort.by(Sort.Direction.DESC, "createdAt");
+            default -> Sort.by(Sort.Direction.DESC, "reviewsCount").and(Sort.by(Sort.Direction.ASC, "sortOrder"));
+        };
+
+        int pageNumber = request.getPage() != null && request.getPage() >= 0 ? request.getPage() : 0;
+        int pageSize = request.getSize() != null && request.getSize() > 0 ? request.getSize() : 12;
+        Pageable pageable = PageRequest.of(pageNumber, pageSize, sort);
+
+        Specification<Product> spec = ProductSpecification.filter(request, targetCategoryIds);
+        return productRepository.findAll(spec, pageable).map(ProductDto::fromEntity);
+    }
 
     @Override
     @Transactional(readOnly = true)

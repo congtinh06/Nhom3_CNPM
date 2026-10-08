@@ -95,14 +95,38 @@ export interface AnalyticsSummaryResponse {
 
 export type ProductCategory = 'FOOD' | 'DRINK';
 
+export type ProductSubCategory =
+  | 'mon-an'
+  | 'mon-an-vat'
+  | 'dac-san'
+  | 'ca-phe'
+  | 'tra'
+  | 'nuoc-giai-khat'
+  | 'sinh-to';
+
+export interface ProductOptions {
+  size?: 'M' | 'L';
+  sugar?: 'Ít' | 'Vừa' | 'Nhiều';
+  ice?: 'Ít' | 'Vừa' | 'Nhiều';
+  note?: string;
+}
+
 export interface Product {
   id: number;
   slug: string;
   name: string;
   category: ProductCategory;
+  subCategory?: ProductSubCategory;
   shortDescription: string;
   description: string;
   price: number;
+  oldPrice?: number;
+  rating?: number;
+  reviewsCount?: number;
+  badge?: 'Bán chạy' | 'Mới' | 'Đặc sản';
+  prepTime?: string;
+  portion?: string;
+  hasDrinkOptions?: boolean;
   imagePath: string;
   isActive: boolean;
   sortOrder: number;
@@ -137,6 +161,7 @@ export interface CartItem {
   slug?: string;
   category?: ProductCategory;
   imagePath?: string;
+  options?: ProductOptions;
 }
 
 export type OrderStatus = 'Chờ xác nhận' | 'Đã hủy';

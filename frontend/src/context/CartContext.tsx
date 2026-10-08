@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { drinksList } from '../content/staticSections';
+import { defaultProducts } from '../content/defaultProducts';
 import { CartItem, Drink, Product, ProductCategory } from '../types';
 
 export interface CartItemMeta {
@@ -138,6 +139,18 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
             slug: meta.slug,
             category: meta.category,
             imagePath: meta.imagePath,
+          };
+        }
+        const defaultProd = defaultProducts.find((p) => p.id === key);
+        if (defaultProd) {
+          return {
+            id: key,
+            name: defaultProd.name,
+            price: defaultProd.price,
+            quantity: qty,
+            slug: defaultProd.slug,
+            category: defaultProd.category,
+            imagePath: defaultProd.imagePath,
           };
         }
         const drink = drinksMap.get(key);

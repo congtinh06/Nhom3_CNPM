@@ -165,7 +165,7 @@ export const CheckoutPage: React.FC = () => {
     <div className="checkout-page">
       <div className="checkout-banner">
         <div className="checkout-banner-content">
-          <Link to="/am-thuc" className="checkout-back-link">
+          <Link to="/am-thuc-thuc-uong" className="checkout-back-link">
             <ArrowLeft size={16} strokeWidth={1.75} aria-hidden="true" />
             <span>{t.shop.continueShopping}</span>
           </Link>
@@ -183,9 +183,9 @@ export const CheckoutPage: React.FC = () => {
               <button
                 type="button"
                 className="tb"
-                onClick={() => navigate('/am-thuc')}
+                onClick={() => navigate('/am-thuc-thuc-uong')}
               >
-                Khám phá ẩm thực
+                Khám phá thực đơn
               </button>
             </div>
           </div>

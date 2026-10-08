@@ -151,7 +151,7 @@ export const NAV_TRANSLATIONS: Record<SupportedLanguage, NavTranslation> = {
         desc: 'Nét sống và nghệ thuật truyền thống',
       },
       food: {
-        title: 'Ẩm thực',
+        title: 'Ẩm thực & Thức uống',
         desc: 'Hương vị đường phố đặc trưng Sài Gòn',
       },
       drinks: {
@@ -241,9 +241,9 @@ export const NAV_TRANSLATIONS: Record<SupportedLanguage, NavTranslation> = {
       paymentMethod: 'Phương thức thanh toán',
       cod: 'Thanh toán khi nhận hàng (COD)',
       codDesc: 'Thanh toán tiền mặt trực tiếp khi nhận món',
-      mockGateway: 'Cổng thanh toán điện tử giả lập',
-      mockGatewayDesc: 'Thử nghiệm luồng thanh toán chuyển khoản/thẻ an toàn',
-      placeOrder: 'Xác nhận đặt hàng',
+      mockGateway: 'Chuyển khoản ngân hàng',
+      mockGatewayDesc: 'Quét mã QR / Chuyển khoản qua số tài khoản ngân hàng',
+      placeOrder: 'Đặt hàng',
       submitting: 'Đang xử lý đơn hàng...',
       orderHistory: 'Đơn hàng của tôi',
       orderCode: 'Mã đơn',

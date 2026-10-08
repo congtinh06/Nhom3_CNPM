@@ -111,6 +111,17 @@ export const Header: React.FC = () => {
   }, [isMenuOpen]);
 
   useEffect(() => {
+    if (isHidden) {
+      document.body.classList.add('header-hidden');
+    } else {
+      document.body.classList.remove('header-hidden');
+    }
+    return () => {
+      document.body.classList.remove('header-hidden');
+    };
+  }, [isHidden]);
+
+  useEffect(() => {
     window.addEventListener('scroll', handleScroll, { passive: true });
     handleScroll();
     return () => {
@@ -250,6 +261,7 @@ export const Header: React.FC = () => {
   const isExploreActive =
     location.pathname.startsWith('/am-thuc') ||
     location.pathname.startsWith('/thuc-uong') ||
+    location.pathname.startsWith('/am-thuc-thuc-uong') ||
     (isHomePage && ['#van-hoa', '#am-thuc', '#thuc-uong'].includes(activeSection));
 
   const exploreList = [

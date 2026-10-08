@@ -12,6 +12,8 @@ public interface ProductService {
 
     Page<ProductDto> getActiveProducts(ProductCategory category, String search, Pageable pageable);
 
+    Page<ProductDto> getActiveProducts(ProductFilterRequest request);
+
     ProductDto getActiveProductBySlug(String slug);
 
     Page<ProductDto> getAdminProducts(ProductCategory category, String search, Boolean isActive, Pageable pageable);

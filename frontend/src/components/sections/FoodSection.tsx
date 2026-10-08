@@ -14,8 +14,8 @@ export const FoodSection: React.FC = () => {
         <h2>{foodContent.title}</h2>
         <p>{foodContent.paragraph}</p>
         <div style={{ marginTop: 20 }}>
-          <Link to="/am-thuc" className="tb" style={{ textDecoration: 'none' }}>
-            Khám phá thực đơn ẩm thực
+          <Link to="/am-thuc-thuc-uong" className="tb" style={{ textDecoration: 'none' }}>
+            Khám phá Ẩm thực & Thức uống
           </Link>
         </div>
       </div>

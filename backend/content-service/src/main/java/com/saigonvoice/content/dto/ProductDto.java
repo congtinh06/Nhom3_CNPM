@@ -23,6 +23,9 @@ public class ProductDto {
     private String description;
     private BigDecimal price;
     private String imagePath;
+    private Long categoryId;
+    private BigDecimal rating;
+    private Integer reviewsCount;
     private Boolean isActive;
     private Integer sortOrder;
     private LocalDateTime createdAt;
@@ -37,6 +40,9 @@ public class ProductDto {
                 .slug(product.getSlug())
                 .name(product.getName())
                 .category(product.getCategory())
+                .categoryId(product.getCategoryEntity() != null ? product.getCategoryEntity().getId() : null)
+                .rating(product.getRating())
+                .reviewsCount(product.getReviewsCount())
                 .shortDescription(product.getShortDescription())
                 .description(product.getDescription())
                 .price(product.getPrice())

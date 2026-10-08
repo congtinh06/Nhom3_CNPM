@@ -2,6 +2,9 @@ package com.saigonvoice.content.dto;
 
 import lombok.*;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Getter
 @Setter
 @NoArgsConstructor
@@ -13,4 +16,7 @@ public class CategoryDto {
     private String nameVi;
     private String nameEn;
     private String iconUrl;
+    private Long parentId;
+    @Builder.Default
+    private List<CategoryDto> children = new ArrayList<>();
 }

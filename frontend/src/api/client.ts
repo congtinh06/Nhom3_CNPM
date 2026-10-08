@@ -175,7 +175,13 @@ export const api = {
   getProducts: async (
     params?: {
       category?: ProductCategory;
+      categoryId?: number;
+      keyword?: string;
       search?: string;
+      minPrice?: number;
+      maxPrice?: number;
+      rating?: number;
+      sortBy?: string;
       page?: number;
       size?: number;
     },

@@ -14,7 +14,7 @@ import { NotFoundPage } from './pages/NotFoundPage';
 import { ResetPasswordPage } from './pages/ResetPasswordPage';
 import { VerifyEmailPage } from './pages/VerifyEmailPage';
 import { AccountPage } from './pages/AccountPage';
-import { ProductListPage } from './pages/ProductListPage';
+import { FoodBeveragePage } from './pages/FoodBeveragePage';
 import { ProductDetailPage } from './pages/ProductDetailPage';
 import { CheckoutPage } from './pages/CheckoutPage';
 import { PaymentResultPage } from './pages/PaymentResultPage';
@@ -49,10 +49,12 @@ const AppContent: React.FC = () => {
         <Suspense fallback={<div className="s sp" style={{ minHeight: '60vh', marginTop: 100 }}><p>Đang tải dữ liệu...</p></div>}>
           <Routes location={backgroundLocation || location}>
             <Route path="/" element={<HomePage />} />
-            <Route path="/am-thuc" element={<ProductListPage category="FOOD" />} />
-            <Route path="/thuc-uong" element={<ProductListPage category="DRINK" />} />
-            <Route path="/am-thuc/:slug" element={<ProductDetailPage category="FOOD" />} />
-            <Route path="/thuc-uong/:slug" element={<ProductDetailPage category="DRINK" />} />
+            <Route path="/am-thuc-thuc-uong" element={<FoodBeveragePage />} />
+            <Route path="/am-thuc" element={<FoodBeveragePage />} />
+            <Route path="/thuc-uong" element={<FoodBeveragePage />} />
+            <Route path="/am-thuc-thuc-uong/:slug" element={<ProductDetailPage />} />
+            <Route path="/am-thuc/:slug" element={<ProductDetailPage />} />
+            <Route path="/thuc-uong/:slug" element={<ProductDetailPage />} />
             <Route path="/thanh-toan" element={<CheckoutPage />} />
             <Route path="/thanh-toan/ket-qua" element={<PaymentResultPage />} />
             <Route path="/don-hang" element={<OrdersPage />} />

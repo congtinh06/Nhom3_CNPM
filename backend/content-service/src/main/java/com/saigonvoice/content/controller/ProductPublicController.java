@@ -11,8 +11,11 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import com.saigonvoice.content.dto.ProductFilterRequest;
+import jakarta.validation.Valid;
+
 @RestController
-@RequestMapping("/api/content/products")
+@RequestMapping({"/api/v1/products", "/api/content/products"})
 @RequiredArgsConstructor
 public class ProductPublicController {
 
@@ -20,12 +23,20 @@ public class ProductPublicController {
 
     @GetMapping
     public ResponseEntity<Page<ProductDto>> getProducts(
+            @Valid @ModelAttribute ProductFilterRequest request,
             @RequestParam(required = false) ProductCategory category,
             @RequestParam(required = false) String search,
-            @RequestParam(required = false) String name,
-            @PageableDefault(size = 20, sort = "sortOrder", direction = Sort.Direction.ASC) Pageable pageable) {
-        String keyword = (search != null && !search.isBlank()) ? search : name;
-        return ResponseEntity.ok(productService.getActiveProducts(category, keyword, pageable));
+            @RequestParam(required = false) String name) {
+        if (request.getKeyword() == null || request.getKeyword().isBlank()) {
+            String legacyKeyword = (search != null && !search.isBlank()) ? search : name;
+            if (legacyKeyword != null && !legacyKeyword.isBlank()) {
+                request.setKeyword(legacyKeyword);
+            }
+        }
+        if (request.getCategory() == null && category != null) {
+            request.setCategory(category);
+        }
+        return ResponseEntity.ok(productService.getActiveProducts(request));
     }
 
     @GetMapping("/{slug}")

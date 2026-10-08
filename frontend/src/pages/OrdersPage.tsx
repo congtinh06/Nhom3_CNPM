@@ -182,16 +182,9 @@ export const OrdersPage: React.FC = () => {
               <button
                 type="button"
                 className="tb"
-                onClick={() => navigate('/am-thuc')}
+                onClick={() => navigate('/am-thuc-thuc-uong')}
               >
-                Ẩm thực Sài Gòn
-              </button>
-              <button
-                type="button"
-                className="tb"
-                onClick={() => navigate('/thuc-uong')}
-              >
-                Thức uống
+                Ẩm thực & Thức uống
               </button>
             </div>
           </div>
