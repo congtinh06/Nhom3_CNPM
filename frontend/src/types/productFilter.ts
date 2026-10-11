@@ -28,5 +28,13 @@ export interface ProductFilterState {
   priceRange: PriceRangeFilter;
   rating: RatingFilter;
   sortBy: SortOptionKey;
+  searchInDescription: boolean;
   page: number;
 }
+
+export type AdvancedSearchValues = Partial<
+  Pick<
+    ProductFilterState,
+    'keyword' | 'productType' | 'category' | 'priceRange' | 'rating' | 'sortBy' | 'searchInDescription'
+  >
+>;

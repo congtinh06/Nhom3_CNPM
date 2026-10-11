@@ -1,0 +1,80 @@
+/* ==========================================================================
+   SAIGONVOICE - STATUS BADGE STYLES (Vanilla CSS)
+   Tokens:
+   - Paid/Completed: Light green (#F0FDF4), Dark green (#15803D), Border (#BBF7D0)
+   - Pending: Light amber (#FFFBEB), Dark amber (#B45309), Border (#FDE68A)
+   - Processing/Shipping: Light blue (#EFF6FF), Dark blue (#1D4ED8), Border (#BFDBFE)
+   - Cancelled: Light red (#FEF2F2), Dark red (#B91C1C), Border (#FECACA)
+   ========================================================================== */
+
+:root {
+  --status-paid-bg: #F0FDF4;
+  --status-paid-text: #15803D;
+  --status-paid-border: #BBF7D0;
+
+  --status-pending-bg: #FFFBEB;
+  --status-pending-text: #B45309;
+  --status-pending-border: #FDE68A;
+
+  --status-processing-bg: #EFF6FF;
+  --status-processing-text: #1D4ED8;
+  --status-processing-border: #BFDBFE;
+
+  --status-cancelled-bg: #FEF2F2;
+  --status-cancelled-text: #B91C1C;
+  --status-cancelled-border: #FECACA;
+}
+
+.status-badge,
+.order-status-badge {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  padding: 3px 10px !important;
+  border-radius: 9999px !important;
+  line-height: 1.4 !important;
+  white-space: nowrap !important;
+  text-transform: none !important;
+  letter-spacing: normal !important;
+}
+
+.status-badge.large,
+.order-status-badge.large {
+  font-size: 13px !important;
+  padding: 5px 12px !important;
+  gap: 6px !important;
+}
+
+.status-badge.badge-paid,
+.status-badge.badge-completed,
+.order-status-badge.badge-paid,
+.order-status-badge.badge-completed {
+  background-color: var(--status-paid-bg, #F0FDF4) !important;
+  color: var(--status-paid-text, #15803D) !important;
+  border: 1px solid var(--status-paid-border, #BBF7D0) !important;
+}
+
+.status-badge.badge-pending,
+.order-status-badge.badge-pending {
+  background-color: var(--status-pending-bg, #FFFBEB) !important;
+  color: var(--status-pending-text, #B45309) !important;
+  border: 1px solid var(--status-pending-border, #FDE68A) !important;
+}
+
+.status-badge.badge-processing,
+.status-badge.badge-shipping,
+.order-status-badge.badge-processing,
+.order-status-badge.badge-shipping {
+  background-color: var(--status-processing-bg, #EFF6FF) !important;
+  color: var(--status-processing-text, #1D4ED8) !important;
+  border: 1px solid var(--status-processing-border, #BFDBFE) !important;
+}
+
+.status-badge.badge-cancelled,
+.order-status-badge.badge-cancelled {
+  background-color: var(--status-cancelled-bg, #FEF2F2) !important;
+  color: var(--status-cancelled-text, #B91C1C) !important;
+  border: 1px solid var(--status-cancelled-border, #FECACA) !important;
+}

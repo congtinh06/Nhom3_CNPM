@@ -1,0 +1,255 @@
+/* ==========================================================================
+   SAIGONVOICE - PAYMENT RESULT / SUCCESS PAGE (Vanilla CSS)
+   Aesthetic:
+   - Nền trang: #FDFBF7 (kem nhạt, bất kể dark mode)
+   - Thẻ card: #FFFFFF, viền mảnh #E7E5E4, bo góc 12px, shadow nhẹ
+   - Tiêu đề: Playfair Display, sentence case, màu #1C1917
+   - Khối chi tiết: Nền đào nhạt #FFF7ED, viền #FED7AA, bo góc 10px
+   - Label:value: Grid 140px 1fr, nowrap label, anywhere overflow value
+   - Nút: Cam chủ đạo #C2410C (primary), Viền xám #D6D3D1 (secondary)
+   ========================================================================== */
+
+.payment-result-page {
+  min-height: 100vh !important;
+  background-color: #FDFBF7 !important;
+  color: #1C1917 !important;
+  font-family: "Be Vietnam Pro", -apple-system, BlinkMacSystemFont, sans-serif !important;
+  padding-top: 88px !important;
+  padding-bottom: 80px !important;
+  display: block !important;
+  position: relative !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.payment-result-container {
+  max-width: 680px !important;
+  margin: 0 auto !important;
+  padding: 0 20px !important;
+  box-sizing: border-box !important;
+}
+
+/* Stepper on top of Success Page */
+.payment-result-stepper-wrap {
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  margin-bottom: 28px !important;
+}
+
+/* Main Result Card */
+.result-card,
+.mock-gateway-card {
+  background-color: #FFFFFF !important;
+  border: 1px solid #E7E5E4 !important;
+  border-radius: 12px !important;
+  padding: clamp(24px, 4vw, 36px) !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+  text-align: center !important;
+  box-sizing: border-box !important;
+}
+
+/* Icons */
+.result-icon-wrap {
+  width: 64px !important;
+  height: 64px !important;
+  border-radius: 50% !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  margin-bottom: 16px !important;
+}
+
+.result-icon-wrap.success {
+  background-color: #F0FDF4 !important;
+  border: 1px solid #BBF7D0 !important;
+  color: #15803D !important;
+}
+
+.result-icon-wrap.failed {
+  background-color: #FEF2F2 !important;
+  border: 1px solid #FECACA !important;
+  color: #DC2626 !important;
+}
+
+.result-icon-wrap.gateway {
+  background-color: #FFF7ED !important;
+  border: 1px solid #FED7AA !important;
+  color: #C2410C !important;
+}
+
+/* Heading: Playfair Display, sentence case, no uppercase */
+.result-title,
+.mock-gateway-header h2 {
+  font-family: "Playfair Display", Georgia, serif !important;
+  font-size: clamp(22px, 3.5vw, 28px) !important;
+  font-weight: 700 !important;
+  color: #1C1917 !important;
+  margin: 0 0 8px 0 !important;
+  text-transform: none !important;
+  letter-spacing: -0.01em !important;
+  line-height: 1.25 !important;
+}
+
+.result-subtitle,
+.gateway-subtitle {
+  color: #78716C !important;
+  font-size: 14px !important;
+  line-height: 1.5 !important;
+  margin: 0 0 24px 0 !important;
+}
+
+/* Tinted detail block */
+.result-info-box,
+.gateway-order-summary {
+  background-color: #FFF7ED !important;
+  border: 1px solid #FED7AA !important;
+  border-radius: 10px !important;
+  padding: 16px 20px !important;
+  margin-bottom: 28px !important;
+  text-align: left !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 10px !important;
+  box-sizing: border-box !important;
+}
+
+/* Label : Value Rows via CSS Grid */
+.info-row,
+.summary-row {
+  display: grid !important;
+  grid-template-columns: 140px 1fr !important;
+  gap: 12px !important;
+  align-items: baseline !important;
+  padding: 4px 0 !important;
+  border-bottom: 1px dashed rgba(253, 186, 116, 0.4) !important;
+}
+
+.info-row:last-child,
+.summary-row:last-child {
+  border-bottom: none !important;
+}
+
+.info-row > span:first-child,
+.summary-row > span:first-child {
+  white-space: nowrap !important;
+  color: #78716C !important;
+  font-size: 13.5px !important;
+  font-weight: 500 !important;
+}
+
+.info-row > span:last-child,
+.info-row > b:last-child,
+.summary-row > span:last-child,
+.summary-row > b:last-child {
+  overflow-wrap: anywhere !important;
+  word-break: break-word !important;
+  color: #1C1917 !important;
+  font-size: 13.5px !important;
+}
+
+/* Order code: monospace + accent */
+.order-code-badge,
+.gateway-order-summary b {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+  font-weight: 700 !important;
+  font-size: 14.5px !important;
+  color: #C2410C !important;
+}
+
+/* Total: bold and larger */
+.result-total-amount,
+.gateway-amount {
+  font-size: 17px !important;
+  font-weight: 700 !important;
+  color: #1C1917 !important;
+}
+
+/* Actions Row */
+.result-actions-row,
+.mock-action-buttons {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 12px !important;
+  flex-wrap: wrap !important;
+}
+
+/* Buttons */
+.result-primary-btn,
+.mock-success-btn {
+  background-color: #C2410C !important;
+  color: #FFFFFF !important;
+  border: none !important;
+  border-radius: 8px !important;
+  padding: 11px 22px !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  font-family: inherit !important;
+  text-decoration: none !important;
+}
+
+.result-primary-btn:hover,
+.mock-success-btn:hover {
+  background-color: #9A3412 !important;
+}
+
+.result-secondary-btn,
+.mock-failed-btn {
+  background-color: #FFFFFF !important;
+  color: #57534E !important;
+  border: 1px solid #D6D3D1 !important;
+  border-radius: 8px !important;
+  padding: 11px 22px !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  font-family: inherit !important;
+  text-decoration: none !important;
+}
+
+.result-secondary-btn:hover,
+.mock-failed-btn:hover {
+  border-color: #78716C !important;
+  color: #1C1917 !important;
+  background-color: #F5F5F4 !important;
+}
+
+.mock-instructions {
+  background: #FAFAF9 !important;
+  border: 1px solid #E7E5E4 !important;
+  border-radius: 8px !important;
+  padding: 12px 16px !important;
+  font-size: 13px !important;
+  color: #78716C !important;
+  margin-bottom: 20px !important;
+  text-align: left !important;
+  line-height: 1.5 !important;
+}
+
+/* Loading Box */
+.result-loading-box {
+  background-color: #FFFFFF !important;
+  border: 1px solid #E7E5E4 !important;
+  border-radius: 12px !important;
+  padding: 48px 24px !important;
+  text-align: center !important;
+  max-width: 480px !important;
+  margin: 40px auto !important;
+  color: #57534E !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 12px !important;
+}

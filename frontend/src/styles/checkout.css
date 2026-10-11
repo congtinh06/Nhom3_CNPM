@@ -1,0 +1,1071 @@
+/* ==========================================================================
+   SAIGONVOICE - CHECKOUT PAGE STYLING (Vanilla CSS)
+   Colors:
+   - Nền trang: #FDFBF7 (kem nhạt, bất kể dark mode)
+   - Thẻ card: #FFFFFF, viền #E7E5E4, bo góc 12px
+   - Màu cam chủ đạo: #C2410C (hover #9A3412)
+   - Nền đào nhạt khi chọn: #FFF7ED
+   - Viền ô nhập: #D6D3D1 (bo góc 8px, nền trắng)
+   - Font: Playfair Display cho tiêu đề (viết hoa chữ đầu), Be Vietnam Pro cho nội dung
+   ========================================================================== */
+
+/* 1. Page Layout (Luôn giữ nền kem nhạt, chữ tối ngay cả khi OS bật Dark Mode) */
+.checkout-page-container {
+  min-height: 100vh !important;
+  background-color: #FDFBF7 !important;
+  color: #1C1917 !important;
+  font-family: "Be Vietnam Pro", -apple-system, BlinkMacSystemFont, sans-serif !important;
+  padding-top: 88px !important;
+  padding-bottom: 80px !important;
+  display: block !important;
+  position: relative !important;
+  width: 100% !important;
+}
+
+.checkout-main-wrap {
+  max-width: 1200px !important;
+  margin: 0 auto !important;
+  padding: 0 20px !important;
+  box-sizing: border-box !important;
+}
+
+/* 2. Top Header & Title: Playfair Display, viết hoa chữ đầu, không in hoa */
+.checkout-header-row {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 16px !important;
+  margin-bottom: 28px !important;
+}
+
+@media (min-width: 768px) {
+  .checkout-header-row {
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+  }
+}
+
+.checkout-page-container h1,
+.checkout-page-container .checkout-heading {
+  font-family: "Playfair Display", Georgia, serif !important;
+  font-size: clamp(24px, 3.5vw, 32px) !important;
+  font-weight: 700 !important;
+  color: #1C1917 !important;
+  margin: 0 !important;
+  text-transform: none !important; /* Viết hoa chữ đầu, KHÔNG in hoa */
+  letter-spacing: -0.01em !important;
+  line-height: 1.25 !important;
+}
+
+/* 3. Stepper */
+.checkout-stepper {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+}
+
+.checkout-stepper .stepper-step {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+}
+
+.checkout-stepper .stepper-circle {
+  width: 24px !important;
+  height: 24px !important;
+  border-radius: 50% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  border: 2px solid #E7E5E4 !important;
+  color: #A8A29E !important;
+  background-color: #FFFFFF !important;
+  transition: all 0.2s ease !important;
+}
+
+.checkout-stepper .stepper-circle.active {
+  background-color: #C2410C !important;
+  border-color: #C2410C !important;
+  color: #FFFFFF !important;
+}
+
+.checkout-stepper .stepper-circle.completed {
+  border-color: #C2410C !important;
+  color: #C2410C !important;
+  background-color: #FFFFFF !important;
+}
+
+.checkout-stepper .stepper-label {
+  font-size: 13.5px !important;
+  color: #A8A29E !important;
+  font-weight: 500 !important;
+}
+
+.checkout-stepper .stepper-label.active {
+  color: #1C1917 !important;
+  font-weight: 600 !important;
+}
+
+.checkout-stepper .stepper-label.completed {
+  color: #57534E !important;
+}
+
+.checkout-stepper .stepper-line {
+  width: 32px !important;
+  height: 2px !important;
+  background-color: #E7E5E4 !important;
+}
+
+.checkout-stepper .stepper-line.completed {
+  background-color: #C2410C !important;
+}
+
+/* 4. Empty Cart State */
+.checkout-empty-card {
+  background: #FFFFFF !important;
+  border: 1px solid #E7E5E4 !important;
+  border-radius: 12px !important;
+  padding: 48px 24px !important;
+  text-align: center !important;
+  max-width: 480px !important;
+  margin: 40px auto !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+}
+
+.checkout-empty-icon-wrap {
+  width: 56px !important;
+  height: 56px !important;
+  border-radius: 50% !important;
+  background-color: #FFF7ED !important;
+  color: #C2410C !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  margin: 0 auto 16px !important;
+}
+
+.checkout-empty-title {
+  font-family: "Playfair Display", Georgia, serif !important;
+  font-size: 20px !important;
+  font-weight: 700 !important;
+  color: #1C1917 !important;
+  margin: 0 0 8px !important;
+  text-transform: none !important;
+}
+
+.checkout-empty-desc {
+  font-size: 14px !important;
+  color: #78716C !important;
+  margin: 0 0 20px !important;
+}
+
+.checkout-empty-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 10px 24px !important;
+  border-radius: 8px !important;
+  background-color: #C2410C !important;
+  color: #FFFFFF !important;
+  font-weight: 600 !important;
+  font-size: 14px !important;
+  text-decoration: none !important;
+  transition: background 0.15s ease !important;
+}
+
+.checkout-empty-btn:hover {
+  background-color: #9A3412 !important;
+}
+
+/* 5. Main 2-Column Grid Layout */
+.checkout-page-container .checkout-grid {
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  gap: 28px !important;
+  align-items: start !important;
+}
+
+@media (min-width: 992px) {
+  .checkout-page-container .checkout-grid {
+    grid-template-columns: 1.4fr 1fr !important;
+    gap: 32px !important;
+  }
+}
+
+.checkout-left-col {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 20px !important;
+}
+
+.checkout-right-col {
+  position: sticky !important;
+  top: 96px !important;
+}
+
+/* 6. Cards (Thẻ bo nhỏ 12px, viền mảnh #E7E5E4, nền trắng) */
+.checkout-page-container .checkout-card {
+  background-color: #FFFFFF !important;
+  border: 1px solid #E7E5E4 !important;
+  border-radius: 12px !important;
+  padding: 22px 24px !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+  box-sizing: border-box !important;
+}
+
+.checkout-card-header {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  padding-bottom: 14px !important;
+  border-bottom: 1px solid #F5F5F4 !important;
+  margin-bottom: 18px !important;
+}
+
+.checkout-card-icon {
+  width: 32px !important;
+  height: 32px !important;
+  border-radius: 50% !important;
+  background-color: #FFF7ED !important;
+  border: 1px solid #FFEDD5 !important;
+  color: #C2410C !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex-shrink: 0 !important;
+}
+
+.checkout-page-container h2,
+.checkout-page-container .checkout-card-title {
+  font-family: "Playfair Display", Georgia, serif !important;
+  font-size: 18px !important;
+  font-weight: 700 !important;
+  color: #1C1917 !important;
+  margin: 0 !important;
+  text-transform: none !important; /* Viết hoa chữ đầu */
+  letter-spacing: -0.01em !important;
+}
+
+/* 7. Form Fields: Ô nhập, Dropdown, Textarea */
+.checkout-form-grid {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 16px !important;
+}
+
+.checkout-form-row {
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  gap: 16px !important;
+}
+
+@media (min-width: 600px) {
+  .checkout-form-row {
+    grid-template-columns: 1fr 1fr !important;
+  }
+}
+
+.checkout-field-wrap {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 6px !important;
+  width: 100% !important;
+}
+
+.checkout-label {
+  font-size: 13.5px !important;
+  font-weight: 600 !important;
+  color: #292524 !important;
+  margin: 0 !important;
+  display: block !important;
+}
+
+.checkout-req {
+  color: #C2410C !important;
+  margin-left: 2px !important;
+}
+
+/* Quy chuẩn đồng đều: viền mảnh 4 cạnh (1px solid #D6D3D1), bo góc 8px, nền trắng */
+.checkout-page-container .checkout-input,
+.checkout-page-container .checkout-select,
+.checkout-page-container .checkout-textarea {
+  width: 100% !important;
+  padding: 10px 14px !important;
+  border: 1px solid #D6D3D1 !important;
+  border-radius: 8px !important;
+  background-color: #FFFFFF !important;
+  color: #1C1917 !important;
+  font-size: 14px !important;
+  font-family: "Be Vietnam Pro", -apple-system, BlinkMacSystemFont, sans-serif !important;
+  box-sizing: border-box !important;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease !important;
+  outline: none !important;
+  height: auto !important;
+}
+
+.checkout-page-container .checkout-input::placeholder,
+.checkout-page-container .checkout-textarea::placeholder {
+  color: #A8A29E !important;
+  font-family: inherit !important;
+}
+
+.checkout-page-container .checkout-input:focus,
+.checkout-page-container .checkout-select:focus,
+.checkout-page-container .checkout-textarea:focus {
+  border-color: #C2410C !important;
+  box-shadow: 0 0 0 1px #C2410C !important;
+  background-color: #FFFFFF !important;
+}
+
+.checkout-page-container .checkout-input.has-error,
+.checkout-page-container .checkout-select.has-error,
+.checkout-page-container .checkout-textarea.has-error {
+  border-color: #DC2626 !important;
+  box-shadow: 0 0 0 1px #DC2626 !important;
+  background-color: #FEF2F2 !important;
+}
+
+.checkout-page-container .checkout-select {
+  appearance: auto !important;
+  cursor: pointer !important;
+  height: 42px !important;
+}
+
+.checkout-page-container .checkout-textarea {
+  resize: vertical !important;
+  min-height: 84px !important;
+  line-height: 1.5 !important;
+  font-family: "Be Vietnam Pro", -apple-system, BlinkMacSystemFont, sans-serif !important; /* KHÔNG DÙNG MONOSPACE */
+}
+
+.checkout-error-msg {
+  font-size: 12px !important;
+  color: #DC2626 !important;
+  margin: 4px 0 0 !important;
+}
+
+/* 8. Thẻ lựa chọn (Giao ngay / Hẹn giờ, COD / VietQR) */
+.checkout-options-grid {
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  gap: 12px !important;
+}
+
+@media (min-width: 600px) {
+  .checkout-options-grid {
+    grid-template-columns: 1fr 1fr !important;
+  }
+}
+
+.checkout-options-stack {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 12px !important;
+}
+
+.checkout-page-container .checkout-option-card {
+  display: flex !important;
+  align-items: flex-start !important;
+  gap: 12px !important;
+  padding: 14px 16px !important;
+  border: 1.5px solid #E7E5E4 !important; /* Viền mảnh màu kem khi chưa chọn */
+  border-radius: 10px !important;
+  background-color: #FFFFFF !important; /* Nền trắng khi chưa chọn */
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+  user-select: none !important;
+  box-sizing: border-box !important;
+}
+
+.checkout-page-container .checkout-option-card:hover {
+  border-color: #D6D3D1 !important;
+}
+
+.checkout-page-container .checkout-option-card.selected {
+  border-color: #C2410C !important; /* Viền cam khi chọn */
+  background-color: #FFF7ED !important; /* Nền đào nhạt khi chọn */
+}
+
+/* Radio circle với chấm trong */
+.checkout-page-container .checkout-radio-circle {
+  width: 18px !important;
+  height: 18px !important;
+  border-radius: 50% !important;
+  border: 2px solid #D6D3D1 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex-shrink: 0 !important;
+  margin-top: 2px !important;
+  background-color: #FFFFFF !important;
+  transition: all 0.15s ease !important;
+  box-sizing: border-box !important;
+}
+
+.checkout-page-container .checkout-option-card.selected .checkout-radio-circle {
+  border-color: #C2410C !important;
+}
+
+.checkout-page-container .checkout-radio-dot {
+  width: 8px !important;
+  height: 8px !important;
+  border-radius: 50% !important;
+  background-color: #C2410C !important;
+  transform: scale(0) !important;
+  transition: transform 0.15s ease !important;
+}
+
+.checkout-page-container .checkout-option-card.selected .checkout-radio-dot {
+  transform: scale(1) !important;
+}
+
+.option-content {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 3px !important;
+}
+
+.option-title {
+  font-size: 14.5px !important;
+  font-weight: 600 !important;
+  color: #1C1917 !important;
+}
+
+.option-desc {
+  font-size: 12.5px !important;
+  color: #78716C !important;
+  margin: 0 !important;
+  line-height: 1.4 !important;
+}
+
+/* 9. Voucher / Mã giảm giá: link chữ cam không khung */
+.checkout-page-container .checkout-voucher-toggle {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  background: none !important;
+  border: none !important;
+  padding: 0 !important;
+  color: #C2410C !important;
+  font-weight: 600 !important;
+  font-size: 13.5px !important;
+  cursor: pointer !important;
+  text-decoration: none !important;
+  font-family: inherit !important;
+  transition: color 0.15s ease !important;
+  outline: none !important;
+}
+
+.checkout-page-container .checkout-voucher-toggle:hover {
+  color: #9A3412 !important;
+}
+
+.checkout-voucher-box {
+  display: flex !important;
+  gap: 8px !important;
+  margin-top: 10px !important;
+}
+
+.checkout-page-container .checkout-voucher-btn {
+  padding: 10px 16px !important;
+  border: none !important;
+  border-radius: 8px !important;
+  background-color: #C2410C !important;
+  color: #FFFFFF !important;
+  font-weight: 600 !important;
+  font-size: 13px !important;
+  cursor: pointer !important;
+  white-space: nowrap !important;
+  font-family: inherit !important;
+  transition: background 0.15s ease !important;
+}
+
+.checkout-page-container .checkout-voucher-btn:hover {
+  background-color: #9A3412 !important;
+}
+
+/* 10. Summary Card & Items */
+.summary-items-list {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 10px !important;
+  max-height: 280px !important;
+  overflow-y: auto !important;
+  padding-right: 4px !important;
+  margin: 12px 0 !important;
+}
+
+.summary-item-row {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 12px !important;
+  padding-bottom: 10px !important;
+  border-bottom: 1px solid #F5F5F4 !important;
+}
+
+.summary-item-left {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  flex: 1 !important;
+  min-width: 0 !important;
+}
+
+.summary-item-thumb {
+  width: 42px !important;
+  height: 42px !important;
+  border-radius: 6px !important;
+  object-fit: cover !important;
+  background-color: #F5F5F4 !important;
+  border: 1px solid #E7E5E4 !important;
+}
+
+.summary-item-thumb-placeholder {
+  width: 42px !important;
+  height: 42px !important;
+  border-radius: 6px !important;
+  background-color: #FFF7ED !important;
+  color: #C2410C !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  border: 1px solid #FFEDD5 !important;
+}
+
+.summary-item-info {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 2px !important;
+  min-width: 0 !important;
+}
+
+.summary-item-name {
+  font-size: 13.5px !important;
+  font-weight: 600 !important;
+  color: #1C1917 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+.summary-item-price {
+  font-size: 13px !important;
+  color: #C2410C !important;
+  font-weight: 600 !important;
+}
+
+.summary-item-controls {
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+}
+
+/* Nút trừ/cộng và thùng rác là icon phẳng */
+.checkout-page-container .summary-qty-btn,
+.checkout-page-container .summary-trash-btn {
+  background: none !important;
+  border: none !important;
+  padding: 4px !important;
+  cursor: pointer !important;
+  color: #78716C !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 4px !important;
+  font-family: inherit !important;
+  transition: all 0.15s ease !important;
+}
+
+.checkout-page-container .summary-qty-btn:hover {
+  color: #1C1917 !important;
+  background-color: #F5F5F4 !important;
+}
+
+.checkout-page-container .summary-trash-btn:hover {
+  color: #DC2626 !important;
+  background-color: #FEF2F2 !important;
+}
+
+.summary-qty-val {
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  color: #1C1917 !important;
+  min-width: 18px !important;
+  text-align: center !important;
+}
+
+/* 11. Cost breakdown */
+.summary-cost-list {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 8px !important;
+  margin: 14px 0 !important;
+  font-size: 13.5px !important;
+}
+
+.summary-cost-line {
+  display: flex !important;
+  justify-content: space-between !important;
+  color: #57534E !important;
+}
+
+.summary-free-ship {
+  color: #16A34A !important;
+  font-weight: 600 !important;
+}
+
+.summary-total-line {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: baseline !important;
+  padding-top: 12px !important;
+  border-top: 1.5px solid #F5F5F4 !important;
+  margin-top: 8px !important;
+}
+
+.summary-total-label {
+  font-size: 15px !important;
+  font-weight: 700 !important;
+  color: #1C1917 !important;
+}
+
+.summary-total-val {
+  font-size: 22px !important;
+  font-weight: 700 !important;
+  color: #C2410C !important;
+}
+
+/* 12. Terms Checkbox */
+.summary-terms-label {
+  display: flex !important;
+  align-items: flex-start !important;
+  gap: 8px !important;
+  font-size: 12px !important;
+  color: #78716C !important;
+  line-height: 1.45 !important;
+  margin-top: 14px !important;
+  cursor: pointer !important;
+  user-select: none !important;
+}
+
+.summary-terms-label input[type="checkbox"] {
+  margin-top: 2px !important;
+  accent-color: #C2410C !important;
+}
+
+/* 13. Nút Đặt hàng: phẳng, xám khi disabled, cam khi hợp lệ */
+.checkout-page-container .checkout-order-submit-btn {
+  width: 100% !important;
+  padding: 13px 20px !important;
+  border: none !important;
+  border-radius: 8px !important;
+  font-size: 15px !important;
+  font-weight: 700 !important;
+  font-family: inherit !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  margin-top: 16px !important;
+  transition: background 0.15s ease !important;
+  cursor: pointer !important;
+}
+
+.checkout-page-container .checkout-order-submit-btn:disabled {
+  background-color: #E7E5E4 !important;
+  color: #A8A29E !important;
+  cursor: not-allowed !important;
+}
+
+.checkout-page-container .checkout-order-submit-btn:not(:disabled) {
+  background-color: #C2410C !important;
+  color: #FFFFFF !important;
+}
+
+.checkout-page-container .checkout-order-submit-btn:not(:disabled):hover {
+  background-color: #9A3412 !important;
+}
+
+/* 14. Hotline & BackToTop không chồng nhau */
+.checkout-page-container .checkout-hotline-floating {
+  position: fixed !important;
+  bottom: 20px !important;
+  right: 24px !important;
+  z-index: 45 !important;
+}
+
+.checkout-page-container .checkout-hotline-link {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  padding: 8px 16px !important;
+  background-color: #FFFFFF !important;
+  border: 1px solid #E7E5E4 !important;
+  border-radius: 9999px !important;
+  color: #1C1917 !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  text-decoration: none !important; /* Không gạch chân */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
+  transition: all 0.2s ease !important;
+}
+
+.checkout-page-container .checkout-hotline-link:hover {
+  border-color: #C2410C !important;
+  color: #C2410C !important;
+  text-decoration: none !important;
+}
+
+.hotline-pulse-dot {
+  width: 8px !important;
+  height: 8px !important;
+  border-radius: 50% !important;
+  background-color: #22C55E !important;
+}
+
+/* Nút lên đầu trang (#up) nằm phía trên Hotline, cách 12px */
+body:has(.checkout-page-container) #up,
+.checkout-page-container ~ #up {
+  bottom: 74px !important;
+  right: 24px !important;
+  z-index: 46 !important;
+}
+
+/* Alert Error */
+.checkout-alert-error {
+  background-color: #FEF2F2 !important;
+  border: 1px solid #FECACA !important;
+  color: #B91C1C !important;
+  padding: 12px 16px !important;
+  border-radius: 8px !important;
+  font-size: 13.5px !important;
+}
+
+/* ==========================================================================
+   VIETQR PAYMENT PAGE STYLING (Vanilla CSS)
+   ========================================================================== */
+.vietqr-page {
+  min-height: 100vh !important;
+  background-color: #FDFBF7 !important;
+  color: #1C1917 !important;
+  font-family: "Be Vietnam Pro", -apple-system, BlinkMacSystemFont, sans-serif !important;
+  padding-top: 88px !important;
+  padding-bottom: 80px !important;
+  display: block !important;
+  position: relative !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.vietqr-container {
+  max-width: 540px !important;
+  margin: 0 auto !important;
+  padding: 0 16px !important;
+  box-sizing: border-box !important;
+}
+
+.vietqr-card {
+  background-color: #FFFFFF !important;
+  border: 1px solid #E7E5E4 !important;
+  border-radius: 16px !important;
+  padding: 32px 24px !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.04) !important;
+  text-align: center !important;
+  box-sizing: border-box !important;
+}
+
+.vietqr-title {
+  font-family: "Playfair Display", Georgia, serif !important;
+  font-size: 24px !important;
+  font-weight: 700 !important;
+  color: #1C1917 !important;
+  margin: 0 0 16px 0 !important;
+  text-transform: none !important;
+  letter-spacing: -0.01em !important;
+}
+
+.vietqr-amount-row {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  padding: 12px 18px !important;
+  background-color: #FFF7ED !important;
+  border: 1px dashed #FDBA74 !important;
+  border-radius: 10px !important;
+  margin-bottom: 24px !important;
+}
+
+.vietqr-amount {
+  font-size: 22px !important;
+  font-weight: 700 !important;
+  color: #C2410C !important;
+}
+
+.vietqr-order-code {
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  color: #78716C !important;
+}
+
+.vietqr-qr-box {
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  background: #FFFFFF !important;
+  border: 1px solid #E7E5E4 !important;
+  border-radius: 14px !important;
+  padding: 16px !important;
+  width: fit-content !important;
+  margin: 0 auto 16px auto !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04) !important;
+}
+
+.vietqr-qr-img {
+  width: 240px !important;
+  height: 240px !important;
+  max-width: 100% !important;
+  object-fit: contain !important;
+  display: block !important;
+  margin: 0 auto !important;
+}
+
+.vietqr-qr-expired {
+  width: 240px !important;
+  height: 240px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 10px !important;
+  color: #DC2626 !important;
+  background-color: #FEF2F2 !important;
+  border-radius: 8px !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+}
+
+.vietqr-countdown {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  color: #C2410C !important;
+  background-color: #FFF7ED !important;
+  border: 1px solid #FFEDD5 !important;
+  padding: 6px 14px !important;
+  border-radius: 9999px !important;
+  margin-bottom: 24px !important;
+}
+
+.vietqr-countdown.expired {
+  color: #DC2626 !important;
+  background-color: #FEF2F2 !important;
+  border-color: #FECACA !important;
+}
+
+.vietqr-bank-info {
+  background-color: #FAFAF9 !important;
+  border: 1px solid #E7E5E4 !important;
+  border-radius: 12px !important;
+  padding: 12px 16px !important;
+  margin-bottom: 24px !important;
+  text-align: left !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 10px !important;
+}
+
+.vietqr-copy-row,
+.bank-copy-row {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  padding: 6px 0 !important;
+  border-bottom: 1px dashed #E7E5E4 !important;
+}
+
+.vietqr-copy-row:last-child,
+.bank-copy-row:last-child {
+  border-bottom: none !important;
+}
+
+.vietqr-label {
+  font-size: 13px !important;
+  color: #78716C !important;
+  font-weight: 500 !important;
+  min-width: 90px !important;
+}
+
+.vietqr-value {
+  font-size: 13.5px !important;
+  font-weight: 600 !important;
+  color: #1C1917 !important;
+  flex: 1 !important;
+  margin: 0 10px !important;
+  word-break: break-all !important;
+}
+
+.vietqr-code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+  color: #C2410C !important;
+}
+
+.bank-copy-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  background-color: #FFFFFF !important;
+  border: 1px solid #D6D3D1 !important;
+  border-radius: 6px !important;
+  padding: 4px 10px !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  color: #44403C !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  font-family: inherit !important;
+}
+
+.bank-copy-btn:hover {
+  border-color: #C2410C !important;
+  color: #C2410C !important;
+  background-color: #FFF7ED !important;
+}
+
+.vietqr-actions {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 10px !important;
+  margin-bottom: 16px !important;
+}
+
+.vietqr-status {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px !important;
+  font-size: 13px !important;
+  color: #0284C7 !important;
+  font-weight: 500 !important;
+  margin-bottom: 4px !important;
+}
+
+.vietqr-primary {
+  width: 100% !important;
+  padding: 13px 20px !important;
+  border-radius: 8px !important;
+  border: none !important;
+  background-color: #C2410C !important;
+  color: #FFFFFF !important;
+  font-size: 14.5px !important;
+  font-weight: 600 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  font-family: inherit !important;
+}
+
+.vietqr-primary:hover {
+  background-color: #9A3412 !important;
+}
+
+.vietqr-primary:disabled {
+  opacity: 0.6 !important;
+  cursor: not-allowed !important;
+}
+
+.vietqr-secondary {
+  width: 100% !important;
+  padding: 11px 20px !important;
+  border-radius: 8px !important;
+  border: 1px solid #D6D3D1 !important;
+  background-color: #FFFFFF !important;
+  color: #57534E !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  font-family: inherit !important;
+}
+
+.vietqr-secondary:hover {
+  border-color: #78716C !important;
+  color: #1C1917 !important;
+  background-color: #F5F5F4 !important;
+}
+
+.vietqr-retry {
+  width: 100% !important;
+  padding: 12px 20px !important;
+  border-radius: 8px !important;
+  border: none !important;
+  background-color: #C2410C !important;
+  color: #FFFFFF !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  cursor: pointer !important;
+  font-family: inherit !important;
+}
+
+.vietqr-simulate {
+  width: 100% !important;
+  padding: 9px 16px !important;
+  border-radius: 8px !important;
+  border: 1px dashed #FDBA74 !important;
+  background-color: #FFF7ED !important;
+  color: #C2410C !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px !important;
+  cursor: pointer !important;
+  font-family: inherit !important;
+  transition: all 0.2s ease !important;
+}
+
+.vietqr-simulate:hover {
+  background-color: #FFEDD5 !important;
+}
+
+.vietqr-note {
+  font-size: 12.5px !important;
+  color: #78716C !important;
+  line-height: 1.5 !important;
+  text-align: center !important;
+  margin: 16px auto 0 auto !important;
+  max-width: 480px !important;
+}
+
+.vietqr-empty-box {
+  background-color: #FFFFFF !important;
+  border: 1px solid #E7E5E4 !important;
+  border-radius: 16px !important;
+  padding: 48px 24px !important;
+  text-align: center !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 14px !important;
+  color: #57534E !important;
+  max-width: 480px !important;
+  margin: 40px auto !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.04) !important;
+}
+

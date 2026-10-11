@@ -1,4 +1,4 @@
-﻿@import './variables.css';
+@import './variables.css';
 
 html {
   scroll-padding-top: env(safe-area-inset-top, 0px);
@@ -129,10 +129,14 @@ select:focus-visible {
   align-items: center;
   justify-content: space-between;
   gap: 20px;
+  height: 64px;
+  min-height: 64px;
+  max-height: 64px;
   padding: calc(14px + env(safe-area-inset-top, 0px)) clamp(16px, 4vw, 56px) 14px;
   background: linear-gradient(180deg, rgba(14, 9, 5, 0.72) 0%, rgba(14, 9, 5, 0.35) 60%, transparent 100%);
   color: var(--cream);
   text-shadow: none;
+  border-bottom: 1px solid transparent;
   transition: background 0.3s ease, transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
   box-sizing: border-box;
 }

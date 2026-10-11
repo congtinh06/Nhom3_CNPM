@@ -4,7 +4,8 @@ import { costumeContent } from '../../content/staticSections';
 
 export const CostumeSection: React.FC = () => {
   return (
-    <section className="s cos" id="trang-phuc">
+    <section className="s cos" id="van-hoa">
+      <div id="trang-phuc" style={{ display: 'none' }} />
       <PhotoFrame
         className="big"
         hue={costumeContent.photoBig.hue}

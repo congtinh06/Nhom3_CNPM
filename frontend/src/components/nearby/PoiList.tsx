@@ -1,114 +1,191 @@
-import React, { ReactNode } from 'react';
+import React, { ReactNode, useCallback, useState } from 'react';
+import { Check } from 'lucide-react';
 import { GeoPoi } from '../../pages/NearbyPage';
 import { SupportedLanguage } from '../../types';
-import { PoiCard } from './PoiCard';
-import { formatDist } from '../../hooks/useAutoNarration';
+import { resolveImagePath } from './PoiCard';
+import { t } from '../../content/nearbyI18n';
 
-interface SortedPoiItem {
+export interface SortedPoiItem {
   poi: GeoPoi;
   originalIndex: number;
   dist: number | null;
 }
 
-interface PoiListProps {
+export interface PoiListProps {
   sortedPois: SortedPoiItem[];
   selectedPoiId: string | null;
-  currentPlayingId: string | null;
-  isPlaying: boolean;
+  activePoiId: string | null;
+  hoveredPoiId?: string | null;
+  currentPlayingId?: string | null;
+  isPlaying?: boolean;
   currentLang: SupportedLanguage;
-  radius: number;
-  statusMessage: ReactNode;
+  radius?: number;
+  overrideRadius?: number | null;
+  listenedPoiIds?: string[];
+  statusMessage?: ReactNode;
   listTitle: string;
   sortNoteText: string;
+  activeSentenceIndex?: number | null;
+  expandedChapterId?: string | null;
+  duration?: number;
   onSelectPoi: (poiId: string) => void;
-  onTogglePlay: (poiId: string) => void;
+  onHoverPoi?: (poiId: string | null) => void;
+  onTogglePlay?: (poiId: string) => void;
+  onChangeLanguage?: (lang: SupportedLanguage) => void;
   getPoiName: (poi: GeoPoi) => string;
   getPoiCategory: (poi: GeoPoi) => string;
-  inZoneBadgeText: string;
-  nearBadgeText: string;
-  distFormatText: (distStr: string) => string;
-  langVoiceAriaText: string;
-  listenBtnText: string;
-  pauseBtnText: string;
-  resumeBtnText: string;
+  inZoneBadgeText?: string;
+  nearBadgeText?: string;
+  distFormatText?: (distStr: string) => string;
+  langVoiceAriaText?: string;
+  listenBtnText?: string;
+  pauseBtnText?: string;
+  resumeBtnText?: string;
 }
 
-export const PoiList: React.FC<PoiListProps> = ({
+interface StopRowProps {
+  item: SortedPoiItem;
+  isActive: boolean;
+  isListened: boolean;
+  currentLang: SupportedLanguage;
+  getPoiName: (poi: GeoPoi) => string;
+  getPoiCategory: (poi: GeoPoi) => string;
+  onSelect: (id: string) => void;
+  onHover?: (id: string, hovered: boolean) => void;
+}
+
+const StopRow: React.FC<StopRowProps> = ({
+  item,
+  isActive,
+  isListened,
+  currentLang,
+  getPoiName,
+  getPoiCategory,
+  onSelect,
+  onHover,
+}) => {
+  const [thumbError, setThumbError] = useState(false);
+  const { poi, originalIndex } = item;
+  const poiName = getPoiName(poi);
+  const poiCategory = getPoiCategory(poi);
+  const hasImage = Boolean((poi.image || poi.slug) && !thumbError);
+
+  return (
+    <li className="nearby-stop-item">
+      <button
+        type="button"
+        className={`nearby-stop-row ${isActive ? 'is-active' : ''}`}
+        aria-current={isActive ? 'true' : undefined}
+        onClick={() => onSelect(poi.id)}
+        onMouseEnter={() => onHover?.(poi.id, true)}
+        onMouseLeave={() => onHover?.(poi.id, false)}
+      >
+        <span className="stop-badge-col">
+          <span className="stop-number-badge">{originalIndex + 1}</span>
+        </span>
+        {hasImage && (
+          <img
+            src={resolveImagePath(poi.image, poi.slug)}
+            alt=""
+            className="stop-row-thumb"
+            loading="lazy"
+            decoding="async"
+            onError={() => setThumbError(true)}
+          />
+        )}
+        <div className="stop-row-info">
+          <span className="stop-row-name">{poiName}</span>
+          <span className="stop-row-category">{poiCategory}</span>
+        </div>
+        {isListened && (
+          <span className="stop-row-listened" title={t(currentLang, 'listenedTitle')}>
+            <Check size={16} aria-hidden="true" />
+          </span>
+        )}
+      </button>
+    </li>
+  );
+};
+
+const PoiListComponent: React.FC<PoiListProps> = ({
   sortedPois,
   selectedPoiId,
-  currentPlayingId,
-  isPlaying,
-  currentLang,
-  radius,
+  activePoiId,
+  hoveredPoiId: _hoveredPoiId,
+  listenedPoiIds = [],
   statusMessage,
   listTitle,
   sortNoteText,
   onSelectPoi,
-  onTogglePlay,
+  onHoverPoi,
   getPoiName,
   getPoiCategory,
-  inZoneBadgeText,
-  nearBadgeText,
-  distFormatText,
-  langVoiceAriaText,
-  listenBtnText,
-  pauseBtnText,
-  resumeBtnText,
+  currentLang,
 }) => {
+  if (import.meta.env.DEV && typeof window !== 'undefined' && (window as any).__nearbyPerf) {
+    (window as any).__nearbyPerf.rendersPoiList++;
+  }
+
+  const effectiveActiveId = activePoiId || selectedPoiId || sortedPois[0]?.poi.id;
+
+  const handleSelect = useCallback(
+    (id: string) => {
+      onSelectPoi(id);
+    },
+    [onSelectPoi]
+  );
+
+  const handleHover = useCallback(
+    (id: string, hovered: boolean) => {
+      if (onHoverPoi) {
+        onHoverPoi(hovered ? id : null);
+      }
+    },
+    [onHoverPoi]
+  );
+
   return (
-    <section className="poi-list-column" aria-label="Danh sách các điểm thuyết minh">
-      {/* Top list header */}
-      <div className="listhead poi-listhead">
-        <h2>{listTitle}</h2>
-        <span id="sortnote" className="sort-note">
+    <div className="nearby-stops-column-inner">
+      {/* Editorial section header */}
+      <div className="chapters-column-header">
+        <h2 className="chapters-list-title">{listTitle}</h2>
+        <span className="chapters-sort-note" id="sortnote">
           {sortNoteText}
         </span>
       </div>
 
-      {/* Single status banner above list (NO repeated turn on gps line on each card!) */}
+      {/* Global status notice if any (e.g. no location) */}
       {statusMessage && (
-        <div className="status poi-global-status" id="status" role="status">
+        <div className="chapters-status-notice" id="status" role="status" aria-live="polite">
           {statusMessage}
         </div>
       )}
 
-      {/* Scrollable list */}
-      <ol className="list poi-cards-scroll" id="list">
-        {sortedPois.map(({ poi, originalIndex, dist }) => {
-          const isSelected = selectedPoiId === poi.id;
-          const isCurrent = currentPlayingId === poi.id;
-          const inTriggerZone = dist !== null && dist <= poi.triggerRadius;
-          const inRadius = dist !== null && dist <= radius;
-          const formattedDist = dist !== null ? formatDist(dist) : null;
+      {/* Stop list container: Shows all 5 stops without inner scrollbar */}
+      <div className="nearby-stop-list-container">
+        <ol className="nearby-stop-list" role="list">
+          {sortedPois.map((item) => {
+            const isItemActive = effectiveActiveId === item.poi.id;
+            const isItemListened = listenedPoiIds.includes(item.poi.id);
 
-          return (
-            <PoiCard
-              key={poi.id}
-              poi={poi}
-              originalIndex={originalIndex}
-              isSelected={isSelected}
-              isPlaying={isPlaying}
-              isCurrent={isCurrent}
-              currentLang={currentLang}
-              dist={dist}
-              formattedDist={formattedDist}
-              inTriggerZone={inTriggerZone}
-              inRadius={inRadius}
-              onSelect={() => onSelectPoi(poi.id)}
-              onTogglePlay={() => onTogglePlay(poi.id)}
-              getPoiName={getPoiName}
-              getPoiCategory={getPoiCategory}
-              inZoneBadgeText={inZoneBadgeText}
-              nearBadgeText={nearBadgeText}
-              distFormatText={distFormatText}
-              langVoiceAriaText={langVoiceAriaText}
-              listenBtnText={listenBtnText}
-              pauseBtnText={pauseBtnText}
-              resumeBtnText={resumeBtnText}
-            />
-          );
-        })}
-      </ol>
-    </section>
+            return (
+              <StopRow
+                key={item.poi.id}
+                item={item}
+                isActive={isItemActive}
+                isListened={isItemListened}
+                currentLang={currentLang}
+                getPoiName={getPoiName}
+                getPoiCategory={getPoiCategory}
+                onSelect={handleSelect}
+                onHover={handleHover}
+              />
+            );
+          })}
+        </ol>
+      </div>
+    </div>
   );
 };
+
+export const PoiList = React.memo(PoiListComponent);

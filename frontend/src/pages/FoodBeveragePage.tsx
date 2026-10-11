@@ -48,9 +48,11 @@ export const FoodBeveragePage: React.FC = () => {
       const q = filters.keyword.toLowerCase().trim();
       list = list.filter((item) => {
         const nameMatch = item.name.toLowerCase().includes(q);
+        if (nameMatch) return true;
+        if (!filters.searchInDescription) return false;
         const descMatch = item.shortDescription.toLowerCase().includes(q);
         const fullDescMatch = item.description.toLowerCase().includes(q);
-        return nameMatch || descMatch || fullDescMatch;
+        return descMatch || fullDescMatch;
       });
     }
 
@@ -169,14 +171,13 @@ export const FoodBeveragePage: React.FC = () => {
     <div className="food-beverage-page-container">
       {/* 1. HERO SECTION */}
       <FoodHeroSection
+        filters={filters}
         onSearch={(newKeyword, newCategory) => {
           handleSearch(newKeyword);
           if (newCategory) {
             handleChangeFilter('category', newCategory);
           }
         }}
-        initialKeyword={filters.keyword}
-        initialCategory={filters.category}
       />
 
       {/* 2. KHU VỰC SHOP (BỐ CỤC 2 CỘT: Cột trái 25% Sidebar Sticky, Cột phải 75% Product List) */}

@@ -114,7 +114,7 @@ export const FoodSidebarFilter: React.FC<FoodSidebarFilterProps> = ({
   };
 
   const filterContent = (
-    <div className="editorial-sidebar-card">
+    <div className="editorial-sidebar-card" data-lenis-prevent>
       {/* 1. Header: Tiêu đề + Nút 'Xóa bộ lọc' link-style bên phải có icon X */}
       <div className="editorial-sidebar-header">
         <div className="header-title-box">

@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import Lenis from 'lenis';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
@@ -11,9 +12,31 @@ declare global {
   }
 }
 
+const isNativeScrollRoute = (pathname: string): boolean => {
+  return (
+    pathname.startsWith('/diem-du-lich') ||
+    pathname.startsWith('/thuyet-minh') ||
+    pathname.startsWith('/gan-toi') ||
+    pathname.startsWith('/van-hoa') ||
+    pathname.startsWith('/culture') ||
+    pathname.startsWith('/kham-pha') ||
+    pathname.startsWith('/explore')
+  );
+};
+
 export const useSmoothScroll = () => {
+  const location = useLocation();
+
   useEffect(() => {
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    // 1. If user prefers reduced motion, or if route requires native scrolling
+    // (such as /diem-du-lich which features sticky split-columns and Leaflet map),
+    // disable Lenis to prevent scroll-momentum jitter and layout thrashing.
+    if (
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches ||
+      isNativeScrollRoute(location.pathname)
+    ) {
+      document.documentElement.classList.remove('lenis', 'lenis-smooth', 'lenis-scrolling', 'lenis-stopped');
+      document.body.classList.remove('lenis', 'lenis-smooth', 'lenis-scrolling', 'lenis-stopped');
       return;
     }
 
@@ -42,6 +65,8 @@ export const useSmoothScroll = () => {
       gsap.ticker.remove(tickerCallback);
       lenis.destroy();
       delete window.__lenis;
+      document.documentElement.classList.remove('lenis', 'lenis-smooth', 'lenis-scrolling', 'lenis-stopped');
+      document.body.classList.remove('lenis', 'lenis-smooth', 'lenis-scrolling', 'lenis-stopped');
     };
-  }, []);
+  }, [location.pathname]);
 };

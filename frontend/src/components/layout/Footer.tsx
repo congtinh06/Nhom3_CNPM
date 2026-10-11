@@ -75,20 +75,24 @@ export const Footer: React.FC = () => {
           </div>
         </div>
 
-        {/* Cột 2: KHÁM PHÁ */}
+        {/* Cột 2: ĐIỀU HƯỚNG */}
         <div className="col">
-          <h3>KHÁM PHÁ</h3>
+          <h3>ĐIỀU HƯỚNG</h3>
           <ul>
-            <li>
-              <Link to="/am-thuc-thuc-uong">Ẩm thực & Thức uống</Link>
-            </li>
             <li>
               <Link to="/diem-du-lich">Điểm du lịch</Link>
             </li>
             <li>
-              <a href="#van-hoa" onClick={(e) => handleAnchorClick(e, '#van-hoa')}>
-                Văn hóa
-              </a>
+              <Link to="/am-thuc">Ẩm thực</Link>
+            </li>
+            <li>
+              <Link to="/don-hang">Đơn hàng của tôi</Link>
+            </li>
+            <li>
+              <Link to="/huong-dan">Hướng dẫn</Link>
+            </li>
+            <li>
+              <Link to="/lien-he">Liên hệ</Link>
             </li>
           </ul>
         </div>
@@ -98,24 +102,16 @@ export const Footer: React.FC = () => {
           <h3>HỖ TRỢ</h3>
           <ul>
             <li>
-              <a href="#lien-he" onClick={(e) => handleAnchorClick(e, '#lien-he')}>
-                Liên hệ
-              </a>
+              <Link to="/lien-he">Hỗ trợ du khách</Link>
             </li>
             <li>
-              <a href="#chinh-sach-giao-hang" onClick={(e) => handleAnchorClick(e, '#lien-he')}>
-                Chính sách giao hàng
-              </a>
+              <Link to="/huong-dan">Hướng dẫn GPS</Link>
             </li>
             <li>
-              <a href="#chinh-sach-doi-tra" onClick={(e) => handleAnchorClick(e, '#lien-he')}>
-                Chính sách đổi trả
-              </a>
+              <Link to="/huong-dan">Câu hỏi thường gặp</Link>
             </li>
             <li>
-              <a href="#faq" onClick={(e) => handleAnchorClick(e, '#lien-he')}>
-                Câu hỏi thường gặp
-              </a>
+              <Link to="/lien-he">Phản hồi & Ý kiến</Link>
             </li>
           </ul>
         </div>

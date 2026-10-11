@@ -7,6 +7,7 @@ import {
   RatingFilter,
   ProductTypeFilter,
   SortOptionKey,
+  AdvancedSearchValues,
 } from '../types/productFilter';
 
 const DEFAULT_FILTERS: ProductFilterState = {
@@ -16,6 +17,7 @@ const DEFAULT_FILTERS: ProductFilterState = {
   priceRange: 'all',
   rating: 'all',
   sortBy: 'popular',
+  searchInDescription: true,
   page: 1,
 };
 
@@ -30,6 +32,7 @@ export const useProductFilters = () => {
     const price = (searchParams.get('price') as PriceRangeFilter) || 'all';
     const rating = (searchParams.get('rating') as RatingFilter) || 'all';
     const sort = (searchParams.get('sort') as SortOptionKey) || 'popular';
+    const desc = searchParams.get('desc') !== '0';
     const page = parseInt(searchParams.get('page') || '1', 10);
 
     return {
@@ -39,6 +42,7 @@ export const useProductFilters = () => {
       priceRange: price,
       rating: rating,
       sortBy: sort,
+      searchInDescription: desc,
       page: isNaN(page) || page < 1 ? 1 : page,
     };
   });
@@ -54,6 +58,7 @@ export const useProductFilters = () => {
       if (nextState.priceRange !== 'all') params.set('price', nextState.priceRange);
       if (nextState.rating !== 'all') params.set('rating', nextState.rating);
       if (nextState.sortBy !== 'popular') params.set('sort', nextState.sortBy);
+      if (!nextState.searchInDescription) params.set('desc', '0');
       if (nextState.page > 1) params.set('page', String(nextState.page));
 
       setSearchParams(params, { replace: true });
@@ -79,6 +84,7 @@ export const useProductFilters = () => {
     const price = (searchParams.get('price') as PriceRangeFilter) || 'all';
     const rating = (searchParams.get('rating') as RatingFilter) || 'all';
     const sort = (searchParams.get('sort') as SortOptionKey) || 'popular';
+    const desc = searchParams.get('desc') !== '0';
     const page = parseInt(searchParams.get('page') || '1', 10);
 
     setFilters((prev) => {
@@ -89,6 +95,7 @@ export const useProductFilters = () => {
         prev.priceRange === price &&
         prev.rating === rating &&
         prev.sortBy === sort &&
+        prev.searchInDescription === desc &&
         prev.page === (isNaN(page) ? 1 : page)
       ) {
         return prev;
@@ -100,6 +107,7 @@ export const useProductFilters = () => {
         priceRange: price,
         rating: rating,
         sortBy: sort,
+        searchInDescription: desc,
         page: isNaN(page) || page < 1 ? 1 : page,
       };
     });
@@ -173,6 +181,22 @@ export const useProductFilters = () => {
     [syncToUrl]
   );
 
+  // Áp dụng đồng thời nhiều tiêu chí từ khối "Tìm kiếm nâng cao"
+  const handleApplyAdvanced = useCallback(
+    (values: AdvancedSearchValues) => {
+      setFilters((prev) => {
+        const next: ProductFilterState = {
+          ...prev,
+          ...values,
+          page: 1,
+        };
+        syncToUrl(next);
+        return next;
+      });
+    },
+    [syncToUrl]
+  );
+
   // Xóa toàn bộ bộ lọc
   const handleResetFilters = useCallback(() => {
     setFilters(DEFAULT_FILTERS);
@@ -184,12 +208,14 @@ export const useProductFilters = () => {
     filters.productType !== 'all' ||
     filters.priceRange !== 'all' ||
     filters.rating !== 'all' ||
+    !filters.searchInDescription ||
     Boolean(filters.keyword.trim());
 
   return {
     filters,
     handleSearch,
     handleChangeFilter,
+    handleApplyAdvanced,
     handlePageChange,
     handleSortChange,
     handleResetFilters,

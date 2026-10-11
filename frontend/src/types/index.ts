@@ -65,7 +65,7 @@ export interface ResolvePoiResponse {
 }
 
 export type AnalyticsEventType = 'SCAN' | 'AUDIO_PLAY';
-export type SupportedLanguage = 'vi' | 'en' | 'ja' | 'ko' | 'zh';
+export type SupportedLanguage = 'vi' | 'en' | 'ja' | 'ko';
 export type TriggerType = 'QR' | 'GPS' | 'MANUAL';
 
 export interface CreateAnalyticsEventRequest {
@@ -173,7 +173,7 @@ export type BackendOrderStatus =
   | 'COMPLETED'
   | 'CANCELLED';
 
-export type PaymentMethod = 'COD' | 'MOCK_GATEWAY';
+export type PaymentMethod = 'COD' | 'MOCK_GATEWAY' | 'VIETQR';
 export type PaymentStatus = 'PENDING' | 'SUCCESS' | 'FAILED';
 
 export interface BackendOrderItem {
@@ -181,6 +181,8 @@ export interface BackendOrderItem {
   productName: string;
   unitPrice: number;
   quantity: number;
+  imagePath?: string;
+  selectedOptions?: string;
 }
 
 export interface BackendOrder {
@@ -192,12 +194,37 @@ export interface BackendOrder {
   receiverName: string;
   phone: string;
   address: string;
+  street?: string;
+  ward?: string;
+  district?: string;
+  province?: string;
   note?: string;
   paymentMethod?: PaymentMethod;
   paymentStatus?: PaymentStatus;
   items: BackendOrderItem[];
   createdAt: string;
   updatedAt: string;
+  expiresAt?: string;
+  deliveryTimeType?: string;
+  scheduledTime?: string;
+  subtotal?: number;
+  shippingFee?: number;
+  discountAmount?: number;
+  voucherCode?: string;
+}
+
+export interface VietQrPaymentInfo {
+  bankId?: string;
+  bankName: string;
+  accountNo: string;
+  accountName: string;
+  amount: number;
+  transferContent: string;
+  qrUrl: string;
+  qrImageUrl?: string;
+  expiresAt: string;
+  remainingMs?: number;
+  status: BackendOrderStatus;
 }
 
 export interface CreateOrderPayload {

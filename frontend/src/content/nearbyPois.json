@@ -1,182 +1,261 @@
 [
   {
     "id": "poi-1",
+    "slug": "dinh-doc-lap",
     "stopOrder": 1,
     "name": {
       "vi": "Dinh Độc Lập",
       "en": "Independence Palace",
       "ko": "통일궁",
-      "ja": "統一会堂",
-      "zh": "统一宫"
+      "ja": "統一会堂"
     },
-    "lat": 10.7770,
-    "lng": 106.6954,
+    "lat": 10.77695,
+    "lng": 106.69537,
     "triggerRadius": 50,
     "category": {
       "vi": "Di tích lịch sử",
       "en": "Historical Landmark",
       "ko": "역사 유적지",
-      "ja": "歴史的史跡",
-      "zh": "历史遗迹"
+      "ja": "歴史的史跡"
     },
     "image": "/images/pois/dinh-doc-lap.jpg",
     "audio": {
       "vi": "https://actions.google.com/sounds/v1/ambiences/outdoor_water_fountain.ogg",
       "en": "https://actions.google.com/sounds/v1/ambiences/outdoor_water_fountain.ogg",
       "ko": "https://actions.google.com/sounds/v1/ambiences/outdoor_water_fountain.ogg",
-      "ja": "https://actions.google.com/sounds/v1/ambiences/outdoor_water_fountain.ogg",
-      "zh": "https://actions.google.com/sounds/v1/ambiences/outdoor_water_fountain.ogg"
+      "ja": "https://actions.google.com/sounds/v1/ambiences/outdoor_water_fountain.ogg"
     },
     "transcript": {
       "vi": "Dinh Độc Lập là biểu tượng lịch sử quốc gia đặc biệt, nơi chứng kiến thời khắc kết thúc chiến tranh Việt Nam vào ngày 30 tháng 4 năm 1975.",
       "en": "The Independence Palace is a landmark national monument that witnessed the historic conclusion of the Vietnam War on April 30, 1975.",
       "ko": "통일궁은 1975년 4월 30일 베트남 전쟁 종결을 목격한 국가 특별 역사적 상징입니다.",
-      "ja": "統一会堂は、1975年4月30日のベトナム戦争終結を見届けた国家の特別な歴史的象徴です。",
-      "zh": "统一宫是国家特别历史象征，见证了1975年4月30日越南战争结束的历史时刻。"
+      "ja": "統一会堂は、1975年4月30日のベトナム戦争終結を見届けた国家の特別な歴史的象徴です。"
+    },
+    "narration": {
+      "short": {
+        "vi": "Chào mừng bạn đến Dinh Độc Lập, nơi gắn liền với ngày thống nhất đất nước. Nơi đây từng là dinh của chính quyền thuộc địa Pháp, sau này là dinh của các tổng thống Việt Nam Cộng hòa. Tòa nhà bạn đang thấy được xây dựng vào những năm sáu mươi. Vào ngày ba mươi tháng tư năm một nghìn chín trăm bảy mươi lăm, xe tăng đã tiến qua cổng chính, đánh dấu sự kết thúc của cuộc chiến. Hãy dành vài phút ngắm tòa nhà từ bãi cỏ phía trước, rồi bước vào trong để xem phòng khánh tiết và hầm chỉ huy. Ngày nay, dinh là một bảo tàng mở cửa cho mọi người tham quan.",
+        "en": "Welcome to Independence Palace, a place tied to the day the country was reunified. The site once housed the French colonial rulers, and later the presidents of South Vietnam. The building in front of you was completed in the nineteen sixties. On the thirtieth of April, nineteen seventy-five, tanks drove through the gates, and the war came to an end. Take a few minutes to see the building from the front lawn, then step inside to see the reception rooms and the command bunker. Today the palace is a museum open to all visitors."
+      },
+      "full": {
+        "vi": [
+          "Dinh Độc Lập nằm giữa một khu vườn rộng ở trung tâm thành phố. Câu chuyện của nơi này bắt đầu từ thế kỷ mười chín, khi người Pháp xây dinh Norodom làm nơi ở và làm việc của người đứng đầu chính quyền thuộc địa. Sau năm một nghìn chín trăm năm mươi tư, dinh trở thành nơi làm việc của chính quyền miền Nam. Năm một nghìn chín trăm sáu mươi hai, hai phi công đã ném bom vào dinh, và tòa nhà cũ bị hư hại nặng. Chính quyền khi đó quyết định phá bỏ để xây một công trình mới.",
+          "Kiến trúc sư Ngô Viết Thụ thiết kế tòa nhà mà ngày nay bạn nhìn thấy. Công trình hoàn thành năm một nghìn chín trăm sáu mươi sáu, kết hợp phong cách hiện đại với những yếu tố phương Đông, có nhiều khoảng thoáng và sảnh cao rộng. Bên trong là phòng khánh tiết, phòng họp nội các, phòng làm việc của tổng thống, và một hệ thống hầm chỉ huy nằm bên dưới.",
+          "Ngày ba mươi tháng tư năm một nghìn chín trăm bảy mươi lăm, xe tăng của quân giải phóng tiến vào khuôn viên và húc đổ cổng dinh. Tổng thống Dương Văn Minh tuyên bố đầu hàng, và lá cờ được kéo lên trên nóc dinh. Ngày đó được nhớ đến như ngày thống nhất đất nước.",
+          "Sau đó, nơi này được gọi là Hội trường Thống Nhất, rồi trở thành một di tích. Năm hai nghìn không trăm lẻ chín, dinh được xếp hạng di tích quốc gia đặc biệt. Khi đi dạo trong khuôn viên, bạn hãy để ý hai chiếc xe tăng ở sân trước, và nếu có thời gian, hãy xuống tham quan khu hầm chỉ huy."
+        ],
+        "en": [
+          "Independence Palace sits in a wide garden in the heart of the city. Its story begins in the nineteenth century, when the French built Norodom Palace as the home and office of the colonial governor. After nineteen fifty-four, it became the seat of the government of South Vietnam. In nineteen sixty-two, two pilots bombed the palace, and the old building was badly damaged. The government decided to tear it down and build a new one.",
+          "Architect Ngô Viết Thụ designed the building you see today. It was completed in nineteen sixty-six, blending a modern style with Eastern elements, with open spaces and tall, airy halls. Inside are reception rooms, a cabinet meeting room, the president's office, and a command bunker underground.",
+          "On the thirtieth of April, nineteen seventy-five, tanks of the liberation forces entered the grounds and broke through the gate. President Dương Văn Minh announced the surrender, and a flag was raised over the palace. That day is remembered as the reunification of the country.",
+          "Afterwards the building was called Reunification Hall, and later became a historic site. In two thousand nine, it was recognized as a special national monument. As you walk the grounds, look for the two tanks in the front yard, and if you have time, visit the command bunker."
+        ]
+      }
     }
   },
   {
     "id": "poi-2",
+    "slug": "nha-tho-duc-ba",
     "stopOrder": 2,
     "name": {
       "vi": "Nhà thờ Đức Bà Sài Gòn",
       "en": "Notre Dame Cathedral of Saigon",
       "ko": "사이공 노트르담 대성당",
-      "ja": "サイゴン大聖堂",
-      "zh": "西贡圣母大教堂"
+      "ja": "サイゴン大聖堂"
     },
-    "lat": 10.7798,
-    "lng": 106.6990,
-    "triggerRadius": 45,
+    "lat": 10.77972,
+    "lng": 106.69908,
+    "triggerRadius": 60,
     "category": {
       "vi": "Tâm linh & Kiến trúc",
       "en": "Spiritual & Architectural",
       "ko": "영적 & 건축",
-      "ja": "精神＆建築",
-      "zh": "宗教与建筑"
+      "ja": "精神＆建築"
     },
     "image": "/images/pois/nha-tho-duc-ba.jpg",
     "audio": {
       "vi": "https://actions.google.com/sounds/v1/ambiences/church_bells_distant.ogg",
       "en": "https://actions.google.com/sounds/v1/ambiences/church_bells_distant.ogg",
       "ko": "",
-      "ja": "https://actions.google.com/sounds/v1/ambiences/church_bells_distant.ogg",
-      "zh": ""
+      "ja": "https://actions.google.com/sounds/v1/ambiences/church_bells_distant.ogg"
     },
     "transcript": {
       "vi": "Nhà thờ Đức Bà là công trình kiến trúc Gothic và Roman tráng lệ, được xây dựng bằng gạch đỏ vận chuyển trực tiếp từ cảng Marseille của Pháp.",
       "en": "Notre Dame Cathedral is a magnificent blend of Romanesque and Gothic architecture, built with red bricks shipped directly from Marseille, France.",
       "ko": "사이공 노트르담 대성당은 프랑스 마르세유에서 직수입한 붉은 벽돌로 지어진 로마네스크와 고딕 양식의 웅장한 건축물입니다.",
-      "ja": "サイゴン大聖堂は、フランスのマルセイユ港から直輸入された赤レンガで建設された、ロマネスク様式とゴシック様式の壮大な建築物です。",
-      "zh": "西贡圣母大教堂是一座宏伟的罗马式和哥特式建筑，采用直接从法国马赛港运来的红砖建造。"
+      "ja": "サイゴン大聖堂は、フランスのマルセイユ港から直輸入された赤レンガで建設された、ロマネスク様式とゴシック様式の壮大な建築物です。"
+    },
+    "narration": {
+      "short": {
+        "vi": "Bạn đang đứng trước Nhà thờ Đức Bà, một trong những biểu tượng kiến trúc nổi tiếng nhất của Sài Gòn. Nhà thờ được người Pháp xây dựng vào cuối thế kỷ mười chín, với những viên gạch đỏ không phủ vữa và hai tháp chuông cao vút. Phía trước là tượng Đức Mẹ Hòa Bình, nhìn ra một quảng trường nhỏ. Dù bạn theo tôn giáo nào, đây vẫn là nơi đẹp để dừng lại, ngước nhìn và chụp một tấm ảnh. Ngay bên cạnh là Bưu điện Trung tâm, điểm dừng tiếp theo của bạn.",
+        "en": "You are standing before Notre-Dame Cathedral, one of the best-known landmarks of Saigon. The French built it in the late nineteenth century, with red bricks left bare and two tall bell towers. In front stands the statue of Our Lady of Peace, facing a small square. Whatever your beliefs, this is a lovely place to pause, look up, and take a photograph. Right next door is the Central Post Office, your next stop."
+      },
+      "full": {
+        "vi": [
+          "Nhà thờ Đức Bà có tên chính thức là Vương cung thánh đường Chính tòa Đức Mẹ Vô Nhiễm Nguyên Tội. Công trình được xây dựng trong thời Pháp thuộc, khởi công năm một nghìn tám trăm sáu mươi ba và hoàn thành năm một nghìn tám trăm tám mươi. Kiến trúc sư Jules Bourard thiết kế theo phong cách Roman và Gothic của châu Âu.",
+          "Điểm dễ nhận ra nhất là lớp gạch đỏ ở mặt ngoài. Theo nhiều tài liệu, gạch được đưa từ Marseille, nước Pháp, sang, và đến nay vẫn giữ được màu sắc đặc trưng mà không cần sơn phủ. Hai tháp chuông được bổ sung vào năm một nghìn tám trăm chín mươi lăm, cao khoảng sáu mươi mét tính cả cây thánh giá trên đỉnh.",
+          "Trước nhà thờ là tượng Đức Mẹ Hòa Bình, được đặt năm một nghìn chín trăm năm mươi chín. Năm một nghìn chín trăm sáu mươi hai, nhà thờ được phong hàng vương cung thánh đường.",
+          "Hãy đi chậm quanh nhà thờ, ngắm mặt tiền gạch đỏ và những ô cửa kính màu. Nếu muốn vào bên trong, bạn nên kiểm tra giờ mở cửa trước, vì nhà thờ có giờ lễ và giờ đón khách riêng, và một số khu vực có thể đang được trùng tu. Chỉ vài bước chân nữa là tới Bưu điện Trung tâm, điểm dừng tiếp theo của bạn."
+        ],
+        "en": [
+          "Its official name is the Cathedral Basilica of Our Lady of the Immaculate Conception. It was built during the French colonial period, started in eighteen sixty-three and finished in eighteen eighty. Architect Jules Bourard drew on European Romanesque and Gothic styles.",
+          "What you notice first is the red brick on the outside. Many sources say the bricks were brought from Marseille, in France, and they still keep their color today without any paint. Two bell towers were added in eighteen ninety-five, rising about sixty meters including the cross on top.",
+          "In front stands the statue of Our Lady of Peace, placed in nineteen fifty-nine. In nineteen sixty-two, the church was raised to the rank of basilica.",
+          "Walk slowly around the cathedral and look at the brick façade and the stained glass. If you plan to go inside, check the opening hours first, because there are times for services and times for visitors, and some areas may be closed for restoration. Just a few steps away stands the Central Post Office, your next stop."
+        ]
+      }
     }
   },
   {
     "id": "poi-3",
+    "slug": "buu-dien-trung-tam",
     "stopOrder": 3,
     "name": {
       "vi": "Bưu điện Trung tâm Sài Gòn",
       "en": "Saigon Central Post Office",
       "ko": "사이공 중앙 우체국",
-      "ja": "サイゴン中央郵便局",
-      "zh": "西贡中心邮局"
+      "ja": "サイゴン中央郵便局"
     },
-    "lat": 10.7800,
-    "lng": 106.6999,
+    "lat": 10.77995,
+    "lng": 106.69971,
     "triggerRadius": 40,
     "category": {
       "vi": "Kiến trúc Pháp cổ",
       "en": "French Colonial Architecture",
       "ko": "프랑스 고전 건축",
-      "ja": "フランス古典建築",
-      "zh": "法国古典建筑"
+      "ja": "フランス古典建築"
     },
     "image": "/images/pois/buu-dien-trung-tam.jpg",
     "audio": {
       "vi": "https://actions.google.com/sounds/v1/ambiences/office_ambience.ogg",
       "en": "https://actions.google.com/sounds/v1/ambiences/office_ambience.ogg",
       "ko": "https://actions.google.com/sounds/v1/ambiences/office_ambience.ogg",
-      "ja": "",
-      "zh": "https://actions.google.com/sounds/v1/ambiences/office_ambience.ogg"
+      "ja": ""
     },
     "transcript": {
       "vi": "Bưu điện Trung tâm Sài Gòn nổi bật với mái vòm cong cổ điển, sàn gạch hoa văn tinh tế và các bức bản đồ địa lý lịch sử vẽ tay trên tường.",
       "en": "Saigon Central Post Office is famed for its grand vaulted ceilings, ornate tile floors, and vintage hand-drawn wall maps of historical Indochina.",
       "ko": "사이공 중앙 우체국은 고전적인 아치형 천장, 정교한 타일 바닥, 벽에 그려진 역사적인 손그림 지도로 유명합니다.",
-      "ja": "サイゴン中央郵便局は、クラシックなアーチ型の天井、繊細な模様のタイル床、壁に手描きされた歴史的な地理地図で有名です。",
-      "zh": "西贡中心邮局以古典的拱形穹顶、精致的花砖地板以及墙上手绘的历史地理地图而著称。"
+      "ja": "サイゴン中央郵便局は、クラシックなアーチ型の天井、繊細な模様のタイル床、壁に手描きされた歴史的な地理地図で有名です。"
+    },
+    "narration": {
+      "short": {
+        "vi": "Bưu điện Trung tâm Sài Gòn nổi bật với mái vòm cong cổ điển, sàn gạch hoa văn tinh tế và những tấm bản đồ vẽ tay trên tường. Công trình được xây dựng vào cuối thế kỷ mười chín, và đến nay vẫn là một bưu điện đang hoạt động. Người ta thường kể rằng Eiffel đã thiết kế nơi này, nhưng đó nhiều khả năng chỉ là giai thoại. Bạn có thể bước vào trong, ngắm trần vòm, mua một tấm bưu thiếp và gửi về cho người thân.",
+        "en": "The Central Post Office stands out with its curved, classical vaulted roof, its patterned tile floor, and the hand-painted maps on its walls. It was built in the late nineteenth century and is still a working post office today. People often say Eiffel designed it, but that is most likely just a legend. Step inside, look up at the arched ceiling, and send a postcard to someone you love."
+      },
+      "full": {
+        "vi": [
+          "Bưu điện Trung tâm được xây dựng từ năm một nghìn tám trăm tám mươi sáu đến năm một nghìn tám trăm chín mươi mốt, trong thời kỳ Pháp thuộc. Người ta thường kể rằng công trình do Gustave Eiffel thiết kế, nhưng nhiều nguồn cho biết kiến trúc sư thực sự là Alfred Foulhoux. Câu chuyện về Eiffel nhiều khả năng chỉ là giai thoại.",
+          "Hãy bước vào bên trong. Bạn sẽ thấy một sảnh dài với mái vòm cong, khung sắt nhẹ và những ô cửa vòm cao. Sàn nhà lát gạch hoa nhiều họa tiết, các dãy quầy gỗ và buồng điện thoại cổ vẫn còn đó. Trên tường là hai tấm bản đồ lớn vẽ tay. Một tấm vẽ Sài Gòn và vùng phụ cận vào năm một nghìn tám trăm chín mươi hai, tấm còn lại là bản đồ các tuyến điện báo ở miền Nam Việt Nam và Campuchia. Ở cuối sảnh là chân dung Chủ tịch Hồ Chí Minh.",
+          "Bưu điện không chỉ để ngắm. Đây vẫn là nơi người dân gửi thư, mua tem và viết bưu thiếp. Nếu bạn có chút thời gian, hãy mua một tấm bưu thiếp, viết vài dòng và gửi đi. Đó là một cách thú vị để mang một phần Sài Gòn về với người thân."
+        ],
+        "en": [
+          "The Central Post Office was built between eighteen eighty-six and eighteen ninety-one, during the French colonial period. People often say it was designed by Gustave Eiffel, but many sources credit an architect named Alfred Foulhoux. The Eiffel story is most likely just a legend.",
+          "Step inside. You will find a long hall with a curved roof, a light iron frame, and tall arched windows. The floor is covered in patterned tiles, and rows of wooden counters and old telephone booths are still in place. On the walls hang two large hand-painted maps. One shows Saigon and its surroundings in eighteen ninety-two. The other shows the telegraph lines of southern Vietnam and Cambodia. At the far end you will see a portrait of President Hồ Chí Minh.",
+          "The post office is not only for sightseeing. People still come here to send letters, buy stamps, and write postcards. If you have a few minutes, buy a postcard, write a few lines, and send it off. It is a charming way to send a piece of Saigon home."
+        ]
+      }
     }
   },
   {
     "id": "poi-4",
+    "slug": "cho-ben-thanh",
     "stopOrder": 4,
     "name": {
       "vi": "Chợ Bến Thành",
       "en": "Ben Thanh Market",
       "ko": "벤탄 시장",
-      "ja": "ベンタイン市場",
-      "zh": "滨城市场"
+      "ja": "ベンタイン市場"
     },
-    "lat": 10.7725,
-    "lng": 106.6980,
+    "lat": 10.77232,
+    "lng": 106.69811,
     "triggerRadius": 55,
     "category": {
       "vi": "Văn hóa & Mua sắm",
       "en": "Culture & Shopping",
       "ko": "문화 & 쇼핑",
-      "ja": "文化＆ショッピング",
-      "zh": "文化与购物"
+      "ja": "文化＆ショッピング"
     },
     "image": "/images/pois/cho-ben-thanh.jpg",
     "audio": {
       "vi": "https://actions.google.com/sounds/v1/ambiences/mall_indoor_walking.ogg",
       "en": "https://actions.google.com/sounds/v1/ambiences/mall_indoor_walking.ogg",
       "ko": "https://actions.google.com/sounds/v1/ambiences/mall_indoor_walking.ogg",
-      "ja": "https://actions.google.com/sounds/v1/ambiences/mall_indoor_walking.ogg",
-      "zh": ""
+      "ja": "https://actions.google.com/sounds/v1/ambiences/mall_indoor_walking.ogg"
     },
     "transcript": {
       "vi": "Chợ Bến Thành là khu chợ sầm uất với tháp đồng hồ bốn mặt biểu tượng, nơi hội tụ đủ loại quà lưu niệm, đồ thủ công và ẩm thực đường phố Sài Gòn.",
       "en": "Ben Thanh Market is a bustling shopping hub featuring the iconic four-dial clock tower, packed with crafts, textiles, and quintessential street food.",
       "ko": "벤탄 시장은 상징적인 4면 시계탑이 있는 번화한 시장으로, 기념품, 공예품, 사이공의 정통 길거리 음식이 모여 있는 곳입니다.",
-      "ja": "ベンタイン市場は、象徴的な4面時計台を持つ賑やかな市場で、お土産、工芸品、サイゴンの代表的な屋台グルメが集まっています。",
-      "zh": "滨城市场是一个繁华的综合市场，拥有标志性的四面钟楼，汇聚了各类纪念品、手工艺品以及正宗的西贡街头美食。"
+      "ja": "ベンタイン市場は、象徴的な4面時計台を持つ賑やかな市場で、お土産、工芸品、サイゴンの代表的な屋台グルメが集まっています。"
+    },
+    "narration": {
+      "short": {
+        "vi": "Chợ Bến Thành là biểu tượng của Sài Gòn từ hơn một trăm năm nay. Tòa nhà có tháp đồng hồ ở cửa Nam được khánh thành năm một nghìn chín trăm mười bốn, nhưng khu chợ ven sông ở đây đã có từ trước đó rất lâu. Bên trong có rất nhiều gian hàng bán đồ ăn, vải vóc, quà lưu niệm và cà phê. Bạn có thể dừng ở cửa Nam để chụp ảnh với tháp đồng hồ. Hãy đi chậm và hỏi giá trước khi mua.",
+        "en": "Ben Thanh Market has been a symbol of Saigon for over a hundred years. The building with the clock tower at its south gate opened in nineteen fourteen, but a riverside market stood here long before. Inside you will find many stalls selling food, fabric, souvenirs, and coffee. You can stop at the south gate for a photo with the clock tower. Walk slowly, and ask the price before you buy."
+      },
+      "full": {
+        "vi": [
+          "Chợ Bến Thành nằm ở trung tâm Quận Một, và là một trong những biểu tượng quen thuộc nhất của thành phố. Khu chợ có nguồn gốc từ đầu thế kỷ mười chín, khi người dân buôn bán ven sông. Tòa nhà hiện nay được xây dựng từ năm một nghìn chín trăm mười hai và khánh thành năm một nghìn chín trăm mười bốn, theo thiết kế của các kiến trúc sư người Pháp.",
+          "Chợ có bốn cửa chính, hướng Đông, Tây, Nam và Bắc. Nổi bật nhất là cửa Nam, với tháp đồng hồ cao, hình ảnh quen thuộc trên rất nhiều tấm bưu thiếp. Bên trong, các dãy hàng chia theo nhóm: vải vóc và quần áo, đồ thủ công và quà lưu niệm, cà phê, trà, đồ khô, trái cây, và khu ẩm thực phục vụ các món Việt quen thuộc.",
+          "Chợ đông nhất vào ban ngày, và buổi tối khu vực quanh chợ có thêm chợ đêm. Khi mua hàng, bạn nên hỏi giá và trả giá nhẹ nhàng, đó là nét văn hóa buôn bán thân thiện ở đây. Hãy dành chút thời gian thử một món ăn nhẹ ngay tại chợ, như chè hay bánh, để cảm nhận nhịp sống của người Sài Gòn."
+        ],
+        "en": [
+          "Ben Thanh Market stands in the center of District One, and is one of the most familiar symbols of the city. The market grew out of riverside trading in the early nineteenth century. The present building went up in nineteen twelve and opened in nineteen fourteen, designed by French architects.",
+          "The market has four main gates, facing east, west, south, and north. The most famous is the south gate, with its tall clock tower, a sight seen on countless postcards. Inside, the aisles are grouped by goods: fabric and clothing, handicrafts and souvenirs, coffee, tea, dried goods, fruit, and a food area serving familiar Vietnamese dishes.",
+          "The market is busiest in the daytime, and in the evening the streets around it also hold a night market. When you shop, ask for the price and bargain gently, which is a friendly part of local trading culture. Take a little time to eat a light snack right here, such as a sweet dessert soup or a small cake, to feel the rhythm of daily life in Saigon."
+        ]
+      }
     }
   },
   {
     "id": "poi-5",
+    "slug": "bao-tang-chung-tich-chien-tranh",
     "stopOrder": 5,
     "name": {
       "vi": "Bảo tàng Chứng tích Chiến tranh",
       "en": "War Remnants Museum",
       "ko": "전쟁 증적 박물관",
-      "ja": "戦争証跡博物館",
-      "zh": "战争遗迹博物馆"
+      "ja": "戦争証跡博物館"
     },
-    "lat": 10.7794,
-    "lng": 106.6923,
+    "lat": 10.77926,
+    "lng": 106.69247,
     "triggerRadius": 45,
     "category": {
       "vi": "Bảo tàng lịch sử",
       "en": "War History Museum",
       "ko": "역사 박물관",
-      "ja": "歴史博物館",
-      "zh": "历史博物馆"
+      "ja": "歴史博物館"
     },
     "image": "/images/pois/bao-tang-chung-tich-chien-tranh.jpg",
     "audio": {
       "vi": "https://actions.google.com/sounds/v1/ambiences/hallway_ambient.ogg",
       "en": "https://actions.google.com/sounds/v1/ambiences/hallway_ambient.ogg",
       "ko": "",
-      "ja": "https://actions.google.com/sounds/v1/ambiences/hallway_ambient.ogg",
-      "zh": "https://actions.google.com/sounds/v1/ambiences/hallway_ambient.ogg"
+      "ja": "https://actions.google.com/sounds/v1/ambiences/hallway_ambient.ogg"
     },
     "transcript": {
       "vi": "Bảo tàng Chứng tích Chiến tranh lưu giữ hàng ngàn tư liệu, hình ảnh và hiện vật phản ánh khát vọng hòa bình và hàn gắn vết thương sau chiến tranh.",
       "en": "The War Remnants Museum houses thousands of photographic records and military artifacts depicting the pursuit of lasting peace and reconciliation.",
       "ko": "전쟁 증적 박물관은 평화에 대한 갈망과 전쟁의 상처 치유를 보여주는 수천 점의 기록, 사진, 유물을 소장하고 있습니다.",
-      "ja": "戦争証跡博物館は、平和への希求と戦争の傷跡の癒しを伝える数千点に及ぶ資料、写真、遺物を収蔵しています。",
-      "zh": "战争遗迹博物馆收藏了数千份珍贵史料、历史照片和实物展品，展现了人们对和平的渴望与战后创伤的弥合。"
+      "ja": "戦争証跡博物館は、平和への希求と戦争の傷跡の癒しを伝える数千点に及ぶ資料、写真、遺物を収蔵しています。"
+    },
+    "narration": {
+      "short": {
+        "vi": "Bảo tàng Chứng tích Chiến tranh ghi lại những hậu quả của chiến tranh đối với con người và đất nước Việt Nam. Bảo tàng được thành lập năm một nghìn chín trăm bảy mươi lăm. Sân trước trưng bày máy bay, xe tăng và vũ khí thật, còn các phòng bên trong có nhiều hình ảnh và hiện vật về chiến tranh. Hãy dành cho nơi này một tâm thế trầm lắng. Một số hình ảnh có thể gây xúc động mạnh, nên bạn hãy cân nhắc nếu đi cùng trẻ nhỏ.",
+        "en": "The War Remnants Museum records the consequences of war for the people and the land of Vietnam. It was founded in nineteen seventy-five. The front yard displays real aircraft, tanks, and weapons, and the rooms inside hold photographs and objects from the war. Please come in a quiet frame of mind. Some images can be deeply upsetting, so think twice before bringing young children."
+      },
+      "full": {
+        "vi": [
+          "Bảo tàng Chứng tích Chiến tranh nằm trên đường Võ Văn Tần. Bảo tàng được thành lập vào tháng chín năm một nghìn chín trăm bảy mươi lăm, ban đầu với một tên gọi khác, và đã nhiều lần đổi tên trước khi mang tên như hiện nay vào năm một nghìn chín trăm chín mươi lăm. Mục đích của bảo tàng là lưu giữ hình ảnh, tư liệu và hiện vật về chiến tranh Việt Nam, để người xem hiểu rõ hơn về những mất mát mà chiến tranh gây ra.",
+          "Ở sân trước, bạn sẽ thấy máy bay, xe tăng, pháo và nhiều loại bom đạn được trưng bày ngoài trời. Bên trong, các tầng trưng bày ảnh và hiện vật theo từng chủ đề, trong đó có phần nói về hậu quả của chất độc da cam đối với nhiều thế hệ, và một triển lãm ảnh dành cho các phóng viên đã hy sinh trong các cuộc chiến tranh ở Đông Dương.",
+          "Đây là nơi nên đến với tâm thế trầm lắng. Một số hình ảnh rất nặng nề, nên bạn hãy cân nhắc nếu đi cùng trẻ nhỏ, và có thể dừng lại nghỉ bất cứ lúc nào. Đây không chỉ là nơi nhìn lại quá khứ, mà còn là nơi nhắc chúng ta trân trọng hòa bình."
+        ],
+        "en": [
+          "The War Remnants Museum is on Võ Văn Tần Street. It was founded in September nineteen seventy-five under a different name, and changed names several times before taking its present name in nineteen ninety-five. Its purpose is to keep photographs, documents, and objects from the Vietnam War, so that visitors can better understand the losses that war causes.",
+          "In the front yard you will see aircraft, tanks, artillery, and many kinds of bombs displayed in the open. Inside, the floors present photographs and objects by theme, including a section on the effects of Agent Orange across generations, and a photo exhibition honoring journalists who died in the wars of Indochina.",
+          "This is a place to visit in a quiet frame of mind. Some images are very heavy, so think carefully before bringing young children, and feel free to stop and rest whenever you need. It is not only a place to look back at the past, but also a place that reminds us to value peace."
+        ]
+      }
     }
   }
 ]

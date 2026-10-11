@@ -300,3 +300,42 @@ export const confirmMockPayment = async (
   }
 };
 
+export const getLocalOrderByCode = (orderCode: string): BackendOrder | null => {
+  const local = loadLocalBackendOrders();
+  return local.find((o) => o.orderCode === orderCode) ?? null;
+};
+
+export const markVietQrOrderPaid = (orderCode: string): BackendOrder | null => {
+  const local = loadLocalBackendOrders();
+  const nowIso = new Date().toISOString();
+  const existing = local.find((o) => o.orderCode === orderCode);
+  if (existing) {
+    const updated: BackendOrder = {
+      ...existing,
+      status: 'PAID',
+      paymentStatus: 'SUCCESS',
+      updatedAt: nowIso,
+    };
+    saveLocalBackendOrders(local.map((o) => (o.orderCode === orderCode ? updated : o)));
+    return updated;
+  }
+  return null;
+};
+
+export const renewVietQrOrderExpiry = (orderCode: string, minutes: number = 15): string | null => {
+  const local = loadLocalBackendOrders();
+  const newExpiry = new Date(Date.now() + minutes * 60 * 1000).toISOString();
+  const existing = local.find((o) => o.orderCode === orderCode);
+  if (existing) {
+    const updated: BackendOrder = {
+      ...existing,
+      expiresAt: newExpiry,
+      updatedAt: new Date().toISOString(),
+    };
+    saveLocalBackendOrders(local.map((o) => (o.orderCode === orderCode ? updated : o)));
+    return newExpiry;
+  }
+  return null;
+};
+
+

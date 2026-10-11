@@ -1,10 +1,17 @@
 import React from 'react';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, fireEvent, act } from '@testing-library/react';
-import { BrowserRouter } from 'react-router-dom';
-import { NearbyPage } from '../pages/NearbyPage';
-import { setStoredLanguage } from '../content/languages';
+import { BrowserRouter, MemoryRouter } from 'react-router-dom';
+import { NearbyPage, GeoPoi, getNarration, getHeroIntroText } from '../pages/NearbyPage';
+import nearbyPoisData from '../content/nearbyPois.json';
+import { PoiCard, resolveImagePath } from '../components/nearby/PoiCard';
+import { BackToTop } from '../components/common/BackToTop';
+import { setStoredLanguage, getStoredLanguage, SUPPORTED_LANGUAGES } from '../content/languages';
+import { NEARBY_DICTIONARY, getMissingKeysCount, t } from '../content/nearbyI18n';
 import { api } from '../api/client';
+import { PoiHero } from '../components/nearby/PoiHero';
+import { PoiReadingSection } from '../components/nearby/PoiReadingSection';
+import { SortedPoiItem } from '../components/nearby/PoiList';
 
 // Mock react-leaflet components since jsdom doesn't support canvas/WebGL
 vi.mock('react-leaflet', () => ({
@@ -12,8 +19,8 @@ vi.mock('react-leaflet', () => ({
     <div data-testid="leaflet-map-container">{children}</div>
   ),
   TileLayer: () => <div data-testid="leaflet-tile-layer" />,
-  Marker: ({ children }: { children: React.ReactNode }) => (
-    <div data-testid="leaflet-marker">{children}</div>
+  Marker: ({ children, eventHandlers }: { children?: React.ReactNode; eventHandlers?: { click?: () => void } }) => (
+    <div data-testid="leaflet-marker" onClick={() => eventHandlers?.click?.()}>{children}</div>
   ),
   Popup: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="leaflet-popup">{children}</div>
@@ -21,15 +28,26 @@ vi.mock('react-leaflet', () => ({
   Circle: () => <div data-testid="leaflet-circle" />,
   Polyline: () => <div data-testid="leaflet-polyline" />,
   useMap: () => ({
+    setView: vi.fn(),
+    stop: vi.fn(),
+    getSize: () => ({ x: 800, y: 600 }),
     invalidateSize: vi.fn(),
     fitBounds: vi.fn(),
     panTo: vi.fn(),
+    flyTo: vi.fn(),
+    addLayer: vi.fn(),
+    removeLayer: vi.fn(),
+    hasLayer: vi.fn(() => false),
+    eachLayer: vi.fn(),
+    attributionControl: { setPrefix: vi.fn() },
   }),
+  useMapEvents: vi.fn(() => ({})),
 }));
 
 describe('NearbyPage - Clean Multilingual & Audio Narration Integration', () => {
   beforeEach(() => {
     localStorage.clear();
+    window.history.replaceState(null, '', '/diem-du-lich');
     setStoredLanguage('vi');
 
     // Mock speechSynthesis
@@ -47,6 +65,8 @@ describe('NearbyPage - Clean Multilingual & Audio Narration Integration', () => 
       removeEventListener: vi.fn(),
       dispatchEvent: vi.fn(),
     } as unknown as SpeechSynthesis;
+
+    window.HTMLElement.prototype.scrollIntoView = vi.fn();
   });
 
   it('renders default Vietnamese interface with 5 Saigon heritage POIs', () => {
@@ -57,7 +77,7 @@ describe('NearbyPage - Clean Multilingual & Audio Narration Integration', () => 
     );
 
     expect(screen.getByText('Điểm du lịch Sài Gòn')).toBeInTheDocument();
-    expect(screen.getByText('Dinh Độc Lập')).toBeInTheDocument();
+    expect(screen.getAllByText('Dinh Độc Lập')[0]).toBeInTheDocument();
     expect(screen.getByText('Nhà thờ Đức Bà Sài Gòn')).toBeInTheDocument();
     expect(screen.getByText('Bưu điện Trung tâm Sài Gòn')).toBeInTheDocument();
     expect(screen.getByText('Chợ Bến Thành')).toBeInTheDocument();
@@ -71,22 +91,21 @@ describe('NearbyPage - Clean Multilingual & Audio Narration Integration', () => 
       </BrowserRouter>
     );
 
-    // Switch language to English via the language selector
-    const langSelect = screen.getByLabelText('Ngôn ngữ') as HTMLSelectElement;
+    // Switch language to English via the single source of truth (header/storage)
     act(() => {
-      fireEvent.change(langSelect, { target: { value: 'en' } });
+      setStoredLanguage('en');
     });
 
     // Check English translations
     expect(screen.getByText('Saigon Attractions')).toBeInTheDocument();
-    expect(screen.getByText('Independence Palace')).toBeInTheDocument();
+    expect(screen.getAllByText('Independence Palace')[0]).toBeInTheDocument();
     expect(screen.getByText('Notre Dame Cathedral of Saigon')).toBeInTheDocument();
     expect(screen.getByText('Saigon Central Post Office')).toBeInTheDocument();
     expect(screen.getByText('Ben Thanh Market')).toBeInTheDocument();
     expect(screen.getByText('War Remnants Museum')).toBeInTheDocument();
 
     // Click Listen on the first POI (Independence Palace)
-    const listenButtons = screen.getAllByRole('button', { name: /▶ Listen/i });
+    const listenButtons = screen.getAllByRole('button', { name: /Play/i });
     act(() => {
       fireEvent.click(listenButtons[0]!);
     });
@@ -96,7 +115,7 @@ describe('NearbyPage - Clean Multilingual & Audio Narration Integration', () => 
     const calls = (window.speechSynthesis.speak as any).mock.calls;
     const utterance = calls[calls.length - 1][0] as SpeechSynthesisUtterance;
     expect(utterance.lang).toBe('en-US');
-    expect(utterance.text).toContain('The Independence Palace is a landmark national monument');
+    expect(utterance.text).toContain('Independence Palace sits in a wide garden in the heart of the city');
   });
 
   it('handles language fallback when a POI lacks voice audio in a target language', () => {
@@ -106,16 +125,20 @@ describe('NearbyPage - Clean Multilingual & Audio Narration Integration', () => 
       </BrowserRouter>
     );
 
-    // Switch language to Korean
-    const langSelect = screen.getByLabelText('Ngôn ngữ') as HTMLSelectElement;
+    // Switch language to Korean via global language source
     act(() => {
-      fireEvent.change(langSelect, { target: { value: 'ko' } });
+      setStoredLanguage('ko');
     });
 
-    // POI 2 (Notre Dame Cathedral) has audio.ko = 0/empty
-    const listenButtons = screen.getAllByRole('button', { name: /▶ 듣기/i });
+    // Select POI 2 (Notre Dame Cathedral) from the stop list, then play it in Hero
+    const stopRows = screen.getAllByRole('button', { name: /노트르담 대성당/i });
     act(() => {
-      fireEvent.click(listenButtons[1]!); // Notre Dame Cathedral
+      fireEvent.click(stopRows[0]!);
+    });
+
+    const playBtn = screen.getByRole('button', { name: /재생.*노트르담/i });
+    act(() => {
+      fireEvent.click(playBtn);
     });
 
     // Verify fallback notice is displayed in the audio player
@@ -227,14 +250,13 @@ describe('NearbyPage - Clean Multilingual & Audio Narration Integration', () => 
       </BrowserRouter>
     );
 
-    // Switch to English
-    const langSelect = screen.getByLabelText('Ngôn ngữ') as HTMLSelectElement;
+    // Switch to English via global language source
     act(() => {
-      fireEvent.change(langSelect, { target: { value: 'en' } });
+      setStoredLanguage('en');
     });
 
     // Click Listen on first spot
-    const listenButtons = screen.getAllByRole('button', { name: /▶ Listen/i });
+    const listenButtons = screen.getAllByRole('button', { name: /Play/i });
     await act(async () => {
       fireEvent.click(listenButtons[0]!);
     });
@@ -247,4 +269,1285 @@ describe('NearbyPage - Clean Multilingual & Audio Narration Integration', () => 
       expect.stringContaining('/api/tts/audio/poi_1_en_sample.mp3')
     );
   });
+
+  it('does NOT play backend TTS that belongs to a different stop (id-space mismatch) and keeps the spoken narration', async () => {
+    const playMock = vi.fn().mockResolvedValue(undefined);
+    (window as any).Audio = vi.fn().mockImplementation((src: string) => ({
+      src,
+      play: playMock,
+      pause: vi.fn(),
+      load: vi.fn(),
+      playbackRate: 1,
+      currentTime: 0,
+      duration: 60,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    }));
+
+    // Backend id 1 = "Bưu điện Trung tâm Sài Gòn" (code POI_BUU_DIEN_01), which is a
+    // different stop than frontend poi-1 "Dinh Độc Lập". The response must be rejected
+    // so the correct (frontend) spoken narration keeps playing.
+    vi.spyOn(api, 'getPoiDetail').mockResolvedValueOnce({
+      id: 1,
+      code: 'POI_BUU_DIEN_01',
+      qrToken: 'qr-1',
+      name: 'Bưu điện Trung tâm Sài Gòn',
+      latitude: 10.7799,
+      longitude: 106.7001,
+      triggerRadiusMeters: 40,
+      zoneId: 1,
+      zoneCode: 'D1',
+      categoryCode: 'ARCHITECTURE',
+      languageCode: 'vi',
+      title: 'Bưu điện Trung tâm Sài Gòn',
+      summary: 'Summary',
+      description: 'Description',
+      audioUrl: '/api/tts/audio/poi_1_vi_wrong_stop.mp3',
+      audioDurationSeconds: 60,
+      audioStatus: 'READY',
+      fallbackLanguage: false,
+    });
+
+    render(
+      <BrowserRouter>
+        <NearbyPage />
+      </BrowserRouter>
+    );
+
+    const speakSpy = window.speechSynthesis.speak as unknown as ReturnType<typeof vi.fn>;
+    speakSpy.mockClear();
+
+    const playBtn = screen.getByRole('button', { name: /Phát.*Dinh Độc Lập/i });
+    await act(async () => {
+      fireEvent.click(playBtn);
+    });
+
+    // Spoken narration started for the correct (frontend) stop ...
+    expect(speakSpy).toHaveBeenCalled();
+    // ... and the mismatched backend audio was never mounted or played.
+    expect((window as any).Audio).not.toHaveBeenCalled();
+    expect(playMock).not.toHaveBeenCalled();
+  });
+
+  it('toggles simulation mode, displays "Chế độ giả lập" banner, and initializes simulated position', () => {
+    render(
+      <BrowserRouter>
+        <NearbyPage />
+      </BrowserRouter>
+    );
+
+    const simBtn = screen.getByRole('button', { name: /Giả lập vị trí/i });
+    expect(simBtn).toBeInTheDocument();
+
+    act(() => {
+      fireEvent.click(simBtn);
+    });
+
+    // Verify simulation mode badge/banner appears
+    const simMatches = screen.getAllByText(/Chế độ giả lập/i);
+    expect(simMatches.length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText(/Bấm hoặc kéo chấm tròn để di chuyển/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Đang giả lập/i })).toBeInTheDocument();
+  });
+
+  it('tracks journey progress and renders single-line stats and localStorage sync', () => {
+    localStorage.setItem('saigonvoice_listened_pois', JSON.stringify(['poi-1']));
+
+    render(
+      <BrowserRouter>
+        <NearbyPage />
+      </BrowserRouter>
+    );
+
+    // Verify progress in single-line stats and chapter card
+    expect(screen.getByText(/1\/5 đã nghe/)).toBeInTheDocument();
+    expect(screen.getByText('✓ Đã nghe')).toBeInTheDocument();
+  });
+
+  describe('Language Consistency (Requirement 7)', () => {
+    it('verifies that the dictionary has identical key sets across all 4 languages and zero missing keys', () => {
+      const missingCounts = getMissingKeysCount();
+      expect(missingCounts).toEqual({ vi: 0, en: 0, ko: 0, ja: 0 });
+
+      const viKeys = Object.keys(NEARBY_DICTIONARY.vi).sort();
+      const languages: ('en' | 'ko' | 'ja')[] = ['en', 'ko', 'ja'];
+      for (const lang of languages) {
+        const langKeys = Object.keys(NEARBY_DICTIONARY[lang]).sort();
+        expect(langKeys).toEqual(viKeys);
+      }
+    });
+
+    it.each(['en', 'ko', 'ja'] as const)(
+      'renders cleanly in %s with no untranslated Vietnamese UI labels and proper html lang attribute',
+      (targetLang) => {
+        setStoredLanguage(targetLang);
+        render(
+          <BrowserRouter>
+            <NearbyPage />
+          </BrowserRouter>
+        );
+
+        // Document language must match selected language
+        expect(document.documentElement.lang).toBe(targetLang);
+
+        // Page title must be localized
+        expect(screen.getByText(t(targetLang, 'pageTitle'))).toBeInTheDocument();
+        // Vietnamese page title must NOT be present
+        expect(screen.queryByText('Điểm du lịch Sài Gòn')).not.toBeInTheDocument();
+
+        // Mode switch tabs must be localized
+        expect(screen.getAllByRole('tab', { name: t(targetLang, 'modeListen') })[0]).toBeInTheDocument();
+        expect(screen.getAllByRole('tab', { name: t(targetLang, 'modeRead') })[0]).toBeInTheDocument();
+
+        // Toolbar buttons must be localized
+        expect(
+          screen.getByRole('button', { name: new RegExp(`^${t(targetLang, 'myLocation')}$`, 'i') })
+        ).toBeInTheDocument();
+
+        // Local name label must be displayed for foreign languages
+        const localNameLabels = screen.getAllByText(new RegExp(t(targetLang, 'localNameLabel'), 'i'));
+        expect(localNameLabels.length).toBeGreaterThanOrEqual(1);
+
+        // Disallowed Vietnamese UI tokens that should NOT appear in other languages
+        const vietnameseOnlyTokens = [
+          'Thuyết minh tự động',
+          'Vị trí của tôi',
+          'điểm tham quan',
+          'tổng hành trình',
+          'Chế độ giả lập',
+        ];
+        for (const token of vietnameseOnlyTokens) {
+          expect(screen.queryByText(token)).not.toBeInTheDocument();
+        }
+      }
+    );
+  });
+
+  describe('Visual Polish & Chapter Layout V2 Checks (Tasks 1, 2, 3)', () => {
+    it('shows selected-stop card ONLY after explicit marker click, and keeps it closed after dismissal', () => {
+      render(
+        <BrowserRouter>
+          <NearbyPage />
+        </BrowserRouter>
+      );
+
+      // Card must NOT be displayed on initial render
+      expect(screen.queryByTestId('nearby-selected-card')).not.toBeInTheDocument();
+
+      // Click the first marker
+      const markers = screen.getAllByTestId('leaflet-marker');
+      expect(markers.length).toBeGreaterThan(0);
+      act(() => {
+        fireEvent.click(markers[0]!);
+      });
+
+      // Card appears after marker click
+      const card = screen.getByTestId('nearby-selected-card');
+      expect(card).toBeInTheDocument();
+
+      // Close the card
+      const closeBtn = screen.getByTitle('Đóng thẻ địa điểm');
+      act(() => {
+        fireEvent.click(closeBtn);
+      });
+
+      // Card is dismissed
+      expect(screen.queryByTestId('nearby-selected-card')).not.toBeInTheDocument();
+    });
+
+    it('removes per-chapter language chips and shows notice when transcript is missing for current language', () => {
+      render(
+        <BrowserRouter>
+          <NearbyPage />
+        </BrowserRouter>
+      );
+
+      // Verify no per-chapter language chips exist
+      expect(document.querySelector('.chapter-lang-availability')).toBeNull();
+      expect(document.querySelector('.lang-avail-chip')).toBeNull();
+
+      // Render a PoiCard with missing transcript for current language
+      const mockPoi: GeoPoi = {
+        id: 'mock-1',
+        slug: 'mock-poi',
+        stopOrder: 1,
+        name: { vi: 'Điểm thử nghiệm', en: 'Test Point', ko: '테스트', ja: 'テスト' },
+        lat: 10.77,
+        lng: 106.69,
+        triggerRadius: 50,
+        category: { vi: 'Di tích', en: 'Relic', ko: '유적', ja: '遺跡' },
+        image: '',
+        audio: { vi: '', en: '', ko: '', ja: '' },
+        transcript: { vi: '', en: 'English transcript only', ko: '', ja: '' },
+      };
+
+      const { container } = render(
+        <PoiCard
+          poi={mockPoi}
+          originalIndex={0}
+          isSelected={false}
+          isActive={false}
+          isHovered={false}
+          isPlaying={false}
+          isCurrent={false}
+          currentLang="vi"
+          inTriggerZone={false}
+          inRadius={false}
+          activeSentenceIndex={null}
+          poiName="Điểm thử nghiệm"
+          poiCategory="Di tích"
+          onSelect={vi.fn()}
+          onHover={vi.fn()}
+          onTogglePlay={vi.fn()}
+          onChangeLanguage={vi.fn()}
+        />
+      );
+
+      // Notice should be displayed under mode switch
+      expect(screen.getByText('Chưa có bản dịch cho ngôn ngữ này')).toBeInTheDocument();
+      // No language chips inside PoiCard
+      expect(container.querySelector('.chapter-lang-availability')).toBeNull();
+    });
+
+    it('renders chapter cleanly without media block when image is missing or errors', () => {
+      const mockPoiNoImage: GeoPoi = {
+        id: 'mock-2',
+        stopOrder: 2,
+        name: { vi: 'Điểm không có ảnh', en: 'No Image Point', ko: '이미지 없음', ja: '画像なし' },
+        lat: 10.77,
+        lng: 106.69,
+        triggerRadius: 50,
+        category: { vi: 'Di tích', en: 'Relic', ko: '유적', ja: '遺跡' },
+        image: '',
+        audio: { vi: '', en: '', ko: '', ja: '' },
+        transcript: { vi: 'Mô tả không có ảnh.', en: 'Description with no image.', ko: '', ja: '' },
+      };
+
+      const { container } = render(
+        <PoiCard
+          poi={mockPoiNoImage}
+          originalIndex={1}
+          isSelected={false}
+          isActive={false}
+          isHovered={false}
+          isPlaying={false}
+          isCurrent={false}
+          currentLang="vi"
+          inTriggerZone={false}
+          inRadius={false}
+          activeSentenceIndex={null}
+          poiName="Điểm không có ảnh"
+          poiCategory="Di tích"
+          onSelect={vi.fn()}
+          onHover={vi.fn()}
+          onTogglePlay={vi.fn()}
+          onChangeLanguage={vi.fn()}
+        />
+      );
+
+      // Media frame must be omitted entirely
+      expect(container.querySelector('.chapter-media-frame')).toBeNull();
+      // Text and play row still render cleanly
+      expect(screen.getByText('Mô tả không có ảnh.')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Phát/i })).toBeInTheDocument();
+    });
+
+    it('renders serif sentence-case h2 for chapters list heading with muted tour order note', () => {
+      render(
+        <BrowserRouter>
+          <NearbyPage />
+        </BrowserRouter>
+      );
+
+      // Editorial h2 section header
+      const listHeading = screen.getByRole('heading', { level: 2, name: /Điểm thuyết minh/i });
+      expect(listHeading).toBeInTheDocument();
+      expect(listHeading).toHaveClass('chapters-list-title');
+
+      // Tour order muted note
+      expect(screen.getByText('Theo thứ tự tour')).toBeInTheDocument();
+    });
+
+    it('verifies compact header, single language control, removed breadcrumb, and 2-line clamped description', () => {
+      const { container } = render(
+        <BrowserRouter>
+          <NearbyPage />
+        </BrowserRouter>
+      );
+
+      // In-page language control is removed; only header dropdown controls language
+      expect(screen.queryByRole('group', { name: /Ngôn ngữ/i })).toBeNull();
+      expect(screen.queryByLabelText('Ngôn ngữ')).toBeNull();
+
+      // Single line stats rendered
+      expect(container.querySelector('.nearby-header-stats-line')).toBeInTheDocument();
+
+      // No location message is rendered as plain text notice under list heading
+      const statusNotice = container.querySelector('.chapters-status-notice');
+      expect(statusNotice).toBeInTheDocument();
+      expect(statusNotice).toHaveTextContent(/Chưa có vị trí của bạn/i);
+
+      // First chapter description has 2-line clamp class in listen mode
+      const clampedDesc = container.querySelector('.chapter-description-measure');
+      expect(clampedDesc).toHaveClass('is-clamped');
+
+      // Primary Play button visible in chapter 1
+      const playButtons = screen.getAllByRole('button', { name: /Phát/i });
+      expect(playButtons[0]).toBeInTheDocument();
+    });
+
+    it('enforces dictionary completeness across all 4 languages with fallback policy', () => {
+      const missingCounts = getMissingKeysCount();
+      expect(missingCounts.vi).toBe(0);
+      expect(missingCounts.en).toBe(0);
+      expect(missingCounts.ko).toBe(0);
+      expect(missingCounts.ja).toBe(0);
+
+      const fallbackText = t('ja', 'pageTitle');
+      expect(fallbackText).toBe(NEARBY_DICTIONARY.ja.pageTitle);
+    });
+
+    it('verifies izi-style stop list rendering, row selection, thumbnail presence, and alignment', () => {
+      const { container } = render(
+        <BrowserRouter>
+          <NearbyPage />
+        </BrowserRouter>
+      );
+
+      const rows = container.querySelectorAll('.nearby-stop-row');
+      expect(rows).toHaveLength(5);
+
+      // Stop 1 is active on initial load with aria-current="true"
+      expect(rows[0]).toHaveAttribute('aria-current', 'true');
+      expect(rows[1]).not.toHaveAttribute('aria-current');
+
+      // Badges have fixed-width column across all rows
+      const badgeCols = container.querySelectorAll('.stop-badge-col');
+      expect(badgeCols).toHaveLength(5);
+
+      // Click row 2 to select Notre Dame Cathedral
+      act(() => {
+        fireEvent.click(rows[1]!);
+      });
+
+      expect(rows[1]).toHaveAttribute('aria-current', 'true');
+      expect(rows[0]).not.toHaveAttribute('aria-current');
+
+      // Detail area updates title to Nhà thờ Đức Bà Sài Gòn
+      const detailTitle = container.querySelector('.detail-title');
+      expect(detailTitle).toHaveTextContent('Nhà thờ Đức Bà Sài Gòn');
+    });
+
+    it('manages Previous/Next buttons: disabled at ends, updates active stop without toggling audio', () => {
+      const { container } = render(
+        <BrowserRouter>
+          <NearbyPage />
+        </BrowserRouter>
+      );
+
+      const prevBtn = container.querySelector('.panel-nav-btn.btn-prev') as HTMLButtonElement;
+      const nextBtn = container.querySelector('.panel-nav-btn.btn-next') as HTMLButtonElement;
+
+      expect(prevBtn).toBeInTheDocument();
+      expect(nextBtn).toBeInTheDocument();
+
+      // At stop 1, Previous is disabled
+      expect(prevBtn).toBeDisabled();
+      expect(nextBtn).not.toBeDisabled();
+      expect(nextBtn).toHaveTextContent(/Nhà thờ Đức Bà Sài Gòn/i);
+
+      // Clicking Next advances to stop 2 without playing audio
+      act(() => {
+        fireEvent.click(nextBtn);
+      });
+
+      expect(window.speechSynthesis.speak).not.toHaveBeenCalled();
+
+      const rows = container.querySelectorAll('.nearby-stop-row');
+      expect(rows[1]).toHaveAttribute('aria-current', 'true');
+      expect(prevBtn).not.toBeDisabled();
+      expect(prevBtn).toHaveTextContent(/Dinh Độc Lập/i);
+
+      // Advance to stop 5
+      act(() => {
+        fireEvent.click(rows[4]!);
+      });
+
+      expect(rows[4]).toHaveAttribute('aria-current', 'true');
+      expect(nextBtn).toBeDisabled();
+      expect(prevBtn).not.toBeDisabled();
+    });
+
+    it('updates title, list heading, control labels, Play, Previous/Next, and html lang on language change', () => {
+      const { container } = render(
+        <BrowserRouter>
+          <NearbyPage />
+        </BrowserRouter>
+      );
+
+      act(() => {
+        setStoredLanguage('en');
+      });
+
+      expect(document.documentElement.lang).toBe('en');
+      expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Saigon Attractions');
+      expect(container.querySelector('.chapters-list-title')).toHaveTextContent(NEARBY_DICTIONARY.en.listTitle);
+      expect(container.querySelector('.detail-play-btn')).toHaveTextContent(/Play/i);
+
+      const nextBtn = container.querySelector('.panel-nav-btn.btn-next');
+      expect(nextBtn).toHaveTextContent(/Next: Notre Dame Cathedral of Saigon/i);
+    });
+
+    it('verifies no scroll-spy IntersectionObserver listener remains for chapter steps', () => {
+      const observeSpy = vi.fn();
+      const originalIO = window.IntersectionObserver;
+      window.IntersectionObserver = vi.fn().mockImplementation(() => ({
+        observe: observeSpy,
+        disconnect: vi.fn(),
+        unobserve: vi.fn(),
+      }));
+
+      render(
+        <BrowserRouter>
+          <NearbyPage />
+        </BrowserRouter>
+      );
+
+      // No chapter-step elements exist or are observed by scroll-spy
+      expect(document.querySelectorAll('.nearby-chapter-step')).toHaveLength(0);
+
+      window.IntersectionObserver = originalIO;
+    });
+  });
+
+  describe('Hero Image, Reading Section Duplicate & Controls (Tasks 1, 2, 3)', () => {
+    it('hero image renders when the image resolves using the same resolver as the list, and is absent without a gap when it fails', () => {
+      const { container } = render(
+        <BrowserRouter>
+          <NearbyPage />
+        </BrowserRouter>
+      );
+
+      // Stop 1 (Dinh Độc Lập): image resolves via resolveImagePath
+      const heroSection = container.querySelector('.nearby-hero-section');
+      expect(heroSection).toHaveClass('has-media');
+      const heroImg = heroSection?.querySelector('.hero-media-img') as HTMLImageElement;
+      expect(heroImg).toBeInTheDocument();
+      expect(heroImg.src).toContain(resolveImagePath('/images/pois/dinh-doc-lap.jpg', 'dinh-doc-lap'));
+      expect(heroImg.alt).toBe('Dinh Độc Lập');
+
+      // Stop 3 (Bưu điện Trung tâm Sài Gòn): select stop 3 from list
+      const rows = container.querySelectorAll('.nearby-stop-row');
+      act(() => {
+        fireEvent.click(rows[2]!);
+      });
+
+      const stop3Img = container.querySelector('.hero-media-img') as HTMLImageElement;
+      expect(stop3Img).toBeInTheDocument();
+      expect(stop3Img.src).toContain(resolveImagePath('/images/pois/buu-dien-trung-tam.jpg', 'buu-dien-trung-tam'));
+      expect(stop3Img.alt).toBe('Bưu điện Trung tâm Sài Gòn');
+
+      // When image load fails (e.g. onError triggered):
+      act(() => {
+        fireEvent.error(stop3Img);
+      });
+
+      // Media column is cleanly absent and container gains no-media without leaving a gap
+      expect(container.querySelector('.hero-media-img')).toBeNull();
+      expect(container.querySelector('.nearby-hero-media')).toBeNull();
+      expect(container.querySelector('.nearby-hero-section')).toHaveClass('no-media');
+    });
+
+    it('reading section does not render text identical to the hero intro twice', () => {
+      const { container } = render(
+        <BrowserRouter>
+          <NearbyPage />
+        </BrowserRouter>
+      );
+
+      // Select stop 3 (Bưu điện Trung tâm Sài Gòn)
+      const rows = container.querySelectorAll('.nearby-stop-row');
+      act(() => {
+        fireEvent.click(rows[2]!);
+      });
+
+      // Hero renders intro text (clamped)
+      const heroIntro = container.querySelector('.nearby-hero-intro');
+      expect(heroIntro).toBeInTheDocument();
+      expect(heroIntro).toHaveTextContent('Bưu điện Trung tâm Sài Gòn nổi bật với mái vòm cong cổ điển');
+
+      // In Vietnamese, reading section shows the distinct full paragraphs and does not repeat hero intro
+      const readingBody = container.querySelector('.reading-body-flow');
+      expect(readingBody).toBeInTheDocument();
+      expect(readingBody?.textContent).not.toBe(heroIntro?.textContent);
+
+      // In Korean (where full text does not exist and short equals hero intro), reading body is hidden
+      act(() => {
+        setStoredLanguage('ko');
+      });
+      expect(container.querySelector('.reading-body-flow')).toBeNull();
+      expect(container.querySelector('.reading-stop-title')).toBeNull();
+
+      // Navigation buttons remain available
+      expect(container.querySelector('.reading-nav-row')).toBeInTheDocument();
+    });
+
+    it('previous and next buttons render no icon elements, are disabled at ends, and change active stop only', () => {
+      const { container } = render(
+        <BrowserRouter>
+          <NearbyPage />
+        </BrowserRouter>
+      );
+
+      const prevBtn = container.querySelector('.panel-nav-btn.btn-prev') as HTMLButtonElement;
+      const nextBtn = container.querySelector('.panel-nav-btn.btn-next') as HTMLButtonElement;
+
+      // No chevron/icon elements rendered inside buttons
+      expect(prevBtn.querySelector('svg')).toBeNull();
+      expect(nextBtn.querySelector('svg')).toBeNull();
+
+      // Stop 1: prev disabled, next enabled
+      expect(prevBtn).toBeDisabled();
+      expect(nextBtn).not.toBeDisabled();
+
+      // Advance to stop 2: only active stop changes, audio not played
+      act(() => {
+        fireEvent.click(nextBtn);
+      });
+      expect(window.speechSynthesis.speak).not.toHaveBeenCalled();
+
+      const activeRows = container.querySelectorAll('.nearby-stop-row.is-active');
+      expect(activeRows).toHaveLength(1);
+      expect(activeRows[0]).toHaveTextContent('Nhà thờ Đức Bà Sài Gòn');
+    });
+
+    it('back-to-top appears only after scroll threshold (> 1.5vh on /diem-du-lich) and not while player bar is visible', async () => {
+      render(
+        <MemoryRouter initialEntries={['/diem-du-lich']}>
+          <BackToTop />
+        </MemoryRouter>
+      );
+
+      // Scroll at 0: button not rendered
+      expect(screen.queryByRole('button', { name: /Lên đầu trang/i })).toBeNull();
+
+      // Scroll below 1.5 viewport height threshold:
+      await act(async () => {
+        window.innerHeight = 1000;
+        window.scrollY = 1200; // < 1500
+        window.dispatchEvent(new Event('scroll'));
+      });
+      expect(screen.queryByRole('button', { name: /Lên đầu trang/i })).toBeNull();
+
+      // Scroll above 1.5 viewport height threshold:
+      await act(async () => {
+        window.scrollY = 1600; // > 1500
+        window.dispatchEvent(new Event('scroll'));
+      });
+      const btn = screen.getByRole('button', { name: /Lên đầu trang/i });
+      expect(btn).toBeInTheDocument();
+      expect(btn).toHaveClass('is-nearby-page');
+
+      // When player bar is in DOM, back-to-top is hidden
+      await act(async () => {
+        const fakePlayer = document.createElement('div');
+        fakePlayer.className = 'nearby-sticky-player-bar';
+        document.body.appendChild(fakePlayer);
+        window.dispatchEvent(new Event('scroll'));
+      });
+      expect(screen.queryByRole('button', { name: /Lên đầu trang/i })).toBeNull();
+
+      // Clean up
+      await act(async () => {
+        const fakePlayer = document.querySelector('.nearby-sticky-player-bar');
+        if (fakePlayer) document.body.removeChild(fakePlayer);
+      });
+    });
+  });
+
+  describe('Single Audio Controller & Overlap Prevention (Audio Audit Tasks)', () => {
+    it('pressing Play twice quickly leaves exactly one active source (second click toggles pause)', () => {
+      render(
+        <BrowserRouter>
+          <NearbyPage />
+        </BrowserRouter>
+      );
+
+      const playBtn = screen.getByRole('button', { name: /Phát.*Dinh Độc Lập/i });
+
+      // First click: starts playback
+      act(() => {
+        fireEvent.click(playBtn);
+      });
+      expect(window.speechSynthesis.speak).toHaveBeenCalledTimes(1);
+
+      // Second click on the same stop: toggles pause, cancels speech, does not spawn second speech
+      act(() => {
+        fireEvent.click(playBtn);
+      });
+      expect(window.speechSynthesis.cancel).toHaveBeenCalled();
+      expect(window.speechSynthesis.speak).toHaveBeenCalledTimes(1);
+    });
+
+    it('starting stop B while stop A plays stops A (cancel called) and plays only B', () => {
+      const { container } = render(
+        <BrowserRouter>
+          <NearbyPage />
+        </BrowserRouter>
+      );
+
+      // Play stop 1 (Dinh Độc Lập)
+      const playBtn1 = screen.getByRole('button', { name: /Phát.*Dinh Độc Lập/i });
+      act(() => {
+        fireEvent.click(playBtn1);
+      });
+      expect(window.speechSynthesis.speak).toHaveBeenCalledTimes(1);
+
+      // Select stop 2 (Nhà thờ Đức Bà) from list
+      const rows = container.querySelectorAll('.nearby-stop-row');
+      act(() => {
+        fireEvent.click(rows[1]!);
+      });
+
+      // Play stop 2: stops stop 1 completely and starts stop 2
+      const playBtn2 = screen.getByRole('button', { name: /Phát.*Nhà thờ Đức Bà/i });
+      act(() => {
+        fireEvent.click(playBtn2);
+      });
+
+      expect(window.speechSynthesis.cancel).toHaveBeenCalled();
+      expect(window.speechSynthesis.speak).toHaveBeenCalledTimes(2);
+    });
+
+    it('a stale async audio URL resolving after a newer start is discarded and does not play', async () => {
+      let resolveStop1: (val: any) => void;
+      const deferredPromise = new Promise((resolve) => {
+        resolveStop1 = resolve;
+      });
+
+      const audioPlayMock = vi.fn().mockResolvedValue(undefined);
+      const audioPauseMock = vi.fn();
+      (window as any).Audio = vi.fn().mockImplementation((src: string) => ({
+        src,
+        play: audioPlayMock,
+        pause: audioPauseMock,
+        load: vi.fn(),
+        playbackRate: 1,
+        currentTime: 0,
+        duration: 60,
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+      }));
+
+      const getPoiDetailSpy = vi.spyOn(api, 'getPoiDetail').mockImplementation((id: number) => {
+        if (id === 1) return deferredPromise as any;
+        return Promise.reject(new Error('not ready'));
+      });
+
+      const { container } = render(
+        <BrowserRouter>
+          <NearbyPage />
+        </BrowserRouter>
+      );
+
+      // 1. User starts stop 1 (async request in-flight)
+      const playBtn1 = screen.getByRole('button', { name: /Phát.*Dinh Độc Lập/i });
+      act(() => {
+        fireEvent.click(playBtn1);
+      });
+
+      // 2. User quickly switches to stop 2 before stop 1 resolves
+      const rows = container.querySelectorAll('.nearby-stop-row');
+      act(() => {
+        fireEvent.click(rows[1]!);
+      });
+      const playBtn2 = screen.getByRole('button', { name: /Phát.*Nhà thờ Đức Bà/i });
+      act(() => {
+        fireEvent.click(playBtn2);
+      });
+
+      // 3. Stale stop 1 resolves later
+      await act(async () => {
+        resolveStop1!({
+          id: 1,
+          audioUrl: '/api/tts/audio/poi_1_stale.mp3',
+          audioStatus: 'READY',
+        });
+      });
+
+      // HTML5 Audio for the stale stop 1 must NOT be instantiated or played
+      expect(audioPlayMock).not.toHaveBeenCalled();
+      getPoiDetailSpy.mockRestore();
+    });
+
+    it('events (onended, onerror) of a cancelled playback do not trigger a new action or state corruption', () => {
+      let capturedOnEnded: (() => void) | null = null;
+      (window as any).Audio = vi.fn().mockImplementation((src: string) => {
+        return {
+          src,
+          play: vi.fn().mockResolvedValue(undefined),
+          pause: vi.fn(),
+          load: vi.fn(),
+          playbackRate: 1,
+          currentTime: 0,
+          duration: 60,
+          addEventListener: vi.fn(),
+          removeEventListener: vi.fn(),
+          set onended(fn: any) {
+            capturedOnEnded = fn;
+          },
+          get onended() {
+            return capturedOnEnded;
+          },
+        };
+      });
+
+      vi.spyOn(api, 'getPoiDetail').mockResolvedValueOnce({
+        id: 1,
+        code: 'poi-1',
+        audioUrl: '/api/tts/audio/poi_1.mp3',
+        audioStatus: 'READY',
+      } as any);
+
+      render(
+        <BrowserRouter>
+          <NearbyPage />
+        </BrowserRouter>
+      );
+
+      const playBtn = screen.getByRole('button', { name: /Phát.*Dinh Độc Lập/i });
+      act(() => {
+        fireEvent.click(playBtn);
+      });
+
+      // Stop audio before it finishes
+      act(() => {
+        fireEvent.click(playBtn);
+      });
+
+      // Firing onended on the cancelled audio element should be safely ignored
+      if (capturedOnEnded) {
+        expect(() => {
+          act(() => {
+            capturedOnEnded!();
+          });
+        }).not.toThrow();
+      }
+    });
+
+    it('auto-narration does not start while playback is active or loading, and respects the 5000ms cooldown window', () => {
+      const { container } = render(
+        <BrowserRouter>
+          <NearbyPage />
+        </BrowserRouter>
+      );
+
+      // Start stop 1 manually
+      const playBtn = screen.getByRole('button', { name: /Phát.*Dinh Độc Lập/i });
+      act(() => {
+        fireEvent.click(playBtn);
+      });
+
+      // Auto narration toggle
+      const autoSwitch = container.querySelector('#chkAuto') as HTMLElement;
+      act(() => {
+        fireEvent.click(autoSwitch);
+      });
+
+      // Clear calls counter
+      (window.speechSynthesis.speak as any).mockClear();
+
+      // Trigger location near stop 1 while already playing
+      // Should NOT re-trigger speech
+      expect(window.speechSynthesis.speak).not.toHaveBeenCalled();
+
+      // Stop manually
+      act(() => {
+        fireEvent.click(playBtn);
+      });
+
+      // In the 5000ms guard window, auto narration must NOT restart stop 1
+      expect(window.speechSynthesis.speak).not.toHaveBeenCalled();
+    });
+
+    it('language change stops playback and does not auto-restart; unmount cancels everything', () => {
+      const { unmount } = render(
+        <BrowserRouter>
+          <NearbyPage />
+        </BrowserRouter>
+      );
+
+      const playBtn = screen.getByRole('button', { name: /Phát.*Dinh Độc Lập/i });
+      act(() => {
+        fireEvent.click(playBtn);
+      });
+      expect(window.speechSynthesis.speak).toHaveBeenCalled();
+
+      // Clear speak calls
+      (window.speechSynthesis.speak as any).mockClear();
+
+      // Switch language to en
+      act(() => {
+        setStoredLanguage('en');
+      });
+
+      // Audio was stopped, cancel called, and does not auto-restart
+      expect(window.speechSynthesis.cancel).toHaveBeenCalled();
+      expect(window.speechSynthesis.speak).not.toHaveBeenCalled();
+
+      // Unmount: cancels everything
+      unmount();
+      expect(window.speechSynthesis.cancel).toHaveBeenCalled();
+    });
+
+    it('previous and next buttons change active stop only and never call play or cancel', () => {
+      const { container } = render(
+        <BrowserRouter>
+          <NearbyPage />
+        </BrowserRouter>
+      );
+
+      const nextBtn = container.querySelector('.panel-nav-btn.btn-next') as HTMLButtonElement;
+      (window.speechSynthesis.speak as any).mockClear();
+      (window.speechSynthesis.cancel as any).mockClear();
+
+      act(() => {
+        fireEvent.click(nextBtn);
+      });
+
+      expect(window.speechSynthesis.speak).not.toHaveBeenCalled();
+      expect(window.speechSynthesis.cancel).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('Narration Layers & Multilingual Content (Tasks 1 to 6)', () => {
+    it('every stop has non-empty vi and en for short and full layers', () => {
+      const pois = nearbyPoisData as GeoPoi[];
+      expect(pois).toHaveLength(5);
+      for (const p of pois) {
+        expect(p.narration?.short?.vi?.trim().length).toBeGreaterThan(0);
+        expect(p.narration?.short?.en?.trim().length).toBeGreaterThan(0);
+        expect(p.narration?.full?.vi?.length).toBeGreaterThan(0);
+        expect(p.narration?.full?.en?.length).toBeGreaterThan(0);
+        for (const para of p.narration!.full.vi) {
+          expect(para.trim().length).toBeGreaterThan(0);
+        }
+        for (const para of p.narration!.full.en) {
+          expect(para.trim().length).toBeGreaterThan(0);
+        }
+      }
+    });
+
+    it('the number of paragraphs of each full text matches the content block', () => {
+      const pois = nearbyPoisData as GeoPoi[];
+      // Stop 1: 4 paragraphs
+      expect(pois[0]?.narration?.full?.vi).toHaveLength(4);
+      expect(pois[0]?.narration?.full?.en).toHaveLength(4);
+
+      // Stop 2: 4 paragraphs
+      expect(pois[1]?.narration?.full?.vi).toHaveLength(4);
+      expect(pois[1]?.narration?.full?.en).toHaveLength(4);
+
+      // Stop 3: 3 paragraphs
+      expect(pois[2]?.narration?.full?.vi).toHaveLength(3);
+      expect(pois[2]?.narration?.full?.en).toHaveLength(3);
+
+      // Stop 4: 3 paragraphs
+      expect(pois[3]?.narration?.full?.vi).toHaveLength(3);
+      expect(pois[3]?.narration?.full?.en).toHaveLength(3);
+
+      // Stop 5: 3 paragraphs
+      expect(pois[4]?.narration?.full?.vi).toHaveLength(3);
+      expect(pois[4]?.narration?.full?.en).toHaveLength(3);
+    });
+
+    it('verifies accessor behavior for vi, en, ko', () => {
+      const stop1 = (nearbyPoisData as GeoPoi[])[0]!;
+
+      // vi
+      const viShort = getNarration(stop1, 'vi', 'short');
+      const viFull = getNarration(stop1, 'vi', 'full');
+      expect(typeof viShort).toBe('string');
+      expect(viShort).toContain('Chào mừng bạn đến Dinh Độc Lập');
+      expect(Array.isArray(viFull)).toBe(true);
+      expect(viFull).toHaveLength(4);
+
+      // en
+      const enShort = getNarration(stop1, 'en', 'short');
+      const enFull = getNarration(stop1, 'en', 'full');
+      expect(typeof enShort).toBe('string');
+      expect(enShort).toContain('Welcome to Independence Palace');
+      expect(Array.isArray(enFull)).toBe(true);
+      expect(enFull).toHaveLength(4);
+
+      // ko: short comes from transcript.ko, full is null
+      const koShort = getNarration(stop1, 'ko', 'short');
+      const koFull = getNarration(stop1, 'ko', 'full');
+      expect(typeof koShort).toBe('string');
+      expect(koShort).toContain('통일궁');
+      expect(koFull).toBeNull();
+    });
+
+    it('hero intro is the first two sentences of short text', () => {
+      const stop1 = (nearbyPoisData as GeoPoi[])[0]!;
+      const heroIntroVi = getHeroIntroText(stop1, 'vi');
+      expect(heroIntroVi).toBe(
+        'Chào mừng bạn đến Dinh Độc Lập, nơi gắn liền với ngày thống nhất đất nước. Nơi đây từng là dinh của chính quyền thuộc địa Pháp, sau này là dinh của các tổng thống Việt Nam Cộng hòa.'
+      );
+
+      const heroIntroEn = getHeroIntroText(stop1, 'en');
+      expect(heroIntroEn).toBe(
+        'Welcome to Independence Palace, a place tied to the day the country was reunified. The site once housed the French colonial rulers, and later the presidents of South Vietnam.'
+      );
+    });
+
+    it('reading section shows full paragraphs in vi and en without repeating hero text, and hides reading body in ko when identical', () => {
+      const { container } = render(
+        <BrowserRouter>
+          <NearbyPage />
+        </BrowserRouter>
+      );
+
+      // Stop 1 in Vietnamese (default)
+      const heroIntro = container.querySelector('.nearby-hero-intro');
+      expect(heroIntro).toBeInTheDocument();
+      expect(heroIntro).toHaveTextContent('Chào mừng bạn đến Dinh Độc Lập');
+
+      // Reading section shows 4 full paragraphs and does not repeat hero intro
+      const readingBody = container.querySelector('.reading-body-flow');
+      expect(readingBody).toBeInTheDocument();
+      const paras = readingBody?.querySelectorAll('.reading-paragraph');
+      expect(paras).toHaveLength(4);
+      expect(readingBody?.textContent).not.toBe(heroIntro?.textContent);
+
+      // Switch language to Korean: short text equals hero intro, so reading body is hidden
+      act(() => {
+        setStoredLanguage('ko');
+      });
+
+      const koHeroIntro = container.querySelector('.nearby-hero-intro');
+      expect(koHeroIntro).toHaveTextContent('통일궁');
+      expect(container.querySelector('.reading-body-flow')).toBeNull();
+      // Navigation buttons remain available
+      expect(container.querySelector('.reading-nav-row')).toBeInTheDocument();
+    });
+
+    it('manual Play passes full text to speechSynthesis (mock)', () => {
+      render(
+        <BrowserRouter>
+          <NearbyPage />
+        </BrowserRouter>
+      );
+
+      // Manual Play: should pass full text (all 4 paragraphs joined by a space)
+      const playBtn = screen.getByRole('button', { name: /Phát.*Dinh Độc Lập/i });
+      act(() => {
+        fireEvent.click(playBtn);
+      });
+
+      expect(window.speechSynthesis.speak).toHaveBeenCalled();
+      const calls = (window.speechSynthesis.speak as any).mock.calls;
+      const utterance = calls[calls.length - 1][0] as SpeechSynthesisUtterance;
+      expect(utterance.text).toContain('Dinh Độc Lập nằm giữa một khu vườn rộng ở trung tâm thành phố');
+      expect(utterance.text).toContain('Kiến trúc sư Ngô Viết Thụ thiết kế');
+      expect(utterance.text).toContain('khu hầm chỉ huy');
+    });
+
+    it('auto trigger passes short text to speechSynthesis (mock)', () => {
+      const mockGeolocation = {
+        getCurrentPosition: vi.fn((success) => {
+          success({
+            coords: {
+              latitude: 10.77709,
+              longitude: 106.6954,
+              accuracy: 10,
+              altitude: null,
+              altitudeAccuracy: null,
+              heading: null,
+              speed: null,
+            },
+            timestamp: Date.now(),
+          });
+        }),
+        watchPosition: vi.fn(),
+        clearWatch: vi.fn(),
+      };
+      Object.defineProperty(navigator, 'geolocation', {
+        value: mockGeolocation,
+        writable: true,
+        configurable: true,
+      });
+
+      render(
+        <BrowserRouter>
+          <NearbyPage />
+        </BrowserRouter>
+      );
+
+      (window.speechSynthesis.speak as any).mockClear();
+
+      // Enable auto narration switch
+      const autoSwitch = screen.getByRole('switch');
+      act(() => {
+        fireEvent.click(autoSwitch);
+      });
+
+      // Request GPS location near Stop 1
+      const gpsBtn = screen.getByRole('button', { name: /Vị trí của tôi/i });
+      act(() => {
+        fireEvent.click(gpsBtn);
+      });
+
+      // Spoken via auto trigger, text is short text (not full text)
+      expect(window.speechSynthesis.speak).toHaveBeenCalled();
+      const calls = (window.speechSynthesis.speak as any).mock.calls;
+      const utterance = calls[calls.length - 1][0] as SpeechSynthesisUtterance;
+      expect(utterance.text).toContain('Chào mừng bạn đến Dinh Độc Lập, nơi gắn liền với ngày thống nhất đất nước');
+      expect(utterance.text).not.toContain('Kiến trúc sư Ngô Viết Thụ thiết kế');
+    });
+
+    it('highlighting advances across paragraph boundaries', () => {
+      const { container } = render(
+        <BrowserRouter>
+          <NearbyPage />
+        </BrowserRouter>
+      );
+
+      // Start playback of Stop 1
+      const playBtn = screen.getByRole('button', { name: /Phát.*Dinh Độc Lập/i });
+      act(() => {
+        fireEvent.click(playBtn);
+      });
+
+      // In listen mode, paragraphs contain sentence nodes
+      const sentences = container.querySelectorAll('.reading-paragraph .transcript-sentence-node');
+      expect(sentences.length).toBeGreaterThan(5);
+
+      // Initial active sentence (index 0) has is-highlighted-sentence
+      expect(sentences[0]).toHaveClass('is-highlighted-sentence');
+    });
+
+    it('no visible text for a stop with a missing language falls back to another language', () => {
+      const mockPoiMissingLang: GeoPoi = {
+        id: 'mock-missing-lang',
+        name: { vi: 'Điểm thử nghiệm', en: '', ko: '', ja: '' },
+        lat: 10.77,
+        lng: 106.69,
+        triggerRadius: 50,
+        category: { vi: 'Thử nghiệm', en: '', ko: '', ja: '' },
+        image: '',
+        audio: { vi: '', en: '', ko: '', ja: '' },
+        transcript: { vi: 'Bản dịch tiếng Việt.', en: '', ko: '', ja: '' },
+      };
+
+      // getNarration for ko returns null, never falling back to Vietnamese
+      expect(getNarration(mockPoiMissingLang, 'ko', 'short')).toBeNull();
+      expect(getNarration(mockPoiMissingLang, 'ko', 'full')).toBeNull();
+      expect(getNarration(mockPoiMissingLang, 'ja', 'short')).toBeNull();
+      expect(getHeroIntroText(mockPoiMissingLang, 'ko')).toBe('');
+    });
+
+    it('asserts no reading paragraph starts with whitespace and no double space appears in any paragraph', () => {
+      const { container } = render(
+        <BrowserRouter>
+          <NearbyPage />
+        </BrowserRouter>
+      );
+
+      const paragraphs = container.querySelectorAll('.reading-paragraph');
+      expect(paragraphs.length).toBeGreaterThan(0);
+
+      paragraphs.forEach((p) => {
+        const text = p.textContent || '';
+        // No leading whitespace (no pseudo-indent)
+        expect(text).toMatch(/^\S/);
+        // No trailing whitespace
+        expect(text).toMatch(/\S$/);
+        // Exactly one space between adjacent sentences (no double spaces)
+        expect(text).not.toContain('  ');
+      });
+    });
+
+    describe('Language Reduction (4 languages) & Duration/Highlight Rules', () => {
+      it('(a) dropdown has exactly 4 options: Tiếng Việt, English, 日本語, 한국어', () => {
+        expect(SUPPORTED_LANGUAGES).toHaveLength(4);
+        expect(SUPPORTED_LANGUAGES.map((l) => l.code)).toEqual(['vi', 'en', 'ja', 'ko']);
+        expect(SUPPORTED_LANGUAGES.map((l) => l.label)).toEqual([
+          'Tiếng Việt',
+          'English',
+          '日本語',
+          '한국어',
+        ]);
+      });
+
+      it('(b) zh in storage migrates to vi', () => {
+        localStorage.setItem('sv:lang', 'zh');
+        const lang = getStoredLanguage();
+        expect(lang).toBe('vi');
+        expect(localStorage.getItem('sv:lang')).toBe('vi');
+      });
+
+      it('(c) hero element set identical across vi/en/ja/ko per state', () => {
+        const testPoi = (nearbyPoisData[0] as unknown) as GeoPoi;
+        const languages: ('vi' | 'en' | 'ja' | 'ko')[] = ['vi', 'en', 'ja', 'ko'];
+        const states: ('idle' | 'loading' | 'playing' | 'paused')[] = [
+          'idle',
+          'loading',
+          'playing',
+          'paused',
+        ];
+
+        states.forEach((state) => {
+          const results = languages.map((lang) => {
+            const isPlaying = state === 'playing';
+            const isCurrent = state !== 'idle';
+            const { container } = render(
+              <PoiHero
+                poi={testPoi}
+                originalIndex={0}
+                totalStops={5}
+                currentLang={lang}
+                isPlaying={isPlaying}
+                isCurrent={isCurrent}
+                playbackStatus={state}
+                chapterMode="listen"
+                onChangeChapterMode={vi.fn()}
+                onTogglePlay={vi.fn()}
+                duration={state === 'playing' || state === 'paused' ? 26 : 0}
+                getPoiName={(p) => p.name[lang] || p.name.vi}
+                getPoiCategory={(p) => p.category[lang] || p.category.vi}
+              />
+            );
+
+            const actionsRow = container.querySelector('.hero-actions-row')!;
+            const hasPlayBtn = Boolean(actionsRow.querySelector('.detail-play-btn'));
+            const hasDuration = Boolean(actionsRow.querySelector('.hero-audio-duration'));
+            const hasSwitcher = Boolean(actionsRow.querySelector('.hero-mode-switcher'));
+
+            return { lang, hasPlayBtn, hasDuration, hasSwitcher };
+          });
+
+          // Across all 4 languages in this state, control element presence must be identical
+          const first = results[0]!;
+          results.forEach((res) => {
+            expect(res.hasPlayBtn).toBe(first.hasPlayBtn);
+            expect(res.hasDuration).toBe(first.hasDuration);
+            expect(res.hasSwitcher).toBe(first.hasSwitcher);
+          });
+
+          // Specifically in idle and loading: no duration next to play button in any language
+          if (state === 'idle' || state === 'loading') {
+            results.forEach((res) => {
+              expect(res.hasDuration).toBe(false);
+            });
+          }
+          // In playing and paused: duration is present in all 4 languages
+          if (state === 'playing' || state === 'paused') {
+            results.forEach((res) => {
+              expect(res.hasDuration).toBe(true);
+            });
+          }
+        });
+      });
+
+      it('(d) ja/ko render no reading body and no empty container', () => {
+        const testPoi = (nearbyPoisData[0] as unknown) as GeoPoi;
+        const sortedItem: SortedPoiItem = {
+          poi: testPoi,
+          originalIndex: 0,
+          dist: null,
+        };
+
+        (['ja', 'ko'] as const).forEach((lang) => {
+          const { container } = render(
+            <PoiReadingSection
+              activeItem={sortedItem}
+              currentLang={lang}
+              isPlaying={false}
+              isCurrent={false}
+              activeSentenceIndex={null}
+              chapterMode="listen"
+              prevItem={null}
+              nextItem={null}
+              onSelectPoi={vi.fn()}
+              getPoiName={(p) => p.name[lang] || p.name.vi}
+            />
+          );
+
+          // No reading body or title
+          expect(container.querySelector('.reading-body-flow')).toBeNull();
+          expect(container.querySelector('.reading-stop-title')).toBeNull();
+          expect(container.querySelectorAll('.reading-paragraph')).toHaveLength(0);
+
+          // Previous/Next navigation is retained
+          expect(container.querySelector('.reading-nav-row')).toBeInTheDocument();
+        });
+      });
+
+      it('(e) no highlight while backend or static audio plays', () => {
+        const testPoi = (nearbyPoisData[0] as unknown) as GeoPoi;
+        const sortedItem: SortedPoiItem = {
+          poi: testPoi,
+          originalIndex: 0,
+          dist: null,
+        };
+
+        // Test with backend audio
+        const { container: backendContainer } = render(
+          <PoiReadingSection
+            activeItem={sortedItem}
+            currentLang="vi"
+            isPlaying={true}
+            isCurrent={true}
+            activeSentenceIndex={0}
+            audioSourceType="backend"
+            chapterMode="listen"
+            prevItem={null}
+            nextItem={null}
+            onSelectPoi={vi.fn()}
+            getPoiName={(p) => p.name.vi}
+          />
+        );
+        expect(backendContainer.querySelectorAll('.is-highlighted-sentence')).toHaveLength(0);
+
+        // Test with static audio
+        const { container: staticContainer } = render(
+          <PoiReadingSection
+            activeItem={sortedItem}
+            currentLang="vi"
+            isPlaying={true}
+            isCurrent={true}
+            activeSentenceIndex={0}
+            audioSourceType="static"
+            chapterMode="listen"
+            prevItem={null}
+            nextItem={null}
+            onSelectPoi={vi.fn()}
+            getPoiName={(p) => p.name.vi}
+          />
+        );
+        expect(staticContainer.querySelectorAll('.is-highlighted-sentence')).toHaveLength(0);
+
+        // Contrast: when speech synthesis is reading full text, highlight is active
+        const { container: speechContainer } = render(
+          <PoiReadingSection
+            activeItem={sortedItem}
+            currentLang="vi"
+            isPlaying={true}
+            isCurrent={true}
+            activeSentenceIndex={0}
+            audioSourceType="speech"
+            chapterMode="listen"
+            prevItem={null}
+            nextItem={null}
+            onSelectPoi={vi.fn()}
+            getPoiName={(p) => p.name.vi}
+          />
+        );
+        expect(speechContainer.querySelectorAll('.is-highlighted-sentence')).toHaveLength(1);
+      });
+    });
+  });
 });
+
+

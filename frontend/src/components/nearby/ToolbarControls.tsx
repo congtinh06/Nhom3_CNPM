@@ -1,34 +1,48 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { LocateFixed, Settings } from 'lucide-react';
+import { LocateFixed, Settings, Navigation, RotateCcw } from 'lucide-react';
 import { SupportedLanguage } from '../../types';
-import { SUPPORTED_LANGUAGES } from '../../content/languages';
+import { t, formatDistance, NATIVE_LANG_NAMES } from '../../content/nearbyI18n';
+
+export { NATIVE_LANG_NAMES };
 
 interface ToolbarControlsProps {
-  myLocationBtnText: string;
-  autoNarrationText: string;
-  languageLabelText: string;
-  radiusLabelText: string;
+  myLocationBtnText?: string;
+  autoNarrationText?: string;
+  radiusLabelText?: string;
   isAutoEnabled: boolean;
   onToggleAuto: () => void;
   onRequestGps: () => void;
   currentLang: SupportedLanguage;
-  onChangeLanguage: (lang: SupportedLanguage) => void;
   radius: number;
+  overrideRadius?: number | null;
+  onChangeOverrideRadius?: (radius: number | null) => void;
   onChangeRadius: (radius: number) => void;
+  isSimMode?: boolean;
+  onToggleSimMode?: () => void;
+  listenedCount?: number;
+  stopsCount?: number;
+  onResetProgress?: () => void;
+  statusMessage?: React.ReactNode;
 }
 
 export const ToolbarControls: React.FC<ToolbarControlsProps> = ({
   myLocationBtnText,
   autoNarrationText,
-  languageLabelText,
   radiusLabelText,
   isAutoEnabled,
   onToggleAuto,
   onRequestGps,
   currentLang,
-  onChangeLanguage,
-  radius,
+  radius: _radius,
+  overrideRadius = null,
+  onChangeOverrideRadius,
   onChangeRadius,
+  isSimMode = false,
+  onToggleSimMode,
+  listenedCount = 0,
+  stopsCount = 5,
+  onResetProgress,
+  statusMessage,
 }) => {
   const [showSettings, setShowSettings] = useState(false);
   const settingsRef = useRef<HTMLDivElement>(null);
@@ -43,95 +57,146 @@ export const ToolbarControls: React.FC<ToolbarControlsProps> = ({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  const locAutoText = autoNarrationText || t(currentLang, 'autoNarration');
+  const locMyLocText = myLocationBtnText || t(currentLang, 'myLocation');
+  const locRadiusLabel = radiusLabelText || t(currentLang, 'radiusLabel');
+
   return (
-    <section className="toolbar-one-row" aria-label="Điều khiển vị trí và thuyết minh">
-      <div className="toolbar-content">
-        {/* Vị trí của tôi */}
-        <button
-          className="btn btn-gps"
-          id="btnGps"
-          type="button"
-          onClick={onRequestGps}
-          aria-label={myLocationBtnText}
-        >
-          <LocateFixed size={18} aria-hidden="true" />
-          <span>{myLocationBtnText}</span>
-        </button>
-
-        {/* Thuyết minh tự động switch */}
-        <button
-          type="button"
-          role="switch"
-          aria-checked={isAutoEnabled}
-          className={`switch ${isAutoEnabled ? 'on' : ''}`}
-          id="chkAuto"
-          onClick={onToggleAuto}
-          aria-label={autoNarrationText}
-        >
-          <span className="switch-track" aria-hidden="true">
-            <span className="switch-thumb" />
-          </span>
-          <span className="switch-label">{autoNarrationText}</span>
-        </button>
-
-        <span className="toolbar-spacer" aria-hidden="true" />
-
-        {/* Ngôn ngữ dropdown */}
-        <div className="field-group">
-          <label className="field-label" htmlFor="selLang">
-            {languageLabelText}
-          </label>
-          <select
-            className="sel"
-            id="selLang"
-            aria-label={languageLabelText}
-            value={currentLang}
-            onChange={(e) => onChangeLanguage(e.target.value as SupportedLanguage)}
-          >
-            {SUPPORTED_LANGUAGES.map((item) => (
-              <option key={item.code} value={item.code}>
-                {item.label}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {/* Settings Button (Bán kính) */}
-        <div className="settings-wrapper" ref={settingsRef}>
+    <nav className="nearby-sticky-controlbar" aria-label={t(currentLang, 'toolbarAriaLabel')}>
+      <div className="nearby-controlbar-inner">
+        {/* Left: Auto Narration Toggle + One-line Status */}
+        <div className="controlbar-auto-cluster">
           <button
             type="button"
-            className={`btn btn-icon ${showSettings ? 'active' : ''}`}
-            aria-label="Cài đặt bán kính tìm kiếm"
-            aria-expanded={showSettings}
-            onClick={() => setShowSettings((prev) => !prev)}
-            title="Cài đặt bán kính"
+            role="switch"
+            aria-checked={isAutoEnabled}
+            className={`nearby-toggle-switch ${isAutoEnabled ? 'is-on' : ''}`}
+            id="chkAuto"
+            onClick={onToggleAuto}
+            aria-label={locAutoText}
           >
-            <Settings size={18} />
+            <span className="toggle-track" aria-hidden="true">
+              <span className="toggle-thumb" />
+            </span>
+            <span className="toggle-text">{locAutoText}</span>
           </button>
 
-          {showSettings && (
-            <div className="settings-popover" role="dialog" aria-label="Cài đặt bán kính">
-              <label className="popover-field" htmlFor="selRadius">
-                <span>{radiusLabelText}</span>
-                <select
-                  className="sel"
-                  id="selRadius"
-                  value={radius}
-                  onChange={(e) => {
-                    onChangeRadius(parseInt(e.target.value, 10));
-                    setShowSettings(false);
-                  }}
-                >
-                  <option value={500}>500 m</option>
-                  <option value={1000}>1.000 m (1 km)</option>
-                  <option value={2000}>2.000 m (2 km)</option>
-                  <option value={5000}>5.000 m (5 km)</option>
-                </select>
-              </label>
+          {statusMessage && (
+            <div className="controlbar-status-line" role="status" aria-live="polite">
+              {statusMessage}
             </div>
           )}
         </div>
+
+        {/* Right: GPS Location, Simulation Toggle & Settings */}
+        <div className="controlbar-action-cluster">
+          {/* Simulation Mode Toggle Button */}
+          {onToggleSimMode && (
+            <button
+              type="button"
+              className={`nearby-action-btn btn-sim ${isSimMode ? 'is-active' : ''}`}
+              id="btnSim"
+              onClick={onToggleSimMode}
+              aria-pressed={isSimMode}
+              title={
+                isSimMode
+                  ? t(currentLang, 'simModeStopTitle')
+                  : t(currentLang, 'simModeStartTitle')
+              }
+            >
+              <Navigation size={15} aria-hidden="true" />
+              <span>{isSimMode ? t(currentLang, 'simModeActive') : t(currentLang, 'simMode')}</span>
+            </button>
+          )}
+
+          <button
+            className={`nearby-action-btn btn-gps ${isSimMode ? 'is-disabled' : ''}`}
+            id="btnGps"
+            type="button"
+            onClick={onRequestGps}
+            aria-label={locMyLocText}
+            title={
+              isSimMode
+                ? t(currentLang, 'gpsDisabledInSimTitle')
+                : locMyLocText
+            }
+          >
+            <LocateFixed size={16} aria-hidden="true" />
+            <span>{locMyLocText}</span>
+          </button>
+
+          <div className="settings-wrapper" ref={settingsRef}>
+            <button
+              type="button"
+              className={`nearby-icon-btn ${showSettings ? 'is-active' : ''}`}
+              aria-label={t(currentLang, 'settingsBtnTitle')}
+              aria-expanded={showSettings}
+              onClick={() => setShowSettings((prev) => !prev)}
+              title={t(currentLang, 'settingsBtnTitle')}
+            >
+              <Settings size={17} />
+            </button>
+
+            {showSettings && (
+              <div className="settings-popover" role="dialog" aria-label={t(currentLang, 'settingsDialogAriaLabel')}>
+                <label className="popover-field" htmlFor="selRadius">
+                  <span>{locRadiusLabel}</span>
+                  <select
+                    className="sel-radius-input"
+                    id="selRadius"
+                    value={overrideRadius !== null ? overrideRadius : 'default'}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val === 'default') {
+                        onChangeOverrideRadius?.(null);
+                        onChangeRadius(50);
+                      } else {
+                        const parsed = parseInt(val, 10);
+                        onChangeOverrideRadius?.(parsed);
+                        onChangeRadius(parsed);
+                      }
+                      setShowSettings(false);
+                    }}
+                  >
+                    <option value="default">{t(currentLang, 'radiusOptionDefault')}</option>
+                    <option value={50}>{t(currentLang, 'radiusOption50m')}</option>
+                    <option value={100}>{formatDistance(100, currentLang)}</option>
+                    <option value={200}>{formatDistance(200, currentLang)}</option>
+                    <option value={500}>{formatDistance(500, currentLang)}</option>
+                    <option value={1000}>{formatDistance(1000, currentLang)}</option>
+                    <option value={2000}>{formatDistance(2000, currentLang)}</option>
+                  </select>
+                </label>
+
+                {/* Progress reset option */}
+                {onResetProgress && (
+                  <div className="popover-progress-section">
+                    <div className="progress-info-line">
+                      <span>{t(currentLang, 'progressSectionTitle')}</span>
+                      <strong>
+                        {listenedCount}/{stopsCount}
+                      </strong>
+                    </div>
+                    {listenedCount > 0 && (
+                      <button
+                        type="button"
+                        className="btn-reset-progress"
+                        onClick={() => {
+                          onResetProgress();
+                          setShowSettings(false);
+                        }}
+                      >
+                        <RotateCcw size={13} aria-hidden="true" />
+                        <span>{t(currentLang, 'resetProgressBtn')}</span>
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
       </div>
-    </section>
+    </nav>
   );
 };

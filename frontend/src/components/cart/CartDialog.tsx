@@ -90,13 +90,26 @@ export const CartDialog: React.FC = () => {
             <ShoppingBag size={48} strokeWidth={1.5} className="cart-empty-icon" aria-hidden="true" />
             <p className="empty-text">{t.shop.cartEmpty}</p>
             <p className="empty-subtext">Khám phá thực đơn đặc sản Sài Gòn và chọn món bạn yêu thích.</p>
-            <button
-              type="button"
-              className="tb cart-browse-btn"
-              onClick={handleBrowseFood}
-            >
-              {t.shop.continueShopping}
-            </button>
+            <div style={{ display: 'flex', gap: 10, marginTop: 12 }}>
+              <button
+                type="button"
+                className="tb cart-browse-btn"
+                onClick={handleBrowseFood}
+              >
+                {t.shop.continueShopping}
+              </button>
+              <button
+                type="button"
+                className="tb"
+                style={{ background: 'transparent', border: '1px solid #c85a20', color: '#c85a20' }}
+                onClick={() => {
+                  closeCart();
+                  navigate('/don-hang');
+                }}
+              >
+                Đơn hàng đã đặt
+              </button>
+            </div>
           </div>
         ) : (
           cartItems.map((item) => (

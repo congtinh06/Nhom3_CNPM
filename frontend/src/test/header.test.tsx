@@ -47,61 +47,79 @@ describe('Header Navigation Redesign', () => {
   });
 
   describe('Phần giữa: Cấu trúc điều hướng desktop', () => {
-    it('hiển thị đúng 5 mục: Trang chủ, Điểm du lịch, Khám phá, Giới thiệu, Liên hệ', async () => {
+    it('hiển thị đúng 5 mục: Trang chủ, Điểm du lịch, Ẩm thực, Hướng dẫn, Liên hệ', async () => {
       renderHeader('/');
 
-      const nav = await screen.findByRole('navigation', { name: 'Điều hướng chính' });
+      const nav = await screen.findByRole('navigation', { name: 'Chính' });
       expect(nav).toBeInTheDocument();
 
       // Trang chủ
-      expect(screen.getByRole('link', { name: 'Trang chủ' })).toHaveAttribute('href', '#top');
+      const homeLink = screen.getByRole('link', { name: 'Trang chủ' });
+      expect(homeLink).toHaveAttribute('href', '/');
+      expect(homeLink).toHaveAttribute('aria-current', 'page');
 
-      // Điểm du lịch trỏ tới /diem-du-lich
+      // Điểm du lịch trỏ tới /diem-du-lich với title/ghi chú Thuyết minh
       const attractionsLink = screen.getByRole('link', { name: 'Điểm du lịch' });
       expect(attractionsLink).toBeInTheDocument();
       expect(attractionsLink).toHaveAttribute('href', '/diem-du-lich');
+      expect(attractionsLink).toHaveAttribute('title', 'Thuyết minh');
+      expect(attractionsLink).toHaveAttribute('data-nav', 'thuyet-minh');
 
-      // Khám phá dropdown button
-      expect(screen.getByRole('button', { name: 'Khám phá' })).toBeInTheDocument();
+      // Ẩm thực trỏ tới /am-thuc
+      const foodLink = screen.getByRole('link', { name: 'Ẩm thực' });
+      expect(foodLink).toBeInTheDocument();
+      expect(foodLink).toHaveAttribute('href', '/am-thuc');
 
-      // Giới thiệu & Liên hệ
-      expect(screen.getByRole('link', { name: 'Giới thiệu' })).toHaveAttribute('href', '#gioi-thieu');
-      expect(screen.getByRole('link', { name: 'Liên hệ' })).toHaveAttribute('href', '#lien-he');
+      // Hướng dẫn (trang riêng) trỏ tới /huong-dan
+      const guideLink = screen.getByRole('link', { name: 'Hướng dẫn' });
+      expect(guideLink).toBeInTheDocument();
+      expect(guideLink).toHaveAttribute('href', '/huong-dan');
 
-      // Không còn Thuyết minh hay Đơn hàng của tôi ở thanh chính
+      // Liên hệ (trang riêng) trỏ tới /lien-he
+      const contactLink = screen.getByRole('link', { name: 'Liên hệ' });
+      expect(contactLink).toBeInTheDocument();
+      expect(contactLink).toHaveAttribute('href', '/lien-he');
+
+      // Danh sách thứ tự chính xác: Trang chủ, Điểm du lịch, Ẩm thực, Hướng dẫn, Liên hệ
       const directLinks = Array.from(nav.children)
         .filter((el) => el.tagName === 'A')
         .map((el) => el.textContent?.trim());
-      expect(directLinks).not.toContain('Thuyết minh');
-      expect(directLinks).not.toContain('Đơn hàng của tôi');
-      expect(directLinks).not.toContain('Ẩm thực');
-      expect(directLinks).not.toContain('Thức uống');
+      expect(directLinks).toEqual([
+        'Trang chủ',
+        'Điểm du lịch',
+        'Ẩm thực',
+        'Hướng dẫn',
+        'Liên hệ',
+      ]);
+
+      // Không còn Giới thiệu, Khám phá hay Văn hóa
+      expect(directLinks).not.toContain('Giới thiệu');
+      expect(directLinks).not.toContain('Khám phá');
+      expect(directLinks).not.toContain('Văn hóa');
     });
 
-    it('dropdown Khám phá chứa đúng 3 mục: Văn hóa, Ẩm thực, Thức uống kèm mô tả', async () => {
-      renderHeader('/');
+    it('gạch chân màu nhấn và aria-current cho mục active tương ứng với trang hiện tại', async () => {
+      renderHeader('/am-thuc');
 
-      const exploreMenu = await screen.findByRole('menu', { name: 'Khám phá' });
-      expect(exploreMenu).toBeInTheDocument();
-
-      const cultureItem = screen.getByRole('menuitem', { name: /Văn hóa/i });
-      expect(cultureItem).toHaveAttribute('href', '#van-hoa');
-      expect(cultureItem).toHaveTextContent('Nét sống và nghệ thuật truyền thống');
-
-      const foodItem = screen.getByRole('menuitem', { name: /Ẩm thực/i });
-      expect(foodItem).toHaveAttribute('href', '/am-thuc');
-      expect(foodItem).toHaveTextContent('Hương vị đường phố đặc trưng Sài Gòn');
-
-      const drinksItem = screen.getByRole('menuitem', { name: /Thức uống/i });
-      expect(drinksItem).toHaveAttribute('href', '/thuc-uong');
-      expect(drinksItem).toHaveTextContent('Cà phê vợt và các món trà giải nhiệt');
+      const foodLink = await screen.findByRole('link', { name: 'Ẩm thực' });
+      expect(foodLink).toHaveClass('active');
+      expect(foodLink).toHaveAttribute('aria-current', 'page');
     });
 
-    it('gạch chân màu nhấn cho mục active tương ứng với trang hiện tại', async () => {
-      renderHeader('/diem-du-lich');
+    it('đánh dấu active cho trang Hướng dẫn khi truy cập /huong-dan', async () => {
+      renderHeader('/huong-dan');
 
-      const attractionsLink = await screen.findByRole('link', { name: 'Điểm du lịch' });
-      expect(attractionsLink).toHaveClass('active');
+      const guideLink = await screen.findByRole('link', { name: 'Hướng dẫn' });
+      expect(guideLink).toHaveClass('active');
+      expect(guideLink).toHaveAttribute('aria-current', 'page');
+    });
+
+    it('đánh dấu active cho trang Liên hệ khi truy cập /lien-he', async () => {
+      renderHeader('/lien-he');
+
+      const contactLink = await screen.findByRole('link', { name: 'Liên hệ' });
+      expect(contactLink).toHaveClass('active');
+      expect(contactLink).toHaveAttribute('aria-current', 'page');
     });
   });
 

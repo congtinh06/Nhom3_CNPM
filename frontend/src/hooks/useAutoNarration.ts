@@ -5,6 +5,7 @@ export interface PositionState {
   lat: number;
   lng: number;
   label: string;
+  accuracy?: number;
 }
 
 export function haversine(lat1: number, lon1: number, lat2: number, lon2: number): number {
@@ -28,8 +29,20 @@ interface UseAutoNarrationProps {
   isAutoEnabled: boolean;
   currentPlayingId: string | null;
   isPlaying: boolean;
+  isLoading?: boolean;
+  lastManualStoppedId?: string | null;
+  lastManualStopTime?: number;
   playPoi: (poiId: string, isAuto?: boolean) => void;
+  stopAllAudio?: () => void;
   gpsErrorMessage: string;
+  gpsErrorDeniedText?: string;
+  gpsErrorUnavailableText?: string;
+  gpsErrorTimeoutText?: string;
+  gpsErrorSimActiveText?: string;
+  gpsErrorNotSupportedText?: string;
+  gpsErrorInsecureText?: string;
+  overrideRadius?: number | null;
+  isSimMode?: boolean;
 }
 
 export function useAutoNarration({
@@ -37,8 +50,13 @@ export function useAutoNarration({
   isAutoEnabled,
   currentPlayingId,
   isPlaying,
+  isLoading = false,
+  lastManualStoppedId = null,
+  lastManualStopTime = 0,
   playPoi,
   gpsErrorMessage,
+  overrideRadius,
+  isSimMode: _isSimMode,
 }: UseAutoNarrationProps) {
   const [userPos, setUserPos] = useState<PositionState | null>(null);
   const [gpsError, setGpsError] = useState<string>('');
@@ -58,46 +76,75 @@ export function useAutoNarration({
 
   // When playing finishes and queue is not empty, pop the next POI
   useEffect(() => {
-    if (!isPlaying && queueRef.current.length > 0) {
+    if (!isPlaying && !isLoading && queueRef.current.length > 0) {
       const nextId = queueRef.current.shift();
       if (nextId) {
+        // Guard against auto-popping a stop that the user just stopped manually
+        if (
+          lastManualStoppedId === nextId &&
+          lastManualStopTime &&
+          Date.now() - lastManualStopTime < 5000
+        ) {
+          queueRef.current = [];
+          return;
+        }
         playPoi(nextId, true);
       }
     }
-  }, [isPlaying, playPoi]);
+  }, [isPlaying, isLoading, lastManualStoppedId, lastManualStopTime, playPoi]);
 
   // Check if position triggers any POI
   const checkAutoTrigger = useCallback(
     (lat: number, lng: number) => {
       if (!isAutoRef.current) return;
+      // Never start while any playback is active or loading
+      if (isPlaying || isLoading) return;
 
       const triggerHits = pois
-        .map((p) => ({
-          poi: p,
-          dist: haversine(lat, lng, p.lat, p.lng),
-        }))
+        .map((p) => {
+          const effectiveRadius = overrideRadius ?? p.triggerRadius;
+          return {
+            poi: p,
+            dist: haversine(lat, lng, p.lat, p.lng),
+            radius: effectiveRadius,
+          };
+        })
         .filter((item) => {
           const alreadyPlayed = autoPlayedSetRef.current.has(item.poi.id);
-          return item.dist <= item.poi.triggerRadius && !alreadyPlayed;
+          return item.dist <= item.radius && !alreadyPlayed;
         })
         .sort((a, b) => a.dist - b.dist);
 
       if (triggerHits.length > 0) {
         const hit = triggerHits[0];
         if (hit) {
-          autoPlayedSetRef.current.add(hit.poi.id);
+          // Never start the same stop that is already playing
+          if (currentPlayingId === hit.poi.id) return;
 
-          if (isPlaying && currentPlayingId !== hit.poi.id) {
-            if (!queueRef.current.includes(hit.poi.id)) {
-              queueRef.current.push(hit.poi.id);
-            }
-          } else {
-            playPoi(hit.poi.id, true);
+          // Never start a stop that was just stopped manually by the user within 5000ms guard window
+          if (
+            lastManualStoppedId === hit.poi.id &&
+            lastManualStopTime &&
+            Date.now() - lastManualStopTime < 5000
+          ) {
+            return;
           }
+
+          autoPlayedSetRef.current.add(hit.poi.id);
+          playPoi(hit.poi.id, true);
         }
       }
     },
-    [pois, isPlaying, currentPlayingId, playPoi]
+    [
+      pois,
+      isPlaying,
+      isLoading,
+      currentPlayingId,
+      lastManualStoppedId,
+      lastManualStopTime,
+      overrideRadius,
+      playPoi,
+    ]
   );
 
   // Unified pipeline to apply position
@@ -184,11 +231,19 @@ export function useAutoNarration({
     };
   }, [clearGpsWatch]);
 
+  const applySimulatedPosition = useCallback(
+    (lat: number, lng: number) => {
+      applyPosition(lat, lng, 'Chế độ giả lập');
+    },
+    [applyPosition]
+  );
+
   return {
     userPos,
     gpsError,
     setGpsError,
     applyPosition,
+    applySimulatedPosition,
     requestGps,
     checkAutoTrigger,
     setAutoDirect,

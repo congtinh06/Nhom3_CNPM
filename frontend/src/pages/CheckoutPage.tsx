@@ -1,21 +1,30 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import '../styles/checkout.css';
 import { useNavigate, Link } from 'react-router-dom';
-import {
-  CreditCard,
-  Truck,
-  ShoppingBag,
-  ArrowLeft,
-  AlertCircle,
-  RefreshCw,
-  ShieldCheck,
-} from 'lucide-react';
+import { ShoppingBag, Phone } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
-import { useToast } from '../context/ToastContext';
-import { useNavbarLanguage } from '../content/languages';
 import { createBackendOrder } from '../services/orderService';
-import { formatPrice } from '../utils/formatters';
-import { PaymentMethod } from '../types';
+import { Stepper } from '../components/checkout/Stepper';
+import {
+  ContactSection,
+  ContactFormData,
+  ContactErrors,
+} from '../components/checkout/ContactSection';
+import {
+  DeliveryTimeSection,
+  DeliveryTimeType,
+} from '../components/checkout/DeliveryTimeSection';
+import {
+  PaymentSection,
+  PaymentMethod,
+} from '../components/checkout/PaymentSection';
+import { OrderSummary } from '../components/checkout/OrderSummary';
+import {
+  FREE_SHIPPING_THRESHOLD,
+  SHIPPING_FEE,
+  HOTLINE_NUMBER,
+} from '../config/constants';
 
 function generateUUID(): string {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
@@ -28,67 +37,122 @@ function generateUUID(): string {
   });
 }
 
-export const CheckoutPage: React.FC = () => {
+export function CheckoutPage() {
   const navigate = useNavigate();
-  const { user, isAuthenticated, status: authStatus } = useAuth();
-  const { cartItems, totalAmount, totalCount, clearCart } = useCart();
-  const { showToast } = useToast();
-  const { t } = useNavbarLanguage();
+  const { user, isAuthenticated } = useAuth();
+  const {
+    cartItems,
+    totalAmount,
+    totalCount,
+    updateQuantity,
+    removeFromCart,
+    clearCart,
+  } = useCart();
 
-  const [receiverName, setReceiverName] = useState('');
-  const [phone, setPhone] = useState('');
-  const [address, setAddress] = useState('');
-  const [note, setNote] = useState('');
+  // Khách vãng lai: receiverName và email để trống ban đầu
+  const [formData, setFormData] = useState<ContactFormData>({
+    receiverName: '',
+    phone: '',
+    email: '',
+    provinceCode: '79',
+    provinceName: 'Thành phố Hồ Chí Minh',
+    districtCode: '',
+    districtName: '',
+    wardCode: '',
+    wardName: '',
+    streetAddress: '',
+    note: '',
+    voucherCode: '',
+  });
+
+  const [errors, setErrors] = useState<ContactErrors>({});
+  const [deliveryTime, setDeliveryTime] = useState<DeliveryTimeType>('NOW');
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('COD');
-
-  const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
 
-  // Điền sẵn thông tin người dùng nếu có
-  useEffect(() => {
-    if (user) {
-      if (user.fullName && !receiverName) {
-        setReceiverName(user.fullName);
-      }
-    }
-  }, [user]);
+  const hasPrefilledRef = useRef(false);
 
-  // Kiểm tra đăng nhập: nếu chưa đăng nhập, chuyển sang /dang-nhap kèm state return
+  // Chỉ tự điền Họ tên và Email khi đã đăng nhập tài khoản thật
   useEffect(() => {
-    if (authStatus === 'guest' && !isAuthenticated) {
-      showToast('Vui lòng đăng nhập để tiến hành đặt hàng');
-      navigate('/dang-nhap', {
-        replace: true,
-        state: { from: '/thanh-toan', backgroundLocation: { pathname: '/thanh-toan' } },
-      });
+    if (isAuthenticated && user && !hasPrefilledRef.current) {
+      setFormData((prev) => ({
+        ...prev,
+        receiverName: user.fullName || prev.receiverName,
+        email: user.email || prev.email,
+      }));
+      hasPrefilledRef.current = true;
     }
-  }, [authStatus, isAuthenticated, navigate, showToast]);
+  }, [isAuthenticated, user]);
+
+  const handleFieldChange = (field: keyof ContactFormData, value: string) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+    if (errors[field as keyof ContactErrors]) {
+      setErrors((prev) => ({ ...prev, [field]: undefined }));
+    }
+  };
+
+  // Fees calculation
+  const subtotal = totalAmount;
+  const shippingFee = subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_FEE;
+  const total = subtotal + shippingFee;
 
   const validateForm = (): boolean => {
-    const newErrors: Record<string, string> = {};
+    const newErrors: ContactErrors = {};
+    let firstInvalidId: string | null = null;
 
-    if (!receiverName.trim() || receiverName.trim().length < 2) {
+    if (!formData.receiverName.trim() || formData.receiverName.trim().length < 2) {
       newErrors.receiverName = 'Vui lòng nhập họ và tên (tối thiểu 2 ký tự).';
+      firstInvalidId = 'receiverName';
     }
 
-    const cleanPhone = phone.replace(/[\s.-]/g, '');
-    if (!cleanPhone) {
-      newErrors.phone = 'Vui lòng nhập số điện thoại nhận hàng.';
-    } else if (!/^0\d{9}$/.test(cleanPhone)) {
-      newErrors.phone = 'Số điện thoại không hợp lệ (cần 10 chữ số, bắt đầu bằng 0).';
+    const cleanPhone = formData.phone.replace(/[\s.-]/g, '');
+    const phoneRegex = /^(0|\+84)(3|5|7|8|9)[0-9]{8}$/;
+    if (!cleanPhone || !phoneRegex.test(cleanPhone)) {
+      newErrors.phone = 'Số điện thoại không hợp lệ (cần 10 chữ số, đầu 03/05/07/08/09).';
+      if (!firstInvalidId) firstInvalidId = 'phone';
     }
 
-    if (!address.trim() || address.trim().length < 5) {
-      newErrors.address = 'Vui lòng nhập địa chỉ nhận hàng chi tiết (tối thiểu 5 ký tự).';
+    if (formData.email.trim()) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(formData.email.trim())) {
+        newErrors.email = 'Địa chỉ email không đúng định dạng.';
+        if (!firstInvalidId) firstInvalidId = 'email';
+      }
+    }
+
+    if (!formData.provinceCode) {
+      newErrors.province = 'Vui lòng chọn Tỉnh / Thành phố.';
+      if (!firstInvalidId) firstInvalidId = 'province';
+    }
+
+    if (!formData.districtCode) {
+      newErrors.district = 'Vui lòng chọn Quận / Huyện.';
+      if (!firstInvalidId) firstInvalidId = 'district';
+    }
+
+    if (!formData.wardCode) {
+      newErrors.ward = 'Vui lòng chọn Phường / Xã.';
+      if (!firstInvalidId) firstInvalidId = 'ward';
+    }
+
+    if (!formData.streetAddress.trim() || formData.streetAddress.trim().length < 3) {
+      newErrors.streetAddress = 'Vui lòng nhập số nhà, tên đường chi tiết.';
+      if (!firstInvalidId) firstInvalidId = 'streetAddress';
     }
 
     setErrors(newErrors);
+
+    if (firstInvalidId) {
+      const el = document.getElementById(firstInvalidId);
+      if (el) el.focus();
+    }
+
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmitOrder = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handlePlaceOrder = async () => {
+    if (submitting) return;
     setServerError(null);
 
     if (cartItems.length === 0) {
@@ -104,23 +168,31 @@ export const CheckoutPage: React.FC = () => {
     const idempotencyKey = generateUUID();
 
     try {
-      const itemsPayload = cartItems.map((it) => ({
-        productId: it.id,
-        quantity: it.quantity,
+      const fullAddress = [
+        formData.streetAddress.trim(),
+        formData.wardName,
+        formData.districtName,
+        formData.provinceName,
+      ]
+        .filter(Boolean)
+        .join(', ');
+
+      const itemsPayload = cartItems.map((item) => ({
+        productId: item.id,
+        quantity: item.quantity,
       }));
 
-      // Tạo lookup meta để phục vụ fallback và hiển thị tên món
       const metaLookup: Record<number, { name: string; price: number }> = {};
-      cartItems.forEach((it) => {
-        metaLookup[it.id] = { name: it.name, price: it.price };
+      cartItems.forEach((item) => {
+        metaLookup[item.id] = { name: item.name, price: item.price };
       });
 
       const order = await createBackendOrder(
         {
-          receiverName: receiverName.trim(),
-          phone: phone.replace(/[\s.-]/g, ''),
-          address: address.trim(),
-          note: note.trim() || undefined,
+          receiverName: formData.receiverName.trim(),
+          phone: formData.phone.replace(/[\s.-]/g, ''),
+          address: fullAddress,
+          note: formData.note.trim() || undefined,
           paymentMethod,
           items: itemsPayload,
         },
@@ -128,295 +200,133 @@ export const CheckoutPage: React.FC = () => {
         metaLookup
       );
 
-      // Làm trống giỏ hàng
       clearCart();
 
-      // Điều hướng kết quả theo phương thức thanh toán
-      if (paymentMethod === 'MOCK_GATEWAY') {
-        navigate(`/thanh-toan/ket-qua?orderCode=${encodeURIComponent(order.orderCode)}&method=MOCK_GATEWAY`, {
+      if (paymentMethod === 'VIETQR') {
+        navigate(`/thanh-toan/qr/${encodeURIComponent(order.orderCode)}`, {
           replace: true,
         });
       } else {
-        navigate(`/thanh-toan/ket-qua?orderCode=${encodeURIComponent(order.orderCode)}&method=COD&status=success`, {
-          replace: true,
-        });
+        navigate(
+          `/thanh-toan/ket-qua?orderCode=${encodeURIComponent(order.orderCode)}&method=COD&status=success`,
+          { replace: true }
+        );
       }
     } catch (err: unknown) {
       const message =
-        err instanceof Error ? err.message : 'Có lỗi xảy ra khi tạo đơn hàng. Vui lòng thử lại.';
+        err instanceof Error
+          ? err.message
+          : 'Có lỗi xảy ra khi tạo đơn hàng. Vui lòng thử lại.';
       setServerError(message);
     } finally {
       setSubmitting(false);
     }
   };
 
-  if (authStatus === 'loading') {
-    return (
-      <div className="checkout-page s">
-        <div className="checkout-loading-box">
-          <RefreshCw size={28} strokeWidth={1.75} className="spin-icon" aria-hidden="true" />
-          <p>Đang kiểm tra trạng thái đăng nhập...</p>
-        </div>
-      </div>
-    );
-  }
+  const summaryItems = cartItems.map((it) => ({
+    id: it.id,
+    name: it.name,
+    quantity: it.quantity,
+    price: it.price,
+    imageUrl: it.imagePath,
+  }));
 
   return (
-    <div className="checkout-page">
-      <div className="checkout-banner">
-        <div className="checkout-banner-content">
-          <Link to="/am-thuc-thuc-uong" className="checkout-back-link">
-            <ArrowLeft size={16} strokeWidth={1.75} aria-hidden="true" />
-            <span>{t.shop.continueShopping}</span>
-          </Link>
-          <h1 className="checkout-page-title">{t.shop.checkoutTitle}</h1>
+    <div className="checkout-page-container">
+      <main className="checkout-main-wrap">
+        {/* Top Header Row: Title on Left, Stepper on Right */}
+        <div className="checkout-header-row">
+          <h1 className="checkout-heading">
+            Thanh toán đơn hàng
+          </h1>
+          <Stepper currentStep={2} />
         </div>
-      </div>
 
-      <div className="checkout-main-content s">
         {cartItems.length === 0 ? (
-          <div className="product-state-card empty-card">
-            <ShoppingBag size={42} strokeWidth={1.5} className="state-icon" aria-hidden="true" />
-            <h2>{t.shop.cartEmpty}</h2>
-            <p>Vui lòng chọn món từ thực đơn trước khi tiến hành thanh toán.</p>
-            <div style={{ marginTop: 16 }}>
-              <button
-                type="button"
-                className="tb"
-                onClick={() => navigate('/am-thuc-thuc-uong')}
-              >
-                Khám phá thực đơn
-              </button>
+          <div className="checkout-empty-card">
+            <div className="checkout-empty-icon-wrap" aria-hidden="true">
+              <ShoppingBag size={28} />
             </div>
+            <h2 className="checkout-empty-title">
+              Giỏ hàng của bạn đang trống
+            </h2>
+            <p className="checkout-empty-desc">
+              Vui lòng chọn món từ thực đơn trước khi tiến hành thanh toán.
+            </p>
+            <Link
+              to="/am-thuc"
+              className="checkout-empty-btn"
+            >
+              Khám phá thực đơn
+            </Link>
           </div>
         ) : (
-          <form className="checkout-grid-layout" onSubmit={handleSubmitOrder} noValidate>
-            {/* Cột trái: Thông tin nhận hàng & Phương thức thanh toán */}
-            <div className="checkout-form-panel">
-              <section className="checkout-section-box">
-                <div className="checkout-section-header">
-                  <Truck size={20} strokeWidth={1.75} className="section-header-icon" aria-hidden="true" />
-                  <h2>{t.shop.deliveryInfo}</h2>
-                </div>
-
-                <div className="checkout-fields-grid">
-                  <label className="checkout-field">
-                    <span className="field-label">
-                      {t.shop.fullName} <span className="field-required">*</span>
-                    </span>
-                    <input
-                      type="text"
-                      className={`checkout-input ${errors.receiverName ? 'input-error' : ''}`}
-                      placeholder="Nguyễn Văn A"
-                      value={receiverName}
-                      onChange={(e) => {
-                        setReceiverName(e.target.value);
-                        if (errors.receiverName) {
-                          setErrors((prev) => ({ ...prev, receiverName: '' }));
-                        }
-                      }}
-                      required
-                      disabled={submitting}
-                    />
-                    {errors.receiverName && (
-                      <span className="field-error-msg" role="alert">
-                        {errors.receiverName}
-                      </span>
-                    )}
-                  </label>
-
-                  <label className="checkout-field">
-                    <span className="field-label">
-                      {t.shop.phone} <span className="field-required">*</span>
-                    </span>
-                    <input
-                      type="tel"
-                      className={`checkout-input ${errors.phone ? 'input-error' : ''}`}
-                      placeholder="0901234567"
-                      value={phone}
-                      onChange={(e) => {
-                        setPhone(e.target.value);
-                        if (errors.phone) {
-                          setErrors((prev) => ({ ...prev, phone: '' }));
-                        }
-                      }}
-                      required
-                      disabled={submitting}
-                    />
-                    {errors.phone && (
-                      <span className="field-error-msg" role="alert">
-                        {errors.phone}
-                      </span>
-                    )}
-                  </label>
-
-                  <label className="checkout-field full-width">
-                    <span className="field-label">
-                      {t.shop.address} <span className="field-required">*</span>
-                    </span>
-                    <input
-                      type="text"
-                      className={`checkout-input ${errors.address ? 'input-error' : ''}`}
-                      placeholder="Số nhà, tên đường, phường/xã, quận/huyện..."
-                      value={address}
-                      onChange={(e) => {
-                        setAddress(e.target.value);
-                        if (errors.address) {
-                          setErrors((prev) => ({ ...prev, address: '' }));
-                        }
-                      }}
-                      required
-                      disabled={submitting}
-                    />
-                    {errors.address && (
-                      <span className="field-error-msg" role="alert">
-                        {errors.address}
-                      </span>
-                    )}
-                  </label>
-
-                  <label className="checkout-field full-width">
-                    <span className="field-label">{t.shop.note}</span>
-                    <textarea
-                      className="checkout-textarea"
-                      rows={3}
-                      placeholder={t.shop.notePlaceholder}
-                      value={note}
-                      onChange={(e) => setNote(e.target.value)}
-                      disabled={submitting}
-                    />
-                  </label>
-                </div>
-              </section>
-
-              {/* Phương thức thanh toán */}
-              <section className="checkout-section-box">
-                <div className="checkout-section-header">
-                  <CreditCard size={20} strokeWidth={1.75} className="section-header-icon" aria-hidden="true" />
-                  <h2>{t.shop.paymentMethod}</h2>
-                </div>
-
-                <div className="payment-options-list" role="radiogroup" aria-label="Chọn phương thức thanh toán">
-                  <label
-                    className={`payment-option-card ${paymentMethod === 'COD' ? 'selected' : ''}`}
-                  >
-                    <input
-                      type="radio"
-                      name="paymentMethod"
-                      value="COD"
-                      checked={paymentMethod === 'COD'}
-                      onChange={() => setPaymentMethod('COD')}
-                      disabled={submitting}
-                    />
-                    <div className="payment-option-content">
-                      <div className="payment-option-title-wrap">
-                        <Truck size={18} strokeWidth={1.75} aria-hidden="true" />
-                        <span className="payment-option-title">{t.shop.cod}</span>
-                      </div>
-                      <p className="payment-option-desc">{t.shop.codDesc}</p>
-                    </div>
-                  </label>
-
-                  <label
-                    className={`payment-option-card ${paymentMethod === 'MOCK_GATEWAY' ? 'selected' : ''}`}
-                  >
-                    <input
-                      type="radio"
-                      name="paymentMethod"
-                      value="MOCK_GATEWAY"
-                      checked={paymentMethod === 'MOCK_GATEWAY'}
-                      onChange={() => setPaymentMethod('MOCK_GATEWAY')}
-                      disabled={submitting}
-                    />
-                    <div className="payment-option-content">
-                      <div className="payment-option-title-wrap">
-                        <CreditCard size={18} strokeWidth={1.75} aria-hidden="true" />
-                        <span className="payment-option-title">{t.shop.mockGateway}</span>
-                      </div>
-                      <p className="payment-option-desc">{t.shop.mockGatewayDesc}</p>
-                    </div>
-                  </label>
-                </div>
-              </section>
-            </div>
-
-            {/* Cột phải: Tóm tắt đơn hàng */}
-            <div className="checkout-summary-panel">
-              <div className="summary-card">
-                <h3 className="summary-card-title">Tóm tắt đơn hàng</h3>
-
-                <div className="summary-item-list">
-                  {cartItems.map((item) => (
-                    <div key={item.id} className="summary-item-row">
-                      <div className="summary-item-name-col">
-                        <span className="summary-item-name">{item.name}</span>
-                        <span className="summary-item-qty">× {item.quantity}</span>
-                      </div>
-                      <b className="summary-item-price">
-                        {formatPrice(item.price * item.quantity)}
-                      </b>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="summary-divider" />
-
-                <div className="summary-cost-rows">
-                  <div className="summary-cost-row">
-                    <span>Số lượng món:</span>
-                    <span>{totalCount} phần</span>
-                  </div>
-                  <div className="summary-cost-row">
-                    <span>Tạm tính:</span>
-                    <span>{formatPrice(totalAmount)}</span>
-                  </div>
-                  <div className="summary-cost-row">
-                    <span>Phí giao hàng:</span>
-                    <span className="free-shipping">Miễn phí</span>
-                  </div>
-                </div>
-
-                <div className="summary-divider" />
-
-                <div className="summary-total-row">
-                  <span className="summary-total-label">{t.shop.total} (ước tính):</span>
-                  <b className="summary-total-amount">{formatPrice(totalAmount)}</b>
-                </div>
-                <p className="summary-note">
-                  Số tiền chính thức sẽ do máy chủ hệ thống tính toán và xác nhận.
-                </p>
-
-                {serverError && (
-                  <div className="checkout-server-error" role="alert">
-                    <AlertCircle size={16} strokeWidth={2} aria-hidden="true" />
-                    <span>{serverError}</span>
-                  </div>
-                )}
-
-                <button
-                  type="submit"
-                  className="tb checkout-submit-btn"
-                  disabled={submitting || cartItems.length === 0}
+          <div className="checkout-grid">
+            {/* Left Column: Contact + Delivery Time + Payment */}
+            <div className="checkout-left-col">
+              {serverError && (
+                <div
+                  className="checkout-alert-error"
+                  role="alert"
                 >
-                  {submitting ? (
-                    <>
-                      <RefreshCw size={16} strokeWidth={2} className="spin-icon" aria-hidden="true" />
-                      <span>{t.shop.submitting}</span>
-                    </>
-                  ) : (
-                    <>
-                      <ShieldCheck size={18} strokeWidth={1.75} aria-hidden="true" />
-                      <span>{t.shop.placeOrder}</span>
-                    </>
-                  )}
-                </button>
-              </div>
+                  {serverError}
+                </div>
+              )}
+
+              {/* Card 1: Thông tin nhận hàng (with cascading API) */}
+              <ContactSection
+                formData={formData}
+                errors={errors}
+                onChange={handleFieldChange}
+                disabled={submitting}
+              />
+
+              {/* Card 2: Thời gian giao hàng (Giao ngay / Hẹn giờ) */}
+              <DeliveryTimeSection
+                selectedType={deliveryTime}
+                onChange={setDeliveryTime}
+                disabled={submitting}
+              />
+
+              {/* Card 3: Phương thức thanh toán (COD / VietQR) */}
+              <PaymentSection
+                selectedMethod={paymentMethod}
+                onChange={setPaymentMethod}
+                disabled={submitting}
+              />
             </div>
-          </form>
+
+            {/* Right Column: Tóm tắt đơn hàng */}
+            <div className="checkout-right-col">
+              <OrderSummary
+                items={summaryItems}
+                subtotal={subtotal}
+                shippingFee={shippingFee}
+                total={total}
+                totalCount={totalCount}
+                onUpdateQuantity={updateQuantity}
+                onRemoveItem={removeFromCart}
+                onPlaceOrder={handlePlaceOrder}
+                submitting={submitting}
+              />
+            </div>
+          </div>
         )}
-      </div>
+      </main>
+
+      {/* Floating Hotline button at bottom right (cách mép dưới 20px, nút #up nằm trên cách 12px) */}
+      <aside aria-label="Hỗ trợ khách hàng" className="checkout-hotline-floating">
+        <a
+          href={`tel:${HOTLINE_NUMBER.replace(/\s+/g, '')}`}
+          className="checkout-hotline-link"
+        >
+          <span className="hotline-pulse-dot" />
+          <Phone size={13} style={{ color: '#C2410C' }} aria-hidden="true" />
+          <span>Hotline {HOTLINE_NUMBER}</span>
+        </a>
+      </aside>
     </div>
   );
-};
+}
 
 export default CheckoutPage;

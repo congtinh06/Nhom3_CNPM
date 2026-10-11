@@ -143,19 +143,19 @@ Toàn bộ các yêu cầu từ Client đều đi qua **API Gateway** (`http://l
 
 | Phân hệ / Service | Phương thức | Endpoint | Mô tả chức năng |
 |---|---|---|---|
-| **Auth Service** | `POST` | `/api/v1/auth/register` | Đăng ký tài khoản du khách mới |
-| | `POST` | `/api/v1/auth/login` | Đăng nhập, nhận JWT Access Token & Refresh Cookie |
-| | `POST` | `/api/v1/auth/refresh` | Làm mới phiên đăng nhập bằng Refresh Token |
-| | `POST` | `/api/v1/auth/logout` | Đăng xuất và thu hồi Refresh Token |
-| | `GET` | `/api/v1/auth/me` | Lấy thông tin tài khoản đang đăng nhập |
-| **Content Service** | `GET` | `/api/v1/content/pois` | Danh sách các điểm tham quan di sản Sài Gòn |
-| | `GET` | `/api/v1/content/pois/{slug}` | Chi tiết điểm tham quan và bản dịch đa ngữ |
-| | `GET` | `/api/v1/content/products` | Danh sách món ăn ẩm thực và thức uống |
-| | `GET` | `/api/v1/content/products/{slug}` | Chi tiết món ăn kèm giá và mô tả |
-| **Location Service** | `GET` | `/api/v1/locations/nearby` | Tìm điểm du lịch gần nhất dựa theo GPS du khách |
-| | `GET` | `/api/v1/locations/scan/{code}` | Lấy thông tin thuyết minh khi quét mã QR tại điểm |
-| **TTS & Dịch thuật** | `POST` | `/api/v1/tts/synthesize` | Tạo âm thanh thuyết minh đa ngữ qua edge-tts |
-| **Analytics Service**| `POST` | `/api/v1/analytics/events` | Ghi nhận lượt nghe thuyết minh và quét mã QR |
+| **Auth Service** | `POST` | `/api/auth/register` | Đăng ký tài khoản du khách mới |
+| | `POST` | `/api/auth/login` | Đăng nhập, nhận JWT Access Token & Refresh Cookie |
+| | `POST` | `/api/auth/refresh` | Làm mới phiên đăng nhập bằng Refresh Token |
+| | `POST` | `/api/auth/logout` | Đăng xuất và thu hồi Refresh Token |
+| | `GET` | `/api/auth/me` | Lấy thông tin tài khoản đang đăng nhập |
+| **Content Service** | `GET` | `/api/content/pois` | Danh sách các điểm tham quan di sản Sài Gòn |
+| | `GET` | `/api/content/pois/{slug}` | Chi tiết điểm tham quan và bản dịch đa ngữ |
+| | `GET` | `/api/content/products` | Danh sách món ăn ẩm thực và thức uống |
+| | `GET` | `/api/content/products/{slug}` | Chi tiết món ăn kèm giá và mô tả |
+| **Location Service** | `GET` | `/api/location/nearby` | Tìm điểm du lịch gần nhất dựa theo GPS du khách |
+| | `GET` | `/api/location/scan/{code}` | Lấy thông tin thuyết minh khi quét mã QR tại điểm |
+| **TTS & Dịch thuật** | `POST` | `/api/tts/synthesize` | Tạo âm thanh thuyết minh đa ngữ qua edge-tts |
+| **Analytics Service**| `POST` | `/api/analytics/events` | Ghi nhận lượt nghe thuyết minh và quét mã QR |
 
 ---
 
@@ -204,6 +204,27 @@ npm run dev
 ```
 
 Truy cập giao diện tại: **http://localhost:5173**
+
+### 6.4. Tài khoản kiểm thử & Quản trị mặc định (Test & Admin Credentials)
+
+Hệ thống cung cấp sẵn các tài khoản kiểm thử đã được kích hoạt sẵn (`ACTIVE`), cho phép đăng nhập trực tiếp tại modal **Đăng nhập** (`/dang-nhap`) mà không cần trải qua bước xác thực email:
+
+| Vai trò | Tài khoản (Email) | Mật khẩu | Chức năng kiểm thử chính |
+|---|---|---|---|
+| **Người dùng / Du khách (USER)** | `user@saigonvoice.local` | `User@123456` | Trải nghiệm đặt món ẩm thực, xem lịch sử đơn hàng, nghe audio thuyết minh di sản |
+| **Quản trị viên (ADMIN)** | `admin@saigonvoice.local` | `Admin@123456` | Quản lý sản phẩm món ăn, duyệt trạng thái điểm tham quan POI |
+| **Khóa Quản trị (Admin Key)** | `saigonvoice_admin_secret_key_2026` | *(Dùng cho ô X-Admin-Key)* | Truy cập trang Thống kê & Quản trị hệ thống (`http://localhost:5173/quan-tri`) |
+
+> **Cấu hình tự động khởi tạo trong `.env`**:
+> Khi `auth-service` khởi động, hệ thống sẽ tự động tạo sẵn 2 tài khoản trên nếu chưa có trong CSDL:
+> ```env
+> SEED_ADMIN_EMAIL=admin@saigonvoice.local
+> SEED_ADMIN_PASSWORD=Admin@123456
+> SEED_TEST_USER_EMAIL=user@saigonvoice.local
+> SEED_TEST_USER_PASSWORD=User@123456
+> ADMIN_API_KEY=saigonvoice_admin_secret_key_2026
+> ```
+> *(Ngoài ra, người dùng vẫn có thể đăng ký tài khoản mới tự do tại `/dang-ky`. Trong môi trường dev không có SMTP thật, link/token xác thực email sẽ được ghi trực tiếp vào log của container `auth-service`)*.
 
 ---
 

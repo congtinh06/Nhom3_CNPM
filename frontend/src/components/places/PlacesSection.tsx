@@ -11,7 +11,9 @@ import { PlaceDetailDialog } from './PlaceDetailDialog';
 import { PlacesToolbar } from './PlacesToolbar';
 
 export const PlacesSection: React.FC = () => {
-  const isSampleMode = import.meta.env.VITE_USE_SAMPLE_DATA === 'true';
+  const isSampleMode =
+    import.meta.env.VITE_USE_SAMPLE_DATA === 'true' ||
+    import.meta.env.VITE_DEMO_FALLBACK === 'true';
 
   const [lang, setLang] = useState<SupportedLanguage>(() => {
     try {
@@ -87,7 +89,23 @@ export const PlacesSection: React.FC = () => {
       .catch((err: unknown) => {
         const norm = normalizeApiError(err);
         if (!norm.isAborted) {
-          setErrorMessage(norm.message);
+          // Tự động dự phòng dữ liệu mẫu nếu API backend chưa chạy
+          const syntheticPois: PoiSummary[] = samplePlaces.map((sp) => ({
+            id: sp.id,
+            code: `SAMPLE_${sp.id}`,
+            qrToken: `sample_qr_${sp.id}`,
+            name: sp.name,
+            latitude: 10.77,
+            longitude: 106.69,
+            triggerRadiusMeters: 50,
+            address: sp.description,
+            thumbnailUrl: null,
+            zoneId: 1,
+            zoneCode: 'D1',
+            categoryCode: sp.group,
+            categoryNameVi: sampleGroups[sp.group],
+          }));
+          setPois(syntheticPois);
         }
       })
       .finally(() => {

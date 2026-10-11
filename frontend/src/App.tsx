@@ -1,5 +1,5 @@
 import React, { Suspense, lazy } from 'react';
-import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { ToastProvider } from './context/ToastContext';
 import { CartProvider } from './context/CartContext';
 import { AuthProvider } from './context/AuthContext';
@@ -18,6 +18,9 @@ import { FoodBeveragePage } from './pages/FoodBeveragePage';
 import { ProductDetailPage } from './pages/ProductDetailPage';
 import { CheckoutPage } from './pages/CheckoutPage';
 import { PaymentResultPage } from './pages/PaymentResultPage';
+import { VietQrPage } from './pages/VietQrPage';
+import { GuidePage } from './pages/GuidePage';
+import { ContactPage } from './pages/ContactPage';
 import { AuthModal } from './components/auth/AuthModal';
 
 import { useSmoothScroll } from './hooks/useSmoothScroll';
@@ -49,20 +52,38 @@ const AppContent: React.FC = () => {
         <Suspense fallback={<div className="s sp" style={{ minHeight: '60vh', marginTop: 100 }}><p>Đang tải dữ liệu...</p></div>}>
           <Routes location={backgroundLocation || location}>
             <Route path="/" element={<HomePage />} />
-            <Route path="/am-thuc-thuc-uong" element={<FoodBeveragePage />} />
+            {/* Legacy redirects */}
+            <Route path="/van-hoa" element={<Navigate to="/diem-du-lich" replace />} />
+            <Route path="/culture" element={<Navigate to="/diem-du-lich" replace />} />
+            <Route path="/kham-pha" element={<Navigate to="/diem-du-lich" replace />} />
+            <Route path="/explore" element={<Navigate to="/diem-du-lich" replace />} />
+
+            {/* Core Navigation Routes */}
+            <Route path="/diem-du-lich" element={<NearbyPage />} />
+            <Route path="/thuyet-minh" element={<NearbyPage />} />
+            <Route path="/gan-toi" element={<NearbyPage />} />
             <Route path="/am-thuc" element={<FoodBeveragePage />} />
             <Route path="/thuc-uong" element={<FoodBeveragePage />} />
+            <Route path="/am-thuc-thuc-uong" element={<FoodBeveragePage />} />
+            <Route path="/huong-dan" element={<GuidePage />} />
+            <Route path="/lien-he" element={<ContactPage />} />
+
+            {/* Product detail routes */}
             <Route path="/am-thuc-thuc-uong/:slug" element={<ProductDetailPage />} />
             <Route path="/am-thuc/:slug" element={<ProductDetailPage />} />
             <Route path="/thuc-uong/:slug" element={<ProductDetailPage />} />
+
+            {/* Checkout & Orders */}
             <Route path="/thanh-toan" element={<CheckoutPage />} />
+            <Route path="/thanh-toan/qr/:orderCode" element={<VietQrPage />} />
             <Route path="/thanh-toan/ket-qua" element={<PaymentResultPage />} />
             <Route path="/don-hang" element={<OrdersPage />} />
+
+            {/* QR Scan */}
             <Route path="/qr/:token" element={<ScanPage />} />
             <Route path="/quet-ma" element={<ScanPage />} />
-            <Route path="/thuyet-minh" element={<ScanPage />} />
-            <Route path="/diem-du-lich" element={<NearbyPage />} />
-            <Route path="/gan-toi" element={<NearbyPage />} />
+
+            {/* User & Admin */}
             <Route path="/quan-tri" element={<AdminPage />} />
             <Route path="/dat-lai-mat-khau" element={<ResetPasswordPage />} />
             <Route path="/xac-thuc-email" element={<VerifyEmailPage />} />

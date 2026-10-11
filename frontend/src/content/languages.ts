@@ -12,7 +12,6 @@ export const SUPPORTED_LANGUAGES: LanguageOption[] = [
   { code: 'en', label: 'English', short: 'EN' },
   { code: 'ja', label: '日本語', short: 'JA' },
   { code: 'ko', label: '한국어', short: 'KO' },
-  { code: 'zh', label: '中文', short: 'ZH' },
 ];
 
 export interface ExploreItemTranslation {
@@ -82,7 +81,9 @@ export interface ShopTranslation {
 
 export interface NavTranslation {
   home: string;
+  food: string;
   attractions: string;
+  guide: string;
   explore: string;
   narration: string;
   about: string;
@@ -140,7 +141,9 @@ export interface NavTranslation {
 export const NAV_TRANSLATIONS: Record<SupportedLanguage, NavTranslation> = {
   vi: {
     home: 'Trang chủ',
+    food: 'Ẩm thực',
     attractions: 'Điểm du lịch',
+    guide: 'Hướng dẫn',
     explore: 'Khám phá',
     narration: 'Thuyết minh',
     about: 'Giới thiệu',
@@ -266,7 +269,9 @@ export const NAV_TRANSLATIONS: Record<SupportedLanguage, NavTranslation> = {
   },
   en: {
     home: 'Home',
+    food: 'Cuisine',
     attractions: 'Attractions',
+    guide: 'Guide',
     explore: 'Explore',
     narration: 'Audio Tour',
     about: 'About',
@@ -392,7 +397,9 @@ export const NAV_TRANSLATIONS: Record<SupportedLanguage, NavTranslation> = {
   },
   ja: {
     home: 'ホーム',
+    food: 'グルメ',
     attractions: '観光名所',
+    guide: '案内',
     explore: '探索',
     narration: '音声ガイド',
     about: '紹介',
@@ -518,7 +525,9 @@ export const NAV_TRANSLATIONS: Record<SupportedLanguage, NavTranslation> = {
   },
   ko: {
     home: '홈',
+    food: '음식',
     attractions: '관광 명소',
+    guide: '이용 안내',
     explore: '둘러보기',
     narration: '오디오 가이드',
     about: '소개',
@@ -642,132 +651,6 @@ export const NAV_TRANSLATIONS: Record<SupportedLanguage, NavTranslation> = {
       viewOrder: '주문 상세 보기',
     },
   },
-  zh: {
-    home: '首页',
-    attractions: '旅游景点',
-    explore: '探索',
-    narration: '语音导览',
-    about: '关于我们',
-    contact: '联系我们',
-    exploreItems: {
-      culture: {
-        title: '文化',
-        desc: '传统生活方式与表演艺术',
-      },
-      food: {
-        title: '美食',
-        desc: '地道西贡街头风味',
-      },
-      drinks: {
-        title: '饮品',
-        desc: '传统手冲咖啡与清凉特色茶饮',
-      },
-      places: {
-        title: '景点',
-        desc: '历史名胜与特色建筑',
-      },
-    },
-    auth: {
-      login: '登录',
-      register: '注册',
-      myOrders: '我的订单',
-      account: '账户',
-      logout: '退出登录',
-      guest: '账户',
-      loginTitle: '登录',
-      registerTitle: '注册账户',
-      forgotPasswordTitle: '找回密码',
-      emailLabel: '电子邮箱',
-      passwordLabel: '密码',
-      confirmPasswordLabel: '确认密码',
-      fullNameLabel: '姓名',
-      rememberMe: '记住登录 30 天',
-      forgotPasswordLink: '忘记密码？',
-      loginSubmit: '登录',
-      loginSubmitting: '正在登录…',
-      registerSubmit: '注册',
-      registerSubmitting: '正在创建账户…',
-      forgotSubmit: '发送重置链接',
-      forgotSubmitting: '正在发送…',
-      noAccount: '还没有账号？',
-      createAccount: '立即注册',
-      hasAccount: '已有账号？',
-      backToLogin: '返回登录',
-      rememberPassword: '记起密码了？',
-      close: '关闭',
-      loginSuccess: '登录成功',
-      checkEmailTitle: '请检查您的邮箱',
-      checkEmailNotice: '请查收验证邮件以激活您的账户。',
-      resendVerification: '重新发送邮件',
-      resending: '正在发送…',
-      resent: '已重新发送',
-      showPassword: '显示密码',
-      hidePassword: '隐藏密码',
-      forgotNote: '输入注册邮箱，我们将向您发送重置密码的链接。',
-    },
-    cart: '购物车',
-    openMenu: '打开菜单',
-    closeMenu: '关闭菜单',
-    shop: {
-      foodTitle: '西贡美食',
-      foodSubtitle: '街头美味与经典西贡特色佳肴',
-      drinksTitle: '西贡特色饮品',
-      drinksSubtitle: '传统手冲咖啡与特色消暑茶',
-      searchPlaceholder: '搜索菜品名称...',
-      searchBtn: '搜索',
-      all: '全部',
-      addToCart: '加入购物车',
-      addedToCart: '已加入购物车',
-      outOfStock: '暂时缺货',
-      loading: '加载中...',
-      loadMore: '加载更多',
-      showingCount: '当前显示',
-      noProducts: '未找到相关菜品。',
-      retry: '重试',
-      errorLoad: '加载列表失败，请重试。',
-      detail: '详情',
-      quantity: '数量',
-      relatedItems: '相似菜品',
-      backToList: '返回列表',
-      cartTitle: '购物车',
-      cartEmpty: '您的购物车是空的。',
-      total: '总计',
-      checkout: '去结算',
-      clearCart: '清空购物车',
-      continueShopping: '继续挑选',
-      checkoutTitle: '订单结算',
-      deliveryInfo: '收货信息',
-      fullName: '姓名',
-      phone: '联系电话',
-      address: '收货地址',
-      note: '订单备注（可选）',
-      notePlaceholder: '例如：少糖、工作时间送达...',
-      paymentMethod: '支付方式',
-      cod: '货到付款 (COD)',
-      codDesc: '收货时直接以现金支付',
-      mockGateway: '模拟电子支付网关',
-      mockGatewayDesc: '安全测试转账/刷卡支付流程',
-      placeOrder: '确认下单',
-      submitting: '正在处理订单...',
-      orderHistory: '我的历史订单',
-      orderCode: '订单号',
-      orderDate: '下单时间',
-      orderStatus: '状态',
-      cancelOrder: '取消订单',
-      cancelSuccess: '订单已成功取消',
-      cancelConfirm: '确定要取消此订单吗？',
-      reorder: '再次购买',
-      statusPending: '待支付',
-      statusPaid: '已支付',
-      statusProcessing: '制作中',
-      statusCompleted: '已完成',
-      statusCancelled: '已取消',
-      paymentResultTitle: '支付结果',
-      paymentSuccess: '支付成功',
-      paymentFailed: '支付失败',
-      viewOrder: '查看订单详情',
-    },
-  },
 };
 
 const LANG_STORAGE_KEY = 'sv:lang';
@@ -776,7 +659,15 @@ const LANG_CHANGE_EVENT = 'sv:lang-change';
 export function getStoredLanguage(): SupportedLanguage {
   try {
     const saved = localStorage.getItem(LANG_STORAGE_KEY);
-    if (saved && (['vi', 'en', 'ja', 'ko', 'zh'] as string[]).includes(saved)) {
+    if (saved === 'zh') {
+      try {
+        localStorage.setItem(LANG_STORAGE_KEY, 'vi');
+      } catch {
+        // Ignore storage write error
+      }
+      return 'vi';
+    }
+    if (saved && (['vi', 'en', 'ja', 'ko'] as string[]).includes(saved)) {
       return saved as SupportedLanguage;
     }
   } catch {
@@ -807,7 +698,10 @@ export function useNavbarLanguage() {
 
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === LANG_STORAGE_KEY && e.newValue) {
-        if ((['vi', 'en', 'ja', 'ko', 'zh'] as string[]).includes(e.newValue)) {
+        if (e.newValue === 'zh') {
+          setStoredLanguage('vi');
+          setLangState('vi');
+        } else if ((['vi', 'en', 'ja', 'ko'] as string[]).includes(e.newValue)) {
           setLangState(e.newValue as SupportedLanguage);
         }
       }

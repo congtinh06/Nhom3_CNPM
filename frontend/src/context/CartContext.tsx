@@ -141,6 +141,15 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
             imagePath: meta.imagePath,
           };
         }
+        const drink = drinksMap.get(key);
+        if (drink) {
+          return {
+            id: key,
+            name: drink.name,
+            price: drink.price,
+            quantity: qty,
+          };
+        }
         const defaultProd = defaultProducts.find((p) => p.id === key);
         if (defaultProd) {
           return {
@@ -151,15 +160,6 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
             slug: defaultProd.slug,
             category: defaultProd.category,
             imagePath: defaultProd.imagePath,
-          };
-        }
-        const drink = drinksMap.get(key);
-        if (drink) {
-          return {
-            id: key,
-            name: drink.name,
-            price: drink.price,
-            quantity: qty,
           };
         }
         return null;

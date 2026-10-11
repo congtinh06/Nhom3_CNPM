@@ -1,14 +1,10 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import {
-  Clock,
-  CheckCircle,
-  XCircle,
   RefreshCw,
   ShoppingBag,
   ArrowLeft,
   CreditCard,
-  Truck,
   RotateCcw,
   Ban,
 } from 'lucide-react';
@@ -17,7 +13,9 @@ import { useCart } from '../context/CartContext';
 import { useToast } from '../context/ToastContext';
 import { useNavbarLanguage } from '../content/languages';
 import { formatPrice } from '../utils/formatters';
-import { BackendOrder, BackendOrderStatus } from '../types';
+import { BackendOrder } from '../types';
+import { StatusBadge } from '../components/orders/StatusBadge';
+import '../styles/orders.css';
 
 export const OrdersPage: React.FC = () => {
   const navigate = useNavigate();
@@ -30,6 +28,9 @@ export const OrdersPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [cancellingCode, setCancellingCode] = useState<string | null>(null);
   const [confirmCancelModal, setConfirmCancelModal] = useState<string | null>(null);
+
+  const listContainerRef = useRef<HTMLDivElement | null>(null);
+  const detailBodyRef = useRef<HTMLDivElement | null>(null);
 
   const loadOrderHistory = useCallback(async () => {
     setLoading(true);
@@ -80,6 +81,33 @@ export const OrdersPage: React.FC = () => {
     loadOrderHistory();
   }, [loadOrderHistory]);
 
+  // Reset detail body scroll position to top when switching orders
+  useEffect(() => {
+    if (detailBodyRef.current) {
+      detailBodyRef.current.scrollTop = 0;
+    }
+  }, [selectedCode]);
+
+  // Scroll active order summary item into view inside list container if outside visible area
+  useEffect(() => {
+    if (!selectedCode || !listContainerRef.current) return;
+    const container = listContainerRef.current;
+    const activeItem = container.querySelector<HTMLElement>('.order-summary-item.active');
+    if (!activeItem) return;
+
+    const containerRect = container.getBoundingClientRect();
+    const itemRect = activeItem.getBoundingClientRect();
+
+    const deltaTop = itemRect.top - containerRect.top;
+    const deltaBottom = itemRect.bottom - containerRect.bottom;
+
+    if (deltaTop < 0) {
+      container.scrollTop += deltaTop;
+    } else if (deltaBottom > 0) {
+      container.scrollTop += deltaBottom;
+    }
+  }, [selectedCode]);
+
   const handleCancelOrder = async (orderCode: string) => {
     setCancellingCode(orderCode);
     setConfirmCancelModal(null);
@@ -110,92 +138,54 @@ export const OrdersPage: React.FC = () => {
     openCart();
   };
 
-  const getStatusBadge = (status: BackendOrderStatus) => {
-    switch (status) {
-      case 'PENDING_PAYMENT':
-        return {
-          label: t.shop.statusPending,
-          className: 'badge-pending',
-          icon: <Clock size={13} strokeWidth={2} aria-hidden="true" />,
-        };
-      case 'PAID':
-        return {
-          label: t.shop.statusPaid,
-          className: 'badge-paid',
-          icon: <CheckCircle size={13} strokeWidth={2} aria-hidden="true" />,
-        };
-      case 'PROCESSING':
-        return {
-          label: t.shop.statusProcessing,
-          className: 'badge-processing',
-          icon: <Truck size={13} strokeWidth={2} aria-hidden="true" />,
-        };
-      case 'COMPLETED':
-        return {
-          label: t.shop.statusCompleted,
-          className: 'badge-completed',
-          icon: <CheckCircle size={13} strokeWidth={2} aria-hidden="true" />,
-        };
-      case 'CANCELLED':
-        return {
-          label: t.shop.statusCancelled,
-          className: 'badge-cancelled',
-          icon: <XCircle size={13} strokeWidth={2} aria-hidden="true" />,
-        };
-      default:
-        return {
-          label: status,
-          className: 'badge-default',
-          icon: null,
-        };
-    }
-  };
-
   const selectedOrder = orders.find((o) => o.orderCode === selectedCode) || orders[0] || null;
 
   return (
     <div className="orders-page-container">
-      {/* Banner */}
-      <section className="orders-banner">
-        <div className="orders-banner-content">
+      <main className="orders-main-section">
+        {/* Header like checkout: Back link + H1 Playfair Display */}
+        <div className="orders-header-row">
           <Link to="/" className="orders-back-link">
-            <ArrowLeft size={16} strokeWidth={1.75} aria-hidden="true" />
-            <span>{t.home}</span>
+            <ArrowLeft size={15} strokeWidth={2} aria-hidden="true" />
+            <span>Trang chủ</span>
           </Link>
           <h1 className="orders-page-title">{t.shop.orderHistory}</h1>
         </div>
-      </section>
 
-      {/* Main content */}
-      <section className="orders-main-section s">
         {loading ? (
           <div className="orders-loading-box">
             <RefreshCw size={28} strokeWidth={1.75} className="spin-icon" aria-hidden="true" />
             <p>Đang tải danh sách đơn hàng...</p>
           </div>
         ) : orders.length === 0 ? (
-          <div className="product-state-card empty-card">
-            <ShoppingBag size={44} strokeWidth={1.5} className="state-icon" aria-hidden="true" />
+          <div className="orders-empty-card">
+            <div className="orders-empty-icon" aria-hidden="true">
+              <ShoppingBag size={28} strokeWidth={1.75} />
+            </div>
             <h2>Bạn chưa có đơn hàng nào</h2>
             <p>Hãy khám phá các món ẩm thực và thức uống đặc sắc của Sài Gòn để đặt đơn hàng đầu tiên.</p>
-            <div style={{ display: 'flex', gap: 12, marginTop: 16 }}>
-              <button
-                type="button"
-                className="tb"
-                onClick={() => navigate('/am-thuc-thuc-uong')}
-              >
-                Ẩm thực & Thức uống
-              </button>
-            </div>
+            <button
+              type="button"
+              className="orders-empty-btn"
+              onClick={() => navigate('/am-thuc-thuc-uong')}
+            >
+              Ẩm thực & Thức uống
+            </button>
           </div>
         ) : (
           <div className="orders-layout-grid">
-            {/* Cột trái: Danh sách đơn hàng */}
+            {/* Cột trái: Danh sách đơn hàng (~360px) */}
             <div className="orders-list-panel">
               <h2 className="orders-panel-heading">Danh sách đơn ({orders.length})</h2>
-              <div className="orders-list">
+              <div
+                className="orders-list"
+                ref={listContainerRef}
+                role="region"
+                aria-label={`Danh sách đơn (${orders.length})`}
+                tabIndex={0}
+                data-lenis-prevent
+              >
                 {orders.map((o) => {
-                  const badge = getStatusBadge(o.status);
                   const isSelected = selectedOrder?.orderCode === o.orderCode;
 
                   return (
@@ -214,10 +204,7 @@ export const OrdersPage: React.FC = () => {
                     >
                       <div className="order-summary-top">
                         <span className="order-summary-code">{o.orderCode}</span>
-                        <span className={`order-status-badge ${badge.className}`}>
-                          {badge.icon}
-                          <span>{badge.label}</span>
-                        </span>
+                        <StatusBadge status={o.status} />
                       </div>
 
                       <div className="order-summary-meta">
@@ -246,129 +233,160 @@ export const OrdersPage: React.FC = () => {
             <div className="order-detail-panel">
               {selectedOrder ? (
                 <div className="order-detail-card">
-                  <div className="order-detail-header">
+                  <header className="order-detail-header">
                     <div className="order-detail-title-wrap">
                       <span className="order-detail-kicker">Chi tiết đơn hàng</span>
                       <h2 className="order-detail-code">{selectedOrder.orderCode}</h2>
                     </div>
-                    {(() => {
-                      const badge = getStatusBadge(selectedOrder.status);
-                      return (
-                        <span className={`order-status-badge large ${badge.className}`}>
-                          {badge.icon}
-                          <span>{badge.label}</span>
+                    <StatusBadge status={selectedOrder.status} size="large" />
+                  </header>
+
+                  {/* Scrollable Body */}
+                  <div
+                    className="order-detail-body"
+                    ref={detailBodyRef}
+                    role="region"
+                    aria-label="Chi tiết đơn hàng"
+                    tabIndex={0}
+                    data-lenis-prevent
+                  >
+                    {/* Khối thông tin chi tiết: Tinted grid */}
+                    <div className="order-meta-info-grid">
+                      <div className="order-meta-row">
+                        <span className="order-meta-label">{t.shop.orderDate}:</span>
+                        <span className="order-meta-value">
+                          {new Date(selectedOrder.createdAt).toLocaleString('vi-VN')}
                         </span>
-                      );
-                    })()}
-                  </div>
+                      </div>
 
-                  <div className="order-meta-info-grid">
-                    <div className="meta-box">
-                      <span className="meta-label">{t.shop.orderDate}:</span>
-                      <span className="meta-value">
-                        {new Date(selectedOrder.createdAt).toLocaleString('vi-VN')}
-                      </span>
-                    </div>
+                      <div className="order-meta-row">
+                        <span className="order-meta-label">Phương thức:</span>
+                        <span className="order-meta-value">
+                          {selectedOrder.paymentMethod === 'VIETQR'
+                            ? 'Chuyển khoản VietQR'
+                            : selectedOrder.paymentMethod === 'MOCK_GATEWAY'
+                            ? 'Cổng thanh toán điện tử'
+                            : 'Thanh toán tiền mặt khi nhận hàng (COD)'}
+                        </span>
+                      </div>
 
-                    <div className="meta-box">
-                      <span className="meta-label">Phương thức:</span>
-                      <span className="meta-value">
-                        {selectedOrder.paymentMethod === 'MOCK_GATEWAY'
-                          ? 'Cổng thanh toán điện tử'
-                          : 'Thanh toán tiền mặt khi nhận hàng (COD)'}
-                      </span>
-                    </div>
+                      <div className="order-meta-row">
+                        <span className="order-meta-label">Người nhận:</span>
+                        <span className="order-meta-value">
+                          <b>{selectedOrder.receiverName}</b>
+                        </span>
+                      </div>
 
-                    <div className="meta-box full-width">
-                      <span className="meta-label">{t.shop.deliveryInfo}:</span>
-                      <span className="meta-value">
-                        <b>{selectedOrder.receiverName}</b> · {selectedOrder.phone}
-                        <br />
-                        {selectedOrder.address}
-                        {selectedOrder.note && (
-                          <span className="order-note-text">
-                            <br />
-                            Ghi chú: {selectedOrder.note}
-                          </span>
-                        )}
-                      </span>
-                    </div>
-                  </div>
+                      <div className="order-meta-row">
+                        <span className="order-meta-label">Số điện thoại:</span>
+                        <span className="order-meta-value">{selectedOrder.phone}</span>
+                      </div>
 
-                  {/* Danh sách món */}
-                  <div className="order-items-section">
-                    <h3 className="order-items-heading">Món đã đặt</h3>
-                    <div className="order-items-table">
-                      {selectedOrder.items.map((item, idx) => (
-                        <div key={idx} className="order-item-table-row">
-                          <div className="item-name-info">
-                            <span className="item-name">{item.productName}</span>
-                            <span className="item-unit-price">
-                              {formatPrice(item.unitPrice)}
+                      <div className="order-meta-row">
+                        <span className="order-meta-label">{t.shop.deliveryInfo}:</span>
+                        <span className="order-meta-value">
+                          {selectedOrder.address}
+                          {selectedOrder.note && (
+                            <span className="order-note-text">
+                              Ghi chú: {selectedOrder.note}
                             </span>
-                          </div>
-                          <span className="item-qty">× {item.quantity}</span>
-                          <b className="item-subtotal">
-                            {formatPrice(item.unitPrice * item.quantity)}
-                          </b>
-                        </div>
-                      ))}
+                          )}
+                        </span>
+                      </div>
                     </div>
 
+                    {/* Danh sách món */}
+                    <div className="order-items-section">
+                      <h3 className="order-items-heading">Món đã đặt</h3>
+                      <div className="order-items-table">
+                        {selectedOrder.items.map((item, idx) => (
+                          <div key={idx} className="order-item-table-row">
+                            <div className="item-name-info">
+                              <span className="item-name">{item.productName}</span>
+                              <span className="item-unit-price">
+                                {formatPrice(item.unitPrice)}
+                              </span>
+                            </div>
+                            <span className="item-qty">× {item.quantity}</span>
+                            <b className="item-subtotal">
+                              {formatPrice(item.unitPrice * item.quantity)}
+                            </b>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Pinned Footer */}
+                  <footer className="order-detail-footer">
                     <div className="order-detail-total-bar">
                       <span className="total-label">{t.shop.total}:</span>
                       <b className="total-amount">{formatPrice(selectedOrder.totalAmount)}</b>
                     </div>
-                  </div>
 
-                  {/* Nút hành động */}
-                  <div className="order-actions-bar">
-                    <button
-                      type="button"
-                      className="tb order-reorder-btn"
-                      onClick={() => handleReorder(selectedOrder)}
-                    >
-                      <RotateCcw size={15} strokeWidth={2} aria-hidden="true" />
-                      <span>{t.shop.reorder}</span>
-                    </button>
-
-                    {/* Nút thanh toán lại khi đơn MOCK_GATEWAY chưa thanh toán */}
-                    {selectedOrder.status === 'PENDING_PAYMENT' &&
-                      selectedOrder.paymentMethod === 'MOCK_GATEWAY' && (
-                        <button
-                          type="button"
-                          className="tb order-pay-now-btn"
-                          onClick={() =>
-                            navigate(
-                              `/thanh-toan/ket-qua?orderCode=${encodeURIComponent(selectedOrder.orderCode)}&method=MOCK_GATEWAY`
-                            )
-                          }
-                        >
-                          <CreditCard size={15} strokeWidth={2} aria-hidden="true" />
-                          <span>Thanh toán ngay</span>
-                        </button>
-                      )}
-
-                    {/* Nút hủy đơn: Cho phép hủy khi PENDING_PAYMENT hoặc PROCESSING */}
-                    {(selectedOrder.status === 'PENDING_PAYMENT' ||
-                      selectedOrder.status === 'PROCESSING') && (
+                    {/* Nút hành động */}
+                    <div className="order-actions-bar">
                       <button
                         type="button"
-                        className="tb order-cancel-btn"
-                        disabled={cancellingCode === selectedOrder.orderCode}
-                        onClick={() => setConfirmCancelModal(selectedOrder.orderCode)}
+                        className="order-reorder-btn"
+                        onClick={() => handleReorder(selectedOrder)}
                       >
-                        <Ban size={15} strokeWidth={2} aria-hidden="true" />
-                        <span>{t.shop.cancelOrder}</span>
+                        <RotateCcw size={15} strokeWidth={2} aria-hidden="true" />
+                        <span>{t.shop.reorder}</span>
                       </button>
-                    )}
-                  </div>
+
+                      {/* Nút thanh toán lại khi đơn PENDING_PAYMENT */}
+                      {selectedOrder.status === 'PENDING_PAYMENT' && (
+                        selectedOrder.paymentMethod === 'VIETQR' ? (
+                          <button
+                            type="button"
+                            className="order-pay-now-btn"
+                            onClick={() =>
+                              navigate(
+                                `/thanh-toan/qr/${encodeURIComponent(selectedOrder.orderCode)}`
+                              )
+                            }
+                          >
+                            <CreditCard size={15} strokeWidth={2} aria-hidden="true" />
+                            <span>Mã QR thanh toán</span>
+                          </button>
+                        ) : selectedOrder.paymentMethod === 'MOCK_GATEWAY' ? (
+                          <button
+                            type="button"
+                            className="order-pay-now-btn"
+                            onClick={() =>
+                              navigate(
+                                `/thanh-toan/ket-qua?orderCode=${encodeURIComponent(selectedOrder.orderCode)}&method=MOCK_GATEWAY`
+                              )
+                            }
+                          >
+                            <CreditCard size={15} strokeWidth={2} aria-hidden="true" />
+                            <span>Thanh toán ngay</span>
+                          </button>
+                        ) : null
+                      )}
+
+                      {/* Nút hủy đơn: Cho phép hủy khi PENDING_PAYMENT hoặc PROCESSING */}
+                      {(selectedOrder.status === 'PENDING_PAYMENT' ||
+                        selectedOrder.status === 'PROCESSING') && (
+                        <button
+                          type="button"
+                          className="order-cancel-btn"
+                          disabled={cancellingCode === selectedOrder.orderCode}
+                          onClick={() => setConfirmCancelModal(selectedOrder.orderCode)}
+                        >
+                          <Ban size={15} strokeWidth={2} aria-hidden="true" />
+                          <span>{t.shop.cancelOrder}</span>
+                        </button>
+                      )}
+                    </div>
+                  </footer>
                 </div>
               ) : null}
             </div>
           </div>
         )}
-      </section>
+      </main>
 
       {/* Modal xác nhận hủy đơn */}
       {confirmCancelModal && (
@@ -387,14 +405,14 @@ export const OrdersPage: React.FC = () => {
             <div className="cancel-dialog-buttons">
               <button
                 type="button"
-                className="tb cancel-btn-confirm"
+                className="cancel-btn-confirm"
                 onClick={() => handleCancelOrder(confirmCancelModal)}
               >
                 Đồng ý hủy
               </button>
               <button
                 type="button"
-                className="tb cancel-btn-dismiss"
+                className="cancel-btn-dismiss"
                 onClick={() => setConfirmCancelModal(null)}
               >
                 Giữ đơn hàng

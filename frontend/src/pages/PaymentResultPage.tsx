@@ -11,6 +11,8 @@ import { getOrderByCode, confirmMockPayment } from '../services/orderService';
 import { useNavbarLanguage } from '../content/languages';
 import { formatPrice } from '../utils/formatters';
 import { BackendOrder } from '../types';
+import { Stepper } from '../components/checkout/Stepper';
+import '../styles/paymentResult.css';
 
 export const PaymentResultPage: React.FC = () => {
   const [searchParams] = useSearchParams();
@@ -71,10 +73,12 @@ export const PaymentResultPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="payment-result-page s">
-        <div className="result-loading-box">
-          <RefreshCw size={28} strokeWidth={1.75} className="spin-icon" aria-hidden="true" />
-          <p>Đang kiểm tra kết quả đơn hàng...</p>
+      <div className="payment-result-page">
+        <div className="payment-result-container">
+          <div className="result-loading-box">
+            <RefreshCw size={28} strokeWidth={1.75} className="spin-icon" aria-hidden="true" />
+            <p>Đang kiểm tra kết quả đơn hàng...</p>
+          </div>
         </div>
       </div>
     );
@@ -84,13 +88,20 @@ export const PaymentResultPage: React.FC = () => {
   const isMockAwaiting = method === 'MOCK_GATEWAY' && simulationResult === null;
 
   return (
-    <div className="payment-result-page s">
+    <div className="payment-result-page">
       <div className="payment-result-container">
+        {/* Checkout Stepper at top, all steps completed */}
+        <div className="payment-result-stepper-wrap">
+          <Stepper currentStep={3} allCompleted={simulationResult === 'SUCCESS' || method === 'COD'} />
+        </div>
+
         {isMockAwaiting ? (
           /* Giao diện mô phỏng cổng thanh toán */
           <div className="mock-gateway-card">
             <div className="mock-gateway-header">
-              <CreditCard size={28} strokeWidth={1.75} className="gateway-icon" aria-hidden="true" />
+              <div className="result-icon-wrap gateway" aria-hidden="true">
+                <CreditCard size={28} strokeWidth={1.75} />
+              </div>
               <h2>Cổng thanh toán giả lập</h2>
               <p className="gateway-subtitle">
                 Môi trường thử nghiệm thanh toán đơn hàng SaigonVoice
@@ -101,7 +112,7 @@ export const PaymentResultPage: React.FC = () => {
               <div className="gateway-order-summary">
                 <div className="summary-row">
                   <span>Mã đơn hàng:</span>
-                  <b>{orderCode || 'Chưa xác định'}</b>
+                  <b className="order-code-badge">{orderCode || 'Chưa xác định'}</b>
                 </div>
                 {order && (
                   <>
@@ -126,7 +137,7 @@ export const PaymentResultPage: React.FC = () => {
               <div className="mock-action-buttons">
                 <button
                   type="button"
-                  className="tb mock-btn mock-success-btn"
+                  className="result-primary-btn mock-success-btn"
                   disabled={processingAction}
                   onClick={() => handleSimulatePayment('SUCCESS')}
                 >
@@ -145,7 +156,7 @@ export const PaymentResultPage: React.FC = () => {
 
                 <button
                   type="button"
-                  className="tb mock-btn mock-failed-btn"
+                  className="result-secondary-btn mock-failed-btn"
                   disabled={processingAction}
                   onClick={() => handleSimulatePayment('FAILED')}
                 >
@@ -158,7 +169,9 @@ export const PaymentResultPage: React.FC = () => {
         ) : simulationResult === 'SUCCESS' || method === 'COD' ? (
           /* Kết quả thành công */
           <div className="result-card result-success">
-            <CheckCircle size={52} strokeWidth={1.5} className="result-icon-success" aria-hidden="true" />
+            <div className="result-icon-wrap success" aria-hidden="true">
+              <CheckCircle size={32} strokeWidth={2.2} />
+            </div>
             <h1 className="result-title">
               {method === 'COD' ? 'Đặt hàng thành công!' : t.shop.paymentSuccess}
             </h1>
@@ -177,13 +190,15 @@ export const PaymentResultPage: React.FC = () => {
                 <>
                   <div className="info-row">
                     <span>Tổng số tiền:</span>
-                    <b>{formatPrice(order.totalAmount)}</b>
+                    <b className="result-total-amount">{formatPrice(order.totalAmount)}</b>
                   </div>
                   <div className="info-row">
                     <span>Phương thức:</span>
                     <span>
                       {order.paymentMethod === 'COD'
                         ? 'Thanh toán tiền mặt khi nhận hàng'
+                        : order.paymentMethod === 'VIETQR'
+                        ? 'Chuyển khoản VietQR'
                         : 'Cổng thanh toán điện tử'}
                     </span>
                   </div>
@@ -198,7 +213,7 @@ export const PaymentResultPage: React.FC = () => {
             <div className="result-actions-row">
               <button
                 type="button"
-                className="tb result-primary-btn"
+                className="result-primary-btn"
                 onClick={() => navigate('/don-hang')}
               >
                 <span>{t.shop.orderHistory}</span>
@@ -207,7 +222,7 @@ export const PaymentResultPage: React.FC = () => {
 
               <button
                 type="button"
-                className="tb result-secondary-btn"
+                className="result-secondary-btn"
                 onClick={() => navigate('/')}
               >
                 {t.home}
@@ -217,7 +232,9 @@ export const PaymentResultPage: React.FC = () => {
         ) : (
           /* Kết quả thất bại */
           <div className="result-card result-failed">
-            <XCircle size={52} strokeWidth={1.5} className="result-icon-failed" aria-hidden="true" />
+            <div className="result-icon-wrap failed" aria-hidden="true">
+              <XCircle size={32} strokeWidth={2.2} />
+            </div>
             <h1 className="result-title">{t.shop.paymentFailed}</h1>
             <p className="result-subtitle">
               Giao dịch thanh toán chưa thể hoàn tất. Đơn hàng của bạn vẫn được lưu ở trạng thái chờ thanh toán.
@@ -231,7 +248,7 @@ export const PaymentResultPage: React.FC = () => {
               {order && (
                 <div className="info-row">
                   <span>Số tiền:</span>
-                  <b>{formatPrice(order.totalAmount)}</b>
+                  <b className="result-total-amount">{formatPrice(order.totalAmount)}</b>
                 </div>
               )}
             </div>
@@ -239,7 +256,7 @@ export const PaymentResultPage: React.FC = () => {
             <div className="result-actions-row">
               <button
                 type="button"
-                className="tb result-primary-btn"
+                className="result-primary-btn"
                 onClick={() => setSimulationResult(null)}
               >
                 <RefreshCw size={15} strokeWidth={2} aria-hidden="true" />
@@ -248,7 +265,7 @@ export const PaymentResultPage: React.FC = () => {
 
               <button
                 type="button"
-                className="tb result-secondary-btn"
+                className="result-secondary-btn"
                 onClick={() => navigate('/don-hang')}
               >
                 <span>{t.shop.orderHistory}</span>

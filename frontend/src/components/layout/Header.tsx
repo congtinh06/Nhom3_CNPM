@@ -26,40 +26,17 @@ export const Header: React.FC = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isHidden, setIsHidden] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [activeSection, setActiveSection] = useState<string>('#top');
 
-  const [isExploreOpen, setIsExploreOpen] = useState(false);
   const [isLangOpen, setIsLangOpen] = useState(false);
   const [isAccountOpen, setIsAccountOpen] = useState(false);
-  const [isMobileExploreExpanded, setIsMobileExploreExpanded] = useState(false);
 
-  const exploreTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const langTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const accountTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const clearDropdownTimers = useCallback(() => {
-    if (exploreTimerRef.current) clearTimeout(exploreTimerRef.current);
     if (langTimerRef.current) clearTimeout(langTimerRef.current);
     if (accountTimerRef.current) clearTimeout(accountTimerRef.current);
   }, []);
-
-  useEffect(() => {
-    return () => {
-      clearDropdownTimers();
-    };
-  }, [clearDropdownTimers]);
-
-  const handleExploreEnter = () => {
-    if (exploreTimerRef.current) clearTimeout(exploreTimerRef.current);
-    setIsExploreOpen(true);
-  };
-
-  const handleExploreLeave = () => {
-    if (exploreTimerRef.current) clearTimeout(exploreTimerRef.current);
-    exploreTimerRef.current = setTimeout(() => {
-      setIsExploreOpen(false);
-    }, 250);
-  };
 
   const handleLangEnter = () => {
     if (langTimerRef.current) clearTimeout(langTimerRef.current);
@@ -87,19 +64,32 @@ export const Header: React.FC = () => {
 
   const lastScrollY = useRef(0);
   const headerRef = useRef<HTMLElement>(null);
-  const exploreRef = useRef<HTMLDivElement>(null);
   const langRef = useRef<HTMLDivElement>(null);
   const accountRef = useRef<HTMLDivElement>(null);
 
   const isHomePage = location.pathname === '/';
-  const isAttractionsPage =
+  const isAttractionsActive =
     location.pathname.startsWith('/diem-du-lich') ||
+    location.pathname.startsWith('/thuyet-minh') ||
     location.pathname.startsWith('/gan-toi');
   const isOrdersPage = location.pathname === '/don-hang';
+  const isGuideActive = location.pathname.startsWith('/huong-dan');
+  const isContactActive = location.pathname.startsWith('/lien-he');
+  const isFoodActive =
+    location.pathname.startsWith('/am-thuc') ||
+    location.pathname.startsWith('/thuc-uong') ||
+    location.pathname.startsWith('/am-thuc-thuc-uong');
 
   const handleScroll = useCallback(() => {
     const y = window.scrollY || 0;
     setIsScrolled(y > 50);
+
+    // On attractions routes (/diem-du-lich), keep header strictly visible and fixed to preserve layout stability
+    if (isAttractionsActive) {
+      setIsHidden(false);
+      lastScrollY.current = y;
+      return;
+    }
 
     if (isMenuOpen || y < 120 || y < lastScrollY.current - 6) {
       setIsHidden(false);
@@ -108,16 +98,26 @@ export const Header: React.FC = () => {
     }
 
     lastScrollY.current = y;
-  }, [isMenuOpen]);
+  }, [isMenuOpen, isAttractionsActive]);
+
+  // Ensure header is never hidden when navigating to attractions pages
+  useEffect(() => {
+    if (isAttractionsActive) {
+      setIsHidden(false);
+    }
+  }, [isAttractionsActive]);
 
   useEffect(() => {
     if (isHidden) {
       document.body.classList.add('header-hidden');
+      document.documentElement.setAttribute('data-header-hidden', 'true');
     } else {
       document.body.classList.remove('header-hidden');
+      document.documentElement.removeAttribute('data-header-hidden');
     }
     return () => {
       document.body.classList.remove('header-hidden');
+      document.documentElement.removeAttribute('data-header-hidden');
     };
   }, [isHidden]);
 
@@ -129,42 +129,10 @@ export const Header: React.FC = () => {
     };
   }, [handleScroll]);
 
-  // Section observer for active link highlighting on homepage
-  useEffect(() => {
-    if (!isHomePage) {
-      setActiveSection('');
-      return;
-    }
-
-    if (!('IntersectionObserver' in window)) return;
-
-    const sectionIds = ['top', 'van-hoa', 'am-thuc', 'thuc-uong', 'gioi-thieu', 'lien-he'];
-    const sections = sectionIds
-      .map((id) => document.getElementById(id))
-      .filter((el): el is HTMLElement => el !== null);
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            setActiveSection(`#${entry.target.id}`);
-          }
-        });
-      },
-      { rootMargin: '-30% 0px -40% 0px' }
-    );
-
-    sections.forEach((sec) => observer.observe(sec));
-
-    return () => {
-      observer.disconnect();
-    };
-  }, [isHomePage, location.pathname]);
 
   // Close menus on route or language changes
   useEffect(() => {
     setIsMenuOpen(false);
-    setIsExploreOpen(false);
     setIsLangOpen(false);
     setIsAccountOpen(false);
   }, [location.pathname, location.hash, lang]);
@@ -173,9 +141,6 @@ export const Header: React.FC = () => {
   useEffect(() => {
     const handlePointerDown = (e: MouseEvent | TouchEvent) => {
       const target = e.target as Node;
-      if (exploreRef.current && !exploreRef.current.contains(target)) {
-        setIsExploreOpen(false);
-      }
       if (langRef.current && !langRef.current.contains(target)) {
         setIsLangOpen(false);
       }
@@ -186,7 +151,6 @@ export const Header: React.FC = () => {
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        setIsExploreOpen(false);
         setIsLangOpen(false);
         setIsAccountOpen(false);
         setIsMenuOpen(false);
@@ -205,30 +169,10 @@ export const Header: React.FC = () => {
   const closeAllMenus = () => {
     clearDropdownTimers();
     setIsMenuOpen(false);
-    setIsExploreOpen(false);
     setIsLangOpen(false);
     setIsAccountOpen(false);
   };
 
-  const handleAnchorClick = (e: React.MouseEvent<HTMLAnchorElement>, hash: string) => {
-    e.preventDefault();
-    closeAllMenus();
-
-    if (!isHomePage) {
-      navigate(`/${hash}`);
-      return;
-    }
-
-    const targetId = hash.replace('#', '');
-    const targetEl = document.getElementById(targetId);
-    if (targetEl) {
-      if (window.__lenis) {
-        window.__lenis.scrollTo(targetEl, { offset: targetId === 'top' ? 0 : -20, duration: 1.1 });
-      } else {
-        targetEl.scrollIntoView({ behavior: 'smooth' });
-      }
-    }
-  };
 
   const handleBrandClick = () => {
     closeAllMenus();
@@ -258,45 +202,6 @@ export const Header: React.FC = () => {
     closeAllMenus();
   };
 
-  const isExploreActive =
-    location.pathname.startsWith('/am-thuc') ||
-    location.pathname.startsWith('/thuc-uong') ||
-    location.pathname.startsWith('/am-thuc-thuc-uong') ||
-    (isHomePage && ['#van-hoa', '#am-thuc', '#thuc-uong'].includes(activeSection));
-
-  const exploreList = [
-    {
-      hash: '#van-hoa',
-      path: null,
-      title: t.exploreItems.culture.title,
-      desc: t.exploreItems.culture.desc,
-    },
-    {
-      hash: '#am-thuc',
-      path: '/am-thuc',
-      title: t.exploreItems.food.title,
-      desc: t.exploreItems.food.desc,
-    },
-    {
-      hash: '#thuc-uong',
-      path: '/thuc-uong',
-      title: t.exploreItems.drinks.title,
-      desc: t.exploreItems.drinks.desc,
-    },
-  ];
-
-  const handleExploreClick = (
-    e: React.MouseEvent<HTMLAnchorElement>,
-    item: { hash: string; path?: string | null }
-  ) => {
-    e.preventDefault();
-    closeAllMenus();
-    if (item.path) {
-      navigate(item.path);
-    } else {
-      handleAnchorClick(e, item.hash);
-    }
-  };
 
   const headerClasses = [
     'hd',
@@ -328,18 +233,26 @@ export const Header: React.FC = () => {
       </div>
 
       {/* 2. Giữa: Trang chủ | Điểm du lịch | Khám phá (dropdown) | Giới thiệu | Liên hệ */}
-      <nav id="nv" className="hd-nav" aria-label="Điều hướng chính">
+      {/* 2. Giữa: Trang chủ | Điểm du lịch | Ẩm thực | Hướng dẫn | Liên hệ */}
+      <nav id="nv" className="hd-nav" aria-label="Chính">
         <a
-          href="#top"
-          className={`nav-link ${isHomePage && (activeSection === '#top' || !activeSection) ? 'active' : ''}`}
-          onClick={(e) => handleAnchorClick(e, '#top')}
+          href="/"
+          className={`nav-link ${isHomePage ? 'active' : ''}`}
+          aria-current={isHomePage ? 'page' : undefined}
+          onClick={(e) => {
+            e.preventDefault();
+            handleBrandClick();
+          }}
         >
           {t.home}
         </a>
 
         <a
           href="/diem-du-lich"
-          className={`nav-link ${isAttractionsPage ? 'active' : ''}`}
+          title={t.narration || 'Thuyết minh'}
+          data-nav="thuyet-minh"
+          className={`nav-link ${isAttractionsActive ? 'active' : ''}`}
+          aria-current={isAttractionsActive ? 'page' : undefined}
           onClick={(e) => {
             e.preventDefault();
             closeAllMenus();
@@ -349,72 +262,41 @@ export const Header: React.FC = () => {
           {t.attractions}
         </a>
 
-        {/* Khám phá Dropdown */}
-        <div
-          ref={exploreRef}
-          className={`nav-dropdown ${isExploreOpen ? 'open' : ''}`}
-          onMouseEnter={handleExploreEnter}
-          onMouseLeave={handleExploreLeave}
-        >
-          <button
-            type="button"
-            className={`nav-link nav-dropdown-trigger ${isExploreActive ? 'active' : ''}`}
-            aria-haspopup="true"
-            aria-expanded={isExploreOpen}
-            onClick={() => setIsExploreOpen((prev) => !prev)}
-            onKeyDown={(e) => {
-              if (e.key === 'ArrowDown' || e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                setIsExploreOpen(true);
-              }
-            }}
-          >
-            <span>{t.explore}</span>
-            <ChevronDown
-              size={13}
-              strokeWidth={1.75}
-              className={`chevron ${isExploreOpen ? 'rotated' : ''}`}
-              aria-hidden="true"
-            />
-          </button>
-
-          <div
-            className={`dropdown-menu explore-menu ${isExploreOpen ? 'visible' : ''}`}
-            role="menu"
-            aria-label={t.explore}
-          >
-            {exploreList.map((item) => {
-              const isItemActive =
-                (isHomePage && activeSection === item.hash) ||
-                (item.path && location.pathname.startsWith(item.path));
-              return (
-                <a
-                  key={item.hash}
-                  href={item.path || item.hash}
-                  role="menuitem"
-                  className={`dropdown-item ${isItemActive ? 'active' : ''}`}
-                  onClick={(e) => handleExploreClick(e, item)}
-                >
-                  <span className="dropdown-item-title">{item.title}</span>
-                  <span className="dropdown-item-desc">{item.desc}</span>
-                </a>
-              );
-            })}
-          </div>
-        </div>
-
         <a
-          href="#gioi-thieu"
-          className={`nav-link ${isHomePage && activeSection === '#gioi-thieu' ? 'active' : ''}`}
-          onClick={(e) => handleAnchorClick(e, '#gioi-thieu')}
+          href="/am-thuc"
+          className={`nav-link ${isFoodActive ? 'active' : ''}`}
+          aria-current={isFoodActive ? 'page' : undefined}
+          onClick={(e) => {
+            e.preventDefault();
+            closeAllMenus();
+            navigate('/am-thuc');
+          }}
         >
-          {t.about}
+          {t.food}
         </a>
 
         <a
-          href="#lien-he"
-          className={`nav-link ${isHomePage && activeSection === '#lien-he' ? 'active' : ''}`}
-          onClick={(e) => handleAnchorClick(e, '#lien-he')}
+          href="/huong-dan"
+          className={`nav-link ${isGuideActive ? 'active' : ''}`}
+          aria-current={isGuideActive ? 'page' : undefined}
+          onClick={(e) => {
+            e.preventDefault();
+            closeAllMenus();
+            navigate('/huong-dan');
+          }}
+        >
+          {t.guide || 'Hướng dẫn'}
+        </a>
+
+        <a
+          href="/lien-he"
+          className={`nav-link ${isContactActive ? 'active' : ''}`}
+          aria-current={isContactActive ? 'page' : undefined}
+          onClick={(e) => {
+            e.preventDefault();
+            closeAllMenus();
+            navigate('/lien-he');
+          }}
         >
           {t.contact}
         </a>
@@ -602,80 +484,71 @@ export const Header: React.FC = () => {
         className={`mobile-panel ${isMenuOpen ? 'open' : ''}`}
         aria-hidden={!isMenuOpen}
       >
-        <nav className="mobile-nav-list" aria-label="Điều hướng di động">
+        <nav className="mobile-nav-list" aria-label="Chính">
           <a
-            href="#top"
-            className={`mobile-nav-item ${isHomePage && (activeSection === '#top' || !activeSection) ? 'active' : ''}`}
-            onClick={(e) => handleAnchorClick(e, '#top')}
+            href="/"
+            className={`mobile-nav-item ${isHomePage ? 'active' : ''}`}
+            aria-current={isHomePage ? 'page' : undefined}
+            onClick={(e) => {
+              e.preventDefault();
+              handleBrandClick();
+            }}
           >
-            {t.home}
+            <span>{t.home}</span>
           </a>
 
           <a
             href="/diem-du-lich"
-            className={`mobile-nav-item ${isAttractionsPage ? 'active' : ''}`}
+            title={t.narration || 'Thuyết minh'}
+            data-nav="thuyet-minh"
+            className={`mobile-nav-item ${isAttractionsActive ? 'active' : ''}`}
+            aria-current={isAttractionsActive ? 'page' : undefined}
             onClick={(e) => {
               e.preventDefault();
               closeAllMenus();
               navigate('/diem-du-lich');
             }}
           >
-            {t.attractions}
-          </a>
-
-          {/* Khám phá Sub-accordion */}
-          <div className="mobile-accordion">
-            <button
-              type="button"
-              className={`mobile-nav-item mobile-accordion-trigger ${isExploreActive ? 'active' : ''}`}
-              aria-expanded={isMobileExploreExpanded}
-              onClick={() => setIsMobileExploreExpanded((prev) => !prev)}
-            >
-              <span>{t.explore}</span>
-              <ChevronDown
-                size={14}
-                strokeWidth={1.75}
-                className={`chevron ${isMobileExploreExpanded ? 'rotated' : ''}`}
-                aria-hidden="true"
-              />
-            </button>
-
-            {isMobileExploreExpanded && (
-              <div className="mobile-sub-list">
-                {exploreList.map((item) => {
-                  const isItemActive =
-                    (isHomePage && activeSection === item.hash) ||
-                    (item.path && location.pathname.startsWith(item.path));
-                  return (
-                    <a
-                      key={item.hash}
-                      href={item.path || item.hash}
-                      className={`mobile-sub-item ${isItemActive ? 'active' : ''}`}
-                      onClick={(e) => handleExploreClick(e, item)}
-                    >
-                      <span className="sub-item-title">{item.title}</span>
-                      <span className="sub-item-desc">{item.desc}</span>
-                    </a>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-
-          <a
-            href="#gioi-thieu"
-            className={`mobile-nav-item ${isHomePage && activeSection === '#gioi-thieu' ? 'active' : ''}`}
-            onClick={(e) => handleAnchorClick(e, '#gioi-thieu')}
-          >
-            {t.about}
+            <span>{t.attractions}</span>
           </a>
 
           <a
-            href="#lien-he"
-            className={`mobile-nav-item ${isHomePage && activeSection === '#lien-he' ? 'active' : ''}`}
-            onClick={(e) => handleAnchorClick(e, '#lien-he')}
+            href="/am-thuc"
+            className={`mobile-nav-item ${isFoodActive ? 'active' : ''}`}
+            aria-current={isFoodActive ? 'page' : undefined}
+            onClick={(e) => {
+              e.preventDefault();
+              closeAllMenus();
+              navigate('/am-thuc');
+            }}
           >
-            {t.contact}
+            <span>{t.food}</span>
+          </a>
+
+          <a
+            href="/huong-dan"
+            className={`mobile-nav-item ${isGuideActive ? 'active' : ''}`}
+            aria-current={isGuideActive ? 'page' : undefined}
+            onClick={(e) => {
+              e.preventDefault();
+              closeAllMenus();
+              navigate('/huong-dan');
+            }}
+          >
+            <span>{t.guide || 'Hướng dẫn'}</span>
+          </a>
+
+          <a
+            href="/lien-he"
+            className={`mobile-nav-item ${isContactActive ? 'active' : ''}`}
+            aria-current={isContactActive ? 'page' : undefined}
+            onClick={(e) => {
+              e.preventDefault();
+              closeAllMenus();
+              navigate('/lien-he');
+            }}
+          >
+            <span>{t.contact}</span>
           </a>
 
           {/* Auth khu vực mobile */}

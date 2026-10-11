@@ -1,2 +1,7 @@
 @import './styles/app.css';
 @import './styles/foodBeverage.css';
+@import './styles/statusBadge.css';
+@import './styles/checkout.css';
+@import './styles/paymentResult.css';
+@import './styles/orders.css';
+

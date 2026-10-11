@@ -2,7 +2,7 @@ import React from 'react';
 import { Play, Pause } from 'lucide-react';
 import { GeoPoi } from '../../pages/NearbyPage';
 import { SupportedLanguage } from '../../types';
-import { LANG_DISPLAY_NAMES } from '../../hooks/useNearbyAudio';
+import { t, NATIVE_LANG_NAMES, LANG_DISPLAY_NAMES } from '../../content/nearbyI18n';
 
 function formatMmSs(seconds: number): string {
   const s = Math.max(0, Math.round(seconds));
@@ -18,28 +18,29 @@ interface AudioPlayerBarProps {
   currentTime: number;
   duration: number;
   speed: number;
-  showTranscript: boolean;
+  showTranscript?: boolean;
   notice: string;
   noticeWarn: boolean;
+  isHtml5Audio: boolean;
   onTogglePlay: () => void;
   onSeek: (seconds: number) => void;
   onChangeSpeed: (spd: number) => void;
-  onToggleTranscript: () => void;
-  resolveAudio: (poi: GeoPoi) => {
+  onViewChapterTranscript: (poiId: string) => void;
+  resolveAudio?: (poi: GeoPoi) => {
     hasAudioInLang: boolean;
     actualLang: SupportedLanguage;
     actualTxLang: SupportedLanguage;
     text: string;
   };
   getPoiName: (poi: GeoPoi) => string;
-  noPoiSelectedText: string;
-  playingInLangText: (langName: string) => string;
-  pausedStatusText: string;
-  clickToStartText: string;
-  speedLabelText: string;
-  viewTextBtnText: string;
-  hideTextBtnText: string;
-  fallbackTxNoticeText: (langName: string) => string;
+  noPoiSelectedText?: string;
+  playingInLangText?: (langName: string) => string;
+  pausedStatusText?: string;
+  clickToStartText?: string;
+  speedLabelText?: string;
+  viewTextBtnText?: string;
+  hideTextBtnText?: string;
+  fallbackTxNoticeText?: (langName: string) => string;
 }
 
 export const AudioPlayerBar: React.FC<AudioPlayerBarProps> = ({
@@ -49,14 +50,13 @@ export const AudioPlayerBar: React.FC<AudioPlayerBarProps> = ({
   currentTime,
   duration,
   speed,
-  showTranscript,
   notice,
   noticeWarn,
+  isHtml5Audio,
   onTogglePlay,
   onSeek,
   onChangeSpeed,
-  onToggleTranscript,
-  resolveAudio,
+  onViewChapterTranscript,
   getPoiName,
   noPoiSelectedText,
   playingInLangText,
@@ -64,129 +64,181 @@ export const AudioPlayerBar: React.FC<AudioPlayerBarProps> = ({
   clickToStartText,
   speedLabelText,
   viewTextBtnText,
-  hideTextBtnText,
-  fallbackTxNoticeText,
 }) => {
-  // Hide if no POI has been chosen yet
-  if (!activePoi) {
+  // Show only while something is playing or paused mid-track, not in idle state
+  if (!activePoi || (!isPlaying && currentTime === 0)) {
     return null;
   }
 
-  const audioInfo = resolveAudio(activePoi);
   const poiName = getPoiName(activePoi);
-  const currentLangDisplayName = LANG_DISPLAY_NAMES[currentLang]?.[currentLang] || currentLang;
+  const currentLangDisplayName =
+    LANG_DISPLAY_NAMES[currentLang]?.[currentLang] ||
+    NATIVE_LANG_NAMES[currentLang] ||
+    currentLang;
 
   const statusSubText =
     notice ||
     (isPlaying
-      ? playingInLangText(currentLangDisplayName)
+      ? playingInLangText
+        ? playingInLangText(currentLangDisplayName)
+        : t(currentLang, 'playingInLang', { lang: currentLangDisplayName })
       : currentTime > 0
-      ? pausedStatusText
-      : clickToStartText);
+      ? pausedStatusText || t(currentLang, 'pausedStatus')
+      : clickToStartText || t(currentLang, 'clickToStart'));
 
   const progressPercent = duration > 0 ? Math.min(100, (currentTime / duration) * 100) : 0;
+  const locSpeedLabel = speedLabelText || t(currentLang, 'speedLabel');
+  const locViewTx = viewTextBtnText || t(currentLang, 'viewTranscriptBtn');
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    const target = e.target as HTMLElement | null;
+    if (!target) return;
+    const tagName = target.tagName.toLowerCase();
+
+    // Never preventDefault when focus is on a button, link, input, select, textarea, contenteditable, the language segmented control, or an accordion
+    const isInteractive =
+      tagName === 'button' ||
+      tagName === 'a' ||
+      tagName === 'input' ||
+      tagName === 'select' ||
+      tagName === 'textarea' ||
+      target.isContentEditable ||
+      Boolean(target.closest('.lang-segmented-control')) ||
+      Boolean(target.closest('[role="button"]')) ||
+      Boolean(target.closest('.accordion')) ||
+      Boolean(target.closest('[aria-expanded]'));
+
+    if (e.code === 'Space') {
+      if (!isInteractive) {
+        e.preventDefault();
+        onTogglePlay();
+      }
+    }
+  };
 
   return (
-    <footer className="player sticky-mini-player" aria-label="Trình phát thuyết minh du lịch">
-      <div className="p-in player-inner">
-        {/* Transcript drawer */}
-        {showTranscript && (
-          <div className="tx transcript-box" id="tx" role="region" aria-label="Văn bản thuyết minh">
-            <p className="transcript-content">{audioInfo.text}</p>
-            {audioInfo.actualTxLang !== currentLang && (
-              <small className="transcript-fallback-notice">
-                {fallbackTxNoticeText(currentLangDisplayName)}
-              </small>
-            )}
-          </div>
-        )}
-
-        <div className="p-row player-row">
-          {/* Info: POI Title & Substatus */}
+    <footer
+      className="player nearby-sticky-player-bar"
+      aria-label={t(currentLang, 'playerAriaLabel')}
+      tabIndex={0}
+      onKeyDown={handleKeyDown}
+    >
+      <div className="player-inner">
+        <div className="player-row">
+          {/* 1. Left info: Stop Name, Language Badge & Substatus */}
           <div className="player-meta-block">
-            <div className="p-title player-poi-title" id="pTitle">
-              {poiName || noPoiSelectedText}
+            <div className="player-title-row">
+              <span className="player-poi-title" id="pTitle">
+                {poiName || noPoiSelectedText || t(currentLang, 'noPoiSelected')}
+              </span>
+              <span
+                className="player-lang-badge"
+                title={`${t(currentLang, 'languageSelectLabel')}: ${currentLangDisplayName}`}
+              >
+                {currentLang.toUpperCase()}
+              </span>
             </div>
             <div
-              className={`p-sub player-status-sub ${noticeWarn ? 'warn is-warning' : ''}`}
+              className={`player-status-sub ${noticeWarn ? 'warn is-warning' : ''}`}
               id="pSub"
             >
               {statusSubText}
             </div>
           </div>
 
-          {/* Controls: Play/Pause, Progress Bar, Duration */}
-          <div className="p-mid player-controls-mid">
+          {/* 2. Middle Controls: Adapts to Audio Source */}
+          <div className="player-controls-mid">
+            {/* Play/Pause Button */}
             <button
-              className="pp player-play-btn"
+              className="player-play-btn"
               id="pPlay"
               type="button"
-              aria-label={isPlaying ? 'Pause' : 'Play'}
+              aria-label={isPlaying ? t(currentLang, 'pauseBtn') : t(currentLang, 'playBtn')}
               onClick={onTogglePlay}
             >
-              {isPlaying ? <Pause size={20} /> : <Play size={20} style={{ marginLeft: 2 }} />}
+              {isPlaying ? <Pause size={18} /> : <Play size={18} style={{ marginLeft: 2 }} />}
             </button>
 
-            <div
-              className="bar player-progress-bar"
-              id="pBar"
-              role="progressbar"
-              aria-label="Tiến trình phát âm thanh"
-              aria-valuemin={0}
-              aria-valuemax={100}
-              aria-valuenow={Math.round(progressPercent)}
-              tabIndex={0}
-              onClick={(e) => {
-                if (!duration) return;
-                const rect = e.currentTarget.getBoundingClientRect();
-                const fraction = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-                onSeek(fraction * duration);
-              }}
-              onKeyDown={(e) => {
-                if (e.key === 'ArrowRight') {
-                  onSeek(Math.min(duration, currentTime + 5));
-                } else if (e.key === 'ArrowLeft') {
-                  onSeek(Math.max(0, currentTime - 5));
-                }
-              }}
-            >
-              <i
-                id="pFill"
-                className="progress-fill"
-                style={{ width: `${progressPercent}%` }}
-              />
-            </div>
-
-            <span className="time player-time-display" id="pTime">
-              {formatMmSs(currentTime)} / {formatMmSs(duration)}
-            </span>
+            {/* Capabilities Adapt to Source: */}
+            {isHtml5Audio ? (
+              /* Real Interactive Progress Bar with accurate timestamps */
+              <div className="player-progress-container">
+                <div
+                  className="player-progress-bar"
+                  id="pBar"
+                  role="progressbar"
+                  aria-label={t(currentLang, 'playerProgressBarAria')}
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-valuenow={Math.round(progressPercent)}
+                  tabIndex={0}
+                  onClick={(e) => {
+                    if (!duration) return;
+                    const rect = e.currentTarget.getBoundingClientRect();
+                    const fraction = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+                    onSeek(fraction * duration);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'ArrowRight') {
+                      onSeek(Math.min(duration, currentTime + 5));
+                    } else if (e.key === 'ArrowLeft') {
+                      onSeek(Math.max(0, currentTime - 5));
+                    }
+                  }}
+                >
+                  <span
+                    id="pFill"
+                    className="progress-fill"
+                    style={{ width: `${progressPercent}%` }}
+                  />
+                </div>
+                <span className="player-time-display" id="pTime">
+                  {formatMmSs(currentTime)} / {formatMmSs(duration)}
+                </span>
+              </div>
+            ) : (
+              /* SpeechSynthesis: Hide seek & +/-15s, show non-interactive progress indicator */
+              <div
+                className="player-speech-indicator"
+                role="status"
+                aria-label={t(currentLang, 'speechEngineAria')}
+              >
+                <div className="speech-pulse-track">
+                  <span
+                    className={`speech-pulse-bar ${isPlaying ? 'is-animating' : ''}`}
+                    style={{ width: isPlaying ? '100%' : '0%' }}
+                  />
+                </div>
+                <span className="speech-engine-tag">{t(currentLang, 'speechEngineTag')}</span>
+              </div>
+            )}
           </div>
 
-          {/* Right Controls: Speed and Transcript */}
-          <div className="p-r player-extra-controls">
+          {/* 3. Right: Speed Selector & "Xem lời thuyết minh" Link */}
+          <div className="player-extra-controls">
             <label htmlFor="selSpeed" className="sr-only">
-              {speedLabelText}
+              {locSpeedLabel}
             </label>
             <select
-              className="sel player-speed-select"
+              className="player-speed-select"
               id="selSpeed"
               value={speed}
-              aria-label={speedLabelText}
+              aria-label={locSpeedLabel}
               onChange={(e) => onChangeSpeed(parseFloat(e.target.value))}
             >
-              <option value={0.75}>0.75x</option>
               <option value={1}>1.0x</option>
               <option value={1.25}>1.25x</option>
+              <option value={1.5}>1.5x</option>
             </select>
 
+            {/* "Xem lời thuyết minh" link that scrolls to the active chapter's transcript */}
             <button
-              className="btn btn-transcript"
+              className="player-view-transcript-link"
               id="btnTx"
               type="button"
-              aria-pressed={showTranscript}
-              onClick={onToggleTranscript}
+              onClick={() => onViewChapterTranscript(activePoi.id)}
             >
-              {showTranscript ? hideTextBtnText : viewTextBtnText}
+              {locViewTx}
             </button>
           </div>
         </div>

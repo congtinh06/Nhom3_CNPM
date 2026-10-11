@@ -3,7 +3,6 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useGsapAnimations } from '../hooks/useGsapAnimations';
 import { CoverSection } from '../components/sections/CoverSection';
 import { IntroSection } from '../components/sections/IntroSection';
-import { CultureSection } from '../components/sections/CultureSection';
 import { CostumeSection } from '../components/sections/CostumeSection';
 import { FoodSection } from '../components/sections/FoodSection';
 import { DrinksSection } from '../components/sections/DrinksSection';
@@ -43,7 +42,6 @@ export const HomePage: React.FC = () => {
     <div ref={containerRef}>
       <CoverSection />
       <IntroSection />
-      <CultureSection />
       <CostumeSection />
       <FoodSection />
       <DrinksSection />
