@@ -118,7 +118,7 @@ describe('NearbyPage - Clean Multilingual & Audio Narration Integration', () => 
     expect(utterance.text).toContain('Independence Palace sits in a wide garden in the heart of the city');
   });
 
-  it('handles language fallback when a POI lacks voice audio in a target language', () => {
+  it('reads ja/ko narration in the matching voice instead of falling back to a Vietnamese voice', () => {
     render(
       <BrowserRouter>
         <NearbyPage />
@@ -141,9 +141,46 @@ describe('NearbyPage - Clean Multilingual & Audio Narration Integration', () => 
       fireEvent.click(playBtn);
     });
 
-    // Verify fallback notice is displayed in the audio player
+    // Korean narration must be spoken with a Korean voice, never a Vietnamese one
+    const calls = (window.speechSynthesis.speak as any).mock.calls;
+    const utterance = calls[calls.length - 1][0] as SpeechSynthesisUtterance;
+    expect(utterance.lang).toBe('ko-KR');
+
+    // No false "playing Vietnamese version" fallback notice
+    expect(screen.queryByText(/베트남어로 재생됩니다/)).not.toBeInTheDocument();
+  });
+
+  it('shows GPS error text in the active language (no Vietnamese leak) in English', () => {
+    const mockGeolocation = {
+      getCurrentPosition: vi.fn((_success: any, error: any) => {
+        error({ code: 1 });
+      }),
+      watchPosition: vi.fn(),
+      clearWatch: vi.fn(),
+    };
+    Object.defineProperty(navigator, 'geolocation', {
+      value: mockGeolocation,
+      writable: true,
+      configurable: true,
+    });
+
+    render(
+      <BrowserRouter>
+        <NearbyPage />
+      </BrowserRouter>
+    );
+
+    act(() => {
+      setStoredLanguage('en');
+    });
+
+    const gpsBtn = screen.getByRole('button', { name: /My location/i });
+    act(() => {
+      fireEvent.click(gpsBtn);
+    });
+
     expect(
-      screen.getByText(/이 명소는 한국어 음성이 지원되지 않아 베트남어로 재생됩니다/i)
+      screen.getByText(/Location access denied\. You can still manually play audio tours\./i)
     ).toBeInTheDocument();
   });
 

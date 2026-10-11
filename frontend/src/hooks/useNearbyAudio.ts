@@ -529,10 +529,7 @@ export function useNearbyAudio({
 
       const targetLangName = LANG_DISPLAY_NAMES[currentLang]?.[currentLang] || currentLang;
 
-      if (!res.hasAudioInLang) {
-        setNotice(fallbackNoticeText(targetLangName));
-        setNoticeWarn(true);
-      } else if (isAuto) {
+      if (isAuto) {
         setNotice(autoTriggerNoticeText(getPoiName(targetPoi)));
         setNoticeWarn(false);
       } else {
@@ -540,10 +537,14 @@ export function useNearbyAudio({
         setNoticeWarn(false);
       }
 
-      // Synchronously start speech narration (hierarchy fallback)
+      // Synchronously start speech narration (hierarchy fallback).
+      // The narration text is always in currentLang (getNarration never falls
+      // back across languages), so the voice must match currentLang too — using
+      // a per-POI audio-availability flag here would read ja/ko text with a
+      // Vietnamese voice.
       setAudioSourceType('speech');
       setIsHtml5Audio(false);
-      speakText(chosenText, res.actualLang, speedRef.current, token, 0, hasFullText);
+      speakText(chosenText, currentLang, speedRef.current, token, 0, hasFullText);
 
       stopTimer();
       timerRef.current = setInterval(() => {
@@ -661,7 +662,7 @@ export function useNearbyAudio({
                 // Fall back to speech synthesis if backend audio fails
                 setIsHtml5Audio(false);
                 setAudioSourceType('speech');
-                speakText(chosenText, res.actualLang, speedRef.current, token, 0);
+                speakText(chosenText, currentLang, speedRef.current, token, 0);
               };
 
               audio.onloadedmetadata = () => {
@@ -729,7 +730,7 @@ export function useNearbyAudio({
                       } else {
                         setIsHtml5Audio(false);
                         setAudioSourceType('speech');
-                        speakText(chosenText, res.actualLang, speedRef.current, token, 0);
+                speakText(chosenText, currentLang, speedRef.current, token, 0);
                       }
                     });
                 } else {
@@ -743,7 +744,7 @@ export function useNearbyAudio({
                 if (token !== requestTokenRef.current) return;
                 setIsHtml5Audio(false);
                 setAudioSourceType('speech');
-                speakText(chosenText, res.actualLang, speedRef.current, token, 0);
+                speakText(chosenText, currentLang, speedRef.current, token, 0);
               }
             }
           })
@@ -775,22 +776,12 @@ export function useNearbyAudio({
     if (prevLangRef.current !== currentLang) {
       prevLangRef.current = currentLang;
       stopAllAudio('language_change');
-      if (currentId) {
-        const activePoi = pois.find((p) => p.id === currentId);
-        if (activePoi) {
-          const res = resolveAudio(activePoi);
-          const langName = LANG_DISPLAY_NAMES[currentLang]?.[currentLang] || currentLang;
-          if (!res.hasAudioInLang) {
-            setNotice(fallbackNoticeText(langName));
-            setNoticeWarn(true);
-          } else {
-            setNotice('');
-            setNoticeWarn(false);
-          }
-        }
-      }
+      // The narration text always follows currentLang (getNarration never falls
+      // back across languages), so no cross-language notice is warranted here.
+      setNotice('');
+      setNoticeWarn(false);
     }
-  }, [currentLang, currentId, pois, resolveAudio, fallbackNoticeText, stopAllAudio]);
+  }, [currentLang, stopAllAudio]);
 
   const togglePlay = useCallback(() => {
     if (!currentId) return;

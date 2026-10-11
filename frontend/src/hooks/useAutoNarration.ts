@@ -55,8 +55,14 @@ export function useAutoNarration({
   lastManualStopTime = 0,
   playPoi,
   gpsErrorMessage,
+  gpsErrorDeniedText,
+  gpsErrorUnavailableText,
+  gpsErrorTimeoutText,
+  gpsErrorSimActiveText,
+  gpsErrorNotSupportedText,
+  gpsErrorInsecureText,
   overrideRadius,
-  isSimMode: _isSimMode,
+  isSimMode = false,
 }: UseAutoNarrationProps) {
   const [userPos, setUserPos] = useState<PositionState | null>(null);
   const [gpsError, setGpsError] = useState<string>('');
@@ -167,8 +173,18 @@ export function useAutoNarration({
 
   // Request single GPS position
   const requestGps = useCallback(() => {
+    if (isSimMode) {
+      setGpsError(
+        gpsErrorSimActiveText ||
+          'Đang ở chế độ giả lập vị trí. Tắt chế độ giả lập để dùng GPS thật.'
+      );
+      return;
+    }
+
     if (typeof window === 'undefined' || !navigator.geolocation) {
-      setGpsError('Thiết bị hoặc trình duyệt không hỗ trợ định vị GPS.');
+      setGpsError(
+        gpsErrorNotSupportedText || 'Thiết bị hoặc trình duyệt không hỗ trợ định vị GPS.'
+      );
       return;
     }
 
@@ -177,7 +193,7 @@ export function useAutoNarration({
       window.location.hostname !== 'localhost' &&
       window.location.hostname !== '127.0.0.1'
     ) {
-      setGpsError('Định vị GPS yêu cầu kết nối bảo mật HTTPS.');
+      setGpsError(gpsErrorInsecureText || 'Định vị GPS yêu cầu kết nối bảo mật HTTPS.');
       return;
     }
 
@@ -188,17 +204,30 @@ export function useAutoNarration({
       (err) => {
         let msg = gpsErrorMessage;
         if (err.code === 1) {
-          msg = 'Quyền truy cập vị trí đã bị từ chối. Bạn vẫn có thể bấm nghe thủ công bình thường.';
+          msg =
+            gpsErrorDeniedText ||
+            'Quyền truy cập vị trí đã bị từ chối. Bạn vẫn có thể bấm nghe thủ công bình thường.';
         } else if (err.code === 2) {
-          msg = 'Không xác định được vị trí GPS. Vui lòng thử lại sau.';
+          msg =
+            gpsErrorUnavailableText || 'Không xác định được vị trí GPS. Vui lòng thử lại sau.';
         } else if (err.code === 3) {
-          msg = 'Hết thời gian chờ lấy vị trí GPS.';
+          msg = gpsErrorTimeoutText || 'Hết thời gian chờ lấy vị trí GPS.';
         }
         setGpsError(msg);
       },
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 5000 }
     );
-  }, [applyPosition, gpsErrorMessage]);
+  }, [
+    applyPosition,
+    gpsErrorMessage,
+    gpsErrorDeniedText,
+    gpsErrorUnavailableText,
+    gpsErrorTimeoutText,
+    gpsErrorSimActiveText,
+    gpsErrorNotSupportedText,
+    gpsErrorInsecureText,
+    isSimMode,
+  ]);
 
   // Keep watching position if auto is enabled and user has real GPS
   useEffect(() => {
@@ -210,7 +239,7 @@ export function useAutoNarration({
         },
         (err) => {
           if (err.code === 1) {
-            setGpsError('Quyền truy cập GPS bị từ chối.');
+            setGpsError(gpsErrorDeniedText || 'Quyền truy cập GPS bị từ chối.');
           }
         },
         { enableHighAccuracy: true, maximumAge: 5000, timeout: 15000 }
@@ -222,7 +251,7 @@ export function useAutoNarration({
     return () => {
       clearGpsWatch();
     };
-  }, [isAutoEnabled, userPos?.label, applyPosition, clearGpsWatch]);
+  }, [isAutoEnabled, userPos?.label, applyPosition, clearGpsWatch, gpsErrorDeniedText]);
 
   // Cleanup on unmount
   useEffect(() => {
