@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import nearbyPoisData from '../content/nearbyPois.json';
-import { useNavbarLanguage } from '../content/languages';
+import { useNavbarLanguage, SUPPORTED_LANGUAGES } from '../content/languages';
 import { SupportedLanguage } from '../types';
 import { useAutoNarration, haversine } from '../hooks/useAutoNarration';
 import { useNearbyAudio, splitTranscriptIntoSentences } from '../hooks/useNearbyAudio';
@@ -153,7 +153,6 @@ export const NearbyPage: React.FC = () => {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
-  const [expandedChapterId, setExpandedChapterId] = useState<string | null>(null);
   const [chapterMode, setChapterMode] = useState<'listen' | 'read'>('listen');
 
   // Journey progress tracking persisted in localStorage
@@ -255,13 +254,7 @@ export const NearbyPage: React.FC = () => {
     return formatDistance(sum, currentLang);
   }, [pois, currentLang]);
 
-  const languagesCount = useMemo(() => {
-    const langSet = new Set<string>();
-    pois.forEach((p) => {
-      Object.keys(p.name).forEach((l) => langSet.add(l));
-    });
-    return langSet.size;
-  }, [pois]);
+  const languagesCount = SUPPORTED_LANGUAGES.length;
 
   // Audio Hook with adaptive playback hierarchy & sentence highlighting
   const {
@@ -466,11 +459,10 @@ export const NearbyPage: React.FC = () => {
     [pois, scrollHeroIntoView]
   );
 
-  // View chapter transcript link from player bar: selects stop & expands Read mode
+  // View chapter transcript link from player bar: selects stop & switches to Read mode
   const handleViewChapterTranscript = useCallback(
     (poiId: string) => {
       setChapterMode('read');
-      setExpandedChapterId(poiId);
       handleExplicitSelectPoi(poiId);
     },
     [handleExplicitSelectPoi]
@@ -600,7 +592,6 @@ export const NearbyPage: React.FC = () => {
               listTitle={t(currentLang, 'listTitle')}
               sortNoteText={userPos ? t(currentLang, 'sortNearest') : t(currentLang, 'sortTour')}
               activeSentenceIndex={activeSentenceIndex}
-              expandedChapterId={expandedChapterId}
               duration={duration}
               onSelectPoi={handleExplicitSelectPoi}
               onHoverPoi={setHoveredId}
@@ -669,7 +660,6 @@ export const NearbyPage: React.FC = () => {
                 ? formatDistance(activeSortedItem.dist, currentLang)
                 : null
             }
-            heroIntroText={getHeroIntroText(activeSortedItem.poi, currentLang)}
           />
         )}
       </main>

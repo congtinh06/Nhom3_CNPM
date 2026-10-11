@@ -73,7 +73,7 @@ describe('splitTranscriptIntoSentences - Abbreviation and Decimal Protection', (
   });
 });
 
-describe('AudioPlayerBar - Scoped Space play/pause & No Arrow/15s Seek', () => {
+describe('AudioPlayerBar - No Space Hijack / No Arrow or 15s Seek (a11y)', () => {
   const mockPoi: GeoPoi = {
     id: 'poi-1',
     slug: 'dinh-doc-lap',
@@ -126,7 +126,7 @@ describe('AudioPlayerBar - Scoped Space play/pause & No Arrow/15s Seek', () => {
     expect(screen.getByRole('progressbar', { name: /Tiến trình phát âm thanh/i })).toBeInTheDocument();
   });
 
-  it('triggers onTogglePlay on Space when focused on player container, but not on interactive controls', () => {
+  it('keeps the player landmark non-focusable and does not hijack Space or arrow keys', () => {
     const onTogglePlay = vi.fn();
     render(
       React.createElement(AudioPlayerBar, {
@@ -159,19 +159,15 @@ describe('AudioPlayerBar - Scoped Space play/pause & No Arrow/15s Seek', () => {
 
     const playerContainer = screen.getByLabelText(/Trình phát thuyết minh du lịch/i);
 
-    // Space on player container triggers onTogglePlay
-    fireEvent.keyDown(playerContainer, { code: 'Space' });
-    expect(onTogglePlay).toHaveBeenCalledTimes(1);
+    // The landmark must not be a tab stop
+    expect(playerContainer.tagName).toBe('FOOTER');
+    expect(playerContainer).not.toHaveAttribute('tabindex');
 
-    // ArrowLeft and ArrowRight do not seek or alter play state
+    // Space / arrows on the landmark must not toggle playback (native play button owns keyboard)
+    fireEvent.keyDown(playerContainer, { code: 'Space' });
     fireEvent.keyDown(playerContainer, { code: 'ArrowLeft' });
     fireEvent.keyDown(playerContainer, { code: 'ArrowRight' });
-    expect(onTogglePlay).toHaveBeenCalledTimes(1);
-
-    // Space on a button inside player container does NOT invoke container handler
-    const playBtn = screen.getByRole('button', { name: /Phát|Play/i });
-    fireEvent.keyDown(playBtn, { code: 'Space' });
-    expect(onTogglePlay).toHaveBeenCalledTimes(1); // Not incremented by container
+    expect(onTogglePlay).not.toHaveBeenCalled();
   });
 });
 

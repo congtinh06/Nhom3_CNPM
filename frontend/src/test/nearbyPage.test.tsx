@@ -432,9 +432,17 @@ describe('NearbyPage - Clean Multilingual & Audio Narration Integration', () => 
         // Vietnamese page title must NOT be present
         expect(screen.queryByText('Điểm du lịch Sài Gòn')).not.toBeInTheDocument();
 
-        // Mode switch tabs must be localized
-        expect(screen.getAllByRole('tab', { name: t(targetLang, 'modeListen') })[0]).toBeInTheDocument();
-        expect(screen.getAllByRole('tab', { name: t(targetLang, 'modeRead') })[0]).toBeInTheDocument();
+        // Mode switch toggle buttons must be localized with aria-pressed state
+        const listenSwitch = screen.getAllByRole('button', {
+          name: t(targetLang, 'modeListen'),
+        })[0];
+        const readSwitch = screen.getAllByRole('button', {
+          name: t(targetLang, 'modeRead'),
+        })[0];
+        expect(listenSwitch).toBeInTheDocument();
+        expect(readSwitch).toBeInTheDocument();
+        expect(listenSwitch).toHaveAttribute('aria-pressed');
+        expect(readSwitch).toHaveAttribute('aria-pressed');
 
         // Toolbar buttons must be localized
         expect(

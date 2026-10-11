@@ -90,38 +90,10 @@ export const AudioPlayerBar: React.FC<AudioPlayerBarProps> = ({
   const locSpeedLabel = speedLabelText || t(currentLang, 'speedLabel');
   const locViewTx = viewTextBtnText || t(currentLang, 'viewTranscriptBtn');
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    const target = e.target as HTMLElement | null;
-    if (!target) return;
-    const tagName = target.tagName.toLowerCase();
-
-    // Never preventDefault when focus is on a button, link, input, select, textarea, contenteditable, the language segmented control, or an accordion
-    const isInteractive =
-      tagName === 'button' ||
-      tagName === 'a' ||
-      tagName === 'input' ||
-      tagName === 'select' ||
-      tagName === 'textarea' ||
-      target.isContentEditable ||
-      Boolean(target.closest('.lang-segmented-control')) ||
-      Boolean(target.closest('[role="button"]')) ||
-      Boolean(target.closest('.accordion')) ||
-      Boolean(target.closest('[aria-expanded]'));
-
-    if (e.code === 'Space') {
-      if (!isInteractive) {
-        e.preventDefault();
-        onTogglePlay();
-      }
-    }
-  };
-
   return (
     <footer
       className="player nearby-sticky-player-bar"
       aria-label={t(currentLang, 'playerAriaLabel')}
-      tabIndex={0}
-      onKeyDown={handleKeyDown}
     >
       <div className="player-inner">
         <div className="player-row">

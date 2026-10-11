@@ -160,10 +160,10 @@ export const PoiHero: React.FC<PoiHeroProps> = ({
               data-id={poi.id}
               aria-label={
                 isCardPlaying
-                  ? `${resolvedPauseText.replace('❚❚ ', '')} ${displayName}`
+                  ? `${resolvedPauseText} ${displayName}`
                   : isCurrent && !isCardPlaying
-                  ? `${resolvedResumeText.replace('▶ ', '')} ${displayName}`
-                  : `${resolvedListenText.replace('▶ ', '')} ${displayName}`
+                  ? `${resolvedResumeText} ${displayName}`
+                  : `${resolvedListenText} ${displayName}`
               }
               onClick={() => onTogglePlay(poi.id)}
             >
@@ -187,10 +187,10 @@ export const PoiHero: React.FC<PoiHeroProps> = ({
               )}
               <span className="chapter-play-label">
                 {isCardPlaying
-                  ? resolvedPauseText.replace('❚❚ ', '')
+                  ? resolvedPauseText
                   : isCurrent && !isCardPlaying
-                  ? resolvedResumeText.replace('▶ ', '')
-                  : resolvedListenText.replace('▶ ', '')}
+                  ? resolvedResumeText
+                  : resolvedListenText}
               </span>
             </button>
 
@@ -198,16 +198,15 @@ export const PoiHero: React.FC<PoiHeroProps> = ({
               <span className="hero-audio-duration">{formattedAudioDuration}</span>
             )}
 
-            {/* Segmented Listen | Read switcher */}
+            {/* Segmented Listen | Read toggle group */}
             <div
               className="chapter-mode-switcher hero-mode-switcher"
-              role="tablist"
+              role="group"
               aria-label={t(currentLang, 'modeSwitchAria', { name: displayName })}
             >
               <button
                 type="button"
-                role="tab"
-                aria-selected={chapterMode === 'listen'}
+                aria-pressed={chapterMode === 'listen'}
                 className={`mode-switch-btn ${chapterMode === 'listen' ? 'is-active' : ''}`}
                 onClick={() => onChangeChapterMode('listen')}
               >
@@ -215,8 +214,7 @@ export const PoiHero: React.FC<PoiHeroProps> = ({
               </button>
               <button
                 type="button"
-                role="tab"
-                aria-selected={chapterMode === 'read'}
+                aria-pressed={chapterMode === 'read'}
                 className={`mode-switch-btn ${chapterMode === 'read' ? 'is-active' : ''}`}
                 onClick={() => onChangeChapterMode('read')}
               >

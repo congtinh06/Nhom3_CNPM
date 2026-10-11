@@ -26,7 +26,6 @@ export interface PoiListProps {
   listTitle: string;
   sortNoteText: string;
   activeSentenceIndex?: number | null;
-  expandedChapterId?: string | null;
   duration?: number;
   onSelectPoi: (poiId: string) => void;
   onHoverPoi?: (poiId: string | null) => void;
@@ -111,7 +110,6 @@ const PoiListComponent: React.FC<PoiListProps> = ({
   sortedPois,
   selectedPoiId,
   activePoiId,
-  hoveredPoiId: _hoveredPoiId,
   listenedPoiIds = [],
   statusMessage,
   listTitle,

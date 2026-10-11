@@ -18,7 +18,6 @@ interface PoiReadingSectionProps {
   onSelectPoi: (poiId: string) => void;
   getPoiName: (poi: GeoPoi) => string;
   formattedDist?: string | null;
-  heroIntroText?: string;
 }
 
 export const PoiReadingSection: React.FC<PoiReadingSectionProps> = ({
@@ -34,7 +33,6 @@ export const PoiReadingSection: React.FC<PoiReadingSectionProps> = ({
   onSelectPoi,
   getPoiName,
   formattedDist,
-  heroIntroText: _heroIntroText,
 }) => {
   const { poi } = activeItem;
   const activeSentenceRef = useRef<HTMLSpanElement | null>(null);
@@ -105,7 +103,7 @@ export const PoiReadingSection: React.FC<PoiReadingSectionProps> = ({
   return (
     <section className="nearby-reading-section" aria-label={`Nội dung thuyết minh: ${displayName}`}>
       <div className="nearby-reading-container">
-        {/* Section Heading & Sentence flow (rendered only when not redundant with hero intro, or during active listen playback) */}
+        {/* Reading body: rendered only when the full narration layer exists for the current language */}
         {showReadingBody && (
           <>
             <h3 className="reading-stop-title">{displayName}</h3>

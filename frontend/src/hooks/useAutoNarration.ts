@@ -4,7 +4,7 @@ import { GeoPoi } from '../pages/NearbyPage';
 export interface PositionState {
   lat: number;
   lng: number;
-  label: string;
+  source: 'gps' | 'sim';
   accuracy?: number;
 }
 
@@ -155,8 +155,8 @@ export function useAutoNarration({
 
   // Unified pipeline to apply position
   const applyPosition = useCallback(
-    (lat: number, lng: number, label: string) => {
-      setUserPos({ lat, lng, label });
+    (lat: number, lng: number, source: 'gps' | 'sim') => {
+      setUserPos({ lat, lng, source });
       setGpsError('');
       checkAutoTrigger(lat, lng);
     },
@@ -199,7 +199,7 @@ export function useAutoNarration({
 
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        applyPosition(pos.coords.latitude, pos.coords.longitude, 'Vị trí GPS');
+        applyPosition(pos.coords.latitude, pos.coords.longitude, 'gps');
       },
       (err) => {
         let msg = gpsErrorMessage;
@@ -231,11 +231,11 @@ export function useAutoNarration({
 
   // Keep watching position if auto is enabled and user has real GPS
   useEffect(() => {
-    if (isAutoEnabled && userPos?.label === 'Vị trí GPS' && navigator.geolocation) {
+    if (isAutoEnabled && userPos?.source === 'gps' && navigator.geolocation) {
       clearGpsWatch();
       watchIdRef.current = navigator.geolocation.watchPosition(
         (pos) => {
-          applyPosition(pos.coords.latitude, pos.coords.longitude, 'Vị trí GPS');
+          applyPosition(pos.coords.latitude, pos.coords.longitude, 'gps');
         },
         (err) => {
           if (err.code === 1) {
@@ -251,7 +251,7 @@ export function useAutoNarration({
     return () => {
       clearGpsWatch();
     };
-  }, [isAutoEnabled, userPos?.label, applyPosition, clearGpsWatch, gpsErrorDeniedText]);
+  }, [isAutoEnabled, userPos?.source, applyPosition, clearGpsWatch, gpsErrorDeniedText]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -262,7 +262,7 @@ export function useAutoNarration({
 
   const applySimulatedPosition = useCallback(
     (lat: number, lng: number) => {
-      applyPosition(lat, lng, 'Chế độ giả lập');
+      applyPosition(lat, lng, 'sim');
     },
     [applyPosition]
   );

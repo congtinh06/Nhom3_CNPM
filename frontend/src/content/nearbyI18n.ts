@@ -647,9 +647,11 @@ export function t(
   let text = dict ? dict[key] : undefined;
   if (!text) {
     if (import.meta.env.DEV) {
-      console.warn(`[nearby i18n] Missing key "${key}" in language "${lang}", falling back`);
+      console.warn(`[nearby i18n] Missing key "${key}" in language "${lang}", falling back to en`);
     }
-    text = NEARBY_DICTIONARY.en[key] ?? NEARBY_DICTIONARY.vi[key] ?? key;
+    // Fall back to English only. Never fall back across languages to Vietnamese,
+    // which would surface Vietnamese text in en/ja/ko UIs.
+    text = NEARBY_DICTIONARY.en[key] ?? key;
   }
   if (params) {
     return text.replace(/\{(\w+)\}/g, (_, k) => String(params[k] ?? `{${k}}`));
