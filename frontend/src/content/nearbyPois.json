@@ -34,7 +34,9 @@
     "narration": {
       "short": {
         "vi": "Chào mừng bạn đến Dinh Độc Lập, nơi gắn liền với ngày thống nhất đất nước. Nơi đây từng là dinh của chính quyền thuộc địa Pháp, sau này là dinh của các tổng thống Việt Nam Cộng hòa. Tòa nhà bạn đang thấy được xây dựng vào những năm sáu mươi. Vào ngày ba mươi tháng tư năm một nghìn chín trăm bảy mươi lăm, xe tăng đã tiến qua cổng chính, đánh dấu sự kết thúc của cuộc chiến. Hãy dành vài phút ngắm tòa nhà từ bãi cỏ phía trước, rồi bước vào trong để xem phòng khánh tiết và hầm chỉ huy. Ngày nay, dinh là một bảo tàng mở cửa cho mọi người tham quan.",
-        "en": "Welcome to Independence Palace, a place tied to the day the country was reunified. The site once housed the French colonial rulers, and later the presidents of South Vietnam. The building in front of you was completed in the nineteen sixties. On the thirtieth of April, nineteen seventy-five, tanks drove through the gates, and the war came to an end. Take a few minutes to see the building from the front lawn, then step inside to see the reception rooms and the command bunker. Today the palace is a museum open to all visitors."
+        "en": "Welcome to Independence Palace, a place tied to the day the country was reunified. The site once housed the French colonial rulers, and later the presidents of South Vietnam. The building in front of you was completed in the nineteen sixties. On the thirtieth of April, nineteen seventy-five, tanks drove through the gates, and the war came to an end. Take a few minutes to see the building from the front lawn, then step inside to see the reception rooms and the command bunker. Today the palace is a museum open to all visitors.",
+        "ja": "国の統一の歴史と深く結びついた統一会堂へようこそ。ここはかつてフランス植民地政府の総督邸であり、後に南ベトナム大統領官邸となりました。現在ご覧いただいている建物は1960年代に建てられたものです。1975年4月30日、戦車が正門を突破し、戦争の終結を告げました。前庭の芝生から建物を眺めたら、中に入って大広間や地下作戦司令室をご見学ください。今日、統一会堂は誰もが訪れることができる博物館として公開されています。",
+        "ko": "국가 통일의 역사적 순간을 간직한 통일궁에 오신 것을 환영합니다. 이곳은 과거 프랑스 식민 통치자의 관저였으며, 이후 베트남 공화국 대통령 관저로 사용되었습니다. 지금 보시는 건물은 1960년대에 완공되었습니다. 1975년 4월 30일, 탱크가 정문을 뚫고 진입하며 전쟁이 종식되었습니다. 앞뜰 잔디밭에서 건물 전경을 감상하신 후, 내부로 들어가 접견실과 지하 지휘 벙커를 둘러보세요. 현재 통일궁은 모든 방문객에게 개방된 박물관으로 운영되고 있습니다."
       },
       "full": {
         "vi": [
@@ -48,6 +50,18 @@
           "Architect Ngô Viết Thụ designed the building you see today. It was completed in nineteen sixty-six, blending a modern style with Eastern elements, with open spaces and tall, airy halls. Inside are reception rooms, a cabinet meeting room, the president's office, and a command bunker underground.",
           "On the thirtieth of April, nineteen seventy-five, tanks of the liberation forces entered the grounds and broke through the gate. President Dương Văn Minh announced the surrender, and a flag was raised over the palace. That day is remembered as the reunification of the country.",
           "Afterwards the building was called Reunification Hall, and later became a historic site. In two thousand nine, it was recognized as a special national monument. As you walk the grounds, look for the two tanks in the front yard, and if you have time, visit the command bunker."
+        ],
+        "ja": [
+          "統一会堂は、市中心部の広大な庭園の中に位置しています。この場所の歴史は19世紀、フランスが植民地総督の住居兼執務室としてノロドム宮殿を建設したことから始まりました。1954年以降、南ベトナム政権の拠点となりました。1962年に2名のパイロットによる爆撃で旧宮殿が大破したため、当時の政権は解体して新たな建物を建設することを決定しました。",
+          "建築家ゴー・ヴィエット・トゥが現在ご覧いただける建物を設計しました。1966年に完成したこの建築は、現代的な様式と東洋の思想を融合させ、風通しの良い開放的な空間と壮大なロビーを備えています。内部には大広間、閣僚会議室、大統領執務室、そして地下に作戦司令室が配置されています。",
+          "1975年4月30日、解放軍の戦車が敷地に突入し正門を打ち破りました。ズオン・ヴァン・ミン大統領が無条件降伏を宣言し、屋上に旗が掲げられました。この日は祖国統一の日として歴史に刻まれています。",
+          "その後、この場所は統一会堂と改称され、歴史遺産となりました。2009年には国家特別史跡に指定されました。敷地内を散策する際は前庭の2両の戦車に注目し、お時間があればぜひ地下司令室もご覧ください。"
+        ],
+        "ko": [
+          "통일궁은 도심 한가운데의 넓은 정원 속에 자리 잡고 있습니다. 이곳의 역사는 19세기 프랑스가 식민지 총독의 관저이자 집무실로 노로돔 궁전을 지으면서 시작되었습니다. 1954년 이후 남베트남 정권의 중심지가 되었으며, 1962년 두 명의 조종사가 궁전을 폭격하여 옛 건물이 심각하게 파손되자 건물을 철거하고 새로 짓기로 결정했습니다.",
+          "건축가 응오 비엣 투가 오늘날의 건물을 설계했습니다. 1966년에 완공된 이 건물은 현대적 양식과 동양적 철학을 조화롭게 결합하여 통풍이 잘되는 넓은 홀을 갖추고 있습니다. 내부에는 국빈 접견실, 내각 회의실, 대통령 집무실과 지하에 위치한 군사 지휘 벙커가 있습니다.",
+          "1975년 4월 30일, 해방군의 탱크가 경내로 진입하여 궁전 정문을 밀고 들어왔습니다. 즈엉 반 민 대통령이 항복을 선언하고 궁전 옥상에 깃발이 게양되었습니다. 그날은 국가 통일의 날로 기억되고 있습니다.",
+          "이후 이곳은 통일회당으로 불리다 유적지가 되었습니다. 2009년에는 국가 특별 유적지로 지정되었습니다. 경내를 거닐며 앞마당의 탱크 두 대를 살펴보시고, 시간이 되신다면 지하 벙커도 꼭 방문해 보시기 바랍니다."
         ]
       }
     }
@@ -87,7 +101,9 @@
     "narration": {
       "short": {
         "vi": "Bạn đang đứng trước Nhà thờ Đức Bà, một trong những biểu tượng kiến trúc nổi tiếng nhất của Sài Gòn. Nhà thờ được người Pháp xây dựng vào cuối thế kỷ mười chín, với những viên gạch đỏ không phủ vữa và hai tháp chuông cao vút. Phía trước là tượng Đức Mẹ Hòa Bình, nhìn ra một quảng trường nhỏ. Dù bạn theo tôn giáo nào, đây vẫn là nơi đẹp để dừng lại, ngước nhìn và chụp một tấm ảnh. Ngay bên cạnh là Bưu điện Trung tâm, điểm dừng tiếp theo của bạn.",
-        "en": "You are standing before Notre-Dame Cathedral, one of the best-known landmarks of Saigon. The French built it in the late nineteenth century, with red bricks left bare and two tall bell towers. In front stands the statue of Our Lady of Peace, facing a small square. Whatever your beliefs, this is a lovely place to pause, look up, and take a photograph. Right next door is the Central Post Office, your next stop."
+        "en": "You are standing before Notre-Dame Cathedral, one of the best-known landmarks of Saigon. The French built it in the late nineteenth century, with red bricks left bare and two tall bell towers. In front stands the statue of Our Lady of Peace, facing a small square. Whatever your beliefs, this is a lovely place to pause, look up, and take a photograph. Right next door is the Central Post Office, your next stop.",
+        "ja": "サイゴンで最も有名な建築の象徴の一つであるサイゴン大聖堂の前に立っています。この教会は19世紀末にフランスによって建てられ、化粧漆喰を施さない赤レンガと天にそびえる2つの鐘楼が特徴です。正面には小さな広場を見守るように平和の聖母マリア像が立っています。信仰を問わず、足を止めて見上げ、記念写真を撮るのに最適な場所です。すぐ隣には次の目的地である中央郵便局があります。",
+        "ko": "사이공에서 가장 유명한 건축 랜드마크 중 하나인 노트르담 대성당 앞에 계십니다. 이 성당은 19세기 후반 프랑스에 의해 건립되었으며, 회반죽을 칠하지 않은 붉은 벽돌과 우뚝 솟은 두 개의 종탑이 특징입니다. 앞쪽에는 작은 광장을 바라보고 있는 평화의 성모 마리아상이 서 있습니다. 종교와 상관없이 잠시 멈춰 서서 사진을 남기기에 아름다운 장소입니다. 바로 옆에는 다음 정류장인 중앙 우체국이 있습니다."
       },
       "full": {
         "vi": [
@@ -101,6 +117,18 @@
           "What you notice first is the red brick on the outside. Many sources say the bricks were brought from Marseille, in France, and they still keep their color today without any paint. Two bell towers were added in eighteen ninety-five, rising about sixty meters including the cross on top.",
           "In front stands the statue of Our Lady of Peace, placed in nineteen fifty-nine. In nineteen sixty-two, the church was raised to the rank of basilica.",
           "Walk slowly around the cathedral and look at the brick façade and the stained glass. If you plan to go inside, check the opening hours first, because there are times for services and times for visitors, and some areas may be closed for restoration. Just a few steps away stands the Central Post Office, your next stop."
+        ],
+        "ja": [
+          "サイゴン大聖堂の正式名称は無原罪の御宿りの聖母大聖堂です。フランス植民地時代に建設され、1863年に着工、1880年に完成しました。建築家ジュール・ブラールがヨーロッパのロマネスク様式とゴシック様式を取り入れて設計しました。",
+          "最も際立っているのは外壁の赤レンガです。多くの記録によれば、レンガはフランスのマルセイユから運ばれ、今日に至るまで塗装を一切施すことなくその鮮やかな色を保っています。1895年には2基の鐘楼が増築され、頂上の十字架を含めて高さ約60メートルに達します。",
+          "聖堂の前には1959年に建立された平和の聖母像があります。1962年にバシリカ（大聖堂）の称号を授与されました。",
+          "大聖堂の周囲をゆっくり歩き、赤レンガのファサードやステンドグラスの窓をご鑑賞ください。中に入る場合は、ミサの時間と見学時間が分かれており、修復工事中のエリアもあるため、事前に開放時間をご確認ください。数歩歩けば次の目的地である中央郵便局に到着します。"
+        ],
+        "ko": [
+          "노트르담 대성당의 공식 명칭은 원죄 없이 잉태되신 성모 대성당입니다. 프랑스 식민지 시절인 1863년에 착공하여 1880년에 완공되었습니다. 건축가 쥘 부라르가 유럽의 로마네스크와 고딕 양식을 결합하여 설계했습니다.",
+          "가장 눈에 띄는 특징은 외벽의 붉은 벽돌입니다. 여러 기록에 따르면 이 벽돌들은 프랑스 마르세유에서 직접 운반되어 왔으며, 페인트칠 없이도 지금까지 본래의 색을 유지하고 있습니다. 1895년에 증축된 두 개의 종탑은 꼭대기의 십자가를 포함하여 약 60미터 높이에 이릅니다.",
+          "성당 앞마당에는 1959년에 세워진 평화의 성모상이 자리하고 있습니다. 1962년에는 준대성당(바실리카)으로 승격되었습니다.",
+          "성당 주변을 천천히 둘러보며 붉은 벽돌 외관과 스테인드글라스 창문을 감상해 보세요. 내부에 들어가시려면 미사 시간과 관람 시간이 다르며 보수 공사 중일 수 있으니 개방 시간을 미리 확인하시는 것이 좋습니다. 몇 걸음만 걸어가면 다음 목적지인 중앙 우체국이 나옵니다."
         ]
       }
     }
@@ -140,7 +168,9 @@
     "narration": {
       "short": {
         "vi": "Bưu điện Trung tâm Sài Gòn nổi bật với mái vòm cong cổ điển, sàn gạch hoa văn tinh tế và những tấm bản đồ vẽ tay trên tường. Công trình được xây dựng vào cuối thế kỷ mười chín, và đến nay vẫn là một bưu điện đang hoạt động. Người ta thường kể rằng Eiffel đã thiết kế nơi này, nhưng đó nhiều khả năng chỉ là giai thoại. Bạn có thể bước vào trong, ngắm trần vòm, mua một tấm bưu thiếp và gửi về cho người thân.",
-        "en": "The Central Post Office stands out with its curved, classical vaulted roof, its patterned tile floor, and the hand-painted maps on its walls. It was built in the late nineteenth century and is still a working post office today. People often say Eiffel designed it, but that is most likely just a legend. Step inside, look up at the arched ceiling, and send a postcard to someone you love."
+        "en": "The Central Post Office stands out with its curved, classical vaulted roof, its patterned tile floor, and the hand-painted maps on its walls. It was built in the late nineteenth century and is still a working post office today. People often say Eiffel designed it, but that is most likely just a legend. Step inside, look up at the arched ceiling, and send a postcard to someone you love.",
+        "ja": "サイゴン中央郵便局は、クラシックなアーチ型の丸天井、精巧な模様のタイル床、壁に描かれた手描きの地図が際立つ名建築です。19世紀末に建てられ、現在も郵便局として機能しています。ギュスターヴ・エッフェルが設計したと語り継がれることが多いですが、それは伝説に過ぎない可能性が高いとされています。中に足を踏み入れ、アーチ天井を見上げ、記念の絵葉書を買って大切な人に送ってみてはいかがでしょうか。",
+        "ko": "사이공 중앙 우체국은 고전적인 아치형 돔 천장, 정교한 패턴 타일 바닥, 벽면에 손으로 그린 지도들이 돋보이는 건축물입니다. 19세기 후반에 건립되어 오늘날까지도 실제로 운영 중인 우체국입니다. 흔히 에펠이 설계했다고 알려져 있지만, 이는 전설에 가까운 이야기입니다. 내부로 들어가 돔 천장을 올려다보고 엽서를 한 장 사서 소중한 사람에게 부쳐 보세요."
       },
       "full": {
         "vi": [
@@ -152,6 +182,16 @@
           "The Central Post Office was built between eighteen eighty-six and eighteen ninety-one, during the French colonial period. People often say it was designed by Gustave Eiffel, but many sources credit an architect named Alfred Foulhoux. The Eiffel story is most likely just a legend.",
           "Step inside. You will find a long hall with a curved roof, a light iron frame, and tall arched windows. The floor is covered in patterned tiles, and rows of wooden counters and old telephone booths are still in place. On the walls hang two large hand-painted maps. One shows Saigon and its surroundings in eighteen ninety-two. The other shows the telegraph lines of southern Vietnam and Cambodia. At the far end you will see a portrait of President Hồ Chí Minh.",
           "The post office is not only for sightseeing. People still come here to send letters, buy stamps, and write postcards. If you have a few minutes, buy a postcard, write a few lines, and send it off. It is a charming way to send a piece of Saigon home."
+        ],
+        "ja": [
+          "中央郵便局は、フランス植民地時代の1886年から1891年にかけて建設されました。ギュスターヴ・エッフェルが設計したとしばしば語られますが、実際の建築家はアルフレッド・フルフーであるとする資料が多くあります。エッフェルの物語はおそらくロマンチックな伝説です。",
+          "中に入ると、アーチ状の丸天井と軽やかな鉄骨フレーム、背の高いアーチ窓を備えた細長いホールが広がっています。床には美しい花模様のタイルが敷き詰められ、木製の受付カウンターやクラシックな電話ボックスが当時の面影を残しています。壁には手描きの大きな古地図が2枚掲げられています。1枚は1892年のサイゴン近郊図、もう1枚は南ベトナムとカンボジアの電信網図です。ホールの奥にはホー・チ・ミン主席の肖像画が掲げられています。",
+          "この郵便局は見学のためだけのものではありません。現在も市民が手紙を出し、切手を買い、絵葉書を書く現役の場所です。少し時間があれば絵葉書を買い、メッセージを書いて投函してみてください。サイゴンの旅の思い出を届ける素晴らしい方法です。"
+        ],
+        "ko": [
+          "중앙 우체국은 프랑스 식민지 시대인 1886년부터 1891년 사이에 건설되었습니다. 구스타프 에펠이 설계했다고 전해지기도 하지만, 실제 건축가는 알프레드 풀루라는 기록이 많습니다. 에펠의 이야기는 흥미로운 전설일 가능성이 높습니다.",
+          "안으로 들어가 보세요. 둥근 아치형 천장과 가벼운 철골 구조, 높은 아치창이 있는 기다란 홀이 펼쳐집니다. 바닥은 다채로운 문양의 타일로 장식되어 있고, 오래된 목재 카운터와 클래식 공중전화 부스가 그대로 보존되어 있습니다. 벽면에는 두 장의 대형 손그림 지도가 걸려 있는데, 하나는 1892년 사이곤 주변 지도이고 다른 하나는 남베트남과 캄보디아의 전신망 지도입니다. 홀 끝에는 호찌민 주석의 초상화가 걸려 있습니다.",
+          "우체국은 단순히 구경만 하는 곳이 아닙니다. 지금도 편지를 부치고 우표를 사고 엽서를 쓰는 실제 공간입니다. 잠시 시간을 내어 예쁜 엽서를 사서 마음을 적어 보내 보세요. 사이공의 정취를 전하는 따뜻한 경험이 될 것입니다."
         ]
       }
     }
@@ -191,7 +231,9 @@
     "narration": {
       "short": {
         "vi": "Chợ Bến Thành là biểu tượng của Sài Gòn từ hơn một trăm năm nay. Tòa nhà có tháp đồng hồ ở cửa Nam được khánh thành năm một nghìn chín trăm mười bốn, nhưng khu chợ ven sông ở đây đã có từ trước đó rất lâu. Bên trong có rất nhiều gian hàng bán đồ ăn, vải vóc, quà lưu niệm và cà phê. Bạn có thể dừng ở cửa Nam để chụp ảnh với tháp đồng hồ. Hãy đi chậm và hỏi giá trước khi mua.",
-        "en": "Ben Thanh Market has been a symbol of Saigon for over a hundred years. The building with the clock tower at its south gate opened in nineteen fourteen, but a riverside market stood here long before. Inside you will find many stalls selling food, fabric, souvenirs, and coffee. You can stop at the south gate for a photo with the clock tower. Walk slowly, and ask the price before you buy."
+        "en": "Ben Thanh Market has been a symbol of Saigon for over a hundred years. The building with the clock tower at its south gate opened in nineteen fourteen, but a riverside market stood here long before. Inside you will find many stalls selling food, fabric, souvenirs, and coffee. You can stop at the south gate for a photo with the clock tower. Walk slowly, and ask the price before you buy.",
+        "ja": "ベンタイン市場は100年以上にわたりサイゴンの象徴であり続けています。南門に時計台を持つ現在の建物は1914年に完成しましたが、川沿いの市場自体はそれよりはるか昔から存在していました。市場内には食品、布地、お土産、コーヒーなどを扱う無数の屋台がひしめき合っています。南門で時計台を背景に写真を撮るのもおすすめです。ゆっくり歩き、値段を確認してから買い物を楽しんでください。",
+        "ko": "벤탄 시장은 100년 넘게 사이공의 대표적인 상징으로 자리해 왔습니다. 남문 시계탑이 있는 현재 건물은 1914년에 문을 열었지만, 이곳의 강변 시장 역사는 그보다 훨씬 오래전으로 거슬러 올라갑니다. 내부에는 음식, 옷감, 기념품, 커피 등을 파는 상점들이 가득합니다. 남문에서 시계탑을 배경으로 사진을 남겨 보세요. 천천히 둘러보며 가격을 먼저 확인하고 구매하시는 것을 추천합니다."
       },
       "full": {
         "vi": [
@@ -203,6 +245,16 @@
           "Ben Thanh Market stands in the center of District One, and is one of the most familiar symbols of the city. The market grew out of riverside trading in the early nineteenth century. The present building went up in nineteen twelve and opened in nineteen fourteen, designed by French architects.",
           "The market has four main gates, facing east, west, south, and north. The most famous is the south gate, with its tall clock tower, a sight seen on countless postcards. Inside, the aisles are grouped by goods: fabric and clothing, handicrafts and souvenirs, coffee, tea, dried goods, fruit, and a food area serving familiar Vietnamese dishes.",
           "The market is busiest in the daytime, and in the evening the streets around it also hold a night market. When you shop, ask for the price and bargain gently, which is a friendly part of local trading culture. Take a little time to eat a light snack right here, such as a sweet dessert soup or a small cake, to feel the rhythm of daily life in Saigon."
+        ],
+        "ja": [
+          "ベンタイン市場は1区の中心に位置し、街で最も親しまれているシンボルの一つです。市場の起源は19世紀初頭、人々が川沿いで取引を行っていた時代にさかのぼります。現在の建物は1912年に着工し、フランスの建築家の設計により1914年に開場しました。",
+          "市場には東西南北の4つの正門があります。最も有名なのは南門で、背の高い時計台は数多くの絵葉書でおなじみの風景です。内部の通路は品目ごとに分かれており、衣類や布地、手工芸品とお土産、コーヒーや紅茶、ドライフルーツ、そして伝統的なベトナム料理を味わえるフードコートがあります。",
+          "市場は昼間が最も賑わい、夜になると周辺の通りにナイトマーケットが広がります。買い物の際は丁寧に値段交渉をするのが地元の温かい商業文化です。市場内でチェー（伝統的な甘味）や軽食を味わいながら、サイゴンの活気ある日常の息吹を肌で感じてみてください。"
+        ],
+        "ko": [
+          "벤탄 시장은 1군 중심부에 위치하며 도시에서 가장 친숙한 상징 중 하나입니다. 시장의 기원은 19세기 초 주민들이 강가에서 장을 열던 때로 거슬러 올라갑니다. 현재의 건물은 프랑스 건축가의 설계로 1912년에 착공하여 1914년에 문을 열었습니다.",
+          "시장에는 동, 서, 남, 북 4개의 정문이 있습니다. 가장 유명한 곳은 남문으로, 우뚝 솟은 시계탑은 수많은 엽서에 등장하는 친숙한 이미지입니다. 내부 통로는 의류와 원단, 수공예품과 기념품, 커피, 건어물, 과일, 그리고 베트남 대중 음식을 맛볼 수 있는 푸드존 등으로 나뉘어 있습니다.",
+          "시장은 낮 시간에 가장 붐비며, 저녁이 되면 주변 거리에 야시장이 활기를 띱니다. 쇼핑할 때는 가격을 묻고 부드럽게 흥정해 보는 것이 이곳의 정겨운 문화입니다. 시장 안에서 달콤한 째(디저트)나 전통 간식을 맛보며 사이공 시민들의 활기찬 일상을 느껴 보세요."
         ]
       }
     }
@@ -242,7 +294,9 @@
     "narration": {
       "short": {
         "vi": "Bảo tàng Chứng tích Chiến tranh ghi lại những hậu quả của chiến tranh đối với con người và đất nước Việt Nam. Bảo tàng được thành lập năm một nghìn chín trăm bảy mươi lăm. Sân trước trưng bày máy bay, xe tăng và vũ khí thật, còn các phòng bên trong có nhiều hình ảnh và hiện vật về chiến tranh. Hãy dành cho nơi này một tâm thế trầm lắng. Một số hình ảnh có thể gây xúc động mạnh, nên bạn hãy cân nhắc nếu đi cùng trẻ nhỏ.",
-        "en": "The War Remnants Museum records the consequences of war for the people and the land of Vietnam. It was founded in nineteen seventy-five. The front yard displays real aircraft, tanks, and weapons, and the rooms inside hold photographs and objects from the war. Please come in a quiet frame of mind. Some images can be deeply upsetting, so think twice before bringing young children."
+        "en": "The War Remnants Museum records the consequences of war for the people and the land of Vietnam. It was founded in nineteen seventy-five. The front yard displays real aircraft, tanks, and weapons, and the rooms inside hold photographs and objects from the war. Please come in a quiet frame of mind. Some images can be deeply upsetting, so think twice before bringing young children.",
+        "ja": "戦争証跡博物館は、ベトナムの国土と人々が被った戦争の悲惨な爪痕を記録しています。1975年に設立されました。前庭には本物の航空機、戦車、重兵器が展示され、館内の展示室には数々の戦争資料や写真が収蔵されています。静かな気持ちでご見学いただくことをお勧めします。衝撃的な写真も含まれるため、小さなお子様連れの場合はご留意ください。",
+        "ko": "전쟁 증적 박물관은 베트남 국토와 국민들이 겪은 전쟁의 아픔과 상처를 생생히 기록하고 있습니다. 1975년에 설립되었습니다. 야외 앞마당에는 실제 항공기, 탱크, 무기들이 전시되어 있고, 실내 전시실에는 전쟁 사진과 유물들이 보존되어 있습니다. 차분하고 경건한 마음으로 둘러보시길 권합니다. 일부 사진은 감정적으로 큰 충격을 줄 수 있으니 어린 자녀와 동행할 경우 유의해 주세요."
       },
       "full": {
         "vi": [
@@ -254,6 +308,16 @@
           "The War Remnants Museum is on Võ Văn Tần Street. It was founded in September nineteen seventy-five under a different name, and changed names several times before taking its present name in nineteen ninety-five. Its purpose is to keep photographs, documents, and objects from the Vietnam War, so that visitors can better understand the losses that war causes.",
           "In the front yard you will see aircraft, tanks, artillery, and many kinds of bombs displayed in the open. Inside, the floors present photographs and objects by theme, including a section on the effects of Agent Orange across generations, and a photo exhibition honoring journalists who died in the wars of Indochina.",
           "This is a place to visit in a quiet frame of mind. Some images are very heavy, so think carefully before bringing young children, and feel free to stop and rest whenever you need. It is not only a place to look back at the past, but also a place that reminds us to value peace."
+        ],
+        "ja": [
+          "戦争証跡博物館はヴォー・ヴァン・タン通りにあります。1975年9月に別の名称で設立され、数度の改称を経て1995年に現在の名称となりました。この博物館の目的は、ベトナム戦争の写真、資料、遺物を保存し、戦争がもたらす計り知れない損失と苦痛を来館者に深く理解してもらうことです。",
+          "前庭では、軍用機、戦車、野砲、各種爆弾が屋外展示されています。館内ではテーマ別に写真や遺物が展示されており、世代を超えて影響を及ぼした枯葉剤の惨禍を伝えるコーナーや、インドシナ戦争で命を落とした報道写真家たちを追悼する写真展などがあります。",
+          "ここは厳粛な気持ちで訪れるべき場所です。展示内容には胸に迫るものが多いため、小さなお子様と一緒の際はご注意いただき、必要に応じて適宜休憩を取ってください。過去を振り返るだけでなく、平和のかけがえのない尊さを改めて教えてくれる場所です。"
+        ],
+        "ko": [
+          "전쟁 증적 박물관은 보반탄 거리에 위치해 있습니다. 1975년 9월 다른 이름으로 처음 문을 열었으며, 여러 차례 명칭을 거쳐 1995년에 현재의 이름을 갖게 되었습니다. 박물관의 목적은 베트남 전쟁의 사진, 문서, 유물을 보존하여 전쟁이 남긴 깊은 상처와 희생을 방문객들이 올바르게 이해하도록 돕는 것입니다.",
+          "야외 마당에는 전투기, 탱크, 야포, 각종 폭탄 등이 전시되어 있습니다. 실내 층별 전시실은 주제별로 구성되어 있으며, 세대를 넘어 지속된 고엽제 피해를 다룬 전시와 인도차이나 전쟁 중 순직한 종군 기자들을 기리는 사진전 등이 마련되어 있습니다.",
+          "이곳은 경건한 마음가짐으로 방문해야 할 장소입니다. 다소 무거운 사진들이 포함되어 있으므로 어린이를 동반할 경우 세심한 주의가 필요하며, 필요할 때 언제든 휴식을 취하실 수 있습니다. 과거를 되돌아보는 것뿐만 아니라, 평화의 소중함을 다시 한번 일깨워 주는 뜻깊은 공간입니다."
         ]
       }
     }

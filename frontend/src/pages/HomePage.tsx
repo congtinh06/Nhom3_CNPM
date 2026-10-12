@@ -8,6 +8,7 @@ import { FoodSection } from '../components/sections/FoodSection';
 import { DrinksSection } from '../components/sections/DrinksSection';
 import { TourismTeaserSection } from '../components/sections/TourismTeaserSection';
 import { PlacesSection } from '../components/places/PlacesSection';
+import { HomeNewsSection } from '../components/sections/HomeNewsSection';
 import { ContactSection } from '../components/sections/ContactSection';
 
 export const HomePage: React.FC = () => {
@@ -47,6 +48,7 @@ export const HomePage: React.FC = () => {
       <DrinksSection />
       <TourismTeaserSection />
       <PlacesSection />
+      <HomeNewsSection />
       <ContactSection />
     </div>
   );

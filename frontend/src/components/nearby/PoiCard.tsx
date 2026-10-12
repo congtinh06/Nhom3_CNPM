@@ -196,8 +196,6 @@ export const PoiCard = React.memo<PoiCardProps>(function PoiCard({
           tagName === 'select' ||
           tagName === 'textarea' ||
           target?.isContentEditable ||
-          Boolean(target?.closest('.chapter-mode-switcher')) ||
-          Boolean(target?.closest('.chapter-mode-switch')) ||
           Boolean(target?.closest('[role="button"]')) ||
           Boolean(target?.closest('.accordion')) ||
           Boolean(target?.closest('[aria-expanded]'));
@@ -245,8 +243,8 @@ export const PoiCard = React.memo<PoiCardProps>(function PoiCard({
             )}
           </span>
           {isListened && (
-            <span className="chapter-listened-pill" title={t(currentLang, 'listenedTitle')}>
-              {t(currentLang, 'listenedBadge')}
+            <span className="stop-row-listened" title={t(currentLang, 'listenedTitle')}>
+              ✓
             </span>
           )}
           {inTriggerZone && (
@@ -330,34 +328,7 @@ export const PoiCard = React.memo<PoiCardProps>(function PoiCard({
           )}
         </div>
 
-        {/* 6. "Nghe | Đọc" mode switch */}
-        <div className="chapter-mode-toggle-wrap">
-          <div
-            className="chapter-mode-switcher"
-            role="tablist"
-            aria-label={t(currentLang, 'modeSwitchAria', { name: displayName })}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <button
-              type="button"
-              role="tab"
-              aria-selected={chapterMode === 'listen'}
-              className={`mode-switch-btn ${chapterMode === 'listen' ? 'is-active' : ''}`}
-              onClick={() => setChapterMode('listen')}
-            >
-              {t(currentLang, 'modeListen')}
-            </button>
-            <button
-              type="button"
-              role="tab"
-              aria-selected={chapterMode === 'read'}
-              className={`mode-switch-btn ${chapterMode === 'read' ? 'is-active' : ''}`}
-              onClick={() => setChapterMode('read')}
-            >
-              {t(currentLang, 'modeRead')}
-            </button>
-          </div>
-        </div>
+
 
         {/* Untranslated notice under mode switch */}
         {!hasTxInCurrentLang && (

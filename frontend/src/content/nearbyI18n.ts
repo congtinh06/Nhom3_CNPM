@@ -1,6 +1,7 @@
 import { SupportedLanguage } from '../types';
 
 export type NearbyKey =
+  | 'heroEyebrow'
   | 'pageTitle'
   | 'pageSubtitle'
   | 'breadcrumbHome'
@@ -62,11 +63,7 @@ export type NearbyKey =
   | 'nearBadge'
   | 'distFormat'
   | 'turnOnGpsDist'
-  | 'listenedBadge'
   | 'listenedTitle'
-  | 'modeListen'
-  | 'modeRead'
-  | 'modeSwitchAria'
   | 'readerBoxAria'
   | 'localNameLabel'
   | 'vietnameseContentNote'
@@ -112,7 +109,8 @@ export type NearbyKey =
   | 'distanceLabel'
   | 'stopListHeading'
   | 'stopListAria'
-  | 'detailAreaAria';
+  | 'detailAreaAria'
+  | 'noVoiceForLanguage';
 
 export const NATIVE_LANG_NAMES: Record<SupportedLanguage, string> = {
   vi: 'Tiếng Việt',
@@ -130,6 +128,7 @@ export const LANG_DISPLAY_NAMES: Record<SupportedLanguage, Record<SupportedLangu
 
 export const NEARBY_DICTIONARY: Record<SupportedLanguage, Record<NearbyKey, string>> = {
   vi: {
+    heroEyebrow: 'TUYẾN THUYẾT MINH · 5 ĐIỂM',
     pageTitle: 'Điểm du lịch Sài Gòn',
     pageSubtitle:
       '5 điểm có thuyết minh. Bấm Phát ở bất kỳ điểm nào để phát ngay, hoặc bật thuyết minh tự động để trang tự phát khi bạn đi tới gần.',
@@ -192,11 +191,7 @@ export const NEARBY_DICTIONARY: Record<SupportedLanguage, Record<NearbyKey, stri
     nearBadge: 'Gần bạn',
     distFormat: 'Cách bạn {dist}',
     turnOnGpsDist: 'Bật vị trí để xem khoảng cách',
-    listenedBadge: '✓ Đã nghe',
     listenedTitle: 'Đã nghe điểm này trong tour',
-    modeListen: 'Nghe',
-    modeRead: 'Đọc',
-    modeSwitchAria: 'Chế độ trải nghiệm {name}',
     readerBoxAria: 'Nội dung lời thuyết minh {name}',
     localNameLabel: 'Tên gọi tại địa phương',
     vietnameseContentNote: 'Nội dung tiếng Việt',
@@ -244,8 +239,10 @@ export const NEARBY_DICTIONARY: Record<SupportedLanguage, Record<NearbyKey, stri
     stopListHeading: 'Danh sách điểm dừng',
     stopListAria: 'Danh sách các điểm dừng trong hành trình',
     detailAreaAria: 'Chi tiết điểm dừng đang chọn',
+    noVoiceForLanguage: 'Thiết bị chưa có giọng đọc tiếng Việt.',
   },
   en: {
+    heroEyebrow: 'AUDIO TOUR · 5 LANDMARKS',
     pageTitle: 'Saigon Attractions',
     pageSubtitle:
       '5 historic landmarks with audio guide. Click Play on any spot to listen immediately, or enable auto narration so the guide plays as you walk near.',
@@ -308,11 +305,7 @@ export const NEARBY_DICTIONARY: Record<SupportedLanguage, Record<NearbyKey, stri
     nearBadge: 'Near you',
     distFormat: '{dist} away',
     turnOnGpsDist: 'Turn on GPS to view distance',
-    listenedBadge: '✓ Listened',
     listenedTitle: 'Listened to this stop in the tour',
-    modeListen: 'Listen',
-    modeRead: 'Read',
-    modeSwitchAria: 'Experience mode for {name}',
     readerBoxAria: 'Narration text for {name}',
     localNameLabel: 'Local name',
     vietnameseContentNote: 'Content in Vietnamese',
@@ -360,9 +353,11 @@ export const NEARBY_DICTIONARY: Record<SupportedLanguage, Record<NearbyKey, stri
     stopListHeading: 'Tour Stops',
     stopListAria: 'List of tour stops in the itinerary',
     detailAreaAria: 'Selected stop details',
+    noVoiceForLanguage: 'No English voice found on this device.',
   },
   /* DRAFT: needs native review */
   ko: {
+    heroEyebrow: '오디오 가이드 · 5대 명소',
     pageTitle: '사이공 관광 명소',
     pageSubtitle:
       '오디오 해설이 제공되는 5개 명소. 원하는 곳에서 재생 버튼을 눌러 바로 청취하거나, 자동 해설을 켜서 근처에 도착하면 자동으로 청취할 수 있습니다.',
@@ -425,11 +420,7 @@ export const NEARBY_DICTIONARY: Record<SupportedLanguage, Record<NearbyKey, stri
     nearBadge: '가까운 위치',
     distFormat: '{dist} 거리',
     turnOnGpsDist: '거리를 확인하려면 위치를 켜세요',
-    listenedBadge: '✓ 청취 완료',
     listenedTitle: '투어에서 이 명소를 청취했습니다',
-    modeListen: '청취',
-    modeRead: '읽기',
-    modeSwitchAria: '{name} 체험 모드',
     readerBoxAria: '{name} 해설 텍스트',
     localNameLabel: '현지 명칭',
     vietnameseContentNote: '베트남어 원문',
@@ -476,9 +467,11 @@ export const NEARBY_DICTIONARY: Record<SupportedLanguage, Record<NearbyKey, stri
     stopListHeading: '투어 코스 목록',
     stopListAria: '투어 코스 명소 목록',
     detailAreaAria: '선택된 명소 상세 정보',
+    noVoiceForLanguage: '이 기기에는 한국어 음성이 지원되지 않습니다.',
   },
   /* DRAFT: needs native review */
   ja: {
+    heroEyebrow: '音声ガイド · 5大名所',
     pageTitle: 'サイゴン観光スポット',
     pageSubtitle:
       '音声ガイド付きの5か所の名所。再生ボタンを押してすぐ聴くか、自動ガイドをオンにして近づいた際に自動再生できます。',
@@ -541,11 +534,7 @@ export const NEARBY_DICTIONARY: Record<SupportedLanguage, Record<NearbyKey, stri
     nearBadge: '周辺',
     distFormat: '距離 {dist}',
     turnOnGpsDist: '位置情報をオンにして距離を表示',
-    listenedBadge: '✓ 再生済み',
     listenedTitle: 'このスポットをツアーで再生済みです',
-    modeListen: '聴く',
-    modeRead: '読む',
-    modeSwitchAria: '{name}の体験モード',
     readerBoxAria: '{name}のガイドテキスト',
     localNameLabel: '現地の名称',
     vietnameseContentNote: 'ベトナム語の原文',
@@ -592,6 +581,7 @@ export const NEARBY_DICTIONARY: Record<SupportedLanguage, Record<NearbyKey, stri
     stopListHeading: 'スポット一覧',
     stopListAria: 'ツアー行程のスポット一覧',
     detailAreaAria: '選択中のスポット詳細',
+    noVoiceForLanguage: 'このデバイスには日本語の音声がありません。',
   },
 };
 

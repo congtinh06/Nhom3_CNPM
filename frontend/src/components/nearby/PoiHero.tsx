@@ -13,16 +13,12 @@ interface PoiHeroProps {
   isPlaying: boolean;
   isCurrent: boolean;
   playbackStatus?: PlaybackStatus;
-  chapterMode: 'listen' | 'read';
-  onChangeChapterMode: (mode: 'listen' | 'read') => void;
   onTogglePlay: (poiId: string) => void;
-  isListened?: boolean;
   duration?: number;
   listenBtnText?: string;
   pauseBtnText?: string;
   resumeBtnText?: string;
   getPoiName: (poi: GeoPoi) => string;
-  getPoiCategory: (poi: GeoPoi) => string;
   heroRef?: React.RefObject<HTMLDivElement>;
 }
 
@@ -34,16 +30,12 @@ export const PoiHero: React.FC<PoiHeroProps> = ({
   isPlaying,
   isCurrent,
   playbackStatus,
-  chapterMode,
-  onChangeChapterMode,
   onTogglePlay,
-  isListened = false,
   duration,
   listenBtnText,
   pauseBtnText,
   resumeBtnText,
   getPoiName,
-  getPoiCategory,
   heroRef,
 }) => {
   const [imageError, setImageError] = useState(false);
@@ -55,10 +47,6 @@ export const PoiHero: React.FC<PoiHeroProps> = ({
   const hasNameInLang = Boolean(poi.name[currentLang]);
   const isNameFallback = !hasNameInLang && currentLang !== 'vi';
   const displayName = getPoiName(poi);
-
-  const hasCatInLang = Boolean(poi.category[currentLang]);
-  const isCatFallback = !hasCatInLang && currentLang !== 'vi';
-  const displayCat = getPoiCategory(poi);
 
   // Hero intro: first two sentences of short narration text (2-line clamped)
   const introText = getHeroIntroText(poi, currentLang);
@@ -105,26 +93,15 @@ export const PoiHero: React.FC<PoiHeroProps> = ({
 
         {/* Right column: text content (spans full width if no image) */}
         <div className="nearby-hero-content">
-          {/* Top meta: category, listened badge, and n / 5 position indicator */}
-          <div className="hero-meta-top">
-            <div className="hero-meta-badges">
-              <span className="hero-category-badge" lang={isCatFallback ? 'vi' : currentLang}>
-                {displayCat}
-                {isCatFallback && (
-                  <span className="hero-content-fallback-tag">
-                    ({t(currentLang, 'vietnameseContentNote')})
-                  </span>
-                )}
-              </span>
-              {isListened && (
-                <span className="chapter-listened-pill" title={t(currentLang, 'listenedTitle')}>
-                  {t(currentLang, 'listenedBadge')}
-                </span>
-              )}
-            </div>
-            <span className="hero-position-indicator" aria-label={`Điểm ${originalIndex + 1} trên ${totalStops}`}>
-              {originalIndex + 1} / {totalStops}
-            </span>
+          {/* Eyebrow badge: uppercase small label (ĐIỂM 1 · loại điểm) */}
+          <div className="hero-eyebrow-label" aria-hidden="true">
+            {currentLang === 'en'
+              ? `STOP ${originalIndex + 1}${poi.category?.en || poi.category?.vi ? ` · ${poi.category?.en || poi.category?.vi}` : ''}`
+              : currentLang === 'ja'
+              ? `スポット ${originalIndex + 1}${poi.category?.ja || poi.category?.vi ? ` · ${poi.category?.ja || poi.category?.vi}` : ''}`
+              : currentLang === 'ko'
+              ? `정류장 ${originalIndex + 1}${poi.category?.ko || poi.category?.vi ? ` · ${poi.category?.ko || poi.category?.vi}` : ''}`
+              : `ĐIỂM ${originalIndex + 1}${poi.category?.vi ? ` · ${poi.category?.vi}` : ''}`}
           </div>
 
           {/* Stop title */}
@@ -152,7 +129,7 @@ export const PoiHero: React.FC<PoiHeroProps> = ({
             </p>
           )}
 
-          {/* Primary action row: Play pill button & Listen | Read switch */}
+          {/* Primary action row: Play button, optional duration, and position indicator */}
           <div className="hero-actions-row">
             <button
               type="button"
@@ -198,29 +175,12 @@ export const PoiHero: React.FC<PoiHeroProps> = ({
               <span className="hero-audio-duration">{formattedAudioDuration}</span>
             )}
 
-            {/* Segmented Listen | Read toggle group */}
-            <div
-              className="chapter-mode-switcher hero-mode-switcher"
-              role="group"
-              aria-label={t(currentLang, 'modeSwitchAria', { name: displayName })}
+            <span
+              className="hero-position-indicator"
+              aria-label={`Điểm ${originalIndex + 1} trên ${totalStops}`}
             >
-              <button
-                type="button"
-                aria-pressed={chapterMode === 'listen'}
-                className={`mode-switch-btn ${chapterMode === 'listen' ? 'is-active' : ''}`}
-                onClick={() => onChangeChapterMode('listen')}
-              >
-                {t(currentLang, 'modeListen')}
-              </button>
-              <button
-                type="button"
-                aria-pressed={chapterMode === 'read'}
-                className={`mode-switch-btn ${chapterMode === 'read' ? 'is-active' : ''}`}
-                onClick={() => onChangeChapterMode('read')}
-              >
-                {t(currentLang, 'modeRead')}
-              </button>
-            </div>
+              {originalIndex + 1} / {totalStops}
+            </span>
           </div>
         </div>
       </div>

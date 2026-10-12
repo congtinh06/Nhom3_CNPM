@@ -1,8 +1,7 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useMemo } from 'react';
 import { GeoPoi, getNarration } from '../../pages/NearbyPage';
 import { SupportedLanguage } from '../../types';
 import { SortedPoiItem } from './PoiList';
-import { splitTranscriptIntoSentences } from '../../hooks/useNearbyAudio';
 import { t } from '../../content/nearbyI18n';
 
 interface PoiReadingSectionProps {
@@ -10,9 +9,11 @@ interface PoiReadingSectionProps {
   currentLang: SupportedLanguage;
   isPlaying: boolean;
   isCurrent: boolean;
-  activeSentenceIndex: number | null;
+  activeSentenceIndex?: number | null;
+  activeCharOffset?: number | null;
+  activeCharLength?: number;
+  syncMode?: 'boundary' | 'estimate';
   audioSourceType?: string;
-  chapterMode: 'listen' | 'read';
   prevItem: SortedPoiItem | null;
   nextItem: SortedPoiItem | null;
   onSelectPoi: (poiId: string) => void;
@@ -25,9 +26,10 @@ export const PoiReadingSection: React.FC<PoiReadingSectionProps> = ({
   currentLang,
   isPlaying,
   isCurrent,
-  activeSentenceIndex,
-  audioSourceType,
-  chapterMode,
+  activeCharOffset = null,
+  activeCharLength = 0,
+  syncMode = 'boundary',
+  audioSourceType = 'speech',
   prevItem,
   nextItem,
   onSelectPoi,
@@ -35,7 +37,8 @@ export const PoiReadingSection: React.FC<PoiReadingSectionProps> = ({
   formattedDist,
 }) => {
   const { poi } = activeItem;
-  const activeSentenceRef = useRef<HTMLSpanElement | null>(null);
+  const currentWordRef = useRef<HTMLSpanElement | null>(null);
+  const lastUserScrollTimeRef = useRef<number>(0);
 
   const displayName = getPoiName(poi);
   // Reading section is "read more" content, based strictly on the full layer:
@@ -45,24 +48,73 @@ export const PoiReadingSection: React.FC<PoiReadingSectionProps> = ({
   const showReadingBody = Boolean(fullParagraphs && fullParagraphs.length > 0);
   const displayParagraphs: string[] = showReadingBody ? (fullParagraphs as string[]) : [];
 
-  let sentenceCounter = 0;
-  const paragraphSentenceGroups = displayParagraphs.map((para) => {
-    const pSentences = splitTranscriptIntoSentences(para);
-    return pSentences.map((s) => ({
-      sentence: s.sentence,
-      globalIndex: sentenceCounter++,
-    }));
-  });
-
-  // Auto-scroll active sentence within viewport when audio is playing in listen mode
+  // Track user manual scrolling with 3-second lockout window
   useEffect(() => {
-    if (isCurrent && isPlaying && chapterMode === 'listen' && activeSentenceRef.current) {
-      activeSentenceRef.current.scrollIntoView({
-        block: 'nearest',
-        behavior: 'smooth',
+    if (typeof window === 'undefined') return;
+
+    const onUserScroll = () => {
+      lastUserScrollTimeRef.current = Date.now();
+    };
+
+    window.addEventListener('wheel', onUserScroll, { passive: true });
+    window.addEventListener('touchmove', onUserScroll, { passive: true });
+    window.addEventListener('keydown', onUserScroll, { passive: true });
+
+    return () => {
+      window.removeEventListener('wheel', onUserScroll);
+      window.removeEventListener('touchmove', onUserScroll);
+      window.removeEventListener('keydown', onUserScroll);
+    };
+  }, []);
+
+  // Precompute paragraph boundaries in the full joined string (which joins paragraphs with a single space)
+  const paragraphRanges = useMemo(() => {
+    let offset = 0;
+    return displayParagraphs.map((para) => {
+      const start = offset;
+      const end = start + para.length;
+      offset = end + 1; // 1 space joining paragraphs in speak()
+      return { start, end, text: para };
+    });
+  }, [displayParagraphs]);
+
+  const isReadingActive =
+    isCurrent &&
+    isPlaying &&
+    audioSourceType === 'speech' &&
+    activeCharOffset !== null;
+
+  // Middle-band scroll: only when the current word leaves the middle band
+  useEffect(() => {
+    if (!isReadingActive || !currentWordRef.current) return;
+
+    // Check 3-second user manual scroll lockout
+    if (Date.now() - lastUserScrollTimeRef.current < 3000) return;
+
+    if (typeof window === 'undefined') return;
+
+    const el = currentWordRef.current;
+    if (typeof el.getBoundingClientRect !== 'function') return;
+
+    const rect = el.getBoundingClientRect();
+    const vh = window.innerHeight || 800;
+
+    // Middle band: between 25% and 75% of viewport, accounting for sticky header (~70px) and bottom bar (~90px)
+    const bandTop = Math.max(90, vh * 0.25);
+    const bandBottom = Math.min(vh - 110, vh * 0.75);
+
+    // Only scroll if the word has left the middle band
+    if (rect.top < bandTop || rect.bottom > bandBottom) {
+      const prefersReducedMotion =
+        typeof window.matchMedia === 'function' &&
+        window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+      el.scrollIntoView({
+        block: 'center',
+        behavior: prefersReducedMotion ? 'auto' : 'smooth',
       });
     }
-  }, [isCurrent, isPlaying, chapterMode, activeSentenceIndex]);
+  }, [isReadingActive, activeCharOffset]);
 
   // Facts row: Address and distance
   const rawAddress = (poi as any).address;
@@ -102,40 +154,75 @@ export const PoiReadingSection: React.FC<PoiReadingSectionProps> = ({
 
   return (
     <section className="nearby-reading-section" aria-label={`Nội dung thuyết minh: ${displayName}`}>
-      <div className="nearby-reading-container">
+      <div className="nearby-reading-container" data-sync={syncMode}>
         {/* Reading body: rendered only when the full narration layer exists for the current language */}
         {showReadingBody && (
           <>
             <h3 className="reading-stop-title">{displayName}</h3>
 
             {/* Reading body: Comfortable 720px max-width, 17px font, 1.7 line height, no inner scroll */}
-            <div className="reading-body-flow" lang={currentLang}>
-              {paragraphSentenceGroups.map((pGroup, pIdx) => (
-                <p key={pIdx} className="reading-paragraph">
-                  {pGroup.map((item, itemIdx) => {
-                    const isSentenceActive =
-                      isCurrent &&
-                      isPlaying &&
-                      audioSourceType === 'speech' &&
-                      activeSentenceIndex === item.globalIndex;
-                    return (
-                      <React.Fragment key={item.globalIndex}>
-                        {itemIdx > 0 && ' '}
-                        <span
-                          ref={isSentenceActive ? activeSentenceRef : null}
-                          className={`transcript-sentence-node ${
-                            isSentenceActive && chapterMode === 'listen'
-                              ? 'is-highlighted-sentence'
-                              : ''
-                          }`}
-                        >
-                          {item.sentence}
-                        </span>
-                      </React.Fragment>
-                    );
-                  })}
-                </p>
-              ))}
+            <div className="reading-body-flow" lang={currentLang} data-sync={syncMode}>
+              {paragraphRanges.map((pRange, pIdx) => {
+                const paraText = pRange.text;
+
+                // When idle or not reading, render plain text with no segment spans (uniform --fb-text-primary)
+                if (!isReadingActive || activeCharOffset === null) {
+                  return (
+                    <p key={pIdx} className="reading-paragraph">
+                      {paraText}
+                    </p>
+                  );
+                }
+
+                const { start, end } = pRange;
+
+                // Case 1: Entire paragraph already read
+                if (activeCharOffset >= end) {
+                  return (
+                    <p key={pIdx} className="reading-paragraph">
+                      <span className="reading-segment-read">{paraText}</span>
+                    </p>
+                  );
+                }
+
+                const wordLen = Math.max(1, activeCharLength || 1);
+                // Case 2: Entire paragraph not yet read
+                if (activeCharOffset + wordLen <= start) {
+                  return (
+                    <p key={pIdx} className="reading-paragraph">
+                      <span className="reading-segment-unread">{paraText}</span>
+                    </p>
+                  );
+                }
+
+                // Case 3: Active paragraph containing current word
+                // Slicing mathematically guarantees: segRead + segCurrent + segUnread === paraText
+                const localWordStart = Math.max(0, activeCharOffset - start);
+                const localWordEnd = Math.min(
+                  paraText.length,
+                  Math.max(localWordStart + 1, activeCharOffset + wordLen - start)
+                );
+
+                const segRead = paraText.slice(0, localWordStart);
+                const segCurrent = paraText.slice(localWordStart, localWordEnd);
+                const segUnread = paraText.slice(localWordEnd);
+
+                return (
+                  <p key={pIdx} className="reading-paragraph">
+                    {segRead.length > 0 && (
+                      <span className="reading-segment-read">{segRead}</span>
+                    )}
+                    {segCurrent.length > 0 && (
+                      <span ref={currentWordRef} className="reading-segment-current">
+                        {segCurrent}
+                      </span>
+                    )}
+                    {segUnread.length > 0 && (
+                      <span className="reading-segment-unread">{segUnread}</span>
+                    )}
+                  </p>
+                );
+              })}
             </div>
           </>
         )}

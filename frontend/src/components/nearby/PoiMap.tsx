@@ -773,7 +773,7 @@ export const PoiMap: React.FC<PoiMapProps> = ({
                   positions={pair}
                   pathOptions={{
                     color: '#FFFFFF',
-                    weight: 10,
+                    weight: 12,
                     opacity: 0.95,
                     lineCap: 'round',
                     lineJoin: 'round',
@@ -784,7 +784,7 @@ export const PoiMap: React.FC<PoiMapProps> = ({
                   positions={pair}
                   pathOptions={{
                     color: routeAccentColor,
-                    weight: 6,
+                    weight: 8,
                     opacity: 1,
                     lineCap: 'round',
                     lineJoin: 'round',

@@ -6,10 +6,16 @@ import {
   splitTranscriptIntoSentences,
   isBackendDetailForPoi,
   normalizePoiName,
+  resolvePlayback,
+  ENABLE_REMOTE_AUDIO,
+  SPEECH_LANG_MAP,
+  findMatchingVoice,
+  useNearbyAudio,
 } from '../hooks/useNearbyAudio';
 import { ToastProvider } from '../context/ToastContext';
 import { AudioPlayerBar } from '../components/nearby/AudioPlayerBar';
 import { GeoPoi } from '../pages/NearbyPage';
+import { SupportedLanguage } from '../types';
 import { TILE_PROVIDERS } from '../components/nearby/PoiMap';
 import nearbyPoisData from '../content/nearbyPois.json';
 
@@ -260,6 +266,181 @@ describe('isBackendDetailForPoi - backend/stop identity gate', () => {
     expect(normalizePoiName('Bưu điện Trung tâm Sài Gòn')).toBe(
       'buu dien trung tam sai gon'
     );
+  });
+});
+
+describe('Audio Resolution, Voice Selection & Linkage (Tasks 1 to 6)', () => {
+  const pois = nearbyPoisData as GeoPoi[];
+  const languages: SupportedLanguage[] = ['vi', 'en', 'ja', 'ko'];
+
+  it('(a) for every stop x language, text passed to speak() equals displayed text of the selected layer', () => {
+    for (const poi of pois) {
+      for (const lang of languages) {
+        // 1. Full layer: for vi/en equals full paragraphs joined; for ja/ko equals transcript
+        const fullResolution = resolvePlayback(poi, lang, 'full');
+        expect(fullResolution.lang).toBe(lang);
+        expect(fullResolution.source).toBe('speech');
+        expect(fullResolution.text.trim().length).toBeGreaterThan(0);
+
+        const expectedFull = poi.narration?.full?.[lang]?.join(' ') || poi.transcript[lang];
+        expect(fullResolution.text).toBe(expectedFull);
+
+        // 2. Short layer: equals narration.short (or transcript fallback)
+        const shortResolution = resolvePlayback(poi, lang, 'short');
+        expect(shortResolution.lang).toBe(lang);
+        expect(shortResolution.source).toBe('speech');
+        expect(shortResolution.text.trim().length).toBeGreaterThan(0);
+
+        const expectedShort = poi.narration?.short?.[lang] || poi.transcript[lang];
+        expect(shortResolution.text).toBe(expectedShort);
+      }
+    }
+  });
+
+  it('(b) with ENABLE_REMOTE_AUDIO=false no remote audio is used and source is strictly speech', () => {
+    expect(ENABLE_REMOTE_AUDIO).toBe(false);
+    for (const poi of pois) {
+      for (const lang of languages) {
+        const fullRes = resolvePlayback(poi, lang, 'full');
+        expect(fullRes.source).toBe('speech');
+        expect(fullRes.url).toBeUndefined();
+
+        const shortRes = resolvePlayback(poi, lang, 'short');
+        expect(shortRes.source).toBe('speech');
+        expect(shortRes.url).toBeUndefined();
+      }
+    }
+  });
+
+  it('(c) utterance.lang matches the selected language', () => {
+    expect(SPEECH_LANG_MAP.vi).toBe('vi-VN');
+    expect(SPEECH_LANG_MAP.en).toBe('en-US');
+    expect(SPEECH_LANG_MAP.ja).toBe('ja-JP');
+    expect(SPEECH_LANG_MAP.ko).toBe('ko-KR');
+
+    // Matching function verifies exact locale or primary subtag
+    const mockVoices = [
+      { lang: 'vi-VN', name: 'Voice VI', voiceURI: 'v1' } as SpeechSynthesisVoice,
+      { lang: 'en-US', name: 'Voice EN', voiceURI: 'v2' } as SpeechSynthesisVoice,
+      { lang: 'ja-JP', name: 'Voice JA', voiceURI: 'v3' } as SpeechSynthesisVoice,
+      { lang: 'ko-KR', name: 'Voice KO', voiceURI: 'v4' } as SpeechSynthesisVoice,
+    ];
+
+    expect(findMatchingVoice(mockVoices, 'vi-VN')?.lang).toBe('vi-VN');
+    expect(findMatchingVoice(mockVoices, 'en-US')?.lang).toBe('en-US');
+    expect(findMatchingVoice(mockVoices, 'ja-JP')?.lang).toBe('ja-JP');
+    expect(findMatchingVoice(mockVoices, 'ko-KR')?.lang).toBe('ko-KR');
+  });
+
+  it('(d) no matching voice -> no speak() call and the message is shown', async () => {
+    // Only English voice is available in system
+    const englishOnlyVoices = [
+      { lang: 'en-US', name: 'Voice EN', voiceURI: 'en' } as SpeechSynthesisVoice,
+    ];
+    expect(findMatchingVoice(englishOnlyVoices, 'vi-VN')).toBeNull();
+
+    const speakSpy = vi.fn();
+    (window.speechSynthesis as any).speak = speakSpy;
+    (window.speechSynthesis as any).getVoices = () => englishOnlyVoices;
+
+    const { result } = renderHook(() =>
+      useNearbyAudio({
+        pois,
+        currentLang: 'vi',
+        fallbackNoticeText: () => '',
+        autoTriggerNoticeText: () => '',
+        getPoiName: (p) => p.name.vi,
+      })
+    );
+
+    await act(async () => {
+      result.current.playPoi('poi-1');
+    });
+
+    // Does NOT speak with the non-Vietnamese voice
+    expect(speakSpy).not.toHaveBeenCalled();
+    // Playback is NOT active
+    expect(result.current.isPlaying).toBe(false);
+    expect(result.current.playbackStatus).toBe('idle');
+    // Warning notice is displayed in the player bar
+    expect(result.current.notice).toBe('Thiết bị chưa có giọng đọc tiếng Việt.');
+    expect(result.current.noticeWarn).toBe(true);
+  });
+
+  it('(e) rapid clicks A, B, C end with only C speaking', async () => {
+    const speakSpy = vi.fn();
+    (window.speechSynthesis as any).speak = speakSpy;
+    (window.speechSynthesis as any).getVoices = () => [
+      { lang: 'vi-VN', name: 'Voice VI', voiceURI: 'vi' } as SpeechSynthesisVoice,
+    ];
+
+    const { result } = renderHook(() =>
+      useNearbyAudio({
+        pois,
+        currentLang: 'vi',
+        fallbackNoticeText: () => '',
+        autoTriggerNoticeText: () => '',
+        getPoiName: (p) => p.name.vi,
+      })
+    );
+
+    await act(async () => {
+      result.current.playPoi('poi-1');
+      result.current.playPoi('poi-2');
+      result.current.playPoi('poi-3');
+    });
+
+    // Active stop is C (poi-3)
+    expect(result.current.currentId).toBe('poi-3');
+    expect(result.current.isPlaying).toBe(true);
+    // Spoken text belongs to C (Bưu điện Trung tâm Sài Gòn)
+    expect(speakSpy).toHaveBeenCalled();
+    const calls = speakSpy.mock.calls;
+    const lastCall = calls[calls.length - 1];
+    const lastUtterance = lastCall ? (lastCall[0] as SpeechSynthesisUtterance) : null;
+    expect(lastUtterance?.text).toContain('Bưu điện Trung tâm');
+    expect(lastUtterance?.text).not.toContain('Dinh Độc Lập');
+  });
+
+  it('(f) language change stops playback and does not auto-start another stop', async () => {
+    const speakSpy = vi.fn();
+    const cancelSpy = vi.fn();
+    (window.speechSynthesis as any).speak = speakSpy;
+    (window.speechSynthesis as any).cancel = cancelSpy;
+    (window.speechSynthesis as any).getVoices = () => [
+      { lang: 'vi-VN', name: 'Voice VI', voiceURI: 'vi' } as SpeechSynthesisVoice,
+      { lang: 'en-US', name: 'Voice EN', voiceURI: 'en' } as SpeechSynthesisVoice,
+    ];
+
+    let currentLang: SupportedLanguage = 'vi';
+    const { result, rerender } = renderHook(() =>
+      useNearbyAudio({
+        pois,
+        currentLang,
+        fallbackNoticeText: () => '',
+        autoTriggerNoticeText: () => '',
+        getPoiName: (p) => p.name[currentLang] || p.name.vi,
+      })
+    );
+
+    await act(async () => {
+      result.current.playPoi('poi-1');
+    });
+    expect(result.current.isPlaying).toBe(true);
+
+    speakSpy.mockClear();
+
+    // Change language to English
+    currentLang = 'en';
+    await act(async () => {
+      rerender();
+    });
+
+    // Audio cancelled, not playing, and does NOT auto-restart
+    expect(cancelSpy).toHaveBeenCalled();
+    expect(result.current.isPlaying).toBe(false);
+    expect(result.current.playbackStatus).toBe('idle');
+    expect(speakSpy).not.toHaveBeenCalled();
   });
 });
 

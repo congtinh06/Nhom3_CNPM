@@ -47,7 +47,7 @@ describe('Header Navigation Redesign', () => {
   });
 
   describe('Phần giữa: Cấu trúc điều hướng desktop', () => {
-    it('hiển thị đúng 5 mục: Trang chủ, Điểm du lịch, Ẩm thực, Hướng dẫn, Liên hệ', async () => {
+    it('hiển thị đúng 5 mục: Trang chủ, Điểm du lịch, Ẩm thực, Tin tức, Liên hệ', async () => {
       renderHeader('/');
 
       const nav = await screen.findByRole('navigation', { name: 'Chính' });
@@ -70,17 +70,17 @@ describe('Header Navigation Redesign', () => {
       expect(foodLink).toBeInTheDocument();
       expect(foodLink).toHaveAttribute('href', '/am-thuc');
 
-      // Hướng dẫn (trang riêng) trỏ tới /huong-dan
-      const guideLink = screen.getByRole('link', { name: 'Hướng dẫn' });
-      expect(guideLink).toBeInTheDocument();
-      expect(guideLink).toHaveAttribute('href', '/huong-dan');
+      // Tin tức (trang riêng) trỏ tới /tin-tuc
+      const newsLink = screen.getByRole('link', { name: 'Tin tức' });
+      expect(newsLink).toBeInTheDocument();
+      expect(newsLink).toHaveAttribute('href', '/tin-tuc');
 
       // Liên hệ (trang riêng) trỏ tới /lien-he
       const contactLink = screen.getByRole('link', { name: 'Liên hệ' });
       expect(contactLink).toBeInTheDocument();
       expect(contactLink).toHaveAttribute('href', '/lien-he');
 
-      // Danh sách thứ tự chính xác: Trang chủ, Điểm du lịch, Ẩm thực, Hướng dẫn, Liên hệ
+      // Danh sách thứ tự chính xác: Trang chủ, Điểm du lịch, Ẩm thực, Tin tức, Liên hệ
       const directLinks = Array.from(nav.children)
         .filter((el) => el.tagName === 'A')
         .map((el) => el.textContent?.trim());
@@ -88,7 +88,7 @@ describe('Header Navigation Redesign', () => {
         'Trang chủ',
         'Điểm du lịch',
         'Ẩm thực',
-        'Hướng dẫn',
+        'Tin tức',
         'Liên hệ',
       ]);
 
@@ -106,12 +106,12 @@ describe('Header Navigation Redesign', () => {
       expect(foodLink).toHaveAttribute('aria-current', 'page');
     });
 
-    it('đánh dấu active cho trang Hướng dẫn khi truy cập /huong-dan', async () => {
-      renderHeader('/huong-dan');
+    it('đánh dấu active cho trang Tin tức khi truy cập /tin-tuc', async () => {
+      renderHeader('/tin-tuc');
 
-      const guideLink = await screen.findByRole('link', { name: 'Hướng dẫn' });
-      expect(guideLink).toHaveClass('active');
-      expect(guideLink).toHaveAttribute('aria-current', 'page');
+      const newsLink = await screen.findByRole('link', { name: 'Tin tức' });
+      expect(newsLink).toHaveClass('active');
+      expect(newsLink).toHaveAttribute('aria-current', 'page');
     });
 
     it('đánh dấu active cho trang Liên hệ khi truy cập /lien-he', async () => {

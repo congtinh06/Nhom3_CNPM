@@ -14,17 +14,13 @@ import { PoiList } from '../components/nearby/PoiList';
 import { PoiHero } from '../components/nearby/PoiHero';
 import { PoiReadingSection } from '../components/nearby/PoiReadingSection';
 import { AudioPlayerBar } from '../components/nearby/AudioPlayerBar';
+import { PageHero } from '../components/common/PageHero';
+import { HERO_CONFIG } from '../config/heroImages';
 import '../styles/nearby.css';
 
 export interface NarrationData {
-  short: {
-    vi: string;
-    en: string;
-  };
-  full: {
-    vi: string[];
-    en: string[];
-  };
+  short: Partial<Record<SupportedLanguage, string>>;
+  full: Partial<Record<SupportedLanguage, string[]>>;
 }
 
 export interface GeoPoi {
@@ -67,26 +63,13 @@ export function getNarration(
 ): string | string[] | null {
   if (!poi) return null;
 
-  if (lang === 'vi' || lang === 'en') {
-    if (layer === 'short') {
-      return poi.narration?.short?.[lang] ?? poi.transcript?.[lang] ?? null;
-    }
-    if (layer === 'full') {
-      const fullParas = poi.narration?.full?.[lang];
-      return fullParas && fullParas.length > 0 ? fullParas : null;
-    }
-  }
-
-  // lang ko, ja: short comes from the existing transcript of that language;
-  // full does not exist and the function returns null for it.
-  // Never fall back from ko, ja to another language's text, never show mixed languages.
   if (layer === 'short') {
-    const tx = poi.transcript?.[lang];
-    return tx && tx.trim() ? tx : null;
+    const text = poi.narration?.short?.[lang] ?? poi.transcript?.[lang];
+    return text && typeof text === 'string' && text.trim() ? text : null;
   }
-
   if (layer === 'full') {
-    return null;
+    const fullParas = poi.narration?.full?.[lang];
+    return fullParas && fullParas.length > 0 ? fullParas : null;
   }
 
   return null;
@@ -153,7 +136,6 @@ export const NearbyPage: React.FC = () => {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
-  const [chapterMode, setChapterMode] = useState<'listen' | 'read'>('listen');
 
   // Journey progress tracking persisted in localStorage
   const [listenedPoiIds, setListenedPoiIds] = useState<string[]>(() => {
@@ -271,6 +253,9 @@ export const NearbyPage: React.FC = () => {
     audioSourceType,
     isHtml5Audio,
     activeSentenceIndex,
+    activeCharOffset,
+    activeCharLength,
+    syncMode,
     resolveAudio,
     playPoi,
     togglePlay,
@@ -290,6 +275,7 @@ export const NearbyPage: React.FC = () => {
     audioFallbackSpeechText: t(currentLang, 'audioFallbackSpeech'),
     clickToPlayText: t(currentLang, 'clickToPlayNotice'),
     cannotResumeText: t(currentLang, 'cannotResumeNotice'),
+    noVoiceNoticeText: () => t(currentLang, 'noVoiceForLanguage'),
   });
 
   // Auto Narration & GPS Hook
@@ -379,7 +365,7 @@ export const NearbyPage: React.FC = () => {
     [activeSortedItem, pois, currentId, selectedId, activeId, effectiveActiveId]
   );
 
-  const isPlayerActive = Boolean(activeSelectedPoi && (isPlaying || currentTime > 0));
+  const isPlayerActive = Boolean(activeSelectedPoi && (isPlaying || currentTime > 0 || notice));
 
   useEffect(() => {
     isPlayerActiveRef.current = isPlayerActive;
@@ -459,10 +445,9 @@ export const NearbyPage: React.FC = () => {
     [pois, scrollHeroIntoView]
   );
 
-  // View chapter transcript link from player bar: selects stop & switches to Read mode
+  // View chapter transcript link from player bar: selects stop and scrolls into view
   const handleViewChapterTranscript = useCallback(
     (poiId: string) => {
-      setChapterMode('read');
       handleExplicitSelectPoi(poiId);
     },
     [handleExplicitSelectPoi]
@@ -496,20 +481,27 @@ export const NearbyPage: React.FC = () => {
 
   return (
     <div className="nearby-sv-root" ref={rootRef}>
-      {/* 1. COMPACT CHECKOUT-STYLE HEADER */}
-      <PoiHeader
+      {/* 1. FULL-BLEED PHOTO HERO BANNER */}
+      <PageHero
+        eyebrow={t(currentLang, 'heroEyebrow')}
         title={t(currentLang, 'pageTitle')}
-        description={t(currentLang, 'pageSubtitle')}
+        subtitle={t(currentLang, 'pageSubtitle')}
+        imageSrc={HERO_CONFIG.diemDuLich.src}
+        imageSrcMobile={HERO_CONFIG.diemDuLich.srcMobile}
+        imagePosition={HERO_CONFIG.diemDuLich.position}
+        imageCredit={HERO_CONFIG.diemDuLich.credit}
+      />
+
+      {/* 2. STATS CHIPS UNDER HERO */}
+      <PoiHeader
         stopsCount={pois.length}
         languagesCount={languagesCount}
         approxDistance={approxDistance}
         listenedCount={listenedPoiIds.length}
-        breadcrumbHome={t(currentLang, 'breadcrumbHome')}
-        breadcrumbCurrent={t(currentLang, 'breadcrumbTour')}
         currentLang={currentLang}
       />
 
-      {/* 2. STICKY CONTROL BAR UNDER HEADER */}
+      {/* 3. STICKY CONTROL BAR UNDER HEADER */}
       <ToolbarControls
         myLocationBtnText={t(currentLang, 'myLocation')}
         autoNarrationText={t(currentLang, 'autoNarration')}
@@ -560,16 +552,12 @@ export const NearbyPage: React.FC = () => {
             isPlaying={isPlaying}
             isCurrent={currentId === activeSelectedPoi.id}
             playbackStatus={playbackStatus}
-            chapterMode={chapterMode}
-            onChangeChapterMode={setChapterMode}
             onTogglePlay={handleTogglePlayPoi}
-            isListened={listenedPoiIds.includes(activeSelectedPoi.id)}
             duration={duration}
             listenBtnText={t(currentLang, 'playBtn')}
             pauseBtnText={t(currentLang, 'pauseBtn')}
             resumeBtnText={t(currentLang, 'resumeBtn')}
             getPoiName={getPoiName}
-            getPoiCategory={getPoiCategory}
             heroRef={heroRef}
           />
         )}
@@ -649,8 +637,10 @@ export const NearbyPage: React.FC = () => {
             isPlaying={isPlaying}
             isCurrent={currentId === activeSortedItem.poi.id}
             activeSentenceIndex={activeSentenceIndex}
+            activeCharOffset={activeCharOffset}
+            activeCharLength={activeCharLength}
+            syncMode={syncMode}
             audioSourceType={audioSourceType}
-            chapterMode={chapterMode}
             prevItem={prevItem}
             nextItem={nextItem}
             onSelectPoi={handleExplicitSelectPoi}

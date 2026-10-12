@@ -1,0 +1,331 @@
+import { describe, it, expect, beforeEach } from 'vitest';
+import { render, screen } from '@testing-library/react';
+import { MemoryRouter, Routes, Route } from 'react-router-dom';
+import {
+  adaptNewsItem,
+  adaptNewsDetail,
+  adaptNewsListResponse,
+  isWithin24Hours,
+} from '../api/adapters';
+import { hasNewerArticles } from '../api/news';
+import { NewsListPage } from '../pages/NewsListPage';
+import { NewsDetailPage } from '../pages/NewsDetailPage';
+import { HomeNewsSection } from '../components/sections/HomeNewsSection';
+import { SafeMarkdown } from '../components/news/SafeMarkdown';
+import { NewsItem } from '../types/domain';
+
+describe('News Feature Tests (Tin tức)', () => {
+  describe('1. Adapters & Data Normalization', () => {
+    it('handles empty/undefined raw input gracefully with safe defaults', () => {
+      const adapted = adaptNewsItem({});
+
+      expect(adapted.id).toBeDefined();
+      expect(adapted.title).toBe('');
+      expect(adapted.slug).toBeDefined();
+      expect(adapted.category).toBe('diem-den'); // fallback category
+      expect(adapted.summary).toBe('');
+      expect(adapted.coverImageUrl).toBeNull();
+      expect(adapted.coverImageAlt).toBe('Hình ảnh bài viết');
+      expect(adapted.imageCredit).toBeNull();
+      expect(adapted.readingMinutes).toBe(3); // default minimum reading time
+      expect(adapted.audioUrl).toBeNull();
+      expect(adapted.relatedPoiSlugs).toEqual([]);
+      expect(adapted.isNew).toBe(true); // default nowMs falls in 48h
+    });
+
+    it('cleans up null, undefined and partial fields to prevent "undefined" in UI', () => {
+      const adapted = adaptNewsItem({
+        id: 'news-99',
+        title: '   Tiêu đề bài viết   ',
+        category: 'invalid-category',
+        summary: 'Tóm tắt nội dung',
+        coverImageUrl: null,
+        coverImageAlt: '',
+        imageCredit: undefined,
+        readingMinutes: -5,
+        audioUrl: '',
+        relatedPoiSlugs: ['dinh-doc-lap', '', null as unknown as string],
+      });
+
+      expect(adapted.id).toBe('news-99');
+      expect(adapted.title).toBe('Tiêu đề bài viết');
+      expect(adapted.category).toBe('diem-den'); // fallback
+      expect(adapted.coverImageUrl).toBeNull();
+      expect(adapted.coverImageAlt).toBe('Tiêu đề bài viết'); // fallback to title
+      expect(adapted.imageCredit).toBeNull();
+      expect(adapted.readingMinutes).toBe(3); // normalized positive number
+      expect(adapted.audioUrl).toBeNull();
+      expect(adapted.relatedPoiSlugs).toEqual(['dinh-doc-lap']); // filtered falsy values
+    });
+
+    it('correctly computes isNew flag within 48h vs older', () => {
+      const now = 1700000000000;
+      const recent = new Date(now - 2 * 3600 * 1000).toISOString(); // 2 hours ago
+      const older = new Date(now - 60 * 3600 * 1000).toISOString(); // 60 hours ago (>48h)
+
+      expect(isWithin24Hours(recent, now)).toBe(true);
+      expect(isWithin24Hours(older, now)).toBe(false);
+
+      const recentItem = adaptNewsItem({ publishedAt: recent }, now);
+      const olderItem = adaptNewsItem({ publishedAt: older }, now);
+
+      expect(recentItem.isNew).toBe(true);
+      expect(olderItem.isNew).toBe(false);
+    });
+
+    it('adaptNewsDetail fills default content string', () => {
+      const detail = adaptNewsDetail({
+        id: '1',
+        title: 'Bài viết chi tiết',
+      });
+      expect(detail.content).toBe('');
+      expect(detail.id).toBe('1');
+    });
+
+    it('adaptNewsListResponse handles empty list and announcement', () => {
+      const resp = adaptNewsListResponse({
+        items: [],
+        announcement: '   Thông báo quan trọng   ',
+      });
+      expect(resp.items).toEqual([]);
+      expect(resp.announcement).toBe('Thông báo quan trọng');
+
+      const nullAnn = adaptNewsListResponse({ items: undefined, announcement: null });
+      expect(nullAnn.items).toEqual([]);
+      expect(nullAnn.announcement).toBeNull();
+    });
+  });
+
+  describe('2. Near-Real-Time Freshness & Pill Logic', () => {
+    it('detects when incoming articles have new IDs or newer dates', () => {
+      const currentList: NewsItem[] = [
+        adaptNewsItem({ id: '1', publishedAt: new Date(1000).toISOString() }),
+        adaptNewsItem({ id: '2', publishedAt: new Date(2000).toISOString() }),
+      ];
+
+      // Same list -> no new articles
+      expect(hasNewerArticles(currentList, currentList)).toBe(false);
+
+      // Incoming has new article id '3'
+      const withNewId: NewsItem[] = [
+        adaptNewsItem({ id: '3', publishedAt: new Date(3000).toISOString() }),
+        ...currentList,
+      ];
+      expect(hasNewerArticles(withNewId, currentList)).toBe(true);
+
+      // Incoming has newer published date
+      const withNewerDate: NewsItem[] = [
+        adaptNewsItem({ id: '1', publishedAt: new Date(5000).toISOString() }),
+        adaptNewsItem({ id: '2', publishedAt: new Date(2000).toISOString() }),
+      ];
+      expect(hasNewerArticles(withNewerDate, currentList)).toBe(true);
+    });
+  });
+
+  describe('3. Safe Markdown Rendering', () => {
+    it('renders safe headings, paragraphs, lists, and quotes', () => {
+      const md = `### Tiêu đề phụ
+Đây là một đoạn văn bản có **chữ đậm** và *chữ nghiêng* cùng [liên kết an toàn](/diem-du-lich).
+
+> Đây là một trích dẫn sâu sắc
+
+- Mục một
+- Mục hai
+1. Số một
+2. Số hai`;
+
+      const { container } = render(<SafeMarkdown content={md} />);
+
+      expect(screen.getByText('Tiêu đề phụ')).toBeInTheDocument();
+      expect(screen.getByText('chữ đậm')).toBeInTheDocument();
+      expect(screen.getByText('chữ nghiêng')).toBeInTheDocument();
+
+      const link = screen.getByRole('link', { name: 'liên kết an toàn' });
+      expect(link).toHaveAttribute('href', '/diem-du-lich');
+
+      expect(container.querySelector('blockquote')).toBeInTheDocument();
+      expect(container.querySelectorAll('li')).toHaveLength(4);
+    });
+
+    it('does not execute or inject unsanitized HTML tags', () => {
+      const dangerous = `<script>window.__hacked = true;</script><img src="x" onerror="alert(1)" />`;
+      render(<SafeMarkdown content={dangerous} />);
+
+      expect(document.querySelector('script[src="x"]')).not.toBeInTheDocument();
+      expect((window as unknown as { __hacked?: boolean }).__hacked).toBeUndefined();
+    });
+  });
+
+  describe('4. News List Page Layout (Hero + Sidebar + 4-col Grid)', () => {
+    beforeEach(() => {
+      (window as unknown as { __TEST_USE_4_ARTICLES?: boolean }).__TEST_USE_4_ARTICLES = false;
+    });
+
+    it('renders Hero (1), Sidebar MỚI NHẤT (4) + BẠN CÓ THỂ BỎ LỠ (3), and 4-column Grid with zero duplicate articles', async () => {
+      render(
+        <MemoryRouter initialEntries={['/tin-tuc']}>
+          <Routes>
+            <Route path="/tin-tuc" element={<NewsListPage />} />
+          </Routes>
+        </MemoryRouter>
+      );
+
+      // Header title & subtitle
+      expect(await screen.findByRole('heading', { level: 1, name: /Tin tức/i })).toBeInTheDocument();
+      expect(screen.getByText(/Cập nhật câu chuyện di sản, đời sống văn hóa/i)).toBeInTheDocument();
+
+      // Filter chips
+      expect(screen.getByRole('button', { name: /Tất cả/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Điểm đến/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Văn hóa Sài Gòn/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Mẹo tham quan/i })).toBeInTheDocument();
+
+      // Hero Block
+      expect(await screen.findByRole('region', { name: 'Bài viết tiêu điểm' })).toBeInTheDocument();
+
+      // Sidebar with MỚI NHẤT and BẠN CÓ THỂ BỎ LỠ
+      expect(screen.getByRole('region', { name: 'Mới nhất' })).toBeInTheDocument();
+      expect(screen.getByRole('region', { name: 'Bạn có thể bỏ lỡ' })).toBeInTheDocument();
+
+      // 4-column Grid
+      expect(screen.getByRole('region', { name: 'Danh sách bài viết' })).toBeInTheDocument();
+
+      // Verify all cards have links pointing to reading pages (/tin-tuc/:slug)
+      const storyLinks = screen.getAllByRole('link').filter((link) => {
+        const href = link.getAttribute('href') || '';
+        return href.startsWith('/tin-tuc/') && href !== '/tin-tuc';
+      });
+      expect(storyLinks.length).toBeGreaterThan(0);
+
+      // Verify no duplicate articles rendered on the page
+      const hrefs = storyLinks.map((l) => l.getAttribute('href'));
+      const uniqueHrefs = new Set(hrefs);
+      expect(hrefs.length).toBe(uniqueHrefs.size);
+    });
+
+    it('filters by category chip (?c=diem-den) and syncs URL', async () => {
+      (window as unknown as { __TEST_USE_4_ARTICLES?: boolean }).__TEST_USE_4_ARTICLES = false;
+
+      render(
+        <MemoryRouter initialEntries={['/tin-tuc?c=diem-den']}>
+          <Routes>
+            <Route path="/tin-tuc" element={<NewsListPage />} />
+          </Routes>
+        </MemoryRouter>
+      );
+
+      const filterBar = await screen.findByText(/Đang lọc theo:/i);
+      expect(filterBar).toBeInTheDocument();
+      expect(filterBar).toHaveTextContent('Điểm đến');
+      const activeChip = screen.getByRole('button', { name: /Điểm đến/i });
+      expect(activeChip).toHaveClass('is-active');
+    });
+
+    it('filters by POI chip (?poi=dinh-doc-lap)', async () => {
+      (window as unknown as { __TEST_USE_4_ARTICLES?: boolean }).__TEST_USE_4_ARTICLES = false;
+
+      render(
+        <MemoryRouter initialEntries={['/tin-tuc?poi=dinh-doc-lap']}>
+          <Routes>
+            <Route path="/tin-tuc" element={<NewsListPage />} />
+          </Routes>
+        </MemoryRouter>
+      );
+
+      const filterBar = await screen.findByText(/Đang lọc theo:/i);
+      expect(filterBar).toBeInTheDocument();
+      expect(screen.getByText(/#dinh-doc-lap/i)).toBeInTheDocument();
+    });
+  });
+
+  describe('5. Article Reading Page (/tin-tuc/:slug)', () => {
+    it('renders reading page with breadcrumb, serif H1, lead excerpt, NGHE button, and primary original link', async () => {
+      render(
+        <MemoryRouter initialEntries={['/tin-tuc/dinh-doc-lap-nhung-can-phong-it-nguoi-de-y']}>
+          <Routes>
+            <Route path="/tin-tuc/:slug" element={<NewsDetailPage />} />
+          </Routes>
+        </MemoryRouter>
+      );
+
+      // 1. Breadcrumb: Trang chủ › Tin tức › Category
+      expect(await screen.findByRole('link', { name: 'Trang chủ' })).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: 'Tin tức' })).toBeInTheDocument();
+
+      // 2. Article Title H1
+      const title = screen.getByRole('heading', {
+        level: 1,
+        name: 'Dinh Độc Lập: Những căn phòng và dấu ấn lịch sử ít người để ý',
+      });
+      expect(title).toBeInTheDocument();
+
+      // 3. Audio NGHE button
+      expect(screen.getByRole('button', { name: /^Nghe bài viết$/i })).toBeInTheDocument();
+
+      // 4. Primary button linking to original source
+      const originalLink = screen.getByRole('link', { name: /Đọc bài gốc tại/i });
+      expect(originalLink).toBeInTheDocument();
+      expect(originalLink).toHaveAttribute('target', '_blank');
+      expect(originalLink).toHaveAttribute('rel', 'noopener noreferrer');
+
+      // 5. Back-to-list link keeping filter
+      expect(screen.getByRole('link', { name: /Quay lại danh sách Tin tức/i })).toHaveAttribute(
+        'href',
+        '/tin-tuc?category=diem-den'
+      );
+
+      // 6. Related stories (3 articles)
+      expect(screen.getByRole('region', { name: 'Bài viết liên quan' })).toBeInTheDocument();
+    });
+
+    it('shows friendly not-found state when slug is unknown', async () => {
+      render(
+        <MemoryRouter initialEntries={['/tin-tuc/unknown-article-slug-xyz']}>
+          <Routes>
+            <Route path="/tin-tuc/:slug" element={<NewsDetailPage />} />
+          </Routes>
+        </MemoryRouter>
+      );
+
+      expect(await screen.findByRole('heading', { level: 1, name: 'Không tìm thấy bài viết' })).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: /Quay lại Tin tức/i })).toHaveAttribute('href', '/tin-tuc');
+    });
+  });
+
+  describe('6. Home Page News Section Integration', () => {
+    it('renders HomeNewsSection using shared data layer with zero internal duplicates', async () => {
+      render(
+        <MemoryRouter initialEntries={['/']}>
+          <Routes>
+            <Route path="/" element={<HomeNewsSection />} />
+          </Routes>
+        </MemoryRouter>
+      );
+
+      // Wait for content to finish loading
+      expect(await screen.findByRole('tab', { name: /Điểm đến/i })).toBeInTheDocument();
+
+      // Section title
+      expect(screen.getByRole('heading', { level: 2, name: /Tin tức & Câu chuyện Sài Gòn/i })).toBeInTheDocument();
+
+      // "Xem tất cả tin tức" link goes to /tin-tuc
+      const viewAllLink = screen.getByRole('link', { name: /Xem tất cả tin tức/i });
+      expect(viewAllLink).toHaveAttribute('href', '/tin-tuc');
+
+      // Check category tabs
+      expect(screen.getByRole('tab', { name: /Văn hóa Sài Gòn/i })).toBeInTheDocument();
+      expect(screen.getByRole('tab', { name: /Mẹo tham quan/i })).toBeInTheDocument();
+
+      // Check all article cards link to /tin-tuc/:slug
+      const cardLinks = screen.getAllByRole('link').filter((l) => {
+        const href = l.getAttribute('href') || '';
+        return href.startsWith('/tin-tuc/') && href !== '/tin-tuc';
+      });
+
+      // Verify no duplicate articles rendered anywhere on the home section
+      const hrefs = cardLinks.map((l) => l.getAttribute('href'));
+      const uniqueHrefs = new Set(hrefs);
+      expect(hrefs.length).toBe(uniqueHrefs.size);
+    });
+  });
+});

@@ -30,12 +30,47 @@ if (typeof HTMLDialogElement !== 'undefined') {
 }
 
 // Mock speechSynthesis
+export const defaultMockVoices: SpeechSynthesisVoice[] = [
+  {
+    voiceURI: 'vi-VN-Standard',
+    name: 'Google Tiếng Việt',
+    lang: 'vi-VN',
+    localService: true,
+    default: true,
+  } as SpeechSynthesisVoice,
+  {
+    voiceURI: 'en-US-Standard',
+    name: 'Google US English',
+    lang: 'en-US',
+    localService: true,
+    default: false,
+  } as SpeechSynthesisVoice,
+  {
+    voiceURI: 'ja-JP-Standard',
+    name: 'Google 日本語',
+    lang: 'ja-JP',
+    localService: true,
+    default: false,
+  } as SpeechSynthesisVoice,
+  {
+    voiceURI: 'ko-KR-Standard',
+    name: 'Google 한국어',
+    lang: 'ko-KR',
+    localService: true,
+    default: false,
+  } as SpeechSynthesisVoice,
+];
+
 const mockSpeechSynthesis = {
   speak: () => {},
   cancel: () => {},
   pause: () => {},
   resume: () => {},
-  getVoices: () => [],
+  getVoices: () => defaultMockVoices,
+  addEventListener: () => {},
+  removeEventListener: () => {},
+  dispatchEvent: () => true,
+  onvoiceschanged: null,
 };
 Object.defineProperty(window, 'speechSynthesis', {
   writable: true,
@@ -50,6 +85,7 @@ class MockSpeechSynthesisUtterance {
   onstart = null;
   onend = null;
   onerror = null;
+  onboundary = null;
   constructor(text?: string) {
     if (text) this.text = text;
   }

@@ -73,7 +73,7 @@ export const Header: React.FC = () => {
     location.pathname.startsWith('/thuyet-minh') ||
     location.pathname.startsWith('/gan-toi');
   const isOrdersPage = location.pathname === '/don-hang';
-  const isGuideActive = location.pathname.startsWith('/huong-dan');
+  const isNewsActive = location.pathname.startsWith('/tin-tuc');
   const isContactActive = location.pathname.startsWith('/lien-he');
   const isFoodActive =
     location.pathname.startsWith('/am-thuc') ||
@@ -276,16 +276,16 @@ export const Header: React.FC = () => {
         </a>
 
         <a
-          href="/huong-dan"
-          className={`nav-link ${isGuideActive ? 'active' : ''}`}
-          aria-current={isGuideActive ? 'page' : undefined}
+          href="/tin-tuc"
+          className={`nav-link ${isNewsActive ? 'active' : ''}`}
+          aria-current={isNewsActive ? 'page' : undefined}
           onClick={(e) => {
             e.preventDefault();
             closeAllMenus();
-            navigate('/huong-dan');
+            navigate('/tin-tuc');
           }}
         >
-          {t.guide || 'Hướng dẫn'}
+          {t.news || 'Tin tức'}
         </a>
 
         <a
@@ -526,16 +526,16 @@ export const Header: React.FC = () => {
           </a>
 
           <a
-            href="/huong-dan"
-            className={`mobile-nav-item ${isGuideActive ? 'active' : ''}`}
-            aria-current={isGuideActive ? 'page' : undefined}
+            href="/tin-tuc"
+            className={`mobile-nav-item ${isNewsActive ? 'active' : ''}`}
+            aria-current={isNewsActive ? 'page' : undefined}
             onClick={(e) => {
               e.preventDefault();
               closeAllMenus();
-              navigate('/huong-dan');
+              navigate('/tin-tuc');
             }}
           >
-            <span>{t.guide || 'Hướng dẫn'}</span>
+            <span>{t.news || 'Tin tức'}</span>
           </a>
 
           <a

@@ -1,6 +1,6 @@
 import React from 'react';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { render, screen, fireEvent, act } from '@testing-library/react';
+import { render, screen, fireEvent, act, renderHook } from '@testing-library/react';
 import { BrowserRouter, MemoryRouter } from 'react-router-dom';
 import { NearbyPage, GeoPoi, getNarration, getHeroIntroText } from '../pages/NearbyPage';
 import nearbyPoisData from '../content/nearbyPois.json';
@@ -12,6 +12,9 @@ import { api } from '../api/client';
 import { PoiHero } from '../components/nearby/PoiHero';
 import { PoiReadingSection } from '../components/nearby/PoiReadingSection';
 import { SortedPoiItem } from '../components/nearby/PoiList';
+import { snapToWordBoundary, useNearbyAudio } from '../hooks/useNearbyAudio';
+
+import { defaultMockVoices } from './setup';
 
 // Mock react-leaflet components since jsdom doesn't support canvas/WebGL
 vi.mock('react-leaflet', () => ({
@@ -60,7 +63,7 @@ describe('NearbyPage - Clean Multilingual & Audio Narration Integration', () => 
       speaking: false,
       paused: false,
       onvoiceschanged: null,
-      getVoices: vi.fn(() => []),
+      getVoices: vi.fn(() => defaultMockVoices),
       addEventListener: vi.fn(),
       removeEventListener: vi.fn(),
       dispatchEvent: vi.fn(),
@@ -244,7 +247,7 @@ describe('NearbyPage - Clean Multilingual & Audio Narration Integration', () => 
     expect(screen.getByText(/điểm gần nhất là/i)).toBeInTheDocument();
   });
 
-  it('calls getPoiDetail with requested language and plays backend audioUrl when audioStatus is READY', async () => {
+  it('with ENABLE_REMOTE_AUDIO=false no fetch to /api/content/pois/{id} audio is used for playback and no HTMLAudioElement is created', async () => {
     const playMock = vi.fn().mockResolvedValue(undefined);
     const pauseMock = vi.fn();
     const loadMock = vi.fn();
@@ -298,13 +301,18 @@ describe('NearbyPage - Clean Multilingual & Audio Narration Integration', () => 
       fireEvent.click(listenButtons[0]!);
     });
 
-    // Verify getPoiDetail was requested with poiId=1 and lang='en'
-    expect(getPoiDetailSpy).toHaveBeenCalledWith(1, 'en');
+    // 1. With ENABLE_REMOTE_AUDIO=false, getPoiDetail was NOT called for audio playback
+    expect(getPoiDetailSpy).not.toHaveBeenCalled();
 
-    // Verify Audio element was initialized with full URL
-    expect((window as any).Audio).toHaveBeenCalledWith(
-      expect.stringContaining('/api/tts/audio/poi_1_en_sample.mp3')
-    );
+    // 2. No HTMLAudioElement was created
+    expect((window as any).Audio).not.toHaveBeenCalled();
+
+    // 3. Playback uses speech synthesis reading the exact English text
+    expect(window.speechSynthesis.speak).toHaveBeenCalled();
+    const calls = (window.speechSynthesis.speak as any).mock.calls;
+    const utterance = calls[calls.length - 1][0] as SpeechSynthesisUtterance;
+    expect(utterance.lang).toBe('en-US');
+    expect(utterance.text).toContain('Independence Palace');
   });
 
   it('does NOT play backend TTS that belongs to a different stop (id-space mismatch) and keeps the spoken narration', async () => {
@@ -396,9 +404,10 @@ describe('NearbyPage - Clean Multilingual & Audio Narration Integration', () => 
       </BrowserRouter>
     );
 
-    // Verify progress in single-line stats and chapter card
+    // Verify progress in single-line stats and list row
     expect(screen.getByText(/1\/5 đã nghe/)).toBeInTheDocument();
-    expect(screen.getByText('✓ Đã nghe')).toBeInTheDocument();
+    expect(document.querySelector('.stop-row-listened')).toBeInTheDocument();
+    expect(document.querySelector('.chapter-listened-pill')).toBeNull();
   });
 
   describe('Language Consistency (Requirement 7)', () => {
@@ -418,7 +427,7 @@ describe('NearbyPage - Clean Multilingual & Audio Narration Integration', () => 
       'renders cleanly in %s with no untranslated Vietnamese UI labels and proper html lang attribute',
       (targetLang) => {
         setStoredLanguage(targetLang);
-        render(
+        const { container } = render(
           <BrowserRouter>
             <NearbyPage />
           </BrowserRouter>
@@ -432,17 +441,17 @@ describe('NearbyPage - Clean Multilingual & Audio Narration Integration', () => 
         // Vietnamese page title must NOT be present
         expect(screen.queryByText('Điểm du lịch Sài Gòn')).not.toBeInTheDocument();
 
-        // Mode switch toggle buttons must be localized with aria-pressed state
-        const listenSwitch = screen.getAllByRole('button', {
-          name: t(targetLang, 'modeListen'),
-        })[0];
-        const readSwitch = screen.getAllByRole('button', {
-          name: t(targetLang, 'modeRead'),
-        })[0];
-        expect(listenSwitch).toBeInTheDocument();
-        expect(readSwitch).toBeInTheDocument();
-        expect(listenSwitch).toHaveAttribute('aria-pressed');
-        expect(readSwitch).toHaveAttribute('aria-pressed');
+        // Hero has no category chip, no listened chip, and no Listen|Read toggle
+        expect(container.querySelector('.hero-category-badge')).toBeNull();
+        expect(container.querySelector('.chapter-listened-pill')).toBeNull();
+        expect(container.querySelector('.hero-mode-switcher')).toBeNull();
+        expect(container.querySelector('.chapter-mode-switcher')).toBeNull();
+
+        // Reading section is rendered regardless of any former mode
+        expect(container.querySelector('.nearby-reading-section')).toBeInTheDocument();
+
+        // List rows still show category
+        expect(container.querySelector('.stop-row-category')).toBeInTheDocument();
 
         // Toolbar buttons must be localized
         expect(
@@ -826,12 +835,12 @@ describe('NearbyPage - Clean Multilingual & Audio Narration Integration', () => 
       expect(readingBody).toBeInTheDocument();
       expect(readingBody?.textContent).not.toBe(heroIntro?.textContent);
 
-      // In Korean (where full text does not exist and short equals hero intro), reading body is hidden
+      // In Korean, reading section now displays the full Korean paragraphs
       act(() => {
         setStoredLanguage('ko');
       });
-      expect(container.querySelector('.reading-body-flow')).toBeNull();
-      expect(container.querySelector('.reading-stop-title')).toBeNull();
+      expect(container.querySelector('.reading-body-flow')).toBeInTheDocument();
+      expect(container.querySelector('.reading-stop-title')).toBeInTheDocument();
 
       // Navigation buttons remain available
       expect(container.querySelector('.reading-nav-row')).toBeInTheDocument();
@@ -1174,10 +1183,10 @@ describe('NearbyPage - Clean Multilingual & Audio Narration Integration', () => 
         expect(p.narration?.short?.en?.trim().length).toBeGreaterThan(0);
         expect(p.narration?.full?.vi?.length).toBeGreaterThan(0);
         expect(p.narration?.full?.en?.length).toBeGreaterThan(0);
-        for (const para of p.narration!.full.vi) {
+        for (const para of p.narration!.full.vi!) {
           expect(para.trim().length).toBeGreaterThan(0);
         }
-        for (const para of p.narration!.full.en) {
+        for (const para of p.narration!.full.en!) {
           expect(para.trim().length).toBeGreaterThan(0);
         }
       }
@@ -1225,12 +1234,13 @@ describe('NearbyPage - Clean Multilingual & Audio Narration Integration', () => 
       expect(Array.isArray(enFull)).toBe(true);
       expect(enFull).toHaveLength(4);
 
-      // ko: short comes from transcript.ko, full is null
+      // ko: short comes from narration.short.ko, full is array of paragraphs
       const koShort = getNarration(stop1, 'ko', 'short');
       const koFull = getNarration(stop1, 'ko', 'full');
       expect(typeof koShort).toBe('string');
       expect(koShort).toContain('통일궁');
-      expect(koFull).toBeNull();
+      expect(Array.isArray(koFull)).toBe(true);
+      expect(koFull).toHaveLength(4);
     });
 
     it('hero intro is the first two sentences of short text', () => {
@@ -1265,14 +1275,16 @@ describe('NearbyPage - Clean Multilingual & Audio Narration Integration', () => 
       expect(paras).toHaveLength(4);
       expect(readingBody?.textContent).not.toBe(heroIntro?.textContent);
 
-      // Switch language to Korean: short text equals hero intro, so reading body is hidden
+      // Switch language to Korean: reading section shows full Korean paragraphs
       act(() => {
         setStoredLanguage('ko');
       });
 
       const koHeroIntro = container.querySelector('.nearby-hero-intro');
       expect(koHeroIntro).toHaveTextContent('통일궁');
-      expect(container.querySelector('.reading-body-flow')).toBeNull();
+      const koReadingBody = container.querySelector('.reading-body-flow');
+      expect(koReadingBody).toBeInTheDocument();
+      expect(koReadingBody?.querySelectorAll('.reading-paragraph')).toHaveLength(4);
       // Navigation buttons remain available
       expect(container.querySelector('.reading-nav-row')).toBeInTheDocument();
     });
@@ -1364,12 +1376,13 @@ describe('NearbyPage - Clean Multilingual & Audio Narration Integration', () => 
         fireEvent.click(playBtn);
       });
 
-      // In listen mode, paragraphs contain sentence nodes
-      const sentences = container.querySelectorAll('.reading-paragraph .transcript-sentence-node');
-      expect(sentences.length).toBeGreaterThan(5);
+      // In listen mode with word-level progress, current word is highlighted
+      const currentWord = container.querySelector('.reading-paragraph .reading-segment-current');
+      expect(currentWord).toBeInTheDocument();
 
-      // Initial active sentence (index 0) has is-highlighted-sentence
-      expect(sentences[0]).toHaveClass('is-highlighted-sentence');
+      // Old sentence box classes no longer exist
+      expect(container.querySelectorAll('.is-highlighted-sentence')).toHaveLength(0);
+      expect(container.querySelectorAll('.transcript-sentence-node')).toHaveLength(0);
     });
 
     it('no visible text for a stop with a missing language falls back to another language', () => {
@@ -1455,29 +1468,69 @@ describe('NearbyPage - Clean Multilingual & Audio Narration Integration', () => 
                 isPlaying={isPlaying}
                 isCurrent={isCurrent}
                 playbackStatus={state}
-                chapterMode="listen"
-                onChangeChapterMode={vi.fn()}
                 onTogglePlay={vi.fn()}
                 duration={state === 'playing' || state === 'paused' ? 26 : 0}
                 getPoiName={(p) => p.name[lang] || p.name.vi}
-                getPoiCategory={(p) => p.category[lang] || p.category.vi}
               />
             );
 
-            const actionsRow = container.querySelector('.hero-actions-row')!;
-            const hasPlayBtn = Boolean(actionsRow.querySelector('.detail-play-btn'));
+            const heroContent = container.querySelector('.nearby-hero-content')!;
+            const titleEl = heroContent.querySelector('.nearby-hero-title');
+            const introEl = heroContent.querySelector('.nearby-hero-intro');
+            const actionsRow = heroContent.querySelector('.hero-actions-row')!;
+            const playBtn = actionsRow.querySelector('.detail-play-btn');
             const hasDuration = Boolean(actionsRow.querySelector('.hero-audio-duration'));
-            const hasSwitcher = Boolean(actionsRow.querySelector('.hero-mode-switcher'));
+            const positionIndicator = actionsRow.querySelector('.hero-position-indicator');
 
-            return { lang, hasPlayBtn, hasDuration, hasSwitcher };
+            // Must NOT have category badge, listened badge, or mode switcher
+            const hasCategoryBadge = Boolean(container.querySelector('.hero-category-badge'));
+            const hasListenedChip = Boolean(container.querySelector('.chapter-listened-pill'));
+            const hasSwitcher = Boolean(
+              container.querySelector('.hero-mode-switcher') ||
+              container.querySelector('.chapter-mode-switcher')
+            );
+
+            // Document order verification: title -> intro -> playBtn -> positionIndicator
+            const children = Array.from(heroContent.children);
+            const titleIdx = children.findIndex((el) => el.contains(titleEl));
+            const introIdx = children.findIndex((el) => el.contains(introEl));
+            const actionsIdx = children.findIndex((el) => el === actionsRow);
+
+            const actionsChildren = Array.from(actionsRow.children);
+            const playBtnIdx = actionsChildren.findIndex((el) => el === playBtn);
+            const posIdx = actionsChildren.findIndex((el) => el === positionIndicator);
+
+            const isOrderValid =
+              titleIdx >= 0 &&
+              introIdx > titleIdx &&
+              actionsIdx > introIdx &&
+              playBtnIdx >= 0 &&
+              posIdx > playBtnIdx;
+
+            return {
+              lang,
+              hasPlayBtn: Boolean(playBtn),
+              hasDuration,
+              hasPositionIndicator: Boolean(positionIndicator),
+              hasCategoryBadge,
+              hasListenedChip,
+              hasSwitcher,
+              isOrderValid,
+              positionText: positionIndicator?.textContent?.trim(),
+            };
           });
 
-          // Across all 4 languages in this state, control element presence must be identical
+          // Across all 4 languages in this state, control element presence and order must be identical
           const first = results[0]!;
           results.forEach((res) => {
             expect(res.hasPlayBtn).toBe(first.hasPlayBtn);
             expect(res.hasDuration).toBe(first.hasDuration);
-            expect(res.hasSwitcher).toBe(first.hasSwitcher);
+            expect(res.hasPositionIndicator).toBe(true);
+            expect(res.hasCategoryBadge).toBe(false);
+            expect(res.hasListenedChip).toBe(false);
+            expect(res.hasSwitcher).toBe(false);
+            expect(res.isOrderValid).toBe(true);
+            expect(res.positionText).toBe('1 / 5');
           });
 
           // Specifically in idle and loading: no duration next to play button in any language
@@ -1495,7 +1548,7 @@ describe('NearbyPage - Clean Multilingual & Audio Narration Integration', () => 
         });
       });
 
-      it('(d) ja/ko render no reading body and no empty container', () => {
+      it('(d) ja/ko render reading body when full narration is present, and no reading body when absent', () => {
         const testPoi = (nearbyPoisData[0] as unknown) as GeoPoi;
         const sortedItem: SortedPoiItem = {
           poi: testPoi,
@@ -1511,7 +1564,6 @@ describe('NearbyPage - Clean Multilingual & Audio Narration Integration', () => 
               isPlaying={false}
               isCurrent={false}
               activeSentenceIndex={null}
-              chapterMode="listen"
               prevItem={null}
               nextItem={null}
               onSelectPoi={vi.fn()}
@@ -1519,14 +1571,35 @@ describe('NearbyPage - Clean Multilingual & Audio Narration Integration', () => 
             />
           );
 
-          // No reading body or title
-          expect(container.querySelector('.reading-body-flow')).toBeNull();
-          expect(container.querySelector('.reading-stop-title')).toBeNull();
-          expect(container.querySelectorAll('.reading-paragraph')).toHaveLength(0);
+          // Reading body and paragraphs are rendered when full narration exists
+          expect(container.querySelector('.reading-body-flow')).toBeInTheDocument();
+          expect(container.querySelector('.reading-stop-title')).toBeInTheDocument();
+          expect(container.querySelectorAll('.reading-paragraph').length).toBeGreaterThan(0);
 
           // Previous/Next navigation is retained
           expect(container.querySelector('.reading-nav-row')).toBeInTheDocument();
         });
+
+        // When full narration is absent, no reading body is rendered
+        const poiWithoutFull: GeoPoi = {
+          ...testPoi,
+          narration: { short: testPoi.narration!.short, full: { vi: [], en: [], ja: [], ko: [] } },
+        };
+        const emptyItem: SortedPoiItem = { poi: poiWithoutFull, originalIndex: 0, dist: null };
+        const { container: emptyContainer } = render(
+          <PoiReadingSection
+            activeItem={emptyItem}
+            currentLang="ja"
+            isPlaying={false}
+            isCurrent={false}
+            activeSentenceIndex={null}
+            prevItem={null}
+            nextItem={null}
+            onSelectPoi={vi.fn()}
+            getPoiName={(p) => p.name.ja || p.name.vi}
+          />
+        );
+        expect(emptyContainer.querySelector('.reading-body-flow')).toBeNull();
       });
 
       it('(e) no highlight while backend or static audio plays', () => {
@@ -1544,15 +1617,16 @@ describe('NearbyPage - Clean Multilingual & Audio Narration Integration', () => 
             currentLang="vi"
             isPlaying={true}
             isCurrent={true}
-            activeSentenceIndex={0}
+            activeCharOffset={0}
+            activeCharLength={4}
             audioSourceType="backend"
-            chapterMode="listen"
             prevItem={null}
             nextItem={null}
             onSelectPoi={vi.fn()}
             getPoiName={(p) => p.name.vi}
           />
         );
+        expect(backendContainer.querySelectorAll('.reading-segment-current')).toHaveLength(0);
         expect(backendContainer.querySelectorAll('.is-highlighted-sentence')).toHaveLength(0);
 
         // Test with static audio
@@ -1562,34 +1636,402 @@ describe('NearbyPage - Clean Multilingual & Audio Narration Integration', () => 
             currentLang="vi"
             isPlaying={true}
             isCurrent={true}
-            activeSentenceIndex={0}
+            activeCharOffset={0}
+            activeCharLength={4}
             audioSourceType="static"
-            chapterMode="listen"
             prevItem={null}
             nextItem={null}
             onSelectPoi={vi.fn()}
             getPoiName={(p) => p.name.vi}
           />
         );
+        expect(staticContainer.querySelectorAll('.reading-segment-current')).toHaveLength(0);
         expect(staticContainer.querySelectorAll('.is-highlighted-sentence')).toHaveLength(0);
 
-        // Contrast: when speech synthesis is reading full text, highlight is active
+        // Contrast: when speech synthesis is reading full text, word highlight is active
         const { container: speechContainer } = render(
           <PoiReadingSection
             activeItem={sortedItem}
             currentLang="vi"
             isPlaying={true}
             isCurrent={true}
-            activeSentenceIndex={0}
+            activeCharOffset={0}
+            activeCharLength={4}
             audioSourceType="speech"
-            chapterMode="listen"
             prevItem={null}
             nextItem={null}
             onSelectPoi={vi.fn()}
             getPoiName={(p) => p.name.vi}
           />
         );
-        expect(speechContainer.querySelectorAll('.is-highlighted-sentence')).toHaveLength(1);
+        expect(speechContainer.querySelectorAll('.reading-segment-current')).toHaveLength(1);
+        expect(speechContainer.querySelectorAll('.is-highlighted-sentence')).toHaveLength(0);
+      });
+    });
+
+    describe('Word-Level Progress & Reading Section Audits (Tasks 1 to 8)', () => {
+      const mockMultiParaPoi: GeoPoi = {
+        id: 'poi-test-multi',
+        slug: 'poi-test-multi',
+        stopOrder: 1,
+        name: { vi: 'Điểm Kiểm Thử', en: 'Test POI', ko: '테스트', ja: 'テスト' },
+        lat: 10.77,
+        lng: 106.69,
+        triggerRadius: 50,
+        category: { vi: 'Di tích', en: 'Landmark', ko: '유적', ja: '史跡' },
+        image: '',
+        audio: { vi: '', en: '', ko: '', ja: '' },
+        transcript: { vi: '', en: '', ko: '', ja: '' },
+        narration: {
+          short: { vi: 'Tóm tắt ngắn.', en: 'Short.', ko: '', ja: '' },
+          full: {
+            vi: [
+              'Đoạn thứ nhất có một số từ ngữ ngắn.',
+              'Đoạn thứ hai tiếp tục bài thuyết minh chi tiết.',
+            ],
+            en: [
+              'The first paragraph has some short words.',
+              'The second paragraph continues with details.',
+            ],
+            ko: [],
+            ja: [],
+          },
+        },
+      };
+
+      const sortedMultiParaItem: SortedPoiItem = {
+        poi: mockMultiParaPoi,
+        originalIndex: 0,
+        dist: null,
+      };
+
+      it('boundary event maps to the right paragraph/segment split across paragraph boundaries', () => {
+        // Para 0: length 36 ('Đoạn thứ nhất có một số từ ngữ ngắn.')
+        // Space at index 36.
+        // Para 1: starts at index 37 ('Đoạn thứ hai tiếp tục bài thuyết minh chi tiết.')
+        
+        // 1. Spoken word is inside Paragraph 0 ('thứ' at offset 5, length 3)
+        const { container: c1 } = render(
+          <PoiReadingSection
+            activeItem={sortedMultiParaItem}
+            currentLang="vi"
+            isPlaying={true}
+            isCurrent={true}
+            activeCharOffset={5}
+            activeCharLength={3}
+            audioSourceType="speech"
+            prevItem={null}
+            nextItem={null}
+            onSelectPoi={vi.fn()}
+            getPoiName={(p) => p.name.vi}
+          />
+        );
+        const p1List = c1.querySelectorAll('.reading-paragraph');
+        expect(p1List).toHaveLength(2);
+
+        // Para 0 should have read, current, unread segments
+        const p0Read = p1List[0]?.querySelector('.reading-segment-read');
+        const p0Current = p1List[0]?.querySelector('.reading-segment-current');
+        const p0Unread = p1List[0]?.querySelector('.reading-segment-unread');
+        expect(p0Read?.textContent).toBe('Đoạn ');
+        expect(p0Current?.textContent).toBe('thứ');
+        expect(p0Unread?.textContent).toBe(' nhất có một số từ ngữ ngắn.');
+
+        // Para 1 is completely unread
+        const p1Unread = p1List[1]?.querySelector('.reading-segment-unread');
+        expect(p1Unread?.textContent).toBe('Đoạn thứ hai tiếp tục bài thuyết minh chi tiết.');
+        expect(p1List[1]?.querySelector('.reading-segment-current')).toBeNull();
+        expect(p1List[1]?.querySelector('.reading-segment-read')).toBeNull();
+
+        // 2. Spoken word is inside Paragraph 1 (offset 42 = 37 + 5, length 3 for 'thứ')
+        const { container: c2 } = render(
+          <PoiReadingSection
+            activeItem={sortedMultiParaItem}
+            currentLang="vi"
+            isPlaying={true}
+            isCurrent={true}
+            activeCharOffset={42}
+            activeCharLength={3}
+            audioSourceType="speech"
+            prevItem={null}
+            nextItem={null}
+            onSelectPoi={vi.fn()}
+            getPoiName={(p) => p.name.vi}
+          />
+        );
+        const p2List = c2.querySelectorAll('.reading-paragraph');
+        expect(p2List).toHaveLength(2);
+
+        // Para 0 is completely read
+        expect(p2List[0]?.querySelector('.reading-segment-read')?.textContent).toBe(
+          'Đoạn thứ nhất có một số từ ngữ ngắn.'
+        );
+        expect(p2List[0]?.querySelector('.reading-segment-current')).toBeNull();
+        expect(p2List[0]?.querySelector('.reading-segment-unread')).toBeNull();
+
+        // Para 1 has read, current, unread segments
+        expect(p2List[1]?.querySelector('.reading-segment-read')?.textContent).toBe('Đoạn ');
+        expect(p2List[1]?.querySelector('.reading-segment-current')?.textContent).toBe('thứ');
+        expect(p2List[1]?.querySelector('.reading-segment-unread')?.textContent).toBe(
+          ' hai tiếp tục bài thuyết minh chi tiết.'
+        );
+      });
+
+      it('read/current/unread segments concatenate to exactly the original paragraph text', () => {
+        const origPara0 = mockMultiParaPoi.narration!.full!.vi![0];
+        const origPara1 = mockMultiParaPoi.narration!.full!.vi![1];
+
+        const testOffsets = [0, 5, 20, 36, 42, 60, 84];
+
+        testOffsets.forEach((offset) => {
+          const { container } = render(
+            <PoiReadingSection
+              activeItem={sortedMultiParaItem}
+              currentLang="vi"
+              isPlaying={true}
+              isCurrent={true}
+              activeCharOffset={offset}
+              activeCharLength={3}
+              audioSourceType="speech"
+              prevItem={null}
+              nextItem={null}
+              onSelectPoi={vi.fn()}
+              getPoiName={(p) => p.name.vi}
+            />
+          );
+
+          const paragraphs = container.querySelectorAll('.reading-paragraph');
+          expect(paragraphs[0]?.textContent).toBe(origPara0);
+          expect(paragraphs[1]?.textContent).toBe(origPara1);
+        });
+      });
+
+      it('ja text without spaces works with snapToWordBoundary', () => {
+        const jaText = '統一会堂はホーチミン市にある歴史的建築物です。';
+        const snapStart = snapToWordBoundary(jaText, 0, 'ja');
+        expect(snapStart.charIndex).toBe(0);
+        expect(snapStart.charLength).toBeGreaterThanOrEqual(1);
+
+        const snapMid = snapToWordBoundary(jaText, 5, 'ja');
+        expect(snapMid.charIndex).toBe(5);
+        expect(snapMid.charLength).toBeGreaterThanOrEqual(1);
+
+        // Japanese reading stops at punctuation
+        const snapPunct = snapToWordBoundary('建築物です。次へ', 5, 'ja');
+        expect(snapPunct.charIndex).toBe(5);
+      });
+
+      it('fallback estimate activates when no boundary events arrive (use fake timers)', () => {
+        vi.useFakeTimers();
+        try {
+          const { result } = renderHook(() =>
+            useNearbyAudio({
+              pois: [mockMultiParaPoi],
+              currentLang: 'vi',
+              fallbackNoticeText: (l) => l,
+              autoTriggerNoticeText: (n) => n,
+              getPoiName: (p) => p.name.vi,
+            })
+          );
+
+          act(() => {
+            result.current.playPoi(mockMultiParaPoi.id);
+          });
+
+          // Initially in boundary syncMode
+          expect(result.current.syncMode).toBe('boundary');
+          expect(result.current.activeCharOffset).toBe(0);
+
+          // Advance by 500ms (still within 1s watchdog)
+          act(() => {
+            vi.advanceTimersByTime(500);
+          });
+          expect(result.current.syncMode).toBe('boundary');
+
+          // Advance past 1000ms watchdog
+          act(() => {
+            vi.advanceTimersByTime(600);
+          });
+          expect(result.current.syncMode).toBe('estimate');
+          expect(result.current.activeCharOffset).toBeGreaterThanOrEqual(0);
+
+          act(() => {
+            result.current.stopAllAudio();
+          });
+          expect(result.current.activeCharOffset).toBeNull();
+        } finally {
+          vi.useRealTimers();
+        }
+      });
+
+      it('no highlight segments exist when idle or when another stop is playing', () => {
+        // 1. Idle (isPlaying = false)
+        const { container: idleContainer } = render(
+          <PoiReadingSection
+            activeItem={sortedMultiParaItem}
+            currentLang="vi"
+            isPlaying={false}
+            isCurrent={true}
+            activeCharOffset={5}
+            activeCharLength={3}
+            audioSourceType="speech"
+            prevItem={null}
+            nextItem={null}
+            onSelectPoi={vi.fn()}
+            getPoiName={(p) => p.name.vi}
+          />
+        );
+        expect(idleContainer.querySelectorAll('.reading-segment-read')).toHaveLength(0);
+        expect(idleContainer.querySelectorAll('.reading-segment-current')).toHaveLength(0);
+        expect(idleContainer.querySelectorAll('.reading-segment-unread')).toHaveLength(0);
+
+        // 2. Another stop is playing (isCurrent = false)
+        const { container: otherContainer } = render(
+          <PoiReadingSection
+            activeItem={sortedMultiParaItem}
+            currentLang="vi"
+            isPlaying={true}
+            isCurrent={false}
+            activeCharOffset={5}
+            activeCharLength={3}
+            audioSourceType="speech"
+            prevItem={null}
+            nextItem={null}
+            onSelectPoi={vi.fn()}
+            getPoiName={(p) => p.name.vi}
+          />
+        );
+        expect(otherContainer.querySelectorAll('.reading-segment-read')).toHaveLength(0);
+        expect(otherContainer.querySelectorAll('.reading-segment-current')).toHaveLength(0);
+        expect(otherContainer.querySelectorAll('.reading-segment-unread')).toHaveLength(0);
+      });
+
+      it('the active-sentence box classes and nodes no longer exist in reading section', () => {
+        const { container } = render(
+          <PoiReadingSection
+            activeItem={sortedMultiParaItem}
+            currentLang="vi"
+            isPlaying={true}
+            isCurrent={true}
+            activeCharOffset={5}
+            activeCharLength={3}
+            audioSourceType="speech"
+            prevItem={null}
+            nextItem={null}
+            onSelectPoi={vi.fn()}
+            getPoiName={(p) => p.name.vi}
+          />
+        );
+        expect(container.querySelectorAll('.is-highlighted-sentence')).toHaveLength(0);
+        expect(container.querySelectorAll('.transcript-sentence-node')).toHaveLength(0);
+        expect(container.querySelector('.reading-body-flow')).toHaveAttribute('data-sync');
+      });
+    });
+
+    describe('Hero Simplification & Invariant Audits (Tasks 1 to 4)', () => {
+      it.each(['vi', 'en', 'ja', 'ko'] as const)(
+        'asserts hero has no category chip, no listened chip, and no Listen|Read toggle in %s',
+        (lang) => {
+          setStoredLanguage(lang);
+          const { container } = render(
+            <BrowserRouter>
+              <NearbyPage />
+            </BrowserRouter>
+          );
+
+          const hero = container.querySelector('.nearby-hero-section');
+          expect(hero).toBeInTheDocument();
+
+          // 1. No category chip
+          expect(hero?.querySelector('.hero-category-badge')).toBeNull();
+
+          // 2. No listened chip
+          expect(hero?.querySelector('.chapter-listened-pill')).toBeNull();
+
+          // 3. No Listen|Read toggle
+          expect(hero?.querySelector('.hero-mode-switcher')).toBeNull();
+          expect(hero?.querySelector('.chapter-mode-switcher')).toBeNull();
+          expect(hero?.querySelector('.mode-switch-btn')).toBeNull();
+
+          // 4. Reading section is rendered below
+          expect(container.querySelector('.nearby-reading-section')).toBeInTheDocument();
+
+          // 5. List rows still show category
+          const stopCategories = container.querySelectorAll('.stop-row-category');
+          expect(stopCategories.length).toBeGreaterThan(0);
+        }
+      );
+
+      it('asserts hero keeps exact order: stop name -> intro -> Play button -> position indicator in vi, en, ja, ko', () => {
+        const testPoi = (nearbyPoisData[0] as unknown) as GeoPoi;
+        const languages: ('vi' | 'en' | 'ja' | 'ko')[] = ['vi', 'en', 'ja', 'ko'];
+
+        languages.forEach((lang) => {
+          const { container } = render(
+            <PoiHero
+              poi={testPoi}
+              originalIndex={2}
+              totalStops={5}
+              currentLang={lang}
+              isPlaying={false}
+              isCurrent={true}
+              playbackStatus="idle"
+              onTogglePlay={vi.fn()}
+              getPoiName={(p) => p.name[lang] || p.name.vi}
+            />
+          );
+
+          const heroContent = container.querySelector('.nearby-hero-content')!;
+          const title = heroContent.querySelector('.nearby-hero-title')!;
+          const intro = heroContent.querySelector('.nearby-hero-intro')!;
+          const actionsRow = heroContent.querySelector('.hero-actions-row')!;
+          const playBtn = actionsRow.querySelector('.detail-play-btn')!;
+          const posIndicator = actionsRow.querySelector('.hero-position-indicator')!;
+
+          expect(title).toBeInTheDocument();
+          expect(intro).toBeInTheDocument();
+          expect(playBtn).toBeInTheDocument();
+          expect(posIndicator).toBeInTheDocument();
+          expect(posIndicator).toHaveTextContent('3 / 5');
+
+          // Strict ordering check
+          const contentChildren = Array.from(heroContent.children);
+          expect(contentChildren.indexOf(title)).toBeLessThan(contentChildren.indexOf(intro));
+          expect(contentChildren.indexOf(intro)).toBeLessThan(contentChildren.indexOf(actionsRow));
+
+          const actionsChildren = Array.from(actionsRow.children);
+          expect(actionsChildren.indexOf(playBtn)).toBeLessThan(actionsChildren.indexOf(posIndicator));
+        });
+      });
+
+      it('asserts list rows still show the category and listened check mark when marked listened, while hero has no chip', () => {
+        // Set stop 1 as listened in localStorage
+        localStorage.setItem('saigonvoice_listened_pois', JSON.stringify(['poi-1']));
+        setStoredLanguage('vi');
+
+        const { container } = render(
+          <BrowserRouter>
+            <NearbyPage />
+          </BrowserRouter>
+        );
+
+        // Stop 1 is active stop and listened
+        const hero = container.querySelector('#active-stop-hero');
+        expect(hero?.querySelector('.chapter-listened-pill')).toBeNull();
+        expect(hero?.querySelector('.hero-category-badge')).toBeNull();
+
+        // In the stop list:
+        const firstStopRow = container.querySelector('.nearby-stop-row');
+        expect(firstStopRow).toBeInTheDocument();
+
+        // Category is present in the list row
+        const catEl = firstStopRow?.querySelector('.stop-row-category');
+        expect(catEl).toBeInTheDocument();
+        expect(catEl?.textContent?.trim().length).toBeGreaterThan(0);
+
+        // Listened check mark is present in the list row
+        const listenedCheck = firstStopRow?.querySelector('.stop-row-listened');
+        expect(listenedCheck).toBeInTheDocument();
       });
     });
   });

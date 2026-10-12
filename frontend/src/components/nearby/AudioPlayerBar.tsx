@@ -65,8 +65,8 @@ export const AudioPlayerBar: React.FC<AudioPlayerBarProps> = ({
   speedLabelText,
   viewTextBtnText,
 }) => {
-  // Show only while something is playing or paused mid-track, not in idle state
-  if (!activePoi || (!isPlaying && currentTime === 0)) {
+  // Show while something is playing, paused mid-track, or displaying a notice message
+  if (!activePoi || (!isPlaying && currentTime === 0 && !notice)) {
     return null;
   }
 

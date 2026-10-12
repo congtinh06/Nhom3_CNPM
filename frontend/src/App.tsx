@@ -1,5 +1,5 @@
 import React, { Suspense, lazy } from 'react';
-import { BrowserRouter, Routes, Route, useLocation, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useLocation, Navigate, useParams } from 'react-router-dom';
 import { ToastProvider } from './context/ToastContext';
 import { CartProvider } from './context/CartContext';
 import { AuthProvider } from './context/AuthContext';
@@ -21,12 +21,19 @@ import { PaymentResultPage } from './pages/PaymentResultPage';
 import { VietQrPage } from './pages/VietQrPage';
 import { GuidePage } from './pages/GuidePage';
 import { ContactPage } from './pages/ContactPage';
+import { NewsListPage } from './pages/NewsListPage';
+import { NewsDetailPage } from './pages/NewsDetailPage';
 import { AuthModal } from './components/auth/AuthModal';
 
 import { useSmoothScroll } from './hooks/useSmoothScroll';
 
 const NearbyPage = lazy(() => import('./pages/NearbyPage'));
 const AdminPage = lazy(() => import('./pages/AdminPage'));
+
+const PoiRedirect: React.FC = () => {
+  const { slug } = useParams<{ slug: string }>();
+  return <Navigate to={slug ? `/diem-du-lich?stop=${slug}` : '/diem-du-lich'} replace />;
+};
 
 const AppContent: React.FC = () => {
   useSmoothScroll();
@@ -60,11 +67,14 @@ const AppContent: React.FC = () => {
 
             {/* Core Navigation Routes */}
             <Route path="/diem-du-lich" element={<NearbyPage />} />
+            <Route path="/diem-du-lich/:slug" element={<PoiRedirect />} />
             <Route path="/thuyet-minh" element={<NearbyPage />} />
             <Route path="/gan-toi" element={<NearbyPage />} />
             <Route path="/am-thuc" element={<FoodBeveragePage />} />
             <Route path="/thuc-uong" element={<FoodBeveragePage />} />
             <Route path="/am-thuc-thuc-uong" element={<FoodBeveragePage />} />
+            <Route path="/tin-tuc" element={<NewsListPage />} />
+            <Route path="/tin-tuc/:slug" element={<NewsDetailPage />} />
             <Route path="/huong-dan" element={<GuidePage />} />
             <Route path="/lien-he" element={<ContactPage />} />
 
