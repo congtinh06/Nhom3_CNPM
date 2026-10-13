@@ -1,22 +1,21 @@
-import React, { FormEvent, useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { authApi } from '../api/auth';
-import { normalizeApiError } from '../api/errors';
+import React, { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
-import { PasswordField } from '../components/auth/PasswordField';
+import { AccountProfile } from '../components/account/AccountProfile';
+import { AccountOrders } from '../components/account/AccountOrders';
+import { AccountSecurity } from '../components/account/AccountSecurity';
+import { AccountPreferences } from '../components/account/AccountPreferences';
+import { useAccountI18n } from '../components/account/accountI18n';
+import '../styles/account.css';
 
 export const AccountPage: React.FC = () => {
-  const { user, status, isAdmin, logout, reloadUser } = useAuth();
+  const { user, status, logout } = useAuth();
   const { showToast } = useToast();
   const navigate = useNavigate();
+  const { t } = useAccountI18n();
 
-  const [oldPassword, setOldPassword] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
-  const [error, setError] = useState<string | null>(null);
-  const [submitting, setSubmitting] = useState(false);
+  const [active, setActive] = useState('profile');
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -28,149 +27,93 @@ export const AccountPage: React.FC = () => {
     }
   }, [status, navigate]);
 
+  const initials = useMemo(() => {
+    const name = user?.fullName?.trim() || user?.email || '';
+    const parts = name.split(/\s+/).filter(Boolean);
+    const first = parts[0] ?? '';
+    if (parts.length >= 2) {
+      const last = parts[parts.length - 1] ?? '';
+      return ((first[0] ?? '') + (last[0] ?? '')).toUpperCase();
+    }
+    return first.slice(0, 2).toUpperCase();
+  }, [user]);
+
+  const navItems = useMemo(
+    () => [
+      { id: 'profile', label: t.navProfile },
+      { id: 'orders', label: t.navOrders },
+      { id: 'security', label: t.navSecurity },
+      { id: 'preferences', label: t.navPreferences },
+    ],
+    [t]
+  );
+
+  const goTo = (id: string) => {
+    setActive(id);
+    const el = document.getElementById(id);
+    if (el && typeof el.scrollIntoView === 'function') {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
   const handleLogout = async () => {
     await logout();
-    showToast('Bạn đã đăng xuất');
+    showToast(t.signedOut);
     navigate('/');
   };
 
-  const handleChangePassword = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    setError(null);
-    setFieldErrors({});
-
-    if (newPassword !== confirmPassword) {
-      setFieldErrors({ confirmPassword: 'Mật khẩu xác nhận không khớp.' });
-      return;
-    }
-
-    setSubmitting(true);
-    try {
-      const response = await authApi.changePassword({ oldPassword, newPassword, confirmPassword });
-      showToast(response.message);
-      setOldPassword('');
-      setNewPassword('');
-      setConfirmPassword('');
-      await reloadUser();
-    } catch (err) {
-      const norm = normalizeApiError(err);
-      setFieldErrors(norm.details ?? {});
-      setError(norm.message);
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  if (status === 'loading' || !user) {
-    return (
-      <section className="s auth">
-        <div className="auth-card">
-          <p className="auth-kicker">SaigonVoice</p>
-          <h2>Tài khoản</h2>
-          <p className="auth-note">Đang tải thông tin…</p>
-        </div>
-      </section>
-    );
-  }
+  const isLoading = status === 'loading' || !user;
 
   return (
-    <section className="s auth">
-      <div className="auth-card">
-        <p className="auth-kicker">SaigonVoice</p>
-        <h2>Tài khoản</h2>
+    <section className="s ac-page">
+      <header className="ac-head">
+        <p className="ac-kicker">{t.kicker}</p>
+        <h1 className="ac-title">{t.pageTitle}</h1>
+        <p className="ac-subtitle">{t.pageSubtitle}</p>
+      </header>
 
-        <dl className="auth-info">
-          <div>
-            <dt>Họ tên</dt>
-            <dd>{user.fullName}</dd>
-          </div>
-          <div>
-            <dt>Email</dt>
-            <dd>{user.email}</dd>
-          </div>
-          <div>
-            <dt>Vai trò</dt>
-            <dd>{isAdmin ? 'Quản trị viên' : 'Người dùng'}</dd>
-          </div>
-          <div>
-            <dt>Trạng thái email</dt>
-            <dd>{user.emailVerified ? 'Đã xác thực' : 'Chưa xác thực'}</dd>
-          </div>
-        </dl>
-
-        {!user.emailVerified && (
-          <p className="af-err" role="status">
-            Tài khoản chưa xác thực email.{' '}
-            <Link to="/xac-thuc-email">Xác thực ngay</Link>
-          </p>
-        )}
-
-        <div className="auth-actions">
-          <button type="button" className="tb" onClick={handleLogout}>
-            Đăng xuất
-          </button>
-          <Link className="tb" to="/">
-            Về trang chủ
-          </Link>
+      {isLoading || !user ? (
+        <div className="ac-loading">
+          <p className="ac-muted">{t.loading}</p>
         </div>
+      ) : (
+        <div className="ac-shell">
+          <aside className="ac-aside">
+            <div className="ac-identity">
+              <div className="ac-avatar" aria-hidden="true">
+                {initials}
+              </div>
+              <span className="ac-identity-name">{user.fullName}</span>
+              <span className="ac-identity-email">{user.email}</span>
+            </div>
 
-        <h3 className="auth-sub">Đổi mật khẩu</h3>
-        <form onSubmit={handleChangePassword} noValidate>
-          <PasswordField
-            name="oldPassword"
-            label="Mật khẩu hiện tại"
-            value={oldPassword}
-            onChange={setOldPassword}
-            autoComplete="current-password"
-            required
-            error={
-              fieldErrors.oldPassword ? (
-                <em className="af-field-err">{fieldErrors.oldPassword}</em>
-              ) : undefined
-            }
-          />
+            <nav className="ac-nav" aria-label={t.menuLabel}>
+              {navItems.map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  className={`ac-nav-link ${active === item.id ? 'is-active' : ''}`.trim()}
+                  aria-current={active === item.id ? 'true' : undefined}
+                  onClick={() => goTo(item.id)}
+                >
+                  {item.label}
+                </button>
+              ))}
+            </nav>
 
-          <PasswordField
-            name="newPassword"
-            label="Mật khẩu mới"
-            value={newPassword}
-            onChange={setNewPassword}
-            autoComplete="new-password"
-            required
-            minLength={8}
-            placeholder="Tối thiểu 8 ký tự"
-            error={
-              fieldErrors.newPassword ? (
-                <em className="af-field-err">{fieldErrors.newPassword}</em>
-              ) : undefined
-            }
-          />
+            <button type="button" className="ac-signout" onClick={handleLogout}>
+              {t.signOut}
+            </button>
+          </aside>
 
-          <PasswordField
-            name="confirmPassword"
-            label="Xác nhận mật khẩu mới"
-            value={confirmPassword}
-            onChange={setConfirmPassword}
-            autoComplete="new-password"
-            required
-            error={
-              fieldErrors.confirmPassword ? (
-                <em className="af-field-err">{fieldErrors.confirmPassword}</em>
-              ) : undefined
-            }
-          />
-
-          {error && (
-            <p className="af-err" role="alert">
-              {error}
-            </p>
-          )}
-
-          <button type="submit" className="tb af-submit" disabled={submitting}>
-            {submitting ? 'Đang cập nhật…' : 'Đổi mật khẩu'}
-          </button>
-        </form>
-      </div>
+          <div className="ac-main">
+            <AccountProfile />
+            <AccountOrders />
+            <AccountSecurity />
+            <AccountPreferences />
+          </div>
+        </div>
+      )}
     </section>
   );
 };
