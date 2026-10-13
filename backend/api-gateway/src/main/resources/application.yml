@@ -37,6 +37,7 @@ spring:
 
 frontend:
   url: ${FRONTEND_URL:http://localhost:5173}
+  urls: ${FRONTEND_URLS:}
 
 management:
   endpoints:

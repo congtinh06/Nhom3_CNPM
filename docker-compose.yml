@@ -288,6 +288,7 @@ services:
       ANALYTICS_SERVICE_URL: http://analytics-service:8081
       AUTH_SERVICE_URL: http://auth-service:8086
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost:5173}
+      FRONTEND_URLS: ${FRONTEND_URLS:-}
       ADMIN_API_KEY: ${ADMIN_API_KEY:-}
     depends_on:
       content-service:

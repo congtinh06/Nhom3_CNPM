@@ -27,6 +27,7 @@ public class AdminAuthGlobalFilter implements GlobalFilter, Ordered {
     public static final String HEADER_ADMIN_KEY = "X-Admin-Key";
     private static final String ADMIN_CONTENT_PREFIX = "/api/content/admin";
     private static final String ANALYTICS_SUMMARY_PATH = "/api/analytics/summary";
+    private static final String ADMIN_API_PREFIX = "/api/admin";
 
     // Read from ADMIN_API_KEY environment variable. No default value in code or yml.
     @Value("${ADMIN_API_KEY:}")
@@ -54,11 +55,12 @@ public class AdminAuthGlobalFilter implements GlobalFilter, Ordered {
             return chain.filter(exchange);
         }
 
-        // 2. Identify protected paths: any method on /api/content/admin/** and /api/analytics/summary
+        // 2. Identify protected paths: any method on /api/content/admin/**, /api/admin/** and /api/analytics/summary
         boolean isAdminContent = path != null && (path.equals(ADMIN_CONTENT_PREFIX) || path.startsWith(ADMIN_CONTENT_PREFIX + "/"));
+        boolean isAdminApi = path != null && (path.equals(ADMIN_API_PREFIX) || path.startsWith(ADMIN_API_PREFIX + "/"));
         boolean isAnalyticsSummary = ANALYTICS_SUMMARY_PATH.equals(path);
 
-        if (!isAdminContent && !isAnalyticsSummary) {
+        if (!isAdminContent && !isAdminApi && !isAnalyticsSummary) {
             return chain.filter(exchange);
         }
 
@@ -85,11 +87,16 @@ public class AdminAuthGlobalFilter implements GlobalFilter, Ordered {
             return sendUnauthorized(exchange);
         }
 
-        // 6. Security rule: Do NOT forward X-Admin-Key downstream
+        // 6. Security rule: Do NOT forward X-Admin-Key downstream.
+        // /api/admin/** (content-service AdminRoleFilter) expects a role header; only the gateway may set it,
+        // and only here, after the admin key has been verified.
         ServerHttpRequest mutatedRequest = exchange.getRequest().mutate()
                 .headers(headers -> {
                     headers.remove(HEADER_ADMIN_KEY);
                     headers.remove(HEADER_ADMIN_KEY.toLowerCase());
+                    if (isAdminApi) {
+                        headers.set(UntrustedHeaderStripGlobalFilter.HEADER_USER_ROLE, "ADMIN");
+                    }
                 })
                 .build();
 

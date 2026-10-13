@@ -39,6 +39,7 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Stream;
@@ -83,6 +84,7 @@ class ApiGatewayApplicationTest {
     private static final AtomicBoolean downstreamReceivedInternalKey = new AtomicBoolean(false);
     private static final AtomicBoolean downstreamReceivedAdminKey = new AtomicBoolean(false);
     private static final AtomicInteger downstreamRequestCount = new AtomicInteger(0);
+    private static final AtomicReference<String> downstreamUserRole = new AtomicReference<>();
 
     @Autowired
     private WebTestClient webTestClient;
@@ -114,6 +116,9 @@ class ApiGatewayApplicationTest {
                     exchange.getRequestHeaders().containsKey("x-internal-api-key")) {
                 downstreamReceivedInternalKey.set(true);
             }
+
+            // Record the X-User-Role that reached downstream (null when absent)
+            downstreamUserRole.set(exchange.getRequestHeaders().getFirst("X-User-Role"));
 
             // Detect if X-Admin-Key was forwarded downstream (it should NOT be)
             if (exchange.getRequestHeaders().containsKey("X-Admin-Key") ||
@@ -165,6 +170,7 @@ class ApiGatewayApplicationTest {
         registry.add("TRANSLATION_TTS_SERVICE_URL", () -> "http://127.0.0.1:" + mockPort);
         registry.add("ANALYTICS_SERVICE_URL", () -> "http://127.0.0.1:" + mockPort);
         registry.add("ADMIN_API_KEY", () -> TEST_ADMIN_KEY);
+        registry.add("FRONTEND_URLS", () -> "https://demo.ngrok-free.app, https://other.example.com");
         registry.add("GATEWAY_RESPONSE_TIMEOUT", () -> "2s");
         registry.add("GATEWAY_CONNECT_TIMEOUT_MS", () -> "1000");
     }
@@ -174,6 +180,7 @@ class ApiGatewayApplicationTest {
         downstreamReceivedInternalKey.set(false);
         downstreamReceivedAdminKey.set(false);
         downstreamRequestCount.set(0);
+        downstreamUserRole.set(null);
         adminAuthFilter.setAdminApiKey(TEST_ADMIN_KEY);
         rateLimitFilter.clearRateLimitCache();
     }
@@ -390,6 +397,136 @@ class ApiGatewayApplicationTest {
                 .isFalse();
     }
 
+    // ==========================================
+    // /api/admin/** guard, X-User-Role stripping, CORS (ngrok exposure hardening)
+    // ==========================================
+
+    @Test
+    void testAdminApiWithoutKeyIsRejected() {
+        String[] paths = {"/api/admin/products", "/api/admin/products/", "/api/admin/products/1/status"};
+        for (String path : paths) {
+            for (HttpMethod method : new HttpMethod[]{HttpMethod.GET, HttpMethod.POST, HttpMethod.PATCH, HttpMethod.DELETE}) {
+                int before = downstreamRequestCount.get();
+                webTestClient.method(method).uri("http://localhost:" + port + path)
+                        .exchange()
+                        .expectStatus().isUnauthorized();
+                assertThat(downstreamRequestCount.get())
+                        .as("Downstream must receive NOTHING for " + method + " " + path + " without key")
+                        .isEqualTo(before);
+            }
+        }
+    }
+
+    @Test
+    void testAdminApiWithWrongKeyIsRejected() {
+        int before = downstreamRequestCount.get();
+        webTestClient.get().uri("http://localhost:" + port + "/api/admin/products")
+                .header("X-Admin-Key", "wrong-key")
+                .exchange()
+                .expectStatus().isUnauthorized()
+                .expectBody()
+                .jsonPath("$.message").isEqualTo("Unauthorized");
+        assertThat(downstreamRequestCount.get()).isEqualTo(before);
+    }
+
+    @Test
+    void testAdminApiFailsClosedWhenAdminKeyIsUnset() {
+        adminAuthFilter.setAdminApiKey("");
+        webTestClient.get().uri("http://localhost:" + port + "/api/admin/products")
+                .header("X-Admin-Key", "any-random-key")
+                .exchange()
+                .expectStatus().isUnauthorized();
+    }
+
+    @Test
+    void testAdminApiWithValidKeyPassesAndGatewaySuppliesRole() {
+        // Client sends a forged role together with a valid key: the forged value must be replaced by the gateway's own.
+        webTestClient.patch().uri("http://localhost:" + port + "/api/admin/products/1/status")
+                .header("X-Admin-Key", TEST_ADMIN_KEY)
+                .header("X-User-Role", "FORGED")
+                .exchange()
+                .expectStatus().isOk();
+
+        assertThat(downstreamUserRole.get())
+                .as("Role seen by content-service must be the gateway-set value, never the client's")
+                .isEqualTo("ADMIN");
+        assertThat(downstreamReceivedAdminKey.get())
+                .as("X-Admin-Key must NOT be forwarded downstream")
+                .isFalse();
+    }
+
+    @Test
+    void testForgedUserRoleWithoutKeyIsRejected() {
+        int before = downstreamRequestCount.get();
+
+        // The original attack: no key, just X-User-Role: ADMIN
+        webTestClient.get().uri("http://localhost:" + port + "/api/admin/products")
+                .header("X-User-Role", "ADMIN")
+                .exchange()
+                .expectStatus().isUnauthorized();
+
+        webTestClient.post().uri("http://localhost:" + port + "/api/admin/products")
+                .header("X-User-Role", "admin")
+                .header("X-Admin-Key", "wrong-key")
+                .exchange()
+                .expectStatus().isUnauthorized();
+
+        assertThat(downstreamRequestCount.get())
+                .as("Forged role must never reach content-service")
+                .isEqualTo(before);
+    }
+
+    @Test
+    void testClientSuppliedUserRoleIsStrippedBeforeRouting() {
+        webTestClient.get().uri("http://localhost:" + port + "/api/content/pois")
+                .header("X-User-Role", "ADMIN")
+                .exchange()
+                .expectStatus().isOk();
+
+        assertThat(downstreamUserRole.get())
+                .as("Downstream must NOT receive client-supplied X-User-Role")
+                .isNull();
+    }
+
+    @Test
+    void testCorsPreflightFromAllowedOriginWithNgrokHeaderAndPatch() {
+        webTestClient.options().uri("http://localhost:" + port + "/api/admin/products/1/status")
+                .header("Origin", "http://localhost:5173")
+                .header("Access-Control-Request-Method", "PATCH")
+                .header("Access-Control-Request-Headers", "ngrok-skip-browser-warning, Content-Type, X-Admin-Key")
+                .exchange()
+                .expectStatus().isOk()
+                .expectHeader().valueEquals("Access-Control-Allow-Origin", "http://localhost:5173")
+                .expectHeader().valueEquals("Access-Control-Allow-Credentials", "true")
+                .expectHeader().value("Access-Control-Allow-Methods", v -> assertThat(v).contains("PATCH").contains("DELETE"))
+                .expectHeader().value("Access-Control-Allow-Headers",
+                        v -> assertThat(v.toLowerCase()).contains("ngrok-skip-browser-warning"));
+    }
+
+    @Test
+    void testCorsPreflightFromFrontendUrlsEntryIsAllowed() {
+        // FRONTEND_URLS is registered in configureProperties: "https://demo.ngrok-free.app, https://other.example.com"
+        webTestClient.options().uri("http://localhost:" + port + "/api/content/pois")
+                .header("Origin", "https://demo.ngrok-free.app")
+                .header("Access-Control-Request-Method", "GET")
+                .header("Access-Control-Request-Headers", "ngrok-skip-browser-warning")
+                .exchange()
+                .expectStatus().isOk()
+                .expectHeader().valueEquals("Access-Control-Allow-Origin", "https://demo.ngrok-free.app");
+    }
+
+    @Test
+    void testCorsPreflightFromDisallowedOriginIsRejected() {
+        webTestClient.options().uri("http://localhost:" + port + "/api/admin/products/1/status")
+                .header("Origin", "https://evil.example.com")
+                .header("Access-Control-Request-Method", "PATCH")
+                .header("Access-Control-Request-Headers", "ngrok-skip-browser-warning")
+                .exchange()
+                .expectStatus().isForbidden()
+                .expectHeader().doesNotExist("Access-Control-Allow-Origin");
+    }
+
+
     @Test
     void testRateLimitOnAnalyticsEvents() {
         rateLimitFilter.clearRateLimitCache();
@@ -544,7 +681,7 @@ class ApiGatewayApplicationTest {
 
     @Test
     void disallowedOriginGetsNoAccessControlAllowOrigin() {
-        webTestClient.get().uri("/api/content/pois")
+        webTestClient.get().uri("http://localhost:" + port + "/api/content/pois")
                 .header("Origin", "http://disallowed-evil.com")
                 .exchange()
                 .expectHeader().doesNotExist("Access-Control-Allow-Origin");
@@ -552,9 +689,10 @@ class ApiGatewayApplicationTest {
 
     @Test
     void deletePreflightNotAllowed() {
+        // DELETE/PATCH are now allowed on purpose (admin UI); a method outside the allowlist must still be rejected.
         webTestClient.options().uri("http://localhost:" + port + "/api/content/pois")
                 .header("Origin", "http://localhost:5173")
-                .header("Access-Control-Request-Method", "DELETE")
+                .header("Access-Control-Request-Method", "TRACE")
                 .exchange()
                 .expectStatus().isForbidden()
                 .expectHeader().doesNotExist("Access-Control-Allow-Origin");
