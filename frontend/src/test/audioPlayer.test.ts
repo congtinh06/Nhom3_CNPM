@@ -332,7 +332,14 @@ describe('Audio Resolution, Voice Selection & Linkage (Tasks 1 to 6)', () => {
     expect(findMatchingVoice(mockVoices, 'ko-KR')?.lang).toBe('ko-KR');
   });
 
-  it('(d) no matching voice -> no speak() call and the message is shown', async () => {
+  it('a voice named "Daniel" must not match vi', () => {
+    const danielVoices = [
+      { lang: 'en-US', name: 'Daniel', voiceURI: 'daniel' } as SpeechSynthesisVoice,
+    ];
+    expect(findMatchingVoice(danielVoices, 'vi-VN')).toBeNull();
+  });
+
+  it('(d) no matching voice shows the no-voice message and does not call speak', async () => {
     // Only English voice is available in system
     const englishOnlyVoices = [
       { lang: 'en-US', name: 'Voice EN', voiceURI: 'en' } as SpeechSynthesisVoice,
@@ -357,14 +364,63 @@ describe('Audio Resolution, Voice Selection & Linkage (Tasks 1 to 6)', () => {
       result.current.playPoi('poi-1');
     });
 
-    // Does NOT speak with the non-Vietnamese voice
     expect(speakSpy).not.toHaveBeenCalled();
-    // Playback is NOT active
     expect(result.current.isPlaying).toBe(false);
     expect(result.current.playbackStatus).toBe('idle');
-    // Warning notice is displayed in the player bar
     expect(result.current.notice).toBe('Thiết bị chưa có giọng đọc tiếng Việt.');
     expect(result.current.noticeWarn).toBe(true);
+  });
+
+
+  it('empty sync voices waits for async load', async () => {
+    const speakSpy = vi.fn();
+    (window.speechSynthesis as any).speak = speakSpy;
+
+    const viVoice = { lang: 'vi-VN', name: 'Voice VI', voiceURI: 'vi' } as SpeechSynthesisVoice;
+    let syncDone = false;
+    const listeners: Array<() => void> = [];
+
+    const addEventListenerSpy = vi
+      .spyOn(window.speechSynthesis, 'addEventListener')
+      .mockImplementation((event: string, handler: any) => {
+        if (event === 'voiceschanged') {
+          listeners.push(handler);
+        }
+      });
+
+    (window.speechSynthesis as any).getVoices = () => {
+      if (!syncDone) {
+        return [];
+      }
+      return [viVoice];
+    };
+
+    const { result } = renderHook(() =>
+      useNearbyAudio({
+        pois,
+        currentLang: 'vi',
+        fallbackNoticeText: () => '',
+        autoTriggerNoticeText: () => '',
+        getPoiName: (p) => p.name.vi,
+      })
+    );
+
+    await act(async () => {
+      result.current.playPoi('poi-1');
+    });
+
+    expect(speakSpy).not.toHaveBeenCalled();
+
+    syncDone = true;
+    await act(async () => {
+      listeners.forEach((fn) => fn());
+    });
+
+    expect(speakSpy).toHaveBeenCalled();
+    expect(result.current.isPlaying).toBe(true);
+    expect(result.current.playbackStatus).toBe('playing');
+
+    addEventListenerSpy.mockRestore();
   });
 
   it('(e) rapid clicks A, B, C end with only C speaking', async () => {

@@ -127,7 +127,62 @@ export function findMatchingVoice(
     const vSubtag = vLang.split('-')[0];
     return vSubtag === targetSubtag;
   });
-  return subtagMatch || null;
+  if (subtagMatch) return subtagMatch;
+
+  // 3. Fallback matching by language name or alternative codes
+  if (targetSubtag === 'vi') {
+    const viMatch = voices.find((v) => {
+      const vLang = (v.lang || '').toLowerCase().replace('_', '-');
+      const vName = (v.name || '').toLowerCase();
+      return (
+        vLang === 'vie' ||
+        vLang === 'vn' ||
+        vLang.startsWith('vi') ||
+        vName.includes('vietnam') ||
+        vName.includes('tiếng việt') ||
+        vName.includes('tieng viet') ||
+        vName.includes('hoaimy') ||
+        vName.includes('namminh')
+      );
+    });
+    if (viMatch) return viMatch;
+  }
+
+  if (targetSubtag === 'ja') {
+    const jaMatch = voices.find((v) => {
+      const vLang = (v.lang || '').toLowerCase().replace('_', '-');
+      const vName = (v.name || '').toLowerCase();
+      return (
+        vLang === 'jpn' ||
+        vLang.startsWith('ja') ||
+        vName.includes('japanese') ||
+        vName.includes('日本語') ||
+        vName.includes('haruka') ||
+        vName.includes('ichiro') ||
+        vName.includes('ayumi')
+      );
+    });
+    if (jaMatch) return jaMatch;
+  }
+
+  if (targetSubtag === 'ko') {
+    const koMatch = voices.find((v) => {
+      const vLang = (v.lang || '').toLowerCase().replace('_', '-');
+      const vName = (v.name || '').toLowerCase();
+      return (
+        vLang === 'kor' ||
+        vLang.startsWith('ko') ||
+        vName.includes('korean') ||
+        vName.includes('한국어') ||
+        vName.includes('heami') ||
+        vName.includes('sunhi') ||
+        vName.includes('injoon')
+      );
+    });
+    if (koMatch) return koMatch;
+  }
+
+  return null;
 }
 
 export const LANG_DISPLAY_NAMES: Record<SupportedLanguage, Record<SupportedLanguage, string>> = {
@@ -460,6 +515,20 @@ export function useNearbyAudio({
     onPoiListenedRef.current = onPoiListened;
   }, [onPoiListened]);
 
+  // Preload speech synthesis voices and subscribe to voiceschanged
+  useEffect(() => {
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      window.speechSynthesis.getVoices?.();
+      const onVoicesChanged = () => {
+        window.speechSynthesis.getVoices?.();
+      };
+      window.speechSynthesis.addEventListener?.('voiceschanged', onVoicesChanged);
+      return () => {
+        window.speechSynthesis.removeEventListener?.('voiceschanged', onVoicesChanged);
+      };
+    }
+  }, []);
+
   const resolveNoVoiceMsg = useCallback(
     (l: SupportedLanguage) => {
       if (noVoiceNoticeText) return noVoiceNoticeText(l);
@@ -594,10 +663,15 @@ export function useNearbyAudio({
       const doSpeak = (voices: SpeechSynthesisVoice[]) => {
         if (token !== requestTokenRef.current) return;
 
-        const matchedVoice = findMatchingVoice(voices, targetLocale);
+        // 1. Find matching voice from supplied list
+        let matchedVoice = findMatchingVoice(voices, targetLocale);
 
-        // Task 3: If no voice matches the selected language, do NOT speak with a different-language voice:
-        // show a short, plain message in the player bar in the selected language and do not start playback.
+        // 2. Re-query synth if not found (catches newly loaded async voices)
+        if (!matchedVoice && typeof window !== 'undefined' && 'speechSynthesis' in window) {
+          const fresh = window.speechSynthesis.getVoices?.() || [];
+          matchedVoice = findMatchingVoice(fresh, targetLocale);
+        }
+
         if (!matchedVoice) {
           stopTimer();
           setPlaybackStatus('idle');
