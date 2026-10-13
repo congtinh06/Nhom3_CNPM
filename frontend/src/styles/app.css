@@ -134,6 +134,7 @@ select:focus-visible {
   max-height: 64px;
   padding: calc(14px + env(safe-area-inset-top, 0px)) clamp(16px, 4vw, 56px) 14px;
   background: linear-gradient(180deg, rgba(14, 9, 5, 0.72) 0%, rgba(14, 9, 5, 0.35) 60%, transparent 100%);
+  background-origin: border-box;
   color: var(--cream);
   text-shadow: none;
   border-bottom: 1px solid transparent;
