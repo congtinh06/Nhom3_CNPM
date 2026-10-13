@@ -48,7 +48,8 @@ class AudioControllerTest {
         mockMvc.perform(get("/api/tts/audio/" + fileName))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType("audio/mpeg"))
-                .andExpect(header().string(HttpHeaders.ACCEPT_RANGES, "bytes"));
+                .andExpect(header().string(HttpHeaders.ACCEPT_RANGES, "bytes"))
+                .andExpect(header().string(HttpHeaders.CACHE_CONTROL, "public, max-age=31536000, immutable"));
 
         verify(audioStorageService).resolveAudioPath(fileName);
     }
@@ -66,7 +67,8 @@ class AudioControllerTest {
                         .header(HttpHeaders.RANGE, "bytes=0-499"))
                 .andExpect(status().isPartialContent())
                 .andExpect(content().contentType("audio/mpeg"))
-                .andExpect(header().string(HttpHeaders.ACCEPT_RANGES, "bytes"));
+                .andExpect(header().string(HttpHeaders.ACCEPT_RANGES, "bytes"))
+                .andExpect(header().string(HttpHeaders.CACHE_CONTROL, "public, max-age=31536000, immutable"));
     }
 
     @Test
@@ -78,7 +80,8 @@ class AudioControllerTest {
         when(audioStorageService.resolveAudioPath(fileName)).thenReturn(nonExistent);
 
         mockMvc.perform(get("/api/tts/audio/" + fileName))
-                .andExpect(status().isNotFound());
+                .andExpect(status().isNotFound())
+                .andExpect(header().doesNotExist(HttpHeaders.CACHE_CONTROL));
     }
 
     @Test
@@ -99,7 +102,8 @@ class AudioControllerTest {
 
         for (String invalidName : invalidNames) {
             mockMvc.perform(get("/api/tts/audio/" + invalidName))
-                    .andExpect(status().isBadRequest());
+                    .andExpect(status().isBadRequest())
+                    .andExpect(header().doesNotExist(HttpHeaders.CACHE_CONTROL));
         }
 
         // Verify storageService was never invoked for any of these

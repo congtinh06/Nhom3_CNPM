@@ -1,6 +1,7 @@
 package com.saigonvoice.translation.service;
 
 import com.saigonvoice.translation.entity.TranslationJob;
+import com.saigonvoice.translation.event.AuthoredPoiText;
 import com.saigonvoice.translation.event.PoiAudioFailedEvent;
 import com.saigonvoice.translation.event.PoiAudioReadyEvent;
 import com.saigonvoice.translation.event.PoiEventPayload;
@@ -176,6 +177,63 @@ class PoiPipelineServiceTest {
         // Verify all 4 jobs saved as DONE
         assertEquals(4, jobStore.size());
         assertTrue(jobStore.values().stream().allMatch(j -> "DONE".equals(j.getStatus())));
+    }
+
+    @Test
+    @DisplayName("Authored en: dùng nguyên văn (không dịch máy), hash tính từ chính bản en, TTS đọc tiêu đề + mô tả")
+    void testAuthoredLanguage_usedVerbatim() {
+        String viTitle = "Dinh Độc Lập";
+        String viSummary = "Tóm tắt tiếng Việt";
+        String viDesc = "Mô tả tiếng Việt";
+        String authoredTitle = "Independence Palace";
+        String authoredSummary = "Authored EN summary";
+        String authoredDesc = "Authored EN description.\n\nSecond paragraph.";
+
+        Map<String, AuthoredPoiText> authored = Map.of("en", AuthoredPoiText.builder()
+                .title(authoredTitle)
+                .summary(authoredSummary)
+                .description(authoredDesc)
+                .historicalSignificance(null)
+                .build());
+
+        PoiEventPayload event = PoiEventPayload.builder()
+                .poiId(909L)
+                .poiCode("POI_09")
+                .sourceLanguage("vi")
+                .title(viTitle)
+                .summary(viSummary)
+                .description(viDesc)
+                .targetLanguages(List.of("en"))
+                .authoredTexts(authored)
+                .build();
+
+        pipelineService.processPoiEvent(event);
+
+        // Không gọi nhà cung cấp dịch máy cho "en"
+        verify(translationCacheService, never()).getOrTranslate(eq("en"), any(), any(), any(), any());
+
+        ArgumentCaptor<PoiAudioReadyEvent> readyCaptor = ArgumentCaptor.forClass(PoiAudioReadyEvent.class);
+        verify(eventPublisher, times(2)).publishAudioReady(readyCaptor.capture());
+        PoiAudioReadyEvent viReady = readyCaptor.getAllValues().stream()
+                .filter(e -> "vi".equals(e.getLanguageCode())).findFirst().orElseThrow();
+        PoiAudioReadyEvent enReady = readyCaptor.getAllValues().stream()
+                .filter(e -> "en".equals(e.getLanguageCode())).findFirst().orElseThrow();
+
+        // vi giữ nguyên bản nguồn
+        assertEquals(viTitle, viReady.getTitle());
+        // en dùng nguyên văn bản authored
+        assertEquals(authoredTitle, enReady.getTitle());
+        assertEquals(authoredSummary, enReady.getSummary());
+        assertEquals(authoredDesc, enReady.getDescription());
+        assertEquals("READY", enReady.getAudioStatus());
+
+        String expectedHash = ContentHashUtils.computeHash("en", authoredTitle, authoredSummary, authoredDesc, null);
+        assertEquals(expectedHash, enReady.getContentHash());
+
+        // TTS chỉ đánh tiếng tiêu đề + mô tả
+        ArgumentCaptor<String> spokenCaptor = ArgumentCaptor.forClass(String.class);
+        verify(audioStorageService).storeAudio(eq(909L), eq("en"), eq(expectedHash), spokenCaptor.capture());
+        assertEquals(authoredTitle + "\n\n" + authoredDesc, spokenCaptor.getValue());
     }
 
     @Test

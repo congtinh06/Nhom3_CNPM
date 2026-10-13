@@ -9,16 +9,14 @@ public final class TtsTextBuilder {
     }
 
     /**
-     * Builds spoken text from title, summary, description, and historicalSignificance,
-     * in exactly this order, skipping blank/null fields, joined by a blank line ("\n\n").
+     * Builds spoken text from the title and description only, in exactly this order,
+     * skipping blank/null fields, joined by a blank line ("\n\n").
      * Never returns null.
      */
-    public static String buildText(String title, String summary, String description, String historicalSignificance) {
-        List<String> parts = new ArrayList<>(4);
+    public static String buildText(String title, String description) {
+        List<String> parts = new ArrayList<>(2);
         appendIfNotBlank(parts, title);
-        appendIfNotBlank(parts, summary);
         appendIfNotBlank(parts, description);
-        appendIfNotBlank(parts, historicalSignificance);
 
         if (parts.isEmpty()) {
             return "";

@@ -1,6 +1,7 @@
 package com.saigonvoice.translation.service;
 
 import com.saigonvoice.translation.entity.TranslationJob;
+import com.saigonvoice.translation.event.AuthoredPoiText;
 import com.saigonvoice.translation.event.PoiAudioFailedEvent;
 import com.saigonvoice.translation.event.PoiAudioReadyEvent;
 import com.saigonvoice.translation.event.PoiEventPayload;
@@ -60,14 +61,23 @@ public class PoiPipelineServiceImpl implements PoiPipelineService {
     }
 
     private boolean processLanguage(PoiEventPayload event, String lang, boolean quotaWarned) {
-        // 4. Compute contentHash on ORIGINAL Vietnamese source fields
-        String contentHash = ContentHashUtils.computeHash(
-                lang,
-                event.getTitle(),
-                event.getSummary(),
-                event.getDescription(),
-                event.getHistoricalSignificance()
-        );
+        // Ngôn ngữ có văn bản do người viết (MANUAL) được dùng nguyên văn, không dịch máy.
+        AuthoredPoiText authored = resolveAuthoredText(event, lang);
+
+        // 4. Compute contentHash: authored -> from that language's own text; otherwise from Vietnamese source
+        String contentHash = (authored != null)
+                ? ContentHashUtils.computeHash(
+                        lang,
+                        authored.getTitle(),
+                        authored.getSummary(),
+                        authored.getDescription(),
+                        authored.getHistoricalSignificance())
+                : ContentHashUtils.computeHash(
+                        lang,
+                        event.getTitle(),
+                        event.getSummary(),
+                        event.getDescription(),
+                        event.getHistoricalSignificance());
 
         // 5. Idempotency on translation_job
         TranslationJob job = getOrCreateJob(event.getPoiId(), lang, contentHash);
@@ -81,8 +91,18 @@ public class PoiPipelineServiceImpl implements PoiPipelineService {
         String targetDescription;
         String targetHistorical;
 
-        // 6. Language "vi": verbatim, no translation provider
-        if ("vi".equals(lang)) {
+        if (authored != null) {
+            // 6a. Authored language: use verbatim, no translation provider
+            targetTitle = authored.getTitle();
+            targetSummary = authored.getSummary();
+            targetDescription = authored.getDescription();
+            targetHistorical = authored.getHistoricalSignificance();
+
+            job.setStatus("TRANSLATED");
+            job.setUpdatedAt(LocalDateTime.now());
+            job = translationJobRepository.save(job);
+        } else if ("vi".equals(lang)) {
+            // 6b. Language "vi": verbatim, no translation provider
             targetTitle = event.getTitle();
             targetSummary = event.getSummary();
             targetDescription = event.getDescription();
@@ -156,8 +176,8 @@ public class PoiPipelineServiceImpl implements PoiPipelineService {
             }
         }
 
-        // 8. TTS & Audio Storage
-        String spokenText = TtsTextBuilder.buildText(targetTitle, targetSummary, targetDescription, targetHistorical);
+        // 8. TTS & Audio Storage (chỉ đọc tiêu đề + mô tả)
+        String spokenText = TtsTextBuilder.buildText(targetTitle, targetDescription);
         AudioStorageResult storageResult;
         try {
             storageResult = audioStorageService.storeAudio(event.getPoiId(), lang, contentHash, spokenText);
@@ -226,6 +246,28 @@ public class PoiPipelineServiceImpl implements PoiPipelineService {
         if (event.getTargetLanguages() == null) {
             throw new AmqpRejectAndDontRequeueException("POI targetLanguages cannot be null");
         }
+    }
+
+    /**
+     * Trả về văn bản do người viết cho ngôn ngữ nếu có và hợp lệ (title + description không rỗng).
+     */
+    private AuthoredPoiText resolveAuthoredText(PoiEventPayload event, String lang) {
+        Map<String, AuthoredPoiText> map = event.getAuthoredTexts();
+        if (map == null) {
+            return null;
+        }
+        AuthoredPoiText text = map.get(lang);
+        if (text == null) {
+            return null;
+        }
+        if (isBlank(text.getTitle()) || isBlank(text.getDescription())) {
+            return null;
+        }
+        return text;
+    }
+
+    private static boolean isBlank(String value) {
+        return value == null || value.trim().isEmpty();
     }
 
     private Set<String> resolveLanguages(List<String> targetLanguages) {

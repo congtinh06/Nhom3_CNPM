@@ -5,6 +5,7 @@ import lombok.*;
 
 import java.io.Serializable;
 import java.util.List;
+import java.util.Map;
 
 @Getter
 @Setter
@@ -22,4 +23,6 @@ public class PoiEventPayload implements Serializable {
     private String description;
     private String historicalSignificance;
     private List<String> targetLanguages;
+    /** Ngôn ngữ có văn bản do người viết -> dùng nguyên văn, không dịch máy. */
+    private Map<String, AuthoredPoiText> authoredTexts;
 }
