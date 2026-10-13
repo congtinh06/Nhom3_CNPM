@@ -79,101 +79,138 @@ DECLARE @CatArch BIGINT = (SELECT id FROM dbo.category WHERE code = 'ARCHITECTUR
 DECLARE @CatFood BIGINT = (SELECT id FROM dbo.category WHERE code = 'FOOD');
 DECLARE @CatReli BIGINT = (SELECT id FROM dbo.category WHERE code = 'RELIGION');
 
--- POI 1: Bưu điện Trung tâm Sài Gòn
--- Xóa "vẽ thủ công"; giữ "hai bản đồ lịch sử (1892 và 1936) trong sảnh"; không nêu tên kiến trúc sư; "xây khoảng 1886–1891".
--- Địa chỉ chỉ giữ số nhà và tên đường: Số 2 Công trường Công xã Paris
-IF NOT EXISTS (SELECT 1 FROM dbo.poi WHERE code = 'POI_BUU_DIEN_01')
-BEGIN
-    INSERT INTO dbo.poi (zone_id, category_id, code, qr_token, name, latitude, longitude, trigger_radius_meters, address, thumbnail_url)
-    VALUES (@Zone1, @CatArch, 'POI_BUU_DIEN_01', 'qr-buu-dien-01', N'Bưu điện Trung tâm Sài Gòn', 10.7799000, 106.7001000, 40, N'Số 2 Công trường Công xã Paris', '/images/buudien.jpg');
+-- 3. SEED 5 POIs FROM nearbyPois.json (vi/en authored text)
+-- Source of text: frontend/src/content/nearbyPois.json
+--   narration.short -> summary, narration.full -> description (paragraphs joined by blank line).
+-- en rows use translation_source = 'MANUAL' so the pipeline speaks them verbatim (no machine translation).
+-- Uses @Zone1 / @CatHist / @CatArch / @CatFood declared above in this batch.
 
-    DECLARE @PoiId1 BIGINT = SCOPE_IDENTITY();
-    INSERT INTO dbo.poi_translation (poi_id, language_code, title, summary, description, historical_significance, audio_status)
-    VALUES (@PoiId1, 'vi', N'Bưu điện Trung tâm Sài Gòn', 
-            N'Công trình kiến trúc bưu chính tiêu biểu xây khoảng 1886–1891, một biểu tượng văn hóa nổi tiếng của thành phố.',
-            N'Bưu điện Trung tâm Sài Gòn được xây khoảng 1886–1891, mang phong cách kiến trúc phương Tây kết hợp hài hòa với các đường nét trang trí phương Đông. Tòa nhà nổi bật với hệ thống cửa vòm cuốn lớn, trần nhà cao thoáng đãng cùng hai bản đồ lịch sử (1892 và 1936) trong sảnh.',
-            N'Là công trình bưu chính tiêu biểu tại Việt Nam, điểm giao lưu văn hóa và du lịch của TP.HCM.',
-            'PENDING');
-END
-ELSE
-BEGIN
-    UPDATE dbo.poi SET zone_id = @Zone1, category_id = @CatArch, name = N'Bưu điện Trung tâm Sài Gòn',
-                       latitude = 10.7799000, longitude = 106.7001000, trigger_radius_meters = 40,
-                       address = N'Số 2 Công trường Công xã Paris', thumbnail_url = '/images/buudien.jpg'
-    WHERE code = 'POI_BUU_DIEN_01';
+CREATE TABLE #PoiSeed (
+    code NVARCHAR(50) COLLATE DATABASE_DEFAULT NOT NULL PRIMARY KEY,
+    slug NVARCHAR(100) NOT NULL,
+    qr_token NVARCHAR(100) NOT NULL,
+    name NVARCHAR(255) NOT NULL,
+    latitude DECIMAL(10,7) NOT NULL,
+    longitude DECIMAL(10,7) NOT NULL,
+trigger_radius_meters INT NOT NULL,
+    category_code NVARCHAR(50) COLLATE DATABASE_DEFAULT NOT NULL,
+    thumbnail_url NVARCHAR(500) NULL,
+    vi_title NVARCHAR(255) NOT NULL,
+    vi_summary NVARCHAR(1000) NOT NULL,
+    vi_description NVARCHAR(MAX) NOT NULL,
+    en_title NVARCHAR(255) NOT NULL,
+    en_summary NVARCHAR(1000) NOT NULL,
+    en_description NVARCHAR(MAX) NOT NULL
+);
 
-    DECLARE @ExistingPoiId1 BIGINT = (SELECT id FROM dbo.poi WHERE code = 'POI_BUU_DIEN_01');
-    UPDATE dbo.poi_translation 
-    SET title = N'Bưu điện Trung tâm Sài Gòn',
-        summary = N'Công trình kiến trúc bưu chính tiêu biểu xây khoảng 1886–1891, một biểu tượng văn hóa nổi tiếng của thành phố.',
-        description = N'Bưu điện Trung tâm Sài Gòn được xây khoảng 1886–1891, mang phong cách kiến trúc phương Tây kết hợp hài hòa với các đường nét trang trí phương Đông. Tòa nhà nổi bật với hệ thống cửa vòm cuốn lớn, trần nhà cao thoáng đãng cùng hai bản đồ lịch sử (1892 và 1936) trong sảnh.',
-        historical_significance = N'Là công trình bưu chính tiêu biểu tại Việt Nam, điểm giao lưu văn hóa và du lịch của TP.HCM.'
-    WHERE poi_id = @ExistingPoiId1 AND language_code = 'vi';
-END
+INSERT INTO #PoiSeed (code, slug, qr_token, name, latitude, longitude, trigger_radius_meters, category_code, thumbnail_url, vi_title, vi_summary, vi_description, en_title, en_summary, en_description)
+VALUES
+  (N'POI_DINH_DOC_LAP_01', N'dinh-doc-lap', N'qr-dinh-doc-lap-01', N'Dinh Độc Lập', 10.7769500, 106.6953700, 50, N'HISTORIC', N'/images/pois/dinh-doc-lap.jpg',
+   N'Dinh Độc Lập', N'Chào mừng bạn đến Dinh Độc Lập, nơi gắn liền với ngày thống nhất đất nước. Nơi đây từng là dinh của chính quyền thuộc địa Pháp, sau này là dinh của các tổng thống Việt Nam Cộng hòa. Tòa nhà bạn đang thấy được xây dựng vào những năm sáu mươi. Vào ngày ba mươi tháng tư năm một nghìn chín trăm bảy mươi lăm, xe tăng đã tiến qua cổng chính, đánh dấu sự kết thúc của cuộc chiến. Hãy dành vài phút ngắm tòa nhà từ bãi cỏ phía trước, rồi bước vào trong để xem phòng khánh tiết và hầm chỉ huy. Ngày nay, dinh là một bảo tàng mở cửa cho mọi người tham quan.', N'Dinh Độc Lập nằm giữa một khu vườn rộng ở trung tâm thành phố. Câu chuyện của nơi này bắt đầu từ thế kỷ mười chín, khi người Pháp xây dinh Norodom làm nơi ở và làm việc của người đứng đầu chính quyền thuộc địa. Sau năm một nghìn chín trăm năm mươi tư, dinh trở thành nơi làm việc của chính quyền miền Nam. Năm một nghìn chín trăm sáu mươi hai, hai phi công đã ném bom vào dinh, và tòa nhà cũ bị hư hại nặng. Chính quyền khi đó quyết định phá bỏ để xây một công trình mới.
 
--- POI 2: Nhà thờ Chính tòa Đức Bà Sài Gòn
--- "Roman cải biên pha Gothic", "hầu hết vật liệu chở từ Pháp sang", không nêu tên kiến trúc sư; tượng Đức Mẹ Hòa Bình đặt năm 1959, chế tác tại Roma.
--- Địa chỉ chỉ giữ số nhà và tên đường: Số 1 Công trường Công xã Paris
-IF NOT EXISTS (SELECT 1 FROM dbo.poi WHERE code = 'POI_DUC_BA_01')
-BEGIN
-    INSERT INTO dbo.poi (zone_id, category_id, code, qr_token, name, latitude, longitude, trigger_radius_meters, address, thumbnail_url)
-    VALUES (@Zone1, @CatArch, 'POI_DUC_BA_01', 'qr-duc-ba-01', N'Nhà thờ Chính tòa Đức Bà Sài Gòn', 10.7798000, 106.6990000, 45, N'Số 1 Công trường Công xã Paris', '/images/ducba.jpg');
+Kiến trúc sư Ngô Viết Thụ thiết kế tòa nhà mà ngày nay bạn nhìn thấy. Công trình hoàn thành năm một nghìn chín trăm sáu mươi sáu, kết hợp phong cách hiện đại với những yếu tố phương Đông, có nhiều khoảng thoáng và sảnh cao rộng. Bên trong là phòng khánh tiết, phòng họp nội các, phòng làm việc của tổng thống, và một hệ thống hầm chỉ huy nằm bên dưới.
 
-    DECLARE @PoiId2 BIGINT = SCOPE_IDENTITY();
-    INSERT INTO dbo.poi_translation (poi_id, language_code, title, summary, description, historical_significance, audio_status)
-    VALUES (@PoiId2, 'vi', N'Nhà thờ Chính tòa Đức Bà Sài Gòn', 
-            N'Kiệt tác kiến trúc tôn giáo tiêu biểu với hầu hết vật liệu chở từ Pháp sang, biểu tượng kiến trúc lịch sử của thành phố.',
-            N'Nhà thờ Chính tòa Đức Bà Sài Gòn (Vương cung thánh đường Chính tòa Đức Mẹ Vô nhiễm Nguyên tội) mang phong cách kiến trúc Roman cải biên pha Gothic, hầu hết vật liệu chở từ Pháp sang. Công trình nổi bật với hai tháp chuông vươn cao đặc trưng; phía trước khuôn viên là tượng Đức Mẹ Hòa Bình đặt năm 1959, chế tác tại Roma.',
-            N'Công trình tôn giáo và di sản kiến trúc lịch sử tiêu biểu của thành phố qua nhiều thế hệ.',
-            'PENDING');
-END
-ELSE
-BEGIN
-    UPDATE dbo.poi SET zone_id = @Zone1, category_id = @CatArch, name = N'Nhà thờ Chính tòa Đức Bà Sài Gòn',
-                       latitude = 10.7798000, longitude = 106.6990000, trigger_radius_meters = 45,
-                       address = N'Số 1 Công trường Công xã Paris', thumbnail_url = '/images/ducba.jpg'
-    WHERE code = 'POI_DUC_BA_01';
+Ngày ba mươi tháng tư năm một nghìn chín trăm bảy mươi lăm, xe tăng của quân giải phóng tiến vào khuôn viên và húc đổ cổng dinh. Tổng thống Dương Văn Minh tuyên bố đầu hàng, và lá cờ được kéo lên trên nóc dinh. Ngày đó được nhớ đến như ngày thống nhất đất nước.
 
-    DECLARE @ExistingPoiId2 BIGINT = (SELECT id FROM dbo.poi WHERE code = 'POI_DUC_BA_01');
-    UPDATE dbo.poi_translation 
-    SET title = N'Nhà thờ Chính tòa Đức Bà Sài Gòn',
-        summary = N'Kiệt tác kiến trúc tôn giáo tiêu biểu với hầu hết vật liệu chở từ Pháp sang, biểu tượng kiến trúc lịch sử của thành phố.',
-        description = N'Nhà thờ Chính tòa Đức Bà Sài Gòn (Vương cung thánh đường Chính tòa Đức Mẹ Vô nhiễm Nguyên tội) mang phong cách kiến trúc Roman cải biên pha Gothic, hầu hết vật liệu chở từ Pháp sang. Công trình nổi bật với hai tháp chuông vươn cao đặc trưng; phía trước khuôn viên là tượng Đức Mẹ Hòa Bình đặt năm 1959, chế tác tại Roma.',
-        historical_significance = N'Công trình tôn giáo và di sản kiến trúc lịch sử tiêu biểu của thành phố qua nhiều thế hệ.'
-    WHERE poi_id = @ExistingPoiId2 AND language_code = 'vi';
-END
+Sau đó, nơi này được gọi là Hội trường Thống Nhất, rồi trở thành một di tích. Năm hai nghìn không trăm lẻ chín, dinh được xếp hạng di tích quốc gia đặc biệt. Khi đi dạo trong khuôn viên, bạn hãy để ý hai chiếc xe tăng ở sân trước, và nếu có thời gian, hãy xuống tham quan khu hầm chỉ huy.',
+   N'Independence Palace', N'Welcome to Independence Palace, a place tied to the day the country was reunified. The site once housed the French colonial rulers, and later the presidents of South Vietnam. The building in front of you was completed in the nineteen sixties. On the thirtieth of April, nineteen seventy-five, tanks drove through the gates, and the war came to an end. Take a few minutes to see the building from the front lawn, then step inside to see the reception rooms and the command bunker. Today the palace is a museum open to all visitors.', N'Independence Palace sits in a wide garden in the heart of the city. Its story begins in the nineteenth century, when the French built Norodom Palace as the home and office of the colonial governor. After nineteen fifty-four, it became the seat of the government of South Vietnam. In nineteen sixty-two, two pilots bombed the palace, and the old building was badly damaged. The government decided to tear it down and build a new one.
 
--- POI 3: Chợ Bến Thành
--- Bến Thành giữ "di tích kiến trúc nghệ thuật cấp thành phố, quyết định ngày 20/11/2024".
--- Địa chỉ chỉ giữ số nhà và tên đường: Đường Lê Lợi
-IF NOT EXISTS (SELECT 1 FROM dbo.poi WHERE code = 'POI_BEN_THANH_01')
-BEGIN
-    INSERT INTO dbo.poi (zone_id, category_id, code, qr_token, name, latitude, longitude, trigger_radius_meters, address, thumbnail_url)
-    VALUES (@Zone1, @CatFood, 'POI_BEN_THANH_01', 'qr-ben-thanh-01', N'Chợ Bến Thành', 10.7725000, 106.6980000, 50, N'Đường Lê Lợi', '/images/benthanh.jpg');
+Architect Ngô Viết Thụ designed the building you see today. It was completed in nineteen sixty-six, blending a modern style with Eastern elements, with open spaces and tall, airy halls. Inside are reception rooms, a cabinet meeting room, the president''s office, and a command bunker underground.
 
-    DECLARE @PoiId3 BIGINT = SCOPE_IDENTITY();
-    INSERT INTO dbo.poi_translation (poi_id, language_code, title, summary, description, historical_significance, audio_status)
-    VALUES (@PoiId3, 'vi', N'Chợ Bến Thành', 
-            N'Khu chợ biểu tượng của thành phố với tháp đồng hồ bốn mặt đặc trưng, trung tâm thương mại và ẩm thực sầm uất.',
-            N'Chợ Bến Thành nổi bật với tháp đồng hồ bốn mặt nhìn ra quảng trường phía Nam. Khu chợ có bốn cửa chính mở ra các trục đường trung tâm, quy tụ hàng trăm gian hàng thương mại truyền thống, đồ thủ công mỹ nghệ và ẩm thực đa dạng.',
-            N'Di tích kiến trúc nghệ thuật cấp thành phố, quyết định ngày 20/11/2024; là trung tâm giao thương truyền thống và điểm tham quan tiêu biểu của TP.HCM.',
-            'PENDING');
-END
-ELSE
-BEGIN
-    UPDATE dbo.poi SET zone_id = @Zone1, category_id = @CatFood, name = N'Chợ Bến Thành',
-                       latitude = 10.7725000, longitude = 106.6980000, trigger_radius_meters = 50,
-                       address = N'Đường Lê Lợi', thumbnail_url = '/images/benthanh.jpg'
-    WHERE code = 'POI_BEN_THANH_01';
+On the thirtieth of April, nineteen seventy-five, tanks of the liberation forces entered the grounds and broke through the gate. President Dương Văn Minh announced the surrender, and a flag was raised over the palace. That day is remembered as the reunification of the country.
 
-    DECLARE @ExistingPoiId3 BIGINT = (SELECT id FROM dbo.poi WHERE code = 'POI_BEN_THANH_01');
-    UPDATE dbo.poi_translation 
-    SET title = N'Chợ Bến Thành',
-        summary = N'Khu chợ biểu tượng của thành phố với tháp đồng hồ bốn mặt đặc trưng, trung tâm thương mại và ẩm thực sầm uất.',
-        description = N'Chợ Bến Thành nổi bật với tháp đồng hồ bốn mặt nhìn ra quảng trường phía Nam. Khu chợ có bốn cửa chính mở ra các trục đường trung tâm, quy tụ hàng trăm gian hàng thương mại truyền thống, đồ thủ công mỹ nghệ và ẩm thực đa dạng.',
-        historical_significance = N'Di tích kiến trúc nghệ thuật cấp thành phố, quyết định ngày 20/11/2024; là trung tâm giao thương truyền thống và điểm tham quan tiêu biểu của TP.HCM.'
-    WHERE poi_id = @ExistingPoiId3 AND language_code = 'vi';
-END
+Afterwards the building was called Reunification Hall, and later became a historic site. In two thousand nine, it was recognized as a special national monument. As you walk the grounds, look for the two tanks in the front yard, and if you have time, visit the command bunker.'),
+  (N'POI_DUC_BA_01', N'nha-tho-duc-ba', N'qr-duc-ba-01', N'Nhà thờ Đức Bà Sài Gòn', 10.7797200, 106.6990800, 60, N'ARCHITECTURE', N'/images/pois/nha-tho-duc-ba.jpg',
+   N'Nhà thờ Đức Bà Sài Gòn', N'Bạn đang đứng trước Nhà thờ Đức Bà, một trong những biểu tượng kiến trúc nổi tiếng nhất của Sài Gòn. Nhà thờ được người Pháp xây dựng vào cuối thế kỷ mười chín, với những viên gạch đỏ không phủ vữa và hai tháp chuông cao vút. Phía trước là tượng Đức Mẹ Hòa Bình, nhìn ra một quảng trường nhỏ. Dù bạn theo tôn giáo nào, đây vẫn là nơi đẹp để dừng lại, ngước nhìn và chụp một tấm ảnh. Ngay bên cạnh là Bưu điện Trung tâm, điểm dừng tiếp theo của bạn.', N'Nhà thờ Đức Bà có tên chính thức là Vương cung thánh đường Chính tòa Đức Mẹ Vô Nhiễm Nguyên Tội. Công trình được xây dựng trong thời Pháp thuộc, khởi công năm một nghìn tám trăm sáu mươi ba và hoàn thành năm một nghìn tám trăm tám mươi. Kiến trúc sư Jules Bourard thiết kế theo phong cách Roman và Gothic của châu Âu.
+
+Điểm dễ nhận ra nhất là lớp gạch đỏ ở mặt ngoài. Theo nhiều tài liệu, gạch được đưa từ Marseille, nước Pháp, sang, và đến nay vẫn giữ được màu sắc đặc trưng mà không cần sơn phủ. Hai tháp chuông được bổ sung vào năm một nghìn tám trăm chín mươi lăm, cao khoảng sáu mươi mét tính cả cây thánh giá trên đỉnh.
+
+Trước nhà thờ là tượng Đức Mẹ Hòa Bình, được đặt năm một nghìn chín trăm năm mươi chín. Năm một nghìn chín trăm sáu mươi hai, nhà thờ được phong hàng vương cung thánh đường.
+
+Hãy đi chậm quanh nhà thờ, ngắm mặt tiền gạch đỏ và những ô cửa kính màu. Nếu muốn vào bên trong, bạn nên kiểm tra giờ mở cửa trước, vì nhà thờ có giờ lễ và giờ đón khách riêng, và một số khu vực có thể đang được trùng tu. Chỉ vài bước chân nữa là tới Bưu điện Trung tâm, điểm dừng tiếp theo của bạn.',
+   N'Notre Dame Cathedral of Saigon', N'You are standing before Notre-Dame Cathedral, one of the best-known landmarks of Saigon. The French built it in the late nineteenth century, with red bricks left bare and two tall bell towers. In front stands the statue of Our Lady of Peace, facing a small square. Whatever your beliefs, this is a lovely place to pause, look up, and take a photograph. Right next door is the Central Post Office, your next stop.', N'Its official name is the Cathedral Basilica of Our Lady of the Immaculate Conception. It was built during the French colonial period, started in eighteen sixty-three and finished in eighteen eighty. Architect Jules Bourard drew on European Romanesque and Gothic styles.
+
+What you notice first is the red brick on the outside. Many sources say the bricks were brought from Marseille, in France, and they still keep their color today without any paint. Two bell towers were added in eighteen ninety-five, rising about sixty meters including the cross on top.
+
+In front stands the statue of Our Lady of Peace, placed in nineteen fifty-nine. In nineteen sixty-two, the church was raised to the rank of basilica.
+
+Walk slowly around the cathedral and look at the brick façade and the stained glass. If you plan to go inside, check the opening hours first, because there are times for services and times for visitors, and some areas may be closed for restoration. Just a few steps away stands the Central Post Office, your next stop.'),
+  (N'POI_BUU_DIEN_01', N'buu-dien-trung-tam', N'qr-buu-dien-01', N'Bưu điện Trung tâm Sài Gòn', 10.7799500, 106.6997100, 40, N'ARCHITECTURE', N'/images/pois/buu-dien-trung-tam.jpg',
+   N'Bưu điện Trung tâm Sài Gòn', N'Bưu điện Trung tâm Sài Gòn nổi bật với mái vòm cong cổ điển, sàn gạch hoa văn tinh tế và những tấm bản đồ vẽ tay trên tường. Công trình được xây dựng vào cuối thế kỷ mười chín, và đến nay vẫn là một bưu điện đang hoạt động. Người ta thường kể rằng Eiffel đã thiết kế nơi này, nhưng đó nhiều khả năng chỉ là giai thoại. Bạn có thể bước vào trong, ngắm trần vòm, mua một tấm bưu thiếp và gửi về cho người thân.', N'Bưu điện Trung tâm được xây dựng từ năm một nghìn tám trăm tám mươi sáu đến năm một nghìn tám trăm chín mươi mốt, trong thời kỳ Pháp thuộc. Người ta thường kể rằng công trình do Gustave Eiffel thiết kế, nhưng nhiều nguồn cho biết kiến trúc sư thực sự là Alfred Foulhoux. Câu chuyện về Eiffel nhiều khả năng chỉ là giai thoại.
+
+Hãy bước vào bên trong. Bạn sẽ thấy một sảnh dài với mái vòm cong, khung sắt nhẹ và những ô cửa vòm cao. Sàn nhà lát gạch hoa nhiều họa tiết, các dãy quầy gỗ và buồng điện thoại cổ vẫn còn đó. Trên tường là hai tấm bản đồ lớn vẽ tay. Một tấm vẽ Sài Gòn và vùng phụ cận vào năm một nghìn tám trăm chín mươi hai, tấm còn lại là bản đồ các tuyến điện báo ở miền Nam Việt Nam và Campuchia. Ở cuối sảnh là chân dung Chủ tịch Hồ Chí Minh.
+
+Bưu điện không chỉ để ngắm. Đây vẫn là nơi người dân gửi thư, mua tem và viết bưu thiếp. Nếu bạn có chút thời gian, hãy mua một tấm bưu thiếp, viết vài dòng và gửi đi. Đó là một cách thú vị để mang một phần Sài Gòn về với người thân.',
+   N'Saigon Central Post Office', N'The Central Post Office stands out with its curved, classical vaulted roof, its patterned tile floor, and the hand-painted maps on its walls. It was built in the late nineteenth century and is still a working post office today. People often say Eiffel designed it, but that is most likely just a legend. Step inside, look up at the arched ceiling, and send a postcard to someone you love.', N'The Central Post Office was built between eighteen eighty-six and eighteen ninety-one, during the French colonial period. People often say it was designed by Gustave Eiffel, but many sources credit an architect named Alfred Foulhoux. The Eiffel story is most likely just a legend.
+
+Step inside. You will find a long hall with a curved roof, a light iron frame, and tall arched windows. The floor is covered in patterned tiles, and rows of wooden counters and old telephone booths are still in place. On the walls hang two large hand-painted maps. One shows Saigon and its surroundings in eighteen ninety-two. The other shows the telegraph lines of southern Vietnam and Cambodia. At the far end you will see a portrait of President Hồ Chí Minh.
+
+The post office is not only for sightseeing. People still come here to send letters, buy stamps, and write postcards. If you have a few minutes, buy a postcard, write a few lines, and send it off. It is a charming way to send a piece of Saigon home.'),
+  (N'POI_BEN_THANH_01', N'cho-ben-thanh', N'qr-ben-thanh-01', N'Chợ Bến Thành', 10.7723200, 106.6981100, 55, N'FOOD', N'/images/pois/cho-ben-thanh.jpg',
+   N'Chợ Bến Thành', N'Chợ Bến Thành là biểu tượng của Sài Gòn từ hơn một trăm năm nay. Tòa nhà có tháp đồng hồ ở cửa Nam được khánh thành năm một nghìn chín trăm mười bốn, nhưng khu chợ ven sông ở đây đã có từ trước đó rất lâu. Bên trong có rất nhiều gian hàng bán đồ ăn, vải vóc, quà lưu niệm và cà phê. Bạn có thể dừng ở cửa Nam để chụp ảnh với tháp đồng hồ. Hãy đi chậm và hỏi giá trước khi mua.', N'Chợ Bến Thành nằm ở trung tâm Quận Một, và là một trong những biểu tượng quen thuộc nhất của thành phố. Khu chợ có nguồn gốc từ đầu thế kỷ mười chín, khi người dân buôn bán ven sông. Tòa nhà hiện nay được xây dựng từ năm một nghìn chín trăm mười hai và khánh thành năm một nghìn chín trăm mười bốn, theo thiết kế của các kiến trúc sư người Pháp.
+
+Chợ có bốn cửa chính, hướng Đông, Tây, Nam và Bắc. Nổi bật nhất là cửa Nam, với tháp đồng hồ cao, hình ảnh quen thuộc trên rất nhiều tấm bưu thiếp. Bên trong, các dãy hàng chia theo nhóm: vải vóc và quần áo, đồ thủ công và quà lưu niệm, cà phê, trà, đồ khô, trái cây, và khu ẩm thực phục vụ các món Việt quen thuộc.
+
+Chợ đông nhất vào ban ngày, và buổi tối khu vực quanh chợ có thêm chợ đêm. Khi mua hàng, bạn nên hỏi giá và trả giá nhẹ nhàng, đó là nét văn hóa buôn bán thân thiện ở đây. Hãy dành chút thời gian thử một món ăn nhẹ ngay tại chợ, như chè hay bánh, để cảm nhận nhịp sống của người Sài Gòn.',
+   N'Ben Thanh Market', N'Ben Thanh Market has been a symbol of Saigon for over a hundred years. The building with the clock tower at its south gate opened in nineteen fourteen, but a riverside market stood here long before. Inside you will find many stalls selling food, fabric, souvenirs, and coffee. You can stop at the south gate for a photo with the clock tower. Walk slowly, and ask the price before you buy.', N'Ben Thanh Market stands in the center of District One, and is one of the most familiar symbols of the city. The market grew out of riverside trading in the early nineteenth century. The present building went up in nineteen twelve and opened in nineteen fourteen, designed by French architects.
+
+The market has four main gates, facing east, west, south, and north. The most famous is the south gate, with its tall clock tower, a sight seen on countless postcards. Inside, the aisles are grouped by goods: fabric and clothing, handicrafts and souvenirs, coffee, tea, dried goods, fruit, and a food area serving familiar Vietnamese dishes.
+
+The market is busiest in the daytime, and in the evening the streets around it also hold a night market. When you shop, ask for the price and bargain gently, which is a friendly part of local trading culture. Take a little time to eat a light snack right here, such as a sweet dessert soup or a small cake, to feel the rhythm of daily life in Saigon.'),
+  (N'POI_BAO_TANG_CHUNG_TICH_01', N'bao-tang-chung-tich-chien-tranh', N'qr-bao-tang-chung-tich-01', N'Bảo tàng Chứng tích Chiến tranh', 10.7792600, 106.6924700, 45, N'HISTORIC', N'/images/pois/bao-tang-chung-tich-chien-tranh.jpg',
+   N'Bảo tàng Chứng tích Chiến tranh', N'Bảo tàng Chứng tích Chiến tranh ghi lại những hậu quả của chiến tranh đối với con người và đất nước Việt Nam. Bảo tàng được thành lập năm một nghìn chín trăm bảy mươi lăm. Sân trước trưng bày máy bay, xe tăng và vũ khí thật, còn các phòng bên trong có nhiều hình ảnh và hiện vật về chiến tranh. Hãy dành cho nơi này một tâm thế trầm lắng. Một số hình ảnh có thể gây xúc động mạnh, nên bạn hãy cân nhắc nếu đi cùng trẻ nhỏ.', N'Bảo tàng Chứng tích Chiến tranh nằm trên đường Võ Văn Tần. Bảo tàng được thành lập vào tháng chín năm một nghìn chín trăm bảy mươi lăm, ban đầu với một tên gọi khác, và đã nhiều lần đổi tên trước khi mang tên như hiện nay vào năm một nghìn chín trăm chín mươi lăm. Mục đích của bảo tàng là lưu giữ hình ảnh, tư liệu và hiện vật về chiến tranh Việt Nam, để người xem hiểu rõ hơn về những mất mát mà chiến tranh gây ra.
+
+Ở sân trước, bạn sẽ thấy máy bay, xe tăng, pháo và nhiều loại bom đạn được trưng bày ngoài trời. Bên trong, các tầng trưng bày ảnh và hiện vật theo từng chủ đề, trong đó có phần nói về hậu quả của chất độc da cam đối với nhiều thế hệ, và một triển lãm ảnh dành cho các phóng viên đã hy sinh trong các cuộc chiến tranh ở Đông Dương.
+
+Đây là nơi nên đến với tâm thế trầm lắng. Một số hình ảnh rất nặng nề, nên bạn hãy cân nhắc nếu đi cùng trẻ nhỏ, và có thể dừng lại nghỉ bất cứ lúc nào. Đây không chỉ là nơi nhìn lại quá khứ, mà còn là nơi nhắc chúng ta trân trọng hòa bình.',
+   N'War Remnants Museum', N'The War Remnants Museum records the consequences of war for the people and the land of Vietnam. It was founded in nineteen seventy-five. The front yard displays real aircraft, tanks, and weapons, and the rooms inside hold photographs and objects from the war. Please come in a quiet frame of mind. Some images can be deeply upsetting, so think twice before bringing young children.', N'The War Remnants Museum is on Võ Văn Tần Street. It was founded in September nineteen seventy-five under a different name, and changed names several times before taking its present name in nineteen ninety-five. Its purpose is to keep photographs, documents, and objects from the Vietnam War, so that visitors can better understand the losses that war causes.
+
+In the front yard you will see aircraft, tanks, artillery, and many kinds of bombs displayed in the open. Inside, the floors present photographs and objects by theme, including a section on the effects of Agent Orange across generations, and a photo exhibition honoring journalists who died in the wars of Indochina.
+
+This is a place to visit in a quiet frame of mind. Some images are very heavy, so think carefully before bringing young children, and feel free to stop and rest whenever you need. It is not only a place to look back at the past, but also a place that reminds us to value peace.')
+;
+
+UPDATE p
+SET p.slug = s.slug, p.zone_id = @Zone1,
+    p.category_id = (SELECT id FROM dbo.category WHERE code = s.category_code),
+    p.qr_token = s.qr_token, p.name = s.name, p.latitude = s.latitude, p.longitude = s.longitude,
+    p.trigger_radius_meters = s.trigger_radius_meters, p.thumbnail_url = s.thumbnail_url,
+    p.status = 'ACTIVE', p.updated_at = SYSUTCDATETIME()
+FROM dbo.poi p JOIN #PoiSeed s ON p.code = s.code;
+
+INSERT INTO dbo.poi (zone_id, category_id, code, qr_token, slug, name, latitude, longitude, trigger_radius_meters, address, thumbnail_url, status, created_at, updated_at)
+SELECT @Zone1, (SELECT id FROM dbo.category WHERE code = s.category_code), s.code, s.qr_token, s.slug, s.name,
+       s.latitude, s.longitude, s.trigger_radius_meters, NULL, s.thumbnail_url, 'ACTIVE', SYSUTCDATETIME(), SYSUTCDATETIME()
+FROM #PoiSeed s
+WHERE NOT EXISTS (SELECT 1 FROM dbo.poi p WHERE p.code = s.code);
+
+-- Vietnamese source translation (authored)
+UPDATE tr
+SET tr.title = s.vi_title, tr.summary = s.vi_summary, tr.description = s.vi_description,
+    tr.historical_significance = NULL, tr.audio_status = 'PENDING', tr.content_hash = NULL,
+    tr.audio_url = NULL, tr.audio_duration_seconds = 0, tr.translation_source = 'MANUAL', tr.updated_at = SYSUTCDATETIME()
+FROM dbo.poi_translation tr JOIN dbo.poi p ON p.id = tr.poi_id JOIN #PoiSeed s ON s.code = p.code
+WHERE tr.language_code = 'vi';
+
+INSERT INTO dbo.poi_translation (poi_id, language_code, title, summary, description, historical_significance, audio_status, translation_source, updated_at)
+SELECT p.id, 'vi', s.vi_title, s.vi_summary, s.vi_description, NULL, 'PENDING', 'MANUAL', SYSUTCDATETIME()
+FROM #PoiSeed s JOIN dbo.poi p ON p.code = s.code
+WHERE NOT EXISTS (SELECT 1 FROM dbo.poi_translation tr WHERE tr.poi_id = p.id AND tr.language_code = 'vi');
+
+-- English authored translation
+UPDATE tr
+SET tr.title = s.en_title, tr.summary = s.en_summary, tr.description = s.en_description,
+    tr.historical_significance = NULL, tr.audio_status = 'PENDING', tr.content_hash = NULL,
+    tr.audio_url = NULL, tr.audio_duration_seconds = 0, tr.translation_source = 'MANUAL', tr.updated_at = SYSUTCDATETIME()
+FROM dbo.poi_translation tr JOIN dbo.poi p ON p.id = tr.poi_id JOIN #PoiSeed s ON s.code = p.code
+WHERE tr.language_code = 'en';
+
+INSERT INTO dbo.poi_translation (poi_id, language_code, title, summary, description, historical_significance, audio_status, translation_source, updated_at)
+SELECT p.id, 'en', s.en_title, s.en_summary, s.en_description, NULL, 'PENDING', 'MANUAL', SYSUTCDATETIME()
+FROM #PoiSeed s JOIN dbo.poi p ON p.code = s.code
+WHERE NOT EXISTS (SELECT 1 FROM dbo.poi_translation tr WHERE tr.poi_id = p.id AND tr.language_code = 'en');
+
+DROP TABLE #PoiSeed;
 
 -- POI 4: Chùa Bà Thiên Hậu (Hội quán Tuệ Thành)
 -- Xóa số quyết định "43/VH-QĐ", chỉ giữ "công nhận ngày 7/1/1993" cho Chùa Bà; năm xây viết "khoảng năm 1760".
@@ -238,6 +275,9 @@ BEGIN
     WHERE poi_id = @ExistingPoiId5 AND language_code = 'vi';
 END
 GO
+
+UPDATE dbo.poi SET status = 'INACTIVE', updated_at = SYSUTCDATETIME()
+WHERE code IN ('POI_THIEN_HAU_01', 'POI_CAU_BA_SON_01');
 
 -- 4. SEED 3 TUYẾN THAM QUAN (ROUTE) & GÁN ĐIỂM DỪNG THEO THỨ TỰ (STOP_ORDER)
 DECLARE @RZone1 BIGINT = (SELECT id FROM dbo.zone WHERE code = 'D1_HISTORIC');

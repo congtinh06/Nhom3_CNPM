@@ -133,14 +133,32 @@ class PoiAudioListenerIntegrationTest {
                 """.formatted(poiId, lang, title, lang, lang, poiId, lang, hash);
     }
 
+    /**
+     * Giống quy ước của PoiAudioUpdateService.expectedHashFor: hash từ chính bản MANUAL nếu có,
+     * ngược lại hash từ bản tiếng Việt nguồn.
+     */
     private String expectedHashFor(long poiId, String lang) {
         List<Map<String, Object>> rows = jdbc.queryForList(
+                "SELECT title, summary, description, historical_significance, translation_source FROM dbo.poi_translation WHERE poi_id = ? AND language_code = ?",
+                poiId, lang);
+        if (!rows.isEmpty() && "MANUAL".equals(rows.get(0).get("translation_source"))) {
+            Map<String, Object> r = rows.get(0);
+            return com.saigonvoice.content.util.ContentHashUtils.computeHash(
+                    lang,
+                    (String) r.get("title"),
+                    (String) r.get("summary"),
+                    (String) r.get("description"),
+                    (String) r.get("historical_significance")
+            );
+        }
+
+        List<Map<String, Object>> viRows = jdbc.queryForList(
                 "SELECT title, summary, description, historical_significance FROM dbo.poi_translation WHERE poi_id = ? AND language_code = 'vi'",
                 poiId);
-        if (rows.isEmpty()) {
+        if (viRows.isEmpty()) {
             return "hash-" + lang;
         }
-        Map<String, Object> r = rows.get(0);
+        Map<String, Object> r = viRows.get(0);
         return com.saigonvoice.content.util.ContentHashUtils.computeHash(
                 lang,
                 (String) r.get("title"),

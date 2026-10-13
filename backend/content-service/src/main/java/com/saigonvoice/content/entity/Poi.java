@@ -46,6 +46,10 @@ public class Poi {
     @Column(nullable = false, length = 255)
     private String name;
 
+    // Định danh thân thiện URL, khớp nearbyPois.json của FE. NULL cho POI nội bộ chưa gán.
+    @Column(length = 100)
+    private String slug;
+
     @Column(nullable = false, precision = 10, scale = 7)
     private BigDecimal latitude;
 

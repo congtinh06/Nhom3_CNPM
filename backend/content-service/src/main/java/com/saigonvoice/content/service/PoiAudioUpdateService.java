@@ -2,6 +2,7 @@ package com.saigonvoice.content.service;
 
 import com.saigonvoice.content.entity.Poi;
 import com.saigonvoice.content.entity.PoiTranslation;
+import com.saigonvoice.content.entity.TranslationSource;
 import com.saigonvoice.content.event.PoiAudioFailedEvent;
 import com.saigonvoice.content.event.PoiAudioReadyEvent;
 import com.saigonvoice.content.exception.ResourceNotFoundException;
@@ -65,13 +66,7 @@ public class PoiAudioUpdateService {
             throw new AmqpRejectAndDontRequeueException("Missing source 'vi' translation for POI id=" + poi.getId());
         }
 
-        String expectedHash = ContentHashUtils.computeHash(
-                lang,
-                viTranslation.getTitle(),
-                viTranslation.getSummary(),
-                viTranslation.getDescription(),
-                viTranslation.getHistoricalSignificance()
-        );
+        String expectedHash = expectedHashFor(poi.getId(), lang, viTranslation);
         if (!event.getContentHash().equalsIgnoreCase(expectedHash)) {
             log.info("Ignoring stale poi.audio.ready for poiId={}, lang={}: event hash {} does not match current content hash {}",
                     poi.getId(), lang, event.getContentHash(), expectedHash);
@@ -120,13 +115,7 @@ public class PoiAudioUpdateService {
             throw new AmqpRejectAndDontRequeueException("Missing source 'vi' translation for POI id=" + poi.getId());
         }
 
-        String expectedHash = ContentHashUtils.computeHash(
-                lang,
-                viTranslation.getTitle(),
-                viTranslation.getSummary(),
-                viTranslation.getDescription(),
-                viTranslation.getHistoricalSignificance()
-        );
+        String expectedHash = expectedHashFor(poi.getId(), lang, viTranslation);
         if (!event.getContentHash().equalsIgnoreCase(expectedHash)) {
             log.info("Ignoring stale poi.audio.failed for poiId={}, lang={}: event hash {} does not match current content hash {}",
                     poi.getId(), lang, event.getContentHash(), expectedHash);
@@ -176,6 +165,28 @@ public class PoiAudioUpdateService {
 
         log.warn("poi.audio.failed applied: poiId={}, lang={}, status={}, error={}",
                 poi.getId(), lang, translation.getAudioStatus(), event.getErrorMessage());
+    }
+
+    /**
+     * Hash kỳ vọng để đối chiếu event.
+     * - Với ngôn ngữ có bản dịch do người viết (translation_source = MANUAL): hash tính từ chính văn bản đó.
+     * - Các ngôn ngữ còn lại (dịch máy): hash tính từ bản tiếng Việt nguồn, như quy ước cũ.
+     */
+    private String expectedHashFor(Long poiId, String lang, PoiTranslation viTranslation) {
+        PoiTranslation source = viTranslation;
+        if (!"vi".equalsIgnoreCase(lang)) {
+            PoiTranslation target = translationRepository.findByPoiIdAndLanguageCode(poiId, lang).orElse(null);
+            if (target != null && TranslationSource.MANUAL.name().equalsIgnoreCase(target.getSource())) {
+                source = target;
+            }
+        }
+        return ContentHashUtils.computeHash(
+                lang,
+                source.getTitle(),
+                source.getSummary(),
+                source.getDescription(),
+                source.getHistoricalSignificance()
+        );
     }
 
     private Poi findPoiOrThrow(Long poiId, String eventName) {

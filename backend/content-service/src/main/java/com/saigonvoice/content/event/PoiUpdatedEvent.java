@@ -4,6 +4,7 @@ import lombok.*;
 
 import java.io.Serializable;
 import java.util.List;
+import java.util.Map;
 
 @Getter
 @Setter
@@ -20,4 +21,6 @@ public class PoiUpdatedEvent implements Serializable {
     private String description;
     private String historicalSignificance;
     private List<String> targetLanguages; // e.g. ["en", "ja", "ko"]
+    /** Ngôn ngữ có văn bản do người viết (translation_source = MANUAL) -> dùng nguyên văn. */
+    private Map<String, AuthoredPoiText> authoredTexts;
 }

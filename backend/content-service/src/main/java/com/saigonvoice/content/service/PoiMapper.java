@@ -17,6 +17,7 @@ final class PoiMapper {
                 .code(poi.getCode())
                 .qrToken(poi.getQrToken())
                 .name(poi.getName())
+                .slug(poi.getSlug())
                 .latitude(poi.getLatitude())
                 .longitude(poi.getLongitude())
                 .triggerRadiusMeters(poi.getTriggerRadiusMeters())

@@ -161,51 +161,49 @@ class PoiContentServiceImplTest {
     }
 
     @Test
-    @DisplayName("getPoiDetail: falls back to Vietnamese when audioStatus is PENDING (unusable)")
-    void testGetPoiDetail_UnusableStatus_Pending() {
+    @DisplayName("getPoiDetail: returns translation text even when audioStatus is PENDING (text is not gated by audio)")
+    void testGetPoiDetail_TranslationText_WhenPending() {
         PoiTranslation en = PoiTranslation.builder().poi(samplePoi).languageCode("en")
-                .title("Central Post Office Old").audioStatus("PENDING").build();
+                .title("Central Post Office").audioStatus("PENDING").build();
         when(poiRepository.findById(100L)).thenReturn(Optional.of(samplePoi));
         when(translationRepository.findByPoiIdAndLanguageCode(100L, "en")).thenReturn(Optional.of(en));
-        when(translationRepository.findByPoiIdAndLanguageCode(100L, "vi")).thenReturn(Optional.of(viTranslation));
 
         PoiDetailDto detail = poiContentService.getPoiDetail(100L, "en");
 
-        assertThat(detail.getLanguageCode()).isEqualTo("vi");
-        assertThat(detail.getTitle()).isEqualTo("Buu Dien Trung Tam");
-        assertThat(detail.isFallbackLanguage()).isTrue();
+        assertThat(detail.getLanguageCode()).isEqualTo("en");
+        assertThat(detail.getTitle()).isEqualTo("Central Post Office");
+        assertThat(detail.getAudioStatus()).isEqualTo("PENDING");
+        assertThat(detail.isFallbackLanguage()).isFalse();
     }
 
     @Test
-    @DisplayName("getPoiDetail: falls back to Vietnamese when audioStatus is PROCESSING (unusable)")
-    void testGetPoiDetail_UnusableStatus_Processing() {
+    @DisplayName("getPoiDetail: returns translation text even when audioStatus is PROCESSING")
+    void testGetPoiDetail_TranslationText_WhenProcessing() {
         PoiTranslation en = PoiTranslation.builder().poi(samplePoi).languageCode("en")
-                .title("Central Post Office Old").audioStatus("PROCESSING").build();
+                .title("Central Post Office").audioStatus("PROCESSING").build();
         when(poiRepository.findById(100L)).thenReturn(Optional.of(samplePoi));
         when(translationRepository.findByPoiIdAndLanguageCode(100L, "en")).thenReturn(Optional.of(en));
-        when(translationRepository.findByPoiIdAndLanguageCode(100L, "vi")).thenReturn(Optional.of(viTranslation));
 
         PoiDetailDto detail = poiContentService.getPoiDetail(100L, "en");
 
-        assertThat(detail.getLanguageCode()).isEqualTo("vi");
-        assertThat(detail.getTitle()).isEqualTo("Buu Dien Trung Tam");
-        assertThat(detail.isFallbackLanguage()).isTrue();
+        assertThat(detail.getLanguageCode()).isEqualTo("en");
+        assertThat(detail.getTitle()).isEqualTo("Central Post Office");
+        assertThat(detail.isFallbackLanguage()).isFalse();
     }
 
     @Test
-    @DisplayName("getPoiDetail: falls back to Vietnamese when audioStatus is FAILED (unusable)")
-    void testGetPoiDetail_UnusableStatus_Failed() {
+    @DisplayName("getPoiDetail: returns translation text even when audioStatus is FAILED")
+    void testGetPoiDetail_TranslationText_WhenFailed() {
         PoiTranslation en = PoiTranslation.builder().poi(samplePoi).languageCode("en")
-                .title("Central Post Office Old").audioStatus("FAILED").build();
+                .title("Central Post Office").audioStatus("FAILED").build();
         when(poiRepository.findById(100L)).thenReturn(Optional.of(samplePoi));
         when(translationRepository.findByPoiIdAndLanguageCode(100L, "en")).thenReturn(Optional.of(en));
-        when(translationRepository.findByPoiIdAndLanguageCode(100L, "vi")).thenReturn(Optional.of(viTranslation));
 
         PoiDetailDto detail = poiContentService.getPoiDetail(100L, "en");
 
-        assertThat(detail.getLanguageCode()).isEqualTo("vi");
-        assertThat(detail.getTitle()).isEqualTo("Buu Dien Trung Tam");
-        assertThat(detail.isFallbackLanguage()).isTrue();
+        assertThat(detail.getLanguageCode()).isEqualTo("en");
+        assertThat(detail.getTitle()).isEqualTo("Central Post Office");
+        assertThat(detail.isFallbackLanguage()).isFalse();
     }
 
     @Test

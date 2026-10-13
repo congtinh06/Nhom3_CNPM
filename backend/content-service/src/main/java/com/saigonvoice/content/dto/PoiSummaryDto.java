@@ -14,6 +14,7 @@ public class PoiSummaryDto {
     private String code;
     private String qrToken;
     private String name;
+    private String slug;
     private BigDecimal latitude;
     private BigDecimal longitude;
     private Integer triggerRadiusMeters;

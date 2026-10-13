@@ -5,6 +5,8 @@ import com.saigonvoice.content.entity.Poi;
 import com.saigonvoice.content.entity.PoiTranslation;
 import com.saigonvoice.content.entity.PublishEventType;
 import com.saigonvoice.content.entity.PublishStatus;
+import com.saigonvoice.content.entity.TranslationSource;
+import com.saigonvoice.content.event.AuthoredPoiText;
 import com.saigonvoice.content.event.PoiCreatedEvent;
 import com.saigonvoice.content.event.PoiUpdatedEvent;
 import com.saigonvoice.content.exception.ResourceNotFoundException;
@@ -18,7 +20,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Gửi poi.created / poi.updated cho 1 POI và GHI LẠI kết quả vào bảng poi (publish_status / attempts / last error).
@@ -102,6 +106,8 @@ public class PoiPublishService {
             PoiTranslation vi = translationRepository.findByPoiIdAndLanguageCode(poi.getId(), SOURCE_LANG)
                     .orElseThrow(() -> new IllegalStateException("Missing source translation 'vi'"));
 
+            Map<String, AuthoredPoiText> authoredTexts = collectAuthoredTexts(poi.getId());
+
             Object event;
             if (RabbitMQConfig.ROUTING_KEY_POI_UPDATED.equals(routingKey)) {
                 event = PoiUpdatedEvent.builder()
@@ -114,6 +120,7 @@ public class PoiPublishService {
                         .description(vi.getDescription())
                         .historicalSignificance(vi.getHistoricalSignificance())
                         .targetLanguages(TARGET_LANGUAGES)
+                        .authoredTexts(authoredTexts)
                         .build();
             } else {
                 event = PoiCreatedEvent.builder()
@@ -126,6 +133,7 @@ public class PoiPublishService {
                         .description(vi.getDescription())
                         .historicalSignificance(vi.getHistoricalSignificance())
                         .targetLanguages(TARGET_LANGUAGES)
+                        .authoredTexts(authoredTexts)
                         .build();
             }
 
@@ -148,6 +156,25 @@ public class PoiPublishService {
         }
         poiRepository.save(poi);
         return poi.getPublishStatus();
+    }
+
+    /**
+     * Thu thập các bản dịch do người viết (translation_source = MANUAL) cho từng ngôn ngữ đích.
+     * translation-tts-service sẽ dùng nguyên văn các ngôn ngữ này thay vì dịch máy.
+     */
+    private Map<String, AuthoredPoiText> collectAuthoredTexts(Long poiId) {
+        Map<String, AuthoredPoiText> authored = new LinkedHashMap<>();
+        for (String lang : TARGET_LANGUAGES) {
+            translationRepository.findByPoiIdAndLanguageCode(poiId, lang)
+                    .filter(t -> TranslationSource.MANUAL.name().equalsIgnoreCase(t.getSource()))
+                    .ifPresent(t -> authored.put(lang, AuthoredPoiText.builder()
+                            .title(t.getTitle())
+                            .summary(t.getSummary())
+                            .description(t.getDescription())
+                            .historicalSignificance(t.getHistoricalSignificance())
+                            .build()));
+        }
+        return authored;
     }
 
     private static String truncate(String value, int max) {

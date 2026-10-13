@@ -53,6 +53,11 @@ public class PoiTranslation {
     @Column(name = "content_hash", length = 64)
     private String contentHash;
 
+    // AUTO = dịch máy; MANUAL = văn bản do người viết (không bị dịch đè).
+    @Column(name = "translation_source", nullable = false, length = 20)
+    @Builder.Default
+    private String source = TranslationSource.AUTO.name();
+
     @Column(name = "updated_at", nullable = false)
     @Builder.Default
     private LocalDateTime updatedAt = LocalDateTime.now();

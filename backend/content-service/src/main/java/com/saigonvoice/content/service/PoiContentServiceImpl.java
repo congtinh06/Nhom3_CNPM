@@ -46,7 +46,6 @@ public class PoiContentServiceImpl implements PoiContentService {
 
     private static final String DEFAULT_LANG = "vi";
     private static final Set<String> PUBLISH_STATUSES = Set.of(PublishStatus.PENDING, PublishStatus.PUBLISHED, PublishStatus.FAILED);
-    private static final Set<String> USABLE_AUDIO_STATUSES = Set.of("READY", "FAILED_TTS");
 
     private final PoiRepository poiRepository;
     private final PoiTranslationRepository translationRepository;
@@ -320,10 +319,12 @@ public class PoiContentServiceImpl implements PoiContentService {
         PoiTranslation translation;
         if (DEFAULT_LANG.equalsIgnoreCase(lang)) {
             translation = translationOpt.orElse(null);
-        } else if (translationOpt.isPresent() && USABLE_AUDIO_STATUSES.contains(translationOpt.get().getAudioStatus())) {
+        } else if (translationOpt.isPresent()) {
+            // Trả văn bản bản dịch ngay cả khi audio chưa sẵn sàng (PENDING/PROCESSING/FAILED...):
+            // văn bản không còn bị khóa theo audio_status. Audio thiếu -> client tự xử lý (audioUrl null).
             translation = translationOpt.get();
         } else {
-            // Fallback sang tiếng Việt nếu không có hàng bản dịch hoặc audio_status không thuộc nhóm dùng được (PENDING, PROCESSING, FAILED...)
+            // Chỉ fallback sang tiếng Việt khi hoàn toàn CHƯA có hàng bản dịch cho ngôn ngữ yêu cầu.
             isFallback = true;
             translation = translationRepository.findByPoiIdAndLanguageCode(poi.getId(), DEFAULT_LANG)
                     .orElse(null);
@@ -338,6 +339,7 @@ public class PoiContentServiceImpl implements PoiContentService {
                 .code(poi.getCode())
                 .qrToken(poi.getQrToken())
                 .name(poi.getName())
+                .slug(poi.getSlug())
                 .latitude(poi.getLatitude())
                 .longitude(poi.getLongitude())
                 .triggerRadiusMeters(poi.getTriggerRadiusMeters())
