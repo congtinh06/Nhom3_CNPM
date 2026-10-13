@@ -27,6 +27,7 @@ import java.math.BigDecimal;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -100,7 +101,7 @@ class ProductControllerTest {
     @Test
     @DisplayName("GET /api/content/products: công khai, trả 200 kèm danh sách sản phẩm active")
     void testGetPublicProducts_Returns200() throws Exception {
-        when(productService.getActiveProducts(eq(ProductCategory.FOOD), any(), any(Pageable.class)))
+        when(productService.getActiveProducts(argThat(f -> f.getCategory() == ProductCategory.FOOD)))
                 .thenReturn(new PageImpl<>(List.of(sampleFoodDto), org.springframework.data.domain.PageRequest.of(0, 20), 1));
 
         publicMockMvc.perform(get("/api/content/products")
