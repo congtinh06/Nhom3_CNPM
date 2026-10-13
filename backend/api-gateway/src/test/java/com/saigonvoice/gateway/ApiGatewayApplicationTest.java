@@ -16,10 +16,12 @@ import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWeb
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.cloud.gateway.route.Route;
 import org.springframework.cloud.gateway.route.RouteLocator;
 import org.springframework.cloud.gateway.route.builder.RouteLocatorBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
+import org.springframework.core.env.Environment;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
@@ -99,6 +101,12 @@ class ApiGatewayApplicationTest {
 
     @Autowired
     private AnalyticsRateLimitGlobalFilter rateLimitFilter;
+
+    @Autowired
+    private RouteLocator routeLocator;
+
+    @Autowired
+    private Environment environment;
 
     @BeforeAll
     static void startMockServer() {
@@ -801,6 +809,55 @@ class ApiGatewayApplicationTest {
         assertThat(elapsed)
                 .as("Audio took longer than the 2s global response timeout and must still complete")
                 .isGreaterThanOrEqualTo(AUDIO_DELAY_MS - 500L);
+    }
+
+    @Test
+    void authRouteCarriesDedicatedTimeoutMetadataDifferingFromGlobalDefault() {
+        Route authRoute = routeLocator.getRoutes()
+                .filter(r -> "auth-service".equals(r.getId()))
+                .next()
+                .block();
+
+        assertThat(authRoute)
+                .as("auth-service route must be registered in the RouteLocator")
+                .isNotNull();
+        assertThat(authRoute.getMetadata())
+                .as("auth route must carry connect-timeout and response-timeout metadata")
+                .containsKeys("connect-timeout", "response-timeout");
+
+        Object connectTimeout = authRoute.getMetadata().get("connect-timeout");
+        Object responseTimeout = authRoute.getMetadata().get("response-timeout");
+
+        assertThat(connectTimeout).isNotNull();
+        assertThat(responseTimeout).isNotNull();
+
+        long authResponseTimeoutMs = Long.parseLong(String.valueOf(responseTimeout));
+        assertThat(authResponseTimeoutMs)
+                .as("auth response timeout should equal the 10000ms default")
+                .isEqualTo(10000L);
+
+        long authConnectTimeoutMs = Long.parseLong(String.valueOf(connectTimeout));
+        assertThat(authConnectTimeoutMs)
+                .as("auth connect timeout should be positive")
+                .isPositive();
+
+        String globalResponseTimeout = environment.getProperty("spring.cloud.gateway.httpclient.response-timeout");
+        assertThat(String.valueOf(responseTimeout))
+                .as("auth response timeout must differ from the global response-timeout")
+                .isNotEqualTo(globalResponseTimeout);
+        assertThat(authResponseTimeoutMs)
+                .as("auth response timeout must exceed the 2s test global timeout and 5s production default")
+                .isGreaterThan(5000L);
+
+        Route audioRoute = routeLocator.getRoutes()
+                .filter(r -> "translation-tts-service".equals(r.getId()))
+                .next()
+                .block();
+        assertThat(audioRoute).isNotNull();
+        long audioResponseTimeoutMs = Long.parseLong(String.valueOf(audioRoute.getMetadata().get("response-timeout")));
+        assertThat(authResponseTimeoutMs)
+                .as("auth route timeout must be well below the audio route timeout")
+                .isLessThan(audioResponseTimeoutMs);
     }
 
     // ==========================================
