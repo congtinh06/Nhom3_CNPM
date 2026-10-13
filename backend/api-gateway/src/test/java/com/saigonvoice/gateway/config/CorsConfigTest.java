@@ -3,6 +3,7 @@ package com.saigonvoice.gateway.config;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.mock.http.server.reactive.MockServerHttpRequest;
 import org.springframework.mock.web.server.MockServerWebExchange;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -21,10 +22,14 @@ class CorsConfigTest {
     }
 
     private static MockServerWebExchange preflight(CorsWebFilter filter, String origin) {
+        return preflight(filter, origin, HttpMethod.GET);
+    }
+
+    private static MockServerWebExchange preflight(CorsWebFilter filter, String origin, HttpMethod method) {
         MockServerWebExchange exchange = MockServerWebExchange.from(
                 MockServerHttpRequest.options("http://localhost:8080/api/content/pois")
                         .header(HttpHeaders.ORIGIN, origin)
-                        .header(HttpHeaders.ACCESS_CONTROL_REQUEST_METHOD, HttpMethod.PATCH.name())
+                        .header(HttpHeaders.ACCESS_CONTROL_REQUEST_METHOD, method.name())
                         .header(HttpHeaders.ACCESS_CONTROL_REQUEST_HEADERS, "ngrok-skip-browser-warning")
                         .build());
         filter.filter(exchange, e -> Mono.empty()).block();
@@ -67,5 +72,43 @@ class CorsConfigTest {
         MockServerWebExchange evil = preflight(filter, "https://evil.example.com");
         assertThat(evil.getResponse().getHeaders().getFirst(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN)).isNull();
         assertThat(isAllowed(preflight(filter, "https://ok.example.com"), "https://ok.example.com")).isTrue();
+    }
+
+    @Test
+    void onlyGetPostPutOptionsAreAllowedMethods() {
+        CorsWebFilter filter = filterWith("https://ok.example.com", "");
+
+        for (HttpMethod allowed : new HttpMethod[]{HttpMethod.GET, HttpMethod.POST, HttpMethod.PUT}) {
+            MockServerWebExchange exchange = preflight(filter, "https://ok.example.com", allowed);
+            assertThat(isAllowed(exchange, "https://ok.example.com"))
+                    .as("preflight for " + allowed + " must be allowed")
+                    .isTrue();
+            assertThat(exchange.getResponse().getHeaders().getAccessControlAllowMethods())
+                    .containsExactlyInAnyOrder(HttpMethod.GET, HttpMethod.POST, HttpMethod.PUT, HttpMethod.OPTIONS);
+        }
+
+        for (HttpMethod rejected : new HttpMethod[]{HttpMethod.PATCH, HttpMethod.DELETE, HttpMethod.HEAD, HttpMethod.TRACE}) {
+            MockServerWebExchange exchange = preflight(filter, "https://ok.example.com", rejected);
+            assertThat(isAllowed(exchange, "https://ok.example.com"))
+                    .as("preflight for " + rejected + " must be rejected")
+                    .isFalse();
+            assertThat(exchange.getResponse().getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+        }
+    }
+
+    @Test
+    void retryAfterHeaderIsExposedToBrowsers() {
+        CorsWebFilter filter = filterWith("https://ok.example.com", "");
+        MockServerWebExchange exchange = MockServerWebExchange.from(
+                MockServerHttpRequest.get("http://localhost:8080/api/content/pois")
+                        .header(HttpHeaders.ORIGIN, "https://ok.example.com")
+                        .build());
+
+        filter.filter(exchange, e -> Mono.empty()).block();
+
+        assertThat(exchange.getResponse().getHeaders().getAccessControlExposeHeaders())
+                .contains(HttpHeaders.RETRY_AFTER);
+        assertThat(exchange.getResponse().getHeaders().getFirst(HttpHeaders.ACCESS_CONTROL_ALLOW_CREDENTIALS))
+                .isEqualTo("true");
     }
 }

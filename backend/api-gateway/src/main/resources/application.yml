@@ -30,6 +30,9 @@ spring:
           uri: ${TRANSLATION_TTS_SERVICE_URL:http://localhost:8083}
           predicates:
             - Path=/api/tts/**
+          metadata:
+            connect-timeout: ${GATEWAY_CONNECT_TIMEOUT_MS:3000}
+            response-timeout: ${GATEWAY_AUDIO_RESPONSE_TIMEOUT_MS:60000}
         - id: analytics-service
           uri: ${ANALYTICS_SERVICE_URL:http://localhost:8081}
           predicates:

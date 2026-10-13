@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -52,6 +53,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 class ApiGatewayApplicationTest {
 
     private static final int REFUSED_PORT = allocateRefusedPort();
+    private static final int AUDIO_DELAY_MS = 3500;
+    private static final int AUDIO_BYTES = 64 * 1024;
     private static ExecutorService mockServerExecutor;
 
     private static int allocateRefusedPort() {
@@ -67,6 +70,8 @@ class ApiGatewayApplicationTest {
         @Bean
         public RouteLocator testRoutes(RouteLocatorBuilder builder) {
             return builder.routes()
+                    .route("content-refused-service", r -> r.order(-1).path("/api/content/pois/refused-probe")
+                            .uri("http://127.0.0.1:" + REFUSED_PORT))
                     .route("refused-service", r -> r.path("/api/location/refused/**")
                             .uri("http://127.0.0.1:" + REFUSED_PORT))
                     .route("unknown-host-service", r -> r.path("/api/location/unknown-host/**")
@@ -139,6 +144,24 @@ class ApiGatewayApplicationTest {
             } catch (InterruptedException ignored) {
             }
         });
+        mockDownstreamServer.createContext("/api/content/pois/slow-probe", exchange -> {
+            try {
+                Thread.sleep(10000);
+            } catch (InterruptedException ignored) {
+            }
+        });
+        mockDownstreamServer.createContext("/api/tts/audio/slow-probe.mp3", exchange -> {
+            try {
+                Thread.sleep(AUDIO_DELAY_MS);
+            } catch (InterruptedException ignored) {
+            }
+            byte[] audio = new byte[AUDIO_BYTES];
+            exchange.getResponseHeaders().set("Content-Type", "audio/mpeg");
+            exchange.sendResponseHeaders(200, audio.length);
+            try (OutputStream os = exchange.getResponseBody()) {
+                os.write(audio);
+            }
+        });
         mockServerExecutor = Executors.newCachedThreadPool(r -> {
             Thread t = new Thread(r, "mock-downstream-worker");
             t.setDaemon(true);
@@ -199,6 +222,18 @@ class ApiGatewayApplicationTest {
     @MethodSource("blockedCases")
     void blockedRequestsDoNotReachDownstream(String caseName, HttpMethod method, String path,
                                              int expectedStatus, String adminKey) {
+        assertBlockedBeforeDownstream(caseName, method, path, expectedStatus, adminKey);
+    }
+
+    @ParameterizedTest(name = "[{index}] {0}")
+    @MethodSource("adminPathVariantCases")
+    void adminPathVariantsDoNotReachDownstream(String caseName, HttpMethod method, String path,
+                                               int expectedStatus, String adminKey) {
+        assertBlockedBeforeDownstream(caseName, method, path, expectedStatus, adminKey);
+    }
+
+    private void assertBlockedBeforeDownstream(String caseName, HttpMethod method, String path,
+                                               int expectedStatus, String adminKey) {
         URI uri = URI.create("http://localhost:" + port + path);
         int before = downstreamRequestCount.get();
         webTestClient.method(method).uri(uri)
@@ -233,6 +268,37 @@ class ApiGatewayApplicationTest {
                 Arguments.of("internal-path", HttpMethod.GET, "/api/content/internal/pois/qr/x", 404, null),
                 Arguments.of("public-path-wrong-method", HttpMethod.POST, "/api/content/pois", 404, null),
                 Arguments.of("unknown-content-path", HttpMethod.GET, "/api/content/foo", 404, null)
+        );
+    }
+
+    private static Stream<Arguments> adminPathVariantCases() {
+        return Stream.of(
+                Arguments.of("admin-encoded-backslash", HttpMethod.GET, "/api/content/admin%5Cpois", 400, null),
+                Arguments.of("admin-encoded-backslash-valid-key", HttpMethod.GET, "/api/content/admin%5Cpois", 400, TEST_ADMIN_KEY),
+                Arguments.of("admin-api-encoded-backslash", HttpMethod.GET, "/api/admin/products%5C1", 400, null),
+                Arguments.of("admin-api-encoded-backslash-put-valid-key", HttpMethod.PUT, "/api/admin/products%5C1", 400, TEST_ADMIN_KEY),
+                Arguments.of("admin-null-byte", HttpMethod.GET, "/api/content/admin/pois%00", 400, null),
+                Arguments.of("admin-api-null-byte-post-valid-key", HttpMethod.POST, "/api/admin/products%00", 400, TEST_ADMIN_KEY),
+                Arguments.of("admin-non-ascii-bidi-override", HttpMethod.GET, "/api/content/admin/pois%E2%80%AE", 400, null),
+                Arguments.of("admin-api-non-ascii-letter", HttpMethod.GET, "/api/admin/products%C3%A9", 400, null),
+                Arguments.of("admin-api-non-ascii-valid-key", HttpMethod.GET, "/api/admin/products%C3%A9", 400, TEST_ADMIN_KEY),
+                Arguments.of("admin-segment-trailing-dot", HttpMethod.GET, "/api/content/admin./pois", 404, null),
+                Arguments.of("admin-segment-trailing-dot-valid-key", HttpMethod.GET, "/api/content/admin./pois", 404, TEST_ADMIN_KEY),
+                Arguments.of("admin-collection-trailing-dot", HttpMethod.GET, "/api/content/admin.", 404, TEST_ADMIN_KEY),
+                Arguments.of("admin-api-segment-trailing-dot", HttpMethod.GET, "/api/admin./products", 404, null),
+                Arguments.of("admin-api-resource-trailing-dot", HttpMethod.GET, "/api/admin/products.", 404, TEST_ADMIN_KEY),
+                Arguments.of("admin-resource-trailing-dot-no-key", HttpMethod.GET, "/api/content/admin/pois.", 401, null),
+                Arguments.of("admin-encoded-slash", HttpMethod.GET, "/api/content/admin%2Fpois", 400, null),
+                Arguments.of("admin-encoded-slash-lowercase", HttpMethod.GET, "/api/content/admin%2fpois", 400, TEST_ADMIN_KEY),
+                Arguments.of("admin-api-encoded-slash", HttpMethod.GET, "/api/admin%2Fproducts", 400, null),
+                Arguments.of("admin-api-encoded-slash-post-valid-key", HttpMethod.POST, "/api/admin%2fproducts/1", 400, TEST_ADMIN_KEY),
+                Arguments.of("admin-double-encoded-slash", HttpMethod.GET, "/api/admin/products%252F1", 400, null),
+                Arguments.of("admin-encoded-dot-dot-slash", HttpMethod.GET, "/api/content/admin/%2e%2e/pois", 400, null),
+                Arguments.of("admin-api-encoded-dot-segments-valid-key", HttpMethod.GET, "/api/admin/products/%2e%2e/%2e%2e/auth", 400, TEST_ADMIN_KEY),
+                Arguments.of("admin-api-double-slash-prefix", HttpMethod.GET, "//api/admin/products", 400, null),
+                Arguments.of("admin-api-inner-double-slash-valid-key", HttpMethod.GET, "/api/admin//products", 400, TEST_ADMIN_KEY),
+                Arguments.of("admin-api-uppercase-segment", HttpMethod.GET, "/api/ADMIN/products", 404, null),
+                Arguments.of("admin-api-mixed-case-valid-key", HttpMethod.GET, "/api/Admin/products", 404, TEST_ADMIN_KEY)
         );
     }
 
@@ -274,38 +340,55 @@ class ApiGatewayApplicationTest {
     }
 
     @ParameterizedTest(name = "[{index}] {0}")
-    @MethodSource("publicPathsCases")
-    void testPublicPathsRouting(String name, HttpMethod method, String uri, String jsonBody) {
-        WebTestClient.RequestHeadersSpec<?> requestSpec;
-        if (HttpMethod.POST.equals(method)) {
-            requestSpec = webTestClient.post().uri(uri)
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .bodyValue(jsonBody);
-        } else {
-            requestSpec = webTestClient.get().uri(uri);
-        }
-
-        requestSpec.exchange()
-                .expectStatus().isOk();
+    @ValueSource(strings = {
+            "/api/content/categories",
+            "/api/content/pois",
+            "/api/content/pois/10",
+            "/api/content/pois/qr/sample-token",
+            "/api/content/routes",
+            "/api/content/routes/5",
+            "/api/content/zones",
+            "/api/content/zones/2",
+            "/api/content/products"
+    })
+    void publicContentGetPathReachesDownstream(String path) {
+        assertGetReachesDownstream(path);
     }
 
-    private static Stream<Arguments> publicPathsCases() {
-        return Stream.of(
-                Arguments.of("content-categories", HttpMethod.GET, "/api/content/categories", null),
-                Arguments.of("content-pois", HttpMethod.GET, "/api/content/pois", null),
-                Arguments.of("content-pois-by-id", HttpMethod.GET, "/api/content/pois/10", null),
-                Arguments.of("content-pois-qr", HttpMethod.GET, "/api/content/pois/qr/sample-token", null),
-                Arguments.of("content-routes", HttpMethod.GET, "/api/content/routes", null),
-                Arguments.of("content-routes-by-id", HttpMethod.GET, "/api/content/routes/5", null),
-                Arguments.of("content-zones", HttpMethod.GET, "/api/content/zones", null),
-                Arguments.of("content-zones-by-id", HttpMethod.GET, "/api/content/zones/2", null),
-                Arguments.of("location-nearby", HttpMethod.GET, "/api/location/nearby?lat=10.77&lng=106.69&radius=500", null),
-                Arguments.of("location-resolve", HttpMethod.GET, "/api/location/resolve?lat=10.77&lng=106.69", null),
-                Arguments.of("location-qr", HttpMethod.GET, "/api/location/qr/test-token", null),
-                Arguments.of("tts-audio", HttpMethod.GET, "/api/tts/audio/poi_1_vi_12345678.mp3", null),
-                Arguments.of("analytics-events", HttpMethod.POST, "/api/analytics/events",
-                        "{\"eventType\":\"SCAN\",\"poiId\":1,\"languageCode\":\"vi\",\"triggerType\":\"QR\"}")
-        );
+    @ParameterizedTest(name = "[{index}] {0}")
+    @ValueSource(strings = {
+            "/api/location/nearby?lat=10.77&lng=106.69&radius=500",
+            "/api/location/resolve?lat=10.77&lng=106.69",
+            "/api/location/qr/test-token"
+    })
+    void publicLocationGetPathReachesDownstream(String path) {
+        assertGetReachesDownstream(path);
+    }
+
+    @Test
+    void ttsAudioGetPathReachesDownstream() {
+        assertGetReachesDownstream("/api/tts/audio/poi_1_vi_12345678.mp3");
+    }
+
+    @Test
+    void analyticsEventsPostReachesDownstream() {
+        int before = downstreamRequestCount.get();
+        webTestClient.post().uri("/api/analytics/events")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue("{\"eventType\":\"SCAN\",\"poiId\":1,\"languageCode\":\"vi\",\"triggerType\":\"QR\"}")
+                .exchange()
+                .expectStatus().isOk();
+        assertThat(downstreamRequestCount.get()).isEqualTo(before + 1);
+    }
+
+    private void assertGetReachesDownstream(String path) {
+        int before = downstreamRequestCount.get();
+        webTestClient.get().uri(path)
+                .exchange()
+                .expectStatus().isOk();
+        assertThat(downstreamRequestCount.get())
+                .as("Public path must be forwarded exactly once: " + path)
+                .isEqualTo(before + 1);
     }
 
     @Test
@@ -489,16 +572,17 @@ class ApiGatewayApplicationTest {
     }
 
     @Test
-    void testCorsPreflightFromAllowedOriginWithNgrokHeaderAndPatch() {
+    void testCorsPreflightFromAllowedOriginWithNgrokHeaderAndPut() {
         webTestClient.options().uri("http://localhost:" + port + "/api/admin/products/1/status")
                 .header("Origin", "http://localhost:5173")
-                .header("Access-Control-Request-Method", "PATCH")
+                .header("Access-Control-Request-Method", "PUT")
                 .header("Access-Control-Request-Headers", "ngrok-skip-browser-warning, Content-Type, X-Admin-Key")
                 .exchange()
                 .expectStatus().isOk()
                 .expectHeader().valueEquals("Access-Control-Allow-Origin", "http://localhost:5173")
                 .expectHeader().valueEquals("Access-Control-Allow-Credentials", "true")
-                .expectHeader().value("Access-Control-Allow-Methods", v -> assertThat(v).contains("PATCH").contains("DELETE"))
+                .expectHeader().value("Access-Control-Allow-Methods",
+                        v -> assertThat(v).contains("PUT").doesNotContain("PATCH").doesNotContain("DELETE"))
                 .expectHeader().value("Access-Control-Allow-Headers",
                         v -> assertThat(v.toLowerCase()).contains("ngrok-skip-browser-warning"));
     }
@@ -519,7 +603,7 @@ class ApiGatewayApplicationTest {
     void testCorsPreflightFromDisallowedOriginIsRejected() {
         webTestClient.options().uri("http://localhost:" + port + "/api/admin/products/1/status")
                 .header("Origin", "https://evil.example.com")
-                .header("Access-Control-Request-Method", "PATCH")
+                .header("Access-Control-Request-Method", "PUT")
                 .header("Access-Control-Request-Headers", "ngrok-skip-browser-warning")
                 .exchange()
                 .expectStatus().isForbidden()
@@ -675,6 +759,50 @@ class ApiGatewayApplicationTest {
                 .jsonPath("$.trace").doesNotExist();
     }
 
+    @Test
+    void contentRouteConnectionRefusedReturns503() {
+        webTestClient.get().uri("/api/content/pois/refused-probe")
+                .exchange()
+                .expectStatus().isEqualTo(503)
+                .expectHeader().contentType(MediaType.APPLICATION_JSON)
+                .expectBody()
+                .jsonPath("$.status").isEqualTo(503)
+                .jsonPath("$.error").isEqualTo("Service Unavailable")
+                .jsonPath("$.message").isEqualTo("Service Unavailable")
+                .jsonPath("$.trace").doesNotExist();
+    }
+
+    @Test
+    void contentRouteTimeoutReturns504() {
+        webTestClient.get().uri("/api/content/pois/slow-probe")
+                .exchange()
+                .expectStatus().isEqualTo(504)
+                .expectHeader().contentType(MediaType.APPLICATION_JSON)
+                .expectBody()
+                .jsonPath("$.status").isEqualTo(504)
+                .jsonPath("$.error").isEqualTo("Gateway Timeout")
+                .jsonPath("$.message").isEqualTo("Gateway Timeout")
+                .jsonPath("$.trace").doesNotExist();
+    }
+
+    @Test
+    void slowAudioResponseIsNotCutByGlobalResponseTimeout() {
+        long start = System.currentTimeMillis();
+        byte[] body = webTestClient.get().uri("/api/tts/audio/slow-probe.mp3")
+                .exchange()
+                .expectStatus().isOk()
+                .expectHeader().contentType("audio/mpeg")
+                .expectBody(byte[].class)
+                .returnResult()
+                .getResponseBody();
+        long elapsed = System.currentTimeMillis() - start;
+
+        assertThat(body).hasSize(AUDIO_BYTES);
+        assertThat(elapsed)
+                .as("Audio took longer than the 2s global response timeout and must still complete")
+                .isGreaterThanOrEqualTo(AUDIO_DELAY_MS - 500L);
+    }
+
     // ==========================================
     // Task 3: CORS Hardening Tests
     // ==========================================
@@ -687,15 +815,38 @@ class ApiGatewayApplicationTest {
                 .expectHeader().doesNotExist("Access-Control-Allow-Origin");
     }
 
-    @Test
-    void deletePreflightNotAllowed() {
-        // DELETE/PATCH are now allowed on purpose (admin UI); a method outside the allowlist must still be rejected.
+    @ParameterizedTest(name = "[{index}] {0}")
+    @ValueSource(strings = {"PATCH", "DELETE", "TRACE"})
+    void preflightForMethodOutsideAllowlistIsRejected(String method) {
         webTestClient.options().uri("http://localhost:" + port + "/api/content/pois")
                 .header("Origin", "http://localhost:5173")
-                .header("Access-Control-Request-Method", "TRACE")
+                .header("Access-Control-Request-Method", method)
                 .exchange()
                 .expectStatus().isForbidden()
                 .expectHeader().doesNotExist("Access-Control-Allow-Origin");
+    }
+
+    @ParameterizedTest(name = "[{index}] {0}")
+    @ValueSource(strings = {"GET", "POST", "PUT"})
+    void preflightForAllowedMethodAdvertisesOnlyTheAllowlist(String method) {
+        webTestClient.options().uri("http://localhost:" + port + "/api/content/pois")
+                .header("Origin", "http://localhost:5173")
+                .header("Access-Control-Request-Method", method)
+                .exchange()
+                .expectStatus().isOk()
+                .expectHeader().value("Access-Control-Allow-Methods", v -> assertThat(v)
+                        .contains("GET").contains("POST").contains("PUT").contains("OPTIONS")
+                        .doesNotContain("PATCH").doesNotContain("DELETE"));
+    }
+
+    @Test
+    void retryAfterHeaderIsExposedOnCrossOriginResponse() {
+        webTestClient.get().uri("http://localhost:" + port + "/api/content/pois")
+                .header("Origin", "http://localhost:5173")
+                .exchange()
+                .expectStatus().isOk()
+                .expectHeader().value("Access-Control-Expose-Headers",
+                        v -> assertThat(v).containsIgnoringCase("Retry-After"));
     }
 
     // ==========================================
