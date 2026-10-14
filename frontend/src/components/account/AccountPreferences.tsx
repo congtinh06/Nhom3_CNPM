@@ -1,5 +1,4 @@
 import React from 'react';
-import { Check } from 'lucide-react';
 import { SUPPORTED_LANGUAGES, useNavbarLanguage } from '../../content/languages';
 import { AccountSection } from './AccountSection';
 import { useAccountI18n } from './accountI18n';
@@ -23,7 +22,6 @@ export const AccountPreferences: React.FC = () => {
             >
               <span className="ac-lang-name">{option.label}</span>
               <span className="ac-lang-code">{option.short}</span>
-              {active && <Check size={15} strokeWidth={2} aria-hidden="true" />}
             </button>
           );
         })}

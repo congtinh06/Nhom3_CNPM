@@ -1,0 +1,522 @@
+/* ==========================================================================
+   News Detail Page Stylesheet (Vietnamese Online Newspaper Redesign)
+   All selectors prefixed with nd- to prevent global collisions.
+   ========================================================================== */
+
+.nd-page-root {
+  min-height: 100vh;
+  background-color: var(--fb-bg-primary, #FDFBF7);
+  color: var(--fb-text-primary, #1C1917);
+  font-family: var(--font-body, "Be Vietnam Pro", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
+  padding-top: 88px;
+  padding-bottom: 72px;
+  box-sizing: border-box;
+  -webkit-font-smoothing: antialiased;
+}
+
+.nd-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding-left: 24px;
+  padding-right: 24px;
+  box-sizing: border-box;
+}
+
+/* --------------------------------------------------------------------------
+   1. Two-Column Layout (Article + Sticky Sidebar)
+   -------------------------------------------------------------------------- */
+.nd-layout {
+  display: flex;
+  align-items: flex-start;
+  gap: 40px;
+}
+
+.nd-layout.is-centered {
+  justify-content: center;
+}
+
+.nd-article-col {
+  flex: 1;
+  min-width: 0;
+  max-width: 760px;
+}
+
+.nd-layout.is-centered .nd-article-col {
+  margin: 0 auto;
+}
+
+.nd-sidebar-col {
+  width: 300px;
+  min-width: 300px;
+  flex-shrink: 0;
+  position: sticky;
+  top: 88px;
+  align-self: start;
+}
+
+/* --------------------------------------------------------------------------
+   2. Article Head Elements (Breadcrumb, Category, Title, Sapo, Meta)
+   -------------------------------------------------------------------------- */
+.nd-breadcrumb {
+  margin-bottom: 16px;
+}
+
+.nd-breadcrumb-list {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--fb-text-secondary, #57534E);
+}
+
+.nd-breadcrumb-item {
+  display: inline-flex;
+  align-items: center;
+}
+
+.nd-breadcrumb-link {
+  color: var(--fb-text-secondary, #57534E);
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.nd-breadcrumb-link:hover {
+  color: var(--fb-accent, #C2410C);
+  text-decoration: underline;
+}
+
+.nd-breadcrumb-link:focus-visible {
+  outline: 2px solid var(--fb-accent, #C2410C);
+  outline-offset: 2px;
+}
+
+.nd-breadcrumb-sep {
+  color: var(--fb-border, #D6D3D1);
+  user-select: none;
+  padding: 0 4px;
+}
+
+.nd-breadcrumb-current {
+  color: var(--fb-text-primary, #1C1917);
+  font-weight: 600;
+}
+
+.nd-category-row {
+  margin-bottom: 10px;
+}
+
+.nd-category-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-decoration: none;
+  display: inline-block;
+}
+
+.nd-category-label:hover {
+  text-decoration: underline;
+}
+
+.nd-title {
+  font-family: var(--font-display, "Playfair Display", Georgia, serif) !important;
+  font-size: clamp(2rem, 3.5vw, 2.5rem);
+  font-weight: 800;
+  line-height: 1.2;
+  color: var(--fb-text-primary, #1C1917);
+  margin: 0 0 16px 0;
+  letter-spacing: -0.02em;
+  text-transform: none !important;
+}
+
+.nd-standfirst {
+  font-family: var(--font-body, "Be Vietnam Pro", sans-serif);
+  font-size: 1.125rem;
+  line-height: 1.6;
+  color: var(--fb-text-secondary, #57534E);
+  font-weight: 500;
+  margin: 0 0 16px 0;
+}
+
+.nd-meta-row {
+  margin-bottom: 24px;
+}
+
+/* --------------------------------------------------------------------------
+   3. Hero Image & Caption
+   -------------------------------------------------------------------------- */
+.nd-hero-figure {
+  width: 100%;
+  margin: 0 0 28px 0;
+}
+
+.nd-hero-media {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background-color: var(--fb-border, #E7E5E4);
+  overflow: hidden;
+  border-radius: 0;
+}
+
+.nd-hero-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  border-radius: 0;
+}
+
+.nd-hero-placeholder {
+  width: 100%;
+  height: 100%;
+  background-color: var(--fb-border, #E7E5E4);
+  border-radius: 0;
+}
+
+.nd-hero-caption {
+  font-size: 0.8125rem;
+  color: var(--fb-text-secondary, #57534E);
+  font-style: italic;
+  line-height: 1.45;
+  margin-top: 8px;
+  padding: 0;
+}
+
+/* --------------------------------------------------------------------------
+   4. Body Typography & Blockquotes
+   -------------------------------------------------------------------------- */
+.nd-body {
+  font-family: var(--font-body, "Be Vietnam Pro", sans-serif);
+  font-size: 1.0625rem;
+  line-height: 1.7;
+  color: var(--fb-text-primary, #1C1917);
+  max-width: 720px;
+}
+
+.nd-body p {
+  margin: 0 0 1.2em 0;
+  max-width: 100%;
+  font-size: 1.0625rem;
+  line-height: 1.7;
+}
+
+.nd-body blockquote {
+  border-left: 2px solid var(--fb-accent, #C2410C);
+  background: transparent;
+  margin: 1.5em 0;
+  padding: 8px 0 8px 18px;
+  font-style: italic;
+  color: var(--fb-text-secondary, #57534E);
+}
+
+.nd-body h2 {
+  font-family: var(--font-display, "Playfair Display", Georgia, serif) !important;
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1.3;
+  margin: 1.8em 0 0.8em 0;
+  color: var(--fb-text-primary, #1C1917);
+  text-transform: none !important;
+}
+
+.nd-body h3 {
+  font-family: var(--font-display, "Playfair Display", Georgia, serif) !important;
+  font-size: 1.25rem;
+  font-weight: 700;
+  line-height: 1.35;
+  margin: 1.5em 0 0.6em 0;
+  color: var(--fb-text-primary, #1C1917);
+  text-transform: none !important;
+}
+
+.nd-body ul,
+.nd-body ol {
+  margin: 0 0 1.2em 0;
+  padding-left: 1.5em;
+}
+
+.nd-body li {
+  margin-bottom: 0.5em;
+  line-height: 1.6;
+}
+
+/* --------------------------------------------------------------------------
+   5. Tags, Actions & Navigation
+   -------------------------------------------------------------------------- */
+.nd-tags-row {
+  margin: 28px 0 24px 0;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--fb-text-secondary, #57534E);
+}
+
+.nd-tags-label {
+  font-weight: 600;
+  color: var(--fb-text-primary, #1C1917);
+  margin-right: 6px;
+}
+
+.nd-tags-list {
+  color: var(--fb-text-secondary, #57534E);
+}
+
+.nd-actions-row {
+  margin: 24px 0;
+}
+
+.nd-btn-original {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background-color: var(--fb-accent, #C2410C);
+  color: #FFFFFF;
+  padding: 10px 18px;
+  border-radius: 2px;
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: none;
+  border: 1px solid var(--fb-accent, #C2410C);
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.nd-btn-original:hover {
+  background-color: var(--fb-accent-hover, #9A3412);
+  border-color: var(--fb-accent-hover, #9A3412);
+  color: #FFFFFF;
+}
+
+.nd-btn-original:focus-visible {
+  outline: 2px solid var(--fb-accent, #C2410C);
+  outline-offset: 3px;
+}
+
+.nd-divider {
+  width: 100%;
+  height: 1px;
+  background-color: var(--fb-border, #E7E5E4);
+  margin: 28px 0;
+}
+
+.nd-back-wrap {
+  margin-bottom: 40px;
+}
+
+.nd-back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--fb-accent, #C2410C);
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.nd-back-link:hover {
+  color: var(--fb-accent-hover, #9A3412);
+  text-decoration: underline;
+}
+
+.nd-back-link:focus-visible {
+  outline: 2px solid var(--fb-accent, #C2410C);
+  outline-offset: 2px;
+}
+
+/* --------------------------------------------------------------------------
+   6. Sidebar "Tin mới nhất"
+   -------------------------------------------------------------------------- */
+.nd-sidebar-card {
+  background-color: var(--fb-surface, #FFFFFF);
+  border: 1px solid var(--fb-border, #E7E5E4);
+  border-radius: 2px;
+  padding: 20px;
+}
+
+.nd-sidebar-title {
+  font-family: var(--font-display, "Playfair Display", Georgia, serif) !important;
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--fb-text-primary, #1C1917);
+  margin: 0 0 16px 0;
+  padding-bottom: 10px;
+  border-bottom: 2px solid var(--fb-text-primary, #1C1917);
+  text-transform: none !important;
+  letter-spacing: -0.01em;
+}
+
+.nd-sidebar-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.nd-sidebar-item {
+  border-bottom: 1px solid var(--fb-border, #E7E5E4);
+  padding: 12px 0;
+}
+
+.nd-sidebar-item:first-child {
+  padding-top: 0;
+}
+
+.nd-sidebar-item:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.nd-sidebar-link {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+}
+
+.nd-sidebar-link:focus-visible {
+  outline: 2px solid var(--fb-accent, #C2410C);
+  outline-offset: 2px;
+}
+
+.nd-sidebar-item-title {
+  font-family: var(--font-display, "Playfair Display", Georgia, serif) !important;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--fb-text-primary, #1C1917);
+  margin: 0 0 6px 0;
+  text-transform: none !important;
+  transition: color 0.15s ease;
+}
+
+.nd-sidebar-link:hover .nd-sidebar-item-title {
+  color: var(--fb-accent-hover, #9A3412);
+  text-decoration: underline;
+}
+
+.nd-sidebar-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  color: var(--fb-text-secondary, #57534E);
+}
+
+.nd-sidebar-cat {
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.6875rem;
+  letter-spacing: 0.04em;
+}
+
+.nd-sidebar-sep {
+  color: var(--fb-border, #D6D3D1);
+  user-select: none;
+}
+
+.nd-sidebar-date {
+  color: var(--fb-text-secondary, #57534E);
+}
+
+/* --------------------------------------------------------------------------
+   7. Related Articles Block (Full width under article)
+   -------------------------------------------------------------------------- */
+.nd-related-section {
+  margin-top: 56px;
+  padding-top: 32px;
+  border-top: 1px solid var(--fb-border, #E7E5E4);
+}
+
+.nd-related-title {
+  font-family: var(--font-display, "Playfair Display", Georgia, serif) !important;
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--fb-text-primary, #1C1917);
+  margin: 0 0 20px 0;
+  text-transform: none !important;
+  letter-spacing: -0.015em;
+}
+
+.nd-related-list {
+  display: flex;
+  flex-direction: column;
+}
+
+/* --------------------------------------------------------------------------
+   8. States: Loading & Not Found
+   -------------------------------------------------------------------------- */
+.nd-state-box {
+  background-color: var(--fb-surface, #FFFFFF);
+  border: 1px solid var(--fb-border, #E7E5E4);
+  border-radius: 2px;
+  padding: 48px 24px;
+  text-align: center;
+  margin: 40px auto;
+  max-width: 600px;
+}
+
+.nd-state-title {
+  font-family: var(--font-display, "Playfair Display", Georgia, serif) !important;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--fb-text-primary, #1C1917);
+  margin: 0 0 12px 0;
+  text-transform: none !important;
+}
+
+.nd-state-desc {
+  font-size: 0.9375rem;
+  color: var(--fb-text-secondary, #57534E);
+  margin: 0 0 24px 0;
+}
+
+/* --------------------------------------------------------------------------
+   9. Responsive Breakpoints
+   -------------------------------------------------------------------------- */
+@media (max-width: 960px) {
+  .nd-layout {
+    flex-direction: column;
+    gap: 32px;
+  }
+
+  .nd-article-col {
+    max-width: 100%;
+    width: 100%;
+  }
+
+  .nd-sidebar-col {
+    width: 100%;
+    min-width: 100%;
+    position: static;
+    margin-top: 24px;
+  }
+}
+
+@media (max-width: 560px) {
+  .nd-page-root {
+    padding-top: 76px;
+    padding-bottom: 48px;
+  }
+
+  .nd-container {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .nd-title {
+    font-size: 1.625rem;
+  }
+
+  .nd-standfirst {
+    font-size: 1rem;
+  }
+
+  .nd-body {
+    font-size: 1rem;
+  }
+
+  .nd-body p {
+    font-size: 1rem;
+  }
+}

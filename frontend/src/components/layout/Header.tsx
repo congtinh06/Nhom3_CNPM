@@ -13,6 +13,7 @@ import {
   SUPPORTED_LANGUAGES,
   LanguageOption,
 } from '../../content/languages';
+import { CountryFlag } from '../common/CountryFlag';
 import { UserMenu } from './UserMenu';
 
 export const Header: React.FC = () => {
@@ -303,6 +304,7 @@ export const Header: React.FC = () => {
               }
             }}
           >
+            <CountryFlag code={currentOption.code} width={18} height={13} />
             <span>{currentOption.short}</span>
             <ChevronDown
               size={13}
@@ -325,7 +327,10 @@ export const Header: React.FC = () => {
                 className={`dropdown-item lang-item ${opt.code === lang ? 'active' : ''}`}
                 onClick={() => handleLanguageSelect(opt)}
               >
-                <span className="lang-name">{opt.label}</span>
+                <div className="lang-item-left">
+                  <CountryFlag code={opt.code} width={18} height={13} />
+                  <span className="lang-name">{opt.label}</span>
+                </div>
                 <span className="lang-short-tag">{opt.short}</span>
               </button>
             ))}

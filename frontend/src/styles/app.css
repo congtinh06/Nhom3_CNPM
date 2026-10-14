@@ -374,6 +374,20 @@ select:focus-visible {
   justify-content: space-between;
 }
 
+.lang-item-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.lang-flag {
+  display: inline-block;
+  vertical-align: middle;
+  border-radius: 2px;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.15);
+  flex-shrink: 0;
+}
+
 .lang-name {
   font-size: 13px;
 }
@@ -1949,6 +1963,53 @@ dialog p {
 .af-btn-secondary:focus-visible {
   outline: 2px solid var(--brown);
   outline-offset: 2px;
+}
+
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 16px 0 12px;
+  color: #8a8177;
+  font-size: 12.5px;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: #e2d8c9;
+}
+
+.auth-divider span {
+  white-space: nowrap;
+}
+
+.google-signin {
+  display: flex;
+  justify-content: center;
+  min-height: 40px;
+}
+
+.google-signin-host {
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.google-signin--disabled {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+@media (max-width: 420px) {
+  .google-signin {
+    width: 100%;
+  }
+
+  .google-signin-host {
+    width: 100%;
+  }
 }
 
 .auth-modal-actions {

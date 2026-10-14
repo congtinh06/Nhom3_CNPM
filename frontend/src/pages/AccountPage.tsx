@@ -1,5 +1,5 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { AccountProfile } from '../components/account/AccountProfile';
@@ -9,13 +9,25 @@ import { AccountPreferences } from '../components/account/AccountPreferences';
 import { useAccountI18n } from '../components/account/accountI18n';
 import '../styles/account.css';
 
+const VALID_TABS = ['profile', 'orders', 'security', 'preferences'] as const;
+type TabId = (typeof VALID_TABS)[number];
+
+function isValidTab(id: string): id is TabId {
+  return VALID_TABS.includes(id as TabId);
+}
+
 export const AccountPage: React.FC = () => {
   const { user, status, logout } = useAuth();
   const { showToast } = useToast();
   const navigate = useNavigate();
+  const location = useLocation();
   const { t } = useAccountI18n();
+  const tabRefs = useRef<Record<string, HTMLButtonElement | null>>({});
 
-  const [active, setActive] = useState('profile');
+  const tabFromHash = location.hash.replace(/^#/, '');
+  const [active, setActive] = useState<TabId>(() =>
+    isValidTab(tabFromHash) ? tabFromHash : 'profile'
+  );
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -26,6 +38,13 @@ export const AccountPage: React.FC = () => {
       navigate('/dang-nhap', { state: { from: '/tai-khoan' }, replace: true });
     }
   }, [status, navigate]);
+
+  useEffect(() => {
+    const fromHash = location.hash.replace(/^#/, '');
+    if (isValidTab(fromHash) && fromHash !== active) {
+      setActive(fromHash);
+    }
+  }, [location.hash, active]);
 
   const initials = useMemo(() => {
     const name = user?.fullName?.trim() || user?.email || '';
@@ -40,19 +59,41 @@ export const AccountPage: React.FC = () => {
 
   const navItems = useMemo(
     () => [
-      { id: 'profile', label: t.navProfile },
-      { id: 'orders', label: t.navOrders },
-      { id: 'security', label: t.navSecurity },
-      { id: 'preferences', label: t.navPreferences },
+      { id: 'profile' as const, label: t.navProfile },
+      { id: 'orders' as const, label: t.navOrders },
+      { id: 'security' as const, label: t.navSecurity },
+      { id: 'preferences' as const, label: t.navPreferences },
     ],
     [t]
   );
 
-  const goTo = (id: string) => {
+  const selectTab = (id: TabId) => {
     setActive(id);
-    const el = document.getElementById(id);
-    if (el && typeof el.scrollIntoView === 'function') {
-      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    navigate({ pathname: location.pathname, search: location.search, hash: id });
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent, index: number) => {
+    let targetIndex = -1;
+    if (e.key === 'ArrowDown' || e.key === 'ArrowRight') {
+      e.preventDefault();
+      targetIndex = (index + 1) % navItems.length;
+    } else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
+      e.preventDefault();
+      targetIndex = (index - 1 + navItems.length) % navItems.length;
+    } else if (e.key === 'Home') {
+      e.preventDefault();
+      targetIndex = 0;
+    } else if (e.key === 'End') {
+      e.preventDefault();
+      targetIndex = navItems.length - 1;
+    }
+
+    if (targetIndex >= 0) {
+      const target = navItems[targetIndex];
+      if (target) {
+        selectTab(target.id);
+        tabRefs.current[target.id]?.focus();
+      }
     }
   };
 
@@ -68,7 +109,12 @@ export const AccountPage: React.FC = () => {
     <section className="s ac-page">
       <header className="ac-head">
         <p className="ac-kicker">{t.kicker}</p>
-        <h1 className="ac-title">{t.pageTitle}</h1>
+        <h1
+          className="ac-title"
+          style={{ fontFamily: 'var(--font-display, "Playfair Display", Georgia, serif)' }}
+        >
+          {t.pageTitle}
+        </h1>
         <p className="ac-subtitle">{t.pageSubtitle}</p>
       </header>
 
@@ -87,18 +133,34 @@ export const AccountPage: React.FC = () => {
               <span className="ac-identity-email">{user.email}</span>
             </div>
 
-            <nav className="ac-nav" aria-label={t.menuLabel}>
-              {navItems.map((item) => (
-                <button
-                  key={item.id}
-                  type="button"
-                  className={`ac-nav-link ${active === item.id ? 'is-active' : ''}`.trim()}
-                  aria-current={active === item.id ? 'true' : undefined}
-                  onClick={() => goTo(item.id)}
-                >
-                  {item.label}
-                </button>
-              ))}
+            <nav
+              className="ac-nav"
+              role="tablist"
+              aria-label={t.menuLabel}
+              aria-orientation="vertical"
+            >
+              {navItems.map((item, index) => {
+                const isSelected = active === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    id={`tab-${item.id}`}
+                    ref={(el) => {
+                      tabRefs.current[item.id] = el;
+                    }}
+                    type="button"
+                    role="tab"
+                    aria-selected={isSelected}
+                    aria-controls={item.id}
+                    tabIndex={isSelected ? 0 : -1}
+                    className={`ac-nav-link ${isSelected ? 'is-active' : ''}`.trim()}
+                    onClick={() => selectTab(item.id)}
+                    onKeyDown={(e) => handleKeyDown(e, index)}
+                  >
+                    {item.label}
+                  </button>
+                );
+              })}
             </nav>
 
             <button type="button" className="ac-signout" onClick={handleLogout}>
@@ -107,10 +169,10 @@ export const AccountPage: React.FC = () => {
           </aside>
 
           <div className="ac-main">
-            <AccountProfile />
-            <AccountOrders />
-            <AccountSecurity />
-            <AccountPreferences />
+            {active === 'profile' && <AccountProfile />}
+            {active === 'orders' && <AccountOrders />}
+            {active === 'security' && <AccountSecurity />}
+            {active === 'preferences' && <AccountPreferences />}
           </div>
         </div>
       )}

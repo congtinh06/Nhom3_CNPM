@@ -3,7 +3,8 @@ import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { authApi } from '../../api/auth';
 import { AccountSection } from './AccountSection';
-import { accountLocale, useAccountI18n } from './accountI18n';
+import { useAccountI18n } from './accountI18n';
+import { formatAccountDate } from './accountFormatters';
 
 export const AccountProfile: React.FC = () => {
   const { user, isAdmin } = useAuth();
@@ -13,9 +14,7 @@ export const AccountProfile: React.FC = () => {
 
   if (!user) return null;
 
-  const memberSince = user.createdAt
-    ? new Date(user.createdAt).toLocaleDateString(accountLocale(lang))
-    : '—';
+  const memberSince = formatAccountDate(user.createdAt, lang);
 
   const handleResend = async () => {
     if (!user.email) return;

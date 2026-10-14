@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Play, Pause } from 'lucide-react';
 import { NewsItem, NEWS_CATEGORIES } from '../../types/domain';
 import { NeutralImagePlaceholder } from './EncausticTilePattern';
 import { SupportedLanguage } from '../../types';
@@ -13,8 +12,6 @@ export interface StoryCardProps {
   lang?: SupportedLanguage;
   isFeaturedEager?: boolean;
   showDivider?: boolean;
-  isSpeaking?: boolean;
-  onToggleSpeech?: (item: NewsItem) => void;
 }
 
 const POI_MAP: Record<string, string> = {
@@ -44,8 +41,6 @@ export const StoryCard: React.FC<StoryCardProps> = ({
   variant = 'grid',
   lang = 'vi',
   isFeaturedEager = false,
-  isSpeaking = false,
-  onToggleSpeech,
 }) => {
   const navigate = useNavigate();
   const [imageError, setImageError] = useState(false);
@@ -69,11 +64,6 @@ export const StoryCard: React.FC<StoryCardProps> = ({
     navigate(`/tin-tuc/${item.slug}`);
   };
 
-  const handleAudioClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    onToggleSpeech?.(item);
-  };
 
   // 1. SIDEBAR VARIANT
   if (isSidebar) {
@@ -110,18 +100,6 @@ export const StoryCard: React.FC<StoryCardProps> = ({
 
           <div className="story-sidebar-footer">
             {formattedDate && <time className="story-date">{formattedDate}</time>}
-            {onToggleSpeech && (
-              <button
-                type="button"
-                className={`story-audio-pill ${isSpeaking ? 'is-playing' : ''}`}
-                onClick={handleAudioClick}
-                aria-label={isSpeaking ? `Tạm dừng nghe: ${item.title}` : `Nghe bài viết: ${item.title}`}
-                title={isSpeaking ? 'Tạm dừng nghe' : 'Nghe bài viết'}
-              >
-                {isSpeaking ? <Pause size={11} aria-hidden="true" /> : <Play size={11} aria-hidden="true" />}
-                <span>NGHE</span>
-              </button>
-            )}
           </div>
         </div>
       </article>
@@ -207,7 +185,7 @@ export const StoryCard: React.FC<StoryCardProps> = ({
           <p className="story-excerpt">{item.excerpt || item.summary}</p>
         )}
 
-        {/* Footer: max 2 tags left, NGHE button right, pinned to bottom */}
+        {/* Footer: max 2 tags left */}
         <div className="story-footer">
           <div className="story-tags-group">
             {displayTags.map((tag) => {
@@ -219,21 +197,6 @@ export const StoryCard: React.FC<StoryCardProps> = ({
               );
             })}
           </div>
-
-          <button
-            type="button"
-            className={`story-audio-pill ${isSpeaking ? 'is-playing' : ''}`}
-            onClick={handleAudioClick}
-            aria-label={isSpeaking ? `Tạm dừng nghe: ${item.title}` : `Nghe bài viết: ${item.title}`}
-            title={isSpeaking ? 'Tạm dừng nghe' : 'Nghe bài viết'}
-          >
-            {isSpeaking ? (
-              <Pause size={12} aria-hidden="true" />
-            ) : (
-              <Play size={12} style={{ marginLeft: 1 }} aria-hidden="true" />
-            )}
-            <span>NGHE</span>
-          </button>
         </div>
       </div>
     </article>

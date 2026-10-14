@@ -180,7 +180,8 @@ describe('Header Navigation Redesign', () => {
       expect(screen.queryByRole('button', { name: 'Đăng nhập' })).not.toBeInTheDocument();
       expect(screen.queryByRole('button', { name: 'Đăng ký' })).not.toBeInTheDocument();
 
-      // Dropdown menu tài khoản
+      // Dropdown menu tài khoản (mở bằng cách bấm trigger)
+      fireEvent.click(userBtn);
       const accountMenu = screen.getByRole('menu', { name: 'Tùy chọn người dùng' });
       expect(accountMenu).toBeInTheDocument();
 

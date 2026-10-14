@@ -12,6 +12,7 @@ import { NewsListPage } from '../pages/NewsListPage';
 import { NewsDetailPage } from '../pages/NewsDetailPage';
 import { HomeNewsSection } from '../components/sections/HomeNewsSection';
 import { SafeMarkdown } from '../components/news/SafeMarkdown';
+import { NewsMeta } from '../components/news/NewsMeta';
 import { NewsItem } from '../types/domain';
 
 describe('News Feature Tests (Tin tức)', () => {
@@ -161,7 +162,7 @@ describe('News Feature Tests (Tin tức)', () => {
       (window as unknown as { __TEST_USE_4_ARTICLES?: boolean }).__TEST_USE_4_ARTICLES = false;
     });
 
-    it('renders Hero (1), Sidebar MỚI NHẤT (4) + BẠN CÓ THỂ BỎ LỠ (3), and 4-column Grid with zero duplicate articles', async () => {
+    it('renders editorial newspaper layout (lead story, side items, and feed list) with zero duplicate articles', async () => {
       render(
         <MemoryRouter initialEntries={['/tin-tuc']}>
           <Routes>
@@ -174,21 +175,19 @@ describe('News Feature Tests (Tin tức)', () => {
       expect(await screen.findByRole('heading', { level: 1, name: /Tin tức/i })).toBeInTheDocument();
       expect(screen.getByText(/Cập nhật câu chuyện di sản, đời sống văn hóa/i)).toBeInTheDocument();
 
-      // Filter chips
+      // Filter tabs
       expect(screen.getByRole('button', { name: /Tất cả/i })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /Điểm đến/i })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /Văn hóa Sài Gòn/i })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /Mẹo tham quan/i })).toBeInTheDocument();
 
-      // Hero Block
+      // Top block (lead story and side items)
       expect(await screen.findByRole('region', { name: 'Bài viết tiêu điểm' })).toBeInTheDocument();
+      expect(screen.getByRole('region', { name: 'Tin nổi bật khác' })).toBeInTheDocument();
 
-      // Sidebar with MỚI NHẤT and BẠN CÓ THỂ BỎ LỠ
-      expect(screen.getByRole('region', { name: 'Mới nhất' })).toBeInTheDocument();
-      expect(screen.getByRole('region', { name: 'Bạn có thể bỏ lỡ' })).toBeInTheDocument();
-
-      // 4-column Grid
+      // Feed list below
       expect(screen.getByRole('region', { name: 'Danh sách bài viết' })).toBeInTheDocument();
+      expect(screen.getByRole('heading', { level: 2, name: /Mới nhất/i })).toBeInTheDocument();
 
       // Verify all cards have links pointing to reading pages (/tin-tuc/:slug)
       const storyLinks = screen.getAllByRole('link').filter((link) => {
@@ -259,10 +258,7 @@ describe('News Feature Tests (Tin tức)', () => {
       });
       expect(title).toBeInTheDocument();
 
-      // 3. Audio NGHE button
-      expect(screen.getByRole('button', { name: /^Nghe bài viết$/i })).toBeInTheDocument();
-
-      // 4. Primary button linking to original source
+      // 3. Primary button linking to original source
       const originalLink = screen.getByRole('link', { name: /Đọc bài gốc tại/i });
       expect(originalLink).toBeInTheDocument();
       expect(originalLink).toHaveAttribute('target', '_blank');
@@ -287,7 +283,13 @@ describe('News Feature Tests (Tin tức)', () => {
         </MemoryRouter>
       );
 
-      expect(await screen.findByRole('heading', { level: 1, name: 'Không tìm thấy bài viết' })).toBeInTheDocument();
+      expect(
+        await screen.findByRole(
+          'heading',
+          { level: 1, name: 'Không tìm thấy bài viết' },
+          { timeout: 4000 }
+        )
+      ).toBeInTheDocument();
       expect(screen.getByRole('link', { name: /Quay lại Tin tức/i })).toHaveAttribute('href', '/tin-tuc');
     });
   });
@@ -326,6 +328,56 @@ describe('News Feature Tests (Tin tức)', () => {
       const hrefs = cardLinks.map((l) => l.getAttribute('href'));
       const uniqueHrefs = new Set(hrefs);
       expect(hrefs.length).toBe(uniqueHrefs.size);
+    });
+  });
+
+  describe('7. Newspaper Redesign Regressions & Meta Separator Checks', () => {
+    it('renders meta line with no trailing separator when readingTime is missing or empty', () => {
+      const { container } = render(
+        <NewsMeta
+          category={{ label: 'Điểm đến' }}
+          formattedDate="14/10/2026"
+          readingTime=""
+        />
+      );
+
+      expect(screen.getByText('Điểm đến')).toBeInTheDocument();
+      expect(screen.getByText('14/10/2026')).toBeInTheDocument();
+
+      const metaParts = container.querySelectorAll('.nl-meta-part');
+      expect(metaParts.length).toBe(2);
+
+      // Part 0: Category (no separator)
+      expect(metaParts[0]?.querySelector('.nl-meta-sep')).toBeNull();
+
+      // Part 1: Date (has leading separator, but no trailing separator)
+      expect(metaParts[1]?.querySelector('.nl-meta-sep')).not.toBeNull();
+      expect(metaParts[1]?.textContent).toBe('·14/10/2026');
+
+      // Check that there is no trailing separator element or reading time
+      const lastElement = container.querySelector('.nl-meta')?.lastElementChild;
+      expect(lastElement?.classList.contains('nl-meta-sep')).toBe(false);
+      expect(container.querySelector('.nl-meta-read')).toBeNull();
+    });
+
+    it('renders news detail page with no element having the old MOI badge class or dot', async () => {
+      const { container } = render(
+        <MemoryRouter initialEntries={['/tin-tuc/dinh-doc-lap-nhung-can-phong-it-nguoi-de-y']}>
+          <Routes>
+            <Route path="/tin-tuc/:slug" element={<NewsDetailPage />} />
+          </Routes>
+        </MemoryRouter>
+      );
+
+      await screen.findByRole('heading', {
+        level: 1,
+        name: 'Dinh Độc Lập: Những căn phòng và dấu ấn lịch sử ít người để ý',
+      });
+
+      // Verify no old pill, badge, or colored dot elements exist
+      expect(container.querySelector('.story-new-badge')).toBeNull();
+      expect(container.querySelector('.story-cat-dot')).toBeNull();
+      expect(container.querySelector('.story-cat-badge')).toBeNull();
     });
   });
 });

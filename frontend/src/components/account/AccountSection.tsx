@@ -14,9 +14,19 @@ export const AccountSection: React.FC<AccountSectionProps> = ({
   children,
 }) => {
   return (
-    <section id={id} className="ac-section" aria-labelledby={`${id}-title`}>
+    <section
+      id={id}
+      role="tabpanel"
+      aria-labelledby={`tab-${id}`}
+      tabIndex={0}
+      className="ac-section"
+    >
       <header className="ac-section-head">
-        <h2 id={`${id}-title`} className="ac-section-title">
+        <h2
+          id={`${id}-title`}
+          className="ac-section-title"
+          style={{ fontFamily: 'var(--font-display, "Playfair Display", Georgia, serif)' }}
+        >
           {title}
         </h2>
         {description && <p className="ac-section-desc">{description}</p>}

@@ -79,7 +79,7 @@ describe('AccountPage', () => {
     renderAccount();
 
     expect(await screen.findByText('Tài khoản của tôi')).toBeInTheDocument();
-    expect(screen.getAllByText('Nguyễn Văn A').length).toBeGreaterThan(0);
+    expect((await screen.findAllByText('Nguyễn Văn A')).length).toBeGreaterThan(0);
     expect(screen.getAllByText('nguyenvana@gmail.com').length).toBeGreaterThan(0);
     expect(screen.getByText('Đã xác thực')).toBeInTheDocument();
   });
@@ -108,6 +108,9 @@ describe('AccountPage', () => {
 
     renderAccount();
 
+    const ordersTab = await screen.findByRole('tab', { name: 'Đơn hàng' });
+    fireEvent.click(ordersTab);
+
     expect(await screen.findByText('SV-20260115-1000')).toBeInTheDocument();
     expect(screen.getByText('55.000đ')).toBeInTheDocument();
     expect(screen.getByText('Đang xử lý')).toBeInTheDocument();
@@ -116,14 +119,19 @@ describe('AccountPage', () => {
   it('báo trống khi người dùng chưa có đơn hàng', async () => {
     renderAccount();
 
+    const ordersTab = await screen.findByRole('tab', { name: 'Đơn hàng' });
+    fireEvent.click(ordersTab);
+
     expect(await screen.findByText('Bạn chưa có đơn hàng nào.')).toBeInTheDocument();
   });
 
   it('báo lỗi khi mật khẩu xác nhận không khớp', async () => {
     renderAccount();
 
-    await screen.findByText('Tài khoản của tôi');
-    fireEvent.change(screen.getByLabelText('Mật khẩu mới'), {
+    const securityTab = await screen.findByRole('tab', { name: 'Bảo mật' });
+    fireEvent.click(securityTab);
+
+    fireEvent.change(await screen.findByLabelText('Mật khẩu mới'), {
       target: { value: 'Matkhau@123' },
     });
     fireEvent.change(screen.getByLabelText('Xác nhận mật khẩu mới'), {
@@ -140,8 +148,10 @@ describe('AccountPage', () => {
 
     renderAccount();
 
-    await screen.findByText('Tài khoản của tôi');
-    fireEvent.change(screen.getByLabelText('Mật khẩu hiện tại'), {
+    const securityTab = await screen.findByRole('tab', { name: 'Bảo mật' });
+    fireEvent.click(securityTab);
+
+    fireEvent.change(await screen.findByLabelText('Mật khẩu hiện tại'), {
       target: { value: 'Matkhau@123' },
     });
     fireEvent.change(screen.getByLabelText('Mật khẩu mới'), {
@@ -164,10 +174,32 @@ describe('AccountPage', () => {
   it('đổi ngôn ngữ hiển thị sang tiếng Anh', async () => {
     renderAccount();
 
-    await screen.findByText('Tài khoản của tôi');
-    fireEvent.click(screen.getByRole('button', { name: /English/i }));
+    const prefTab = await screen.findByRole('tab', { name: 'Tùy chọn' });
+    fireEvent.click(prefTab);
+
+    fireEvent.click(await screen.findByRole('button', { name: /English/i }));
 
     expect(await screen.findByText('My account')).toBeInTheDocument();
+  });
+
+  it('chuyển tab sẽ hiển thị panel tương ứng và ẩn các panel khác', async () => {
+    renderAccount();
+
+    expect(await screen.findByRole('heading', { level: 2, name: 'Hồ sơ cá nhân' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { level: 2, name: 'Bảo mật tài khoản' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { level: 2, name: 'Tùy chọn hiển thị' })).not.toBeInTheDocument();
+
+    const securityTab = screen.getByRole('tab', { name: 'Bảo mật' });
+    fireEvent.click(securityTab);
+
+    expect(await screen.findByRole('heading', { level: 2, name: 'Bảo mật tài khoản' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { level: 2, name: 'Hồ sơ cá nhân' })).not.toBeInTheDocument();
+
+    const prefTab = screen.getByRole('tab', { name: 'Tùy chọn' });
+    fireEvent.click(prefTab);
+
+    expect(await screen.findByRole('heading', { level: 2, name: 'Tùy chọn hiển thị' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { level: 2, name: 'Bảo mật tài khoản' })).not.toBeInTheDocument();
   });
 
   it('đăng xuất khi bấm nút Đăng xuất', async () => {

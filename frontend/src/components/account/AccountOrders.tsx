@@ -5,7 +5,8 @@ import { BackendOrder } from '../../types';
 import { formatPrice } from '../../utils/formatters';
 import { StatusBadge } from '../orders/StatusBadge';
 import { AccountSection } from './AccountSection';
-import { accountLocale, useAccountI18n } from './accountI18n';
+import { useAccountI18n } from './accountI18n';
+import { formatAccountDate } from './accountFormatters';
 
 const RECENT_LIMIT = 3;
 
@@ -55,7 +56,7 @@ export const AccountOrders: React.FC = () => {
                 </span>
                 <span className="ac-order-date">
                   <span className="ac-order-label">{t.orderDate}</span>
-                  {new Date(order.createdAt).toLocaleDateString(accountLocale(lang))}
+                  {formatAccountDate(order.createdAt, lang)}
                 </span>
                 <span className="ac-order-total">
                   <span className="ac-order-label">{t.orderTotal}</span>

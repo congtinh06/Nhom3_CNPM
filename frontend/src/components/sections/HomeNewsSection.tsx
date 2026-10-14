@@ -4,7 +4,6 @@ import { ArrowRight, Newspaper } from 'lucide-react';
 import { useNewsListQuery } from '../../api/news';
 import { NewsCategory, NEWS_CATEGORIES } from '../../types/domain';
 import { StoryCard } from '../news/StoryCard';
-import { useSpeechAudio } from '../../hooks/useSpeechAudio';
 import { useNavbarLanguage } from '../../content/languages';
 
 const HOME_CATEGORIES: { key: NewsCategory; label: string; dotColor: string }[] = [
@@ -15,7 +14,6 @@ const HOME_CATEGORIES: { key: NewsCategory; label: string; dotColor: string }[] 
 
 export const HomeNewsSection: React.FC = () => {
   const { lang } = useNavbarLanguage();
-  const { activeId, toggleSpeech } = useSpeechAudio();
   const [activeCategoryTab, setActiveCategoryTab] = useState<NewsCategory>('diem-den');
 
   const { displayedData, isLoading, isError } = useNewsListQuery({ lang });
@@ -48,9 +46,6 @@ export const HomeNewsSection: React.FC = () => {
       .slice(0, 3);
   }, [allItems, activeCategoryTab, alreadyUsedIds]);
 
-  const handleSpeakItem = (item: (typeof allItems)[0]) => {
-    toggleSpeech(item.id, `${item.title}. ${item.excerpt || item.summary || ''}`);
-  };
 
   if (isLoading) {
     return (
@@ -105,8 +100,6 @@ export const HomeNewsSection: React.FC = () => {
               item={featuredArticle}
               variant="featured"
               lang={lang}
-              isSpeaking={activeId === featuredArticle.id}
-              onToggleSpeech={handleSpeakItem}
             />
           </div>
         )}
@@ -129,8 +122,6 @@ export const HomeNewsSection: React.FC = () => {
                   item={item}
                   variant="grid"
                   lang={lang}
-                  isSpeaking={activeId === item.id}
-                  onToggleSpeech={handleSpeakItem}
                 />
               ))}
             </div>
@@ -188,8 +179,6 @@ export const HomeNewsSection: React.FC = () => {
                   item={item}
                   variant="grid"
                   lang={lang}
-                  isSpeaking={activeId === item.id}
-                  onToggleSpeech={handleSpeakItem}
                 />
               ))}
             </div>
