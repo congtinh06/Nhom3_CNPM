@@ -1,0 +1,195 @@
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import axios, { AxiosError, AxiosHeaders, InternalAxiosRequestConfig } from 'axios';
+import { adminClient, normalizeAdminError } from '../admin/api/adminClient';
+import { tokenStore, notifyLoggedOut } from '../api/tokenStore';
+
+vi.mock('../api/tokenStore', async () => {
+  let token: string | null = null;
+  return {
+    tokenStore: {
+      get: vi.fn(() => token),
+      set: vi.fn((t: string | null) => {
+        token = t;
+      }),
+      clear: vi.fn(() => {
+        token = null;
+      }),
+    },
+    notifyLoggedOut: vi.fn(),
+  };
+});
+
+describe('adminClient & normalizeAdminError', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    tokenStore.clear();
+  });
+
+  describe('normalizeAdminError', () => {
+    it('chuẩn hóa lỗi 403 Forbidden thành thông báo tiếng Việt', () => {
+      const err = new AxiosError(
+        'Request failed with status code 403',
+        'ERR_BAD_REQUEST',
+        undefined,
+        undefined,
+        {
+          status: 403,
+          statusText: 'Forbidden',
+          data: {},
+          headers: {},
+          config: { headers: new AxiosHeaders() },
+        }
+      );
+
+      const normalized = normalizeAdminError(err);
+      expect(normalized.status).toBe(403);
+      expect(normalized.message).toBe('Bạn không có quyền thực hiện thao tác này.');
+    });
+
+    it('chuẩn hóa lỗi 401 Unauthorized thành thông báo hết hạn phiên', () => {
+      const err = new AxiosError(
+        'Request failed with status code 401',
+        'ERR_BAD_REQUEST',
+        undefined,
+        undefined,
+        {
+          status: 401,
+          statusText: 'Unauthorized',
+          data: {},
+          headers: {},
+          config: { headers: new AxiosHeaders() },
+        }
+      );
+
+      const normalized = normalizeAdminError(err);
+      expect(normalized.status).toBe(401);
+      expect(normalized.message).toBe('Phiên làm việc đã hết hạn. Vui lòng đăng nhập lại.');
+    });
+
+    it('ưu tiên message từ server nếu máy chủ cung cấp', () => {
+      const err = new AxiosError(
+        'Server Error',
+        'ERR_BAD_REQUEST',
+        undefined,
+        undefined,
+        {
+          status: 400,
+          statusText: 'Bad Request',
+          data: { message: 'Tên danh mục không được để trống' },
+          headers: {},
+          config: { headers: new AxiosHeaders() },
+        }
+      );
+
+      const normalized = normalizeAdminError(err);
+      expect(normalized.status).toBe(400);
+      expect(normalized.message).toBe('Tên danh mục không được để trống');
+    });
+  });
+
+  describe('Request Interceptor', () => {
+    it('tự động đính kèm Authorization: Bearer <token> khi tokenStore có token', async () => {
+      vi.mocked(tokenStore.get).mockReturnValue('valid-admin-jwt');
+
+      const requestInterceptor = (adminClient.interceptors.request as unknown as {
+        handlers: Array<{ fulfilled: (config: InternalAxiosRequestConfig) => InternalAxiosRequestConfig }>;
+      }).handlers[0]!.fulfilled;
+
+      const baseConfig: InternalAxiosRequestConfig = {
+        headers: new AxiosHeaders(),
+      };
+
+      const mutated = requestInterceptor(baseConfig);
+      expect(mutated.headers.get('Authorization')).toBe('Bearer valid-admin-jwt');
+    });
+
+    it('không đính kèm Authorization khi tokenStore rỗng', async () => {
+      vi.mocked(tokenStore.get).mockReturnValue(null);
+
+      const requestInterceptor = (adminClient.interceptors.request as unknown as {
+        handlers: Array<{ fulfilled: (config: InternalAxiosRequestConfig) => InternalAxiosRequestConfig }>;
+      }).handlers[0]!.fulfilled;
+
+      const baseConfig: InternalAxiosRequestConfig = {
+        headers: new AxiosHeaders(),
+      };
+
+      const mutated = requestInterceptor(baseConfig);
+      expect(mutated.headers.get('Authorization')).toBeUndefined();
+    });
+  });
+
+  describe('Response Interceptor & Refresh Flow', () => {
+    it('thử refresh và thực thi lại request khi nhận 401', async () => {
+      vi.mocked(tokenStore.get).mockReturnValue('expired-token');
+
+      const responseErrorHandler = (adminClient.interceptors.response as unknown as {
+        handlers: Array<{ rejected: (error: AxiosError) => Promise<unknown> }>;
+      }).handlers[0]!.rejected;
+
+      vi.spyOn(axios, 'post').mockResolvedValueOnce({
+        data: { accessToken: 'new-valid-token' },
+      });
+      const replaySpy = vi.spyOn(adminClient, 'request').mockResolvedValueOnce({ data: 'replayed' });
+
+      const reqConfig: InternalAxiosRequestConfig = {
+        headers: new AxiosHeaders(),
+        url: '/api/admin/products',
+      };
+
+      const error401 = new AxiosError(
+        'Unauthorized',
+        'ERR_BAD_REQUEST',
+        reqConfig,
+        {},
+        {
+          status: 401,
+          statusText: 'Unauthorized',
+          data: {},
+          headers: {},
+          config: reqConfig,
+        }
+      );
+
+      const res = await responseErrorHandler(error401);
+      expect(replaySpy).toHaveBeenCalled();
+      expect(tokenStore.set).toHaveBeenCalledWith('new-valid-token');
+      expect(res).toEqual({ data: 'replayed' });
+    });
+
+    it('gọi notifyLoggedOut khi refresh token thất bại trên lỗi 401', async () => {
+      vi.mocked(tokenStore.get).mockReturnValue('expired-token');
+
+      const responseErrorHandler = (adminClient.interceptors.response as unknown as {
+        handlers: Array<{ rejected: (error: AxiosError) => Promise<unknown> }>;
+      }).handlers[0]!.rejected;
+
+      vi.spyOn(axios, 'post').mockRejectedValueOnce(new Error('Refresh failed'));
+
+      const reqConfig: InternalAxiosRequestConfig = {
+        headers: new AxiosHeaders(),
+        url: '/api/admin/products',
+      };
+
+      const error401 = new AxiosError(
+        'Unauthorized',
+        'ERR_BAD_REQUEST',
+        reqConfig,
+        {},
+        {
+          status: 401,
+          statusText: 'Unauthorized',
+          data: {},
+          headers: {},
+          config: reqConfig,
+        }
+      );
+
+      await expect(responseErrorHandler(error401)).rejects.toMatchObject({
+        message: expect.any(String),
+      });
+
+      expect(notifyLoggedOut).toHaveBeenCalled();
+    });
+  });
+});

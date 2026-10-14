@@ -28,7 +28,7 @@ import { AuthModal } from './components/auth/AuthModal';
 import { useSmoothScroll } from './hooks/useSmoothScroll';
 
 const NearbyPage = lazy(() => import('./pages/NearbyPage'));
-const AdminPage = lazy(() => import('./pages/AdminPage'));
+const AdminRoutes = lazy(() => import('./admin/AdminRoutes'));
 
 const PoiRedirect: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -45,12 +45,30 @@ const AppContent: React.FC = () => {
   } | null;
 
   const isAuthModalRoute = ['/dang-nhap', '/dang-ky', '/quen-mat-khau'].includes(location.pathname);
+  const isAdminRoute = location.pathname.startsWith('/quan-tri');
 
   // Background location pattern:
   // If on an auth modal route, render either the previous backgroundLocation or fallback to homepage
   const backgroundLocation = isAuthModalRoute
     ? (state?.backgroundLocation || { pathname: '/', search: '', hash: '' })
     : undefined;
+
+  if (isAdminRoute) {
+    return (
+      <Suspense
+        fallback={
+          <div className="adm-screen-loader" role="status" aria-label="Đang tải dữ liệu">
+            <div className="adm-spinner" />
+            <p className="adm-loader-text">Đang tải giao diện quản trị...</p>
+          </div>
+        }
+      >
+        <Routes>
+          <Route path="/quan-tri/*" element={<AdminRoutes />} />
+        </Routes>
+      </Suspense>
+    );
+  }
 
   return (
     <>
@@ -93,8 +111,7 @@ const AppContent: React.FC = () => {
             <Route path="/qr/:token" element={<ScanPage />} />
             <Route path="/quet-ma" element={<ScanPage />} />
 
-            {/* User & Admin */}
-            <Route path="/quan-tri" element={<AdminPage />} />
+            {/* User & Auth */}
             <Route path="/dat-lai-mat-khau" element={<ResetPasswordPage />} />
             <Route path="/xac-thuc-email" element={<VerifyEmailPage />} />
             <Route path="/tai-khoan" element={<AccountPage />} />

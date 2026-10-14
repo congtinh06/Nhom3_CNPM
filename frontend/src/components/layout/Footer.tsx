@@ -31,6 +31,11 @@ export const Footer: React.FC = () => {
         {/* Cột 1: Logo & Thông tin thương hiệu */}
         <div className="col">
           <div className="br">{footerContent.brand}</div>
+          {footerContent.tagline && (
+            <p className="footer-tagline" style={{ fontStyle: 'italic', color: '#C8BDB0', fontSize: 13, margin: '4px 0 8px' }}>
+              {footerContent.tagline}
+            </p>
+          )}
           <p>{footerContent.blurb}</p>
           <div className="footer-social-row" style={{ display: 'flex', gap: 12, marginTop: 14 }}>
             {/* Facebook SVG */}

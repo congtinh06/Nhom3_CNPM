@@ -58,7 +58,7 @@ export interface AccountTranslation {
 
 const ACCOUNT_TRANSLATIONS: Record<SupportedLanguage, AccountTranslation> = {
   vi: {
-    kicker: 'SaigonVoice',
+    kicker: 'Echora',
     pageTitle: 'Tài khoản của tôi',
     pageSubtitle: 'Quản lý hồ sơ, đơn hàng, bảo mật và tùy chọn hiển thị của bạn.',
     loading: 'Đang tải thông tin tài khoản…',
@@ -68,7 +68,7 @@ const ACCOUNT_TRANSLATIONS: Record<SupportedLanguage, AccountTranslation> = {
     navSecurity: 'Bảo mật',
     navPreferences: 'Tùy chọn',
     profileTitle: 'Hồ sơ cá nhân',
-    profileDesc: 'Thông tin tài khoản dùng để nhận diện bạn trên SaigonVoice.',
+    profileDesc: 'Thông tin tài khoản dùng để nhận diện bạn trên Echora.',
     fullName: 'Họ và tên',
     email: 'Email',
     role: 'Vai trò',
@@ -112,7 +112,7 @@ const ACCOUNT_TRANSLATIONS: Record<SupportedLanguage, AccountTranslation> = {
     signedOut: 'Bạn đã đăng xuất.',
   },
   en: {
-    kicker: 'SaigonVoice',
+    kicker: 'Echora',
     pageTitle: 'My account',
     pageSubtitle: 'Manage your profile, orders, security and display preferences.',
     loading: 'Loading your account…',
@@ -122,7 +122,7 @@ const ACCOUNT_TRANSLATIONS: Record<SupportedLanguage, AccountTranslation> = {
     navSecurity: 'Security',
     navPreferences: 'Preferences',
     profileTitle: 'Personal profile',
-    profileDesc: 'Account details used to identify you across SaigonVoice.',
+    profileDesc: 'Account details used to identify you across Echora.',
     fullName: 'Full name',
     email: 'Email',
     role: 'Role',
@@ -166,7 +166,7 @@ const ACCOUNT_TRANSLATIONS: Record<SupportedLanguage, AccountTranslation> = {
     signedOut: 'You have signed out.',
   },
   ja: {
-    kicker: 'SaigonVoice',
+    kicker: 'Echora',
     pageTitle: 'マイアカウント',
     pageSubtitle: 'プロフィール、注文、セキュリティ、表示設定を管理します。',
     loading: 'アカウント情報を読み込んでいます…',
@@ -176,7 +176,7 @@ const ACCOUNT_TRANSLATIONS: Record<SupportedLanguage, AccountTranslation> = {
     navSecurity: 'セキュリティ',
     navPreferences: '表示設定',
     profileTitle: 'プロフィール',
-    profileDesc: 'SaigonVoice でお客様を識別するためのアカウント情報です。',
+    profileDesc: 'Echora でお客様を識別するためのアカウント情報です。',
     fullName: '氏名',
     email: 'メールアドレス',
     role: '権限',
@@ -220,7 +220,7 @@ const ACCOUNT_TRANSLATIONS: Record<SupportedLanguage, AccountTranslation> = {
     signedOut: 'ログアウトしました。',
   },
   ko: {
-    kicker: 'SaigonVoice',
+    kicker: 'Echora',
     pageTitle: '내 계정',
     pageSubtitle: '프로필, 주문, 보안 및 표시 설정을 관리하세요.',
     loading: '계정 정보를 불러오는 중…',
@@ -230,7 +230,7 @@ const ACCOUNT_TRANSLATIONS: Record<SupportedLanguage, AccountTranslation> = {
     navSecurity: '보안',
     navPreferences: '환경설정',
     profileTitle: '개인 프로필',
-    profileDesc: 'SaigonVoice에서 회원님을 식별하는 데 사용되는 계정 정보입니다.',
+    profileDesc: 'Echora에서 회원님을 식별하는 데 사용되는 계정 정보입니다.',
     fullName: '이름',
     email: '이메일',
     role: '권한',

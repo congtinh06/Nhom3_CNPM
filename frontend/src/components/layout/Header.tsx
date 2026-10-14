@@ -15,6 +15,7 @@ import {
 } from '../../content/languages';
 import { CountryFlag } from '../common/CountryFlag';
 import { UserMenu } from './UserMenu';
+import { footerContent } from '../../content/staticSections';
 
 export const Header: React.FC = () => {
   const { totalCount, openCart } = useCart();
@@ -204,10 +205,10 @@ export const Header: React.FC = () => {
           onClick={handleBrandClick}
           role="button"
           tabIndex={0}
-          aria-label="Sài Gòn - Về trang chủ"
+          aria-label={`${footerContent.brand} - Về trang chủ`}
           onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && handleBrandClick()}
         >
-          Sài Gòn
+          {footerContent.brand}
         </b>
       </div>
 

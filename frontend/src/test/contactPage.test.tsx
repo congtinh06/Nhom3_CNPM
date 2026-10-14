@@ -130,10 +130,10 @@ describe('ContactPage Component', () => {
 
     // First FAQ is open by default
     expect(
-      screen.getByText(/Ứng dụng Sài Gòn Voice có thu phí thuyết minh du lịch không\?/i)
+      screen.getByText(/Ứng dụng Echora có thu phí thuyết minh du lịch không\?/i)
     ).toBeInTheDocument();
     expect(
-      screen.getByText(/Hoàn toàn không. Sài Gòn Voice là dự án số hóa di sản/i)
+      screen.getByText(/Hoàn toàn không. Echora là dự án số hóa di sản/i)
     ).toBeInTheDocument();
 
     // Click second FAQ to open it

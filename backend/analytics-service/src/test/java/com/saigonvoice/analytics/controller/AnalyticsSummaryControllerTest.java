@@ -1,5 +1,6 @@
 package com.saigonvoice.analytics.controller;
 
+import com.saigonvoice.analytics.config.AnalyticsAdminFilter;
 import com.saigonvoice.analytics.dto.AnalyticsSummaryResponse;
 import com.saigonvoice.analytics.service.AnalyticsSummaryService;
 import org.junit.jupiter.api.DisplayName;
@@ -7,8 +8,11 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.http.MediaType;
+import org.springframework.context.annotation.Import;
+import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.util.List;
 import java.util.Map;
@@ -18,18 +22,23 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(AnalyticsSummaryController.class)
+@Import(AnalyticsAdminFilter.class)
+@TestPropertySource(properties = "internal.api-key=test-gateway-internal-key")
 class AnalyticsSummaryControllerTest {
+
+    private static final String GATEWAY_KEY = "test-gateway-internal-key";
 
     @Autowired
     private MockMvc mockMvc;
 
+    @Autowired
+    private AnalyticsSummaryController analyticsSummaryController;
+
     @MockBean
     private AnalyticsSummaryService analyticsSummaryService;
 
-    @Test
-    @DisplayName("GET /api/analytics/summary returns 200 OK with expected JSON structure")
-    void testGetSummary_returns200() throws Exception {
-        AnalyticsSummaryResponse response = AnalyticsSummaryResponse.builder()
+    private AnalyticsSummaryResponse sampleResponse() {
+        return AnalyticsSummaryResponse.builder()
                 .totalScans(100L)
                 .scansByTrigger(Map.of("QR", 80L, "GPS", 15L, "MANUAL", 5L))
                 .totalAudioPlays(50L)
@@ -44,11 +53,16 @@ class AnalyticsSummaryControllerTest {
                                 .build()
                 ))
                 .build();
+    }
 
-        when(analyticsSummaryService.getSummary()).thenReturn(response);
+    @Test
+    @DisplayName("GET /api/analytics/summary: có X-User-Role ADMIN + khóa nội bộ -> 200 OK")
+    void testGetSummary_returns200() throws Exception {
+        when(analyticsSummaryService.getSummary()).thenReturn(sampleResponse());
 
         mockMvc.perform(get("/api/analytics/summary")
-                        .contentType(MediaType.APPLICATION_JSON))
+                        .header("X-User-Role", "ADMIN")
+                        .header("X-Internal-Api-Key", GATEWAY_KEY))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.totalScans").value(100))
                 .andExpect(jsonPath("$.scansByTrigger.QR").value(80))
@@ -62,5 +76,56 @@ class AnalyticsSummaryControllerTest {
                 .andExpect(jsonPath("$.topPois[0].name").value("Chợ Bến Thành"))
                 .andExpect(jsonPath("$.topPois[0].scans").value(50))
                 .andExpect(jsonPath("$.topPois[0].plays").value(20));
+    }
+
+    @Test
+    @DisplayName("GET /api/analytics/summary: thiếu header gateway -> 403 Forbidden")
+    void testGetSummary_missingHeaders_returns403() throws Exception {
+        mockMvc.perform(get("/api/analytics/summary"))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.status").value(403))
+                .andExpect(jsonPath("$.message").value("Bạn không có quyền thực hiện thao tác này."));
+    }
+
+    @Test
+    @DisplayName("GET /api/analytics/summary: thiếu khóa nội bộ -> 403 Forbidden")
+    void testGetSummary_missingInternalKey_returns403() throws Exception {
+        mockMvc.perform(get("/api/analytics/summary")
+                        .header("X-User-Role", "ADMIN"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @DisplayName("GET /api/analytics/summary: sai khóa nội bộ -> 403 Forbidden")
+    void testGetSummary_wrongInternalKey_returns403() throws Exception {
+        mockMvc.perform(get("/api/analytics/summary")
+                        .header("X-User-Role", "ADMIN")
+                        .header("X-Internal-Api-Key", "wrong-key"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @DisplayName("GET /api/analytics/summary: role không phải ADMIN -> 403 Forbidden")
+    void testGetSummary_wrongRole_returns403() throws Exception {
+        mockMvc.perform(get("/api/analytics/summary")
+                        .header("X-User-Role", "USER")
+                        .header("X-Internal-Api-Key", GATEWAY_KEY))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @DisplayName("GET /api/analytics/summary: khóa nội bộ chưa cấu hình -> fail-closed 403")
+    void testGetSummary_noConfiguredKey_failsClosed() throws Exception {
+        AnalyticsAdminFilter unconfigured = new AnalyticsAdminFilter();
+        ReflectionTestUtils.setField(unconfigured, "expectedApiKey", "");
+
+        MockMvc failClosedMvc = MockMvcBuilders.standaloneSetup(analyticsSummaryController)
+                .addFilters(unconfigured)
+                .build();
+
+        failClosedMvc.perform(get("/api/analytics/summary")
+                        .header("X-User-Role", "ADMIN")
+                        .header("X-Internal-Api-Key", GATEWAY_KEY))
+                .andExpect(status().isForbidden());
     }
 }

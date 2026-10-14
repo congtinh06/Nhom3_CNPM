@@ -12,7 +12,7 @@ export function useDocumentMeta(
 ) {
   useEffect(() => {
     const originalTitle = document.title;
-    document.title = title ? `${title} | Sài Gòn Tourism` : 'Sài Gòn Tourism';
+    document.title = title ? `${title} | Echora` : 'Echora';
 
     const setMeta = (attr: 'name' | 'property', key: string, content?: string | null) => {
       let el = document.querySelector(`meta[${attr}="${key}"]`) as HTMLMetaElement | null;
@@ -47,7 +47,7 @@ export function useDocumentMeta(
       cleanups.push(setMeta('property', 'og:description', description));
     }
     if (title) {
-      cleanups.push(setMeta('property', 'og:title', `${title} | Sài Gòn Tourism`));
+      cleanups.push(setMeta('property', 'og:title', `${title} | Echora`));
     }
     if (ogImage) {
       cleanups.push(setMeta('property', 'og:image', ogImage));

@@ -23,6 +23,8 @@ import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
+import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.web.multipart.MultipartFile;
 import java.math.BigDecimal;
 import java.util.List;
 
@@ -79,11 +81,14 @@ class ProductControllerTest {
                 .setCustomArgumentResolvers(new PageableHandlerMethodArgumentResolver())
                 .build();
 
-        // 2. Admin MockMvc with AdminRoleFilter
+        // 2. Admin MockMvc with AdminRoleFilter (yêu cầu role ADMIN + khóa nội bộ từ gateway)
+        AdminRoleFilter adminRoleFilter = new AdminRoleFilter();
+        ReflectionTestUtils.setField(adminRoleFilter, "expectedApiKey", VALID_INTERNAL_KEY);
+
         adminMockMvc = MockMvcBuilders.standaloneSetup(adminController)
                 .setControllerAdvice(new GlobalExceptionHandler())
                 .setCustomArgumentResolvers(new PageableHandlerMethodArgumentResolver())
-                .addFilters(new AdminRoleFilter())
+                .addFilters(adminRoleFilter)
                 .build();
 
         // 3. Internal MockMvc with InternalApiKeyFilter
@@ -141,7 +146,8 @@ class ProductControllerTest {
     void testAdminGetProducts_MissingRole_Returns403() throws Exception {
         adminMockMvc.perform(get("/api/admin/products"))
                 .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.status").value(403));
+                .andExpect(jsonPath("$.status").value(403))
+                .andExpect(jsonPath("$.message").value("Bạn không có quyền thực hiện thao tác này."));
     }
 
     @Test
@@ -150,7 +156,8 @@ class ProductControllerTest {
         adminMockMvc.perform(get("/api/admin/products")
                         .header("X-User-Role", "USER"))
                 .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.status").value(403));
+                .andExpect(jsonPath("$.status").value(403))
+                .andExpect(jsonPath("$.message").value("Bạn không có quyền thực hiện thao tác này."));
     }
 
     @Test
@@ -160,7 +167,8 @@ class ProductControllerTest {
                 .thenReturn(new PageImpl<>(List.of(sampleFoodDto), org.springframework.data.domain.PageRequest.of(0, 20), 1));
 
         adminMockMvc.perform(get("/api/admin/products")
-                        .header("X-User-Role", "ADMIN"))
+                        .header("X-User-Role", "ADMIN")
+                        .header("X-Internal-Api-Key", VALID_INTERNAL_KEY))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content[0].slug").value("com-tam-suon-bi-cha"));
     }
@@ -179,6 +187,7 @@ class ProductControllerTest {
 
         adminMockMvc.perform(post("/api/admin/products")
                         .header("X-User-Role", "ADMIN")
+                        .header("X-Internal-Api-Key", VALID_INTERNAL_KEY)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(req)))
                 .andExpect(status().isCreated())
@@ -198,6 +207,7 @@ class ProductControllerTest {
 
         adminMockMvc.perform(patch("/api/admin/products/1/status")
                         .header("X-User-Role", "ADMIN")
+                        .header("X-Internal-Api-Key", VALID_INTERNAL_KEY)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(req)))
                 .andExpect(status().isOk())
@@ -217,10 +227,116 @@ class ProductControllerTest {
 
         adminMockMvc.perform(patch("/api/admin/products/1/sort-order")
                         .header("X-User-Role", "ADMIN")
+                        .header("X-Internal-Api-Key", VALID_INTERNAL_KEY)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(req)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.sortOrder").value(10));
+    }
+
+    @Test
+    @DisplayName("POST /api/admin/products/{id}/image: upload ảnh hợp lệ -> 200 OK")
+    void testAdminUploadImage_Success() throws Exception {
+        byte[] pngBytes = new byte[]{(byte) 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0, 0, 0, 0};
+        MockMultipartFile file = new MockMultipartFile("file", "test.png", "image/png", pngBytes);
+
+        ProductDto uploadedDto = ProductDto.builder()
+                .id(1L)
+                .slug("com-tam-suon-bi-cha")
+                .name("Cơm tấm sườn bì chả")
+                .category(ProductCategory.FOOD)
+                .price(new BigDecimal("55000"))
+                .imagePath("/img/products/com-tam-suon-bi-cha.png?v=123456")
+                .isActive(true)
+                .sortOrder(1)
+                .build();
+
+        when(productService.uploadProductImage(eq(1L), any(MultipartFile.class))).thenReturn(uploadedDto);
+
+        adminMockMvc.perform(multipart("/api/admin/products/1/image")
+                        .file(file)
+                        .header("X-User-Role", "ADMIN")
+                        .header("X-Internal-Api-Key", VALID_INTERNAL_KEY))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.imagePath").value("/img/products/com-tam-suon-bi-cha.png?v=123456"));
+    }
+
+    @Test
+    @DisplayName("POST /api/admin/products: slug có ký tự hoa hoặc ký tự đặc biệt -> 400 Bad Request")
+    void testAdminCreateProduct_InvalidSlug_Returns400() throws Exception {
+        CreateProductRequest req = CreateProductRequest.builder()
+                .name("Cơm tấm")
+                .slug("Com-Tam-Suon")
+                .category(ProductCategory.FOOD)
+                .price(new BigDecimal("50000"))
+                .build();
+
+        adminMockMvc.perform(post("/api/admin/products")
+                        .header("X-User-Role", "ADMIN")
+                        .header("X-Internal-Api-Key", VALID_INTERNAL_KEY)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(req)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.details.slug").value("Slug chỉ được chứa chữ thường không dấu, số và dấu gạch ngang"));
+    }
+
+    @Test
+    @DisplayName("PUT /api/admin/products/{id}: slug có double hyphen -> 400 Bad Request")
+    void testAdminUpdateProduct_DoubleHyphenSlug_Returns400() throws Exception {
+        UpdateProductRequest req = UpdateProductRequest.builder()
+                .name("Cơm tấm")
+                .slug("com--tam")
+                .category(ProductCategory.FOOD)
+                .price(new BigDecimal("50000"))
+                .build();
+
+        adminMockMvc.perform(put("/api/admin/products/1")
+                        .header("X-User-Role", "ADMIN")
+                        .header("X-Internal-Api-Key", VALID_INTERNAL_KEY)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(req)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.details.slug").value("Slug chỉ được chứa chữ thường không dấu, số và dấu gạch ngang"));
+    }
+
+    // --- Admin API Tests: Gateway Credential (Defense-in-Depth) ---
+
+    @Test
+    @DisplayName("GET /api/admin/products: có X-User-Role = ADMIN nhưng thiếu khóa nội bộ -> 403 Forbidden")
+    void testAdminGetProducts_MissingInternalKey_Returns403() throws Exception {
+        adminMockMvc.perform(get("/api/admin/products")
+                        .header("X-User-Role", "ADMIN"))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.status").value(403))
+                .andExpect(jsonPath("$.message").value("Bạn không có quyền thực hiện thao tác này."));
+    }
+
+    @Test
+    @DisplayName("GET /api/admin/products: X-User-Role = ADMIN nhưng sai khóa nội bộ -> 403 Forbidden")
+    void testAdminGetProducts_WrongInternalKey_Returns403() throws Exception {
+        adminMockMvc.perform(get("/api/admin/products")
+                        .header("X-User-Role", "ADMIN")
+                        .header("X-Internal-Api-Key", "wrong-gateway-key"))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.status").value(403));
+    }
+
+    @Test
+    @DisplayName("GET /api/admin/products: khóa nội bộ chưa cấu hình -> fail-closed 403")
+    void testAdminGetProducts_NoConfiguredKey_FailsClosed() throws Exception {
+        AdminRoleFilter unconfigured = new AdminRoleFilter();
+        MockMvc failClosedMvc = MockMvcBuilders.standaloneSetup(adminController)
+                .setControllerAdvice(new GlobalExceptionHandler())
+                .setCustomArgumentResolvers(new PageableHandlerMethodArgumentResolver())
+                .addFilters(unconfigured)
+                .build();
+
+        failClosedMvc.perform(get("/api/admin/products")
+                        .header("X-User-Role", "ADMIN")
+                        .header("X-Internal-Api-Key", VALID_INTERNAL_KEY))
+                .andExpect(status().isForbidden());
     }
 
     // --- Internal API Tests (X-Internal-Api-Key) ---

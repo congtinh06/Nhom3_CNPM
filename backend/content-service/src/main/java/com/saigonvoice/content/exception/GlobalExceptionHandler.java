@@ -39,6 +39,12 @@ public class GlobalExceptionHandler {
         return buildResponse(HttpStatus.FORBIDDEN, ex.getMessage(), request.getRequestURI());
     }
 
+    @ExceptionHandler(org.springframework.web.multipart.MaxUploadSizeExceededException.class)
+    public ResponseEntity<Map<String, Object>> handleMaxUploadSizeExceeded(org.springframework.web.multipart.MaxUploadSizeExceededException ex, HttpServletRequest request) {
+        log.warn("Upload size exceeded on {}: {}", request.getRequestURI(), ex.getMessage());
+        return buildResponse(HttpStatus.BAD_REQUEST, "Dung lượng ảnh vượt quá giới hạn tối đa 2MB", request.getRequestURI());
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, Object>> handleValidationErrors(MethodArgumentNotValidException ex, HttpServletRequest request) {
         Map<String, String> errors = new HashMap<>();

@@ -12,6 +12,20 @@ docker compose down         # dừng
 
 Không chạy thêm service nào từ IDE trong chế độ này.
 
+> Mặc định `docker-compose.yml` chỉ publish cổng của `api-gateway` (cùng hạ tầng `mssql`
+> và `rabbitmq`). Các dịch vụ nghiệp vụ (`content-service`, `analytics-service`, `auth-service`...)
+> **không** mở cổng ra host: chúng chỉ liên lạc trong mạng nội bộ `saigonvoice-net` và bắt buộc
+> đi qua gateway. Đây là lớp phòng thủ để không ai gọi tắt, giả mạo header quản trị.
+>
+> Khi cần gọi trực tiếp từ host (test Postman, debug), dùng thêm profile dev:
+>
+> ```bash
+> docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build
+> ```
+>
+> File `docker-compose.dev.yml` chỉ publish lại các cổng 8081/8082/8083/8085/8086. Không dùng
+> file này ở môi trường deploy.
+
 ## Chế độ B — Debug service bằng IDE (IntelliJ/VS Code)
 
 Chỉ bật hạ tầng bằng Docker, service cần debug chạy từ IDE:
@@ -27,12 +41,16 @@ docker stop content-service   # hoặc location-service, ...
 ```
 
 Cổng mặc định: gateway 8080, analytics 8081, location 8082, translation-tts 8083, content 8085,
-auth 8086, SQL Server 1433, RabbitMQ 5672 / 15672.
+auth 8086, SQL Server 1433, RabbitMQ 5672 / 15672. Lưu ý: chỉ gateway (và hạ tầng) publish cổng;
+cổng của các dịch vụ nghiệp vụ chỉ mở khi dùng `docker-compose.dev.yml`.
 
 Tài khoản DB và RabbitMQ: giá trị trong `.env.example` trùng với giá trị mặc định trong
 `application.yml` của từng service, nên chạy từ IDE không cần khai báo thêm biến môi trường.
 Ngoại lệ là `INTERNAL_API_KEY`: IDE không tự đọc `.env`, nên nếu cần gọi `/api/content/internal/**`
 hãy đặt biến này trong Run Configuration (cùng giá trị với `.env`), nếu không endpoint trả về 503.
+`INTERNAL_API_KEY` cũng là khóa nội bộ để `api-gateway` chứng thực với các dịch vụ hạ nguồn trên
+route quản trị; nếu rỗng, gateway từ chối mọi route admin bằng 401 và content/analytics từ chối 403
+(fail-closed). Phải đặt cùng một giá trị cho gateway, content-service và analytics-service.
 
 **`auth-service` (cổng 8086)** cũng cần đọc `.env` khi chạy từ IDE — tối thiểu:
 

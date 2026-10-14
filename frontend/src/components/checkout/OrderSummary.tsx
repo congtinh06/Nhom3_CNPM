@@ -152,7 +152,7 @@ export function OrderSummary({
           >
             Điều khoản dịch vụ
           </a>{' '}
-          của SaigonVoice.
+          của Echora.
         </span>
       </label>
 

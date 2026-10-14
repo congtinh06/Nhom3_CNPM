@@ -24,6 +24,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -31,12 +32,17 @@ import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class ProductServiceImpl implements ProductService {
+
+    private static final Pattern SLUG_PATTERN = Pattern.compile("^[a-z0-9]+(-[a-z0-9]+)*$");
+    private static final List<String> ALLOWED_CONTENT_TYPES = List.of("image/jpeg", "image/png", "image/webp");
+    private static final long MAX_IMAGE_BYTES = 2 * 1024 * 1024; // 2MB
 
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
@@ -110,11 +116,17 @@ public class ProductServiceImpl implements ProductService {
     @Override
     @Transactional
     public ProductDto createProduct(CreateProductRequest request) {
-        String slug = (request.getSlug() != null && !request.getSlug().isBlank())
-                ? SlugUtils.toSlug(request.getSlug())
-                : SlugUtils.toSlug(request.getName());
+        String slug;
+        if (request.getSlug() != null && !request.getSlug().isBlank()) {
+            slug = request.getSlug().trim();
+            if (!SLUG_PATTERN.matcher(slug).matches()) {
+                throw new BadRequestException("Slug chỉ được chứa chữ thường không dấu, số và dấu gạch ngang");
+            }
+        } else {
+            slug = SlugUtils.toSlug(request.getName());
+        }
 
-        if (slug.isBlank()) {
+        if (slug.isBlank() || !SLUG_PATTERN.matcher(slug).matches()) {
             throw new BadRequestException("Slug không hợp lệ và không thể tự sinh từ tên sản phẩm");
         }
 
@@ -149,12 +161,49 @@ public class ProductServiceImpl implements ProductService {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy sản phẩm với id: " + id));
 
-        String targetSlug = (request.getSlug() != null && !request.getSlug().isBlank())
-                ? SlugUtils.toSlug(request.getSlug())
-                : product.getSlug();
+        String oldSlug = product.getSlug();
+        String targetSlug;
+        if (request.getSlug() != null && !request.getSlug().isBlank()) {
+            targetSlug = request.getSlug().trim();
+            if (!SLUG_PATTERN.matcher(targetSlug).matches()) {
+                throw new BadRequestException("Slug chỉ được chứa chữ thường không dấu, số và dấu gạch ngang");
+            }
+        } else {
+            targetSlug = product.getSlug();
+        }
 
         if (productRepository.existsBySlugAndIdNot(targetSlug, id)) {
             throw new BadRequestException("Slug đã thuộc về sản phẩm khác: " + targetSlug);
+        }
+
+        // If slug changed, migrate any existing image files on disk to prevent orphan/broken links
+        if (!targetSlug.equals(oldSlug)) {
+            Path baseDir = Paths.get(uploadDir).toAbsolutePath().normalize();
+            for (String ext : List.of(".jpg", ".jpeg", ".png", ".webp")) {
+                Path oldFile = baseDir.resolve(oldSlug + ext).normalize().toAbsolutePath();
+                if (oldFile.startsWith(baseDir) && Files.exists(oldFile)) {
+                    Path newFile = baseDir.resolve(targetSlug + ext).normalize().toAbsolutePath();
+                    if (newFile.startsWith(baseDir)) {
+                        try {
+                            Files.move(oldFile, newFile, StandardCopyOption.REPLACE_EXISTING);
+                            log.info("Renamed product image file from {} to {}", oldFile, newFile);
+                            if (request.getImagePath() == null || request.getImagePath().isBlank()) {
+                                product.setImagePath("/img/products/" + targetSlug + ext + "?v=" + System.currentTimeMillis());
+                            }
+                        } catch (IOException e) {
+                            log.warn("Failed to rename product image from {} to {}: {}", oldFile, newFile, e.getMessage());
+                        }
+                    }
+                }
+            }
+            // Also update imagePath if it pointed to oldSlug and wasn't explicitly changed
+            if ((request.getImagePath() == null || request.getImagePath().isBlank())
+                    && product.getImagePath() != null
+                    && product.getImagePath().startsWith("/img/products/" + oldSlug)) {
+                String currentPath = product.getImagePath();
+                String remaining = currentPath.substring(("/img/products/" + oldSlug).length());
+                product.setImagePath("/img/products/" + targetSlug + remaining);
+            }
         }
 
         product.setSlug(targetSlug);
@@ -208,31 +257,38 @@ public class ProductServiceImpl implements ProductService {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy sản phẩm với id: " + id));
 
-        if (file == null || file.isEmpty()) {
-            throw new BadRequestException("File ảnh không được rỗng");
-        }
-
-        String originalFilename = file.getOriginalFilename();
-        String extension = "";
-        if (originalFilename != null && originalFilename.contains(".")) {
-            extension = originalFilename.substring(originalFilename.lastIndexOf(".")).toLowerCase();
-        }
-
-        if (!List.of(".jpg", ".jpeg", ".png", ".webp").contains(extension)) {
-            throw new BadRequestException("Định dạng ảnh không hỗ trợ, vui lòng dùng jpg, jpeg, png, webp");
-        }
+        String extension = validateAndDetectImage(file);
 
         try {
-            Path targetDirectory = Paths.get(uploadDir);
+            Path targetDirectory = Paths.get(uploadDir).toAbsolutePath().normalize();
             if (!Files.exists(targetDirectory)) {
                 Files.createDirectories(targetDirectory);
             }
 
+            // Remove previous images with different extensions to avoid orphans
+            for (String ext : List.of(".jpg", ".jpeg", ".png", ".webp")) {
+                if (!ext.equals(extension)) {
+                    Path oldFile = targetDirectory.resolve(product.getSlug() + ext).normalize().toAbsolutePath();
+                    if (oldFile.startsWith(targetDirectory) && Files.exists(oldFile)) {
+                        try {
+                            Files.delete(oldFile);
+                            log.info("Removed old product image file with different extension: {}", oldFile);
+                        } catch (IOException e) {
+                            log.warn("Failed to delete old product image {}: {}", oldFile, e.getMessage());
+                        }
+                    }
+                }
+            }
+
             String filename = product.getSlug() + extension;
-            Path destination = targetDirectory.resolve(filename);
+            Path destination = targetDirectory.resolve(filename).normalize().toAbsolutePath();
+            if (!destination.startsWith(targetDirectory)) {
+                throw new BadRequestException("Đường dẫn lưu tệp không an toàn");
+            }
+
             Files.copy(file.getInputStream(), destination, StandardCopyOption.REPLACE_EXISTING);
 
-            String imagePath = "/img/products/" + product.getSlug() + ".jpg";
+            String imagePath = "/img/products/" + product.getSlug() + extension + "?v=" + System.currentTimeMillis();
             product.setImagePath(imagePath);
             Product updated = productRepository.save(product);
             log.info("Uploaded product image for id={}, path={}", updated.getId(), imagePath);
@@ -240,6 +296,66 @@ public class ProductServiceImpl implements ProductService {
         } catch (IOException e) {
             log.error("Failed to store uploaded file for product id={}", id, e);
             throw new BadRequestException("Không thể lưu trữ tệp ảnh tải lên: " + e.getMessage());
+        }
+    }
+
+    private String validateAndDetectImage(MultipartFile file) {
+        if (file == null || file.isEmpty()) {
+            throw new BadRequestException("File ảnh không được rỗng");
+        }
+
+        if (file.getSize() > MAX_IMAGE_BYTES) {
+            throw new BadRequestException("Dung lượng ảnh vượt quá giới hạn tối đa 2MB");
+        }
+
+        String originalFilename = file.getOriginalFilename();
+        if (originalFilename != null) {
+            if (originalFilename.contains("/") || originalFilename.contains("\\") || originalFilename.contains("..")) {
+                throw new BadRequestException("Tên tệp không hợp lệ hoặc chứa ký tự đường dẫn không an toàn");
+            }
+        }
+
+        String contentType = file.getContentType();
+        if (contentType == null || !ALLOWED_CONTENT_TYPES.contains(contentType.toLowerCase())) {
+            throw new BadRequestException("Định dạng ảnh không hỗ trợ, vui lòng dùng jpg, jpeg, png, webp");
+        }
+
+        byte[] header = new byte[12];
+        int bytesRead;
+        try (InputStream is = file.getInputStream()) {
+            bytesRead = is.read(header);
+        } catch (IOException e) {
+            throw new BadRequestException("Không thể đọc tệp ảnh: " + e.getMessage());
+        }
+
+        if (bytesRead < 12) {
+            throw new BadRequestException("Tệp ảnh không hợp lệ hoặc kích thước quá nhỏ");
+        }
+
+        // Magic bytes validation
+        boolean isJpeg = (header[0] & 0xFF) == 0xFF && (header[1] & 0xFF) == 0xD8 && (header[2] & 0xFF) == 0xFF;
+        boolean isPng = (header[0] & 0xFF) == 0x89 && (header[1] & 0xFF) == 0x50 && (header[2] & 0xFF) == 0x4E && (header[3] & 0xFF) == 0x47
+                && (header[4] & 0xFF) == 0x0D && (header[5] & 0xFF) == 0x0A && (header[6] & 0xFF) == 0x1A && (header[7] & 0xFF) == 0x0A;
+        boolean isWebp = (header[0] & 0xFF) == 0x52 && (header[1] & 0xFF) == 0x49 && (header[2] & 0xFF) == 0x46 && (header[3] & 0xFF) == 0x46
+                && (header[8] & 0xFF) == 0x57 && (header[9] & 0xFF) == 0x45 && (header[10] & 0xFF) == 0x42 && (header[11] & 0xFF) == 0x50;
+
+        if (isJpeg) {
+            if (!contentType.equalsIgnoreCase("image/jpeg")) {
+                throw new BadRequestException("Nội dung tệp không khớp với Content-Type ảnh JPEG");
+            }
+            return ".jpg";
+        } else if (isPng) {
+            if (!contentType.equalsIgnoreCase("image/png")) {
+                throw new BadRequestException("Nội dung tệp không khớp với Content-Type ảnh PNG");
+            }
+            return ".png";
+        } else if (isWebp) {
+            if (!contentType.equalsIgnoreCase("image/webp")) {
+                throw new BadRequestException("Nội dung tệp không khớp với Content-Type ảnh WebP");
+            }
+            return ".webp";
+        } else {
+            throw new BadRequestException("Nội dung tệp không phải là định dạng ảnh hợp lệ (magic bytes không khớp)");
         }
     }
 

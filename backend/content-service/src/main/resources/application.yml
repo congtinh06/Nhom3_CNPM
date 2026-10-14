@@ -4,6 +4,10 @@ server:
 spring:
   application:
     name: content-service
+  servlet:
+    multipart:
+      max-file-size: 2MB
+      max-request-size: 10MB
   datasource:
     url: ${DB_URL:jdbc:sqlserver://localhost:1433;databaseName=saigonvoice_content_db;encrypt=true;trustServerCertificate=true}
     username: ${DB_USERNAME:content_user}

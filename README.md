@@ -212,8 +212,7 @@ Hệ thống cung cấp sẵn các tài khoản kiểm thử đã được kích
 | Vai trò | Tài khoản (Email) | Mật khẩu | Chức năng kiểm thử chính |
 |---|---|---|---|
 | **Người dùng / Du khách (USER)** | `user@saigonvoice.local` | `User@123456` | Trải nghiệm đặt món ẩm thực, xem lịch sử đơn hàng, nghe audio thuyết minh di sản |
-| **Quản trị viên (ADMIN)** | `admin@saigonvoice.local` | `Admin@123456` | Quản lý sản phẩm món ăn, duyệt trạng thái điểm tham quan POI |
-| **Khóa Quản trị (Admin Key)** | `saigonvoice_admin_secret_key_2026` | *(Dùng cho ô X-Admin-Key)* | Truy cập trang Thống kê & Quản trị hệ thống (`http://localhost:5173/quan-tri`) |
+| **Quản trị viên (ADMIN)** | `admin@saigonvoice.local` | `Admin@123456` | Đăng nhập tài khoản ADMIN với Bearer JWT để quản lý sản phẩm món ăn, duyệt trạng thái POI và truy cập trang Quản trị (`http://localhost:5173/quan-tri`) |
 
 > **Cấu hình tự động khởi tạo trong `.env`**:
 > Khi `auth-service` khởi động, hệ thống sẽ tự động tạo sẵn 2 tài khoản trên nếu chưa có trong CSDL:
@@ -222,7 +221,6 @@ Hệ thống cung cấp sẵn các tài khoản kiểm thử đã được kích
 > SEED_ADMIN_PASSWORD=Admin@123456
 > SEED_TEST_USER_EMAIL=user@saigonvoice.local
 > SEED_TEST_USER_PASSWORD=User@123456
-> ADMIN_API_KEY=saigonvoice_admin_secret_key_2026
 > ```
 > *(Ngoài ra, người dùng vẫn có thể đăng ký tài khoản mới tự do tại `/dang-ky`. Trong môi trường dev không có SMTP thật, link/token xác thực email sẽ được ghi trực tiếp vào log của container `auth-service`)*.
 

@@ -45,6 +45,15 @@ frontend:
   url: ${FRONTEND_URL:http://localhost:5173}
   urls: ${FRONTEND_URLS:}
 
+app:
+  jwt:
+    secret: ${JWT_SECRET:}
+
+# Khoa noi bo gateway dung de chung thuc voi cac dich vu ha nguon tren cac route admin.
+# Rong -> route admin bi tu choi 401 (fail-closed).
+internal:
+  api-key: ${INTERNAL_API_KEY:}
+
 management:
   endpoints:
     web:

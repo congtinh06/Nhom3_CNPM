@@ -22,60 +22,54 @@ public class InternalPathBlockFilter implements GlobalFilter, Ordered {
 
     private static final Logger log = LoggerFactory.getLogger(InternalPathBlockFilter.class);
 
-    public static final String HEADER_INTERNAL_API_KEY = "X-Internal-Api-Key";
     private static final String CONTENT_PREFIX = "/api/content";
     private static final String INTERNAL_CONTENT_PREFIX = "/api/content/internal";
     private static final String ADMIN_CONTENT_PREFIX = "/api/content/admin";
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
+        // NOTE: client-supplied X-Internal-Api-Key is already stripped by
+        // UntrustedHeaderStripGlobalFilter (order HIGHEST_PRECEDENCE + 5), which runs BEFORE
+        // AdminAuthGlobalFilter (order + 10) injects the trusted key. Stripping here (order + 20)
+        // would wipe out the gateway-injected key and break admin calls to downstream services.
         ServerHttpRequest request = exchange.getRequest();
         String path = request.getURI().getPath();
         HttpMethod method = request.getMethod();
 
-        // 1. Strip any client-supplied X-Internal-Api-Key header on ALL incoming requests
-        ServerHttpRequest mutatedRequest = request.mutate()
-                .headers(headers -> {
-                    headers.remove(HEADER_INTERNAL_API_KEY);
-                    headers.remove(HEADER_INTERNAL_API_KEY.toLowerCase());
-                })
-                .build();
-        ServerWebExchange mutatedExchange = exchange.mutate().request(mutatedRequest).build();
-
         // If path is not under /api/content, allow to proceed (e.g. /api/location/**, /api/tts/**, /api/analytics/**)
         if (path == null || (!path.equals(CONTENT_PREFIX) && !path.startsWith(CONTENT_PREFIX + "/"))) {
-            return chain.filter(mutatedExchange);
+            return chain.filter(exchange);
         }
 
         // 2. /api/content/internal/** (any method) -> 404 Not Found
         if (path.equals(INTERNAL_CONTENT_PREFIX) || path.startsWith(INTERNAL_CONTENT_PREFIX + "/")) {
             log.warn("Blocked public access attempt to internal endpoint: {}", path);
-            return sendNotFound(mutatedExchange);
+            return sendNotFound(exchange);
         }
 
         // 3. /api/content/admin/** -> Handled and authorized by AdminAuthGlobalFilter; allow through
         if (path.equals(ADMIN_CONTENT_PREFIX) || path.startsWith(ADMIN_CONTENT_PREFIX + "/")) {
-            return chain.filter(mutatedExchange);
+            return chain.filter(exchange);
         }
 
         // 4. Preflight OPTIONS requests for CORS must not be blocked
         if (HttpMethod.OPTIONS.equals(method)) {
-            return chain.filter(mutatedExchange);
+            return chain.filter(exchange);
         }
 
         // 5. Everything else under /api/content/**: allow ONLY GET and HEAD
         if (!HttpMethod.GET.equals(method) && !HttpMethod.HEAD.equals(method)) {
             log.warn("Blocked disallowed method [{}] on public content endpoint: {}", method, path);
-            return sendNotFound(mutatedExchange);
+            return sendNotFound(exchange);
         }
 
         // 6. Path must strictly match allowed public content paths
         if (!isAllowedPublicContentPath(path)) {
             log.warn("Blocked request to unrecognized content path: {}", path);
-            return sendNotFound(mutatedExchange);
+            return sendNotFound(exchange);
         }
 
-        return chain.filter(mutatedExchange);
+        return chain.filter(exchange);
     }
 
     private boolean isAllowedPublicContentPath(String path) {

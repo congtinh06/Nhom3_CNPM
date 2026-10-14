@@ -4,6 +4,7 @@ import com.saigonvoice.content.entity.ProductCategory;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -22,6 +23,10 @@ public class UpdateProductRequest {
     @Size(max = 255, message = "Tên sản phẩm tối đa 255 ký tự")
     private String name;
 
+    @Pattern(
+        regexp = "^$|^[a-z0-9]+(-[a-z0-9]+)*$",
+        message = "Slug chỉ được chứa chữ thường không dấu, số và dấu gạch ngang"
+    )
     @Size(max = 150, message = "Slug tối đa 150 ký tự")
     private String slug;
 

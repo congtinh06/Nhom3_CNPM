@@ -1,0 +1,29 @@
+# Profile phát triển: chỉ dùng khi cần gọi trực tiếp các dịch vụ backend từ máy host
+# (ví dụ chạy service từ IDE, hoặc test bằng Postman tới từng cổng).
+#
+# KHÔNG dùng file này ở môi trường deploy. Ở chế độ mặc định (docker-compose.yml),
+# chỉ api-gateway (và hạ tầng mssql/rabbitmq) được publish cổng ra host, nên
+# content-service, analytics-service, auth-service... không thể bị gọi tắt qua gateway.
+#
+# Cách chạy kèm profile dev:
+#   docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+services:
+  content-service:
+    ports:
+      - "8085:8085"
+
+  location-service:
+    ports:
+      - "8082:8082"
+
+  translation-tts-service:
+    ports:
+      - "8083:8083"
+
+  analytics-service:
+    ports:
+      - "8081:8081"
+
+  auth-service:
+    ports:
+      - "8086:8086"

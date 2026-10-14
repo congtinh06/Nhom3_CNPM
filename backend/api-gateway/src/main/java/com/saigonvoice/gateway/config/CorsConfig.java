@@ -44,7 +44,6 @@ public class CorsConfig {
         config.setAllowedOrigins(new ArrayList<>(allowedOrigins));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "OPTIONS"));
         config.setAllowedHeaders(List.of(
-                "X-Admin-Key",
                 "Content-Type",
                 "Authorization",
                 "Accept",

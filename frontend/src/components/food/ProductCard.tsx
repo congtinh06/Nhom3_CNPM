@@ -63,7 +63,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           />
         ) : (
           <div className="editorial-card-placeholder">
-            <span className="placeholder-brand">SÀI GÒN</span>
+            <span className="placeholder-brand">ECHORA</span>
             <span className="placeholder-name">{product.name}</span>
           </div>
         )}

@@ -18,6 +18,7 @@ public class UntrustedHeaderStripGlobalFilter implements GlobalFilter, Ordered {
 
     public static final String HEADER_USER_ROLE = "X-User-Role";
     public static final String HEADER_INTERNAL_API_KEY = "X-Internal-Api-Key";
+    public static final String HEADER_USER_ID = "X-User-Id";
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
@@ -25,6 +26,7 @@ public class UntrustedHeaderStripGlobalFilter implements GlobalFilter, Ordered {
                 .headers(headers -> {
                     headers.remove(HEADER_USER_ROLE);
                     headers.remove(HEADER_INTERNAL_API_KEY);
+                    headers.remove(HEADER_USER_ID);
                 })
                 .build();
         return chain.filter(exchange.mutate().request(request).build());

@@ -95,11 +95,11 @@ export const CONTACT_TRANSLATIONS: Record<SupportedLanguage, ContactTranslation>
     mapSubheading: 'Tọa lạc ngay trái tim lịch sử Sài Gòn, thuận tiện cho mọi hành trình đi bộ khám phá.',
     directionsBtn: 'Xem chỉ đường trên Google Maps',
     faqHeading: 'Câu hỏi thường gặp',
-    faqSubheading: 'Giải đáp nhanh các thắc mắc phổ biến về audio tour và ứng dụng Sài Gòn Voice.',
+    faqSubheading: 'Giải đáp nhanh các thắc mắc phổ biến về audio tour và ứng dụng Echora.',
     faqs: [
       {
-        q: 'Ứng dụng Sài Gòn Voice có thu phí thuyết minh du lịch không?',
-        a: 'Hoàn toàn không. Sài Gòn Voice là dự án số hóa di sản phục vụ cộng đồng, toàn bộ tính năng nghe thuyết minh đa ngôn ngữ (Việt, Anh, Nhật, Hàn) và bản đồ đều được cung cấp miễn phí cho mọi du khách.',
+        q: 'Ứng dụng Echora có thu phí thuyết minh du lịch không?',
+        a: 'Hoàn toàn không. Echora là dự án số hóa di sản phục vụ cộng đồng, toàn bộ tính năng nghe thuyết minh đa ngôn ngữ (Việt, Anh, Nhật, Hàn) và bản đồ đều được cung cấp miễn phí cho mọi du khách.',
       },
       {
         q: 'Làm thế nào để nghe thuyết minh tự động khi tôi đi bộ gần di tích?',
@@ -156,11 +156,11 @@ export const CONTACT_TRANSLATIONS: Record<SupportedLanguage, ContactTranslation>
     mapSubheading: 'Located at the historic core of Saigon, convenient for walking heritage discovery.',
     directionsBtn: 'Get Directions on Google Maps',
     faqHeading: 'Frequently Asked Questions',
-    faqSubheading: 'Quick answers to common questions about audio tours and the Saigon Voice platform.',
+    faqSubheading: 'Quick answers to common questions about audio tours and the Echora platform.',
     faqs: [
       {
-        q: 'Is the Saigon Voice audio tour free of charge?',
-        a: 'Yes, completely free. Saigon Voice is a heritage digitization project for the community. All audio narrations in 4 languages and map features are accessible without any fees.',
+        q: 'Is the Echora audio tour free of charge?',
+        a: 'Yes, completely free. Echora is a heritage digitization project for the community. All audio narrations in 4 languages and map features are accessible without any fees.',
       },
       {
         q: 'How does automatic GPS narration work during walking tours?',
@@ -220,8 +220,8 @@ export const CONTACT_TRANSLATIONS: Record<SupportedLanguage, ContactTranslation>
     faqSubheading: '音声ガイドやアプリの使い方についてよくいただくご質問です。',
     faqs: [
       {
-        q: 'サイゴン・ボイスの音声ガイドは無料ですか？',
-        a: 'はい、完全無料です。サイゴン・ボイスは文化遺産のデジタル化プロジェクトであり、多言語音声解説（日本語対応）とマップはすべて無料でご利用いただけます。',
+        q: 'Echora（エコーラ）の音声ガイドは無料ですか？',
+        a: 'はい、完全無料です。Echoraは文化遺産のデジタル化プロジェクトであり、多言語音声解説（日本語対応）とマップはすべて無料でご利用いただけます。',
       },
       {
         q: '史跡に近づいたときに自動で音声が再生される仕組みは？',
@@ -281,8 +281,8 @@ export const CONTACT_TRANSLATIONS: Record<SupportedLanguage, ContactTranslation>
     faqSubheading: '오디오 투어 및 플랫폼 이용과 관련하여 자주 묻는 질문들입니다.',
     faqs: [
       {
-        q: '사이공 보이스 오디오 투어 이용 요금은 얼마인가요?',
-        a: '완전 무료입니다. 사이공 보이스는 지역사회를 위한 문화유산 디지털화 프로젝트로, 한국어를 포함한 4개 국어 음성 해설 및 지도 서비스를 무료로 제공합니다.',
+        q: 'Echora 오디오 투어 이용 요금은 얼마인가요?',
+        a: '완전 무료입니다. Echora는 지역사회를 위한 문화유산 디지털화 프로젝트로, 한국어를 포함한 4개 국어 음성 해설 및 지도 서비스를 무료로 제공합니다.',
       },
       {
         q: '유적지 근처에 도착했을 때 자동으로 음성을 들으려면 어떻게 하나요?',

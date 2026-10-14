@@ -130,7 +130,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                 />
               ) : (
                 <div className="food-modal-placeholder">
-                  <span className="placeholder-brand">SÀI GÒN</span>
+                  <span className="placeholder-brand">ECHORA</span>
                   <span className="placeholder-name">{product.name}</span>
                 </div>
               )}

@@ -108,8 +108,9 @@ export const contactContent = {
 };
 
 export const footerContent = {
-  brand: 'Sài Gòn',
+  brand: 'Echora',
+  tagline: 'Audio guide for places and food',
   blurb: 'Khám phá văn hóa, ẩm thực và các điểm đến nổi bật của TP. Hồ Chí Minh.',
-  copyright: '© 2026 Sài Gòn – Văn hóa các điểm du lịch TP.HCM. Bản demo.',
+  copyright: '© 2026 Echora – Văn hóa các điểm du lịch TP.HCM. Bản demo.',
   backToTop: 'Về đầu trang ↑',
 };

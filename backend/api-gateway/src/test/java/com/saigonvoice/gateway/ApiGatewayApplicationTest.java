@@ -1,5 +1,6 @@
 package com.saigonvoice.gateway;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.saigonvoice.gateway.filter.AdminAuthGlobalFilter;
 import com.saigonvoice.gateway.filter.AnalyticsRateLimitGlobalFilter;
 import com.sun.net.httpserver.HttpServer;
@@ -29,6 +30,8 @@ import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.reactive.server.WebTestClient;
 
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -40,6 +43,10 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
+import java.util.Base64;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -87,11 +94,49 @@ class ApiGatewayApplicationTest {
 
     private static HttpServer mockDownstreamServer;
     private static int mockPort;
-    private static final String TEST_ADMIN_KEY = "test-secret-admin-key-2026";
+    private static final String TEST_JWT_SECRET = "test-secret-with-at-least-32-characters-for-hs256!";
+    private static final String TEST_INTERNAL_KEY = "test-internal-api-key-with-at-least-32-chars";
     private static final AtomicBoolean downstreamReceivedInternalKey = new AtomicBoolean(false);
     private static final AtomicBoolean downstreamReceivedAdminKey = new AtomicBoolean(false);
     private static final AtomicInteger downstreamRequestCount = new AtomicInteger(0);
     private static final AtomicReference<String> downstreamUserRole = new AtomicReference<>();
+    private static final AtomicReference<String> downstreamUserId = new AtomicReference<>();
+
+    private static String createToken(Long userId, String email, String role, String status, long ttlSeconds) {
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            String header = Base64.getUrlEncoder().withoutPadding()
+                    .encodeToString("{\"alg\":\"HS256\",\"typ\":\"JWT\"}".getBytes(StandardCharsets.UTF_8));
+
+            Map<String, Object> payloadMap = new LinkedHashMap<>();
+            payloadMap.put("sub", String.valueOf(userId));
+            payloadMap.put("email", email);
+            payloadMap.put("role", role);
+            payloadMap.put("status", status);
+            payloadMap.put("iat", Instant.now().getEpochSecond());
+            payloadMap.put("exp", Instant.now().getEpochSecond() + ttlSeconds);
+
+            String payload = Base64.getUrlEncoder().withoutPadding()
+                    .encodeToString(mapper.writeValueAsBytes(payloadMap));
+
+            String signingInput = header + "." + payload;
+            Mac mac = Mac.getInstance("HmacSHA256");
+            mac.init(new SecretKeySpec(TEST_JWT_SECRET.getBytes(StandardCharsets.UTF_8), "HmacSHA256"));
+            byte[] sig = mac.doFinal(signingInput.getBytes(StandardCharsets.US_ASCII));
+            String signature = Base64.getUrlEncoder().withoutPadding().encodeToString(sig);
+
+            return signingInput + "." + signature;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private static final String ADMIN_TOKEN = createToken(1L, "admin@saigonvoice.local", "ADMIN", "ACTIVE", 900);
+    private static final String USER_TOKEN = createToken(2L, "user@saigonvoice.local", "USER", "ACTIVE", 900);
+    private static final String EXPIRED_TOKEN = createToken(1L, "admin@saigonvoice.local", "ADMIN", "ACTIVE", -60);
+    private static final String BLOCKED_ADMIN_TOKEN = createToken(3L, "blocked@saigonvoice.local", "ADMIN", "BLOCKED", 900);
+    private static final String TAMPERED_TOKEN = ADMIN_TOKEN.substring(0, ADMIN_TOKEN.length() - 4) + "zzzz";
+    private static final String MALFORMED_TOKEN = "malformed.jwt.token";
 
     @Autowired
     private WebTestClient webTestClient;
@@ -119,65 +164,66 @@ class ApiGatewayApplicationTest {
         }
 
         try {
-        mockDownstreamServer = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
-        mockDownstreamServer.createContext("/", exchange -> {
-            downstreamRequestCount.incrementAndGet();
-            String path = exchange.getRequestURI().getPath();
+            mockDownstreamServer = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
+            mockDownstreamServer.createContext("/", exchange -> {
+                downstreamRequestCount.incrementAndGet();
+                String path = exchange.getRequestURI().getPath();
 
-            // Detect if client-supplied X-Internal-Api-Key reached downstream
-            if (exchange.getRequestHeaders().containsKey("X-Internal-Api-Key") ||
-                    exchange.getRequestHeaders().containsKey("x-internal-api-key")) {
-                downstreamReceivedInternalKey.set(true);
-            }
+                // Detect if client-supplied X-Internal-Api-Key reached downstream
+                if (exchange.getRequestHeaders().containsKey("X-Internal-Api-Key") ||
+                        exchange.getRequestHeaders().containsKey("x-internal-api-key")) {
+                    downstreamReceivedInternalKey.set(true);
+                }
 
-            // Record the X-User-Role that reached downstream (null when absent)
-            downstreamUserRole.set(exchange.getRequestHeaders().getFirst("X-User-Role"));
+                // Record the X-User-Role and X-User-Id that reached downstream
+                downstreamUserRole.set(exchange.getRequestHeaders().getFirst("X-User-Role"));
+                downstreamUserId.set(exchange.getRequestHeaders().getFirst("X-User-Id"));
 
-            // Detect if X-Admin-Key was forwarded downstream (it should NOT be)
-            if (exchange.getRequestHeaders().containsKey("X-Admin-Key") ||
-                    exchange.getRequestHeaders().containsKey("x-admin-key")) {
-                downstreamReceivedAdminKey.set(true);
-            }
+                // Detect if X-Admin-Key was forwarded downstream (it should NOT be)
+                if (exchange.getRequestHeaders().containsKey("X-Admin-Key") ||
+                        exchange.getRequestHeaders().containsKey("x-admin-key")) {
+                    downstreamReceivedAdminKey.set(true);
+                }
 
-            byte[] responseBytes = ("{\"status\":\"ok\",\"path\":\"" + path + "\"}").getBytes(StandardCharsets.UTF_8);
-            exchange.getResponseHeaders().set("Content-Type", "application/json");
-            exchange.sendResponseHeaders(200, responseBytes.length);
-            try (OutputStream os = exchange.getResponseBody()) {
-                os.write(responseBytes);
-            }
-        });
-        mockDownstreamServer.createContext("/api/location/timeout", exchange -> {
-            try {
-                Thread.sleep(10000);
-            } catch (InterruptedException ignored) {
-            }
-        });
-        mockDownstreamServer.createContext("/api/content/pois/slow-probe", exchange -> {
-            try {
-                Thread.sleep(10000);
-            } catch (InterruptedException ignored) {
-            }
-        });
-        mockDownstreamServer.createContext("/api/tts/audio/slow-probe.mp3", exchange -> {
-            try {
-                Thread.sleep(AUDIO_DELAY_MS);
-            } catch (InterruptedException ignored) {
-            }
-            byte[] audio = new byte[AUDIO_BYTES];
-            exchange.getResponseHeaders().set("Content-Type", "audio/mpeg");
-            exchange.sendResponseHeaders(200, audio.length);
-            try (OutputStream os = exchange.getResponseBody()) {
-                os.write(audio);
-            }
-        });
-        mockServerExecutor = Executors.newCachedThreadPool(r -> {
-            Thread t = new Thread(r, "mock-downstream-worker");
-            t.setDaemon(true);
-            return t;
-        });
-        mockDownstreamServer.setExecutor(mockServerExecutor);
-        mockDownstreamServer.start();
-        mockPort = mockDownstreamServer.getAddress().getPort();
+                byte[] responseBytes = ("{\"status\":\"ok\",\"path\":\"" + path + "\"}").getBytes(StandardCharsets.UTF_8);
+                exchange.getResponseHeaders().set("Content-Type", "application/json");
+                exchange.sendResponseHeaders(200, responseBytes.length);
+                try (OutputStream os = exchange.getResponseBody()) {
+                    os.write(responseBytes);
+                }
+            });
+            mockDownstreamServer.createContext("/api/location/timeout", exchange -> {
+                try {
+                    Thread.sleep(10000);
+                } catch (InterruptedException ignored) {
+                }
+            });
+            mockDownstreamServer.createContext("/api/content/pois/slow-probe", exchange -> {
+                try {
+                    Thread.sleep(10000);
+                } catch (InterruptedException ignored) {
+                }
+            });
+            mockDownstreamServer.createContext("/api/tts/audio/slow-probe.mp3", exchange -> {
+                try {
+                    Thread.sleep(AUDIO_DELAY_MS);
+                } catch (InterruptedException ignored) {
+                }
+                byte[] audio = new byte[AUDIO_BYTES];
+                exchange.getResponseHeaders().set("Content-Type", "audio/mpeg");
+                exchange.sendResponseHeaders(200, audio.length);
+                try (OutputStream os = exchange.getResponseBody()) {
+                    os.write(audio);
+                }
+            });
+            mockServerExecutor = Executors.newCachedThreadPool(r -> {
+                Thread t = new Thread(r, "mock-downstream-worker");
+                t.setDaemon(true);
+                return t;
+            });
+            mockDownstreamServer.setExecutor(mockServerExecutor);
+            mockDownstreamServer.start();
+            mockPort = mockDownstreamServer.getAddress().getPort();
         } catch (IOException exception) {
             throw new UncheckedIOException("Unable to start mock downstream server", exception);
         }
@@ -200,7 +246,9 @@ class ApiGatewayApplicationTest {
         registry.add("LOCATION_SERVICE_URL", () -> "http://127.0.0.1:" + mockPort);
         registry.add("TRANSLATION_TTS_SERVICE_URL", () -> "http://127.0.0.1:" + mockPort);
         registry.add("ANALYTICS_SERVICE_URL", () -> "http://127.0.0.1:" + mockPort);
-        registry.add("ADMIN_API_KEY", () -> TEST_ADMIN_KEY);
+        registry.add("AUTH_SERVICE_URL", () -> "http://127.0.0.1:" + mockPort);
+        registry.add("JWT_SECRET", () -> TEST_JWT_SECRET);
+        registry.add("INTERNAL_API_KEY", () -> TEST_INTERNAL_KEY);
         registry.add("FRONTEND_URLS", () -> "https://demo.ngrok-free.app, https://other.example.com");
         registry.add("GATEWAY_RESPONSE_TIMEOUT", () -> "2s");
         registry.add("GATEWAY_CONNECT_TIMEOUT_MS", () -> "1000");
@@ -212,42 +260,43 @@ class ApiGatewayApplicationTest {
         downstreamReceivedAdminKey.set(false);
         downstreamRequestCount.set(0);
         downstreamUserRole.set(null);
-        adminAuthFilter.setAdminApiKey(TEST_ADMIN_KEY);
+        downstreamUserId.set(null);
+        adminAuthFilter.setJwtSecret(TEST_JWT_SECRET);
+        adminAuthFilter.setInternalApiKey(TEST_INTERNAL_KEY);
         rateLimitFilter.clearRateLimitCache();
     }
 
     @Test
     void contextLoads() {
-        // Preserved original smoke test
+        // Smoke test
     }
 
     // ==========================================
-    // Step 1.7c Hardened Path Matching & Blocking Tests
-    // Assert mock downstream receives NOTHING (count unchanged) for blocked cases
+    // Hardened Path Matching & Blocking Tests
     // ==========================================
 
     @ParameterizedTest(name = "[{index}] {0}")
     @MethodSource("blockedCases")
     void blockedRequestsDoNotReachDownstream(String caseName, HttpMethod method, String path,
-                                             int expectedStatus, String adminKey) {
-        assertBlockedBeforeDownstream(caseName, method, path, expectedStatus, adminKey);
+                                             int expectedStatus, String token) {
+        assertBlockedBeforeDownstream(caseName, method, path, expectedStatus, token);
     }
 
     @ParameterizedTest(name = "[{index}] {0}")
     @MethodSource("adminPathVariantCases")
     void adminPathVariantsDoNotReachDownstream(String caseName, HttpMethod method, String path,
-                                               int expectedStatus, String adminKey) {
-        assertBlockedBeforeDownstream(caseName, method, path, expectedStatus, adminKey);
+                                               int expectedStatus, String token) {
+        assertBlockedBeforeDownstream(caseName, method, path, expectedStatus, token);
     }
 
     private void assertBlockedBeforeDownstream(String caseName, HttpMethod method, String path,
-                                               int expectedStatus, String adminKey) {
+                                               int expectedStatus, String token) {
         URI uri = URI.create("http://localhost:" + port + path);
         int before = downstreamRequestCount.get();
         webTestClient.method(method).uri(uri)
                 .headers(headers -> {
-                    if (adminKey != null) {
-                        headers.set("X-Admin-Key", adminKey);
+                    if (token != null) {
+                        headers.set(HttpHeaders.AUTHORIZATION, "Bearer " + token);
                     }
                 })
                 .exchange()
@@ -259,7 +308,7 @@ class ApiGatewayApplicationTest {
 
     private static Stream<Arguments> blockedCases() {
         return Stream.of(
-                Arguments.of("uppercase-admin-segment", HttpMethod.GET, "/api/content/ADMIN/pois", 404, null),
+                Arguments.of("uppercase-admin-segment", HttpMethod.GET, "/api/content/ADMIN/pois", 401, null),
                 Arguments.of("double-slash", HttpMethod.GET, "//api/content/admin/pois", 400, null),
                 Arguments.of("current-directory-segment", HttpMethod.GET, "/api/content/./admin/pois", 400, null),
                 Arguments.of("parent-directory-segment-public", HttpMethod.GET, "/api/content/pois/../admin/pois", 400, null),
@@ -268,10 +317,10 @@ class ApiGatewayApplicationTest {
                 Arguments.of("percent-encoded-traversal", HttpMethod.GET, "/api/content/pois%2f..%2fadmin", 400, null),
                 Arguments.of("matrix-parameter", HttpMethod.GET, "/api/content/pois;x=1", 400, null),
                 Arguments.of("semicolon-suffix", HttpMethod.GET, "/api/content/foo;", 400, null),
-                Arguments.of("admin-no-key", HttpMethod.GET, "/api/content/admin/pois", 401, null),
-                Arguments.of("admin-wrong-key", HttpMethod.GET, "/api/content/admin/pois", 401, "wrong-key"),
-                Arguments.of("admin-trailing-slash-no-key", HttpMethod.GET, "/api/content/admin/pois/", 401, null),
-                Arguments.of("admin-trailing-slash-wrong-key", HttpMethod.GET, "/api/content/admin/pois/", 401, "wrong-key"),
+                Arguments.of("admin-no-token", HttpMethod.GET, "/api/content/admin/pois", 401, null),
+                Arguments.of("admin-wrong-token", HttpMethod.GET, "/api/content/admin/pois", 401, "wrong-token"),
+                Arguments.of("admin-trailing-slash-no-token", HttpMethod.GET, "/api/content/admin/pois/", 401, null),
+                Arguments.of("admin-trailing-slash-wrong-token", HttpMethod.GET, "/api/content/admin/pois/", 401, "wrong-token"),
                 Arguments.of("uppercase-internal-segment", HttpMethod.GET, "/api/content/INTERNAL/pois/qr/x", 404, null),
                 Arguments.of("internal-path", HttpMethod.GET, "/api/content/internal/pois/qr/x", 404, null),
                 Arguments.of("public-path-wrong-method", HttpMethod.POST, "/api/content/pois", 404, null),
@@ -282,31 +331,31 @@ class ApiGatewayApplicationTest {
     private static Stream<Arguments> adminPathVariantCases() {
         return Stream.of(
                 Arguments.of("admin-encoded-backslash", HttpMethod.GET, "/api/content/admin%5Cpois", 400, null),
-                Arguments.of("admin-encoded-backslash-valid-key", HttpMethod.GET, "/api/content/admin%5Cpois", 400, TEST_ADMIN_KEY),
+                Arguments.of("admin-encoded-backslash-valid-token", HttpMethod.GET, "/api/content/admin%5Cpois", 400, ADMIN_TOKEN),
                 Arguments.of("admin-api-encoded-backslash", HttpMethod.GET, "/api/admin/products%5C1", 400, null),
-                Arguments.of("admin-api-encoded-backslash-put-valid-key", HttpMethod.PUT, "/api/admin/products%5C1", 400, TEST_ADMIN_KEY),
+                Arguments.of("admin-api-encoded-backslash-put-valid-token", HttpMethod.PUT, "/api/admin/products%5C1", 400, ADMIN_TOKEN),
                 Arguments.of("admin-null-byte", HttpMethod.GET, "/api/content/admin/pois%00", 400, null),
-                Arguments.of("admin-api-null-byte-post-valid-key", HttpMethod.POST, "/api/admin/products%00", 400, TEST_ADMIN_KEY),
+                Arguments.of("admin-api-null-byte-post-valid-token", HttpMethod.POST, "/api/admin/products%00", 400, ADMIN_TOKEN),
                 Arguments.of("admin-non-ascii-bidi-override", HttpMethod.GET, "/api/content/admin/pois%E2%80%AE", 400, null),
                 Arguments.of("admin-api-non-ascii-letter", HttpMethod.GET, "/api/admin/products%C3%A9", 400, null),
-                Arguments.of("admin-api-non-ascii-valid-key", HttpMethod.GET, "/api/admin/products%C3%A9", 400, TEST_ADMIN_KEY),
+                Arguments.of("admin-api-non-ascii-valid-token", HttpMethod.GET, "/api/admin/products%C3%A9", 400, ADMIN_TOKEN),
                 Arguments.of("admin-segment-trailing-dot", HttpMethod.GET, "/api/content/admin./pois", 404, null),
-                Arguments.of("admin-segment-trailing-dot-valid-key", HttpMethod.GET, "/api/content/admin./pois", 404, TEST_ADMIN_KEY),
-                Arguments.of("admin-collection-trailing-dot", HttpMethod.GET, "/api/content/admin.", 404, TEST_ADMIN_KEY),
+                Arguments.of("admin-segment-trailing-dot-valid-token", HttpMethod.GET, "/api/content/admin./pois", 404, ADMIN_TOKEN),
+                Arguments.of("admin-collection-trailing-dot", HttpMethod.GET, "/api/content/admin.", 404, ADMIN_TOKEN),
                 Arguments.of("admin-api-segment-trailing-dot", HttpMethod.GET, "/api/admin./products", 404, null),
-                Arguments.of("admin-api-resource-trailing-dot", HttpMethod.GET, "/api/admin/products.", 404, TEST_ADMIN_KEY),
-                Arguments.of("admin-resource-trailing-dot-no-key", HttpMethod.GET, "/api/content/admin/pois.", 401, null),
+                Arguments.of("admin-api-resource-trailing-dot", HttpMethod.GET, "/api/admin/products.", 404, ADMIN_TOKEN),
+                Arguments.of("admin-resource-trailing-dot-no-token", HttpMethod.GET, "/api/content/admin/pois.", 401, null),
                 Arguments.of("admin-encoded-slash", HttpMethod.GET, "/api/content/admin%2Fpois", 400, null),
-                Arguments.of("admin-encoded-slash-lowercase", HttpMethod.GET, "/api/content/admin%2fpois", 400, TEST_ADMIN_KEY),
+                Arguments.of("admin-encoded-slash-lowercase", HttpMethod.GET, "/api/content/admin%2fpois", 400, ADMIN_TOKEN),
                 Arguments.of("admin-api-encoded-slash", HttpMethod.GET, "/api/admin%2Fproducts", 400, null),
-                Arguments.of("admin-api-encoded-slash-post-valid-key", HttpMethod.POST, "/api/admin%2fproducts/1", 400, TEST_ADMIN_KEY),
+                Arguments.of("admin-api-encoded-slash-post-valid-token", HttpMethod.POST, "/api/admin%2fproducts/1", 400, ADMIN_TOKEN),
                 Arguments.of("admin-double-encoded-slash", HttpMethod.GET, "/api/admin/products%252F1", 400, null),
                 Arguments.of("admin-encoded-dot-dot-slash", HttpMethod.GET, "/api/content/admin/%2e%2e/pois", 400, null),
-                Arguments.of("admin-api-encoded-dot-segments-valid-key", HttpMethod.GET, "/api/admin/products/%2e%2e/%2e%2e/auth", 400, TEST_ADMIN_KEY),
+                Arguments.of("admin-api-encoded-dot-segments-valid-token", HttpMethod.GET, "/api/admin/products/%2e%2e/%2e%2e/auth", 400, ADMIN_TOKEN),
                 Arguments.of("admin-api-double-slash-prefix", HttpMethod.GET, "//api/admin/products", 400, null),
-                Arguments.of("admin-api-inner-double-slash-valid-key", HttpMethod.GET, "/api/admin//products", 400, TEST_ADMIN_KEY),
+                Arguments.of("admin-api-inner-double-slash-valid-token", HttpMethod.GET, "/api/admin//products", 400, ADMIN_TOKEN),
                 Arguments.of("admin-api-uppercase-segment", HttpMethod.GET, "/api/ADMIN/products", 404, null),
-                Arguments.of("admin-api-mixed-case-valid-key", HttpMethod.GET, "/api/Admin/products", 404, TEST_ADMIN_KEY)
+                Arguments.of("admin-api-mixed-case-valid-token", HttpMethod.GET, "/api/Admin/products", 404, ADMIN_TOKEN)
         );
     }
 
@@ -326,25 +375,24 @@ class ApiGatewayApplicationTest {
                 .exchange()
                 .expectStatus().isOk();
 
-        // Admin with correct key (GET and PUT)
+        // Admin with valid Bearer token (GET and PUT)
         // 1. GET /api/content/admin/pois/publish-status
         webTestClient.get().uri("http://localhost:" + port + "/api/content/admin/pois/publish-status")
-                .header("X-Admin-Key", TEST_ADMIN_KEY)
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + ADMIN_TOKEN)
                 .exchange()
                 .expectStatus().isOk();
 
         // 2. PUT /api/content/admin/pois/1
         webTestClient.put().uri("http://localhost:" + port + "/api/content/admin/pois/1")
-                .header("X-Admin-Key", TEST_ADMIN_KEY)
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + ADMIN_TOKEN)
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue("{\"title\":\"updated\"}")
                 .exchange()
                 .expectStatus().isOk();
 
-        // Crucial security rule: X-Admin-Key must NOT be forwarded downstream!
-        assertThat(downstreamReceivedAdminKey.get())
-                .as("X-Admin-Key must NOT be forwarded downstream to backend microservices")
-                .isFalse();
+        assertThat(downstreamUserRole.get()).isEqualTo("ADMIN");
+        assertThat(downstreamUserId.get()).isEqualTo("1");
+        assertThat(downstreamReceivedAdminKey.get()).isFalse();
     }
 
     @ParameterizedTest(name = "[{index}] {0}")
@@ -401,7 +449,7 @@ class ApiGatewayApplicationTest {
 
     @Test
     void testAdminAuthOnAnalyticsSummary() {
-        // Missing key on GET /api/analytics/summary -> 401
+        // Missing token on GET /api/analytics/summary -> 401
         webTestClient.get().uri("/api/analytics/summary")
                 .exchange()
                 .expectStatus().isUnauthorized()
@@ -409,57 +457,57 @@ class ApiGatewayApplicationTest {
                 .expectBody()
                 .jsonPath("$.status").isEqualTo(401)
                 .jsonPath("$.error").isEqualTo("Unauthorized")
-                .jsonPath("$.message").isEqualTo("Unauthorized");
+                .jsonPath("$.message").isEqualTo("Phiên đăng nhập không hợp lệ hoặc đã hết hạn.");
 
-        // Wrong key on GET /api/analytics/summary -> 401
+        // USER token on GET /api/analytics/summary -> 403
         webTestClient.get().uri("/api/analytics/summary")
-                .header("X-Admin-Key", "invalid-key")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + USER_TOKEN)
                 .exchange()
-                .expectStatus().isUnauthorized()
+                .expectStatus().isForbidden()
                 .expectBody()
-                .jsonPath("$.status").isEqualTo(401)
-                .jsonPath("$.message").isEqualTo("Unauthorized");
+                .jsonPath("$.status").isEqualTo(403)
+                .jsonPath("$.error").isEqualTo("Forbidden")
+                .jsonPath("$.message").isEqualTo("Bạn không có quyền thực hiện thao tác này.");
 
-        // Right key on GET /api/analytics/summary -> 200 OK
+        // ADMIN token on GET /api/analytics/summary -> 200 OK
         webTestClient.get().uri("/api/analytics/summary")
-                .header("X-Admin-Key", TEST_ADMIN_KEY)
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + ADMIN_TOKEN)
                 .exchange()
                 .expectStatus().isOk();
 
-        assertThat(downstreamReceivedAdminKey.get())
-                .as("X-Admin-Key must NOT be forwarded downstream to analytics-service")
-                .isFalse();
+        assertThat(downstreamUserRole.get()).isEqualTo("ADMIN");
+        assertThat(downstreamReceivedAdminKey.get()).isFalse();
     }
 
     @Test
-    void testFailClosedWhenAdminKeyIsUnset() {
-        adminAuthFilter.setAdminApiKey("");
+    void testFailClosedWhenJwtSecretIsUnset() {
+        adminAuthFilter.setJwtSecret("");
 
-        // Even with a key provided in the header, access MUST be denied with 401 (generic body, no hints)
+        // Even with a valid token provided, access MUST be denied with 401 when secret is unset
         webTestClient.post().uri("http://localhost:" + port + "/api/content/admin/pois")
-                .header("X-Admin-Key", "any-random-key")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + ADMIN_TOKEN)
                 .exchange()
                 .expectStatus().isUnauthorized()
                 .expectBody()
                 .jsonPath("$.status").isEqualTo(401)
-                .jsonPath("$.message").isEqualTo("Unauthorized");
+                .jsonPath("$.message").isEqualTo("Phiên đăng nhập không hợp lệ hoặc đã hết hạn.");
 
         webTestClient.get().uri("/api/analytics/summary")
-                .header("X-Admin-Key", "any-random-key")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + ADMIN_TOKEN)
                 .exchange()
                 .expectStatus().isUnauthorized()
                 .expectBody()
                 .jsonPath("$.status").isEqualTo(401)
-                .jsonPath("$.message").isEqualTo("Unauthorized");
+                .jsonPath("$.message").isEqualTo("Phiên đăng nhập không hợp lệ hoặc đã hết hạn.");
     }
 
     @Test
-    void testOptionsPreflightDoesNotRequireAdminKey() {
+    void testOptionsPreflightDoesNotRequireAuthorization() {
         // Preflight to /api/content/admin/pois
         webTestClient.options().uri("http://localhost:" + port + "/api/content/admin/pois")
                 .header("Origin", "http://localhost:5173")
                 .header("Access-Control-Request-Method", "POST")
-                .header("Access-Control-Request-Headers", "X-Admin-Key, Content-Type")
+                .header("Access-Control-Request-Headers", "Authorization, Content-Type")
                 .exchange()
                 .expectStatus().isOk()
                 .expectHeader().valueEquals("Access-Control-Allow-Origin", "http://localhost:5173");
@@ -468,7 +516,7 @@ class ApiGatewayApplicationTest {
         webTestClient.options().uri("http://localhost:" + port + "/api/analytics/summary")
                 .header("Origin", "http://localhost:5173")
                 .header("Access-Control-Request-Method", "GET")
-                .header("Access-Control-Request-Headers", "X-Admin-Key")
+                .header("Access-Control-Request-Headers", "Authorization")
                 .exchange()
                 .expectStatus().isOk()
                 .expectHeader().valueEquals("Access-Control-Allow-Origin", "http://localhost:5173");
@@ -489,51 +537,72 @@ class ApiGatewayApplicationTest {
     }
 
     // ==========================================
-    // /api/admin/** guard, X-User-Role stripping, CORS (ngrok exposure hardening)
+    // /api/admin/** Guard, Token Verification, Deny-by-default Tests
     // ==========================================
 
     @Test
-    void testAdminApiWithoutKeyIsRejected() {
+    void testAdminApiWithoutTokenIsRejected() {
         String[] paths = {"/api/admin/products", "/api/admin/products/", "/api/admin/products/1/status"};
         for (String path : paths) {
             for (HttpMethod method : new HttpMethod[]{HttpMethod.GET, HttpMethod.POST, HttpMethod.PATCH, HttpMethod.DELETE}) {
                 int before = downstreamRequestCount.get();
                 webTestClient.method(method).uri("http://localhost:" + port + path)
                         .exchange()
-                        .expectStatus().isUnauthorized();
+                        .expectStatus().isUnauthorized()
+                        .expectBody()
+                        .jsonPath("$.status").isEqualTo(401)
+                        .jsonPath("$.message").isEqualTo("Phiên đăng nhập không hợp lệ hoặc đã hết hạn.");
                 assertThat(downstreamRequestCount.get())
-                        .as("Downstream must receive NOTHING for " + method + " " + path + " without key")
+                        .as("Downstream must receive NOTHING for " + method + " " + path + " without token")
                         .isEqualTo(before);
             }
         }
     }
 
     @Test
-    void testAdminApiWithWrongKeyIsRejected() {
+    void testAdminApiWithUserTokenIsForbidden() {
         int before = downstreamRequestCount.get();
         webTestClient.get().uri("http://localhost:" + port + "/api/admin/products")
-                .header("X-Admin-Key", "wrong-key")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + USER_TOKEN)
                 .exchange()
-                .expectStatus().isUnauthorized()
+                .expectStatus().isForbidden()
                 .expectBody()
-                .jsonPath("$.message").isEqualTo("Unauthorized");
+                .jsonPath("$.status").isEqualTo(403)
+                .jsonPath("$.message").isEqualTo("Bạn không có quyền thực hiện thao tác này.");
         assertThat(downstreamRequestCount.get()).isEqualTo(before);
     }
 
     @Test
-    void testAdminApiFailsClosedWhenAdminKeyIsUnset() {
-        adminAuthFilter.setAdminApiKey("");
+    void testAdminApiWithExpiredTokenIsUnauthorized() {
+        int before = downstreamRequestCount.get();
         webTestClient.get().uri("http://localhost:" + port + "/api/admin/products")
-                .header("X-Admin-Key", "any-random-key")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + EXPIRED_TOKEN)
                 .exchange()
-                .expectStatus().isUnauthorized();
+                .expectStatus().isUnauthorized()
+                .expectBody()
+                .jsonPath("$.status").isEqualTo(401)
+                .jsonPath("$.message").isEqualTo("Phiên đăng nhập không hợp lệ hoặc đã hết hạn.");
+        assertThat(downstreamRequestCount.get()).isEqualTo(before);
     }
 
     @Test
-    void testAdminApiWithValidKeyPassesAndGatewaySuppliesRole() {
-        // Client sends a forged role together with a valid key: the forged value must be replaced by the gateway's own.
+    void testAdminApiWithTamperedTokenIsUnauthorized() {
+        int before = downstreamRequestCount.get();
+        webTestClient.get().uri("http://localhost:" + port + "/api/admin/products")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + TAMPERED_TOKEN)
+                .exchange()
+                .expectStatus().isUnauthorized()
+                .expectBody()
+                .jsonPath("$.status").isEqualTo(401)
+                .jsonPath("$.message").isEqualTo("Phiên đăng nhập không hợp lệ hoặc đã hết hạn.");
+        assertThat(downstreamRequestCount.get()).isEqualTo(before);
+    }
+
+    @Test
+    void testAdminApiWithValidAdminTokenPassesAndGatewaySuppliesRole() {
+        // Client sends a forged role together with a valid admin token: the forged value must be replaced by gateway.
         webTestClient.patch().uri("http://localhost:" + port + "/api/admin/products/1/status")
-                .header("X-Admin-Key", TEST_ADMIN_KEY)
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + ADMIN_TOKEN)
                 .header("X-User-Role", "FORGED")
                 .exchange()
                 .expectStatus().isOk();
@@ -541,29 +610,35 @@ class ApiGatewayApplicationTest {
         assertThat(downstreamUserRole.get())
                 .as("Role seen by content-service must be the gateway-set value, never the client's")
                 .isEqualTo("ADMIN");
+        assertThat(downstreamUserId.get())
+                .as("UserId seen by content-service must match subject from verified token")
+                .isEqualTo("1");
         assertThat(downstreamReceivedAdminKey.get())
                 .as("X-Admin-Key must NOT be forwarded downstream")
                 .isFalse();
     }
 
     @Test
-    void testForgedUserRoleWithoutKeyIsRejected() {
+    void testForgedUserRoleWithoutTokenIsRejected() {
         int before = downstreamRequestCount.get();
 
-        // The original attack: no key, just X-User-Role: ADMIN
+        // The attack: no token, just X-User-Role: ADMIN
         webTestClient.get().uri("http://localhost:" + port + "/api/admin/products")
                 .header("X-User-Role", "ADMIN")
                 .exchange()
-                .expectStatus().isUnauthorized();
+                .expectStatus().isUnauthorized()
+                .expectBody()
+                .jsonPath("$.status").isEqualTo(401)
+                .jsonPath("$.message").isEqualTo("Phiên đăng nhập không hợp lệ hoặc đã hết hạn.");
 
         webTestClient.post().uri("http://localhost:" + port + "/api/admin/products")
                 .header("X-User-Role", "admin")
-                .header("X-Admin-Key", "wrong-key")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer invalid-token")
                 .exchange()
                 .expectStatus().isUnauthorized();
 
         assertThat(downstreamRequestCount.get())
-                .as("Forged role must never reach content-service")
+                .as("Forged role must never reach downstream")
                 .isEqualTo(before);
     }
 
@@ -580,11 +655,184 @@ class ApiGatewayApplicationTest {
     }
 
     @Test
+    void testLegacyAdminKeyWithoutBearerReturns401() {
+        // Proves that old X-Admin-Key mechanism is dead
+        String[] adminEndpoints = {
+                "/api/admin/products",
+                "/api/content/admin/pois",
+                "/api/analytics/summary",
+                "/api/content/admin/routes"
+        };
+        for (String endpoint : adminEndpoints) {
+            webTestClient.get().uri("http://localhost:" + port + endpoint)
+                    .header("X-Admin-Key", "saigonvoice_admin_secret_key_2026")
+                    .exchange()
+                    .expectStatus().isUnauthorized()
+                    .expectBody()
+                    .jsonPath("$.status").isEqualTo(401)
+                    .jsonPath("$.message").isEqualTo("Phiên đăng nhập không hợp lệ hoặc đã hết hạn.");
+        }
+    }
+
+    @Test
+    void testBlockedAccountWithAdminRoleReturns401() {
+        webTestClient.get().uri("http://localhost:" + port + "/api/admin/products")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + BLOCKED_ADMIN_TOKEN)
+                .exchange()
+                .expectStatus().isUnauthorized()
+                .expectBody()
+                .jsonPath("$.status").isEqualTo(401)
+                .jsonPath("$.message").isEqualTo("Phiên đăng nhập không hợp lệ hoặc đã hết hạn.");
+    }
+
+    @Test
+    void testDemotedAccountBehaviorPerStep2Design() {
+        // Phase 1: Unexpired access token issued before demotion (within 15-minute TTL bound)
+        webTestClient.get().uri("http://localhost:" + port + "/api/admin/products")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + ADMIN_TOKEN)
+                .exchange()
+                .expectStatus().isOk();
+
+        // Phase 2: Expired token presented after TTL -> 401
+        webTestClient.get().uri("http://localhost:" + port + "/api/admin/products")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + EXPIRED_TOKEN)
+                .exchange()
+                .expectStatus().isUnauthorized()
+                .expectBody()
+                .jsonPath("$.status").isEqualTo(401)
+                .jsonPath("$.message").isEqualTo("Phiên đăng nhập không hợp lệ hoặc đã hết hạn.");
+
+        // Phase 3: Token refreshed from auth-service with demoted role USER -> 403 Forbidden
+        String demotedUserToken = createToken(1L, "admin@saigonvoice.local", "USER", "ACTIVE", 900);
+        webTestClient.get().uri("http://localhost:" + port + "/api/admin/products")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + demotedUserToken)
+                .exchange()
+                .expectStatus().isForbidden()
+                .expectBody()
+                .jsonPath("$.status").isEqualTo(403)
+                .jsonPath("$.message").isEqualTo("Bạn không có quyền thực hiện thao tác này.");
+    }
+
+    @Test
+    void newlyAddedAdminRoutesAreProtectedByDefault() {
+        String[] arbitraryNewAdminPaths = {
+                "/api/admin/products/new-feature-endpoint",
+                "/api/content/admin/moderation/queue",
+                "/api/auth/admin/security-policies",
+                "/api/analytics/admin/custom-report"
+        };
+
+        for (String path : arbitraryNewAdminPaths) {
+            // 1. No token -> 401
+            webTestClient.get().uri("http://localhost:" + port + path)
+                    .exchange()
+                    .expectStatus().isUnauthorized()
+                    .expectBody()
+                    .jsonPath("$.status").isEqualTo(401)
+                    .jsonPath("$.message").isEqualTo("Phiên đăng nhập không hợp lệ hoặc đã hết hạn.");
+
+            // 2. USER token -> 403
+            webTestClient.get().uri("http://localhost:" + port + path)
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + USER_TOKEN)
+                    .exchange()
+                    .expectStatus().isForbidden()
+                    .expectBody()
+                    .jsonPath("$.status").isEqualTo(403)
+                    .jsonPath("$.message").isEqualTo("Bạn không có quyền thực hiện thao tác này.");
+
+            // 3. ADMIN token -> reaches downstream (200 OK from mock server)
+            webTestClient.get().uri("http://localhost:" + port + path)
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + ADMIN_TOKEN)
+                    .exchange()
+                    .expectStatus().isOk();
+        }
+    }
+
+    @ParameterizedTest(name = "[{index}] {0} {1}")
+    @MethodSource("allAdminEndpoints")
+    void testEveryAdminEndpointAuthenticationAndAuthorization(HttpMethod method, String path) {
+        // 1. No token -> 401
+        webTestClient.method(method).uri("http://localhost:" + port + path)
+                .exchange()
+                .expectStatus().isUnauthorized()
+                .expectBody()
+                .jsonPath("$.status").isEqualTo(401)
+                .jsonPath("$.message").isEqualTo("Phiên đăng nhập không hợp lệ hoặc đã hết hạn.");
+
+        // 2. Bad signature -> 401
+        webTestClient.method(method).uri("http://localhost:" + port + path)
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + TAMPERED_TOKEN)
+                .exchange()
+                .expectStatus().isUnauthorized()
+                .expectBody()
+                .jsonPath("$.status").isEqualTo(401)
+                .jsonPath("$.message").isEqualTo("Phiên đăng nhập không hợp lệ hoặc đã hết hạn.");
+
+        // 3. Expired token -> 401
+        webTestClient.method(method).uri("http://localhost:" + port + path)
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + EXPIRED_TOKEN)
+                .exchange()
+                .expectStatus().isUnauthorized()
+                .expectBody()
+                .jsonPath("$.status").isEqualTo(401)
+                .jsonPath("$.message").isEqualTo("Phiên đăng nhập không hợp lệ hoặc đã hết hạn.");
+
+        // 4. Malformed token -> 401
+        webTestClient.method(method).uri("http://localhost:" + port + path)
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + MALFORMED_TOKEN)
+                .exchange()
+                .expectStatus().isUnauthorized()
+                .expectBody()
+                .jsonPath("$.status").isEqualTo(401)
+                .jsonPath("$.message").isEqualTo("Phiên đăng nhập không hợp lệ hoặc đã hết hạn.");
+
+        // 5. Old X-Admin-Key without Bearer -> 401
+        webTestClient.method(method).uri("http://localhost:" + port + path)
+                .header("X-Admin-Key", "old-secret-admin-key")
+                .exchange()
+                .expectStatus().isUnauthorized()
+                .expectBody()
+                .jsonPath("$.status").isEqualTo(401)
+                .jsonPath("$.message").isEqualTo("Phiên đăng nhập không hợp lệ hoặc đã hết hạn.");
+
+        // 6. Valid token, role USER -> 403
+        webTestClient.method(method).uri("http://localhost:" + port + path)
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + USER_TOKEN)
+                .exchange()
+                .expectStatus().isForbidden()
+                .expectBody()
+                .jsonPath("$.status").isEqualTo(403)
+                .jsonPath("$.message").isEqualTo("Bạn không có quyền thực hiện thao tác này.");
+
+        // 7. Valid token, role ADMIN -> 2xx
+        webTestClient.method(method).uri("http://localhost:" + port + path)
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + ADMIN_TOKEN)
+                .exchange()
+                .expectStatus().is2xxSuccessful();
+    }
+
+    private static Stream<Arguments> allAdminEndpoints() {
+        return Stream.of(
+                Arguments.of(HttpMethod.GET, "/api/admin/products"),
+                Arguments.of(HttpMethod.GET, "/api/admin/products/1"),
+                Arguments.of(HttpMethod.GET, "/api/admin/products/1/status"),
+                Arguments.of(HttpMethod.GET, "/api/admin/products/1/sort-order"),
+                Arguments.of(HttpMethod.GET, "/api/content/admin/pois/publish-status"),
+                Arguments.of(HttpMethod.GET, "/api/content/admin/pois/1/publish-status"),
+                Arguments.of(HttpMethod.POST, "/api/content/admin/pois/1/republish"),
+                Arguments.of(HttpMethod.GET, "/api/content/admin/zones"),
+                Arguments.of(HttpMethod.GET, "/api/content/admin/routes"),
+                Arguments.of(HttpMethod.GET, "/api/analytics/summary"),
+                Arguments.of(HttpMethod.GET, "/api/auth/admin/users")
+        );
+    }
+
+    @Test
     void testCorsPreflightFromAllowedOriginWithNgrokHeaderAndPut() {
         webTestClient.options().uri("http://localhost:" + port + "/api/admin/products/1/status")
                 .header("Origin", "http://localhost:5173")
                 .header("Access-Control-Request-Method", "PUT")
-                .header("Access-Control-Request-Headers", "ngrok-skip-browser-warning, Content-Type, X-Admin-Key")
+                .header("Access-Control-Request-Headers", "ngrok-skip-browser-warning, Content-Type, Authorization")
                 .exchange()
                 .expectStatus().isOk()
                 .expectHeader().valueEquals("Access-Control-Allow-Origin", "http://localhost:5173")
@@ -597,7 +845,6 @@ class ApiGatewayApplicationTest {
 
     @Test
     void testCorsPreflightFromFrontendUrlsEntryIsAllowed() {
-        // FRONTEND_URLS is registered in configureProperties: "https://demo.ngrok-free.app, https://other.example.com"
         webTestClient.options().uri("http://localhost:" + port + "/api/content/pois")
                 .header("Origin", "https://demo.ngrok-free.app")
                 .header("Access-Control-Request-Method", "GET")
@@ -617,7 +864,6 @@ class ApiGatewayApplicationTest {
                 .expectStatus().isForbidden()
                 .expectHeader().doesNotExist("Access-Control-Allow-Origin");
     }
-
 
     @Test
     void testRateLimitOnAnalyticsEvents() {
@@ -665,7 +911,7 @@ class ApiGatewayApplicationTest {
     }
 
     @Test
-    void headAnalyticsSummaryWithoutKeyReturns401() {
+    void headAnalyticsSummaryWithoutTokenReturns401() {
         int before = downstreamRequestCount.get();
         webTestClient.head().uri("/api/analytics/summary")
                 .exchange()
@@ -676,7 +922,7 @@ class ApiGatewayApplicationTest {
     }
 
     @Test
-    void postAnalyticsSummaryWithoutKeyReturns401() {
+    void postAnalyticsSummaryWithoutTokenReturns401() {
         int before = downstreamRequestCount.get();
         webTestClient.post().uri("/api/analytics/summary")
                 .exchange()
@@ -687,7 +933,7 @@ class ApiGatewayApplicationTest {
     }
 
     @Test
-    void deleteAnalyticsSummaryWithoutKeyReturns401() {
+    void deleteAnalyticsSummaryWithoutTokenReturns401() {
         int before = downstreamRequestCount.get();
         webTestClient.delete().uri("/api/analytics/summary")
                 .exchange()
@@ -698,14 +944,14 @@ class ApiGatewayApplicationTest {
     }
 
     @Test
-    void headAnalyticsSummaryWithValidKeyIsForwarded() {
+    void headAnalyticsSummaryWithValidAdminTokenIsForwarded() {
         int before = downstreamRequestCount.get();
         webTestClient.head().uri("/api/analytics/summary")
-                .header("X-Admin-Key", TEST_ADMIN_KEY)
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + ADMIN_TOKEN)
                 .exchange()
                 .expectStatus().isOk();
         assertThat(downstreamRequestCount.get())
-                .as("Request with valid key must reach stub downstream backend")
+                .as("Request with valid admin token must reach downstream")
                 .isEqualTo(before + 1);
         assertThat(downstreamReceivedAdminKey.get())
                 .as("X-Admin-Key must NOT be forwarded downstream")
@@ -713,7 +959,208 @@ class ApiGatewayApplicationTest {
     }
 
     // ==========================================
-    // Task 1 & 2: Timeouts and Backend Down Tests
+    // S1.1 Hardening Tests: JWT strictness, fail-closed, spoofing
+    // ==========================================
+
+    private static String base64Url(String json) {
+        return Base64.getUrlEncoder().withoutPadding().encodeToString(json.getBytes(StandardCharsets.UTF_8));
+    }
+
+    private static String signedToken(String headerJson, String payloadJson) {
+        try {
+            String signingInput = base64Url(headerJson) + "." + base64Url(payloadJson);
+            Mac mac = Mac.getInstance("HmacSHA256");
+            mac.init(new SecretKeySpec(TEST_JWT_SECRET.getBytes(StandardCharsets.UTF_8), "HmacSHA256"));
+            String signature = Base64.getUrlEncoder().withoutPadding()
+                    .encodeToString(mac.doFinal(signingInput.getBytes(StandardCharsets.US_ASCII)));
+            return signingInput + "." + signature;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private static String payloadWith(String fields) {
+        long exp = Instant.now().getEpochSecond() + 900;
+        return "{\"sub\":\"77\",\"email\":\"x@saigonvoice.local\",\"status\":\"ACTIVE\",\"exp\":" + exp
+                + (fields.isEmpty() ? "" : ",") + fields + "}";
+    }
+
+    @Test
+    void shortJwtSecretFailsClosedOnAdminButNotPublic() {
+        adminAuthFilter.setJwtSecret("too-short");
+
+        webTestClient.get().uri("http://localhost:" + port + "/api/admin/products")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + ADMIN_TOKEN)
+                .exchange()
+                .expectStatus().isUnauthorized();
+
+        webTestClient.get().uri("/api/content/pois")
+                .exchange()
+                .expectStatus().isOk();
+    }
+
+    @Test
+    void missingInternalKeyFailsClosedOnAdminButNotPublic() {
+        adminAuthFilter.setInternalApiKey("");
+
+        webTestClient.get().uri("http://localhost:" + port + "/api/admin/products")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + ADMIN_TOKEN)
+                .exchange()
+                .expectStatus().isUnauthorized();
+
+        webTestClient.get().uri("/api/content/pois")
+                .exchange()
+                .expectStatus().isOk();
+    }
+
+    @ParameterizedTest(name = "[{index}] {0}")
+    @MethodSource("badAlgorithmTokens")
+    void unsupportedOrMissingAlgorithmIsRejected(String name, String token) {
+        int before = downstreamRequestCount.get();
+        webTestClient.get().uri("http://localhost:" + port + "/api/admin/products")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+                .exchange()
+                .expectStatus().isUnauthorized();
+        assertThat(downstreamRequestCount.get()).isEqualTo(before);
+    }
+
+    private static Stream<Arguments> badAlgorithmTokens() {
+        String adminPayload = payloadWith("\"role\":\"ADMIN\"");
+        return Stream.of(
+                Arguments.of("alg-none", base64Url("{\"alg\":\"none\",\"typ\":\"JWT\"}") + "."
+                        + base64Url(adminPayload) + ".signature"),
+                Arguments.of("alg-hs512", signedToken("{\"alg\":\"HS512\",\"typ\":\"JWT\"}", adminPayload)),
+                Arguments.of("alg-missing", signedToken("{\"typ\":\"JWT\"}", adminPayload))
+        );
+    }
+
+    @Test
+    void missingExpClaimIsRejected() {
+        String payload = "{\"sub\":\"1\",\"role\":\"ADMIN\",\"status\":\"ACTIVE\"}";
+        String token = signedToken("{\"alg\":\"HS256\",\"typ\":\"JWT\"}", payload);
+
+        webTestClient.get().uri("http://localhost:" + port + "/api/admin/products")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+                .exchange()
+                .expectStatus().isUnauthorized();
+    }
+
+    @ParameterizedTest(name = "[{index}] {0}")
+    @MethodSource("badRoleTokens")
+    void missingOrNonStringRoleIsRejected(String name, String token) {
+        webTestClient.get().uri("http://localhost:" + port + "/api/admin/products")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+                .exchange()
+                .expectStatus().isUnauthorized();
+    }
+
+    private static Stream<Arguments> badRoleTokens() {
+        String header = "{\"alg\":\"HS256\",\"typ\":\"JWT\"}";
+        return Stream.of(
+                Arguments.of("role-missing", signedToken(header, payloadWith(""))),
+                Arguments.of("role-number", signedToken(header, payloadWith("\"role\":123"))),
+                Arguments.of("role-array", signedToken(header, payloadWith("\"role\":[\"ADMIN\"]"))),
+                Arguments.of("role-null", signedToken(header, payloadWith("\"role\":null"))),
+                Arguments.of("role-object", signedToken(header, payloadWith("\"role\":{\"name\":\"ADMIN\"}")))
+        );
+    }
+
+    @Test
+    void validStringRoleThatIsNotAdminReturns403() {
+        String token = signedToken("{\"alg\":\"HS256\",\"typ\":\"JWT\"}", payloadWith("\"role\":\"USER\""));
+        webTestClient.get().uri("http://localhost:" + port + "/api/admin/products")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+                .exchange()
+                .expectStatus().isForbidden()
+                .expectBody()
+                .jsonPath("$.status").isEqualTo(403)
+                .jsonPath("$.message").isEqualTo("Bạn không có quyền thực hiện thao tác này.");
+    }
+
+    @Test
+    void oversizedTokenIsRejected() {
+        String hugeToken = "a".repeat(9000);
+        int before = downstreamRequestCount.get();
+        webTestClient.get().uri("http://localhost:" + port + "/api/admin/products")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + hugeToken)
+                .exchange()
+                .expectStatus().isUnauthorized();
+        assertThat(downstreamRequestCount.get()).isEqualTo(before);
+    }
+
+    @Test
+    void garbageTokenIsRejected() {
+        webTestClient.get().uri("http://localhost:" + port + "/api/admin/products")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer not-a-jwt-at-all")
+                .exchange()
+                .expectStatus().isUnauthorized();
+    }
+
+    @Test
+    void pendingAccountWithAdminRoleReturns401() {
+        String token = createToken(5L, "pending@saigonvoice.local", "ADMIN", "PENDING", 900);
+        webTestClient.get().uri("http://localhost:" + port + "/api/admin/products")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+                .exchange()
+                .expectStatus().isUnauthorized();
+    }
+
+    @Test
+    void spoofedUserIdAndRoleNeverReachDownstreamOnAdminRoute() {
+        webTestClient.get().uri("http://localhost:" + port + "/api/admin/products")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + ADMIN_TOKEN)
+                .header("X-User-Id", "999")
+                .header("X-User-Role", "ADMIN")
+                .exchange()
+                .expectStatus().isOk();
+
+        assertThat(downstreamUserId.get()).isEqualTo("1");
+        assertThat(downstreamUserRole.get()).isEqualTo("ADMIN");
+    }
+
+    @Test
+    void spoofedUserIdAndRoleNeverReachDownstreamOnPublicRoute() {
+        webTestClient.get().uri("/api/content/pois")
+                .header("X-User-Id", "999")
+                .header("X-User-Role", "ADMIN")
+                .exchange()
+                .expectStatus().isOk();
+
+        assertThat(downstreamUserId.get()).isNull();
+        assertThat(downstreamUserRole.get()).isNull();
+    }
+
+    @Test
+    void gatewayInjectsInternalKeyForAdminRequests() {
+        webTestClient.get().uri("http://localhost:" + port + "/api/admin/products")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + ADMIN_TOKEN)
+                .exchange()
+                .expectStatus().isOk();
+
+        assertThat(downstreamReceivedInternalKey.get())
+                .as("Downstream must receive the gateway-supplied internal key on admin routes")
+                .isTrue();
+    }
+
+    @ParameterizedTest(name = "[{index}] {0}")
+    @ValueSource(strings = {
+            "/api/admin/products/",
+            "/api/content/admin/pois/",
+            "/api/auth/admin/users/",
+            "/api/analytics/summary/"
+    })
+    void adminPrefixTrailingSlashRequiresAuth(String path) {
+        int before = downstreamRequestCount.get();
+        webTestClient.get().uri("http://localhost:" + port + path)
+                .exchange()
+                .expectStatus().isUnauthorized();
+        assertThat(downstreamRequestCount.get())
+                .as("Downstream must receive NOTHING for trailing-slash admin path: " + path)
+                .isEqualTo(before);
+    }
+
+    // ==========================================
+    // Timeouts and Backend Down Tests
     // ==========================================
 
     @Test
@@ -861,7 +1308,7 @@ class ApiGatewayApplicationTest {
     }
 
     // ==========================================
-    // Task 3: CORS Hardening Tests
+    // CORS Hardening Tests
     // ==========================================
 
     @Test
@@ -907,7 +1354,7 @@ class ApiGatewayApplicationTest {
     }
 
     // ==========================================
-    // Task 5: PathGuardFilter Uncovered Path Variants Tests
+    // PathGuardFilter Uncovered Path Variants Tests
     // ==========================================
 
     @Test
@@ -985,4 +1432,3 @@ class ApiGatewayApplicationTest {
                 .isEqualTo(before);
     }
 }
-

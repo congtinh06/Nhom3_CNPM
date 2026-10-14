@@ -131,9 +131,9 @@ Hệ thống sử dụng một máy chủ **Microsoft SQL Server 2022** duy nh�
    - Giới hạn các endpoint công khai thuộc `/api/content` chỉ chấp nhận phương thức `GET` cho `categories`, `pois`, `routes`, `zones`.
 
 3. **Xác Thực Quản Trị Viên An Toàn (`AdminAuthGlobalFilter`)**:
-   - Yêu cầu header `X-Admin-Key` đối với `/api/content/admin/**` và `/api/analytics/summary`.
-   - Cơ chế so sánh chuỗi thời gian hằng số (`MessageDigest.isEqual`) nhằm ngăn ngừa tấn công kênh bên (timing attack).
-   - Không chuyển tiếp header `X-Admin-Key` xuống các dịch vụ backend.
+   - Yêu cầu header `Authorization: Bearer <token>` hợp lệ với vai trò (claim `role`) là `ADMIN` đối với mọi endpoint quản trị (`/api/admin/**`, `/api/content/admin/**`, `/api/auth/admin/**`, `/api/analytics/summary`).
+   - Xác thực chữ ký số HMAC-SHA256, thời hạn token, trạng thái tài khoản và áp dụng nguyên tắc cấm mặc định (deny-by-default).
+   - Truyền định danh vai trò `X-User-Role: ADMIN` và `X-User-Id` tin cậy xuống các dịch vụ backend; đồng thời gắn khóa nội bộ `X-Internal-Api-Key` (triệt để loại bỏ cơ chế khóa quản trị cũ).
 
 4. **Giới Hạn Tần Suất Gọi API (`AnalyticsRateLimitGlobalFilter`)**:
    - Giới hạn tối đa 60 request/phút theo IP trên endpoint ghi nhận sự kiện `POST /api/analytics/events`.

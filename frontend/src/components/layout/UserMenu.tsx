@@ -7,7 +7,7 @@ import { useAccountI18n } from '../account/accountI18n';
 import '../../styles/user-menu.css';
 
 export const UserMenu: React.FC = () => {
-  const { user, logout } = useAuth();
+  const { user, logout, isAdmin } = useAuth();
   const { t } = useNavbarLanguage();
   const { t: accountT } = useAccountI18n();
   const navigate = useNavigate();
@@ -105,6 +105,12 @@ export const UserMenu: React.FC = () => {
     navigate('/don-hang');
   };
 
+  const handleAdminClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    e.preventDefault();
+    setIsOpen(false);
+    navigate('/quan-tri');
+  };
+
   const handleSignOut = async () => {
     try {
       await logout();
@@ -168,11 +174,30 @@ export const UserMenu: React.FC = () => {
             {t.auth.myOrders}
           </a>
 
+          {isAdmin && (
+            <a
+              ref={(el) => {
+                itemRefs.current[2] = el;
+              }}
+              href="/quan-tri"
+              role="menuitem"
+              className="um-item"
+              onClick={handleAdminClick}
+            >
+              Quản trị hệ thống
+            </a>
+          )}
+
           <div className="um-rule" role="separator" />
 
           <button
             ref={(el) => {
-              itemRefs.current[2] = el;
+              if (isAdmin) {
+                itemRefs.current[3] = el;
+              } else {
+                itemRefs.current[2] = el;
+                itemRefs.current.length = 3;
+              }
             }}
             type="button"
             role="menuitem"

@@ -45,6 +45,11 @@ services:
   content-service:
     url: ${CONTENT_SERVICE_URL:http://localhost:8085}
 
+# Khoa noi bo de xac thuc request den tu gateway tren endpoint quan tri /api/analytics/summary.
+# Rong -> endpoint bi tu choi 403 (fail-closed).
+internal:
+  api-key: ${INTERNAL_API_KEY:}
+
 feign:
   client:
     config:
