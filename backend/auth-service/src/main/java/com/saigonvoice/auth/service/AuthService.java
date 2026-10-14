@@ -2,6 +2,7 @@ package com.saigonvoice.auth.service;
 
 import com.saigonvoice.auth.dto.ChangePasswordRequest;
 import com.saigonvoice.auth.dto.CookieResult;
+import com.saigonvoice.auth.dto.GoogleLoginRequest;
 import com.saigonvoice.auth.dto.LoginRequest;
 import com.saigonvoice.auth.dto.MessageResponse;
 import com.saigonvoice.auth.dto.RegisterRequest;
@@ -16,6 +17,8 @@ public interface AuthService {
     MessageResponse register(RegisterRequest request, String ipAddress, String userAgent);
 
     CookieResult login(LoginRequest request, String ipAddress, String userAgent);
+
+    CookieResult loginWithGoogle(GoogleLoginRequest request, String ipAddress, String userAgent);
 
     CookieResult refresh(String rawRefreshToken, String ipAddress, String userAgent);
 

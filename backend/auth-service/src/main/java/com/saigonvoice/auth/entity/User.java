@@ -36,8 +36,13 @@ public class User {
     @Column(name = "email", nullable = false, length = 320, unique = true)
     private String email;
 
-    @Column(name = "password_hash", nullable = false, length = 100)
+    /** NULL đối với tài khoản chỉ đăng nhập bằng Google (không có mật khẩu). */
+    @Column(name = "password_hash", length = 100)
     private String passwordHash;
+
+    /** Định danh Google (claim "sub"), NULL với tài khoản đăng nhập bằng mật khẩu. */
+    @Column(name = "google_sub", length = 255)
+    private String googleSub;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "role", nullable = false, length = 20)

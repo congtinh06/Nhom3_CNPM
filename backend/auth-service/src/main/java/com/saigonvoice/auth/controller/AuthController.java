@@ -4,6 +4,7 @@ import com.saigonvoice.auth.dto.AuthResponse;
 import com.saigonvoice.auth.dto.ChangePasswordRequest;
 import com.saigonvoice.auth.dto.CookieResult;
 import com.saigonvoice.auth.dto.EmailOnlyRequest;
+import com.saigonvoice.auth.dto.GoogleLoginRequest;
 import com.saigonvoice.auth.dto.LoginRequest;
 import com.saigonvoice.auth.dto.MessageResponse;
 import com.saigonvoice.auth.dto.RegisterRequest;
@@ -67,6 +68,15 @@ public class AuthController {
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request,
                                               HttpServletRequest httpRequest) {
         CookieResult result = authService.login(request, clientIp(httpRequest), userAgent(httpRequest));
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, refreshCookie(result).toString())
+                .body(result.getBody());
+    }
+
+    @PostMapping("/api/auth/google")
+    public ResponseEntity<AuthResponse> loginWithGoogle(@Valid @RequestBody GoogleLoginRequest request,
+                                                        HttpServletRequest httpRequest) {
+        CookieResult result = authService.loginWithGoogle(request, clientIp(httpRequest), userAgent(httpRequest));
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, refreshCookie(result).toString())
                 .body(result.getBody());

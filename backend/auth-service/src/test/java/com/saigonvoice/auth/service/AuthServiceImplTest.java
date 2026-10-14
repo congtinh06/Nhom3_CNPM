@@ -61,6 +61,8 @@ class AuthServiceImplTest {
     private final TokenService tokenService = new TokenService();
     private final PasswordEncoder passwordEncoder = new BCryptPasswordEncoder(4);
     private final JwtService jwtService = mock(JwtService.class);
+    private final com.saigonvoice.auth.security.GoogleTokenVerifier googleTokenVerifier =
+            mock(com.saigonvoice.auth.security.GoogleTokenVerifier.class);
 
     private AuthServiceImpl service;
 
@@ -76,7 +78,8 @@ class AuthServiceImplTest {
                 refreshTokenService,
                 rateLimitService,
                 mailService,
-                jwtService);
+                jwtService,
+                googleTokenVerifier);
 
         ReflectionTestUtils.setField(service, "loginMaxFailures", 5);
         ReflectionTestUtils.setField(service, "loginLock", Duration.ofMinutes(15));
@@ -259,6 +262,22 @@ class AuthServiceImplTest {
                 LoginRequest.builder().email("a@saigonvoice.local").password("Secret123").build(), IP, "junit"))
                 .isInstanceOf(ForbiddenException.class)
                 .hasMessageContaining("bị khóa");
+    }
+
+    @Test
+    @DisplayName("Tài khoản Google-only (password_hash NULL) không thể đăng nhập bằng mật khẩu")
+    void loginGoogleOnlyAccountHasNoPassword() {
+        User googleUser = activeUser();
+        googleUser.setPasswordHash(null);
+        googleUser.setGoogleSub("google-sub-123");
+        when(userRepository.findByEmail("a@saigonvoice.local")).thenReturn(Optional.of(googleUser));
+
+        assertThatThrownBy(() -> service.login(
+                LoginRequest.builder().email("a@saigonvoice.local").password("BatKy123").build(), IP, "junit"))
+                .isInstanceOf(UnauthorizedException.class)
+                .hasMessage(AuthServiceImpl.GENERIC_LOGIN_ERROR);
+
+        verify(rateLimitService).recordFailure(anyString(), eq(5), any(), any());
     }
 
     @Test

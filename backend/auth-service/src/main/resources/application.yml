@@ -34,6 +34,10 @@ app:
   security:
     # Origin được phép gọi các endpoint nhận cookie (chống CSRF)
     frontend-url: ${FRONTEND_URL:http://localhost:5173}
+  google:
+    # Client ID của Google OAuth (loại Web). Rỗng -> /api/auth/google trả 503.
+    # Không đặt client secret ở đây (luồng ID token không cần secret).
+    client-id: ${GOOGLE_CLIENT_ID:}
   mail:
     # Rỗng -> không khởi tạo JavaMailSender, MailService chuyển sang chế độ ghi link ra log (dev/offline)
     host: ${MAIL_HOST:}

@@ -11,6 +11,7 @@ interface AuthContextValue {
   isAuthenticated: boolean;
   isAdmin: boolean;
   login: (payload: LoginPayload) => Promise<AuthUser>;
+  loginWithGoogle: (credential: string) => Promise<AuthUser>;
   register: (payload: RegisterPayload) => Promise<string>;
   logout: () => Promise<void>;
   reloadUser: () => Promise<void>;
@@ -75,6 +76,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return session.user;
   }, []);
 
+  const loginWithGoogle = useCallback(async (credential: string): Promise<AuthUser> => {
+    const session = await authApi.loginWithGoogle(credential);
+    tokenStore.set(session.accessToken);
+    setUser(session.user);
+    setStatus('authenticated');
+    return session.user;
+  }, []);
+
   const register = useCallback(async (payload: RegisterPayload): Promise<string> => {
     const response = await authApi.register(payload);
     return response.message;
@@ -110,11 +119,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       isAuthenticated: status === 'authenticated',
       isAdmin: user?.role === 'ADMIN',
       login,
+      loginWithGoogle,
       register,
       logout,
       reloadUser,
     }),
-    [user, status, login, register, logout, reloadUser]
+    [user, status, login, loginWithGoogle, register, logout, reloadUser]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

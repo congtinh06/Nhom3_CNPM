@@ -3,6 +3,7 @@ package com.saigonvoice.auth.service;
 import com.saigonvoice.auth.dto.AuthResponse;
 import com.saigonvoice.auth.dto.ChangePasswordRequest;
 import com.saigonvoice.auth.dto.CookieResult;
+import com.saigonvoice.auth.dto.GoogleLoginRequest;
 import com.saigonvoice.auth.dto.LoginRequest;
 import com.saigonvoice.auth.dto.MessageResponse;
 import com.saigonvoice.auth.dto.RegisterRequest;
@@ -25,6 +26,8 @@ import com.saigonvoice.auth.repository.EmailVerificationTokenRepository;
 import com.saigonvoice.auth.repository.PasswordResetTokenRepository;
 import com.saigonvoice.auth.repository.UserRepository;
 import com.saigonvoice.auth.security.JwtService;
+import com.saigonvoice.auth.security.GoogleIdentity;
+import com.saigonvoice.auth.security.GoogleTokenVerifier;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -60,6 +63,8 @@ public class AuthServiceImpl implements AuthService {
             "Nếu email tồn tại trong hệ thống, chúng tôi đã gửi hướng dẫn đặt lại mật khẩu. Vui lòng kiểm tra hộp thư.";
     public static final String GENERIC_RESEND_MESSAGE =
             "Nếu email tồn tại và chưa được xác thực, chúng tôi đã gửi lại email xác thực. Vui lòng kiểm tra hộp thư.";
+    public static final String ACCOUNT_BLOCKED_MESSAGE =
+            "Tài khoản đã bị khóa. Vui lòng liên hệ quản trị viên.";
 
     private final UserRepository userRepository;
     private final EmailVerificationTokenRepository emailVerificationTokenRepository;
@@ -71,6 +76,7 @@ public class AuthServiceImpl implements AuthService {
     private final RateLimitService rateLimitService;
     private final MailService mailService;
     private final JwtService jwtService;
+    private final GoogleTokenVerifier googleTokenVerifier;
 
     private String dummyHash;
 
@@ -171,20 +177,24 @@ public class AuthServiceImpl implements AuthService {
         rateLimitService.assertNotLocked(ipFailBucket);
 
         Optional<User> found = userRepository.findByEmail(email);
-        String candidateHash = found.map(User::getPasswordHash).orElseGet(() -> dummyHash);
+        User foundUser = found.orElse(null);
+        // Tài khoản Google-only có password_hash NULL: dùng hash giả để vẫn so sánh
+        // (giữ thời gian phản hồi tương đương) và chắc chắn bị từ chối, không NPE.
+        boolean passwordSet = foundUser != null && foundUser.getPasswordHash() != null;
+        String candidateHash = passwordSet ? foundUser.getPasswordHash() : dummyHash;
         boolean passwordMatches = passwordEncoder.matches(password, candidateHash);
 
-        if (found.isEmpty() || !passwordMatches) {
+        if (!passwordSet || !passwordMatches) {
             rateLimitService.recordFailure(failBucket, loginMaxFailures, loginWindow, loginLock);
             rateLimitService.recordFailure(ipFailBucket, loginIpMaxFailures, loginWindow, loginLock);
             log.info("Đăng nhập thất bại cho email {} từ IP {}", email, normalizeIp(ipAddress));
             throw new UnauthorizedException(GENERIC_LOGIN_ERROR);
         }
 
-        User user = found.get();
+        User user = foundUser;
         if (user.getStatus() == UserStatus.BLOCKED) {
             log.warn("Từ chối đăng nhập: tài khoản BLOCKED userId={}", user.getId());
-            throw new ForbiddenException("Tài khoản đã bị khóa. Vui lòng liên hệ quản trị viên.");
+            throw new ForbiddenException(ACCOUNT_BLOCKED_MESSAGE);
         }
         if (!user.isEmailVerified()) {
             // Chỉ trả lời sau khi mật khẩu đã đúng -> không mở kênh dò email
@@ -205,6 +215,92 @@ public class AuthServiceImpl implements AuthService {
 
         log.info("Đăng nhập thành công userId={}", user.getId());
         return buildResult(user, accessToken, issued);
+    }
+
+    // ----------------------------------------------------------- LOGIN GOOGLE
+
+    @Override
+    public CookieResult loginWithGoogle(GoogleLoginRequest request, String ipAddress, String userAgent) {
+        // Xác minh chữ ký/issuer/audience/hạn của ID token; ném 401/503 nếu không hợp lệ.
+        GoogleIdentity identity = googleTokenVerifier.verify(request == null ? null : request.getCredential());
+
+        if (!identity.emailVerified()) {
+            // Phòng thủ nhiều lớp: Google phải xác thực email trước khi ta cho đăng nhập.
+            log.info("Từ chối đăng nhập Google: email chưa được Google xác thực");
+            throw new UnauthorizedException("Không thể xác minh tài khoản Google.");
+        }
+
+        String email = normalizeEmail(identity.email());
+        User user = userRepository.findByGoogleSub(identity.subject()).orElse(null);
+
+        if (user == null) {
+            User existing = userRepository.findByEmail(email).orElse(null);
+            if (existing == null) {
+                user = createGoogleUser(identity, email);
+                log.info("Tạo tài khoản mới qua Google userId={}", user.getId());
+            } else {
+                // Liên kết tài khoản sẵn có với Google, giữ nguyên role.
+                user = linkGoogleAccount(existing, identity.subject());
+                log.info("Liên kết tài khoản sẵn có với Google userId={}", user.getId());
+            }
+        }
+
+        if (user.getStatus() == UserStatus.BLOCKED) {
+            log.warn("Từ chối đăng nhập Google: tài khoản BLOCKED userId={}", user.getId());
+            throw new ForbiddenException(ACCOUNT_BLOCKED_MESSAGE);
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+        user.setLastLoginAt(now);
+        user.setUpdatedAt(now);
+        userRepository.save(user);
+
+        RefreshTokenService.Issued issued = refreshTokenService.issue(user, false, ipAddress, userAgent);
+        String accessToken = jwtService.generateAccessToken(user);
+
+        log.info("Đăng nhập Google thành công userId={}", user.getId());
+        return buildResult(user, accessToken, issued);
+    }
+
+    private User linkGoogleAccount(User user, String googleSub) {
+        LocalDateTime now = LocalDateTime.now();
+        if (user.getGoogleSub() == null) {
+            user.setGoogleSub(googleSub);
+        }
+        if (!user.isEmailVerified()) {
+            // Email do Google xác thực -> coi như đã xác thực, kích hoạt tài khoản PENDING.
+            user.setEmailVerifiedAt(now);
+            if (user.getStatus() == UserStatus.PENDING) {
+                user.setStatus(UserStatus.ACTIVE);
+            }
+        }
+        user.setUpdatedAt(now);
+        return userRepository.save(user);
+    }
+
+    private User createGoogleUser(GoogleIdentity identity, String email) {
+        LocalDateTime now = LocalDateTime.now();
+        String fullName = (identity.name() == null || identity.name().isBlank())
+                ? emailLocalPart(email)
+                : identity.name().trim();
+
+        User user = User.builder()
+                .fullName(fullName)
+                .email(email)
+                .passwordHash(null)
+                .googleSub(identity.subject())
+                .role(UserRole.USER)
+                .status(UserStatus.ACTIVE)
+                .emailVerifiedAt(now)
+                .createdAt(now)
+                .updatedAt(now)
+                .build();
+        return userRepository.save(user);
+    }
+
+    private static String emailLocalPart(String email) {
+        int at = email.indexOf('@');
+        return at > 0 ? email.substring(0, at) : email;
     }
 
     // ----------------------------------------------------------------- REFRESH

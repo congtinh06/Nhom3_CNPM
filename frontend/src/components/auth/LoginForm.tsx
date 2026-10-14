@@ -3,6 +3,7 @@ import { normalizeApiError } from '../../api/errors';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { useNavbarLanguage } from '../../content/languages';
+import { GoogleSignInButton } from './GoogleSignInButton';
 import { PasswordField } from './PasswordField';
 
 interface LoginFormProps {
@@ -117,6 +118,23 @@ export const LoginForm: React.FC<LoginFormProps> = ({
           {submitting ? t.auth.loginSubmitting : t.auth.loginSubmit}
         </button>
       </form>
+
+      {Boolean(import.meta.env.VITE_GOOGLE_CLIENT_ID) && (
+        <>
+          <div className="auth-divider">
+            <span>hoặc</span>
+          </div>
+
+          <GoogleSignInButton
+            onSuccess={() => {
+              showToast(t.auth.loginSuccess);
+              onSuccess();
+            }}
+            onError={setError}
+            disabled={submitting}
+          />
+        </>
+      )}
 
       <p className="af-alt">
         {t.auth.noAccount}{' '}

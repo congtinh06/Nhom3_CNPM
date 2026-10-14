@@ -2,6 +2,7 @@ package com.saigonvoice.auth.controller;
 
 import com.saigonvoice.auth.dto.AuthResponse;
 import com.saigonvoice.auth.dto.CookieResult;
+import com.saigonvoice.auth.dto.GoogleLoginRequest;
 import com.saigonvoice.auth.dto.LoginRequest;
 import com.saigonvoice.auth.dto.MessageResponse;
 import com.saigonvoice.auth.dto.RegisterRequest;
@@ -128,6 +129,50 @@ class AuthControllerTest {
                         .content("{\"email\":\"a@saigonvoice.local\",\"password\":\"sai\"}"))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.message").value("Email hoặc mật khẩu không đúng."));
+    }
+
+    @Test
+    @DisplayName("POST /api/auth/google hợp lệ trả 200 kèm cookie refresh")
+    void googleLoginReturnsTokenAndCookie() throws Exception {
+        UserResponse user = UserResponse.builder()
+                .id(2L).fullName("Khách Google").email("g@saigonvoice.local")
+                .role("USER").emailVerified(true).build();
+        when(authService.loginWithGoogle(any(GoogleLoginRequest.class), anyString(), any()))
+                .thenReturn(new CookieResult("raw-google", Duration.ofDays(7),
+                        AuthResponse.builder().accessToken("jwt-google").expiresIn(900L)
+                                .tokenType("Bearer").user(user).build()));
+
+        mockMvc.perform(post("/api/auth/google")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"credential\":\"fake-google-id-token\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.accessToken").value("jwt-google"))
+                .andExpect(cookie().httpOnly("refresh_token", true))
+                .andExpect(cookie().value("refresh_token", "raw-google"));
+    }
+
+    @Test
+    @DisplayName("POST /api/auth/google thiếu credential trả 400 kèm lỗi ô credential")
+    void googleLoginMissingCredentialReturns400() throws Exception {
+        mockMvc.perform(post("/api/auth/google")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"credential\":\"\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.details.credential").exists());
+    }
+
+    @Test
+    @DisplayName("POST /api/auth/google khi chưa cấu hình trả 503 kèm thông điệp tiếng Việt")
+    void googleLoginNotConfiguredReturns503() throws Exception {
+        when(authService.loginWithGoogle(any(GoogleLoginRequest.class), anyString(), any()))
+                .thenThrow(new com.saigonvoice.auth.exception.ServiceUnavailableException(
+                        "Đăng nhập Google chưa được cấu hình."));
+
+        mockMvc.perform(post("/api/auth/google")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"credential\":\"fake-google-id-token\"}"))
+                .andExpect(status().isServiceUnavailable())
+                .andExpect(jsonPath("$.message").value("Đăng nhập Google chưa được cấu hình."));
     }
 
     @Test

@@ -4,6 +4,7 @@ import { normalizeApiError } from '../../api/errors';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { useNavbarLanguage } from '../../content/languages';
+import { GoogleSignInButton } from './GoogleSignInButton';
 import { PasswordField } from './PasswordField';
 
 interface RegisterFormProps {
@@ -244,6 +245,23 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
           {submitting ? t.auth.registerSubmitting : t.auth.registerSubmit}
         </button>
       </form>
+
+      {Boolean(import.meta.env.VITE_GOOGLE_CLIENT_ID) && (
+        <>
+          <div className="auth-divider">
+            <span>hoặc</span>
+          </div>
+
+          <GoogleSignInButton
+            onSuccess={() => {
+              showToast(t.auth.loginSuccess);
+              onClose();
+            }}
+            onError={setError}
+            disabled={submitting}
+          />
+        </>
+      )}
 
       <p className="af-alt">
         {t.auth.hasAccount}{' '}

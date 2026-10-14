@@ -21,6 +21,9 @@ export const authApi = {
   login: (payload: LoginPayload): Promise<AuthSession> =>
     post<AuthSession>('/api/auth/login', payload),
 
+  loginWithGoogle: (credential: string): Promise<AuthSession> =>
+    post<AuthSession>('/api/auth/google', { credential }),
+
   refresh: (): Promise<AuthSession> => post<AuthSession>('/api/auth/refresh', {}),
 
   logout: async (): Promise<void> => {
