@@ -13,6 +13,7 @@ import {
   SUPPORTED_LANGUAGES,
   LanguageOption,
 } from '../../content/languages';
+import { UserMenu } from './UserMenu';
 
 export const Header: React.FC = () => {
   const { totalCount, openCart } = useCart();
@@ -28,14 +29,11 @@ export const Header: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const [isLangOpen, setIsLangOpen] = useState(false);
-  const [isAccountOpen, setIsAccountOpen] = useState(false);
 
   const langTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const accountTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const clearDropdownTimers = useCallback(() => {
     if (langTimerRef.current) clearTimeout(langTimerRef.current);
-    if (accountTimerRef.current) clearTimeout(accountTimerRef.current);
   }, []);
 
   const handleLangEnter = () => {
@@ -50,29 +48,15 @@ export const Header: React.FC = () => {
     }, 250);
   };
 
-  const handleAccountEnter = () => {
-    if (accountTimerRef.current) clearTimeout(accountTimerRef.current);
-    setIsAccountOpen(true);
-  };
-
-  const handleAccountLeave = () => {
-    if (accountTimerRef.current) clearTimeout(accountTimerRef.current);
-    accountTimerRef.current = setTimeout(() => {
-      setIsAccountOpen(false);
-    }, 250);
-  };
-
   const lastScrollY = useRef(0);
   const headerRef = useRef<HTMLElement>(null);
   const langRef = useRef<HTMLDivElement>(null);
-  const accountRef = useRef<HTMLDivElement>(null);
 
   const isHomePage = location.pathname === '/';
   const isAttractionsActive =
     location.pathname.startsWith('/diem-du-lich') ||
     location.pathname.startsWith('/thuyet-minh') ||
     location.pathname.startsWith('/gan-toi');
-  const isOrdersPage = location.pathname === '/don-hang';
   const isNewsActive = location.pathname.startsWith('/tin-tuc');
   const isContactActive = location.pathname.startsWith('/lien-he');
   const isFoodActive =
@@ -134,7 +118,6 @@ export const Header: React.FC = () => {
   useEffect(() => {
     setIsMenuOpen(false);
     setIsLangOpen(false);
-    setIsAccountOpen(false);
   }, [location.pathname, location.hash, lang]);
 
   // Handle outside clicks and Escape key
@@ -144,15 +127,11 @@ export const Header: React.FC = () => {
       if (langRef.current && !langRef.current.contains(target)) {
         setIsLangOpen(false);
       }
-      if (accountRef.current && !accountRef.current.contains(target)) {
-        setIsAccountOpen(false);
-      }
     };
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         setIsLangOpen(false);
-        setIsAccountOpen(false);
         setIsMenuOpen(false);
       }
     };
@@ -170,7 +149,6 @@ export const Header: React.FC = () => {
     clearDropdownTimers();
     setIsMenuOpen(false);
     setIsLangOpen(false);
-    setIsAccountOpen(false);
   };
 
 
@@ -402,62 +380,7 @@ export const Header: React.FC = () => {
             )}
           </>
         ) : (
-          <div
-            ref={accountRef}
-            className={`nav-dropdown account-dropdown ${isAccountOpen ? 'open' : ''}`}
-            onMouseEnter={handleAccountEnter}
-            onMouseLeave={handleAccountLeave}
-          >
-            <button
-              type="button"
-              className="nav-link user-trigger-btn"
-              aria-label="Mở trang tài khoản"
-              aria-haspopup="true"
-              aria-expanded={isAccountOpen}
-              onClick={() => setIsAccountOpen((prev) => !prev)}
-              onKeyDown={(e) => {
-                if (e.key === 'ArrowDown' || e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  setIsAccountOpen(true);
-                }
-              }}
-            >
-              <span className="user-name">{displayName}</span>
-              <ChevronDown
-                size={13}
-                strokeWidth={1.75}
-                className={`chevron ${isAccountOpen ? 'rotated' : ''}`}
-                aria-hidden="true"
-              />
-            </button>
-
-            <div
-              className={`dropdown-menu account-menu ${isAccountOpen ? 'visible' : ''}`}
-              role="menu"
-              aria-label="Tùy chọn người dùng"
-            >
-              <a
-                href="/don-hang"
-                role="menuitem"
-                className={`dropdown-item ${isOrdersPage ? 'active' : ''}`}
-                onClick={(e) => {
-                  e.preventDefault();
-                  closeAllMenus();
-                  navigate('/don-hang');
-                }}
-              >
-                <span className="dropdown-item-title">{t.auth.myOrders}</span>
-              </a>
-              <button
-                type="button"
-                role="menuitem"
-                className="dropdown-item logout-item"
-                onClick={handleLogoutClick}
-              >
-                <span className="dropdown-item-title">{t.auth.logout}</span>
-              </button>
-            </div>
-          </div>
+          <UserMenu />
         )}
 
         {/* Nút Menu Mobile (< 900px) */}
