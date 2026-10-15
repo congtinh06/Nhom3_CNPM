@@ -14,7 +14,7 @@
 
 ## 1. Giới thiệu dự án (Overview)
 
-**SaigonVoice** là giải pháp nền tảng du lịch số thông minh dành cho du khách khám phá Thành phố Hồ Chí Minh. Dự án tích hợp công nghệ định vị GPS, bản đồ tương tác mã nguồn mở **Leaflet + OpenStreetMap**, mã QR tại điểm dừng, và hệ thống **thuyết minh âm thanh tự động đa ngôn ngữ** (`vi`, `en`, `ko`, `ja`, `zh`).
+**SaigonVoice** là giải pháp nền tảng du lịch số thông minh dành cho du khách khám phá Thành phố Hồ Chí Minh. Dự án tích hợp công nghệ định vị GPS, bản đồ tương tác mã nguồn mở **Leaflet + OpenStreetMap**, mã QR tại điểm dừng, và hệ thống **thuyết minh âm thanh tự động đa ngôn ngữ** (`vi`, `en`, `ja`, `ko`).
 
 Bên cạnh trải nghiệm tham quan di sản, hệ thống còn cung cấp module **Văn hóa ẩm thực & Thức uống bản địa**, cho phép du khách tìm hiểu các món ngon đặc trưng Sài Gòn (cơm tấm, bánh mì, cà phê vợt...), đặt món giao tận nơi hoặc trải nghiệm thanh toán trực tuyến thuận tiện.
 
@@ -28,7 +28,7 @@ Bên cạnh trải nghiệm tham quan di sản, hệ thống còn cung cấp mod
 2. **Thuyết minh Tự động & Đa ngôn ngữ (Auto Narration & Multilingual Sync)**:
    - Tự động kích hoạt giọng đọc khi du khách di chuyển vào bán kính kích hoạt (trigger radius 40–55 m).
    - Kiểm soát phát âm thanh chặt chẽ: hàng đợi tuần tự, không phát chồng âm thanh, chống phát lặp lại cùng một địa điểm trong vòng 10 phút.
-   - Đồng bộ ngôn ngữ 2 chiều toàn diện giữa Navbar và Audio Player. Hỗ trợ 5 ngôn ngữ (`vi`, `en`, `ko`, `ja`, `zh`) với cơ chế fallback thông minh về tiếng Việt kèm thông báo.
+   - Đồng bộ ngôn ngữ 2 chiều toàn diện giữa Navbar và Audio Player. Hỗ trợ 4 ngôn ngữ (`vi`, `en`, `ja`, `ko`) với cơ chế fallback thông minh về tiếng Việt kèm thông báo.
    - Tích hợp Web Speech API chuẩn ngữ điệu bản xứ và tùy chỉnh tốc độ đọc (0.75x, 1x, 1.25x), thanh tua tiến trình và xem văn bản thuyết minh.
 
 3. **Chế độ Thử nghiệm Tọa độ (GPS Simulation Mode)**:
@@ -57,7 +57,7 @@ Bên cạnh trải nghiệm tham quan di sản, hệ thống còn cung cấp mod
                             ┌──────────────────────────────────────────────┐
                             │            api-gateway (Spring Cloud)        │
                             │  CORS, Path Guard, Rate Limiting, Admin Auth │
-                            │           Host: 18080 (Container: 8080)      │
+                            │           Host: 8080 (Container: 8080)       │
                             └───────┬──────────────┬──────────────┬────────┘
                                     │              │              │
       ┌─────────────────────────────┼──────────────┼──────────────┼────────────────────────┐
@@ -101,7 +101,7 @@ Nhom3_CNPM/
 │   ├── src/
 │   │   ├── api/                  # Axios HTTP client, token store và xử lý lỗi tập trung
 │   │   ├── components/           # UI Components (Header, AuthModal, CartDialog...)
-│   │   ├── content/              # Dữ liệu 5 POIs Sài Gòn, từ điển đa ngôn ngữ (vi, en, ko, ja, zh)
+│   │   ├── content/              # Dữ liệu 5 POIs Sài Gòn, từ điển đa ngôn ngữ (vi, en, ja, ko)
 │   │   ├── context/              # React Context (AuthContext, CartContext, ToastContext)
 │   │   ├── hooks/                # Custom React hooks (useAudioPlayer, useNavbarLanguage...)
 │   │   ├── pages/                # Các trang: NearbyPage (Bản đồ), ScanPage, Shop, Orders...
@@ -125,7 +125,7 @@ Nhom3_CNPM/
 | Dịch vụ / Ứng dụng | Cổng Host | Cổng Nội bộ | Công nghệ chính | Chức năng chính |
 |---|---|---|---|---|
 | **Frontend Web** | `5173` | `5173` | React 18, Vite, TypeScript | Giao diện du khách & bản đồ du lịch |
-| **API Gateway** | `18080` | `8080` | Spring Cloud Gateway | Điểm tiếp nhận request tập trung |
+| **API Gateway** | `8080` | `8080` | Spring Cloud Gateway | Điểm tiếp nhận request tập trung |
 | **Content Service** | `8085` | `8085` | Spring Boot 3, Flyway, JPA | Quản lý điểm tham quan, ẩm thực |
 | **Location Service** | `8082` | `8082` | Spring Boot 3, OpenFeign | Tính toán GPS và mã QR |
 | **Translation & TTS** | `8083` | `8083` | Spring Boot 3, Edge-TTS | Dịch thuật tự động và tạo giọng đọc |
@@ -139,7 +139,9 @@ Nhom3_CNPM/
 
 ## 5. Danh sách API Endpoints chính (Core REST APIs)
 
-Toàn bộ các yêu cầu từ Client đều đi qua **API Gateway** (`http://localhost:18080`):
+Toàn bộ các yêu cầu từ Client đều đi qua **API Gateway** (`http://localhost:8080`):
+
+> `Ghi chú`: `8080` là cổng mặc định trong `docker-compose.yml`. Trên máy dev nếu cổng `8080` đã bị chiếm, `docker-compose.override.yml` sẽ map gateway ra `18080`.
 
 | Phân hệ / Service | Phương thức | Endpoint | Mô tả chức năng |
 |---|---|---|---|
