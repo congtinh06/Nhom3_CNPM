@@ -5,6 +5,7 @@ services:
   rabbitmq:
     image: rabbitmq:3-management
     container_name: rabbitmq
+    restart: unless-stopped
     hostname: rabbitmq
     ports:
       - "5672:5672"
@@ -32,6 +33,7 @@ services:
   mssql:
     image: mcr.microsoft.com/mssql/server:2022-latest
     container_name: mssql
+    restart: unless-stopped
     environment:
       ACCEPT_EULA: "Y"
       MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD:?MSSQL_SA_PASSWORD is required in .env}
@@ -112,6 +114,7 @@ services:
       context: ./backend/content-service
       dockerfile: Dockerfile
     container_name: content-service
+    restart: unless-stopped
     environment:
       JAVA_TOOL_OPTIONS: "-Xms128m -Xmx256m"
       DB_URL: jdbc:sqlserver://mssql:1433;databaseName=saigonvoice_content_db;encrypt=true;trustServerCertificate=true
@@ -141,6 +144,7 @@ services:
       context: ./backend/location-service
       dockerfile: Dockerfile
     container_name: location-service
+    restart: unless-stopped
     environment:
       JAVA_TOOL_OPTIONS: "-Xms128m -Xmx256m"
       CONTENT_SERVICE_URL: http://content-service:8085
@@ -162,6 +166,7 @@ services:
       context: ./backend/translation-tts-service
       dockerfile: Dockerfile
     container_name: translation-tts-service
+    restart: unless-stopped
     environment:
       JAVA_TOOL_OPTIONS: "-Xms128m -Xmx256m"
       DB_URL: jdbc:sqlserver://mssql:1433;databaseName=saigonvoice_translation_db;encrypt=true;trustServerCertificate=true
@@ -200,6 +205,7 @@ services:
       context: ./backend/analytics-service
       dockerfile: Dockerfile
     container_name: analytics-service
+    restart: unless-stopped
     environment:
       JAVA_TOOL_OPTIONS: "-Xms128m -Xmx256m"
       DB_URL: jdbc:sqlserver://mssql:1433;databaseName=saigonvoice_analytics_db;encrypt=true;trustServerCertificate=true
@@ -233,6 +239,7 @@ services:
       context: ./backend/auth-service
       dockerfile: Dockerfile
     container_name: auth-service
+    restart: unless-stopped
     environment:
       JAVA_TOOL_OPTIONS: "-Xms128m -Xmx256m"
       DB_URL: jdbc:sqlserver://mssql:1433;databaseName=saigonvoice_auth_db;encrypt=true;trustServerCertificate=true
@@ -271,6 +278,7 @@ services:
       context: ./backend/api-gateway
       dockerfile: Dockerfile
     container_name: api-gateway
+    restart: unless-stopped
     ports:
       - "8080:8080"
     environment:
