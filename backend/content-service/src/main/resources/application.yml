@@ -61,7 +61,7 @@ management:
         include: health,info
   endpoint:
     health:
-      show-details: always
+      show-details: never
 
 # Rỗng = endpoint /api/content/internal/** bị tắt (503), xem InternalApiKeyFilter
 internal:
