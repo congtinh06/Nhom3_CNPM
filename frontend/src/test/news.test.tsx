@@ -305,24 +305,19 @@ describe('News Feature Tests (Tin tức)', () => {
       );
 
       // Wait for content to finish loading
-      expect(await screen.findByRole('tab', { name: /Điểm đến/i })).toBeInTheDocument();
+      const viewAllLink = await screen.findByRole('link', { name: /Xem tất cả tin tức/i });
+      expect(viewAllLink).toHaveAttribute('href', '/tin-tuc');
 
       // Section title
       expect(screen.getByRole('heading', { level: 2, name: /Tin tức & Câu chuyện Sài Gòn/i })).toBeInTheDocument();
 
-      // "Xem tất cả tin tức" link goes to /tin-tuc
-      const viewAllLink = screen.getByRole('link', { name: /Xem tất cả tin tức/i });
-      expect(viewAllLink).toHaveAttribute('href', '/tin-tuc');
-
-      // Check category tabs
-      expect(screen.getByRole('tab', { name: /Văn hóa Sài Gòn/i })).toBeInTheDocument();
-      expect(screen.getByRole('tab', { name: /Mẹo tham quan/i })).toBeInTheDocument();
-
-      // Check all article cards link to /tin-tuc/:slug
+      // Compact home row: at most 3 article cards, all linking to /tin-tuc/:slug
       const cardLinks = screen.getAllByRole('link').filter((l) => {
         const href = l.getAttribute('href') || '';
         return href.startsWith('/tin-tuc/') && href !== '/tin-tuc';
       });
+      expect(cardLinks.length).toBeGreaterThan(0);
+      expect(cardLinks.length).toBeLessThanOrEqual(3);
 
       // Verify no duplicate articles rendered anywhere on the home section
       const hrefs = cardLinks.map((l) => l.getAttribute('href'));

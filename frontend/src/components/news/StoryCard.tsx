@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { NewsItem, NEWS_CATEGORIES } from '../../types/domain';
 import { NeutralImagePlaceholder } from './EncausticTilePattern';
 import { SupportedLanguage } from '../../types';
+import '../../styles/news.css';
 
 export type StoryCardVariant = 'grid' | 'featured' | 'sidebar' | 'large' | 'row';
 
@@ -12,6 +13,7 @@ export interface StoryCardProps {
   lang?: SupportedLanguage;
   isFeaturedEager?: boolean;
   showDivider?: boolean;
+  compact?: boolean;
 }
 
 const POI_MAP: Record<string, string> = {
@@ -41,6 +43,7 @@ export const StoryCard: React.FC<StoryCardProps> = ({
   variant = 'grid',
   lang = 'vi',
   isFeaturedEager = false,
+  compact = false,
 }) => {
   const navigate = useNavigate();
   const [imageError, setImageError] = useState(false);
@@ -109,13 +112,13 @@ export const StoryCard: React.FC<StoryCardProps> = ({
   // 2. FEATURED OR STANDARD GRID VARIANT
   return (
     <article
-      className={`story-card ${isFeatured ? 'story-card--featured' : 'story-card--grid'}`}
+      className={`story-card ${isFeatured ? 'story-card--featured' : 'story-card--grid'}${compact ? ' story-card--compact' : ''}`}
       onClick={handleCardClick}
       data-testid="story-card"
     >
-      {/* 1. IMAGE: 4:3 for grid, 16:10 for featured */}
+      {/* 1. IMAGE: 16:10 for featured and compact, 4:3 for the default grid */}
       <div className="story-media-wrap">
-        <div className={`story-img-container ${isFeatured ? 'aspect-16-10' : 'aspect-4-3'}`}>
+        <div className={`story-img-container ${isFeatured || compact ? 'aspect-16-10' : 'aspect-4-3'}`}>
           {imageUrl && !imageError ? (
             <img
               src={imageUrl}
@@ -123,12 +126,12 @@ export const StoryCard: React.FC<StoryCardProps> = ({
               className="story-img"
               loading={isFeaturedEager || isFeatured ? 'eager' : 'lazy'}
               width={isFeatured ? '600' : '400'}
-              height={isFeatured ? '375' : '300'}
+              height={isFeatured ? '375' : compact ? '250' : '300'}
               onError={() => setImageError(true)}
             />
           ) : (
             <NeutralImagePlaceholder
-              aspectRatio={isFeatured ? '16/10' : '4/3'}
+              aspectRatio={isFeatured || compact ? '16/10' : '4/3'}
               altText={item.title}
             />
           )}
@@ -185,19 +188,21 @@ export const StoryCard: React.FC<StoryCardProps> = ({
           <p className="story-excerpt">{item.excerpt || item.summary}</p>
         )}
 
-        {/* Footer: max 2 tags left */}
-        <div className="story-footer">
-          <div className="story-tags-group">
-            {displayTags.map((tag) => {
-              const label = POI_MAP[tag] || tag;
-              return (
-                <span key={tag} className="story-tag" title={`#${label}`}>
-                  #{label}
-                </span>
-              );
-            })}
+        {/* Footer: max 2 tags left (omitted in the compact variant) */}
+        {!compact && (
+          <div className="story-footer">
+            <div className="story-tags-group">
+              {displayTags.map((tag) => {
+                const label = POI_MAP[tag] || tag;
+                return (
+                  <span key={tag} className="story-tag" title={`#${label}`}>
+                    #{label}
+                  </span>
+                );
+              })}
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </article>
   );

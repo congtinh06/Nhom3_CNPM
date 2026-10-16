@@ -37,15 +37,12 @@ export const NewsRow: React.FC<NewsRowProps> = ({ item, lang = 'vi' }) => {
           )}
         </div>
         <div className="nl-row-body">
-          <span className="nl-row-cat" style={{ color: categoryMeta.hex }}>
-            {categoryLabel.toUpperCase()}
-          </span>
           <h3 className="nl-row-title">{item.title}</h3>
           {(item.excerpt || item.summary) && (
             <p className="nl-row-excerpt">{item.excerpt || item.summary}</p>
           )}
           <NewsMeta
-            category={{ label: categoryLabel }}
+            category={{ label: categoryLabel, color: categoryMeta.hex }}
             publishedAt={item.publishedAt}
             formattedDate={formattedDate}
             readingTime={readingTime}
