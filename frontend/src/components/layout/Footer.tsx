@@ -12,14 +12,14 @@ export const Footer: React.FC = () => {
   return (
     <footer className="s ftr" aria-label="Chân trang">
       <div className="ftr-inner">
-        <div className="ftr-brand">
+        <div className="ftr-brand col">
           <div className="ftr-br">{footerContent.brand}</div>
           <p className="ftr-tagline">
             Nghe kể chuyện Sài Gòn qua từng điểm đến và món ăn.
           </p>
         </div>
 
-        <nav className="ftr-nav" aria-label="Liên kết nhanh">
+        <nav className="ftr-nav col" aria-label="Liên kết nhanh">
           <h2 className="ftr-heading">Liên kết</h2>
           <ul className="ftr-list">
             <li>
@@ -40,7 +40,7 @@ export const Footer: React.FC = () => {
           </ul>
         </nav>
 
-        <div className="ftr-contact">
+        <div className="ftr-contact col">
           <h2 className="ftr-heading">Liên hệ</h2>
           <ul className="ftr-list">
             <li className="ftr-line">
