@@ -32,6 +32,8 @@ export interface PoiSummary {
   categoryNameVi?: string;
   routeId?: number | null;
   stopOrder?: number | null;
+  audioUrl?: string | null;
+  audioStatus?: string;
 }
 
 export type AudioStatus = 'PENDING' | 'PROCESSING' | 'READY' | 'FAILED_TTS';

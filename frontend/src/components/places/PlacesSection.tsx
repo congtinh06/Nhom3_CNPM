@@ -4,6 +4,7 @@ import { normalizeApiError } from '../../api/errors';
 import { samplePlaces, sampleGroups } from '../../content/samplePlaces';
 import { matchesSearch } from '../../content/searchUtils';
 import { useAudioPlayer } from '../../hooks/useAudioPlayer';
+import { unlockAudio } from '../../lib/audioUnlock';
 import { useFavorites } from '../../hooks/useFavorites';
 import { Category, PoiDetail, PoiSummary, SupportedLanguage, Zone } from '../../types';
 import { PlaceCard } from './PlaceCard';
@@ -177,9 +178,12 @@ export const PlacesSection: React.FC = () => {
   }, [isSampleMode, detailModalPoiId]);
 
   const handleToggleCardAudio = (poi: PoiSummary) => {
+    unlockAudio();
     const zoneName = zoneMap.get(poi.zoneId) || '';
     playAudio({
       poiId: poi.id,
+      audioUrl: poi.audioUrl,
+      audioStatus: poi.audioStatus,
       title: poi.name,
       textToSpeak: poi.address ? `${poi.address}. Khu vực ${zoneName}.` : `Khu vực ${zoneName}.`,
       lang,
@@ -187,6 +191,7 @@ export const PlacesSection: React.FC = () => {
   };
 
   const handleToggleDetailAudio = (detail: PoiDetail) => {
+    unlockAudio();
     playAudio({
       poiId: detail.id,
       audioUrl: detail.audioUrl,

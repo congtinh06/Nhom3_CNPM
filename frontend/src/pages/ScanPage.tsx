@@ -4,6 +4,7 @@ import { Camera, Pause, Volume2 } from 'lucide-react';
 import { api } from '../api/client';
 import { normalizeApiError } from '../api/errors';
 import { useAudioPlayer } from '../hooks/useAudioPlayer';
+import { unlockAudio } from '../lib/audioUnlock';
 import { PoiDetail, SupportedLanguage } from '../types';
 
 export const ScanPage: React.FC = () => {
@@ -29,15 +30,17 @@ export const ScanPage: React.FC = () => {
 
   const [cameraActive, setCameraActive] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
+  const [pendingPlay, setPendingPlay] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
   const { playAudio, stopAudio, isPlaying } = useAudioPlayer();
 
   const handleResolveQr = useCallback(
-    (qrTokenToResolve: string) => {
+    (qrTokenToResolve: string, options?: { auto?: boolean }) => {
       const trimmed = qrTokenToResolve.trim();
       if (!trimmed) return;
+      const isAuto = options?.auto ?? false;
 
       setLoading(true);
       setErrorMessage(null);
@@ -46,6 +49,14 @@ export const ScanPage: React.FC = () => {
         .getPoiByQr(trimmed, lang)
         .then((detail) => {
           setPoiDetail(detail);
+          if (isAuto) {
+            // Resolved after an await, so browsers block autoplay (no user gesture).
+            // Prompt with an explicit button instead of playing silently.
+            setPendingPlay(true);
+            return;
+          }
+          unlockAudio();
+          setPendingPlay(false);
           playAudio({
             poiId: detail.id,
             audioUrl: detail.audioUrl,
@@ -72,7 +83,7 @@ export const ScanPage: React.FC = () => {
 
   useEffect(() => {
     if (token) {
-      handleResolveQr(token);
+      handleResolveQr(token, { auto: true });
     }
   }, [token, handleResolveQr]);
 
@@ -131,7 +142,7 @@ export const ScanPage: React.FC = () => {
               const extracted = val.includes('/qr/') ? val.split('/qr/')[1]?.split('?')[0] : val;
               if (extracted) {
                 setInputToken(extracted);
-                handleResolveQr(extracted);
+                handleResolveQr(extracted, { auto: true });
               }
             }
           } catch {
@@ -242,6 +253,8 @@ export const ScanPage: React.FC = () => {
               className="tb"
               aria-pressed={isPlaying(poiDetail.id)}
               onClick={() => {
+                unlockAudio();
+                setPendingPlay(false);
                 playAudio({
                   poiId: poiDetail.id,
                   audioUrl: poiDetail.audioUrl,
@@ -260,7 +273,7 @@ export const ScanPage: React.FC = () => {
               ) : (
                 <>
                   <Volume2 size={15} strokeWidth={1.75} aria-hidden="true" />
-                  Nghe thuyết minh
+                  {pendingPlay ? 'Bấm để nghe' : 'Nghe thuyết minh'}
                 </>
               )}
             </button>
