@@ -22,7 +22,8 @@ const getSessionId = (): string => {
       sessionStorage.setItem('sv:session_id', sid);
     }
     return sid;
-  } catch {
+  } catch (err) {
+    console.warn('[useAudioPlayer] sessionStorage unavailable, using default session id', err);
     return 'sid_default';
   }
 };
@@ -105,6 +106,7 @@ export const useAudioPlayer = () => {
         };
 
         audio.onerror = () => {
+          console.warn('[useAudioPlayer] audio element failed to load or play', audio.error);
           if (audioRef.current === audio) {
             stopAudio();
             showToast('Không phát được thuyết minh.');
@@ -113,7 +115,8 @@ export const useAudioPlayer = () => {
 
         audio.play().then(() => {
           fireAnalytics(poiId, lang);
-        }).catch(() => {
+        }).catch((err) => {
+          console.warn('[useAudioPlayer] audio.play() rejected', err);
           if (audioRef.current === audio) {
             stopAudio();
             showToast('Không phát được thuyết minh.');
@@ -154,7 +157,8 @@ export const useAudioPlayer = () => {
           stopAudio();
         };
 
-        utterance.onerror = () => {
+        utterance.onerror = (event) => {
+          console.warn('[useAudioPlayer] speech synthesis failed', event.error);
           stopAudio();
         };
 

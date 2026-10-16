@@ -553,8 +553,8 @@ export function useNearbyAudio({
       a.src = '';
       try {
         a.load();
-      } catch {
-        // Ignore load error during reset
+      } catch (err) {
+        console.warn('[useNearbyAudio] resetting audio element failed', err);
       }
       audioElemRef.current = null;
     }
@@ -562,8 +562,8 @@ export function useNearbyAudio({
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
       try {
         window.speechSynthesis.cancel();
-      } catch {
-        // Ignore
+      } catch (err) {
+        console.warn('[useNearbyAudio] speechSynthesis.cancel() failed during reset', err);
       }
     }
     activeUtteranceRef.current = null;
@@ -751,8 +751,8 @@ export function useNearbyAudio({
           activeSourceTypeRef.current = 'speech';
           setAudioSourceType('speech');
           window.speechSynthesis.speak(utterance);
-        } catch {
-          // Fall back gracefully
+        } catch (err) {
+          console.warn('[useNearbyAudio] speechSynthesis.speak() failed', err);
         }
       };
 
@@ -1033,8 +1033,8 @@ export function useNearbyAudio({
       if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
         try {
           window.speechSynthesis.cancel(); // Cancel to avoid Chrome pause/resume queue issues
-        } catch {
-          // Ignore
+        } catch (err) {
+          console.warn('[useNearbyAudio] speechSynthesis.cancel() failed while pausing', err);
         }
       }
       activeUtteranceRef.current = null;
@@ -1064,7 +1064,8 @@ export function useNearbyAudio({
             setPlaybackStatus('playing');
             setIsPlaying(true);
           }
-        } catch {
+        } catch (err) {
+          console.warn('[useNearbyAudio] resuming audio playback failed', err);
           setNotice(cannotResumeText || 'Không thể phát tiếp âm thanh.');
           setNoticeWarn(true);
           setPlaybackStatus('paused');
