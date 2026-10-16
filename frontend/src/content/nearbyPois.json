@@ -1,6 +1,7 @@
 [
   {
     "id": "poi-1",
+    "qrToken": "qr-dinh-doc-lap-01",
     "slug": "dinh-doc-lap",
     "stopOrder": 1,
     "name": {
@@ -68,6 +69,7 @@
   },
   {
     "id": "poi-2",
+    "qrToken": "qr-duc-ba-01",
     "slug": "nha-tho-duc-ba",
     "stopOrder": 2,
     "name": {
@@ -135,6 +137,7 @@
   },
   {
     "id": "poi-3",
+    "qrToken": "qr-buu-dien-01",
     "slug": "buu-dien-trung-tam",
     "stopOrder": 3,
     "name": {
@@ -198,6 +201,7 @@
   },
   {
     "id": "poi-4",
+    "qrToken": "qr-ben-thanh-01",
     "slug": "cho-ben-thanh",
     "stopOrder": 4,
     "name": {
@@ -261,6 +265,7 @@
   },
   {
     "id": "poi-5",
+    "qrToken": "qr-bao-tang-chung-tich-01",
     "slug": "bao-tang-chung-tich-chien-tranh",
     "stopOrder": 5,
     "name": {

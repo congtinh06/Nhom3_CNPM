@@ -110,7 +110,15 @@ export type NearbyKey =
   | 'stopListHeading'
   | 'stopListAria'
   | 'detailAreaAria'
-  | 'noVoiceForLanguage';
+  | 'noVoiceForLanguage'
+  | 'qrCardAria'
+  | 'qrScanHint'
+  | 'qrDownload'
+  | 'qrCopyLink'
+  | 'qrLinkCopied'
+  | 'qrShare'
+  | 'qrModalTitle'
+  | 'qrShowBtn';
 
 export const NATIVE_LANG_NAMES: Record<SupportedLanguage, string> = {
   vi: 'Tiếng Việt',
@@ -240,6 +248,14 @@ export const NEARBY_DICTIONARY: Record<SupportedLanguage, Record<NearbyKey, stri
     stopListAria: 'Danh sách các điểm dừng trong hành trình',
     detailAreaAria: 'Chi tiết điểm dừng đang chọn',
     noVoiceForLanguage: 'Thiết bị chưa có giọng đọc tiếng Việt.',
+    qrCardAria: 'Mã QR để mở điểm này trên điện thoại',
+    qrScanHint: 'Quét để nghe trên điện thoại',
+    qrDownload: 'Tải QR',
+    qrCopyLink: 'Sao chép link',
+    qrLinkCopied: 'Đã sao chép liên kết',
+    qrShare: 'Chia sẻ',
+    qrModalTitle: 'Mã QR',
+    qrShowBtn: 'Hiện mã QR',
   },
   en: {
     heroEyebrow: 'AUDIO TOUR · 5 LANDMARKS',
@@ -354,6 +370,14 @@ export const NEARBY_DICTIONARY: Record<SupportedLanguage, Record<NearbyKey, stri
     stopListAria: 'List of tour stops in the itinerary',
     detailAreaAria: 'Selected stop details',
     noVoiceForLanguage: 'No English voice found on this device.',
+    qrCardAria: 'QR code to open this stop on your phone',
+    qrScanHint: 'Scan to listen on your phone',
+    qrDownload: 'Download QR',
+    qrCopyLink: 'Copy link',
+    qrLinkCopied: 'Link copied',
+    qrShare: 'Share',
+    qrModalTitle: 'QR code',
+    qrShowBtn: 'Show QR code',
   },
   /* DRAFT: needs native review */
   ko: {
@@ -468,6 +492,14 @@ export const NEARBY_DICTIONARY: Record<SupportedLanguage, Record<NearbyKey, stri
     stopListAria: '투어 코스 명소 목록',
     detailAreaAria: '선택된 명소 상세 정보',
     noVoiceForLanguage: '이 기기에는 한국어 음성이 지원되지 않습니다.',
+    qrCardAria: '휴대폰에서 이 지점을 열 QR 코드',
+    qrScanHint: '휴대폰으로 스캔하여 듣기',
+    qrDownload: 'QR 다운로드',
+    qrCopyLink: '링크 복사',
+    qrLinkCopied: '링크를 복사했습니다',
+    qrShare: '공유',
+    qrModalTitle: 'QR 코드',
+    qrShowBtn: 'QR 코드 표시',
   },
   /* DRAFT: needs native review */
   ja: {
@@ -582,6 +614,14 @@ export const NEARBY_DICTIONARY: Record<SupportedLanguage, Record<NearbyKey, stri
     stopListAria: 'ツアー行程のスポット一覧',
     detailAreaAria: '選択中のスポット詳細',
     noVoiceForLanguage: 'このデバイスには日本語の音声がありません。',
+    qrCardAria: 'スマートフォンでこのスポットを開くQRコード',
+    qrScanHint: 'スマートフォンでスキャンして再生',
+    qrDownload: 'QRをダウンロード',
+    qrCopyLink: 'リンクをコピー',
+    qrLinkCopied: 'リンクをコピーしました',
+    qrShare: '共有',
+    qrModalTitle: 'QRコード',
+    qrShowBtn: 'QRコードを表示',
   },
 };
 
@@ -598,6 +638,14 @@ export const UNREVIEWED_CJK_KEYS: NearbyKey[] = [
   'stopListHeading',
   'stopListAria',
   'detailAreaAria',
+  'qrCardAria',
+  'qrScanHint',
+  'qrDownload',
+  'qrCopyLink',
+  'qrLinkCopied',
+  'qrShare',
+  'qrModalTitle',
+  'qrShowBtn',
 ];
 
 const LOCALE_MAP: Record<SupportedLanguage, string> = {

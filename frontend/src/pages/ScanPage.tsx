@@ -6,6 +6,7 @@ import { normalizeApiError } from '../api/errors';
 import { useAudioPlayer } from '../hooks/useAudioPlayer';
 import { unlockAudio } from '../lib/audioUnlock';
 import { PoiDetail, SupportedLanguage } from '../types';
+import '../styles/scan.css';
 
 export const ScanPage: React.FC = () => {
   const { token } = useParams<{ token?: string }>();
@@ -31,6 +32,9 @@ export const ScanPage: React.FC = () => {
   const [cameraActive, setCameraActive] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [pendingPlay, setPendingPlay] = useState(false);
+  const [expanded, setExpanded] = useState(false);
+  const [showScanner, setShowScanner] = useState(false);
+  const [imgError, setImgError] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
@@ -49,6 +53,8 @@ export const ScanPage: React.FC = () => {
         .getPoiByQr(trimmed, lang)
         .then((detail) => {
           setPoiDetail(detail);
+          setExpanded(false);
+          setImgError(false);
           if (isAuto) {
             // Resolved after an await, so browsers block autoplay (no user gesture).
             // Prompt with an explicit button instead of playing silently.
@@ -162,134 +168,211 @@ export const ScanPage: React.FC = () => {
     }
   };
 
-  return (
-    <section className="s sp" style={{ minHeight: '60vh', marginTop: 80 }}>
-      <h2>Quét mã QR</h2>
-      <p style={{ marginBottom: 16 }}>
-        Nhập mã QR của điểm du lịch hoặc sử dụng máy ảnh để quét mã trực tiếp. (Lưu ý: Camera và GPS yêu cầu HTTPS hoặc localhost).
-      </p>
+  const handleScanAnother = () => {
+    stopCamera();
+    stopAudio();
+    setPoiDetail(null);
+    setErrorMessage(null);
+    setPendingPlay(false);
+    setInputToken('');
+    setExpanded(false);
+    setShowScanner(true);
+  };
 
-      <form onSubmit={handleSubmit} style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 16 }}>
+  const renderScanner = () => (
+    <>
+      <form onSubmit={handleSubmit} className="scan-form">
         <input
           type="text"
-          placeholder="Nhập mã QR (ví dụ: DINH_DOC_LAP_VI)..."
+          placeholder="Nhập mã QR (ví dụ: qr-dinh-doc-lap-01)..."
           value={inputToken}
           onChange={(e) => setInputToken(e.target.value)}
-          style={{ flex: '1 1 240px', padding: '10px 14px', border: '2px solid var(--brown)', borderRadius: 999 }}
+          className="scan-input"
         />
         <button type="submit" className="tb" disabled={loading}>
           {loading ? 'Đang tra cứu...' : 'Tra cứu mã'}
         </button>
-        <button
-          type="button"
-          className="tb"
-          onClick={cameraActive ? stopCamera : startCamera}
-        >
+        <button type="button" className="tb" onClick={cameraActive ? stopCamera : startCamera}>
           <Camera size={15} strokeWidth={1.75} aria-hidden="true" />
           {cameraActive ? 'Tắt camera' : 'Bật camera'}
         </button>
       </form>
 
-      {cameraError && (
-        <p style={{ color: '#c0392b', marginBottom: 12 }}>{cameraError}</p>
-      )}
+      {cameraError && <p className="scan-camera-error">{cameraError}</p>}
 
       {cameraActive && (
-        <div style={{ maxWidth: 400, margin: '16px 0', border: '2px solid var(--brown)', borderRadius: 14, overflow: 'hidden' }}>
-          <video ref={videoRef} style={{ width: '100%', height: 'auto', display: 'block' }} muted playsInline />
-          <p style={{ padding: 8, fontSize: 13, textAlign: 'center', background: 'var(--cream)', color: 'var(--ink)' }}>
-            Đang quét mã QR từ camera...
-          </p>
+        <div className="scan-camera-frame">
+          <video ref={videoRef} className="scan-camera-video" muted playsInline />
+          <p className="scan-camera-note">Đang quét mã QR từ camera...</p>
         </div>
       )}
+    </>
+  );
+
+  const displayName = poiDetail ? poiDetail.title || poiDetail.name : '';
+  const narrativeText = poiDetail ? poiDetail.description || poiDetail.summary : '';
+
+  return (
+    <section className="s sp scan-page">
+      {!poiDetail && (
+        <header className="scan-header">
+          <h2>Quét mã QR</h2>
+          <p className="scan-intro">
+            Nhập mã QR của điểm du lịch hoặc sử dụng máy ảnh để quét mã trực tiếp.
+            (Lưu ý: Camera và GPS yêu cầu HTTPS hoặc localhost).
+          </p>
+        </header>
+      )}
+
+      {!poiDetail && renderScanner()}
 
       {loading && <p className="cn">Đang tải thông tin điểm du lịch từ mã QR...</p>}
 
       {errorMessage && (
-        <div style={{ margin: '16px 0', padding: 16, background: '#fcebe6', border: '1px solid #c0392b', borderRadius: 12 }}>
-          <p style={{ color: '#c0392b' }}>{errorMessage}</p>
+        <div className="scan-error" role="alert">
+          <p>{errorMessage}</p>
         </div>
       )}
 
       {poiDetail && (
-        <div style={{ marginTop: 24, padding: 20, border: '2px solid #e7dcc6', borderRadius: 14, background: '#fff' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
-            <h3 style={{ margin: 0, color: 'var(--brown)', fontSize: 24 }}>
-              {poiDetail.title || poiDetail.name}
-            </h3>
+        <article className="scan-result">
+          <div className="scan-result-grid">
+            <div className="scan-media">
+              {poiDetail.thumbnailUrl && !imgError ? (
+                <img
+                  className="scan-media-img"
+                  src={poiDetail.thumbnailUrl}
+                  alt=""
+                  loading="lazy"
+                  decoding="async"
+                  onError={() => setImgError(true)}
+                />
+              ) : (
+                <div className="scan-media-fallback" aria-hidden="true">
+                  <Volume2 size={40} strokeWidth={1.25} />
+                </div>
+              )}
+              {poiDetail.categoryNameVi && (
+                <span className="scan-category">{poiDetail.categoryNameVi}</span>
+              )}
+              <h3 className="scan-title">{displayName}</h3>
+            </div>
 
-            <div style={{ display: 'flex', gap: 4 }}>
-              {(['vi', 'en', 'ja', 'ko'] as const).map((l) => (
+            <div className="scan-content">
+              <div className="scan-audio-row">
                 <button
-                  key={l}
                   type="button"
-                  className="tb"
-                  style={{
-                    padding: '3px 8px',
-                    fontSize: 12,
-                    background: lang === l ? 'var(--brown)' : 'transparent',
-                    color: lang === l ? 'var(--cream)' : 'var(--brown)',
-                  }}
-                  aria-pressed={lang === l}
+                  className="scan-listen-btn"
+                  aria-pressed={isPlaying(poiDetail.id)}
                   onClick={() => {
-                    setLang(l);
-                    if (poiDetail.qrToken) {
-                      api.getPoiByQr(poiDetail.qrToken, l).then(setPoiDetail);
-                    }
+                    unlockAudio();
+                    setPendingPlay(false);
+                    playAudio({
+                      poiId: poiDetail.id,
+                      audioUrl: poiDetail.audioUrl,
+                      audioStatus: poiDetail.audioStatus,
+                      title: poiDetail.title || poiDetail.name,
+                      textToSpeak: poiDetail.description || poiDetail.summary,
+                      lang,
+                    });
                   }}
                 >
-                  {l.toUpperCase()}
+                  {isPlaying(poiDetail.id) ? (
+                    <>
+                      <Pause size={18} strokeWidth={1.75} aria-hidden="true" />
+                      Dừng thuyết minh
+                    </>
+                  ) : (
+                    <>
+                      <Volume2 size={18} strokeWidth={1.75} aria-hidden="true" />
+                      {pendingPlay ? 'Bấm để nghe' : 'Nghe thuyết minh'}
+                    </>
+                  )}
                 </button>
-              ))}
+
+                <div className="scan-lang-chips" role="group" aria-label="Chọn ngôn ngữ">
+                  {(['vi', 'en', 'ja', 'ko'] as const).map((l) => (
+                    <button
+                      key={l}
+                      type="button"
+                      className={`scan-lang-btn ${lang === l ? 'is-active' : ''}`}
+                      aria-pressed={lang === l}
+                      onClick={() => {
+                        setLang(l);
+                        if (poiDetail.qrToken) {
+                          api.getPoiByQr(poiDetail.qrToken, l).then(setPoiDetail);
+                        }
+                      }}
+                    >
+                      {l.toUpperCase()}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {poiDetail.address && (
+                <p className="scan-address">
+                  <span className="scan-address-label">Địa chỉ:</span> {poiDetail.address}
+                </p>
+              )}
+
+              {narrativeText && (
+                <div className="scan-narrative-wrap">
+                  <p className={`scan-narrative ${expanded ? 'is-expanded' : 'is-clamped'}`}>
+                    {narrativeText}
+                  </p>
+                  <button
+                    type="button"
+                    className="scan-more-btn"
+                    aria-expanded={expanded}
+                    onClick={() => setExpanded((v) => !v)}
+                  >
+                    {expanded ? 'Thu gọn' : 'Xem thêm'}
+                  </button>
+                </div>
+              )}
+
+              <div className="scan-result-actions">
+                <button type="button" className="tb" onClick={handleScanAnother}>
+                  Quét mã khác
+                </button>
+                <button
+                  type="button"
+                  className="tb"
+                  onClick={() => navigate('/diem-du-lich')}
+                >
+                  Xem trên bản đồ
+                </button>
+              </div>
             </div>
           </div>
 
-          <p style={{ marginTop: 12 }}>{poiDetail.description || poiDetail.summary}</p>
-          {poiDetail.address && <p style={{ fontSize: 13, color: '#666' }}>Địa chỉ: {poiDetail.address}</p>}
-
-          <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
+          <div className="scan-secondary">
             <button
               type="button"
-              className="tb"
-              aria-pressed={isPlaying(poiDetail.id)}
+              className="scan-secondary-toggle"
+              aria-expanded={showScanner}
               onClick={() => {
-                unlockAudio();
-                setPendingPlay(false);
-                playAudio({
-                  poiId: poiDetail.id,
-                  audioUrl: poiDetail.audioUrl,
-                  audioStatus: poiDetail.audioStatus,
-                  title: poiDetail.title || poiDetail.name,
-                  textToSpeak: poiDetail.description || poiDetail.summary,
-                  lang,
-                });
+                if (showScanner) stopCamera();
+                setShowScanner((v) => !v);
               }}
             >
-              {isPlaying(poiDetail.id) ? (
-                <>
-                  <Pause size={15} strokeWidth={1.75} aria-hidden="true" />
-                  Dừng thuyết minh
-                </>
-              ) : (
-                <>
-                  <Volume2 size={15} strokeWidth={1.75} aria-hidden="true" />
-                  {pendingPlay ? 'Bấm để nghe' : 'Nghe thuyết minh'}
-                </>
-              )}
+              {showScanner ? 'Ẩn nhập mã / camera' : 'Nhập mã hoặc bật camera'}
             </button>
+            {showScanner && <div className="scan-secondary-body">{renderScanner()}</div>}
           </div>
-        </div>
+        </article>
       )}
 
-      <p style={{ marginTop: 24 }}>
-        <button
-          type="button"
-          className="tb"
-          onClick={() => navigate('/')}
-        >
-          ← Về trang chủ
-        </button>
-      </p>
+      {!poiDetail && (
+        <p className="scan-home">
+          <button type="button" className="tb" onClick={() => navigate('/')}>
+            ← Về trang chủ
+          </button>
+        </p>
+      )}
     </section>
   );
 };
+
+export default ScanPage;

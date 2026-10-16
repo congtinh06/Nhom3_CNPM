@@ -26,6 +26,7 @@ export interface NarrationData {
 
 export interface GeoPoi {
   id: string;
+  qrToken?: string | null;
   name: Record<SupportedLanguage, string>;
   lat: number;
   lng: number;

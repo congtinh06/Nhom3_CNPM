@@ -51,6 +51,9 @@ dist-ssr/
 scratch/
 test-output/
 
+# Generated QR codes for manual phone testing
+qr-output/
+
 # Tai lieu no bo (khong dua len GitHub)
 *.docx
 *.pdf

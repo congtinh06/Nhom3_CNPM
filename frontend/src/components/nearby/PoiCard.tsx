@@ -3,6 +3,7 @@ import { GeoPoi } from '../../pages/NearbyPage';
 import { SupportedLanguage } from '../../types';
 import { splitTranscriptIntoSentences } from '../../hooks/useNearbyAudio';
 import { t } from '../../content/nearbyI18n';
+import { PlaceQR, isQrAvailable } from '../common/PlaceQR';
 
 export const resolveImagePath = (imgPath?: string, slug?: string): string => {
   const base = import.meta.env.BASE_URL || '/';
@@ -82,6 +83,7 @@ export const PoiCard = React.memo<PoiCardProps>(function PoiCard({
 
   const [imageError, setImageError] = useState(false);
   const [chapterMode, setChapterMode] = useState<'listen' | 'read'>('listen');
+  const [qrOpen, setQrOpen] = useState(false);
   const activeSentenceRef = useRef<HTMLSpanElement | null>(null);
 
   useEffect(() => {
@@ -93,6 +95,17 @@ export const PoiCard = React.memo<PoiCardProps>(function PoiCard({
       setChapterMode('read');
     }
   }, [forceReadMode]);
+
+  useEffect(() => {
+    if (!qrOpen || typeof window === 'undefined') return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setQrOpen(false);
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [qrOpen]);
+
+  const qrAvailable = isQrAvailable(poi);
 
   const isCardPlaying = isCurrent && isPlaying;
 
@@ -321,6 +334,23 @@ export const PoiCard = React.memo<PoiCardProps>(function PoiCard({
                 : resolvedListenText.replace('▶ ', '')}
             </span>
           </button>
+          {qrAvailable && (
+            <button
+              type="button"
+              className="chapter-qr-btn"
+              data-id={poi.id}
+              title={t(currentLang, 'qrShowBtn')}
+              aria-label={t(currentLang, 'qrShowBtn')}
+              onClick={(e) => {
+                e.stopPropagation();
+                setQrOpen(true);
+              }}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" fill="currentColor">
+                <path d="M3 3h8v8H3V3zm2 2v4h4V5H5zm8-2h8v8h-8V3zm2 2v4h4V5h-4zM3 13h8v8H3v-8zm2 2v4h4v-4H5zm11-2h2v2h-2v-2zm4 0h2v2h-2v-2zm-4 4h2v2h-2v-2zm2 2h2v2h-2v-2zm2-2h2v4h-2v-4zm-4 4h2v2h-2v-2zm4 2h2v2h-2v-2z" />
+              </svg>
+            </button>
+          )}
           {formattedAudioDuration && (
             <div className="chapter-play-meta">
               <span className="chapter-play-duration">{formattedAudioDuration}</span>
@@ -393,6 +423,41 @@ export const PoiCard = React.memo<PoiCardProps>(function PoiCard({
           </dl>
         )}
       </div>
+
+      {qrOpen && qrAvailable && (
+        <div
+          className="place-qr-modal-overlay"
+          role="dialog"
+          aria-modal="true"
+          aria-label={t(currentLang, 'qrModalTitle')}
+          onClick={(e) => {
+            e.stopPropagation();
+            setQrOpen(false);
+          }}
+        >
+          <div className="place-qr-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="place-qr-modal-head">
+              <span className="place-qr-modal-title">{t(currentLang, 'qrModalTitle')}</span>
+              <button
+                type="button"
+                className="place-qr-modal-close"
+                aria-label="Đóng"
+                onClick={() => setQrOpen(false)}
+              >
+                ×
+              </button>
+            </div>
+            <p className="place-qr-modal-name">{displayName}</p>
+            <PlaceQR
+              poi={poi}
+              size={220}
+              lang={currentLang}
+              label={displayName}
+              showActions
+            />
+          </div>
+        </div>
+      )}
     </article>
   );
 });

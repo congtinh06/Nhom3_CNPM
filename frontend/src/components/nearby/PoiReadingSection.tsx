@@ -3,6 +3,7 @@ import { GeoPoi, getNarration } from '../../pages/NearbyPage';
 import { SupportedLanguage } from '../../types';
 import { SortedPoiItem } from './PoiList';
 import { t } from '../../content/nearbyI18n';
+import { PlaceQR, isQrAvailable, buildPoiQrUrl } from '../common/PlaceQR';
 
 interface PoiReadingSectionProps {
   activeItem: SortedPoiItem;
@@ -152,6 +153,20 @@ export const PoiReadingSection: React.FC<PoiReadingSectionProps> = ({
     ? t(currentLang, 'nextStop', { name: getPoiName(nextItem.poi) })
     : t(currentLang, 'nextBtn');
 
+  const qrAvailable = isQrAvailable(poi);
+
+  const handleShare = () => {
+    const url = buildPoiQrUrl(poi);
+    if (!url) return;
+    if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
+      navigator.share({ title: displayName, text: displayName, url }).catch(() => {});
+      return;
+    }
+    if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+      navigator.clipboard.writeText(url).catch(() => {});
+    }
+  };
+
   return (
     <section className="nearby-reading-section" aria-label={`Nội dung thuyết minh: ${displayName}`}>
       <div className="nearby-reading-container" data-sync={syncMode}>
@@ -243,6 +258,33 @@ export const PoiReadingSection: React.FC<PoiReadingSectionProps> = ({
               </div>
             )}
           </dl>
+        )}
+
+        {/* QR card: listen on a phone. Hidden on mobile (share button shown instead). */}
+        {qrAvailable && (
+          <div className="place-qr-detail-wrap">
+            <div
+              className="place-qr-detail-card"
+              role="region"
+              aria-label={t(currentLang, 'qrCardAria')}
+            >
+              <PlaceQR
+                poi={poi}
+                size={128}
+                lang={currentLang}
+                label={displayName}
+                showActions
+              />
+            </div>
+            <button
+              type="button"
+              className="place-qr-share-btn"
+              onClick={handleShare}
+              aria-label={t(currentLang, 'qrShare')}
+            >
+              {t(currentLang, 'qrShare')}
+            </button>
+          </div>
         )}
 
         {/* Bottom Navigation: Previous / Next buttons (min 44px hit area, disabled at ends, no chevron icons) */}
