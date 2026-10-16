@@ -99,11 +99,20 @@ export const tourismTeaserContent = {
     'Mỗi điểm đến kể một câu chuyện khác nhau: Dinh Độc Lập của lịch sử, Chợ Bến Thành của đời sống thường ngày, Địa đạo Củ Chi của ký ức chiến tranh và Landmark 81 của một thành phố đang vươn lên.',
 };
 
+export const siteContact = {
+  address: '338 An Dương Vương',
+  fullAddress: '338 An Dương Vương, Phường 4, Quận 5, TP. Hồ Chí Minh',
+  phone: '0346358399',
+  email: 'congtinh1932006@gmail.com',
+  hours: '8h – 23h',
+  directionsUrl: 'https://www.google.com/maps/dir/?api=1&destination=10.7599%2C106.6791',
+};
+
 export const contactContent = {
   title: 'Liên hệ',
   paragraph: 'Bạn có góp ý hoặc muốn đề xuất thêm địa điểm? Gửi cho mình nhé.',
-  email: 'hello@example.com',
-  phone: '0900 000 000',
+  email: siteContact.email,
+  phone: siteContact.phone,
   area: 'TP. Hồ Chí Minh',
 };
 

@@ -1436,11 +1436,18 @@ dialog p {
 
 /* Contact */
 .ft {
+  --ft-muted: rgba(255, 241, 199, 0.62);
+  --ft-border: rgba(255, 241, 199, 0.28);
+  --ft-accent: #e8a33d;
   background: var(--black);
   color: var(--cream);
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 28px;
+}
+
+.ft p {
+  color: var(--ft-muted);
 }
 
 .ft h2 {
@@ -1455,26 +1462,55 @@ dialog p {
 
 .ft input,
 .ft textarea {
-  border: 2px solid var(--cream);
+  width: 100%;
+  box-sizing: border-box;
+  border: 2px solid var(--ft-border);
   background: transparent;
   color: var(--cream);
   border-radius: 12px;
+  padding: 11px 14px;
+  font: inherit;
+  font-size: 15px;
+  line-height: 1.5;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.ft input {
+  height: 44px;
 }
 
 .ft textarea {
   min-height: 100px;
-  font: inherit;
-  padding: 10px 14px;
+  resize: vertical;
+}
+
+.ft input::placeholder,
+.ft textarea::placeholder {
+  color: var(--ft-muted);
+}
+
+.ft input:focus,
+.ft textarea:focus {
+  outline: none;
+  border-color: var(--ft-accent);
+  box-shadow: 0 0 0 3px rgba(232, 163, 61, 0.22);
 }
 
 .ft .tb {
-  border-color: var(--cream);
-  color: var(--cream);
   justify-self: start;
+  background: var(--brown);
+  color: #ffffff;
+  border: 1px solid var(--brown);
+  border-radius: 4px;
+  height: 40px;
+  padding: 0 18px;
+  transition: background 0.18s ease, border-color 0.18s ease;
 }
 
 .ft .tb:hover {
-  background: var(--brown);
+  background: #9f3615;
+  border-color: #9f3615;
+  color: #ffffff;
 }
 
 .ft ul {
@@ -1489,10 +1525,18 @@ dialog p {
 .ft li b {
   display: inline-block;
   min-width: 96px;
+  color: var(--ft-accent);
 }
 
 .ft li a {
   color: var(--cream);
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.ft li a:hover {
+  color: var(--ft-accent);
+  text-decoration: underline;
 }
 
 /* Orders Page */

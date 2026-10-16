@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Phone, Mail, MapPin, Clock } from 'lucide-react';
-import { footerContent } from '../../content/staticSections';
+import { footerContent, siteContact } from '../../content/staticSections';
 
 export const Footer: React.FC = () => {
   const handleTopClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
@@ -45,19 +45,19 @@ export const Footer: React.FC = () => {
           <ul className="ftr-list">
             <li className="ftr-line">
               <MapPin size={14} aria-hidden="true" />
-              <span>338 An Dương Vương</span>
+              <span>{siteContact.address}</span>
             </li>
             <li className="ftr-line">
               <Phone size={14} aria-hidden="true" />
-              <a href="tel:0346358399">0346358399</a>
+              <a href={`tel:${siteContact.phone}`}>{siteContact.phone}</a>
             </li>
             <li className="ftr-line">
               <Mail size={14} aria-hidden="true" />
-              <a href="mailto:congtinh1932006@gmail.com">congtinh1932006@gmail.com</a>
+              <a href={`mailto:${siteContact.email}`}>{siteContact.email}</a>
             </li>
             <li className="ftr-line">
               <Clock size={14} aria-hidden="true" />
-              <span>8h - 23h</span>
+              <span>{siteContact.hours}</span>
             </li>
           </ul>
         </div>

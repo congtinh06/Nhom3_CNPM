@@ -4,15 +4,16 @@ import { PageHero } from '../components/common/PageHero';
 import { submitFeedback } from '../services/feedbackService';
 import { useDocumentMeta } from '../hooks/useDocumentMeta';
 import { ContactMap } from '../components/contact/ContactMap';
+import { siteContact } from '../content/staticSections';
 import '../styles/contact.css';
 
-const CONTACT_ADDRESS = '338 An Dương Vương';
-const CONTACT_FULL_ADDRESS = '338 An Dương Vương, Phường 4, Quận 5, TP. Hồ Chí Minh';
-const CONTACT_PHONE = '0346358399';
-const CONTACT_EMAIL = 'congtinh1932006@gmail.com';
-const CONTACT_HOURS = '8h – 23h';
+const CONTACT_ADDRESS = siteContact.address;
+const CONTACT_FULL_ADDRESS = siteContact.fullAddress;
+const CONTACT_PHONE = siteContact.phone;
+const CONTACT_EMAIL = siteContact.email;
+const CONTACT_HOURS = siteContact.hours;
 
-const DIRECTIONS_URL = 'https://www.google.com/maps/dir/?api=1&destination=10.7599%2C106.6791';
+const DIRECTIONS_URL = siteContact.directionsUrl;
 
 const MESSAGE_MIN = 10;
 
