@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { api } from '../api/client';
+import { getSharedAudio } from '../lib/audioUnlock';
 import { useToast } from '../context/ToastContext';
 
 export type PlayerState = 'idle' | 'loading' | 'playing' | 'error';
@@ -85,7 +86,10 @@ export const useAudioPlayer = () => {
         setPlayingPoiId(poiId);
 
         const fullAudioUrl = api.getAudioUrl(audioUrl);
-        const audio = new Audio(fullAudioUrl);
+        const audio = getSharedAudio();
+        audio.src = fullAudioUrl;
+        audio.playbackRate = 1;
+        audio.currentTime = 0;
         audioRef.current = audio;
 
         audio.oncanplay = () => {
