@@ -26,9 +26,10 @@ public class AudioController {
 
     private static final long CHUNK_SIZE = 1024 * 1024L; // 1 MB chunk for range streaming
 
-    // no-store: prevent shared caches (CDN/edge) from storing audio responses;
-    // a cached partial (206) must never be replayed as a full response to other clients.
-    private static final String AUDIO_CACHE_CONTROL = "no-store";
+    // File names embed an 8-char content hash, so an audio response is immutable and
+    // safe to cache. max-age=86400 lets mobile clients and the CDN reuse the bytes
+    // instead of re-fetching on every play.
+    private static final String AUDIO_CACHE_CONTROL = "public, max-age=86400";
 
     private final AudioStorageService audioStorageService;
 
