@@ -7,7 +7,6 @@ import {
   isBackendDetailForPoi,
   normalizePoiName,
   resolvePlayback,
-  ENABLE_REMOTE_AUDIO,
   SPEECH_LANG_MAP,
   findMatchingVoice,
   useNearbyAudio,
@@ -297,8 +296,7 @@ describe('Audio Resolution, Voice Selection & Linkage (Tasks 1 to 6)', () => {
     }
   });
 
-  it('(b) with ENABLE_REMOTE_AUDIO=false no remote audio is used and source is strictly speech', () => {
-    expect(ENABLE_REMOTE_AUDIO).toBe(false);
+  it('(b) stops without backend audio resolve to speech; a READY audio URL resolves to remote', () => {
     for (const poi of pois) {
       for (const lang of languages) {
         const fullRes = resolvePlayback(poi, lang, 'full');
@@ -310,6 +308,25 @@ describe('Audio Resolution, Voice Selection & Linkage (Tasks 1 to 6)', () => {
         expect(shortRes.url).toBeUndefined();
       }
     }
+
+    const remotePoi: GeoPoi = {
+      ...pois[0]!,
+      audioUrl: '/api/tts/audio/poi_1_vi_ab12cd34.mp3',
+      audioStatus: 'READY',
+    };
+    for (const lang of languages) {
+      const remoteRes = resolvePlayback(remotePoi, lang, 'short');
+      expect(remoteRes.source).toBe('remote');
+      expect(remoteRes.url).toBe('/api/tts/audio/poi_1_vi_ab12cd34.mp3');
+    }
+
+    // A non-READY status must never be treated as remote.
+    const pendingPoi: GeoPoi = {
+      ...pois[0]!,
+      audioUrl: '/api/tts/audio/poi_1_vi_ab12cd34.mp3',
+      audioStatus: 'PENDING',
+    };
+    expect(resolvePlayback(pendingPoi, 'vi', 'short').source).toBe('speech');
   });
 
   it('(c) utterance.lang matches the selected language', () => {

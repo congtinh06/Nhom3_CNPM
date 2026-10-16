@@ -1,14 +1,8 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { api } from '../api/client';
 import { SupportedLanguage } from '../types';
+import { getSharedAudio } from '../lib/audioUnlock';
 import { GeoPoi, getNarration, NarrationLayer } from '../pages/NearbyPage';
-
-/**
- * Feature flag: while false, remote audio (backend TTS and static ambient files)
- * is never used; playback is always speechSynthesis reading the exact frontend narration text.
- * NOTE: This may only be enabled when the backend seeds the same 5 POIs with the same text.
- */
-export const ENABLE_REMOTE_AUDIO = false;
 
 export const SPEECH_LANG_MAP: Record<SupportedLanguage, string> = {
   vi: 'vi-VN',
@@ -25,7 +19,7 @@ export const NO_VOICE_MESSAGES: Record<SupportedLanguage, string> = {
 };
 
 export interface PlaybackResolution {
-  source: 'speech' | 'backend' | 'static';
+  source: 'speech' | 'remote';
   url?: string;
   text: string;
   lang: SupportedLanguage;
@@ -38,6 +32,7 @@ export interface PlaybackResolution {
  *   - vi/en full:  poi.narration.full[lang] (joined by a space)
  *   - ja/ko:       poi.transcript[lang] (full does not exist in seed, uses transcript)
  * Strictly NO cross-language fallback, NO cross-stop data.
+ * Remote backend audio is used only when the stop carries a READY audio URL.
  */
 export function resolvePlayback(
   poi: GeoPoi,
@@ -56,22 +51,10 @@ export function resolvePlayback(
     text = poi.narration?.short?.[lang] || poi.transcript?.[lang] || '';
   }
 
-  // When remote audio is disabled, playback is strictly speechSynthesis reading exact FE text
-  if (!ENABLE_REMOTE_AUDIO) {
+  if (poi.audioStatus === 'READY' && poi.audioUrl) {
     return {
-      source: 'speech',
-      text,
-      lang,
-    };
-  }
-
-  // Preserved remote audio path (only active if ENABLE_REMOTE_AUDIO is true)
-  // May only be enabled when the backend seeds the same 5 POIs with the same text.
-  const staticUrl = poi.audio?.[lang];
-  if (typeof staticUrl === 'string' && staticUrl.trim()) {
-    return {
-      source: 'static',
-      url: staticUrl,
+      source: 'remote',
+      url: poi.audioUrl,
       text,
       lang,
     };
@@ -845,222 +828,161 @@ export function useNearbyAudio({
         setNoticeWarn(false);
       }
 
-      // Synchronously start speech narration
-      setAudioSourceType('speech');
-      setIsHtml5Audio(false);
-      speakText(chosenText, currentLang, speedRef.current, token, 0, hasFullText);
+      if (playback.source === 'remote' && playback.url) {
+        // Backend TTS path: reuse the audio element unlocked by a user gesture.
+        const fullUrl = api.getAudioUrl(playback.url);
 
-      stopTimer();
-      timerRef.current = setInterval(() => {
-        if (token !== requestTokenRef.current) return;
-        setCurrentTime((prev) => {
-          if (token !== requestTokenRef.current) return prev;
-          const next = prev + 0.1 * speedRef.current;
-          if (hasFullText) {
-            updateSentenceHighlight(next, estDuration);
-            if (!hasBoundaryEventsRef.current) {
-              const tLen = currentTextLengthRef.current;
-              const rawOffset = estDuration > 0 ? (next / estDuration) * tLen : 0;
-              const snapped = snapToWordBoundary(currentFullTextRef.current, rawOffset, currentLang);
-              setActiveCharOffset(snapped.charIndex);
-              setActiveCharLength(snapped.charLength);
-            }
-          } else {
-            setActiveSentenceIndex(null);
-            setActiveCharOffset(null);
-            setActiveCharLength(0);
+        stopTimer();
+        stopWatchdog();
+        if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+          try {
+            window.speechSynthesis.cancel();
+          } catch (err) {
+            console.warn('[NearbyAudio] speechSynthesis.cancel failed before remote playback', err);
           }
-          checkListenedProgress(poiId, next);
-          if (next >= estDuration) {
-            stopTimer();
-            stopWatchdog();
-            setPlaybackStatus('idle');
-            setIsPlaying(false);
-            setActiveSentenceIndex(null);
-            setActiveCharOffset(null);
-            setActiveCharLength(0);
-            setSyncMode('boundary');
-            setCurrentId(null);
-            setCurrentTime(0);
-            setDuration(0);
-            setNotice('');
-            if (poiId) onPoiListenedRef.current?.(poiId);
-            return estDuration;
+        }
+        activeUtteranceRef.current = null;
+
+        const audio = getSharedAudio();
+        audioElemRef.current = audio;
+        audio.src = fullUrl;
+        audio.playbackRate = speedRef.current;
+        audio.currentTime = 0;
+
+        audio.onerror = () => {
+          if (token !== requestTokenRef.current) return;
+          logAudioDev('STOP', { sourceType: 'backend', stopId: poiId, token, reason: 'error' });
+          console.warn('[NearbyAudio] remote audio error, falling back to speech', { poiId, url: fullUrl });
+          setIsHtml5Audio(false);
+          setAudioSourceType('speech');
+          speakText(chosenText, currentLang, speedRef.current, token, 0);
+        };
+
+        audio.onloadedmetadata = () => {
+          if (token !== requestTokenRef.current) return;
+          if (audio.duration && !isNaN(audio.duration)) {
+            setDuration(Math.round(audio.duration));
           }
-          return next;
-        });
-      }, 100);
+        };
 
-      // Task 2: Remote audio path (behind ENABLE_REMOTE_AUDIO flag)
-      // NOTE: May only be enabled when the backend seeds the same 5 POIs with the same text.
-      if (ENABLE_REMOTE_AUDIO) {
-        const numericId = parseInt(poiId.replace(/\D/g, ''), 10);
-        if (!isNaN(numericId) && numericId > 0 && typeof api?.getPoiDetail === 'function') {
-          api.getPoiDetail(numericId, currentLang)
-            .then((detail) => {
-              if (token !== requestTokenRef.current) {
-                logAudioDev('DISCARD_STALE', {
+        audio.ontimeupdate = () => {
+          if (token !== requestTokenRef.current) return;
+          setCurrentTime(audio.currentTime);
+          setActiveSentenceIndex(null);
+          checkListenedProgress(poiId, audio.currentTime);
+        };
+
+        audio.onended = () => {
+          if (token !== requestTokenRef.current) return;
+          logAudioDev('STOP', { sourceType: 'backend', stopId: poiId, token, reason: 'ended' });
+          activeSourceTypeRef.current = null;
+          setPlaybackStatus('idle');
+          setIsPlaying(false);
+          setActiveSentenceIndex(null);
+          setCurrentId(null);
+          setCurrentTime(0);
+          setDuration(0);
+          setNotice('');
+          if (poiId) onPoiListenedRef.current?.(poiId);
+          audioElemRef.current = null;
+        };
+
+        try {
+          const playPromise = audio.play();
+          if (playPromise && typeof playPromise.then === 'function') {
+            playPromise
+              .then(() => {
+                if (token !== requestTokenRef.current) {
+                  audio.pause();
+                  return;
+                }
+                logAudioDev('START', {
+                  sourceType: 'backend',
                   stopId: poiId,
+                  lang: currentLang,
+                  trigger: triggerType,
                   token,
-                  reason: 'token_mismatch_getPoiDetail',
                 });
-                return;
-              }
-
-              if (!isBackendDetailForPoi(detail, targetPoi)) {
-                logAudioDev('DISCARD_STALE', {
-                  stopId: poiId,
-                  token,
-                  reason: `backend_poi_mismatch (code=${detail?.code ?? 'none'}, id=${(detail as any)?.id ?? 'none'})`,
-                });
-                if (import.meta.env.DEV) {
-                  console.warn(
-                    '[NearbyAudio] Discarded backend TTS: response does not match the requested stop',
-                    {
-                      requestedStopId: poiId,
-                      requestedName: targetPoi.name.vi,
-                      backendId: (detail as any)?.id,
-                      backendCode: detail?.code,
-                      backendName: detail?.name,
-                    }
-                  );
-                }
-                return;
-              }
-
-              const isFallback = Boolean(
-                detail?.fallbackLanguage ?? (detail as any)?.isFallbackLanguage
-              );
-
-              if (isFallback) {
-                const targetLangName = LANG_DISPLAY_NAMES[currentLang]?.[currentLang] || currentLang;
-                setNotice(fallbackNoticeText(targetLangName));
-                setNoticeWarn(true);
-              }
-
-              if (detail?.audioUrl && detail.audioStatus === 'READY') {
-                const fullUrl = api.getAudioUrl(detail.audioUrl);
-
-                stopTimer();
-                if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-                  try {
-                    window.speechSynthesis.cancel();
-                  } catch {}
-                }
-                activeUtteranceRef.current = null;
-
-                if (audioElemRef.current) {
-                  const prevAudio = audioElemRef.current;
-                  prevAudio.onended = null;
-                  prevAudio.onerror = null;
-                  prevAudio.ontimeupdate = null;
-                  prevAudio.pause();
-                  prevAudio.src = '';
-                  try {
-                    prevAudio.load();
-                  } catch {}
-                  audioElemRef.current = null;
-                }
-
-                const audio = new Audio(fullUrl);
-                audioElemRef.current = audio;
-                audio.playbackRate = speedRef.current;
-
-                audio.onerror = () => {
-                  if (token !== requestTokenRef.current) return;
-                  logAudioDev('STOP', { sourceType: 'backend', stopId: poiId, token, reason: 'error' });
-                  setIsHtml5Audio(false);
-                  setAudioSourceType('speech');
-                  speakText(chosenText, currentLang, speedRef.current, token, 0);
-                };
-
-                audio.onloadedmetadata = () => {
-                  if (token !== requestTokenRef.current) return;
-                  if (audio.duration && !isNaN(audio.duration)) {
-                    setDuration(Math.round(audio.duration));
-                  }
-                };
-
-                audio.ontimeupdate = () => {
-                  if (token !== requestTokenRef.current) return;
-                  setCurrentTime(audio.currentTime);
-                  setActiveSentenceIndex(null);
-                  checkListenedProgress(poiId, audio.currentTime);
-                };
-
-                audio.onended = () => {
-                  if (token !== requestTokenRef.current) return;
-                  logAudioDev('STOP', { sourceType: 'backend', stopId: poiId, token, reason: 'ended' });
-                  activeSourceTypeRef.current = null;
+                activeSourceTypeRef.current = 'backend';
+                setAudioSourceType('backend');
+                setIsHtml5Audio(true);
+                setPlaybackStatus('playing');
+                setIsPlaying(true);
+              })
+              .catch((err) => {
+                if (token !== requestTokenRef.current) return;
+                if (err?.name === 'NotAllowedError' || err?.message?.includes('NotAllowedError')) {
+                  setNotice(clickToPlayText || 'Bấm để phát');
+                  setNoticeWarn(true);
                   setPlaybackStatus('idle');
                   setIsPlaying(false);
-                  setActiveSentenceIndex(null);
-                  setCurrentId(null);
-                  setCurrentTime(0);
-                  setDuration(0);
-                  setNotice('');
-                  if (poiId) onPoiListenedRef.current?.(poiId);
-                  audioElemRef.current = null;
-                };
-
-                try {
-                  const playPromise = audio.play();
-                  if (playPromise && typeof playPromise.then === 'function') {
-                    playPromise
-                      .then(() => {
-                        if (token !== requestTokenRef.current) {
-                          audio.pause();
-                          audio.src = '';
-                          return;
-                        }
-                        logAudioDev('START', {
-                          sourceType: 'backend',
-                          stopId: poiId,
-                          lang: currentLang,
-                          trigger: triggerType,
-                          token,
-                        });
-                        activeSourceTypeRef.current = 'backend';
-                        setAudioSourceType('backend');
-                        setIsHtml5Audio(true);
-                        setPlaybackStatus('playing');
-                        setIsPlaying(true);
-                      })
-                      .catch((err) => {
-                        if (token !== requestTokenRef.current) return;
-                        if (err?.name === 'NotAllowedError' || err?.message?.includes('NotAllowedError')) {
-                          setNotice(clickToPlayText || 'Bấm để phát');
-                          setNoticeWarn(true);
-                          setPlaybackStatus('idle');
-                          setIsPlaying(false);
-                        } else {
-                          setIsHtml5Audio(false);
-                          setAudioSourceType('speech');
-                          speakText(chosenText, currentLang, speedRef.current, token, 0);
-                        }
-                      });
-                  } else {
-                    activeSourceTypeRef.current = 'backend';
-                    setAudioSourceType('backend');
-                    setIsHtml5Audio(true);
-                    setPlaybackStatus('playing');
-                    setIsPlaying(true);
-                  }
-                } catch {
-                  if (token !== requestTokenRef.current) return;
+                } else {
+                  console.warn('[NearbyAudio] remote play rejected, falling back to speech', err);
                   setIsHtml5Audio(false);
                   setAudioSourceType('speech');
                   speakText(chosenText, currentLang, speedRef.current, token, 0);
                 }
-              }
-            })
-            .catch((err) => {
-              if (token !== requestTokenRef.current) return;
-              if (import.meta.env.DEV) {
-                console.log('[NearbyAudio trace] getPoiDetail unavailable:', err?.message);
-              }
-            });
+              });
+          } else {
+            activeSourceTypeRef.current = 'backend';
+            setAudioSourceType('backend');
+            setIsHtml5Audio(true);
+            setPlaybackStatus('playing');
+            setIsPlaying(true);
+          }
+        } catch (err) {
+          if (token !== requestTokenRef.current) return;
+          console.warn('[NearbyAudio] remote playback threw, falling back to speech', err);
+          setIsHtml5Audio(false);
+          setAudioSourceType('speech');
+          speakText(chosenText, currentLang, speedRef.current, token, 0);
         }
+      } else {
+        // Synchronously start speech narration.
+        setAudioSourceType('speech');
+        setIsHtml5Audio(false);
+        speakText(chosenText, currentLang, speedRef.current, token, 0, hasFullText);
+
+        stopTimer();
+        timerRef.current = setInterval(() => {
+          if (token !== requestTokenRef.current) return;
+          setCurrentTime((prev) => {
+            if (token !== requestTokenRef.current) return prev;
+            const next = prev + 0.1 * speedRef.current;
+            if (hasFullText) {
+              updateSentenceHighlight(next, estDuration);
+              if (!hasBoundaryEventsRef.current) {
+                const tLen = currentTextLengthRef.current;
+                const rawOffset = estDuration > 0 ? (next / estDuration) * tLen : 0;
+                const snapped = snapToWordBoundary(currentFullTextRef.current, rawOffset, currentLang);
+                setActiveCharOffset(snapped.charIndex);
+                setActiveCharLength(snapped.charLength);
+              }
+            } else {
+              setActiveSentenceIndex(null);
+              setActiveCharOffset(null);
+              setActiveCharLength(0);
+            }
+            checkListenedProgress(poiId, next);
+            if (next >= estDuration) {
+              stopTimer();
+              stopWatchdog();
+              setPlaybackStatus('idle');
+              setIsPlaying(false);
+              setActiveSentenceIndex(null);
+              setActiveCharOffset(null);
+              setActiveCharLength(0);
+              setSyncMode('boundary');
+              setCurrentId(null);
+              setCurrentTime(0);
+              setDuration(0);
+              setNotice('');
+              if (poiId) onPoiListenedRef.current?.(poiId);
+              return estDuration;
+            }
+            return next;
+          });
+        }, 100);
       }
     },
     [

@@ -33,6 +33,8 @@ export interface GeoPoi {
   category: Record<SupportedLanguage, string>;
   image: string;
   audio: Record<SupportedLanguage, string | number>;
+  audioUrl?: string | null;
+  audioStatus?: string | null;
   transcript: Record<SupportedLanguage, string>;
   narration?: NarrationData;
   stopOrder?: number;

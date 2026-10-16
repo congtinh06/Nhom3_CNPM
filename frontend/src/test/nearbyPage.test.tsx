@@ -920,6 +920,15 @@ describe('NearbyPage - Clean Multilingual & Audio Narration Integration', () => 
   });
 
   describe('Single Audio Controller & Overlap Prevention (Audio Audit Tasks)', () => {
+    // unlockAudio() emits a muted " " utterance on every gesture; ignore it when
+    // counting real narration calls.
+    const spokenTexts = () =>
+      (
+        window.speechSynthesis.speak as unknown as {
+          mock: { calls: Array<[SpeechSynthesisUtterance | undefined]> };
+        }
+      ).mock.calls.filter((call) => (call[0]?.text ?? '') !== ' ');
+
     it('pressing Play twice quickly leaves exactly one active source (second click toggles pause)', () => {
       render(
         <BrowserRouter>
@@ -933,14 +942,14 @@ describe('NearbyPage - Clean Multilingual & Audio Narration Integration', () => 
       act(() => {
         fireEvent.click(playBtn);
       });
-      expect(window.speechSynthesis.speak).toHaveBeenCalledTimes(1);
+      expect(spokenTexts()).toHaveLength(1);
 
       // Second click on the same stop: toggles pause, cancels speech, does not spawn second speech
       act(() => {
         fireEvent.click(playBtn);
       });
       expect(window.speechSynthesis.cancel).toHaveBeenCalled();
-      expect(window.speechSynthesis.speak).toHaveBeenCalledTimes(1);
+      expect(spokenTexts()).toHaveLength(1);
     });
 
     it('starting stop B while stop A plays stops A (cancel called) and plays only B', () => {
@@ -955,7 +964,7 @@ describe('NearbyPage - Clean Multilingual & Audio Narration Integration', () => 
       act(() => {
         fireEvent.click(playBtn1);
       });
-      expect(window.speechSynthesis.speak).toHaveBeenCalledTimes(1);
+      expect(spokenTexts()).toHaveLength(1);
 
       // Select stop 2 (Nhà thờ Đức Bà) from list
       const rows = container.querySelectorAll('.nearby-stop-row');
@@ -970,7 +979,7 @@ describe('NearbyPage - Clean Multilingual & Audio Narration Integration', () => 
       });
 
       expect(window.speechSynthesis.cancel).toHaveBeenCalled();
-      expect(window.speechSynthesis.speak).toHaveBeenCalledTimes(2);
+      expect(spokenTexts()).toHaveLength(2);
     });
 
     it('a stale async audio URL resolving after a newer start is discarded and does not play', async () => {
@@ -1113,7 +1122,7 @@ describe('NearbyPage - Clean Multilingual & Audio Narration Integration', () => 
 
       // Trigger location near stop 1 while already playing
       // Should NOT re-trigger speech
-      expect(window.speechSynthesis.speak).not.toHaveBeenCalled();
+      expect(spokenTexts()).toHaveLength(0);
 
       // Stop manually
       act(() => {
@@ -1121,7 +1130,7 @@ describe('NearbyPage - Clean Multilingual & Audio Narration Integration', () => 
       });
 
       // In the 5000ms guard window, auto narration must NOT restart stop 1
-      expect(window.speechSynthesis.speak).not.toHaveBeenCalled();
+      expect(spokenTexts()).toHaveLength(0);
     });
 
     it('language change stops playback and does not auto-restart; unmount cancels everything', () => {
