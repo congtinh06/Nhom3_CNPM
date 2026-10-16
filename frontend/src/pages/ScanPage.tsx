@@ -298,6 +298,9 @@ export const ScanPage: React.FC = () => {
                       className={`scan-lang-btn ${lang === l ? 'is-active' : ''}`}
                       aria-pressed={lang === l}
                       onClick={() => {
+                        if (l === lang) return;
+                        stopAudio();
+                        setPendingPlay(false);
                         setLang(l);
                         if (poiDetail.qrToken) {
                           api.getPoiByQr(poiDetail.qrToken, l).then(setPoiDetail);

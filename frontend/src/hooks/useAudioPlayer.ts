@@ -2,8 +2,14 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { api } from '../api/client';
 import { getSharedAudio } from '../lib/audioUnlock';
 import { useToast } from '../context/ToastContext';
+import { findMatchingVoice, getAvailableVoices } from './useNearbyAudio';
 
 export type PlayerState = 'idle' | 'loading' | 'playing' | 'error';
+
+// How long to wait for the browser to populate its speech voices before deciding
+// that a Vietnamese voice is genuinely unavailable.
+const SPEECH_VOICE_WAIT_MS = 1500;
+const NO_VI_VOICE_MESSAGE = 'Thiết bị chưa có giọng đọc tiếng Việt';
 
 interface PlayParams {
   poiId: number;
@@ -35,8 +41,11 @@ export const useAudioPlayer = () => {
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const rateLimitedUntilRef = useRef<number>(0);
+  const playTokenRef = useRef<number>(0);
 
   const stopAudio = useCallback(() => {
+    // Invalidate any pending async speech resolution (e.g. waiting for voices).
+    playTokenRef.current += 1;
     if (audioRef.current) {
       audioRef.current.pause();
       audioRef.current.currentTime = 0;
@@ -134,35 +143,59 @@ export const useAudioPlayer = () => {
         const synthesis = window.speechSynthesis;
         synthesis.cancel();
 
+        // Capture a token so a language change / stop during the async voice wait
+        // cannot start a stale utterance.
+        const token = playTokenRef.current;
         const speechText = textToSpeak ? `${title}. ${textToSpeak}` : title;
-        const utterance = new SpeechSynthesisUtterance(speechText);
-        utterance.lang = 'vi-VN';
-        utterance.rate = 0.95;
 
-        const voices = synthesis.getVoices();
-        const viVoice = voices.find((v) => /^vi/i.test(v.lang));
-        if (viVoice) {
+        setPlayerState('loading');
+        setPlayingPoiId(poiId);
+
+        const speakWithVietnameseVoice = (voices: SpeechSynthesisVoice[]) => {
+          if (token !== playTokenRef.current) return;
+
+          const viVoice = findMatchingVoice(voices, 'vi-VN');
+          if (!viVoice) {
+            // Never fall back to an unrelated/default voice for Vietnamese.
+            stopAudio();
+            showToast(NO_VI_VOICE_MESSAGE);
+            return;
+          }
+
+          const utterance = new SpeechSynthesisUtterance(speechText);
+          utterance.lang = 'vi-VN';
           utterance.voice = viVoice;
-        } else if (voices.length > 0) {
-          showToast('Thiết bị chưa có giọng đọc tiếng Việt, giọng đọc có thể không chuẩn.');
+          utterance.rate = 0.95;
+
+          utterance.onstart = () => {
+            if (token !== playTokenRef.current) return;
+            setPlayerState('playing');
+            setPlayingPoiId(poiId);
+            fireAnalytics(poiId, lang);
+          };
+
+          utterance.onend = () => {
+            if (token !== playTokenRef.current) return;
+            stopAudio();
+          };
+
+          utterance.onerror = (event) => {
+            console.warn('[useAudioPlayer] speech synthesis failed', event.error);
+            if (token !== playTokenRef.current) return;
+            stopAudio();
+          };
+
+          synthesis.speak(utterance);
+        };
+
+        // Voices are often populated asynchronously; wait briefly for voiceschanged
+        // before giving up so we do not falsely report a missing Vietnamese voice.
+        const syncVoices = synthesis.getVoices?.() ?? [];
+        if (syncVoices.length > 0) {
+          speakWithVietnameseVoice(syncVoices);
+        } else {
+          getAvailableVoices(SPEECH_VOICE_WAIT_MS).then(speakWithVietnameseVoice);
         }
-
-        utterance.onstart = () => {
-          setPlayerState('playing');
-          setPlayingPoiId(poiId);
-          fireAnalytics(poiId, lang);
-        };
-
-        utterance.onend = () => {
-          stopAudio();
-        };
-
-        utterance.onerror = (event) => {
-          console.warn('[useAudioPlayer] speech synthesis failed', event.error);
-          stopAudio();
-        };
-
-        synthesis.speak(utterance);
         return;
       }
 

@@ -44,6 +44,82 @@ describe('useAudioPlayer', () => {
     expect(result.current.playerState).toBe('idle');
     expect(result.current.playingPoiId).toBeNull();
   });
+
+  it('does not speak and shows a clear notice when there is no Vietnamese voice', () => {
+    const speakSpy = vi.spyOn(window.speechSynthesis, 'speak').mockImplementation(() => {});
+    const getVoicesSpy = vi
+      .spyOn(window.speechSynthesis, 'getVoices')
+      .mockReturnValue([
+        { lang: 'en-US', name: 'Google US English', voiceURI: 'en' } as SpeechSynthesisVoice,
+      ]);
+
+    const { result } = renderHook(() => useAudioPlayer(), { wrapper });
+
+    act(() => {
+      result.current.playAudio({
+        poiId: 1,
+        title: 'Dinh Độc Lập',
+        textToSpeak: 'Di tích lịch sử nổi tiếng.',
+        lang: 'vi',
+      });
+    });
+
+    expect(speakSpy).not.toHaveBeenCalled();
+    expect(result.current.playerState).toBe('idle');
+    expect(result.current.playingPoiId).toBeNull();
+    expect(screen.getByText('Thiết bị chưa có giọng đọc tiếng Việt')).toBeInTheDocument();
+
+    speakSpy.mockRestore();
+    getVoicesSpy.mockRestore();
+  });
+
+  it('waits for asynchronously loaded voices before deciding a Vietnamese voice is missing', async () => {
+    const speakSpy = vi.spyOn(window.speechSynthesis, 'speak').mockImplementation(() => {});
+    const viVoice = {
+      lang: 'vi-VN',
+      name: 'Google Tiếng Việt',
+      voiceURI: 'vi',
+    } as SpeechSynthesisVoice;
+    let ready = false;
+    const getVoicesSpy = vi
+      .spyOn(window.speechSynthesis, 'getVoices')
+      .mockImplementation(() => (ready ? [viVoice] : []));
+    const listeners: Array<() => void> = [];
+    const addEventListenerSpy = vi
+      .spyOn(window.speechSynthesis, 'addEventListener')
+      .mockImplementation((event: string, handler: any) => {
+        if (event === 'voiceschanged') listeners.push(handler);
+      });
+
+    const { result } = renderHook(() => useAudioPlayer(), { wrapper });
+
+    act(() => {
+      result.current.playAudio({
+        poiId: 1,
+        title: 'Dinh Độc Lập',
+        textToSpeak: 'Di tích lịch sử nổi tiếng.',
+        lang: 'vi',
+      });
+    });
+
+    // Not spoken yet, but still loading while voices populate.
+    expect(speakSpy).not.toHaveBeenCalled();
+    expect(result.current.playerState).toBe('loading');
+
+    ready = true;
+    await act(async () => {
+      listeners.forEach((fn) => fn());
+      await Promise.resolve();
+    });
+
+    expect(speakSpy).toHaveBeenCalledTimes(1);
+    const utterance = speakSpy.mock.calls[0]?.[0] as SpeechSynthesisUtterance;
+    expect(utterance.voice).toBe(viVoice);
+
+    speakSpy.mockRestore();
+    getVoicesSpy.mockRestore();
+    addEventListenerSpy.mockRestore();
+  });
 });
 
 describe('splitTranscriptIntoSentences - Abbreviation and Decimal Protection', () => {
