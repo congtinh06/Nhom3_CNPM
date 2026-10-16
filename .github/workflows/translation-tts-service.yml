@@ -22,7 +22,7 @@ concurrency:
 jobs:
   test:
     name: Test translation-tts-service
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     defaults:
       run:
         working-directory: backend/translation-tts-service
@@ -43,7 +43,7 @@ jobs:
 
   docker-build:
     name: Build image translation-tts-service
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: test
     steps:
       - name: Checkout

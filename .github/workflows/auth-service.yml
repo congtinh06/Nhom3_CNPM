@@ -22,7 +22,7 @@ concurrency:
 jobs:
   test:
     name: Test auth-service
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     defaults:
       run:
         working-directory: backend/auth-service
@@ -44,7 +44,7 @@ jobs:
 
   docker-build:
     name: Build image auth-service
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: test
     steps:
       - name: Checkout
