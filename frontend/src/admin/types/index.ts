@@ -13,3 +13,7 @@ export interface AdminNavItem {
 }
 
 export * from './product';
+export * from './poi';
+export * from './zone';
+export * from './route';
+export * from './user';
