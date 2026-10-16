@@ -23,7 +23,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -32,7 +31,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.Duration;
-import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -148,12 +146,6 @@ public class AuthController {
     @GetMapping("/api/auth/me")
     public ResponseEntity<UserResponse> me() {
         return ResponseEntity.ok(authService.me(currentUserId()));
-    }
-
-    @GetMapping("/api/auth/admin/users")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<List<UserResponse>> listUsers() {
-        return ResponseEntity.ok(authService.listUsers());
     }
 
     // -------------------------------------------------------------- INTERNAL

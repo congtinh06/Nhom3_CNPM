@@ -33,6 +33,8 @@ public class RefreshToken {
     public static final String REASON_PASSWORD_CHANGED = "PASSWORD_CHANGED";
     public static final String REASON_EXPIRED = "EXPIRED";
     public static final String REASON_ACCOUNT_DISABLED = "ACCOUNT_DISABLED";
+    public static final String REASON_ROLE_CHANGED = "ROLE_CHANGED";
+    public static final String REASON_STATUS_CHANGED = "STATUS_CHANGED";
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

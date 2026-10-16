@@ -10,8 +10,6 @@ import com.saigonvoice.auth.dto.ResetPasswordRequest;
 import com.saigonvoice.auth.dto.UserResponse;
 import com.saigonvoice.auth.dto.VerifyEmailRequest;
 
-import java.util.List;
-
 public interface AuthService {
 
     MessageResponse register(RegisterRequest request, String ipAddress, String userAgent);
@@ -37,6 +35,4 @@ public interface AuthService {
     void changePassword(Long userId, ChangePasswordRequest request, String currentRawRefreshToken);
 
     UserResponse me(Long userId);
-
-    List<UserResponse> listUsers();
 }

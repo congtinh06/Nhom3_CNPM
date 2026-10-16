@@ -516,13 +516,6 @@ public class AuthServiceImpl implements AuthService {
                 .orElseThrow(() -> new NotFoundException("Không tìm thấy người dùng."));
     }
 
-    @Override
-    public List<UserResponse> listUsers() {
-        return userRepository.findAllByOrderByCreatedAtDesc().stream()
-                .map(UserResponse::from)
-                .toList();
-    }
-
     // -------------------------------------------------------------- INTERNALS
 
     private CookieResult buildResult(User user, String accessToken, RefreshTokenService.Issued issued) {
