@@ -431,4 +431,113 @@ class ProductServiceImplTest {
                 .isInstanceOf(BadRequestException.class)
                 .hasMessageContaining("Slug chỉ được chứa chữ thường không dấu");
     }
+
+    @Test
+    @DisplayName("updateProduct: đổi slug nhưng tệp ảnh đích đã tồn tại trên đĩa -> từ chối 400 BadRequestException")
+    void updateProduct_Rename_TargetFileAlreadyExists_ThrowsBadRequestException() throws Exception {
+        when(productRepository.findById(1L)).thenReturn(Optional.of(activeFood));
+        when(productRepository.existsBySlugAndIdNot("com-tam-dac-biet", 1L)).thenReturn(false);
+
+        // Tạo sẵn cả tệp cũ và tệp đích trên đĩa
+        Path oldJpg = tempDir.resolve("com-tam-suon-bi-cha.jpg");
+        Path targetJpg = tempDir.resolve("com-tam-dac-biet.jpg");
+        Files.write(oldJpg, new byte[]{1, 2, 3});
+        Files.write(targetJpg, new byte[]{9, 9, 9});
+
+        UpdateProductRequest req = UpdateProductRequest.builder()
+                .name("Cơm tấm đặc biệt")
+                .slug("com-tam-dac-biet")
+                .category(ProductCategory.FOOD)
+                .price(new BigDecimal("60000"))
+                .build();
+
+        assertThatThrownBy(() -> productService.updateProduct(1L, req))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessageContaining("Tệp ảnh đích đã tồn tại trên đĩa");
+
+        // Đảm bảo tệp cũ và tệp đích vẫn nguyên vẹn
+        assertThat(Files.exists(oldJpg)).isTrue();
+        assertThat(Files.readAllBytes(oldJpg)).containsExactly(1, 2, 3);
+        assertThat(Files.exists(targetJpg)).isTrue();
+        assertThat(Files.readAllBytes(targetJpg)).containsExactly(9, 9, 9);
+        verify(productRepository, never()).save(any(Product.class));
+    }
+
+    @Test
+    @DisplayName("updateProduct: đổi slug di chuyển tệp nhưng lưu DB thất bại -> rollback tệp về tên cũ")
+    void updateProduct_Rename_DbFailure_RollsBackMovedFiles() throws Exception {
+        when(productRepository.findById(1L)).thenReturn(Optional.of(activeFood));
+        when(productRepository.existsBySlugAndIdNot("com-tam-dac-biet", 1L)).thenReturn(false);
+        when(productRepository.save(any(Product.class))).thenThrow(new RuntimeException("DB save failure"));
+
+        Path oldJpg = tempDir.resolve("com-tam-suon-bi-cha.jpg");
+        Files.write(oldJpg, new byte[]{10, 20, 30});
+
+        UpdateProductRequest req = UpdateProductRequest.builder()
+                .name("Cơm tấm đặc biệt")
+                .slug("com-tam-dac-biet")
+                .category(ProductCategory.FOOD)
+                .price(new BigDecimal("60000"))
+                .build();
+
+        assertThatThrownBy(() -> productService.updateProduct(1L, req))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessage("DB save failure");
+
+        // Sau khi DB lỗi, tệp đích không còn và tệp cũ đã được phục hồi
+        Path targetJpg = tempDir.resolve("com-tam-dac-biet.jpg");
+        assertThat(Files.exists(targetJpg)).isFalse();
+        assertThat(Files.exists(oldJpg)).isTrue();
+        assertThat(Files.readAllBytes(oldJpg)).containsExactly(10, 20, 30);
+    }
+
+    @Test
+    @DisplayName("uploadProductImage: lưu DB thất bại -> xóa tệp mới và giữ lại tệp cũ (cùng extension)")
+    void uploadProductImage_DbFailure_DeletesNewFileAndRestoresOldFile() throws Exception {
+        when(productRepository.findById(1L)).thenReturn(Optional.of(activeFood));
+        when(productRepository.save(any(Product.class))).thenThrow(new RuntimeException("DB error on save"));
+
+        // Tạo tệp cũ trên đĩa
+        Path existingPng = tempDir.resolve("com-tam-suon-bi-cha.png");
+        byte[] oldBytes = new byte[]{(byte) 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0, 0, 0, 0, 9, 9, 9};
+        Files.write(existingPng, oldBytes);
+
+        // Upload tệp mới
+        byte[] newPngBytes = new byte[]{(byte) 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0, 0, 0, 0, 7, 7, 7};
+        MockMultipartFile newFile = new MockMultipartFile("file", "new-photo.png", "image/png", newPngBytes);
+
+        assertThatThrownBy(() -> productService.uploadProductImage(1L, newFile))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessageContaining("Không thể cập nhật thông tin ảnh sản phẩm vào cơ sở dữ liệu");
+
+        // Tệp cũ vẫn tồn tại với nội dung cũ, không còn tệp .bak
+        assertThat(Files.exists(existingPng)).isTrue();
+        assertThat(Files.readAllBytes(existingPng)).isEqualTo(oldBytes);
+        assertThat(Files.exists(tempDir.resolve("com-tam-suon-bi-cha.png.bak"))).isFalse();
+    }
+
+    @Test
+    @DisplayName("uploadProductImage: lưu DB thất bại -> xóa tệp mới và giữ lại tệp cũ (khác extension)")
+    void uploadProductImage_DbFailure_WithDifferentExtension_DeletesNewFileAndKeepsOldFile() throws Exception {
+        when(productRepository.findById(1L)).thenReturn(Optional.of(activeFood));
+        when(productRepository.save(any(Product.class))).thenThrow(new RuntimeException("DB error on save"));
+
+        // Tạo tệp cũ với đuôi .jpg
+        Path existingJpg = tempDir.resolve("com-tam-suon-bi-cha.jpg");
+        byte[] oldJpgBytes = new byte[]{(byte) 0xFF, (byte) 0xD8, (byte) 0xFF, 0, 1, 2, 3, 4, 5, 6, 7, 8};
+        Files.write(existingJpg, oldJpgBytes);
+
+        // Upload tệp mới với đuôi .png
+        byte[] newPngBytes = new byte[]{(byte) 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0, 0, 0, 0, 5, 5, 5};
+        MockMultipartFile newFile = new MockMultipartFile("file", "photo.png", "image/png", newPngBytes);
+
+        assertThatThrownBy(() -> productService.uploadProductImage(1L, newFile))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessageContaining("Không thể cập nhật thông tin ảnh sản phẩm vào cơ sở dữ liệu");
+
+        // Tệp cũ .jpg vẫn còn nguyên, tệp mới .png đã bị xóa
+        assertThat(Files.exists(existingJpg)).isTrue();
+        assertThat(Files.readAllBytes(existingJpg)).isEqualTo(oldJpgBytes);
+        assertThat(Files.exists(tempDir.resolve("com-tam-suon-bi-cha.png"))).isFalse();
+    }
 }

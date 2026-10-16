@@ -31,7 +31,9 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -177,21 +179,34 @@ public class ProductServiceImpl implements ProductService {
         }
 
         // If slug changed, migrate any existing image files on disk to prevent orphan/broken links
+        Map<Path, Path> movedFiles = new LinkedHashMap<>();
         if (!targetSlug.equals(oldSlug)) {
             Path baseDir = Paths.get(uploadDir).toAbsolutePath().normalize();
+
+            // Refuse rename if target file already exists on disk
+            for (String ext : List.of(".jpg", ".jpeg", ".png", ".webp")) {
+                Path targetFile = baseDir.resolve(targetSlug + ext).normalize().toAbsolutePath();
+                if (targetFile.startsWith(baseDir) && Files.exists(targetFile)) {
+                    throw new BadRequestException("Tệp ảnh đích đã tồn tại trên đĩa cho slug mới: " + targetSlug + ext);
+                }
+            }
+
             for (String ext : List.of(".jpg", ".jpeg", ".png", ".webp")) {
                 Path oldFile = baseDir.resolve(oldSlug + ext).normalize().toAbsolutePath();
                 if (oldFile.startsWith(baseDir) && Files.exists(oldFile)) {
                     Path newFile = baseDir.resolve(targetSlug + ext).normalize().toAbsolutePath();
                     if (newFile.startsWith(baseDir)) {
                         try {
-                            Files.move(oldFile, newFile, StandardCopyOption.REPLACE_EXISTING);
+                            Files.move(oldFile, newFile);
+                            movedFiles.put(newFile, oldFile);
                             log.info("Renamed product image file from {} to {}", oldFile, newFile);
                             if (request.getImagePath() == null || request.getImagePath().isBlank()) {
                                 product.setImagePath("/img/products/" + targetSlug + ext + "?v=" + System.currentTimeMillis());
                             }
                         } catch (IOException e) {
-                            log.warn("Failed to rename product image from {} to {}: {}", oldFile, newFile, e.getMessage());
+                            log.error("Failed to rename product image from {} to {}: {}", oldFile, newFile, e.getMessage());
+                            rollbackMovedFiles(movedFiles);
+                            throw new BadRequestException("Không thể đổi tên tệp ảnh sản phẩm trên đĩa: " + e.getMessage());
                         }
                     }
                 }
@@ -222,9 +237,30 @@ public class ProductServiceImpl implements ProductService {
             product.setSortOrder(request.getSortOrder());
         }
 
-        Product updated = productRepository.save(product);
-        log.info("Updated product id={} slug={}", updated.getId(), updated.getSlug());
-        return ProductDto.fromEntity(updated);
+        try {
+            Product updated = productRepository.save(product);
+            log.info("Updated product id={} slug={}", updated.getId(), updated.getSlug());
+            return ProductDto.fromEntity(updated);
+        } catch (Exception e) {
+            log.error("Failed to save product after rename, rolling back moved image files", e);
+            rollbackMovedFiles(movedFiles);
+            throw e;
+        }
+    }
+
+    private void rollbackMovedFiles(Map<Path, Path> movedFiles) {
+        for (Map.Entry<Path, Path> entry : movedFiles.entrySet()) {
+            Path newFile = entry.getKey();
+            Path oldFile = entry.getValue();
+            try {
+                if (Files.exists(newFile)) {
+                    Files.move(newFile, oldFile, StandardCopyOption.REPLACE_EXISTING);
+                    log.info("Rolled back product image file from {} to {}", newFile, oldFile);
+                }
+            } catch (IOException rollbackEx) {
+                log.error("Failed to rollback product image file from {} to {}: {}", newFile, oldFile, rollbackEx.getMessage());
+            }
+        }
     }
 
     @Override
@@ -259,44 +295,89 @@ public class ProductServiceImpl implements ProductService {
 
         String extension = validateAndDetectImage(file);
 
-        try {
-            Path targetDirectory = Paths.get(uploadDir).toAbsolutePath().normalize();
-            if (!Files.exists(targetDirectory)) {
+        Path targetDirectory = Paths.get(uploadDir).toAbsolutePath().normalize();
+        if (!Files.exists(targetDirectory)) {
+            try {
                 Files.createDirectories(targetDirectory);
+            } catch (IOException e) {
+                log.error("Failed to create upload directory {}", targetDirectory, e);
+                throw new BadRequestException("Không thể tạo thư mục lưu trữ ảnh: " + e.getMessage());
             }
+        }
 
-            // Remove previous images with different extensions to avoid orphans
-            for (String ext : List.of(".jpg", ".jpeg", ".png", ".webp")) {
-                if (!ext.equals(extension)) {
-                    Path oldFile = targetDirectory.resolve(product.getSlug() + ext).normalize().toAbsolutePath();
-                    if (oldFile.startsWith(targetDirectory) && Files.exists(oldFile)) {
-                        try {
-                            Files.delete(oldFile);
-                            log.info("Removed old product image file with different extension: {}", oldFile);
-                        } catch (IOException e) {
-                            log.warn("Failed to delete old product image {}: {}", oldFile, e.getMessage());
-                        }
+        String filename = product.getSlug() + extension;
+        Path destination = targetDirectory.resolve(filename).normalize().toAbsolutePath();
+        if (!destination.startsWith(targetDirectory)) {
+            throw new BadRequestException("Đường dẫn lưu tệp không an toàn");
+        }
+
+        // Backup existing file with identical name/extension if present, so we can restore on DB failure
+        Path backupFile = targetDirectory.resolve(product.getSlug() + extension + ".bak").normalize().toAbsolutePath();
+        boolean hasBackup = false;
+        try {
+            if (Files.exists(destination)) {
+                Files.move(destination, backupFile, StandardCopyOption.REPLACE_EXISTING);
+                hasBackup = true;
+            }
+            Files.copy(file.getInputStream(), destination, StandardCopyOption.REPLACE_EXISTING);
+        } catch (IOException e) {
+            log.error("Failed to copy uploaded file for product id={}", id, e);
+            if (hasBackup && Files.exists(backupFile)) {
+                try {
+                    Files.move(backupFile, destination, StandardCopyOption.REPLACE_EXISTING);
+                } catch (IOException restoreEx) {
+                    log.error("Failed to restore backup file after copy failure", restoreEx);
+                }
+            }
+            throw new BadRequestException("Không thể lưu trữ tệp ảnh tải lên: " + e.getMessage());
+        }
+
+        String imagePath = "/img/products/" + product.getSlug() + extension + "?v=" + System.currentTimeMillis();
+        product.setImagePath(imagePath);
+
+        Product updated;
+        try {
+            updated = productRepository.save(product);
+            log.info("Uploaded product image for id={}, path={}", updated.getId(), imagePath);
+        } catch (Exception e) {
+            log.error("Failed to save product image path to database, rolling back file changes", e);
+            // On DB failure, delete new file and restore previous file (keep old one)
+            try {
+                if (Files.exists(destination)) {
+                    Files.delete(destination);
+                }
+                if (hasBackup && Files.exists(backupFile)) {
+                    Files.move(backupFile, destination, StandardCopyOption.REPLACE_EXISTING);
+                }
+            } catch (IOException rollbackEx) {
+                log.error("Failed to rollback files after DB save failure", rollbackEx);
+            }
+            throw new BadRequestException("Không thể cập nhật thông tin ảnh sản phẩm vào cơ sở dữ liệu: " + e.getMessage());
+        }
+
+        // DB save succeeded: remove temporary backup and previous images with other extensions
+        if (hasBackup && Files.exists(backupFile)) {
+            try {
+                Files.delete(backupFile);
+            } catch (IOException e) {
+                log.warn("Failed to delete temporary backup image {}: {}", backupFile, e.getMessage());
+            }
+        }
+        for (String ext : List.of(".jpg", ".jpeg", ".png", ".webp")) {
+            if (!ext.equals(extension)) {
+                Path oldFile = targetDirectory.resolve(product.getSlug() + ext).normalize().toAbsolutePath();
+                if (oldFile.startsWith(targetDirectory) && Files.exists(oldFile)) {
+                    try {
+                        Files.delete(oldFile);
+                        log.info("Removed old product image file with different extension: {}", oldFile);
+                    } catch (IOException e) {
+                        log.warn("Failed to delete old product image {}: {}", oldFile, e.getMessage());
                     }
                 }
             }
-
-            String filename = product.getSlug() + extension;
-            Path destination = targetDirectory.resolve(filename).normalize().toAbsolutePath();
-            if (!destination.startsWith(targetDirectory)) {
-                throw new BadRequestException("Đường dẫn lưu tệp không an toàn");
-            }
-
-            Files.copy(file.getInputStream(), destination, StandardCopyOption.REPLACE_EXISTING);
-
-            String imagePath = "/img/products/" + product.getSlug() + extension + "?v=" + System.currentTimeMillis();
-            product.setImagePath(imagePath);
-            Product updated = productRepository.save(product);
-            log.info("Uploaded product image for id={}, path={}", updated.getId(), imagePath);
-            return ProductDto.fromEntity(updated);
-        } catch (IOException e) {
-            log.error("Failed to store uploaded file for product id={}", id, e);
-            throw new BadRequestException("Không thể lưu trữ tệp ảnh tải lên: " + e.getMessage());
         }
+
+        return ProductDto.fromEntity(updated);
     }
 
     private String validateAndDetectImage(MultipartFile file) {
