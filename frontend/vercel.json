@@ -1,8 +1,39 @@
 {
-  "rewrites": [
+  "routes": [
     {
-      "source": "/(.*)",
-      "destination": "/index.html"
+      "src": "/api/(.*)",
+      "dest": "https://affection-smokiness-watch.ngrok-free.dev/api/$1",
+      "transforms": [
+        {
+          "type": "request.headers",
+          "op": "set",
+          "target": {
+            "key": "ngrok-skip-browser-warning"
+          },
+          "args": "1"
+        }
+      ]
+    },
+    {
+      "src": "/img/products/(.*)",
+      "dest": "https://affection-smokiness-watch.ngrok-free.dev/img/products/$1",
+      "transforms": [
+        {
+          "type": "request.headers",
+          "op": "set",
+          "target": {
+            "key": "ngrok-skip-browser-warning"
+          },
+          "args": "1"
+        }
+      ]
+    },
+    {
+      "handle": "filesystem"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
     }
   ]
 }
