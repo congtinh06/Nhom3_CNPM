@@ -26,8 +26,9 @@ public class AudioController {
 
     private static final long CHUNK_SIZE = 1024 * 1024L; // 1 MB chunk for range streaming
 
-    // File names are content-hash versioned (poi_{id}_{lang}_{hash8}.mp3), so a given URL never changes.
-    private static final String IMMUTABLE_CACHE_CONTROL = "public, max-age=31536000, immutable";
+    // no-store: prevent shared caches (CDN/edge) from storing audio responses;
+    // a cached partial (206) must never be replayed as a full response to other clients.
+    private static final String AUDIO_CACHE_CONTROL = "no-store";
 
     private final AudioStorageService audioStorageService;
 
@@ -75,7 +76,7 @@ public class AudioController {
             return ResponseEntity.ok()
                     .contentType(mediaType)
                     .header(HttpHeaders.ACCEPT_RANGES, "bytes")
-                    .header(HttpHeaders.CACHE_CONTROL, IMMUTABLE_CACHE_CONTROL)
+                    .header(HttpHeaders.CACHE_CONTROL, AUDIO_CACHE_CONTROL)
                     .body(region);
         }
 
@@ -89,7 +90,7 @@ public class AudioController {
             return ResponseEntity.status(HttpStatus.PARTIAL_CONTENT)
                     .contentType(mediaType)
                     .header(HttpHeaders.ACCEPT_RANGES, "bytes")
-                    .header(HttpHeaders.CACHE_CONTROL, IMMUTABLE_CACHE_CONTROL)
+                    .header(HttpHeaders.CACHE_CONTROL, AUDIO_CACHE_CONTROL)
                     .body(region);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.REQUESTED_RANGE_NOT_SATISFIABLE)
