@@ -4,6 +4,7 @@ import { useNavbarLanguage, SUPPORTED_LANGUAGES } from '../content/languages';
 import { SupportedLanguage } from '../types';
 import { useAutoNarration, haversine } from '../hooks/useAutoNarration';
 import { useNearbyAudio, splitTranscriptIntoSentences } from '../hooks/useNearbyAudio';
+import { unlockAudio } from '../lib/audioUnlock';
 import { t, formatDistance, NEARBY_DICTIONARY } from '../content/nearbyI18n';
 
 // Components
@@ -468,6 +469,8 @@ export const NearbyPage: React.FC = () => {
 
   const handleTogglePlayPoi = useCallback(
     (poiId: string) => {
+      // Must run synchronously inside the tap gesture, before any async work.
+      unlockAudio();
       setSelectedId(poiId);
       setActiveId(poiId);
       if (currentId === poiId) {
@@ -508,6 +511,8 @@ export const NearbyPage: React.FC = () => {
         radiusLabelText={t(currentLang, 'radiusLabel')}
         isAutoEnabled={isAutoEnabled}
         onToggleAuto={() => {
+          // Must run synchronously inside the tap gesture, before any async work.
+          unlockAudio();
           const nextVal = !isAutoEnabled;
           setIsAutoEnabled(nextVal);
           setAutoDirect(nextVal);
