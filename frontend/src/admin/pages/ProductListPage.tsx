@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { productApi } from '../api/productApi';
 import { normalizeAdminError } from '../api/adminClient';
 import { Product, ProductCategory } from '../types/product';
@@ -10,6 +10,7 @@ import { EmptyState } from '../components/EmptyState';
 import { ErrorState } from '../components/ErrorState';
 
 export const ProductListPage: React.FC = () => {
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
   const [products, setProducts] = useState<Product[]>([]);
@@ -528,9 +529,7 @@ export const ProductListPage: React.FC = () => {
             title="Chưa có sản phẩm nào trong hệ thống"
             description="Bắt đầu thêm món ăn hoặc đồ uống đầu tiên để hiển thị cho du khách khám phá ẩm thực Sài Gòn."
             actionText="+ Thêm sản phẩm mới"
-            onAction={() => {
-              window.location.href = '/quan-tri/san-pham/moi';
-            }}
+            onAction={() => navigate('/quan-tri/san-pham/moi')}
           />
         )
       ) : (

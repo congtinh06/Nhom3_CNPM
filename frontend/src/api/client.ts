@@ -7,7 +7,6 @@ import {
   NearbyPoi,
   ResolvePoiResponse,
   CreateAnalyticsEventRequest,
-  AnalyticsSummaryResponse,
   AuthSession,
   Product,
   ProductCategory,
@@ -162,14 +161,6 @@ export const api = {
 
   recordAnalyticsEvent: async (event: CreateAnalyticsEventRequest): Promise<void> => {
     await apiClient.post<void>('/api/analytics/events', event);
-  },
-
-  getAnalyticsSummary: async (adminKey: string, signal?: AbortSignal): Promise<AnalyticsSummaryResponse> => {
-    const response = await apiClient.get<AnalyticsSummaryResponse>('/api/analytics/summary', {
-      headers: { 'X-Admin-Key': adminKey },
-      signal,
-    });
-    return response.data;
   },
 
   getProducts: async (

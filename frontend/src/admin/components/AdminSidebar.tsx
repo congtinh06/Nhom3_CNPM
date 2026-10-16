@@ -17,8 +17,16 @@ const NAV_ITEMS: AdminNavItem[] = [
     id: 'pois',
     label: 'Điểm thuyết minh',
     path: '/quan-tri/diem-thuyet-minh',
-    badge: 'Sắp có',
-    isUpcoming: true,
+  },
+  {
+    id: 'zones',
+    label: 'Khu vực',
+    path: '/quan-tri/khu-vuc',
+  },
+  {
+    id: 'routes',
+    label: 'Lộ trình',
+    path: '/quan-tri/lo-trinh',
   },
   {
     id: 'products',
@@ -36,8 +44,6 @@ const NAV_ITEMS: AdminNavItem[] = [
     id: 'users',
     label: 'Người dùng',
     path: '/quan-tri/nguoi-dung',
-    badge: 'Sắp có',
-    isUpcoming: true,
   },
 ];
 

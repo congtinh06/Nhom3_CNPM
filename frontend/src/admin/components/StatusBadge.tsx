@@ -24,6 +24,24 @@ function resolveStatus(status: string): BadgeConfig {
         cssClass: 'adm-badge-success',
       };
 
+    case 'READY':
+      return {
+        label: 'Sẵn sàng',
+        cssClass: 'adm-badge-success',
+      };
+
+    case 'PUBLISHED':
+      return {
+        label: 'Đã phát',
+        cssClass: 'adm-badge-success',
+      };
+
+    case 'FAILED_TTS':
+      return {
+        label: 'Lỗi tổng hợp',
+        cssClass: 'adm-badge-danger',
+      };
+
     case 'PROCESSING':
     case 'ĐANG XỬ LÝ':
       return {
@@ -45,8 +63,17 @@ function resolveStatus(status: string): BadgeConfig {
     case 'ĐÃ HỦY':
     case 'INACTIVE':
     case 'TẠM KHÓA':
+    case 'BLOCKED':
+    case 'ĐÃ KHÓA':
       return {
-        label: norm === 'INACTIVE' ? 'Tạm ngưng' : norm === 'CANCELLED' ? 'Đã hủy' : 'Thất bại',
+        label:
+          norm === 'INACTIVE'
+            ? 'Tạm ngưng'
+            : norm === 'CANCELLED'
+            ? 'Đã hủy'
+            : norm === 'BLOCKED' || norm === 'ĐÃ KHÓA'
+            ? 'Đã khóa'
+            : 'Thất bại',
         cssClass: 'adm-badge-danger',
       };
 

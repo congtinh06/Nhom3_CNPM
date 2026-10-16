@@ -28,6 +28,10 @@ export const AdminLoginPage: React.FC = () => {
     emailInputRef.current?.focus();
   }, []);
 
+  useEffect(() => {
+    document.title = 'Đăng nhập · Quản trị SaigonVoice';
+  }, []);
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!email.trim() || !password) {

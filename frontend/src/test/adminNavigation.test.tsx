@@ -105,6 +105,57 @@ describe('Admin Navigation & Sidebar & Breadcrumbs (S2)', () => {
     expect(screen.getByText('Chỉnh sửa')).toBeInTheDocument();
   });
 
+  it('mục "Điểm thuyết minh" trong AdminSidebar là link hoạt động và nổi bật ở route con', () => {
+    const { unmount } = render(
+      <MemoryRouter initialEntries={['/quan-tri/diem-thuyet-minh']}>
+        <AdminSidebar isOpen={true} onClose={vi.fn()} />
+      </MemoryRouter>
+    );
+
+    const poiLink = screen.getByRole('link', { name: /điểm thuyết minh/i });
+    expect(poiLink).toHaveAttribute('href', '/quan-tri/diem-thuyet-minh');
+    expect(poiLink).not.toHaveTextContent('Sắp có');
+    expect(poiLink).toHaveClass('adm-nav-link-active');
+    unmount();
+
+    render(
+      <MemoryRouter initialEntries={['/quan-tri/diem-thuyet-minh/moi']}>
+        <AdminSidebar isOpen={true} onClose={vi.fn()} />
+      </MemoryRouter>
+    );
+
+    expect(screen.getByRole('link', { name: /điểm thuyết minh/i })).toHaveClass(
+      'adm-nav-link-active'
+    );
+  });
+
+  it('AdminHeader hiển thị breadcrumbs cho danh sách, thêm mới và chỉnh sửa điểm thuyết minh', () => {
+    const { unmount: unmount1 } = render(
+      <MemoryRouter initialEntries={['/quan-tri/diem-thuyet-minh']}>
+        <AdminHeader onToggleSidebar={vi.fn()} />
+      </MemoryRouter>
+    );
+    expect(screen.getByText('Điểm thuyết minh')).toBeInTheDocument();
+    unmount1();
+
+    const { unmount: unmount2 } = render(
+      <MemoryRouter initialEntries={['/quan-tri/diem-thuyet-minh/moi']}>
+        <AdminHeader onToggleSidebar={vi.fn()} />
+      </MemoryRouter>
+    );
+    expect(screen.getByRole('link', { name: 'Điểm thuyết minh' })).toBeInTheDocument();
+    expect(screen.getByText('Thêm mới')).toBeInTheDocument();
+    unmount2();
+
+    render(
+      <MemoryRouter initialEntries={['/quan-tri/diem-thuyet-minh/42']}>
+        <AdminHeader onToggleSidebar={vi.fn()} />
+      </MemoryRouter>
+    );
+    expect(screen.getByRole('link', { name: 'Điểm thuyết minh' })).toBeInTheDocument();
+    expect(screen.getByText('Chỉnh sửa')).toBeInTheDocument();
+  });
+
   it('chuẩn hóa lỗi 403 Forbidden hiển thị thông báo tiếng Việt chính xác', () => {
     const error403 = new AxiosError(
       'Request failed with status code 403',
@@ -159,5 +210,45 @@ describe('Admin Navigation & Sidebar & Breadcrumbs (S2)', () => {
     expect(
       screen.getByText(/Tài khoản của bạn không có quyền quản trị/i)
     ).toBeInTheDocument();
+  });
+
+  it('mục "Người dùng" trong AdminSidebar là link hoạt động, không có huy hiệu "Sắp có"', () => {
+    const { unmount } = render(
+      <MemoryRouter initialEntries={['/quan-tri/nguoi-dung']}>
+        <AdminSidebar isOpen={true} onClose={vi.fn()} />
+      </MemoryRouter>
+    );
+
+    const usersLink = screen.getByRole('link', { name: /người dùng/i });
+    expect(usersLink).toHaveAttribute('href', '/quan-tri/nguoi-dung');
+    expect(usersLink).not.toHaveTextContent('Sắp có');
+    expect(usersLink).toHaveClass('adm-nav-link-active');
+    unmount();
+
+    render(
+      <MemoryRouter initialEntries={['/quan-tri/nguoi-dung/42']}>
+        <AdminSidebar isOpen={true} onClose={vi.fn()} />
+      </MemoryRouter>
+    );
+
+    expect(screen.getByRole('link', { name: /người dùng/i })).toHaveClass('adm-nav-link-active');
+  });
+
+  it('AdminHeader hiển thị breadcrumbs cho danh sách và chi tiết người dùng', () => {
+    const { unmount } = render(
+      <MemoryRouter initialEntries={['/quan-tri/nguoi-dung']}>
+        <AdminHeader onToggleSidebar={vi.fn()} />
+      </MemoryRouter>
+    );
+    expect(screen.getByText('Người dùng')).toBeInTheDocument();
+    unmount();
+
+    render(
+      <MemoryRouter initialEntries={['/quan-tri/nguoi-dung/42']}>
+        <AdminHeader onToggleSidebar={vi.fn()} />
+      </MemoryRouter>
+    );
+    expect(screen.getByRole('link', { name: 'Người dùng' })).toBeInTheDocument();
+    expect(screen.getByText('Chi tiết')).toBeInTheDocument();
   });
 });

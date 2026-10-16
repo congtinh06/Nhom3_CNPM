@@ -1,0 +1,359 @@
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { MemoryRouter, Routes, Route } from 'react-router-dom';
+import { PoiFormPage } from '../admin/pages/PoiFormPage';
+import { poiApi } from '../admin/api/poiApi';
+import { AdminPoiDetail, PoiDetail } from '../admin/types/poi';
+import { AxiosError, AxiosHeaders } from 'axios';
+
+vi.mock('../admin/api/poiApi', () => ({
+  poiApi: {
+    getZones: vi.fn(),
+    getCategories: vi.fn(),
+    getRoutes: vi.fn(),
+    getAdminPoiDetail: vi.fn(),
+    createPoi: vi.fn(),
+    updatePoi: vi.fn(),
+  },
+}));
+
+vi.mock('../admin/components/PoiAudioStatusPanel', () => ({
+  PoiAudioStatusPanel: () => null,
+}));
+
+const mockRoutes = [{ id: 7, zoneId: 1, name: 'Tuyến trung tâm' }];
+
+const mockDetail: AdminPoiDetail = {
+  id: 10,
+  code: 'BEN_THANH',
+  qrToken: 'qr-ben-thanh',
+  name: 'Chợ Bến Thành',
+  latitude: 10.7725,
+  longitude: 106.698,
+  triggerRadiusMeters: 50,
+  zoneId: 1,
+  zoneCode: 'Q1',
+  categoryId: 2,
+  categoryCode: 'HISTORY',
+  categoryNameVi: 'Di tích',
+  routeId: null,
+  routeName: null,
+  stopOrder: null,
+  status: 'ACTIVE',
+  version: 4,
+  publishStatus: 'PUBLISHED',
+  publishAttempts: 0,
+  translations: {
+    vi: {
+      languageCode: 'vi',
+      title: 'Tiêu đề gốc',
+      summary: 'Tóm tắt gốc',
+      description: 'Mô tả gốc',
+      audioStatus: 'READY',
+    },
+    en: {
+      languageCode: 'en',
+      title: 'Original title',
+      summary: 'Original summary',
+      description: 'Original description',
+      audioStatus: 'PENDING',
+    },
+  },
+};
+
+const mockCreated: PoiDetail = {
+  id: 10,
+  code: 'BEN_THANH',
+  qrToken: 'qr-ben-thanh',
+  name: 'Chợ Bến Thành',
+  latitude: 10.7725,
+  longitude: 106.698,
+  triggerRadiusMeters: 50,
+  zoneId: 1,
+  zoneCode: 'Q1',
+  categoryCode: 'HISTORY',
+  languageCode: 'vi',
+  title: 'Chợ Bến Thành',
+  summary: 'Khu chợ biểu tượng',
+  description: 'Chi tiết',
+  audioStatus: 'PENDING',
+};
+
+describe('PoiFormPage', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(poiApi.getZones).mockResolvedValue([{ id: 1, code: 'Q1', name: 'Quận 1' }]);
+    vi.mocked(poiApi.getCategories).mockResolvedValue([
+      { id: 2, code: 'HISTORY', nameVi: 'Di tích' },
+    ]);
+    vi.mocked(poiApi.getRoutes).mockResolvedValue(mockRoutes);
+  });
+
+  const renderCreate = () =>
+    render(
+      <MemoryRouter initialEntries={['/quan-tri/diem-thuyet-minh/moi']}>
+        <Routes>
+          <Route path="/quan-tri/diem-thuyet-minh/moi" element={<PoiFormPage />} />
+          <Route path="/quan-tri/diem-thuyet-minh/:id" element={<PoiFormPage />} />
+          <Route
+            path="/quan-tri/diem-thuyet-minh"
+            element={<div data-testid="poi-list-page">Danh sách điểm thuyết minh</div>}
+          />
+        </Routes>
+      </MemoryRouter>
+    );
+
+  const renderEdit = (id = '10') =>
+    render(
+      <MemoryRouter initialEntries={[`/quan-tri/diem-thuyet-minh/${id}`]}>
+        <Routes>
+          <Route path="/quan-tri/diem-thuyet-minh/:id" element={<PoiFormPage />} />
+          <Route
+            path="/quan-tri/diem-thuyet-minh"
+            element={<div data-testid="poi-list-page">Danh sách điểm thuyết minh</div>}
+          />
+        </Routes>
+      </MemoryRouter>
+    );
+
+  const fillRequired = () => {
+    fireEvent.change(screen.getByLabelText(/khu vực/i), { target: { value: '1' } });
+    fireEvent.change(screen.getByLabelText(/danh mục/i), { target: { value: '2' } });
+    fireEvent.change(screen.getByLabelText(/mã điểm/i), { target: { value: 'BEN_THANH' } });
+    fireEvent.change(screen.getByLabelText(/mã qr/i), { target: { value: 'qr-ben-thanh' } });
+    fireEvent.change(screen.getByLabelText(/tên điểm/i), { target: { value: 'Chợ Bến Thành' } });
+    fireEvent.change(screen.getByLabelText(/vĩ độ/i), { target: { value: '10.7725' } });
+    fireEvent.change(screen.getByLabelText(/kinh độ/i), { target: { value: '106.698' } });
+    fireEvent.change(screen.getByLabelText(/tiêu đề/i), { target: { value: 'Chợ Bến Thành' } });
+    fireEvent.change(screen.getByLabelText(/tóm tắt/i), { target: { value: 'Khu chợ biểu tượng' } });
+    fireEvent.change(screen.getByLabelText(/mô tả chi tiết/i), { target: { value: 'Chi tiết' } });
+  };
+
+  const awaitFormLoaded = async () => {
+    await screen.findByRole('button', { name: /tạo điểm thuyết minh/i });
+  };
+
+  const awaitEditLoaded = async () => {
+    await screen.findByRole('button', { name: /lưu thay đổi/i });
+  };
+
+  it('chặn gửi khi thiếu các trường bắt buộc và hiển thị lỗi tiếng Việt', async () => {
+    renderCreate();
+    await awaitFormLoaded();
+
+    fireEvent.click(screen.getByRole('button', { name: /tạo điểm thuyết minh/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText('Khu vực không được để trống')).toBeInTheDocument();
+      expect(screen.getByText('Tên điểm không được để trống')).toBeInTheDocument();
+      expect(screen.getByText('Vĩ độ không được để trống')).toBeInTheDocument();
+      expect(screen.getByText('Tiêu đề không được để trống')).toBeInTheDocument();
+    });
+
+    expect(poiApi.createPoi).not.toHaveBeenCalled();
+  });
+
+  it('ánh xạ lỗi xác thực từ backend sang trường tương ứng bằng tiếng Việt', async () => {
+    renderCreate();
+    await awaitFormLoaded();
+    fillRequired();
+
+    const axios400 = new AxiosError(
+      'Request failed with status code 400',
+      'ERR_BAD_REQUEST',
+      undefined,
+      undefined,
+      {
+        status: 400,
+        statusText: 'Bad Request',
+        data: { error: 'Validation Failed', details: { name: 'name is required' } },
+        headers: {},
+        config: { headers: new AxiosHeaders() },
+      }
+    );
+    vi.mocked(poiApi.createPoi).mockRejectedValueOnce(axios400);
+
+    fireEvent.click(screen.getByRole('button', { name: /tạo điểm thuyết minh/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText('Tên điểm không được để trống')).toBeInTheDocument();
+    });
+  });
+
+  it('tạo mới thành công và điều hướng về danh sách', async () => {
+    vi.mocked(poiApi.createPoi).mockResolvedValueOnce(mockCreated);
+    renderCreate();
+    await awaitFormLoaded();
+    fillRequired();
+
+    fireEvent.click(screen.getByRole('button', { name: /tạo điểm thuyết minh/i }));
+
+    await waitFor(() => {
+      expect(poiApi.createPoi).toHaveBeenCalledTimes(1);
+      expect(poiApi.createPoi).toHaveBeenCalledWith(
+        expect.objectContaining({
+          zoneId: 1,
+          categoryId: 2,
+          code: 'BEN_THANH',
+          name: 'Chợ Bến Thành',
+          latitude: 10.7725,
+          longitude: 106.698,
+        })
+      );
+      expect(screen.getByTestId('poi-list-page')).toBeInTheDocument();
+    });
+  });
+
+  it('vô hiệu hóa nút và ngăn chặn gửi đúp khi đang xử lý', async () => {
+    let resolveCreate: (value: PoiDetail) => void;
+    const pending = new Promise<PoiDetail>((resolve) => {
+      resolveCreate = resolve;
+    });
+    vi.mocked(poiApi.createPoi).mockReturnValueOnce(pending);
+
+    renderCreate();
+    await awaitFormLoaded();
+    fillRequired();
+
+    fireEvent.click(screen.getByRole('button', { name: /tạo điểm thuyết minh/i }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /đang tạo mới.../i })).toBeDisabled();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: /đang tạo mới.../i }));
+    expect(poiApi.createPoi).toHaveBeenCalledTimes(1);
+
+    resolveCreate!(mockCreated);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('poi-list-page')).toBeInTheDocument();
+    });
+  });
+
+  it('chế độ chỉnh sửa nạp chi tiết admin với toàn bộ bản dịch trong một lần gọi', async () => {
+    vi.mocked(poiApi.getAdminPoiDetail).mockResolvedValue(mockDetail);
+    renderEdit('10');
+    await awaitEditLoaded();
+
+    await waitFor(() => {
+      expect(poiApi.getAdminPoiDetail).toHaveBeenCalledWith(10);
+      expect(screen.getByLabelText(/tên điểm/i)).toHaveValue('Chợ Bến Thành');
+      expect(screen.getByLabelText(/tiêu đề/i)).toHaveValue('Tiêu đề gốc');
+      expect(screen.getByLabelText(/tóm tắt/i)).toHaveValue('Tóm tắt gốc');
+      expect(screen.getByLabelText(/danh mục/i)).toHaveValue('2');
+    });
+  });
+
+  it('cho phép chỉnh sửa tuyến và thứ tự điểm dừng rồi gửi kèm version', async () => {
+    vi.mocked(poiApi.getAdminPoiDetail).mockResolvedValue(mockDetail);
+    vi.mocked(poiApi.updatePoi).mockResolvedValueOnce(mockDetail);
+    renderEdit('10');
+    await awaitEditLoaded();
+
+    fireEvent.change(screen.getByLabelText(/tuyến \(không bắt buộc\)/i), {
+      target: { value: '7' },
+    });
+    fireEvent.change(screen.getByLabelText(/thứ tự điểm dừng/i), {
+      target: { value: '3' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /lưu thay đổi/i }));
+
+    await waitFor(() => {
+      expect(poiApi.updatePoi).toHaveBeenCalledWith(
+        10,
+        expect.objectContaining({ routeId: 7, stopOrder: 3, version: 4 })
+      );
+      expect(screen.getByTestId('poi-list-page')).toBeInTheDocument();
+    });
+  });
+
+  it('chặn gửi khi chỉ nhập tuyến mà thiếu thứ tự điểm dừng', async () => {
+    vi.mocked(poiApi.getAdminPoiDetail).mockResolvedValue(mockDetail);
+    renderEdit('10');
+    await awaitEditLoaded();
+
+    fireEvent.change(screen.getByLabelText(/tuyến \(không bắt buộc\)/i), {
+      target: { value: '7' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /lưu thay đổi/i }));
+
+    await waitFor(() => {
+      expect(
+        screen.getByText('Vui lòng nhập thứ tự điểm dừng cho tuyến')
+      ).toBeInTheDocument();
+    });
+    expect(poiApi.updatePoi).not.toHaveBeenCalled();
+  });
+
+  it('xung đột 409 giữ nguyên chỉnh sửa và cho phép tải lại dữ liệu mới', async () => {
+    vi.mocked(poiApi.getAdminPoiDetail).mockResolvedValue(mockDetail);
+    const axios409 = new AxiosError(
+      'Request failed with status code 409',
+      'ERR_BAD_REQUEST',
+      undefined,
+      undefined,
+      {
+        status: 409,
+        statusText: 'Conflict',
+        data: { message: 'Nội dung đã được người khác cập nhật. Vui lòng tải lại trang.' },
+        headers: {},
+        config: { headers: new AxiosHeaders() },
+      }
+    );
+    vi.mocked(poiApi.updatePoi).mockRejectedValueOnce(axios409);
+
+    renderEdit('10');
+    await awaitEditLoaded();
+
+    fireEvent.change(screen.getByLabelText(/tên điểm/i), {
+      target: { value: 'Chợ Bến Thành mới' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /lưu thay đổi/i }));
+
+    const dialog = await screen.findByRole('heading', {
+      name: /nội dung đã được người khác cập nhật/i,
+    });
+    expect(dialog).toBeInTheDocument();
+    // Chỉnh sửa của người dùng vẫn hiển thị cho tới khi họ chọn tải lại
+    expect(screen.getByLabelText(/tên điểm/i)).toHaveValue('Chợ Bến Thành mới');
+
+    fireEvent.click(screen.getByRole('button', { name: /tải lại/i }));
+
+    await waitFor(() => {
+      expect(poiApi.getAdminPoiDetail).toHaveBeenCalledTimes(2);
+      expect(screen.getByLabelText(/tên điểm/i)).toHaveValue('Chợ Bến Thành');
+      expect(
+        screen.queryByRole('heading', { name: /nội dung đã được người khác cập nhật/i })
+      ).not.toBeInTheDocument();
+    });
+  });
+
+  it('hiện hộp thoại xác nhận khi rời trang với biểu mẫu chưa lưu', async () => {
+    vi.mocked(poiApi.getAdminPoiDetail).mockResolvedValue(mockDetail);
+    renderEdit('10');
+    await awaitEditLoaded();
+
+    fireEvent.change(screen.getByLabelText(/tên điểm/i), {
+      target: { value: 'Chợ Bến Thành mới' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /quay lại danh sách điểm thuyết minh/i }));
+
+    const dialog = await screen.findByRole('heading', { name: /rời khỏi trang khi chưa lưu/i });
+    expect(dialog).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /ở lại tiếp tục sửa/i }));
+    await waitFor(() => {
+      expect(
+        screen.queryByRole('heading', { name: /rời khỏi trang khi chưa lưu/i })
+      ).not.toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: /quay lại danh sách điểm thuyết minh/i }));
+    fireEvent.click(await screen.findByRole('button', { name: /rời khỏi trang/i }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('poi-list-page')).toBeInTheDocument();
+    });
+  });
+});
