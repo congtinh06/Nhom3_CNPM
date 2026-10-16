@@ -70,3 +70,8 @@ internal:
 logging:
   level:
     com.saigonvoice.content: INFO
+
+app:
+  product:
+    upload-dir: ${PRODUCT_UPLOAD_DIR:uploads/products}
+
