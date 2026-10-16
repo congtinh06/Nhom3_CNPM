@@ -10,6 +10,7 @@ import {
   SPEECH_LANG_MAP,
   findMatchingVoice,
   useNearbyAudio,
+  NO_VOICE_MESSAGES,
 } from '../hooks/useNearbyAudio';
 import { ToastProvider } from '../context/ToastContext';
 import { AudioPlayerBar } from '../components/nearby/AudioPlayerBar';
@@ -67,7 +68,7 @@ describe('useAudioPlayer', () => {
     expect(speakSpy).not.toHaveBeenCalled();
     expect(result.current.playerState).toBe('idle');
     expect(result.current.playingPoiId).toBeNull();
-    expect(screen.getByText('Thiết bị chưa có giọng đọc tiếng Việt')).toBeInTheDocument();
+    expect(screen.getByText(NO_VOICE_MESSAGES.vi)).toBeInTheDocument();
 
     speakSpy.mockRestore();
     getVoicesSpy.mockRestore();
@@ -119,6 +120,55 @@ describe('useAudioPlayer', () => {
     speakSpy.mockRestore();
     getVoicesSpy.mockRestore();
     addEventListenerSpy.mockRestore();
+  });
+
+  it('speaks other languages with a matching voice when the caller opts in', () => {
+    const speakSpy = vi.spyOn(window.speechSynthesis, 'speak').mockImplementation(() => {});
+    const enVoice = window.speechSynthesis
+      .getVoices()
+      .find((v) => v.lang === 'en-US') as SpeechSynthesisVoice;
+
+    const { result } = renderHook(() => useAudioPlayer(), { wrapper });
+
+    act(() => {
+      result.current.playAudio({
+        poiId: 1,
+        title: 'Independence Palace',
+        textToSpeak: 'A historic site.',
+        lang: 'en',
+        speechLangs: ['vi', 'en', 'ja', 'ko'],
+      });
+    });
+
+    expect(speakSpy).toHaveBeenCalledTimes(1);
+    const utterance = speakSpy.mock.calls[0]?.[0] as SpeechSynthesisUtterance;
+    expect(utterance.lang).toBe('en-US');
+    expect(utterance.voice).toBe(enVoice);
+
+    speakSpy.mockRestore();
+  });
+
+  it('does not speak non-Vietnamese languages when the caller does not opt in', () => {
+    const speakSpy = vi.spyOn(window.speechSynthesis, 'speak').mockImplementation(() => {});
+
+    const { result } = renderHook(() => useAudioPlayer(), { wrapper });
+
+    act(() => {
+      result.current.playAudio({
+        poiId: 1,
+        title: 'Independence Palace',
+        textToSpeak: 'A historic site.',
+        lang: 'en',
+      });
+    });
+
+    expect(speakSpy).not.toHaveBeenCalled();
+    expect(result.current.playerState).toBe('idle');
+    expect(
+      screen.getByText('Bản dịch âm thanh cho ngôn ngữ này chưa sẵn sàng.')
+    ).toBeInTheDocument();
+
+    speakSpy.mockRestore();
   });
 });
 

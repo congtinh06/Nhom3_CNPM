@@ -8,6 +8,10 @@ import { unlockAudio } from '../lib/audioUnlock';
 import { PoiDetail, SupportedLanguage } from '../types';
 import '../styles/scan.css';
 
+// Scan detail text is translated per language, so on-device speech is offered for
+// every supported language (unlike the map section, which only speaks Vietnamese).
+const SCAN_SPEECH_LANGS: SupportedLanguage[] = ['vi', 'en', 'ja', 'ko'];
+
 export const ScanPage: React.FC = () => {
   const { token } = useParams<{ token?: string }>();
   const navigate = useNavigate();
@@ -70,6 +74,7 @@ export const ScanPage: React.FC = () => {
             title: detail.title || detail.name,
             textToSpeak: detail.description || detail.summary,
             lang,
+            speechLangs: SCAN_SPEECH_LANGS,
           });
         })
         .catch((err: unknown) => {
@@ -274,6 +279,7 @@ export const ScanPage: React.FC = () => {
                       title: poiDetail.title || poiDetail.name,
                       textToSpeak: poiDetail.description || poiDetail.summary,
                       lang,
+                      speechLangs: SCAN_SPEECH_LANGS,
                     });
                   }}
                 >

@@ -2,14 +2,27 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { api } from '../api/client';
 import { getSharedAudio } from '../lib/audioUnlock';
 import { useToast } from '../context/ToastContext';
-import { findMatchingVoice, getAvailableVoices } from './useNearbyAudio';
+import { SupportedLanguage } from '../types';
+import {
+  findMatchingVoice,
+  getAvailableVoices,
+  NO_VOICE_MESSAGES,
+  SPEECH_LANG_MAP,
+} from './useNearbyAudio';
 
 export type PlayerState = 'idle' | 'loading' | 'playing' | 'error';
 
 // How long to wait for the browser to populate its speech voices before deciding
-// that a Vietnamese voice is genuinely unavailable.
+// that a voice for the requested language is genuinely unavailable.
 const SPEECH_VOICE_WAIT_MS = 1500;
-const NO_VI_VOICE_MESSAGE = 'Thiết bị chưa có giọng đọc tiếng Việt';
+
+// Speech synthesis is only offered for the languages the caller opts into.
+// Defaults to Vietnamese only, which is the historical behaviour for the map /
+// places section where the spoken text is always Vietnamese.
+const DEFAULT_SPEECH_LANGS: SupportedLanguage[] = ['vi'];
+
+const isSupportedLanguage = (value: string): value is SupportedLanguage =>
+  value === 'vi' || value === 'en' || value === 'ja' || value === 'ko';
 
 interface PlayParams {
   poiId: number;
@@ -18,6 +31,7 @@ interface PlayParams {
   title: string;
   textToSpeak?: string;
   lang: string;
+  speechLangs?: SupportedLanguage[];
 }
 
 const getSessionId = (): string => {
@@ -81,7 +95,7 @@ export const useAudioPlayer = () => {
   }, []);
 
   const playAudio = useCallback(
-    ({ poiId, audioUrl, audioStatus, title, textToSpeak, lang }: PlayParams) => {
+    ({ poiId, audioUrl, audioStatus, title, textToSpeak, lang, speechLangs }: PlayParams) => {
       if (playingPoiId === poiId) {
         stopAudio();
         return;
@@ -134,7 +148,11 @@ export const useAudioPlayer = () => {
         return;
       }
 
-      if (lang === 'vi') {
+      const allowedSpeechLangs = speechLangs ?? DEFAULT_SPEECH_LANGS;
+      const speechLang =
+        isSupportedLanguage(lang) && allowedSpeechLangs.includes(lang) ? lang : null;
+
+      if (speechLang) {
         if (typeof window === 'undefined' || !('speechSynthesis' in window) || !('SpeechSynthesisUtterance' in window)) {
           showToast('Trình duyệt chưa hỗ trợ đọc thuyết minh.');
           return;
@@ -147,31 +165,33 @@ export const useAudioPlayer = () => {
         // cannot start a stale utterance.
         const token = playTokenRef.current;
         const speechText = textToSpeak ? `${title}. ${textToSpeak}` : title;
+        const targetLocale = SPEECH_LANG_MAP[speechLang];
+        const noVoiceMessage = NO_VOICE_MESSAGES[speechLang] || NO_VOICE_MESSAGES.vi;
 
         setPlayerState('loading');
         setPlayingPoiId(poiId);
 
-        const speakWithVietnameseVoice = (voices: SpeechSynthesisVoice[]) => {
+        const speakWithMatchedVoice = (voices: SpeechSynthesisVoice[]) => {
           if (token !== playTokenRef.current) return;
 
-          const viVoice = findMatchingVoice(voices, 'vi-VN');
-          if (!viVoice) {
-            // Never fall back to an unrelated/default voice for Vietnamese.
+          const matchedVoice = findMatchingVoice(voices, targetLocale);
+          if (!matchedVoice) {
+            // Never fall back to an unrelated/default voice for this language.
             stopAudio();
-            showToast(NO_VI_VOICE_MESSAGE);
+            showToast(noVoiceMessage);
             return;
           }
 
           const utterance = new SpeechSynthesisUtterance(speechText);
-          utterance.lang = 'vi-VN';
-          utterance.voice = viVoice;
+          utterance.lang = targetLocale;
+          utterance.voice = matchedVoice;
           utterance.rate = 0.95;
 
           utterance.onstart = () => {
             if (token !== playTokenRef.current) return;
             setPlayerState('playing');
             setPlayingPoiId(poiId);
-            fireAnalytics(poiId, lang);
+            fireAnalytics(poiId, speechLang);
           };
 
           utterance.onend = () => {
@@ -189,12 +209,12 @@ export const useAudioPlayer = () => {
         };
 
         // Voices are often populated asynchronously; wait briefly for voiceschanged
-        // before giving up so we do not falsely report a missing Vietnamese voice.
+        // before giving up so we do not falsely report a missing voice.
         const syncVoices = synthesis.getVoices?.() ?? [];
         if (syncVoices.length > 0) {
-          speakWithVietnameseVoice(syncVoices);
+          speakWithMatchedVoice(syncVoices);
         } else {
-          getAvailableVoices(SPEECH_VOICE_WAIT_MS).then(speakWithVietnameseVoice);
+          getAvailableVoices(SPEECH_VOICE_WAIT_MS).then(speakWithMatchedVoice);
         }
         return;
       }
