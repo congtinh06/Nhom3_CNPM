@@ -25,6 +25,10 @@ spring:
           uri: ${CONTENT_SERVICE_URL:http://localhost:8085}
           predicates:
             - Path=/api/admin/products/**
+        - id: content-service-product-images
+          uri: ${CONTENT_SERVICE_URL:http://localhost:8085}
+          predicates:
+            - Path=/img/products/**
         - id: location-service
           uri: ${LOCATION_SERVICE_URL:http://localhost:8082}
           predicates:

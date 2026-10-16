@@ -16,6 +16,9 @@ import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Locale;
+import java.util.Set;
+import java.util.regex.Pattern;
 
 @Component
 public class InternalPathBlockFilter implements GlobalFilter, Ordered {
@@ -25,30 +28,93 @@ public class InternalPathBlockFilter implements GlobalFilter, Ordered {
     private static final String CONTENT_PREFIX = "/api/content";
     private static final String INTERNAL_CONTENT_PREFIX = "/api/content/internal";
     private static final String ADMIN_CONTENT_PREFIX = "/api/content/admin";
+    private static final String ADMIN_AUTH_PREFIX = "/api/auth/admin";
+    private static final String ADMIN_PRODUCTS_PREFIX = "/api/admin/products";
+    private static final String PRODUCT_IMAGES_PREFIX = "/img/products";
+
+    private static final Pattern POI_DETAIL_OR_PUBLISH = Pattern.compile("^/api/content/admin/pois/\\d+(/publish-status)?$");
+    private static final Pattern POI_STATUS = Pattern.compile("^/api/content/admin/pois/\\d+/status$");
+    private static final Pattern POI_REPUBLISH = Pattern.compile("^/api/content/admin/pois/\\d+/republish$");
+    private static final Pattern ZONE_DETAIL = Pattern.compile("^/api/content/admin/zones/\\d+$");
+    private static final Pattern ZONE_STATUS = Pattern.compile("^/api/content/admin/zones/\\d+/status$");
+    private static final Pattern ROUTE_DETAIL = Pattern.compile("^/api/content/admin/routes/\\d+$");
+    private static final Pattern ROUTE_STOPS = Pattern.compile("^/api/content/admin/routes/\\d+/stops$");
+    private static final Pattern ROUTE_STATUS = Pattern.compile("^/api/content/admin/routes/\\d+/status$");
+    private static final Pattern USER_DETAIL = Pattern.compile("^/api/auth/admin/users/\\d+$");
+    private static final Pattern USER_ROLE = Pattern.compile("^/api/auth/admin/users/\\d+/role$");
+    private static final Pattern USER_STATUS = Pattern.compile("^/api/auth/admin/users/\\d+/status$");
+    private static final Pattern PRODUCT_DETAIL = Pattern.compile("^/api/admin/products/\\d+$");
+    private static final Pattern PRODUCT_STATUS = Pattern.compile("^/api/admin/products/\\d+/status$");
+    private static final Pattern PRODUCT_SORT_ORDER = Pattern.compile("^/api/admin/products/\\d+/sort-order$");
+    private static final Pattern PRODUCT_IMAGE = Pattern.compile("^/api/admin/products/\\d+/image$");
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
-        // NOTE: client-supplied X-Internal-Api-Key is already stripped by
-        // UntrustedHeaderStripGlobalFilter (order HIGHEST_PRECEDENCE + 5), which runs BEFORE
-        // AdminAuthGlobalFilter (order + 10) injects the trusted key. Stripping here (order + 20)
-        // would wipe out the gateway-injected key and break admin calls to downstream services.
         ServerHttpRequest request = exchange.getRequest();
         String path = request.getURI().getPath();
         HttpMethod method = request.getMethod();
 
-        // If path is not under /api/content, allow to proceed (e.g. /api/location/**, /api/tts/**, /api/analytics/**)
-        if (path == null || (!path.equals(CONTENT_PREFIX) && !path.startsWith(CONTENT_PREFIX + "/"))) {
+        if (path == null) {
             return chain.filter(exchange);
         }
 
-        // 2. /api/content/internal/** (any method) -> 404 Not Found
+        // 1. Phục vụ ảnh sản phẩm (/img/products/**): GET và HEAD công khai; từ chối mọi method khác (405)
+        if (path.equals(PRODUCT_IMAGES_PREFIX) || path.startsWith(PRODUCT_IMAGES_PREFIX + "/")) {
+            if (HttpMethod.OPTIONS.equals(method)) {
+                return chain.filter(exchange);
+            }
+            if (!HttpMethod.GET.equals(method) && !HttpMethod.HEAD.equals(method)) {
+                log.warn("Blocked disallowed method [{}] on product image endpoint: {}", method, path);
+                return sendMethodNotAllowed(exchange);
+            }
+            return chain.filter(exchange);
+        }
+
+        // 2. /api/content/internal/** (bất kỳ method nào) -> 404 Not Found
         if (path.equals(INTERNAL_CONTENT_PREFIX) || path.startsWith(INTERNAL_CONTENT_PREFIX + "/")) {
             log.warn("Blocked public access attempt to internal endpoint: {}", path);
             return sendNotFound(exchange);
         }
 
-        // 3. /api/content/admin/** -> Handled and authorized by AdminAuthGlobalFilter; allow through
+        // 3. Kiểm tra danh sách method cho phép trên các endpoint quản trị
         if (path.equals(ADMIN_CONTENT_PREFIX) || path.startsWith(ADMIN_CONTENT_PREFIX + "/")) {
+            if (HttpMethod.OPTIONS.equals(method)) {
+                return chain.filter(exchange);
+            }
+            String normalized = normalizePath(path);
+            if (!isAllowedAdminContentMethod(normalized, method)) {
+                log.warn("Blocked disallowed method [{}] on admin content endpoint: {}", method, path);
+                return sendMethodNotAllowed(exchange);
+            }
+            return chain.filter(exchange);
+        }
+
+        if (path.equals(ADMIN_AUTH_PREFIX) || path.startsWith(ADMIN_AUTH_PREFIX + "/")) {
+            if (HttpMethod.OPTIONS.equals(method)) {
+                return chain.filter(exchange);
+            }
+            String normalized = normalizePath(path);
+            if (!isAllowedAdminAuthMethod(normalized, method)) {
+                log.warn("Blocked disallowed method [{}] on admin auth endpoint: {}", method, path);
+                return sendMethodNotAllowed(exchange);
+            }
+            return chain.filter(exchange);
+        }
+
+        if (path.equals(ADMIN_PRODUCTS_PREFIX) || path.startsWith(ADMIN_PRODUCTS_PREFIX + "/")) {
+            if (HttpMethod.OPTIONS.equals(method)) {
+                return chain.filter(exchange);
+            }
+            String normalized = normalizePath(path);
+            if (!isAllowedAdminProductMethod(normalized, method)) {
+                log.warn("Blocked disallowed method [{}] on admin product endpoint: {}", method, path);
+                return sendMethodNotAllowed(exchange);
+            }
+            return chain.filter(exchange);
+        }
+
+        // Nếu path không nằm dưới /api/content, cho phép đi tiếp (vd: /api/location/**, /api/tts/**, /api/analytics/**)
+        if (!path.equals(CONTENT_PREFIX) && !path.startsWith(CONTENT_PREFIX + "/")) {
             return chain.filter(exchange);
         }
 
@@ -57,19 +123,110 @@ public class InternalPathBlockFilter implements GlobalFilter, Ordered {
             return chain.filter(exchange);
         }
 
-        // 5. Everything else under /api/content/**: allow ONLY GET and HEAD
+        // 5. Mọi endpoint công khai khác dưới /api/content/**: CHỈ cho phép GET và HEAD
         if (!HttpMethod.GET.equals(method) && !HttpMethod.HEAD.equals(method)) {
             log.warn("Blocked disallowed method [{}] on public content endpoint: {}", method, path);
             return sendNotFound(exchange);
         }
 
-        // 6. Path must strictly match allowed public content paths
+        // 6. Path phải thuộc danh sách công khai tường minh
         if (!isAllowedPublicContentPath(path)) {
             log.warn("Blocked request to unrecognized content path: {}", path);
             return sendNotFound(exchange);
         }
 
         return chain.filter(exchange);
+    }
+
+    private String normalizePath(String path) {
+        if (path == null || path.isEmpty()) {
+            return "/";
+        }
+        String candidate = path;
+        if (candidate.length() > 1 && candidate.endsWith("/")) {
+            candidate = candidate.substring(0, candidate.length() - 1);
+        }
+        return candidate.toLowerCase(Locale.ROOT);
+    }
+
+    private boolean isAllowedAdminContentMethod(String path, HttpMethod method) {
+        if (path.equals("/api/content/admin/pois")) {
+            return HttpMethod.GET.equals(method) || HttpMethod.POST.equals(method);
+        }
+        if (path.equals("/api/content/admin/pois/publish-status")) {
+            return HttpMethod.GET.equals(method);
+        }
+        if (POI_STATUS.matcher(path).matches()) {
+            return HttpMethod.GET.equals(method) || HttpMethod.PUT.equals(method) || HttpMethod.PATCH.equals(method);
+        }
+        if (POI_DETAIL_OR_PUBLISH.matcher(path).matches()) {
+            if (path.endsWith("/publish-status")) {
+                return HttpMethod.GET.equals(method);
+            }
+            return HttpMethod.GET.equals(method) || HttpMethod.PUT.equals(method);
+        }
+        if (POI_REPUBLISH.matcher(path).matches()) {
+            return HttpMethod.POST.equals(method);
+        }
+
+        if (path.equals("/api/content/admin/zones")) {
+            return HttpMethod.GET.equals(method) || HttpMethod.POST.equals(method);
+        }
+        if (ZONE_STATUS.matcher(path).matches()) {
+            return HttpMethod.GET.equals(method) || HttpMethod.PUT.equals(method) || HttpMethod.PATCH.equals(method);
+        }
+        if (ZONE_DETAIL.matcher(path).matches()) {
+            return HttpMethod.GET.equals(method) || HttpMethod.PUT.equals(method);
+        }
+
+        if (path.equals("/api/content/admin/routes")) {
+            return HttpMethod.GET.equals(method) || HttpMethod.POST.equals(method);
+        }
+        if (ROUTE_STOPS.matcher(path).matches()) {
+            return HttpMethod.GET.equals(method) || HttpMethod.PUT.equals(method);
+        }
+        if (ROUTE_STATUS.matcher(path).matches()) {
+            return HttpMethod.GET.equals(method) || HttpMethod.PUT.equals(method) || HttpMethod.PATCH.equals(method);
+        }
+        if (ROUTE_DETAIL.matcher(path).matches()) {
+            return HttpMethod.GET.equals(method) || HttpMethod.PUT.equals(method);
+        }
+
+        // Cho phép GET trên các route admin mới bổ sung (xem newlyAddedAdminRoutesAreProtectedByDefault)
+        return HttpMethod.GET.equals(method);
+    }
+
+    private boolean isAllowedAdminAuthMethod(String path, HttpMethod method) {
+        if (path.equals("/api/auth/admin/users")) {
+            return HttpMethod.GET.equals(method);
+        }
+        if (USER_ROLE.matcher(path).matches() || USER_STATUS.matcher(path).matches()) {
+            return HttpMethod.GET.equals(method) || HttpMethod.PUT.equals(method) || HttpMethod.PATCH.equals(method);
+        }
+        if (USER_DETAIL.matcher(path).matches()) {
+            return HttpMethod.GET.equals(method);
+        }
+
+        // Cho phép GET trên các route admin mới bổ sung
+        return HttpMethod.GET.equals(method);
+    }
+
+    private boolean isAllowedAdminProductMethod(String path, HttpMethod method) {
+        if (path.equals("/api/admin/products")) {
+            return HttpMethod.GET.equals(method) || HttpMethod.POST.equals(method);
+        }
+        if (PRODUCT_STATUS.matcher(path).matches() || PRODUCT_SORT_ORDER.matcher(path).matches()) {
+            return HttpMethod.GET.equals(method) || HttpMethod.PUT.equals(method) || HttpMethod.PATCH.equals(method);
+        }
+        if (PRODUCT_IMAGE.matcher(path).matches()) {
+            return HttpMethod.POST.equals(method);
+        }
+        if (PRODUCT_DETAIL.matcher(path).matches()) {
+            return HttpMethod.GET.equals(method) || HttpMethod.PUT.equals(method);
+        }
+
+        // Cho phép GET trên các route admin mới bổ sung
+        return HttpMethod.GET.equals(method);
     }
 
     private boolean isAllowedPublicContentPath(String path) {
@@ -90,8 +247,19 @@ public class InternalPathBlockFilter implements GlobalFilter, Ordered {
         return response.writeWith(Mono.just(buffer));
     }
 
+    private Mono<Void> sendMethodNotAllowed(ServerWebExchange exchange) {
+        ServerHttpResponse response = exchange.getResponse();
+        response.setStatusCode(HttpStatus.METHOD_NOT_ALLOWED);
+        response.getHeaders().setContentType(MediaType.APPLICATION_JSON);
+        byte[] jsonBytes = "{\"status\":405,\"error\":\"Method Not Allowed\",\"message\":\"Method Not Allowed\"}"
+                .getBytes(StandardCharsets.UTF_8);
+        DataBuffer buffer = response.bufferFactory().wrap(jsonBytes);
+        return response.writeWith(Mono.just(buffer));
+    }
+
     @Override
     public int getOrder() {
         return Ordered.HIGHEST_PRECEDENCE + 20;
     }
 }
+

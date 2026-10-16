@@ -1431,4 +1431,162 @@ class ApiGatewayApplicationTest {
                 .as("Downstream receives nothing for path ending with /..")
                 .isEqualTo(before);
     }
+
+    @Test
+    void productImageRoute_UnauthenticatedGetAllowed_ForwardsToDownstream() {
+        webTestClient.get().uri("http://localhost:" + port + "/img/products/com-tam-suon-bi-cha.png")
+                .exchange()
+                .expectStatus().isOk()
+                .expectHeader().contentType(MediaType.APPLICATION_JSON)
+                .expectBody()
+                .jsonPath("$.status").isEqualTo("ok")
+                .jsonPath("$.path").isEqualTo("/img/products/com-tam-suon-bi-cha.png");
+    }
+
+    @Test
+    void productImageRoute_WithVersionQueryParam_ForwardsToDownstream() {
+        webTestClient.get().uri("http://localhost:" + port + "/img/products/com-tam-suon-bi-cha.png?v=1792034589000")
+                .exchange()
+                .expectStatus().isOk()
+                .expectHeader().contentType(MediaType.APPLICATION_JSON)
+                .expectBody()
+                .jsonPath("$.status").isEqualTo("ok")
+                .jsonPath("$.path").isEqualTo("/img/products/com-tam-suon-bi-cha.png");
+    }
+
+    @Test
+    void productImageRoute_PathTraversalAttempt_BlockedByPathGuard() {
+        int before = downstreamRequestCount.get();
+        webTestClient.get().uri("http://localhost:" + port + "/img/products/%2e%2e/secret.png")
+                .exchange()
+                .expectStatus().isBadRequest();
+        assertThat(downstreamRequestCount.get())
+                .as("Downstream receives nothing for path traversal on product image route")
+                .isEqualTo(before);
+    }
+
+    @Test
+    void productImageRoute_HeadAllowed_ForwardsToDownstream() {
+        webTestClient.head().uri("http://localhost:" + port + "/img/products/com-tam-suon-bi-cha.png")
+                .exchange()
+                .expectStatus().isOk();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"POST", "PUT", "DELETE", "PATCH"})
+    void productImageRoute_DisallowedMethods_Return405(String method) {
+        int before = downstreamRequestCount.get();
+        webTestClient.method(HttpMethod.valueOf(method))
+                .uri("http://localhost:" + port + "/img/products/com-tam-suon-bi-cha.png")
+                .exchange()
+                .expectStatus().isEqualTo(405);
+        assertThat(downstreamRequestCount.get()).isEqualTo(before);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "/api/content/admin/pois",
+            "/api/content/admin/zones",
+            "/api/content/admin/routes",
+            "/api/auth/admin/users"
+    })
+    void adminListEndpoints_WithAdminToken_Forwards200(String path) {
+        webTestClient.get().uri("http://localhost:" + port + path)
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + ADMIN_TOKEN)
+                .exchange()
+                .expectStatus().isOk();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "/api/content/admin/pois",
+            "/api/content/admin/zones",
+            "/api/content/admin/routes",
+            "/api/auth/admin/users"
+    })
+    void adminListEndpoints_WithoutToken_Returns401(String path) {
+        webTestClient.get().uri("http://localhost:" + port + path)
+                .exchange()
+                .expectStatus().isUnauthorized();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "/api/content/admin/pois",
+            "/api/content/admin/zones",
+            "/api/content/admin/routes",
+            "/api/auth/admin/users"
+    })
+    void adminListEndpoints_WithUserToken_Returns403(String path) {
+        webTestClient.get().uri("http://localhost:" + port + path)
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + USER_TOKEN)
+                .exchange()
+                .expectStatus().isForbidden();
+    }
+
+    @Test
+    void adminEndpoints_DisallowedMethods_Return405() {
+        int before = downstreamRequestCount.get();
+
+        // DELETE on POIs list
+        webTestClient.delete().uri("http://localhost:" + port + "/api/content/admin/pois")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + ADMIN_TOKEN)
+                .exchange()
+                .expectStatus().isEqualTo(405);
+
+        // POST on users list
+        webTestClient.post().uri("http://localhost:" + port + "/api/auth/admin/users")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + ADMIN_TOKEN)
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue("{\"username\":\"test\"}")
+                .exchange()
+                .expectStatus().isEqualTo(405);
+
+        // DELETE on users list
+        webTestClient.delete().uri("http://localhost:" + port + "/api/auth/admin/users")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + ADMIN_TOKEN)
+                .exchange()
+                .expectStatus().isEqualTo(405);
+
+        assertThat(downstreamRequestCount.get()).isEqualTo(before);
+    }
+
+    @Test
+    void adminSubpaths_AllowedPutPatch_Forwards200() {
+        webTestClient.put().uri("http://localhost:" + port + "/api/content/admin/pois/1/status")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + ADMIN_TOKEN)
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue("{\"status\":\"PUBLISHED\"}")
+                .exchange()
+                .expectStatus().isOk();
+
+        webTestClient.patch().uri("http://localhost:" + port + "/api/content/admin/pois/1/status")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + ADMIN_TOKEN)
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue("{\"status\":\"PUBLISHED\"}")
+                .exchange()
+                .expectStatus().isOk();
+
+        webTestClient.put().uri("http://localhost:" + port + "/api/content/admin/routes/1/stops")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + ADMIN_TOKEN)
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue("[]")
+                .exchange()
+                .expectStatus().isOk();
+
+        webTestClient.patch().uri("http://localhost:" + port + "/api/auth/admin/users/1/role")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + ADMIN_TOKEN)
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue("{\"role\":\"ADMIN\"}")
+                .exchange()
+                .expectStatus().isOk();
+
+        webTestClient.patch().uri("http://localhost:" + port + "/api/auth/admin/users/1/status")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + ADMIN_TOKEN)
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue("{\"status\":\"ACTIVE\"}")
+                .exchange()
+                .expectStatus().isOk();
+    }
 }
+
