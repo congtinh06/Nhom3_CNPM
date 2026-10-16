@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chính sách quyền riêng tư - SaigonVoice (Echora)</title>
+  <style>
+    :root {
+      --bg: #ffffff;
+      --text: #222222;
+      --muted: #666666;
+      --border: #dddddd;
+      --link: #0066cc;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #181818;
+        --text: #e0e0e0;
+        --muted: #999999;
+        --border: #333333;
+        --link: #66b2ff;
+      }
+    }
+    body {
+      margin: 0;
+      padding: 32px 20px;
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      line-height: 1.65;
+    }
+    .container {
+      max-width: 720px;
+      margin: 0 auto;
+    }
+    h1 {
+      font-size: 1.75rem;
+      margin-top: 0;
+      margin-bottom: 8px;
+    }
+    h2 {
+      font-size: 1.25rem;
+      margin-top: 28px;
+      margin-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 4px;
+    }
+    p, ul {
+      margin: 12px 0;
+    }
+    li {
+      margin-bottom: 6px;
+    }
+    .meta {
+      color: var(--muted);
+      font-size: 0.9rem;
+      margin-bottom: 24px;
+    }
+    a {
+      color: var(--link);
+      text-decoration: underline;
+    }
+    nav {
+      margin-top: 36px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+      font-size: 0.95rem;
+    }
+    nav a {
+      margin-right: 16px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Chính sách quyền riêng tư</h1>
+    <p class="meta">Ứng dụng: SaigonVoice (hiển thị: Echora) | Ngày cập nhật: 16/10/2026</p>
+
+    <h2>1. Giới thiệu</h2>
+    <p>
+      SaigonVoice (giao diện hiển thị dưới tên Echora) là ứng dụng web thuyết minh du lịch tự động đa ngôn ngữ dành cho các địa điểm du lịch tại Thành phố Hồ Chí Minh. Đây là dự án bài tập học phần môn Công nghệ phần mềm tại Đại học Sài Gòn, phục vụ mục đích học tập và nghiên cứu phi thương mại.
+    </p>
+
+    <h2>2. Dữ liệu thu thập khi đăng nhập bằng Google</h2>
+    <p>
+      Khi người dùng lựa chọn đăng nhập thông qua Google Sign-In, hệ thống chỉ nhận các thông tin cơ bản do Google cung cấp gồm:
+    </p>
+    <ul>
+      <li>Địa chỉ email</li>
+      <li>Tên hiển thị (display name)</li>
+      <li>Đường dẫn ảnh đại diện (URL avatar), nếu có</li>
+    </ul>
+    <p>
+      Các thông tin này chỉ được sử dụng duy nhất cho mục đích khởi tạo tài khoản, nhận diện người dùng và duy trì phiên đăng nhập trên hệ thống.
+    </p>
+
+    <h2>3. Dữ liệu sử dụng và vị trí</h2>
+    <p>
+      Hệ thống ghi nhận một số sự kiện tương tác cơ bản phục vụ thống kê (ví dụ: địa điểm hoặc đoạn thuyết minh âm thanh được mở).
+    </p>
+    <p>
+      Hệ thống <strong>không lưu trữ tọa độ vị trí chính xác</strong> của người dùng trên máy chủ. Tọa độ GPS chỉ được trình duyệt xử lý cục bộ trên thiết bị của bạn nhằm xác định khoảng cách để kích hoạt bài thuyết minh tương ứng.
+    </p>
+
+    <h2>4. Chia sẻ dữ liệu và dịch vụ bên thứ ba</h2>
+    <p>
+      Dữ liệu của người dùng không bị bán, không được chia sẻ cho bên thứ ba vì bất kỳ mục đích quảng cáo hay tiếp thị nào. Các dịch vụ bên thứ ba được sử dụng trong dự án bao gồm:
+    </p>
+    <ul>
+      <li><strong>Google Sign-In:</strong> Xác thực danh tính người dùng theo tiêu chuẩn Google Identity Services.</li>
+      <li><strong>Vercel:</strong> Nền tảng lưu trữ và phân phối tệp giao diện web tĩnh.</li>
+      <li><strong>ngrok:</strong> Đường hầm kết nối trung chuyển yêu cầu API từ giao diện web tới máy chủ phụ trợ thử nghiệm.</li>
+      <li><strong>MyMemory và Microsoft Edge TTS:</strong> Dịch văn bản và tổng hợp giọng nói thuyết minh; các dịch vụ này chỉ nhận nội dung mô tả địa điểm du lịch, hoàn toàn không nhận bất kỳ dữ liệu cá nhân nào của người dùng.</li>
+    </ul>
+
+    <h2>5. Lưu trữ và yêu cầu xóa dữ liệu</h2>
+    <p>
+      Dữ liệu tài khoản được lưu trữ an toàn trong cơ sở dữ liệu của dự án. Người dùng có quyền yêu cầu xóa toàn bộ thông tin tài khoản và dữ liệu liên quan bất cứ lúc nào bằng cách gửi email tới địa chỉ liên hệ bên dưới. Yêu cầu sẽ được xử lý trong vòng 7 ngày làm việc.
+    </p>
+
+    <h2>6. Thông tin liên hệ</h2>
+    <p>
+      Mọi thắc mắc hoặc yêu cầu liên quan đến quyền riêng tư, vui lòng liên hệ:
+    </p>
+    <p>
+      Email: <a href="mailto:congtinh1932006@gmail.com">congtinh1932006@gmail.com</a>
+    </p>
+
+    <nav aria-label="Điều hướng liên kết">
+      <a href="/">Quay về Trang chủ</a>
+      <a href="/terms.html">Điều khoản dịch vụ</a>
+    </nav>
+  </div>
+</body>
+</html>
