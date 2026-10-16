@@ -1,6 +1,9 @@
 package com.saigonvoice.content.service;
 
 import com.saigonvoice.content.config.RabbitMQConfig;
+import com.saigonvoice.content.dto.AdminPoiDetailDto;
+import com.saigonvoice.content.dto.AdminPoiListItemDto;
+import com.saigonvoice.content.dto.AdminPoiTranslationDto;
 import com.saigonvoice.content.dto.CreatePoiRequest;
 import com.saigonvoice.content.dto.PoiBoundingBoxDto;
 import com.saigonvoice.content.dto.PoiDetailDto;
@@ -16,6 +19,7 @@ import com.saigonvoice.content.entity.PublishStatus;
 import com.saigonvoice.content.entity.Route;
 import com.saigonvoice.content.entity.Zone;
 import com.saigonvoice.content.exception.BadRequestException;
+import com.saigonvoice.content.exception.ConflictException;
 import com.saigonvoice.content.exception.ResourceNotFoundException;
 import com.saigonvoice.content.messaging.PoiPublishRequestedEvent;
 import com.saigonvoice.content.repository.CategoryRepository;
@@ -27,13 +31,18 @@ import com.saigonvoice.content.util.TimeUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -54,6 +63,7 @@ public class PoiContentServiceImpl implements PoiContentService {
     private final RouteRepository routeRepository;
     private final ApplicationEventPublisher applicationEventPublisher;
     private final PoiPublishService poiPublishService;
+    private final RouteStopsSynchronizer routeStopsSynchronizer;
 
     @Override
     public List<PoiSummaryDto> getPois(Long zoneId) {
@@ -61,6 +71,43 @@ public class PoiContentServiceImpl implements PoiContentService {
                 ? poiRepository.findByZoneIdAndStatus(zoneId, "ACTIVE")
                 : poiRepository.findByStatus("ACTIVE");
         return pois.stream().map(PoiMapper::toSummary).toList();
+    }
+
+    @Override
+    public Page<AdminPoiListItemDto> getAdminPois(
+            Long zoneId, Long routeId, String status, String search, String audioStatus, Pageable pageable) {
+        String searchPattern = (search != null && !search.isBlank())
+                ? "%" + search.trim().toLowerCase(Locale.ROOT) + "%" : null;
+        String normalizedStatus = (status != null && !status.isBlank()) ? status.trim().toUpperCase(Locale.ROOT) : null;
+        String normalizedAudio = (audioStatus != null && !audioStatus.isBlank())
+                ? audioStatus.trim().toUpperCase(Locale.ROOT) : null;
+
+        Page<Poi> page = poiRepository.searchAdminPois(
+                zoneId, routeId, normalizedStatus, searchPattern, normalizedAudio, pageable);
+
+        List<Long> ids = page.getContent().stream().map(Poi::getId).toList();
+        Map<Long, Map<String, String>> audioByPoi = loadAudioStatuses(ids);
+
+        return page.map(poi -> toAdminListItem(poi, audioByPoi.getOrDefault(poi.getId(), Map.of())));
+    }
+
+    @Override
+    public AdminPoiDetailDto getAdminPoiDetail(Long id) {
+        Poi poi = poiRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("POI not found with id: " + id));
+        return mapToAdminDetail(poi, translationRepository.findByPoiId(id), null);
+    }
+
+    private Map<Long, Map<String, String>> loadAudioStatuses(List<Long> poiIds) {
+        if (poiIds.isEmpty()) {
+            return Map.of();
+        }
+        Map<Long, Map<String, String>> result = new HashMap<>();
+        for (PoiTranslation t : translationRepository.findByPoiIdIn(poiIds)) {
+            result.computeIfAbsent(t.getPoi().getId(), k -> new LinkedHashMap<>())
+                    .put(t.getLanguageCode(), t.getAudioStatus());
+        }
+        return result;
     }
 
     @Override
@@ -175,12 +222,18 @@ public class PoiContentServiceImpl implements PoiContentService {
 
     @Override
     @Transactional
-    public PoiDetailDto updatePoi(Long id, UpdatePoiRequest request) {
+    public AdminPoiDetailDto updatePoi(Long id, UpdatePoiRequest request) {
         Poi poi = poiRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("POI not found with id: " + id));
 
+        if (request.getVersion() == null || !Objects.equals(poi.getVersion(), request.getVersion())) {
+            throw new ConflictException("Nội dung đã được người khác cập nhật. Vui lòng tải lại trang.");
+        }
+
         Category category = categoryRepository.findById(request.getCategoryId())
                 .orElseThrow(() -> new BadRequestException("Category not found with id: " + request.getCategoryId()));
+
+        Long oldRouteId = applyRouteAssignment(poi, request);
 
         poi.setName(request.getName());
         poi.setCategory(category);
@@ -194,6 +247,7 @@ public class PoiContentServiceImpl implements PoiContentService {
 
         PoiTranslation viTranslation = translationRepository.findByPoiIdAndLanguageCode(poi.getId(), DEFAULT_LANG)
                 .orElse(null);
+        List<PoiTranslation> allTranslations = translationRepository.findByPoiId(poi.getId());
 
         boolean contentChanged = viTranslation == null
                 || !Objects.equals(viTranslation.getTitle(), request.getTitle())
@@ -232,8 +286,7 @@ public class PoiContentServiceImpl implements PoiContentService {
 
             // Đặt audio_status = 'PENDING' cho các hàng poi_translation của ngôn ngữ khác (en, ja, ko)
             // nhưng KHÔNG xóa title/summary/description/audio_url cũ
-            List<PoiTranslation> otherTranslations = translationRepository.findByPoiId(poi.getId());
-            for (PoiTranslation trans : otherTranslations) {
+            for (PoiTranslation trans : allTranslations) {
                 if (!DEFAULT_LANG.equalsIgnoreCase(trans.getLanguageCode())) {
                     trans.setAudioStatus("PENDING");
                     trans.setUpdatedAt(now);
@@ -242,8 +295,10 @@ public class PoiContentServiceImpl implements PoiContentService {
             }
         }
 
+        poi.setVersion((poi.getVersion() == null ? 0L : poi.getVersion()) + 1);
         poiRepository.save(poi);
         translationRepository.save(viTranslation);
+        poiRepository.flush();
 
         if (contentChanged) {
             String routingKey = PublishEventType.POI_UPDATED.equals(poi.getPublishEventType())
@@ -253,7 +308,123 @@ public class PoiContentServiceImpl implements PoiContentService {
                     new PoiPublishRequestedEvent(poi.getId(), routingKey));
         }
 
-        return mapToDetailDto(poi, viTranslation, false);
+        AdminPoiDetailDto result = mapToAdminDetail(poi, allTranslations, viTranslation);
+
+        // Nếu POI đổi tuyến, giữ stop_order của tuyến cũ liên tục
+        if (oldRouteId != null) {
+            routeStopsSynchronizer.renumberRoute(oldRouteId);
+        }
+
+        return result;
+    }
+
+    private Long applyRouteAssignment(Poi poi, UpdatePoiRequest request) {
+        Long routeId = request.getRouteId();
+        Integer stopOrder = request.getStopOrder();
+        boolean hasRoute = routeId != null;
+        boolean hasStop = stopOrder != null;
+        if (hasRoute != hasStop) {
+            throw new BadRequestException("routeId and stopOrder must be provided together");
+        }
+        Long previousRouteId = poi.getRoute() != null ? poi.getRoute().getId() : null;
+        if (!hasRoute) {
+            poi.setRoute(null);
+            poi.setStopOrder(null);
+            if (previousRouteId != null) {
+                return previousRouteId;
+            }
+            return null;
+        }
+        boolean alreadyOnRoute = poi.getRoute() != null && Objects.equals(poi.getRoute().getId(), routeId);
+        boolean stopUnchanged = Objects.equals(poi.getStopOrder(), stopOrder);
+        if (alreadyOnRoute && stopUnchanged) {
+            return null;
+        }
+        Route route = routeRepository.findById(routeId)
+                .orElseThrow(() -> new ResourceNotFoundException("Route not found with id: " + routeId));
+        if (!Objects.equals(route.getZone().getId(), poi.getZone().getId())) {
+            throw new BadRequestException("Route " + route.getId() + " does not belong to zone " + poi.getZone().getId());
+        }
+        if (poiRepository.existsByRouteIdAndStopOrder(route.getId(), stopOrder)) {
+            throw new BadRequestException("stopOrder " + stopOrder + " already used in route " + route.getId());
+        }
+        poi.setRoute(route);
+        poi.setStopOrder(stopOrder);
+        if (previousRouteId != null && !previousRouteId.equals(route.getId())) {
+            return previousRouteId;
+        }
+        return null;
+    }
+
+    private AdminPoiListItemDto toAdminListItem(Poi poi, Map<String, String> audioStatuses) {
+        return AdminPoiListItemDto.builder()
+                .id(poi.getId())
+                .code(poi.getCode())
+                .name(poi.getName())
+                .slug(poi.getSlug())
+                .zoneId(poi.getZone() != null ? poi.getZone().getId() : null)
+                .zoneCode(poi.getZone() != null ? poi.getZone().getCode() : null)
+                .routeId(poi.getRoute() != null ? poi.getRoute().getId() : null)
+                .routeName(poi.getRoute() != null ? poi.getRoute().getName() : null)
+                .stopOrder(poi.getStopOrder())
+                .status(poi.getStatus())
+                .version(poi.getVersion())
+                .publishStatus(poi.getPublishStatus())
+                .audioStatusByLanguage(audioStatuses)
+                .build();
+    }
+
+    private AdminPoiDetailDto mapToAdminDetail(Poi poi, List<PoiTranslation> translations, PoiTranslation primaryVi) {
+        Map<String, AdminPoiTranslationDto> mapped = new LinkedHashMap<>();
+        if (primaryVi != null && primaryVi.getLanguageCode() != null) {
+            mapped.put(primaryVi.getLanguageCode(), toAdminTranslation(primaryVi));
+        }
+        if (translations != null) {
+            for (PoiTranslation t : translations) {
+                mapped.putIfAbsent(t.getLanguageCode(), toAdminTranslation(t));
+            }
+        }
+
+        return AdminPoiDetailDto.builder()
+                .id(poi.getId())
+                .code(poi.getCode())
+                .qrToken(poi.getQrToken())
+                .name(poi.getName())
+                .slug(poi.getSlug())
+                .latitude(poi.getLatitude())
+                .longitude(poi.getLongitude())
+                .triggerRadiusMeters(poi.getTriggerRadiusMeters())
+                .address(poi.getAddress())
+                .thumbnailUrl(poi.getThumbnailUrl())
+                .zoneId(poi.getZone() != null ? poi.getZone().getId() : null)
+                .zoneCode(poi.getZone() != null ? poi.getZone().getCode() : null)
+                .categoryId(poi.getCategory() != null ? poi.getCategory().getId() : null)
+                .categoryCode(poi.getCategory() != null ? poi.getCategory().getCode() : null)
+                .categoryNameVi(poi.getCategory() != null ? poi.getCategory().getNameVi() : null)
+                .routeId(poi.getRoute() != null ? poi.getRoute().getId() : null)
+                .routeName(poi.getRoute() != null ? poi.getRoute().getName() : null)
+                .stopOrder(poi.getStopOrder())
+                .status(poi.getStatus())
+                .version(poi.getVersion())
+                .publishStatus(poi.getPublishStatus())
+                .publishAttempts(poi.getPublishAttempts())
+                .lastPublishAttemptAt(poi.getLastPublishAttemptAt())
+                .translations(mapped)
+                .build();
+    }
+
+    private AdminPoiTranslationDto toAdminTranslation(PoiTranslation t) {
+        return AdminPoiTranslationDto.builder()
+                .languageCode(t.getLanguageCode())
+                .title(t.getTitle())
+                .summary(t.getSummary())
+                .description(t.getDescription())
+                .historicalSignificance(t.getHistoricalSignificance())
+                .audioUrl(t.getAudioUrl())
+                .audioDurationSeconds(t.getAudioDurationSeconds())
+                .audioStatus(t.getAudioStatus())
+                .source(t.getSource())
+                .build();
     }
 
     private static String emptyToNull(String s) {

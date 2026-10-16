@@ -5,6 +5,7 @@ import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 import lombok.*;
 
@@ -16,6 +17,15 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 @Builder
 public class UpdatePoiRequest {
+
+    // Khoá lạc hậu: bắt buộc. Không khớp -> 409 (đã có người cập nhật).
+    private Long version;
+
+    // Tùy chọn: gán POI vào tuyến. routeId và stopOrder phải cùng có hoặc cùng bỏ trống.
+    private Long routeId;
+
+    @Positive(message = "stopOrder must be > 0")
+    private Integer stopOrder;
 
     @NotNull(message = "categoryId is required")
     private Long categoryId;

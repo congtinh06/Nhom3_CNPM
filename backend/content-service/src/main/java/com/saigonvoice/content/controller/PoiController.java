@@ -1,5 +1,7 @@
 package com.saigonvoice.content.controller;
 
+import com.saigonvoice.content.dto.AdminPoiDetailDto;
+import com.saigonvoice.content.dto.AdminPoiListItemDto;
 import com.saigonvoice.content.dto.CreatePoiRequest;
 import com.saigonvoice.content.dto.PoiBoundingBoxDto;
 import com.saigonvoice.content.dto.PoiDetailDto;
@@ -10,6 +12,10 @@ import com.saigonvoice.content.dto.UpdatePoiRequest;
 import com.saigonvoice.content.service.PoiContentService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -57,6 +63,23 @@ public class PoiController {
         return ResponseEntity.ok(poiContentService.getInternalPoiByQrToken(qrToken));
     }
 
+    @GetMapping("/api/content/admin/pois")
+    public ResponseEntity<Page<AdminPoiListItemDto>> getAdminPois(
+            @RequestParam(required = false) Long zoneId,
+            @RequestParam(required = false) Long routeId,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) String audioStatus,
+            @PageableDefault(size = 20, sort = "id", direction = Sort.Direction.ASC) Pageable pageable) {
+        return ResponseEntity.ok(
+                poiContentService.getAdminPois(zoneId, routeId, status, search, audioStatus, pageable));
+    }
+
+    @GetMapping("/api/content/admin/pois/{id}")
+    public ResponseEntity<AdminPoiDetailDto> getAdminPoiDetail(@PathVariable Long id) {
+        return ResponseEntity.ok(poiContentService.getAdminPoiDetail(id));
+    }
+
     @PostMapping("/api/content/admin/pois")
     public ResponseEntity<PoiDetailDto> createPoi(@Valid @RequestBody CreatePoiRequest request) {
         PoiDetailDto created = poiContentService.createPoi(request);
@@ -64,7 +87,7 @@ public class PoiController {
     }
 
     @PutMapping("/api/content/admin/pois/{id}")
-    public ResponseEntity<PoiDetailDto> updatePoi(
+    public ResponseEntity<AdminPoiDetailDto> updatePoi(
             @PathVariable Long id,
             @Valid @RequestBody UpdatePoiRequest request) {
         return ResponseEntity.ok(poiContentService.updatePoi(id, request));

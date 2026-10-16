@@ -21,4 +21,6 @@ public class UpdateRouteStopsRequest {
     @NotNull(message = "poiIds is required")
     @Builder.Default
     private List<Long> poiIds = new ArrayList<>();
+
+    private Long version;
 }

@@ -371,6 +371,7 @@ class PoiAudioListenerIntegrationTest {
 
         // 2. Chỉ đổi tọa độ / địa chỉ / thumbnail / category (nội dung tiếng Việt giữ nguyên)
         UpdatePoiRequest coordOnlyReq = UpdatePoiRequest.builder()
+                .version(0L)
                 .categoryId(categoryId)
                 .name("Bảo tàng Cũ")
                 .latitude(new BigDecimal("10.7780000"))
@@ -392,6 +393,7 @@ class PoiAudioListenerIntegrationTest {
 
         // 3. Đổi nội dung tiếng Việt (title, summary, description, historicalSignificance)
         UpdatePoiRequest contentReq = UpdatePoiRequest.builder()
+                .version(1L)
                 .categoryId(categoryId)
                 .name("Bảo tàng Mới")
                 .latitude(new BigDecimal("10.7780000"))

@@ -1,11 +1,21 @@
 package com.saigonvoice.content.service;
 
+import com.saigonvoice.content.dto.AdminZoneDetailDto;
+import com.saigonvoice.content.dto.AdminZoneListItemDto;
 import com.saigonvoice.content.dto.CreateZoneRequest;
+import com.saigonvoice.content.dto.UpdateZoneRequest;
 import com.saigonvoice.content.dto.ZoneDto;
 import com.saigonvoice.content.entity.Zone;
 import com.saigonvoice.content.exception.BadRequestException;
+import com.saigonvoice.content.exception.ConflictException;
+import com.saigonvoice.content.repository.PoiRepository;
+import com.saigonvoice.content.repository.RouteRepository;
 import com.saigonvoice.content.repository.ZoneRepository;
 import com.saigonvoice.content.util.GeoUtils;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -27,6 +37,12 @@ class ZoneServiceImplTest {
 
     @Mock
     private ZoneRepository zoneRepository;
+
+    @Mock
+    private PoiRepository poiRepository;
+
+    @Mock
+    private RouteRepository routeRepository;
 
     @InjectMocks
     private ZoneServiceImpl zoneService;
@@ -187,6 +203,7 @@ class ZoneServiceImplTest {
                 .centerLng(new BigDecimal("106.7010000"))
                 .radiusMeters(500)
                 .isActive(true)
+                .version(0L)
                 .build();
 
         assertThatThrownBy(() -> zoneService.updateZone(4L, request))
@@ -210,6 +227,7 @@ class ZoneServiceImplTest {
                 .centerLng(new BigDecimal("106.7009000"))
                 .radiusMeters(600)
                 .isActive(true)
+                .version(0L)
                 .build();
 
         ZoneDto updated = zoneService.updateZone(1L, request);
@@ -233,6 +251,7 @@ class ZoneServiceImplTest {
                 .centerLng(new BigDecimal("106.7009000"))
                 .radiusMeters(650)
                 .isActive(true)
+                .version(0L)
                 .build();
 
         ZoneDto updated = zoneService.updateZone(1L, request);
@@ -240,5 +259,138 @@ class ZoneServiceImplTest {
         assertThat(updated).isNotNull();
         assertThat(updated.getRadiusMeters()).isEqualTo(650);
         verify(zoneRepository).save(zoneD1);
+    }
+
+    @Test
+    @DisplayName("Cập nhật khu vực với version cũ -> ném ConflictException (HTTP 409)")
+    void updateZoneStaleVersionThrowsConflict() {
+        when(zoneRepository.findById(1L)).thenReturn(java.util.Optional.of(zoneD1));
+
+        UpdateZoneRequest request = UpdateZoneRequest.builder()
+                .name("Trung tâm Lịch sử Quận 1")
+                .centerLat(new BigDecimal("10.7769000"))
+                .centerLng(new BigDecimal("106.7009000"))
+                .radiusMeters(600)
+                .isActive(true)
+                .version(99L)
+                .build();
+
+        assertThatThrownBy(() -> zoneService.updateZone(1L, request))
+                .isInstanceOf(ConflictException.class)
+                .hasMessageContaining("Nội dung đã được người khác cập nhật");
+
+        verify(zoneRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("Cập nhật khu vực thành công thì tăng version lên 1")
+    void updateZoneIncrementsVersion() {
+        when(zoneRepository.findById(1L)).thenReturn(java.util.Optional.of(zoneD1));
+        when(zoneRepository.findByIsActiveTrue()).thenReturn(List.of(zoneD1));
+        when(zoneRepository.save(any(Zone.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        UpdateZoneRequest request = UpdateZoneRequest.builder()
+                .name("Trung tâm Lịch sử Quận 1")
+                .centerLat(new BigDecimal("10.7769000"))
+                .centerLng(new BigDecimal("106.7009000"))
+                .radiusMeters(600)
+                .isActive(true)
+                .version(0L)
+                .build();
+
+        zoneService.updateZone(1L, request);
+
+        assertThat(zoneD1.getVersion()).isEqualTo(1L);
+    }
+
+    @Test
+    @DisplayName("Ngừng hoạt động khu vực khi vẫn còn điểm thuyết minh -> ném BadRequestException tiếng Việt")
+    void deactivateZoneWithPoisThrowsException() {
+        when(zoneRepository.findById(1L)).thenReturn(java.util.Optional.of(zoneD1));
+        when(poiRepository.countByZoneId(1L)).thenReturn(3L);
+
+        UpdateZoneRequest request = UpdateZoneRequest.builder()
+                .name("Trung tâm Lịch sử Quận 1")
+                .centerLat(new BigDecimal("10.7769000"))
+                .centerLng(new BigDecimal("106.7009000"))
+                .radiusMeters(600)
+                .isActive(false)
+                .version(0L)
+                .build();
+
+        assertThatThrownBy(() -> zoneService.updateZone(1L, request))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessageContaining("Không thể ngừng hoạt động khu vực");
+
+        verify(zoneRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("Endpoint trạng thái: ngừng hoạt động khu vực còn điểm -> BadRequestException")
+    void updateStatusDeactivateWithPoisThrows() {
+        when(zoneRepository.findById(1L)).thenReturn(java.util.Optional.of(zoneD1));
+        when(poiRepository.countByZoneId(1L)).thenReturn(4L);
+
+        assertThatThrownBy(() -> zoneService.updateStatus(1L, false))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessageContaining("Không thể ngừng hoạt động khu vực");
+
+        verify(zoneRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("Endpoint trạng thái: ngừng hoạt động khu vực rỗng -> thành công")
+    void updateStatusDeactivateEmptyZoneSucceeds() {
+        when(zoneRepository.findById(1L)).thenReturn(java.util.Optional.of(zoneD1));
+        when(poiRepository.countByZoneId(1L)).thenReturn(0L);
+        when(zoneRepository.save(any(Zone.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(routeRepository.countByZoneId(1L)).thenReturn(0L);
+
+        AdminZoneDetailDto detail = zoneService.updateStatus(1L, false);
+
+        assertThat(detail.getIsActive()).isFalse();
+        verify(zoneRepository).save(zoneD1);
+    }
+
+    @Test
+    @DisplayName("Endpoint trạng thái: bật hoạt động khu vực -> thành công")
+    void updateStatusActivateSucceeds() {
+        zoneD1.setIsActive(false);
+        when(zoneRepository.findById(1L)).thenReturn(java.util.Optional.of(zoneD1));
+        when(zoneRepository.save(any(Zone.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(poiRepository.countByZoneId(1L)).thenReturn(2L);
+        when(routeRepository.countByZoneId(1L)).thenReturn(1L);
+
+        AdminZoneDetailDto detail = zoneService.updateStatus(1L, true);
+
+        assertThat(detail.getIsActive()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Endpoint trạng thái: khu vực không tồn tại -> ResourceNotFoundException")
+    void updateStatusNotFoundThrows() {
+        when(zoneRepository.findById(99L)).thenReturn(java.util.Optional.empty());
+
+        assertThatThrownBy(() -> zoneService.updateStatus(99L, true))
+                .isInstanceOf(com.saigonvoice.content.exception.ResourceNotFoundException.class);
+    }
+
+    @Test
+    @DisplayName("Danh sách khu vực admin: gắn poiCount theo lô, không truy vấn từng dòng")
+    void getAdminZonesMapsPoiCounts() {
+        Pageable pageable = PageRequest.of(0, 20);
+        Page<Zone> page = new PageImpl<>(List.of(zoneD1, zoneChoLon), pageable, 2);
+        when(zoneRepository.searchAdminZones(null, null, pageable)).thenReturn(page);
+        java.util.List<Object[]> counts = new java.util.ArrayList<>();
+        counts.add(new Object[]{1L, 5L});
+        when(poiRepository.countPoisByZoneIds(List.of(1L, 2L))).thenReturn(counts);
+
+        Page<AdminZoneListItemDto> result = zoneService.getAdminZones(null, null, pageable);
+
+        assertThat(result.getContent()).hasSize(2);
+        assertThat(result.getContent().get(0).getPoiCount()).isEqualTo(5L);
+        assertThat(result.getContent().get(1).getPoiCount()).isEqualTo(0L);
+        assertThat(result.getContent().get(0).getCode()).isEqualTo("D1_HISTORIC");
+        verify(poiRepository, times(1)).countPoisByZoneIds(List.of(1L, 2L));
     }
 }

@@ -97,6 +97,11 @@ public class Poi {
     @Builder.Default
     private LocalDateTime updatedAt = LocalDateTime.now();
 
+    // Khoá lạc hậu cho admin update. Quản lý thủ công (không dùng @Version) để trả 409 rõ ràng.
+    @Column(nullable = false)
+    @Builder.Default
+    private Long version = 0L;
+
     @OneToMany(mappedBy = "poi", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<PoiTranslation> translations = new ArrayList<>();

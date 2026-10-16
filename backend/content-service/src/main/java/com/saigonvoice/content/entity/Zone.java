@@ -45,4 +45,9 @@ public class Zone {
     @Column(name = "created_at", nullable = false, updatable = false)
     @Builder.Default
     private LocalDateTime createdAt = LocalDateTime.now();
+
+    // Khoá lạc hậu cho admin update (manual optimistic lock).
+    @Column(nullable = false)
+    @Builder.Default
+    private Long version = 0L;
 }

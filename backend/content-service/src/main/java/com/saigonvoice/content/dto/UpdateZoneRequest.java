@@ -34,4 +34,6 @@ public class UpdateZoneRequest {
     private Integer radiusMeters;
 
     private Boolean isActive;
+
+    private Long version;
 }

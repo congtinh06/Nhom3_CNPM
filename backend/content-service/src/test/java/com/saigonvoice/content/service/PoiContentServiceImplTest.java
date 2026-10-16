@@ -1,5 +1,7 @@
 package com.saigonvoice.content.service;
 
+import com.saigonvoice.content.dto.AdminPoiDetailDto;
+import com.saigonvoice.content.dto.AdminPoiListItemDto;
 import com.saigonvoice.content.dto.CreatePoiRequest;
 import com.saigonvoice.content.dto.PoiBoundingBoxDto;
 import com.saigonvoice.content.dto.PoiDetailDto;
@@ -15,6 +17,7 @@ import com.saigonvoice.content.entity.PublishStatus;
 import com.saigonvoice.content.entity.Route;
 import com.saigonvoice.content.entity.Zone;
 import com.saigonvoice.content.exception.BadRequestException;
+import com.saigonvoice.content.exception.ConflictException;
 import com.saigonvoice.content.exception.ResourceNotFoundException;
 import com.saigonvoice.content.messaging.PoiPublishRequestedEvent;
 import com.saigonvoice.content.repository.CategoryRepository;
@@ -31,6 +34,10 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -51,6 +58,7 @@ class PoiContentServiceImplTest {
     @Mock private RouteRepository routeRepository;
     @Mock private ApplicationEventPublisher applicationEventPublisher;
     @Mock private PoiPublishService poiPublishService;
+    @Mock private RouteStopsSynchronizer routeStopsSynchronizer;
 
     @InjectMocks
     private PoiContentServiceImpl poiContentService;
@@ -328,6 +336,7 @@ class PoiContentServiceImplTest {
 
     private UpdatePoiRequest.UpdatePoiRequestBuilder baseUpdateRequest() {
         return UpdatePoiRequest.builder()
+                .version(0L)
                 .categoryId(1L)
                 .name("Buu Dien Trung Tam")
                 .latitude(new BigDecimal("10.7799000"))
@@ -385,9 +394,9 @@ class PoiContentServiceImplTest {
         samplePoi.setPublishStatus(PublishStatus.PUBLISHED);
         samplePoi.setPublishAttempts(2);
 
-        PoiDetailDto result = poiContentService.updatePoi(100L, request);
+        AdminPoiDetailDto result = poiContentService.updatePoi(100L, request);
 
-        assertThat(result.getTitle()).isEqualTo("Buu Dien Trung Tam Cap Nhat");
+        assertThat(result.getTranslations().get("vi").getTitle()).isEqualTo("Buu Dien Trung Tam Cap Nhat");
         assertThat(samplePoi.getPublishStatus()).isEqualTo(PublishStatus.PENDING);
         assertThat(samplePoi.getPublishEventType()).isEqualTo(PublishEventType.POI_UPDATED);
         assertThat(samplePoi.getPublishAttempts()).isEqualTo(0);
@@ -420,7 +429,7 @@ class PoiContentServiceImplTest {
         samplePoi.setPublishStatus(PublishStatus.PUBLISHED);
         samplePoi.setPublishAttempts(1);
 
-        PoiDetailDto result = poiContentService.updatePoi(100L, request);
+        AdminPoiDetailDto result = poiContentService.updatePoi(100L, request);
 
         assertThat(result.getLatitude()).isEqualTo(new BigDecimal("10.7812000"));
         assertThat(samplePoi.getAddress()).isEqualTo("Dia chi moi");
@@ -466,7 +475,7 @@ class PoiContentServiceImplTest {
         when(categoryRepository.findById(1L)).thenReturn(Optional.of(sampleCategory));
         when(translationRepository.findByPoiIdAndLanguageCode(100L, "vi")).thenReturn(Optional.of(viTranslation));
 
-        PoiDetailDto result = poiContentService.updatePoi(100L, request);
+        AdminPoiDetailDto result = poiContentService.updatePoi(100L, request);
 
         assertThat(result.getAddress()).isEqualTo("Dia chi moi sau khi loi publish");
         assertThat(samplePoi.getPublishEventType()).isEqualTo(PublishEventType.POI_CREATED);
@@ -556,6 +565,165 @@ class PoiContentServiceImplTest {
 
         verify(translationRepository).save(enTranslation);
         verify(translationRepository).save(jaTranslation);
+    }
+
+    @Test
+    @DisplayName("updatePoi: version lệch -> ConflictException (409)")
+    void testUpdatePoi_StaleVersion_ThrowsConflict() {
+        samplePoi.setVersion(5L);
+        UpdatePoiRequest request = baseUpdateRequest().version(0L).build();
+        when(poiRepository.findById(100L)).thenReturn(Optional.of(samplePoi));
+
+        assertThatThrownBy(() -> poiContentService.updatePoi(100L, request))
+                .isInstanceOf(ConflictException.class)
+                .hasMessageContaining("Nội dung đã được người khác cập nhật");
+
+        verify(poiRepository, never()).save(any());
+        verifyNoInteractions(applicationEventPublisher);
+    }
+
+    @Test
+    @DisplayName("updatePoi: version khớp -> tăng version và trả về version mới")
+    void testUpdatePoi_MatchingVersion_IncrementsVersion() {
+        samplePoi.setVersion(3L);
+        UpdatePoiRequest request = baseUpdateRequest().version(3L).build();
+        when(poiRepository.findById(100L)).thenReturn(Optional.of(samplePoi));
+        when(categoryRepository.findById(1L)).thenReturn(Optional.of(sampleCategory));
+        when(translationRepository.findByPoiIdAndLanguageCode(100L, "vi")).thenReturn(Optional.of(viTranslation));
+
+        AdminPoiDetailDto result = poiContentService.updatePoi(100L, request);
+
+        assertThat(result.getVersion()).isEqualTo(4L);
+        assertThat(samplePoi.getVersion()).isEqualTo(4L);
+    }
+
+    @Test
+    @DisplayName("updatePoi: gán route + stopOrder hợp lệ -> cập nhật thành công")
+    void testUpdatePoi_AssignsRouteAndStopOrder() {
+        Route route = Route.builder().id(7L).zone(sampleZone).name("Tuyen").build();
+        UpdatePoiRequest request = baseUpdateRequest().routeId(7L).stopOrder(2).build();
+        when(poiRepository.findById(100L)).thenReturn(Optional.of(samplePoi));
+        when(categoryRepository.findById(1L)).thenReturn(Optional.of(sampleCategory));
+        when(translationRepository.findByPoiIdAndLanguageCode(100L, "vi")).thenReturn(Optional.of(viTranslation));
+        when(routeRepository.findById(7L)).thenReturn(Optional.of(route));
+        when(poiRepository.existsByRouteIdAndStopOrder(7L, 2)).thenReturn(false);
+
+        AdminPoiDetailDto result = poiContentService.updatePoi(100L, request);
+
+        assertThat(result.getRouteId()).isEqualTo(7L);
+        assertThat(result.getStopOrder()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("updatePoi: di chuyển POI sang tuyến khác -> tuyến cũ được đánh số lại (liên tục)")
+    void testUpdatePoi_MovingPoiRenumbersOldRoute() {
+        Route oldRoute = Route.builder().id(9L).zone(sampleZone).name("Tuyen cu").build();
+        Route newRoute = Route.builder().id(7L).zone(sampleZone).name("Tuyen moi").build();
+        samplePoi.setRoute(oldRoute);
+        samplePoi.setStopOrder(3);
+        UpdatePoiRequest request = baseUpdateRequest().routeId(7L).stopOrder(2).build();
+        when(poiRepository.findById(100L)).thenReturn(Optional.of(samplePoi));
+        when(categoryRepository.findById(1L)).thenReturn(Optional.of(sampleCategory));
+        when(translationRepository.findByPoiIdAndLanguageCode(100L, "vi")).thenReturn(Optional.of(viTranslation));
+        when(routeRepository.findById(7L)).thenReturn(Optional.of(newRoute));
+        when(poiRepository.existsByRouteIdAndStopOrder(7L, 2)).thenReturn(false);
+
+        AdminPoiDetailDto result = poiContentService.updatePoi(100L, request);
+
+        assertThat(result.getRouteId()).isEqualTo(7L);
+        verify(routeStopsSynchronizer).renumberRoute(9L);
+    }
+
+    @Test
+    @DisplayName("updatePoi: gỡ POI khỏi tuyến (routeId null) -> tuyến cũ được đánh số lại")
+    void testUpdatePoi_RemovingPoiRenumbersOldRoute() {
+        Route oldRoute = Route.builder().id(9L).zone(sampleZone).name("Tuyen cu").build();
+        samplePoi.setRoute(oldRoute);
+        samplePoi.setStopOrder(2);
+        UpdatePoiRequest request = baseUpdateRequest().build();
+        when(poiRepository.findById(100L)).thenReturn(Optional.of(samplePoi));
+        when(categoryRepository.findById(1L)).thenReturn(Optional.of(sampleCategory));
+        when(translationRepository.findByPoiIdAndLanguageCode(100L, "vi")).thenReturn(Optional.of(viTranslation));
+
+        AdminPoiDetailDto result = poiContentService.updatePoi(100L, request);
+
+        assertThat(result.getRouteId()).isNull();
+        assertThat(result.getStopOrder()).isNull();
+        verify(routeStopsSynchronizer).renumberRoute(9L);
+    }
+
+    @Test
+    @DisplayName("updatePoi: stopOrder trùng trong tuyến đích -> BadRequest")
+    void testUpdatePoi_DuplicateStopOrder_Rejected() {
+        Route route = Route.builder().id(7L).zone(sampleZone).name("Tuyen").build();
+        UpdatePoiRequest request = baseUpdateRequest().routeId(7L).stopOrder(2).build();
+        when(poiRepository.findById(100L)).thenReturn(Optional.of(samplePoi));
+        when(categoryRepository.findById(1L)).thenReturn(Optional.of(sampleCategory));
+        when(routeRepository.findById(7L)).thenReturn(Optional.of(route));
+        when(poiRepository.existsByRouteIdAndStopOrder(7L, 2)).thenReturn(true);
+
+        assertThatThrownBy(() -> poiContentService.updatePoi(100L, request))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessageContaining("already used");
+    }
+
+    @Test
+    @DisplayName("getAdminPois: map dòng trang kèm audioStatus theo ngôn ngữ (không N+1)")
+    void testGetAdminPois_MapsAudioStatuses() {
+        PoiTranslation en = PoiTranslation.builder().poi(samplePoi).languageCode("en")
+                .title("Central").audioStatus("READY").build();
+        Pageable pageable = PageRequest.of(0, 20);
+        Page<Poi> page = new PageImpl<>(List.of(samplePoi), pageable, 1);
+        when(poiRepository.searchAdminPois(null, null, null, null, null, pageable)).thenReturn(page);
+        when(translationRepository.findByPoiIdIn(List.of(100L))).thenReturn(List.of(viTranslation, en));
+
+        Page<AdminPoiListItemDto> result = poiContentService.getAdminPois(null, null, null, null, null, pageable);
+
+        assertThat(result.getTotalElements()).isEqualTo(1);
+        AdminPoiListItemDto row = result.getContent().get(0);
+        assertThat(row.getId()).isEqualTo(100L);
+        assertThat(row.getZoneCode()).isEqualTo("D1_HISTORIC");
+        assertThat(row.getVersion()).isEqualTo(0L);
+        assertThat(row.getAudioStatusByLanguage()).containsEntry("vi", "READY").containsEntry("en", "READY");
+    }
+
+    @Test
+    @DisplayName("getAdminPois: search được trim + lower-case thành LIKE pattern")
+    void testGetAdminPois_SearchPattern() {
+        Pageable pageable = PageRequest.of(0, 20);
+        when(poiRepository.searchAdminPois(1L, null, null, "%buu dien%", null, pageable))
+                .thenReturn(new PageImpl<>(List.of(samplePoi), pageable, 1));
+        when(translationRepository.findByPoiIdIn(List.of(100L))).thenReturn(List.of());
+
+        Page<AdminPoiListItemDto> result =
+                poiContentService.getAdminPois(1L, null, null, "  Buu Dien  ", null, pageable);
+
+        assertThat(result.getContent()).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("getAdminPoiDetail: trả toàn bộ bản dịch theo ngôn ngữ trong 1 response")
+    void testGetAdminPoiDetail_AllTranslations() {
+        PoiTranslation en = PoiTranslation.builder().poi(samplePoi).languageCode("en")
+                .title("Central").audioStatus("READY").build();
+        when(poiRepository.findById(100L)).thenReturn(Optional.of(samplePoi));
+        when(translationRepository.findByPoiId(100L)).thenReturn(List.of(viTranslation, en));
+
+        AdminPoiDetailDto detail = poiContentService.getAdminPoiDetail(100L);
+
+        assertThat(detail.getCategoryId()).isEqualTo(1L);
+        assertThat(detail.getVersion()).isEqualTo(0L);
+        assertThat(detail.getTranslations()).containsKeys("vi", "en");
+        assertThat(detail.getTranslations().get("en").getTitle()).isEqualTo("Central");
+    }
+
+    @Test
+    @DisplayName("getAdminPoiDetail: ném ResourceNotFoundException khi không tồn tại")
+    void testGetAdminPoiDetail_NotFound() {
+        when(poiRepository.findById(999L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> poiContentService.getAdminPoiDetail(999L))
+                .isInstanceOf(ResourceNotFoundException.class);
     }
 
     @Test
