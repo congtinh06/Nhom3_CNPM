@@ -1,4 +1,4 @@
-@import './variables.css';
+﻿@import './variables.css';
 
 html {
   scroll-padding-top: env(safe-area-inset-top, 0px);
@@ -272,7 +272,7 @@ select:focus-visible {
   text-shadow: none;
 }
 
-/* VÃ¹ng Ä‘á»‡m vÃ´ hÃ¬nh phá»§ kÃ­n khoáº£ng há»Ÿ giá»¯a nÃºt trigger vÃ  menu con */
+/* V├â┬╣ng ├äΓÇÿ├í┬╗ΓÇím v├â┬┤ h├â┬¼nh ph├í┬╗┬º k├â┬¡n kho├í┬║┬úng h├í┬╗┼╕ gi├í┬╗┬»a n├â┬║t trigger v├â┬á menu con */
 .dropdown-menu::before {
   content: '';
   position: absolute;
@@ -2135,7 +2135,7 @@ dialog p {
 
 /* ==========================================================================
    8. Shop, Catalog, Detail, Cart, Checkout, and Orders
-   Phong cÃ¡ch hoÃ i cá»• thá»§ cÃ´ng SÃ i GÃ²n (tÃ´ng nÃ¢u, kem, trang nhÃ£)
+   Phong c├â┬ích ho├â┬ái c├í┬╗ΓÇó th├í┬╗┬º c├â┬┤ng S├â┬ái G├â┬▓n (t├â┬┤ng n├â┬óu, kem, trang nh├â┬ú)
    ========================================================================== */
 
 /* --- 8.1. Product List Page (/am-thuc, /thuc-uong) --- */
@@ -3992,7 +3992,7 @@ dialog p {
   background: rgba(192, 57, 43, 0.08);
 }
 
-/* Modal xÃ¡c nháº­n há»§y Ä‘Æ¡n */
+/* Modal x├â┬íc nh├í┬║┬¡n h├í┬╗┬ºy ├äΓÇÿ├å┬ín */
 .cancel-confirm-backdrop {
   position: fixed;
   inset: 0;
