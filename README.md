@@ -226,6 +226,18 @@ Hệ thống cung cấp sẵn các tài khoản kiểm thử đã được kích
 > ```
 > *(Ngoài ra, người dùng vẫn có thể đăng ký tài khoản mới tự do tại `/dang-ky`. Trong môi trường dev không có SMTP thật, link/token xác thực email sẽ được ghi trực tiếp vào log của container `auth-service`)*.
 
+### 6.5. Trang Quản trị (Admin Console)
+
+Khu vực quản trị dành riêng cho vai trò `ADMIN`, truy cập tại **http://localhost:5173/quan-tri** (trang đăng nhập: `/quan-tri/dang-nhap`).
+
+- **Xác thực**: đăng nhập bằng Bearer JWT, yêu cầu vai trò `ADMIN`. `api-gateway` và bộ lọc `AdminRoleFilter` (ở `content-service`) chặn mọi truy cập thiếu quyền. **Không còn dùng cơ chế `X-Admin-Key`/`ADMIN_API_KEY` cũ.**
+- **Phân hệ**: Tổng quan · Sản phẩm · Điểm thuyết minh (POI) · Khu vực · Lộ trình · Người dùng.
+- **API chính**: `/api/content/admin/**`, `/api/admin/products/**`, `/api/auth/admin/users`, `/api/analytics/summary`.
+- **Tải theo trang (lazy-load)**: mỗi trang quản trị được tách thành chunk riêng, chỉ tải khi truy cập.
+- **Uploads & hiển thị ảnh**: ảnh sản phẩm tối đa **2 MB (3 MB ở tầng nginx)**, lưu trong volume `product-uploads-data` và phục vụ qua `/img/products/{filename}` (gateway route `content-service-product-images` → `content-service`, nginx proxy `/img/products/`).
+- **Khóa lạc hậu (optimistic lock)**: POI, khu vực và lộ trình đều có trường `version`. Khi lưu với `version` cũ, API trả **409 Conflict**; giao diện hiển thị hộp thoại thông báo dữ liệu đã thay đổi và tùy chọn tải lại.
+- **Giới hạn đã biết**: access token có hiệu lực ~15 phút (thay đổi vai trò/trạng thái tài khoản có độ trễ ngắn); dữ liệu analytics không tách theo người dùng.
+
 ---
 
 ## 7. Kiểm thử hệ thống (Automated Testing)

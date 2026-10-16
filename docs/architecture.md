@@ -117,6 +117,10 @@ Hệ thống sử dụng một máy chủ **Microsoft SQL Server 2022** duy nh�
 - Quản lý bảng: `analytics_event` (lưu trữ nhật ký sự kiện quét QR và phát audio, không lưu thông tin định danh cá nhân của du khách).
 - Login chuyên dụng: `analytics_user` (chỉ có quyền trên `saigonvoice_analytics_db`).
 
+### 5.4. Khóa lạc hậu & Phục vụ ảnh sản phẩm
+- Các bảng `poi`, `zone`, `route` (thuộc `saigonvoice_content_db`) đều có cột `version` (BIGINT, mặc định `0`) làm khóa lạc hậu cho thao tác quản trị. Khi cập nhật với `version` cũ, service ném `ConflictException` → `HTTP 409`; giao diện quản trị hiển thị hộp thoại yêu cầu tải lại.
+- Ảnh sản phẩm được tải lên (tối đa 2 MB) và lưu trong volume `product-uploads-data`; phục vụ bất biến qua gateway route `content-service-product-images` (`Path=/img/products/**` → `content-service`) và được nginx proxy tại `/img/products/`.
+
 ---
 
 ## 6. Các Lớp Bảo Mật & Ràng Buộc Hệ Thống (Defense-in-Depth)

@@ -125,6 +125,9 @@ services:
       RABBITMQ_USERNAME: ${RABBITMQ_DEFAULT_USER:?RABBITMQ_DEFAULT_USER is required in .env}
       RABBITMQ_PASSWORD: ${RABBITMQ_DEFAULT_PASS:?RABBITMQ_DEFAULT_PASS is required in .env}
       INTERNAL_API_KEY: ${INTERNAL_API_KEY:-}
+      PRODUCT_UPLOAD_DIR: /app/uploads/products
+    volumes:
+      - product-uploads-data:/app/uploads/products
     depends_on:
       mssql-db-init:
         condition: service_completed_successfully
@@ -318,3 +321,7 @@ volumes:
   mssql-data:
   rabbitmq-data:
   audio-storage-data:
+  # Lưu trữ ảnh sản phẩm tải lên phục vụ GET /img/products/**
+  # Backup: docker run --rm -v product-uploads-data:/data -v ${PWD}:/backup alpine tar czf /backup/product-uploads.tar.gz -C /data .
+  # Restore: docker run --rm -v product-uploads-data:/data -v ${PWD}:/backup alpine tar xzf /backup/product-uploads.tar.gz -C /data
+  product-uploads-data:

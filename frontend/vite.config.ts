@@ -96,6 +96,10 @@ export default defineConfig(({ mode }) => {
           target: 'http://localhost:18080',
           changeOrigin: true,
         },
+        '/img/products': {
+          target: 'http://localhost:18080',
+          changeOrigin: true,
+        },
       },
     },
     test: {
