@@ -1500,6 +1500,13 @@
   gap: 16px;
 }
 
+.adm-form-section-desc {
+  font-size: 12.5px;
+  color: var(--fb-text-secondary, #78716C);
+  margin: 0;
+  line-height: 1.5;
+}
+
 .adm-form-row {
   display: flex;
   gap: 16px;

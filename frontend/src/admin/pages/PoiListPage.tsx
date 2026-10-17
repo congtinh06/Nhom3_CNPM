@@ -13,6 +13,8 @@ import { DataTable, Column } from '../components/DataTable';
 import { StatusBadge } from '../components/StatusBadge';
 import { EmptyState } from '../components/EmptyState';
 import { ErrorState } from '../components/ErrorState';
+import { AdminToolbar } from '../components/AdminToolbar';
+import { AdminPagination } from '../components/AdminPagination';
 
 const PAGE_SIZE = 10;
 
@@ -226,93 +228,80 @@ export const PoiListPage: React.FC = () => {
         </Link>
       </div>
 
-      <div className="adm-toolbar">
-        <div className="adm-toolbar-left">
-          <div className="adm-search-wrap">
-            <input
-              type="search"
-              className="adm-input adm-search-input"
-              placeholder="Tìm theo tên hoặc mã điểm..."
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-              aria-label="Tìm kiếm điểm thuyết minh"
-            />
-          </div>
-
-          <select
-            className="adm-select"
-            value={zoneFilter}
-            onChange={(e) => {
-              setZoneFilter(e.target.value);
-              setRouteFilter('');
-              setPage(0);
-            }}
-            aria-label="Lọc theo khu vực"
-          >
-            <option value="">Tất cả khu vực</option>
-            {zones.map((zone) => (
-              <option key={zone.id} value={String(zone.id)}>
-                {zone.name}
-              </option>
-            ))}
-          </select>
-
-          <select
-            className="adm-select"
-            value={routeFilter}
-            onChange={(e) => {
-              setRouteFilter(e.target.value);
-              setPage(0);
-            }}
-            disabled={!zoneFilter}
-            aria-label="Lọc theo tuyến"
-          >
-            <option value="">Tất cả tuyến</option>
-            {routes.map((route) => (
-              <option key={route.id} value={String(route.id)}>
-                {route.name}
-              </option>
-            ))}
-          </select>
-
-          <select
-            className="adm-select"
-            value={audioFilter}
-            onChange={(e) => {
-              setAudioFilter(e.target.value);
-              setPage(0);
-            }}
-            aria-label="Lọc theo trạng thái thuyết minh"
-          >
-            <option value="">Tất cả trạng thái âm thanh</option>
-            <option value="PENDING">Chờ xử lý</option>
-            <option value="PROCESSING">Đang xử lý</option>
-            <option value="READY">Sẵn sàng</option>
-            <option value="FAILED_TTS">Lỗi tổng hợp</option>
-          </select>
-
-          {hasActiveFilters && (
-            <button
-              type="button"
-              className="adm-btn adm-btn-ghost adm-btn-sm"
-              onClick={handleClearFilters}
-            >
-              Xóa bộ lọc
-            </button>
-          )}
+      <AdminToolbar onRefresh={fetchList} refreshing={loading}>
+        <div className="adm-search-wrap">
+          <input
+            type="search"
+            className="adm-input adm-search-input"
+            placeholder="Tìm theo tên hoặc mã điểm..."
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            aria-label="Tìm kiếm điểm thuyết minh"
+          />
         </div>
 
-        <div className="adm-toolbar-right">
+        <select
+          className="adm-select"
+          value={zoneFilter}
+          onChange={(e) => {
+            setZoneFilter(e.target.value);
+            setRouteFilter('');
+            setPage(0);
+          }}
+          aria-label="Lọc theo khu vực"
+        >
+          <option value="">Tất cả khu vực</option>
+          {zones.map((zone) => (
+            <option key={zone.id} value={String(zone.id)}>
+              {zone.name}
+            </option>
+          ))}
+        </select>
+
+        <select
+          className="adm-select"
+          value={routeFilter}
+          onChange={(e) => {
+            setRouteFilter(e.target.value);
+            setPage(0);
+          }}
+          disabled={!zoneFilter}
+          aria-label="Lọc theo tuyến"
+        >
+          <option value="">Tất cả tuyến</option>
+          {routes.map((route) => (
+            <option key={route.id} value={String(route.id)}>
+              {route.name}
+            </option>
+          ))}
+        </select>
+
+        <select
+          className="adm-select"
+          value={audioFilter}
+          onChange={(e) => {
+            setAudioFilter(e.target.value);
+            setPage(0);
+          }}
+          aria-label="Lọc theo trạng thái thuyết minh"
+        >
+          <option value="">Tất cả trạng thái âm thanh</option>
+          <option value="PENDING">Chờ xử lý</option>
+          <option value="PROCESSING">Đang xử lý</option>
+          <option value="READY">Sẵn sàng</option>
+          <option value="FAILED_TTS">Lỗi tổng hợp</option>
+        </select>
+
+        {hasActiveFilters && (
           <button
             type="button"
-            className="adm-btn adm-btn-secondary adm-btn-sm"
-            onClick={fetchList}
-            disabled={loading}
+            className="adm-btn adm-btn-ghost adm-btn-sm"
+            onClick={handleClearFilters}
           >
-            {loading ? 'Đang tải...' : 'Làm mới'}
+            Xóa bộ lọc
           </button>
-        </div>
-      </div>
+        )}
+      </AdminToolbar>
 
       {error ? (
         <ErrorState
@@ -347,35 +336,14 @@ export const PoiListPage: React.FC = () => {
             ariaLabel="Bảng danh sách điểm thuyết minh quản trị"
           />
 
-          {totalPages > 1 && (
-            <div className="adm-pagination">
-              <div className="adm-pagination-info">
-                Hiển thị trang {page + 1} trên {totalPages} (Tổng cộng{' '}
-                {totalElements.toLocaleString('vi-VN')} điểm)
-              </div>
-              <div className="adm-pagination-actions">
-                <button
-                  type="button"
-                  className="adm-btn adm-btn-secondary adm-btn-sm"
-                  onClick={() => setPage((p) => Math.max(0, p - 1))}
-                  disabled={page <= 0 || loading}
-                >
-                  &larr; Trang trước
-                </button>
-                <span className="adm-pagination-current">
-                  {page + 1} / {totalPages}
-                </span>
-                <button
-                  type="button"
-                  className="adm-btn adm-btn-secondary adm-btn-sm"
-                  onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
-                  disabled={page >= totalPages - 1 || loading}
-                >
-                  Trang sau &rarr;
-                </button>
-              </div>
-            </div>
-          )}
+          <AdminPagination
+            page={page}
+            totalPages={totalPages}
+            totalElements={totalElements}
+            unitLabel="điểm"
+            onPageChange={(next) => setPage(Math.max(0, Math.min(totalPages - 1, next)))}
+            disabled={loading}
+          />
         </>
       )}
     </div>

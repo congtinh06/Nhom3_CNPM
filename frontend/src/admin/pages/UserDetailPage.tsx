@@ -14,6 +14,8 @@ import {
 import { StatusBadge } from '../components/StatusBadge';
 import { ErrorState } from '../components/ErrorState';
 import { ConfirmDialog } from '../components/ConfirmDialog';
+import { FormSection } from '../components/FormSection';
+import { AdminAlert } from '../components/AdminAlert';
 
 type PendingAction =
   | { kind: 'role'; value: UserRoleValue }
@@ -185,31 +187,11 @@ export const UserDetailPage: React.FC = () => {
       </div>
 
       {notice && (
-        <div className="adm-alert adm-alert-success" role="status">
-          <span>{notice}</span>
-          <button
-            type="button"
-            className="adm-alert-close"
-            onClick={() => setNotice(null)}
-            aria-label="Đóng thông báo"
-          >
-            &times;
-          </button>
-        </div>
+        <AdminAlert variant="success" message={notice} onClose={() => setNotice(null)} />
       )}
 
       {actionError && (
-        <div className="adm-alert adm-alert-danger" role="alert">
-          <span>{actionError}</span>
-          <button
-            type="button"
-            className="adm-alert-close"
-            onClick={() => setActionError(null)}
-            aria-label="Đóng lỗi"
-          >
-            &times;
-          </button>
-        </div>
+        <AdminAlert variant="danger" message={actionError} onClose={() => setActionError(null)} />
       )}
 
       {isSelf && (
@@ -219,8 +201,7 @@ export const UserDetailPage: React.FC = () => {
       )}
 
       <div className="adm-form-grid">
-        <div className="adm-card adm-form-section">
-          <h2 className="adm-card-title">Thông tin tài khoản</h2>
+        <FormSection title="Thông tin tài khoản">
 
           <dl className="adm-detail-list">
             <div className="adm-detail-row">
@@ -258,11 +239,10 @@ export const UserDetailPage: React.FC = () => {
               </dd>
             </div>
           </dl>
-        </div>
+        </FormSection>
 
         <div className="adm-form-side">
-          <div className="adm-card adm-form-section">
-            <h2 className="adm-card-title">Vai trò</h2>
+          <FormSection title="Vai trò">
             <p className="adm-field-helper" style={{ marginBottom: '12px' }}>
               Vai trò hiện tại: <strong>{USER_ROLE_LABELS[user.role]}</strong>
             </p>
@@ -286,10 +266,9 @@ export const UserDetailPage: React.FC = () => {
                 Cập nhật vai trò
               </button>
             </div>
-          </div>
+          </FormSection>
 
-          <div className="adm-card adm-form-section">
-            <h2 className="adm-card-title">Trạng thái tài khoản</h2>
+          <FormSection title="Trạng thái tài khoản">
             <p className="adm-field-helper" style={{ marginBottom: '12px' }}>
               Trạng thái hiện tại: <strong>{USER_STATUS_LABELS[user.status]}</strong>
             </p>
@@ -318,7 +297,7 @@ export const UserDetailPage: React.FC = () => {
               Khóa hoặc hạ cấp tài khoản sẽ thu hồi toàn bộ phiên đăng nhập. Access token đã cấp
               vẫn có hiệu lực tối đa 15 phút.
             </p>
-          </div>
+          </FormSection>
         </div>
       </div>
 

@@ -10,6 +10,9 @@ import { StatusBadge } from '../components/StatusBadge';
 import { EmptyState } from '../components/EmptyState';
 import { ErrorState } from '../components/ErrorState';
 import { ConfirmDialog } from '../components/ConfirmDialog';
+import { AdminToolbar } from '../components/AdminToolbar';
+import { AdminPagination } from '../components/AdminPagination';
+import { AdminAlert } from '../components/AdminAlert';
 
 const PAGE_SIZE = 10;
 
@@ -199,85 +202,62 @@ export const RouteListPage: React.FC = () => {
       </div>
 
       {notice && (
-        <div className="adm-alert adm-alert-success" role="status">
-          <span>{notice}</span>
-          <button
-            type="button"
-            className="adm-alert-close"
-            onClick={() => setNotice(null)}
-            aria-label="Đóng thông báo"
-          >
-            &times;
-          </button>
-        </div>
+        <AdminAlert variant="success" message={notice} onClose={() => setNotice(null)} />
       )}
 
-      <div className="adm-toolbar">
-        <div className="adm-toolbar-left">
-          <div className="adm-search-wrap">
-            <input
-              type="search"
-              className="adm-input adm-search-input"
-              placeholder="Tìm theo tên tuyến..."
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-              aria-label="Tìm kiếm tuyến"
-            />
-          </div>
-
-          <select
-            className="adm-select"
-            value={zoneFilter}
-            onChange={(e) => {
-              setZoneFilter(e.target.value);
-              setPage(0);
-            }}
-            aria-label="Lọc theo khu vực"
-          >
-            <option value="">Tất cả khu vực</option>
-            {zones.map((zone) => (
-              <option key={zone.id} value={zone.id}>
-                {zone.name}
-              </option>
-            ))}
-          </select>
-
-          <select
-            className="adm-select"
-            value={statusFilter}
-            onChange={(e) => {
-              setStatusFilter(e.target.value);
-              setPage(0);
-            }}
-            aria-label="Lọc theo trạng thái tuyến"
-          >
-            <option value="">Tất cả trạng thái</option>
-            <option value="ACTIVE">Đang hoạt động</option>
-            <option value="INACTIVE">Tạm ngưng</option>
-          </select>
-
-          {hasActiveFilters && (
-            <button
-              type="button"
-              className="adm-btn adm-btn-ghost adm-btn-sm"
-              onClick={handleClearFilters}
-            >
-              Xóa bộ lọc
-            </button>
-          )}
+      <AdminToolbar onRefresh={fetchList} refreshing={loading}>
+        <div className="adm-search-wrap">
+          <input
+            type="search"
+            className="adm-input adm-search-input"
+            placeholder="Tìm theo tên tuyến..."
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            aria-label="Tìm kiếm tuyến"
+          />
         </div>
 
-        <div className="adm-toolbar-right">
+        <select
+          className="adm-select"
+          value={zoneFilter}
+          onChange={(e) => {
+            setZoneFilter(e.target.value);
+            setPage(0);
+          }}
+          aria-label="Lọc theo khu vực"
+        >
+          <option value="">Tất cả khu vực</option>
+          {zones.map((zone) => (
+            <option key={zone.id} value={zone.id}>
+              {zone.name}
+            </option>
+          ))}
+        </select>
+
+        <select
+          className="adm-select"
+          value={statusFilter}
+          onChange={(e) => {
+            setStatusFilter(e.target.value);
+            setPage(0);
+          }}
+          aria-label="Lọc theo trạng thái tuyến"
+        >
+          <option value="">Tất cả trạng thái</option>
+          <option value="ACTIVE">Đang hoạt động</option>
+          <option value="INACTIVE">Tạm ngưng</option>
+        </select>
+
+        {hasActiveFilters && (
           <button
             type="button"
-            className="adm-btn adm-btn-secondary adm-btn-sm"
-            onClick={fetchList}
-            disabled={loading}
+            className="adm-btn adm-btn-ghost adm-btn-sm"
+            onClick={handleClearFilters}
           >
-            {loading ? 'Đang tải...' : 'Làm mới'}
+            Xóa bộ lọc
           </button>
-        </div>
-      </div>
+        )}
+      </AdminToolbar>
 
       {error ? (
         <ErrorState title="Không thể tải danh sách tuyến" message={error} onRetry={fetchList} />
@@ -308,35 +288,14 @@ export const RouteListPage: React.FC = () => {
             ariaLabel="Bảng danh sách tuyến tham quan quản trị"
           />
 
-          {totalPages > 1 && (
-            <div className="adm-pagination">
-              <div className="adm-pagination-info">
-                Hiển thị trang {page + 1} trên {totalPages} (Tổng cộng{' '}
-                {totalElements.toLocaleString('vi-VN')} tuyến)
-              </div>
-              <div className="adm-pagination-actions">
-                <button
-                  type="button"
-                  className="adm-btn adm-btn-secondary adm-btn-sm"
-                  onClick={() => setPage((p) => Math.max(0, p - 1))}
-                  disabled={page <= 0 || loading}
-                >
-                  &larr; Trang trước
-                </button>
-                <span className="adm-pagination-current">
-                  {page + 1} / {totalPages}
-                </span>
-                <button
-                  type="button"
-                  className="adm-btn adm-btn-secondary adm-btn-sm"
-                  onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
-                  disabled={page >= totalPages - 1 || loading}
-                >
-                  Trang sau &rarr;
-                </button>
-              </div>
-            </div>
-          )}
+          <AdminPagination
+            page={page}
+            totalPages={totalPages}
+            totalElements={totalElements}
+            unitLabel="tuyến"
+            onPageChange={(next) => setPage(Math.max(0, Math.min(totalPages - 1, next)))}
+            disabled={loading}
+          />
         </>
       )}
 

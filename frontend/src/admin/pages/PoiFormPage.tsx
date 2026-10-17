@@ -14,6 +14,8 @@ import {
 import { FormField } from '../components/FormField';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { PoiAudioStatusPanel } from '../components/PoiAudioStatusPanel';
+import { FormSection } from '../components/FormSection';
+import { AdminAlert } from '../components/AdminAlert';
 
 interface FormValues {
   zoneId: string;
@@ -502,17 +504,7 @@ export const PoiFormPage: React.FC = () => {
       </div>
 
       {submitError && (
-        <div className="adm-alert adm-alert-danger" role="alert">
-          <span>{submitError}</span>
-          <button
-            type="button"
-            className="adm-alert-close"
-            onClick={() => setSubmitError(null)}
-            aria-label="Đóng lỗi"
-          >
-            &times;
-          </button>
-        </div>
+        <AdminAlert variant="danger" message={submitError} onClose={() => setSubmitError(null)} />
       )}
 
       {loading ? (
@@ -524,8 +516,7 @@ export const PoiFormPage: React.FC = () => {
       ) : (
         <form onSubmit={handleSubmit} className="adm-form-container" noValidate>
           <div className="adm-form-grid">
-            <div className="adm-card adm-form-section">
-              <h2 className="adm-card-title">Thông tin cơ bản</h2>
+            <FormSection title="Thông tin cơ bản">
 
               <div className="adm-form-row">
                 <div className="adm-form-col">
@@ -809,11 +800,10 @@ export const PoiFormPage: React.FC = () => {
                   </FormField>
                 </div>
               </div>
-            </div>
+            </FormSection>
 
             <div className="adm-form-side">
-              <div className="adm-card adm-form-section">
-                <h2 className="adm-card-title">Nội dung thuyết minh tiếng Việt</h2>
+              <FormSection title="Nội dung thuyết minh tiếng Việt">
                 <p className="adm-form-hint">
                   Đây là nội dung gốc. Hệ thống sẽ tự động dịch và tạo audio cho các ngôn ngữ khác
                   sau khi lưu.
@@ -893,7 +883,7 @@ export const PoiFormPage: React.FC = () => {
                     aria-invalid={Boolean(errors.historicalSignificance)}
                   />
                 </FormField>
-              </div>
+              </FormSection>
 
               <div className="adm-form-actions">
                 <button
