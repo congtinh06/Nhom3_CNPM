@@ -1,4 +1,4 @@
-# SAIGONVOICE — HỆ THỐNG HƯỚNG DẪN VIÊN DU LỊCH ĐA NGÔN NGỮ TỰ ĐỘNG
+# ECHORA — HỆ THỐNG HƯỚNG DẪN VIÊN DU LỊCH ĐA NGÔN NGỮ TỰ ĐỘNG
 ## Multilingual Automated Tourist Audio Guide & Local Experience Platform
 
 [![Vite Build](https://img.shields.io/badge/Vite-5.4.21-646CFF?logo=vite&logoColor=white)](https://vitejs.dev/)
@@ -14,7 +14,7 @@
 
 ## 1. Giới thiệu dự án (Overview)
 
-**SaigonVoice** là giải pháp nền tảng du lịch số thông minh dành cho du khách khám phá Thành phố Hồ Chí Minh. Dự án tích hợp công nghệ định vị GPS, bản đồ tương tác mã nguồn mở **Leaflet + OpenStreetMap**, mã QR tại điểm dừng, và hệ thống **thuyết minh âm thanh tự động đa ngôn ngữ** (`vi`, `en`, `ja`, `ko`).
+**Echora** là giải pháp nền tảng du lịch số thông minh dành cho du khách khám phá Thành phố Hồ Chí Minh. Dự án tích hợp công nghệ định vị GPS, bản đồ tương tác mã nguồn mở **Leaflet + OpenStreetMap**, mã QR tại điểm dừng, và hệ thống **thuyết minh âm thanh tự động đa ngôn ngữ** (`vi`, `en`, `ja`, `ko`).
 
 Bên cạnh trải nghiệm tham quan di sản, hệ thống còn cung cấp module **Văn hóa ẩm thực & Thức uống bản địa**, cho phép du khách tìm hiểu các món ngon đặc trưng Sài Gòn (cơm tấm, bánh mì, cà phê vợt...), đặt món giao tận nơi hoặc trải nghiệm thanh toán trực tuyến thuận tiện.
 
@@ -213,15 +213,15 @@ Hệ thống cung cấp sẵn các tài khoản kiểm thử đã được kích
 
 | Vai trò | Tài khoản (Email) | Mật khẩu | Chức năng kiểm thử chính |
 |---|---|---|---|
-| **Người dùng / Du khách (USER)** | `user@saigonvoice.local` | `User@123456` | Trải nghiệm đặt món ẩm thực, xem lịch sử đơn hàng, nghe audio thuyết minh di sản |
-| **Quản trị viên (ADMIN)** | `admin@saigonvoice.local` | `Admin@123456` | Đăng nhập tài khoản ADMIN với Bearer JWT để quản lý sản phẩm món ăn, duyệt trạng thái POI và truy cập trang Quản trị (`http://localhost:5173/quan-tri`) |
+| **Người dùng / Du khách (USER)** | `user@echora.local` | `User@123456` | Trải nghiệm đặt món ẩm thực, xem lịch sử đơn hàng, nghe audio thuyết minh di sản |
+| **Quản trị viên (ADMIN)** | `admin@echora.local` | `Admin@123456` | Đăng nhập tài khoản ADMIN với Bearer JWT để quản lý sản phẩm món ăn, duyệt trạng thái POI và truy cập trang Quản trị (`http://localhost:5173/quan-tri`) |
 
 > **Cấu hình tự động khởi tạo trong `.env`**:
 > Khi `auth-service` khởi động, hệ thống sẽ tự động tạo sẵn 2 tài khoản trên nếu chưa có trong CSDL:
 > ```env
-> SEED_ADMIN_EMAIL=admin@saigonvoice.local
+> SEED_ADMIN_EMAIL=admin@echora.local
 > SEED_ADMIN_PASSWORD=Admin@123456
-> SEED_TEST_USER_EMAIL=user@saigonvoice.local
+> SEED_TEST_USER_EMAIL=user@echora.local
 > SEED_TEST_USER_PASSWORD=User@123456
 > ```
 > *(Ngoài ra, người dùng vẫn có thể đăng ký tài khoản mới tự do tại `/dang-ky`. Trong môi trường dev không có SMTP thật, link/token xác thực email sẽ được ghi trực tiếp vào log của container `auth-service`)*.
@@ -282,6 +282,6 @@ mvn -f backend/api-gateway/pom.xml test
 ## 8. Thông tin đồ án (Project Information)
 
 - **Môn học**: Công nghệ Phần mềm (CNPM) — Nhóm 3
-- **Đề tài**: Nền tảng hướng dẫn viên du lịch số tự động thuyết minh Sài Gòn (SaigonVoice)
+- **Đề tài**: Nền tảng hướng dẫn viên du lịch số tự động thuyết minh Sài Gòn (Echora)
 - **Repository**: [https://github.com/congtinh06/Nhom3_CNPM](https://github.com/congtinh06/Nhom3_CNPM)
 - **Công nghệ**: React 18, TypeScript, Vite, Spring Boot 3, SQL Server 2022, RabbitMQ, Docker Compose, Leaflet OSM.

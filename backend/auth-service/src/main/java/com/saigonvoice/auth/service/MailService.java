@@ -29,7 +29,7 @@ public class MailService {
                        @Value("${app.mail.username:}") String username,
                        @Value("${app.mail.password:}") String password,
                        @Value("${app.mail.start-tls:true}") boolean startTls,
-                       @Value("${app.mail.from:SaigonVoice <no-reply@saigonvoice.local>}") String from,
+                       @Value("${app.mail.from:Echora <no-reply@echora.local>}") String from,
                        @Value("${app.security.frontend-url:http://localhost:5173}") String frontendUrl) {
         this.from = from;
         this.frontendUrl = frontendUrl;
@@ -70,7 +70,7 @@ public class MailService {
 
     public void sendVerificationEmail(String to, String token) {
         String link = buildVerifyLink(token);
-        String subject = "Xác thực địa chỉ email SaigonVoice";
+        String subject = "Xác thực địa chỉ email Echora";
         String body = "Xin chào,\n\n"
                 + "Vui lòng xác thực địa chỉ email của bạn bằng cách nhấn vào link sau "
                 + "(hiệu lực trong 24 giờ, dùng một lần):\n"
@@ -81,7 +81,7 @@ public class MailService {
 
     public void sendPasswordResetEmail(String to, String token) {
         String link = buildResetLink(token);
-        String subject = "Đặt lại mật khẩu SaigonVoice";
+        String subject = "Đặt lại mật khẩu Echora";
         String body = "Xin chào,\n\n"
                 + "Chúng tôi nhận được yêu cầu đặt lại mật khẩu. Nhấn vào link sau "
                 + "(hiệu lực trong 20 phút, dùng một lần):\n"

@@ -64,7 +64,7 @@ MAIL_HOST=                 # trống = không gửi mail thật, token xác th�
 MAIL_PORT=587
 MAIL_USERNAME=
 MAIL_PASSWORD=
-MAIL_FROM=SaigonVoice <no-reply@saigonvoice.local>
+MAIL_FROM=Echora <no-reply@echora.local>
 ```
 
 DB của auth là `saigonvoice_auth_db` (tự tạo bởi `docker/init-databases.sql`, idempotent).

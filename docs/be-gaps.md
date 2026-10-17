@@ -1,6 +1,6 @@
 # Backend API Gaps Analysis vs Frontend Plan (F1)
 
-This document lists every backend field that is missing, structured differently, or unclear between the current backend API implementation and the SaigonVoice frontend plan:
+This document lists every backend field that is missing, structured differently, or unclear between the current backend API implementation and the Echora frontend plan:
 
 - **Endpoint `GET /api/content/pois` and `GET /api/content/pois/:slug` - Cover Image Structure**:
   - Current BE: Returns `thumbnailUrl: string` (flat URL string).

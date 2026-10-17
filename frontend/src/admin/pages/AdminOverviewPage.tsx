@@ -22,21 +22,30 @@ interface CountCard {
   label: string;
   to: string;
   endpoint: string;
+  activeParams?: Record<string, string | boolean>;
 }
 
 interface CountState {
   loading: boolean;
   value: number | null;
+  active: number | null;
   error: boolean;
 }
 
 const COUNT_CARDS: CountCard[] = [
-  { key: 'products', label: 'Sản phẩm', to: '/quan-tri/san-pham', endpoint: '/api/admin/products' },
+  {
+    key: 'products',
+    label: 'Sản phẩm',
+    to: '/quan-tri/san-pham',
+    endpoint: '/api/admin/products',
+    activeParams: { isActive: true },
+  },
   {
     key: 'pois',
     label: 'Điểm thuyết minh',
     to: '/quan-tri/diem-thuyet-minh',
     endpoint: '/api/content/admin/pois',
+    activeParams: { status: 'ACTIVE' },
   },
   { key: 'zones', label: 'Khu vực', to: '/quan-tri/khu-vuc', endpoint: '/api/content/admin/zones' },
   {
@@ -50,7 +59,7 @@ const COUNT_CARDS: CountCard[] = [
 
 const INITIAL_COUNTS: Record<string, CountState> = COUNT_CARDS.reduce(
   (acc, card) => {
-    acc[card.key] = { loading: true, value: null, error: false };
+    acc[card.key] = { loading: true, value: null, active: null, error: false };
     return acc;
   },
   {} as Record<string, CountState>
@@ -85,14 +94,31 @@ export const AdminOverviewPage: React.FC = () => {
             params: { page: 0, size: 1 },
           });
           const total = response.data?.totalElements;
+          let active: number | null = null;
+          if (card.activeParams) {
+            try {
+              const activeRes = await adminClient.get<{ totalElements?: number }>(card.endpoint, {
+                params: { page: 0, size: 1, ...card.activeParams },
+              });
+              const activeTotal = activeRes.data?.totalElements;
+              active = typeof activeTotal === 'number' ? activeTotal : null;
+            } catch {
+              active = null;
+            }
+          }
           setCounts((prev) => ({
             ...prev,
-            [card.key]: { loading: false, value: typeof total === 'number' ? total : 0, error: false },
+            [card.key]: {
+              loading: false,
+              value: typeof total === 'number' ? total : 0,
+              active,
+              error: false,
+            },
           }));
         } catch {
           setCounts((prev) => ({
             ...prev,
-            [card.key]: { loading: false, value: null, error: true },
+            [card.key]: { loading: false, value: null, active: null, error: true },
           }));
         }
       })
@@ -199,9 +225,13 @@ export const AdminOverviewPage: React.FC = () => {
                     ? '...'
                     : state?.error
                     ? '—'
+                    : state?.active != null
+                    ? `${state.active.toLocaleString('vi-VN')} / ${(state.value ?? 0).toLocaleString('vi-VN')}`
                     : (state?.value ?? 0).toLocaleString('vi-VN')}
                 </div>
-                <span className="adm-metric-hint">Quản lý &rarr;</span>
+                <span className="adm-metric-hint">
+                  {card.activeParams ? 'Đang hoạt động / Tổng' : 'Quản lý'} &rarr;
+                </span>
               </Link>
             );
           })}

@@ -5,6 +5,7 @@ import com.saigonvoice.content.dto.AdminPoiListItemDto;
 import com.saigonvoice.content.dto.CreatePoiRequest;
 import com.saigonvoice.content.dto.PoiBoundingBoxDto;
 import com.saigonvoice.content.dto.PoiDetailDto;
+import com.saigonvoice.content.dto.PoiGuideDto;
 import com.saigonvoice.content.dto.PoiInternalQrDto;
 import com.saigonvoice.content.dto.PoiPublishStatusDto;
 import com.saigonvoice.content.dto.PoiSummaryDto;
@@ -32,6 +33,12 @@ public class PoiController {
     @GetMapping("/api/content/pois")
     public ResponseEntity<List<PoiSummaryDto>> getPois(@RequestParam(required = false) Long zoneId) {
         return ResponseEntity.ok(poiContentService.getPois(zoneId));
+    }
+
+    // Toàn bộ POI ACTIVE kèm mọi bản dịch - nguồn dữ liệu cho bản đồ thuyết minh của du khách.
+    @GetMapping("/api/content/pois/guide")
+    public ResponseEntity<List<PoiGuideDto>> getPoiGuides(@RequestParam(required = false) Long zoneId) {
+        return ResponseEntity.ok(poiContentService.getPoiGuides(zoneId));
     }
 
     @GetMapping("/api/content/pois/{id}")

@@ -16,7 +16,7 @@ export const newsArticles: ApiNewsDetail[] = [
     summary: 'Ngoài phòng Khánh tiết và chiếc xe tăng lịch sử ngoài sân, Dinh Độc Lập còn nhiều góc độc đáo: phòng chiếu phim thập niên 60, khu hầm chỉ huy và sân thượng ngắm trọn đại lộ.',
     coverImageUrl: '/pois/dinh-doc-lap.jpg',
     coverImageAlt: 'Mặt tiền Dinh Độc Lập nhìn từ bãi cỏ trung tâm',
-    imageCredit: 'SaigonVoice Studio',
+    imageCredit: 'Echora Studio',
     publishedAt: hoursAgo(3), // Within 24h -> isNew = true
     readingMinutes: 4,
     audioUrl: null,

@@ -1,5 +1,7 @@
 import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import nearbyPoisData from '../content/nearbyPois.json';
+import { api } from '../api/client';
+import { mapGuidesToGeoPois } from '../content/poiGuideAdapter';
 import { useNavbarLanguage, SUPPORTED_LANGUAGES } from '../content/languages';
 import { SupportedLanguage } from '../types';
 import { useAutoNarration, haversine } from '../hooks/useAutoNarration';
@@ -119,8 +121,31 @@ export const NearbyPage: React.FC = () => {
   const rootRef = useRef<HTMLDivElement>(null);
   const heroRef = useRef<HTMLDivElement>(null);
 
+  // Nguồn dữ liệu: API/DB (nguồn chung với admin). Nếu API lỗi, rơi về file tĩnh cũ.
+  const [apiPois, setApiPois] = useState<GeoPoi[] | null>(null);
+
+  useEffect(() => {
+    if (import.meta.env.MODE === 'test') return;
+    if (typeof api.getPoiGuides !== 'function') return;
+    let cancelled = false;
+    api
+      .getPoiGuides()
+      .then((guides) => {
+        if (!cancelled && guides.length > 0) {
+          setApiPois(mapGuidesToGeoPois(guides));
+        }
+      })
+      .catch(() => {
+        // Giữ nguyên nguồn tĩnh nếu API không sẵn sàng.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   // Read slug from data; fall back to a slugified id only if missing
   const pois: GeoPoi[] = useMemo(() => {
+    if (apiPois && apiPois.length > 0) return apiPois;
     return (nearbyPoisData as GeoPoi[]).map((p) => {
       const derivedSlug =
         p.slug ||
@@ -131,7 +156,7 @@ export const NearbyPage: React.FC = () => {
         slug: derivedSlug,
       };
     });
-  }, []);
+  }, [apiPois]);
 
   // Toolbar & map states
   const [radius, setRadius] = useState<number>(50);

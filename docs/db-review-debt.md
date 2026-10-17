@@ -1,6 +1,6 @@
-# SỔ NỢ KỸ THUẬT CƠ SỞ DỮ LIỆU (DATABASE REVIEW DEBT) — SAIGONVOICE
+# SỔ NỢ KỸ THUẬT CƠ SỞ DỮ LIỆU (DATABASE REVIEW DEBT) — ECHORA
 
-Tài liệu này tổng hợp toàn bộ các khoản nợ kỹ thuật (technical debt), rủi ro cấu hình và kiến trúc cơ sở dữ liệu được phát hiện trong đợt DB Review toàn diện của dự án SaigonVoice.
+Tài liệu này tổng hợp toàn bộ các khoản nợ kỹ thuật (technical debt), rủi ro cấu hình và kiến trúc cơ sở dữ liệu được phát hiện trong đợt DB Review toàn diện của dự án Echora.
 
 ---
 

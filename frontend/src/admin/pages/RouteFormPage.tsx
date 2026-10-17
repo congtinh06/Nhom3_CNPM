@@ -16,6 +16,8 @@ import { AdminPoiListItem } from '../types/poi';
 import { AdminZoneListItem } from '../types/zone';
 import { FormField } from '../components/FormField';
 import { ConfirmDialog } from '../components/ConfirmDialog';
+import { FormSection } from '../components/FormSection';
+import { AdminAlert } from '../components/AdminAlert';
 
 interface FormValues {
   zoneId: string;
@@ -379,31 +381,11 @@ export const RouteFormPage: React.FC = () => {
       </div>
 
       {notice && (
-        <div className="adm-alert adm-alert-success" role="status">
-          <span>{notice}</span>
-          <button
-            type="button"
-            className="adm-alert-close"
-            onClick={() => setNotice(null)}
-            aria-label="Đóng thông báo"
-          >
-            &times;
-          </button>
-        </div>
+        <AdminAlert variant="success" message={notice} onClose={() => setNotice(null)} />
       )}
 
       {submitError && (
-        <div className="adm-alert adm-alert-danger" role="alert">
-          <span>{submitError}</span>
-          <button
-            type="button"
-            className="adm-alert-close"
-            onClick={() => setSubmitError(null)}
-            aria-label="Đóng lỗi"
-          >
-            &times;
-          </button>
-        </div>
+        <AdminAlert variant="danger" message={submitError} onClose={() => setSubmitError(null)} />
       )}
 
       {loading ? (
@@ -415,8 +397,7 @@ export const RouteFormPage: React.FC = () => {
       ) : (
         <form onSubmit={handleSubmit} className="adm-form-container" noValidate>
           <div className="adm-form-grid">
-            <div className="adm-card adm-form-section">
-              <h2 className="adm-card-title">Thông tin tuyến</h2>
+            <FormSection title="Thông tin tuyến">
 
               <div className="adm-form-row">
                 <div className="adm-form-col">
@@ -539,7 +520,7 @@ export const RouteFormPage: React.FC = () => {
                     : 'Tạo tuyến'}
                 </button>
               </div>
-            </div>
+            </FormSection>
 
             {isEditMode && (
               <div className="adm-form-side">
@@ -550,14 +531,18 @@ export const RouteFormPage: React.FC = () => {
                   </div>
 
                   {stopsNotice && (
-                    <div className="adm-alert adm-alert-success adm-alert-inline" role="status">
-                      <span>{stopsNotice}</span>
-                    </div>
+                    <AdminAlert
+                      variant="success"
+                      message={stopsNotice}
+                      className="adm-alert-inline"
+                    />
                   )}
                   {stopsError && (
-                    <div className="adm-alert adm-alert-danger adm-alert-inline" role="alert">
-                      <span>{stopsError}</span>
-                    </div>
+                    <AdminAlert
+                      variant="danger"
+                      message={stopsError}
+                      className="adm-alert-inline"
+                    />
                   )}
 
                   {stops.length === 0 ? (

@@ -7,6 +7,8 @@ import { DataTable, Column } from '../components/DataTable';
 import { StatusBadge } from '../components/StatusBadge';
 import { EmptyState } from '../components/EmptyState';
 import { ErrorState } from '../components/ErrorState';
+import { AdminToolbar } from '../components/AdminToolbar';
+import { AdminPagination } from '../components/AdminPagination';
 
 const PAGE_SIZE = 10;
 
@@ -153,65 +155,10 @@ export const UserListPage: React.FC = () => {
             tài khoản khi cần thiết.
           </p>
         </div>
-      </div>
-
-      <div className="adm-toolbar">
-        <div className="adm-toolbar-left">
-          <div className="adm-search-wrap">
-            <input
-              type="search"
-              className="adm-input adm-search-input"
-              placeholder="Tìm theo tên hoặc email..."
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-              aria-label="Tìm kiếm người dùng"
-            />
-          </div>
-
-          <select
-            className="adm-select"
-            value={roleFilter}
-            onChange={(e) => {
-              setRoleFilter(e.target.value as '' | UserRoleValue);
-              setPage(0);
-            }}
-            aria-label="Lọc theo vai trò"
-          >
-            <option value="">Tất cả vai trò</option>
-            <option value="USER">Du khách</option>
-            <option value="ADMIN">Quản trị viên</option>
-          </select>
-
-          <select
-            className="adm-select"
-            value={statusFilter}
-            onChange={(e) => {
-              setStatusFilter(e.target.value as '' | UserStatusValue);
-              setPage(0);
-            }}
-            aria-label="Lọc theo trạng thái người dùng"
-          >
-            <option value="">Tất cả trạng thái</option>
-            <option value="ACTIVE">Hoạt động</option>
-            <option value="PENDING">Chờ xác thực</option>
-            <option value="BLOCKED">Đã khóa</option>
-          </select>
-
-          {hasActiveFilters && (
-            <button
-              type="button"
-              className="adm-btn adm-btn-ghost adm-btn-sm"
-              onClick={handleClearFilters}
-            >
-              Xóa bộ lọc
-            </button>
-          )}
-        </div>
-
-        <div className="adm-toolbar-right">
+        <div className="adm-page-actions">
           <button
             type="button"
-            className="adm-btn adm-btn-secondary adm-btn-sm"
+            className="adm-btn adm-btn-secondary"
             onClick={fetchList}
             disabled={loading}
           >
@@ -219,6 +166,58 @@ export const UserListPage: React.FC = () => {
           </button>
         </div>
       </div>
+
+      <AdminToolbar>
+        <div className="adm-search-wrap">
+          <input
+            type="search"
+            className="adm-input adm-search-input"
+            placeholder="Tìm theo tên hoặc email..."
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            aria-label="Tìm kiếm người dùng"
+          />
+        </div>
+
+        <select
+          className="adm-select"
+          value={roleFilter}
+          onChange={(e) => {
+            setRoleFilter(e.target.value as '' | UserRoleValue);
+            setPage(0);
+          }}
+          aria-label="Lọc theo vai trò"
+        >
+          <option value="">Tất cả vai trò</option>
+          <option value="USER">Du khách</option>
+          <option value="ADMIN">Quản trị viên</option>
+        </select>
+
+        <select
+          className="adm-select"
+          value={statusFilter}
+          onChange={(e) => {
+            setStatusFilter(e.target.value as '' | UserStatusValue);
+            setPage(0);
+          }}
+          aria-label="Lọc theo trạng thái người dùng"
+        >
+          <option value="">Tất cả trạng thái</option>
+          <option value="ACTIVE">Hoạt động</option>
+          <option value="PENDING">Chờ xác thực</option>
+          <option value="BLOCKED">Đã khóa</option>
+        </select>
+
+        {hasActiveFilters && (
+          <button
+            type="button"
+            className="adm-btn adm-btn-ghost adm-btn-sm"
+            onClick={handleClearFilters}
+          >
+            Xóa bộ lọc
+          </button>
+        )}
+      </AdminToolbar>
 
       {error ? (
         <ErrorState
@@ -249,37 +248,17 @@ export const UserListPage: React.FC = () => {
             loading={loading}
             emptyText="Chưa có dữ liệu người dùng hiển thị."
             ariaLabel="Bảng danh sách người dùng quản trị"
+            stickyLastColumn
           />
 
-          {totalPages > 1 && (
-            <div className="adm-pagination">
-              <div className="adm-pagination-info">
-                Hiển thị trang {page + 1} trên {totalPages} (Tổng cộng{' '}
-                {totalElements.toLocaleString('vi-VN')} người dùng)
-              </div>
-              <div className="adm-pagination-actions">
-                <button
-                  type="button"
-                  className="adm-btn adm-btn-secondary adm-btn-sm"
-                  onClick={() => setPage((p) => Math.max(0, p - 1))}
-                  disabled={page <= 0 || loading}
-                >
-                  &larr; Trang trước
-                </button>
-                <span className="adm-pagination-current">
-                  {page + 1} / {totalPages}
-                </span>
-                <button
-                  type="button"
-                  className="adm-btn adm-btn-secondary adm-btn-sm"
-                  onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
-                  disabled={page >= totalPages - 1 || loading}
-                >
-                  Trang sau &rarr;
-                </button>
-              </div>
-            </div>
-          )}
+          <AdminPagination
+            page={page}
+            totalPages={totalPages}
+            totalElements={totalElements}
+            unitLabel="người dùng"
+            onPageChange={(next) => setPage(Math.max(0, Math.min(totalPages - 1, next)))}
+            disabled={loading}
+          />
         </>
       )}
     </div>

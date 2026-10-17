@@ -12,6 +12,14 @@ export interface AdminNavItem {
   isUpcoming?: boolean;
 }
 
+export interface AdminNavSection {
+  id: string;
+  label?: string;
+  items: AdminNavItem[];
+}
+
+export type AdminDensity = 'comfortable' | 'compact';
+
 export * from './product';
 export * from './poi';
 export * from './zone';

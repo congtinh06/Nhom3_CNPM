@@ -5,6 +5,8 @@ import { normalizeAdminError } from '../api/adminClient';
 import { ProductCategory, CreateProductInput, UpdateProductInput } from '../types/product';
 import { FormField } from '../components/FormField';
 import { ConfirmDialog } from '../components/ConfirmDialog';
+import { FormSection } from '../components/FormSection';
+import { AdminAlert } from '../components/AdminAlert';
 
 interface FormValues {
   name: string;
@@ -353,9 +355,7 @@ export const ProductFormPage: React.FC = () => {
       </div>
 
       {submitError && (
-        <div className="adm-alert adm-alert-danger" role="alert">
-          <span>{submitError}</span>
-        </div>
+        <AdminAlert variant="danger" message={submitError} onClose={() => setSubmitError(null)} />
       )}
 
       {loading ? (
@@ -368,9 +368,7 @@ export const ProductFormPage: React.FC = () => {
         <form onSubmit={handleSubmit} className="adm-form-container" noValidate>
           <div className="adm-form-grid">
             {/* Cột trái: Thông tin chính */}
-            <div className="adm-card adm-form-section">
-              <h2 className="adm-card-title">Thông tin cơ bản</h2>
-
+            <FormSection title="Thông tin cơ bản">
               <FormField
                 label="Tên sản phẩm"
                 htmlFor="name"
@@ -502,13 +500,12 @@ export const ProductFormPage: React.FC = () => {
                   aria-describedby={errors.description ? 'description-error' : 'description-helper'}
                 />
               </FormField>
-            </div>
+            </FormSection>
 
             {/* Cột phải: Hình ảnh & Cấu hình hiển thị */}
             <div className="adm-form-side">
               {/* Hình ảnh */}
-              <div className="adm-card adm-form-section">
-                <h2 className="adm-card-title">Hình ảnh sản phẩm</h2>
+              <FormSection title="Hình ảnh sản phẩm">
 
                 <div className="adm-image-preview-container">
                   {imagePreview ? (
@@ -526,15 +523,11 @@ export const ProductFormPage: React.FC = () => {
                 </div>
 
                 {imageNotice && (
-                  <div className="adm-alert adm-alert-success adm-alert-sm" role="status">
-                    <span>{imageNotice}</span>
-                  </div>
+                  <AdminAlert variant="success" message={imageNotice} className="adm-alert-sm" />
                 )}
 
                 {imageError && (
-                  <div className="adm-alert adm-alert-danger adm-alert-sm" role="alert">
-                    <span>{imageError}</span>
-                  </div>
+                  <AdminAlert variant="danger" message={imageError} className="adm-alert-sm" />
                 )}
 
                 <FormField
@@ -585,12 +578,10 @@ export const ProductFormPage: React.FC = () => {
                     placeholder="/img/products/ten-mon.jpg"
                   />
                 </FormField>
-              </div>
+              </FormSection>
 
               {/* Cấu hình hiển thị */}
-              <div className="adm-card adm-form-section">
-                <h2 className="adm-card-title">Cài đặt hiển thị</h2>
-
+              <FormSection title="Cài đặt hiển thị">
                 <FormField
                   label="Thứ tự hiển thị"
                   htmlFor="sortOrder"
@@ -626,7 +617,7 @@ export const ProductFormPage: React.FC = () => {
                     Nếu bỏ chọn, sản phẩm sẽ tạm ẩn khỏi thực đơn và tìm kiếm.
                   </p>
                 </div>
-              </div>
+              </FormSection>
 
               {/* Nút hành động */}
               <div className="adm-form-actions">

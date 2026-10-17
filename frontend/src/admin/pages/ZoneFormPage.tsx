@@ -12,6 +12,8 @@ import {
 } from '../types/zone';
 import { FormField } from '../components/FormField';
 import { ConfirmDialog } from '../components/ConfirmDialog';
+import { FormSection } from '../components/FormSection';
+import { AdminAlert } from '../components/AdminAlert';
 
 interface FormValues {
   code: string;
@@ -311,17 +313,7 @@ export const ZoneFormPage: React.FC = () => {
       </div>
 
       {submitError && (
-        <div className="adm-alert adm-alert-danger" role="alert">
-          <span>{submitError}</span>
-          <button
-            type="button"
-            className="adm-alert-close"
-            onClick={() => setSubmitError(null)}
-            aria-label="Đóng lỗi"
-          >
-            &times;
-          </button>
-        </div>
+        <AdminAlert variant="danger" message={submitError} onClose={() => setSubmitError(null)} />
       )}
 
       {isEditMode && detail && (
@@ -340,8 +332,7 @@ export const ZoneFormPage: React.FC = () => {
       ) : (
         <form onSubmit={handleSubmit} className="adm-form-container" noValidate>
           <div className="adm-form-grid">
-            <div className="adm-card adm-form-section">
-              <h2 className="adm-card-title">Thông tin khu vực</h2>
+            <FormSection title="Thông tin khu vực">
 
               <div className="adm-form-row">
                 <div className="adm-form-col">
@@ -464,12 +455,11 @@ export const ZoneFormPage: React.FC = () => {
                   aria-invalid={Boolean(errors.radiusMeters)}
                 />
               </FormField>
-            </div>
+            </FormSection>
 
             {isEditMode && (
               <div className="adm-form-side">
-                <div className="adm-card adm-form-section">
-                  <h2 className="adm-card-title">Trạng thái hiển thị</h2>
+                <FormSection title="Trạng thái hiển thị">
                   <div className="adm-checkbox-wrap">
                     <label htmlFor="isActive" className="adm-checkbox-label">
                       <input
@@ -492,7 +482,7 @@ export const ZoneFormPage: React.FC = () => {
                       Khi ngừng hoạt động, khu vực sẽ bị ẩn khỏi website du khách.
                     </p>
                   </div>
-                </div>
+                </FormSection>
 
                 <div className="adm-form-actions">
                   <button

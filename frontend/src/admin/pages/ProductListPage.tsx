@@ -8,6 +8,9 @@ import { StatusBadge } from '../components/StatusBadge';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { EmptyState } from '../components/EmptyState';
 import { ErrorState } from '../components/ErrorState';
+import { AdminToolbar } from '../components/AdminToolbar';
+import { AdminPagination } from '../components/AdminPagination';
+import { AdminAlert } from '../components/AdminAlert';
 
 export const ProductListPage: React.FC = () => {
   const navigate = useNavigate();
@@ -400,114 +403,98 @@ export const ProductListPage: React.FC = () => {
         <div>
           <h1 className="adm-page-title">Quản lý sản phẩm</h1>
           <p className="adm-page-desc">
-            Danh sách món ăn, thức uống và ẩm thực hiển thị trên website SaigonVoice.
+            Danh sách món ăn, thức uống và ẩm thực hiển thị trên website Echora.
           </p>
         </div>
-        <Link to="/quan-tri/san-pham/moi" className="adm-btn adm-btn-primary">
-          + Thêm sản phẩm
-        </Link>
-      </div>
-
-      {actionNotice && (
-        <div className="adm-alert adm-alert-success" role="status">
-          <span>{actionNotice}</span>
+        <div className="adm-page-actions">
           <button
             type="button"
-            className="adm-alert-close"
-            onClick={() => setActionNotice(null)}
-            aria-label="Đóng thông báo"
-          >
-            &times;
-          </button>
-        </div>
-      )}
-
-      {actionError && (
-        <div className="adm-alert adm-alert-danger" role="alert">
-          <span>{actionError}</span>
-          <button
-            type="button"
-            className="adm-alert-close"
-            onClick={() => setActionError(null)}
-            aria-label="Đóng lỗi"
-          >
-            &times;
-          </button>
-        </div>
-      )}
-
-      {/* Toolbar / Bộ lọc */}
-      <div className="adm-toolbar">
-        <div className="adm-toolbar-left">
-          <div className="adm-search-wrap">
-            <input
-              type="search"
-              className="adm-input adm-search-input"
-              placeholder="Tìm theo tên sản phẩm..."
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-              aria-label="Tìm kiếm sản phẩm"
-            />
-          </div>
-
-          <select
-            className="adm-select"
-            value={categoryParam || ''}
-            onChange={handleCategoryChange}
-            aria-label="Lọc theo danh mục"
-          >
-            <option value="">Tất cả danh mục</option>
-            <option value="FOOD">Món ăn (FOOD)</option>
-            <option value="DRINK">Đồ uống (DRINK)</option>
-          </select>
-
-          <select
-            className="adm-select"
-            value={statusParam || ''}
-            onChange={handleStatusFilterChange}
-            aria-label="Lọc theo trạng thái"
-          >
-            <option value="">Tất cả trạng thái</option>
-            <option value="active">Đang hoạt động</option>
-            <option value="inactive">Tạm ngưng</option>
-          </select>
-
-          <select
-            className="adm-select"
-            value={sortParam}
-            onChange={handleSortChange}
-            aria-label="Sắp xếp danh sách"
-          >
-            <option value="sortOrder,asc">Thứ tự hiển thị (tăng dần)</option>
-            <option value="sortOrder,desc">Thứ tự hiển thị (giảm dần)</option>
-            <option value="id,desc">Mới nhất (ID giảm dần)</option>
-            <option value="price,asc">Giá bán (tăng dần)</option>
-            <option value="price,desc">Giá bán (giảm dần)</option>
-          </select>
-
-          {hasActiveFilters && (
-            <button
-              type="button"
-              className="adm-btn adm-btn-ghost adm-btn-sm"
-              onClick={handleClearFilters}
-            >
-              Xóa bộ lọc
-            </button>
-          )}
-        </div>
-
-        <div className="adm-toolbar-right">
-          <button
-            type="button"
-            className="adm-btn adm-btn-secondary adm-btn-sm"
+            className="adm-btn adm-btn-secondary"
             onClick={fetchProducts}
             disabled={loading}
-            title="Tải lại danh sách"
           >
             {loading ? 'Đang tải...' : 'Làm mới'}
           </button>
+          <Link to="/quan-tri/san-pham/moi" className="adm-btn adm-btn-primary">
+            + Thêm sản phẩm
+          </Link>
         </div>
       </div>
+
+      {actionNotice && (
+        <AdminAlert
+          variant="success"
+          message={actionNotice}
+          onClose={() => setActionNotice(null)}
+        />
+      )}
+
+      {actionError && (
+        <AdminAlert
+          variant="danger"
+          message={actionError}
+          onClose={() => setActionError(null)}
+        />
+      )}
+
+      {/* Toolbar / Bộ lọc */}
+      <AdminToolbar>
+        <div className="adm-search-wrap">
+          <input
+            type="search"
+            className="adm-input adm-search-input"
+            placeholder="Tìm theo tên sản phẩm..."
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            aria-label="Tìm kiếm sản phẩm"
+          />
+        </div>
+
+        <select
+          className="adm-select"
+          value={categoryParam || ''}
+          onChange={handleCategoryChange}
+          aria-label="Lọc theo danh mục"
+        >
+          <option value="">Tất cả danh mục</option>
+          <option value="FOOD">Món ăn (FOOD)</option>
+          <option value="DRINK">Đồ uống (DRINK)</option>
+        </select>
+
+        <select
+          className="adm-select"
+          value={statusParam || ''}
+          onChange={handleStatusFilterChange}
+          aria-label="Lọc theo trạng thái"
+        >
+          <option value="">Tất cả trạng thái</option>
+          <option value="active">Đang hoạt động</option>
+          <option value="inactive">Tạm ngưng</option>
+        </select>
+
+        <select
+          className="adm-select"
+          value={sortParam}
+          onChange={handleSortChange}
+          aria-label="Sắp xếp danh sách"
+        >
+          <option value="sortOrder,asc">Thứ tự hiển thị (tăng dần)</option>
+          <option value="sortOrder,desc">Thứ tự hiển thị (giảm dần)</option>
+          <option value="id,desc">Mới nhất (ID giảm dần)</option>
+          <option value="price,asc">Giá bán (tăng dần)</option>
+          <option value="price,desc">Giá bán (giảm dần)</option>
+        </select>
+
+        {hasActiveFilters && (
+          <button
+            type="button"
+            className="adm-btn adm-btn-ghost adm-btn-sm"
+            onClick={handleClearFilters}
+          >
+            Xóa bộ lọc
+          </button>
+        )}
+      </AdminToolbar>
 
       {/* Danh sách dữ liệu */}
       {error ? (
@@ -541,40 +528,17 @@ export const ProductListPage: React.FC = () => {
             loading={loading}
             emptyText="Chưa có dữ liệu sản phẩm hiển thị."
             ariaLabel="Bảng danh sách sản phẩm quản trị"
+            stickyLastColumn
           />
 
-          {/* Pagination Controls */}
-          {totalPages > 1 && (
-            <div className="adm-pagination">
-              <div className="adm-pagination-info">
-                Hiển thị trang {page + 1} trên {totalPages} (Tổng cộng{' '}
-                {totalElements.toLocaleString('vi-VN')} sản phẩm)
-              </div>
-              <div className="adm-pagination-actions">
-                <button
-                  type="button"
-                  className="adm-btn adm-btn-secondary adm-btn-sm"
-                  onClick={() => handlePageChange(page - 1)}
-                  disabled={page <= 0 || loading}
-                >
-                  &larr; Trang trước
-                </button>
-
-                <span className="adm-pagination-current">
-                  {page + 1} / {totalPages}
-                </span>
-
-                <button
-                  type="button"
-                  className="adm-btn adm-btn-secondary adm-btn-sm"
-                  onClick={() => handlePageChange(page + 1)}
-                  disabled={page >= totalPages - 1 || loading}
-                >
-                  Trang sau &rarr;
-                </button>
-              </div>
-            </div>
-          )}
+          <AdminPagination
+            page={page}
+            totalPages={totalPages}
+            totalElements={totalElements}
+            unitLabel="sản phẩm"
+            onPageChange={handlePageChange}
+            disabled={loading}
+          />
         </>
       )}
 

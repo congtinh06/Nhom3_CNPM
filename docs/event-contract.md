@@ -1,4 +1,4 @@
-# SaigonVoice Event Contract
+# Echora Event Contract
 
 Tài liệu đặc tả hợp đồng sự kiện (Event Contract) giữa `content-service` và `translation-tts-service` thông qua RabbitMQ.
 

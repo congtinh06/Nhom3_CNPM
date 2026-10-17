@@ -8,6 +8,9 @@ import { StatusBadge } from '../components/StatusBadge';
 import { EmptyState } from '../components/EmptyState';
 import { ErrorState } from '../components/ErrorState';
 import { ConfirmDialog } from '../components/ConfirmDialog';
+import { AdminToolbar } from '../components/AdminToolbar';
+import { AdminPagination } from '../components/AdminPagination';
+import { AdminAlert } from '../components/AdminAlert';
 
 const PAGE_SIZE = 10;
 
@@ -164,74 +167,61 @@ export const ZoneListPage: React.FC = () => {
             thuyết minh theo vị trí.
           </p>
         </div>
-        <Link to="/quan-tri/khu-vuc/moi" className="adm-btn adm-btn-primary">
-          + Thêm khu vực
-        </Link>
-      </div>
-
-      {notice && (
-        <div className="adm-alert adm-alert-success" role="status">
-          <span>{notice}</span>
+        <div className="adm-page-actions">
           <button
             type="button"
-            className="adm-alert-close"
-            onClick={() => setNotice(null)}
-            aria-label="Đóng thông báo"
-          >
-            &times;
-          </button>
-        </div>
-      )}
-
-      <div className="adm-toolbar">
-        <div className="adm-toolbar-left">
-          <div className="adm-search-wrap">
-            <input
-              type="search"
-              className="adm-input adm-search-input"
-              placeholder="Tìm theo tên hoặc mã khu vực..."
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-              aria-label="Tìm kiếm khu vực"
-            />
-          </div>
-
-          <select
-            className="adm-select"
-            value={activeFilter}
-            onChange={(e) => {
-              setActiveFilter(e.target.value);
-              setPage(0);
-            }}
-            aria-label="Lọc theo trạng thái khu vực"
-          >
-            <option value="">Tất cả trạng thái</option>
-            <option value="true">Đang hoạt động</option>
-            <option value="false">Đã ẩn</option>
-          </select>
-
-          {hasActiveFilters && (
-            <button
-              type="button"
-              className="adm-btn adm-btn-ghost adm-btn-sm"
-              onClick={handleClearFilters}
-            >
-              Xóa bộ lọc
-            </button>
-          )}
-        </div>
-
-        <div className="adm-toolbar-right">
-          <button
-            type="button"
-            className="adm-btn adm-btn-secondary adm-btn-sm"
+            className="adm-btn adm-btn-secondary"
             onClick={fetchList}
             disabled={loading}
           >
             {loading ? 'Đang tải...' : 'Làm mới'}
           </button>
+          <Link to="/quan-tri/khu-vuc/moi" className="adm-btn adm-btn-primary">
+            + Thêm khu vực
+          </Link>
         </div>
       </div>
+
+      {notice && (
+        <AdminAlert variant="success" message={notice} onClose={() => setNotice(null)} />
+      )}
+
+      <AdminToolbar>
+        <div className="adm-search-wrap">
+          <input
+            type="search"
+            className="adm-input adm-search-input"
+            placeholder="Tìm theo tên hoặc mã khu vực..."
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            aria-label="Tìm kiếm khu vực"
+          />
+        </div>
+
+        <select
+          className="adm-select"
+          value={activeFilter}
+          onChange={(e) => {
+            setActiveFilter(e.target.value);
+            setPage(0);
+          }}
+          aria-label="Lọc theo trạng thái khu vực"
+        >
+          <option value="">Tất cả trạng thái</option>
+          <option value="true">Đang hoạt động</option>
+          <option value="false">Đã ẩn</option>
+        </select>
+
+        {hasActiveFilters && (
+          <button
+            type="button"
+            className="adm-btn adm-btn-ghost adm-btn-sm"
+            onClick={handleClearFilters}
+          >
+            Xóa bộ lọc
+          </button>
+        )}
+      </AdminToolbar>
 
       {error ? (
         <ErrorState
@@ -264,37 +254,17 @@ export const ZoneListPage: React.FC = () => {
             loading={loading}
             emptyText="Chưa có dữ liệu khu vực hiển thị."
             ariaLabel="Bảng danh sách khu vực quản trị"
+            stickyLastColumn
           />
 
-          {totalPages > 1 && (
-            <div className="adm-pagination">
-              <div className="adm-pagination-info">
-                Hiển thị trang {page + 1} trên {totalPages} (Tổng cộng{' '}
-                {totalElements.toLocaleString('vi-VN')} khu vực)
-              </div>
-              <div className="adm-pagination-actions">
-                <button
-                  type="button"
-                  className="adm-btn adm-btn-secondary adm-btn-sm"
-                  onClick={() => setPage((p) => Math.max(0, p - 1))}
-                  disabled={page <= 0 || loading}
-                >
-                  &larr; Trang trước
-                </button>
-                <span className="adm-pagination-current">
-                  {page + 1} / {totalPages}
-                </span>
-                <button
-                  type="button"
-                  className="adm-btn adm-btn-secondary adm-btn-sm"
-                  onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
-                  disabled={page >= totalPages - 1 || loading}
-                >
-                  Trang sau &rarr;
-                </button>
-              </div>
-            </div>
-          )}
+          <AdminPagination
+            page={page}
+            totalPages={totalPages}
+            totalElements={totalElements}
+            unitLabel="khu vực"
+            onPageChange={(next) => setPage(Math.max(0, Math.min(totalPages - 1, next)))}
+            disabled={loading}
+          />
         </>
       )}
 

@@ -2,8 +2,10 @@ import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 import {
   Category,
   Zone,
+  Route,
   PoiSummary,
   PoiDetail,
+  PoiGuide,
   NearbyPoi,
   ResolvePoiResponse,
   CreateAnalyticsEventRequest,
@@ -100,6 +102,23 @@ export const api = {
 
   getZones: async (signal?: AbortSignal): Promise<Zone[]> => {
     const response = await apiClient.get<Zone[]>('/api/content/zones', { signal });
+    return response.data;
+  },
+
+  getRoutes: async (zoneId?: number, signal?: AbortSignal): Promise<Route[]> => {
+    const response = await apiClient.get<Route[]>('/api/content/routes', {
+      params: zoneId !== undefined ? { zoneId } : undefined,
+      signal,
+    });
+    return response.data;
+  },
+
+  // Toàn bộ POI ACTIVE kèm mọi bản dịch trong 1 lần gọi (nguồn chung với admin).
+  getPoiGuides: async (zoneId?: number, signal?: AbortSignal): Promise<PoiGuide[]> => {
+    const response = await apiClient.get<PoiGuide[]>('/api/content/pois/guide', {
+      params: zoneId !== undefined ? { zoneId } : undefined,
+      signal,
+    });
     return response.data;
   },
 

@@ -29,7 +29,7 @@ export const AdminLoginPage: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    document.title = 'Đăng nhập · Quản trị SaigonVoice';
+    document.title = `Đăng nhập · Quản trị ${BRAND_NAME}`;
   }, []);
 
   const handleSubmit = async (e: FormEvent) => {
@@ -89,7 +89,7 @@ export const AdminLoginPage: React.FC = () => {
               className="adm-input"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="admin@saigonvoice.local"
+              placeholder="admin@echora.local"
               disabled={submitting}
               required
             />
