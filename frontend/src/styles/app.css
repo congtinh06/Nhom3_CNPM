@@ -823,16 +823,6 @@ select:focus-visible {
   will-change: transform, opacity;
 }
 
-.hero-date {
-  display: block;
-  text-align: right;
-  margin: 1.2vw 0 0;
-  font: 500 clamp(14px, 1.4vw, 20px)/1 Montserrat, sans-serif;
-  letter-spacing: 0.06em;
-  max-width: none;
-  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.45);
-}
-
 /* 2. Intro */
 .intro {
   background: var(--white);
@@ -860,11 +850,6 @@ select:focus-visible {
 
 .intro .tri .ph {
   min-height: 200px;
-}
-
-.intro .bar {
-  height: 22px;
-  background: var(--brown);
 }
 
 .intro .big {

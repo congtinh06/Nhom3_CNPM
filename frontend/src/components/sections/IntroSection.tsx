@@ -13,7 +13,6 @@ export const IntroSection: React.FC = () => {
           ))}
         </div>
         <p>{introContent.paragraph}</p>
-        <div className="bar" />
       </div>
       <PhotoFrame
         className="big"

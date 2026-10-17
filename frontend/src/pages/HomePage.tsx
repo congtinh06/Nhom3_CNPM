@@ -5,9 +5,7 @@ import { CoverSection } from '../components/sections/CoverSection';
 import { IntroSection } from '../components/sections/IntroSection';
 import { CostumeSection } from '../components/sections/CostumeSection';
 import { FoodSection } from '../components/sections/FoodSection';
-import { DrinksSection } from '../components/sections/DrinksSection';
 import { TourismTeaserSection } from '../components/sections/TourismTeaserSection';
-import { PlacesSection } from '../components/places/PlacesSection';
 import { HomeNewsSection } from '../components/sections/HomeNewsSection';
 import { ContactSection } from '../components/sections/ContactSection';
 
@@ -45,9 +43,7 @@ export const HomePage: React.FC = () => {
       <IntroSection />
       <CostumeSection />
       <FoodSection />
-      <DrinksSection />
       <TourismTeaserSection />
-      <PlacesSection />
       <HomeNewsSection />
       <ContactSection />
     </div>

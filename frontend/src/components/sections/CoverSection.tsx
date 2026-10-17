@@ -53,19 +53,12 @@ export const CoverSection: React.FC = () => {
           '.hero-kicker',
           { y: 25, opacity: 0 },
           { y: 0, opacity: 1, duration: 1.0, delay: 0.1 }
-        )
-          .fromTo(
-            '.hero-title span',
-            { y: 65, opacity: 0 },
-            { y: 0, opacity: 1, duration: 1.2, stagger: 0.025 },
-            '-=0.75'
-          )
-          .fromTo(
-            '.hero-date',
-            { y: 25, opacity: 0 },
-            { y: 0, opacity: 1, duration: 1.0 },
-            '-=0.8'
-          );
+        ).fromTo(
+          '.hero-title span',
+          { y: 65, opacity: 0 },
+          { y: 0, opacity: 1, duration: 1.2, stagger: 0.025 },
+          '-=0.75'
+        );
 
         gsap.to('.hero-wrap', {
           y: -80,
@@ -111,7 +104,6 @@ export const CoverSection: React.FC = () => {
               </span>
             ))}
           </h1>
-          <p className="hero-date">TP. Hồ Chí Minh · 10/2026</p>
         </div>
       </div>
     </section>
