@@ -7,9 +7,12 @@ import {
   ADMIN_SECTION_ROOTS,
 } from '../config/nav';
 import { BRAND_NAME } from '../brand/brand';
+import type { AdminDensity } from '../types';
 
 export interface AdminHeaderProps {
   onToggleSidebar: () => void;
+  density?: AdminDensity;
+  onToggleDensity?: () => void;
 }
 
 interface Crumb {
@@ -77,7 +80,11 @@ function getInitials(name: string): string {
   return `${first.charAt(0)}${last.charAt(0)}`.toUpperCase();
 }
 
-export const AdminHeader: React.FC<AdminHeaderProps> = ({ onToggleSidebar }) => {
+export const AdminHeader: React.FC<AdminHeaderProps> = ({
+  onToggleSidebar,
+  density = 'comfortable',
+  onToggleDensity,
+}) => {
   const { user, logout } = useAuth();
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -166,6 +173,31 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({ onToggleSidebar }) => 
       </div>
 
       <div className="adm-header-right">
+        {onToggleDensity && (
+          <div className="adm-density-toggle" role="group" aria-label="Mật độ hiển thị">
+            <button
+              type="button"
+              className={`adm-density-btn ${
+                density === 'comfortable' ? 'adm-density-btn-active' : ''
+              }`}
+              onClick={() => density === 'compact' && onToggleDensity()}
+              aria-pressed={density === 'comfortable'}
+            >
+              Thoáng
+            </button>
+            <button
+              type="button"
+              className={`adm-density-btn ${
+                density === 'compact' ? 'adm-density-btn-active' : ''
+              }`}
+              onClick={() => density === 'comfortable' && onToggleDensity()}
+              aria-pressed={density === 'compact'}
+            >
+              Gọn
+            </button>
+          </div>
+        )}
+
         <div className="adm-usermenu" ref={menuRef}>
           <button
             type="button"

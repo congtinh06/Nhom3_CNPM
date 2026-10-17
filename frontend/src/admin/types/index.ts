@@ -18,6 +18,8 @@ export interface AdminNavSection {
   items: AdminNavItem[];
 }
 
+export type AdminDensity = 'comfortable' | 'compact';
+
 export * from './product';
 export * from './poi';
 export * from './zone';

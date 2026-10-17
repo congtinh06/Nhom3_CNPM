@@ -2180,3 +2180,44 @@
   gap: 12px;
 }
 
+/* Nút chuyển mật độ trên header */
+.adm-density-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid var(--fb-border);
+  border-radius: 999px;
+  background-color: var(--fb-border-subtle);
+}
+
+.adm-density-btn {
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--fb-text-secondary);
+  background: transparent;
+  border: 0;
+  border-radius: 999px;
+  padding: 5px 12px;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.adm-density-btn:hover {
+  color: var(--fb-text-primary);
+}
+
+.adm-density-btn-active {
+  background-color: var(--fb-surface);
+  color: var(--fb-text-primary);
+  box-shadow: var(--adm-shadow-xs);
+}
+
+@media (max-width: 720px) {
+  .adm-density-toggle {
+    display: none;
+  }
+}
+

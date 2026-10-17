@@ -141,3 +141,42 @@ describe('Admin shell (GĐ2): header user menu dropdown', () => {
     expect(logout).toHaveBeenCalledTimes(1);
   });
 });
+
+describe('Admin shell (GĐ4): nút chuyển mật độ hiển thị', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockAdminAuth();
+  });
+
+  it('ẩn nút chuyển mật độ khi không truyền handler', () => {
+    render(
+      <MemoryRouter initialEntries={['/quan-tri/tong-quan']}>
+        <AdminHeader onToggleSidebar={vi.fn()} />
+      </MemoryRouter>
+    );
+
+    expect(screen.queryByRole('button', { name: 'Gọn' })).not.toBeInTheDocument();
+  });
+
+  it('gọi handler khi chuyển sang Gọn và phản ánh trạng thái đang chọn', () => {
+    const onToggleDensity = vi.fn();
+
+    render(
+      <MemoryRouter initialEntries={['/quan-tri/tong-quan']}>
+        <AdminHeader
+          onToggleSidebar={vi.fn()}
+          density="comfortable"
+          onToggleDensity={onToggleDensity}
+        />
+      </MemoryRouter>
+    );
+
+    expect(screen.getByRole('button', { name: 'Thoáng' })).toHaveAttribute(
+      'aria-pressed',
+      'true'
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Gọn' }));
+    expect(onToggleDensity).toHaveBeenCalledTimes(1);
+  });
+});
