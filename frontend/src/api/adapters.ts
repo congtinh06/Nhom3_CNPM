@@ -1,7 +1,13 @@
 import { ApiNewsListItem, ApiNewsDetail, ApiNewsListResponse } from '../types/api';
 import { NewsItem, NewsDetail, NewsListDomain, NewsCategory } from '../types/domain';
 
-const VALID_CATEGORIES: ReadonlySet<string> = new Set(['diem-den', 'van-hoa', 'meo-tham-quan']);
+const VALID_CATEGORIES: ReadonlySet<string> = new Set([
+  'diem-den',
+  'van-hoa',
+  'meo-tham-quan',
+  'trang-phuc',
+  've-dep',
+]);
 const FORTY_EIGHT_HOURS_MS = 48 * 60 * 60 * 1000;
 const TWENTY_FOUR_HOURS_MS = 24 * 60 * 60 * 1000;
 
@@ -35,6 +41,7 @@ export function adaptNewsItem(
   raw?: Partial<ApiNewsListItem> & {
     source?: string;
     sourceUrl?: string;
+    externalUrl?: string | null;
     thumbnail?: string | null;
     excerpt?: string;
     tags?: string[];
@@ -80,8 +87,10 @@ export function adaptNewsItem(
     ? rawTags.slice(0, 2).map((t) => String(t).trim()).filter(Boolean)
     : safeRelatedPoiSlugs.slice(0, 2);
 
-  const safeSource = (raw?.source || 'VnExpress').trim();
-  const safeSourceUrl = (raw?.sourceUrl || 'https://vnexpress.net/du-lich').trim();
+  const safeSource = (raw?.source || 'Echora').trim();
+  const rawExternal = (raw?.externalUrl ?? raw?.sourceUrl ?? '').trim();
+  const safeExternalUrl = rawExternal ? rawExternal : null;
+  const safeSourceUrl = safeExternalUrl ?? '';
 
   const isNew = isWithin48Hours(safePublishedAt, nowMs);
 
@@ -91,6 +100,7 @@ export function adaptNewsItem(
     title: safeTitle,
     source: safeSource,
     sourceUrl: safeSourceUrl,
+    externalUrl: safeExternalUrl,
     publishedAt: safePublishedAt,
     thumbnail: safeCoverImageUrl,
     coverImageUrl: safeCoverImageUrl,
@@ -115,6 +125,7 @@ export function adaptNewsDetail(
   raw?: Partial<ApiNewsDetail> & {
     source?: string;
     sourceUrl?: string;
+    externalUrl?: string | null;
     thumbnail?: string | null;
     excerpt?: string;
     tags?: string[];

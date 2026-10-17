@@ -3,7 +3,12 @@
  * Adapters guarantee that required fields are always present with safe fallbacks.
  */
 
-export type NewsCategory = 'diem-den' | 'van-hoa' | 'meo-tham-quan';
+export type NewsCategory =
+  | 'diem-den'
+  | 'van-hoa'
+  | 'meo-tham-quan'
+  | 'trang-phuc'
+  | 've-dep';
 
 export interface NewsItem {
   id: string; // Hash of URL
@@ -11,6 +16,7 @@ export interface NewsItem {
   title: string;
   source: string;
   sourceUrl: string;
+  externalUrl: string | null; // Real link to the original/source article, null when internal-only
   publishedAt: string; // ISO string
   thumbnail: string | null; // RSS media or og:image
   coverImageUrl?: string | null; // Alias for thumbnail
@@ -61,5 +67,17 @@ export const NEWS_CATEGORIES: Record<NewsCategory, NewsCategoryMeta> = {
     label: 'Mẹo tham quan',
     cssVar: '--cat-meo-tham-quan',
     hex: '#8A5200', // Deep ochre (contrast >= 5.4:1 on cream)
+  },
+  'trang-phuc': {
+    key: 'trang-phuc',
+    label: 'Trang phục truyền thống',
+    cssVar: '--cat-trang-phuc',
+    hex: '#8A1F5C', // Deep magenta (contrast >= 6:1 on cream)
+  },
+  've-dep': {
+    key: 've-dep',
+    label: 'Vẻ đẹp Việt Nam',
+    cssVar: '--cat-ve-dep',
+    hex: '#0F5B7A', // Deep cyan-blue (contrast >= 6:1 on cream)
   },
 };

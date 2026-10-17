@@ -36,6 +36,8 @@ export function getCategoryLabel(category: string, lang: SupportedLanguage = 'vi
   if (category === 'diem-den') return tNews(lang, 'categoryDiemDen');
   if (category === 'van-hoa') return tNews(lang, 'categoryVanHoa');
   if (category === 'meo-tham-quan') return tNews(lang, 'categoryMeoThamQuan');
+  if (category === 'trang-phuc') return tNews(lang, 'categoryTrangPhuc');
+  if (category === 've-dep') return tNews(lang, 'categoryVeDep');
   const catMeta = NEWS_CATEGORIES[category as NewsCategory];
   return catMeta?.label || category;
 }

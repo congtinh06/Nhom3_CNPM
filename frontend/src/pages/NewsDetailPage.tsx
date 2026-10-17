@@ -91,10 +91,10 @@ export const NewsDetailPage: React.FC = () => {
   const formattedDate = formatNewsDate(article.publishedAt, lang);
   const readingTime = formatReadingTime(article.readingTime || article.readingMinutes || 3, lang);
   const imageUrl = article.thumbnail || article.coverImageUrl;
-  const captionText = article.source
-    ? `Nguồn: ${article.source}`
-    : article.imageCredit
+  const captionText = article.imageCredit
     ? `Ảnh: ${article.imageCredit}`
+    : article.source
+    ? `Nguồn: ${article.source}`
     : '';
 
   return (
@@ -198,18 +198,22 @@ export const NewsDetailPage: React.FC = () => {
               </div>
             )}
 
-            {/* 9. "Read original" button */}
-            <div className="nd-actions-row">
-              <a
-                href={article.sourceUrl || 'https://vnexpress.net/du-lich'}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="nd-btn-original"
-              >
-                <span>Đọc bài gốc tại {article.source || 'VnExpress'}</span>
-                <ExternalLink size={16} aria-hidden="true" />
-              </a>
-            </div>
+            {/* 9. "Read original" button (external sources only) */}
+            {article.externalUrl && (
+              <div className="nd-actions-row">
+                <a
+                  href={article.externalUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="nd-btn-original"
+                >
+                  <span>
+                    {tNews(lang, 'readAtSource')} {article.source}
+                  </span>
+                  <ExternalLink size={16} aria-hidden="true" />
+                </a>
+              </div>
+            )}
 
             <div className="nd-divider" role="separator" />
 

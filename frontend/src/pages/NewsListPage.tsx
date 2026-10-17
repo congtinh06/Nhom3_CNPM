@@ -2,10 +2,10 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { RefreshCw } from 'lucide-react';
 import { useNewsListQuery } from '../api/news';
-import { NewsCategory, NEWS_CATEGORIES } from '../types/domain';
 import { useDocumentMeta } from '../hooks/useDocumentMeta';
 import { useNavbarLanguage } from '../content/languages';
-import { tNews } from '../content/newsI18n';
+import { tNews, NewsTranslation } from '../content/newsI18n';
+import { getCategoryLabel } from '../components/news/newsFormatters';
 import { PageHero } from '../components/common/PageHero';
 import { NewsLeadStory } from '../components/news/NewsLeadStory';
 import { NewsSideItem } from '../components/news/NewsSideItem';
@@ -14,16 +14,18 @@ import '../styles/news-list.css';
 
 interface CategoryFilterOption {
   key: string;
-  label: string;
+  i18nKey: keyof NewsTranslation;
 }
 
 const FEED_PAGE_SIZE = 6;
 
 const CATEGORY_OPTIONS: CategoryFilterOption[] = [
-  { key: 'all', label: 'Tất cả' },
-  { key: 'diem-den', label: 'Điểm đến' },
-  { key: 'van-hoa', label: 'Văn hóa Sài Gòn' },
-  { key: 'meo-tham-quan', label: 'Mẹo tham quan' },
+  { key: 'all', i18nKey: 'categoryAll' },
+  { key: 'diem-den', i18nKey: 'categoryDiemDen' },
+  { key: 'van-hoa', i18nKey: 'categoryVanHoa' },
+  { key: 'meo-tham-quan', i18nKey: 'categoryMeoThamQuan' },
+  { key: 'trang-phuc', i18nKey: 'categoryTrangPhuc' },
+  { key: 've-dep', i18nKey: 'categoryVeDep' },
 ];
 
 export const NewsListPage: React.FC = () => {
@@ -94,9 +96,9 @@ export const NewsListPage: React.FC = () => {
   };
 
   const activeCategoryLabel = useMemo(() => {
-    if (categoryParam === 'all') return 'Tất cả';
-    return NEWS_CATEGORIES[categoryParam as NewsCategory]?.label || categoryParam;
-  }, [categoryParam]);
+    if (categoryParam === 'all') return tNews(lang, 'categoryAll');
+    return getCategoryLabel(categoryParam, lang);
+  }, [categoryParam, lang]);
 
   const heroArticle = sortedFilteredItems[0] || null;
   const sideArticles = sortedFilteredItems.slice(1, 4);
@@ -144,7 +146,7 @@ export const NewsListPage: React.FC = () => {
                   className={`nl-tab ${isActive ? 'is-active' : ''}`}
                   onClick={() => handleSelectCategory(opt.key)}
                 >
-                  {opt.label}
+                  {tNews(lang, opt.i18nKey)}
                 </button>
               );
             })}

@@ -1,6 +1,6 @@
 import { NewsItem, NewsDetail } from '../types/domain';
 import { adaptNewsDetail } from '../api/adapters';
-import { thirteenNewsArticles, sampleAnnouncement } from '../content/newsFixtures';
+import { newsArticles, sampleAnnouncement } from '../content/newsFixtures';
 
 export interface GetArticlesParams {
   category?: string;
@@ -18,7 +18,7 @@ export interface GetArticlesResult {
 export async function getArticles(params: GetArticlesParams = {}): Promise<GetArticlesResult> {
   const { category, limit, offset = 0 } = params;
 
-  let list = thirteenNewsArticles.map((raw) => adaptNewsDetail(raw));
+  let list = newsArticles.map((raw) => adaptNewsDetail(raw));
   if (category && category !== 'all') {
     list = list.filter((item) => item.category === category);
   }
@@ -35,7 +35,7 @@ export async function getArticles(params: GetArticlesParams = {}): Promise<GetAr
 export async function getArticleBySlug(slug: string, _signal?: AbortSignal): Promise<NewsDetail | null> {
   if (!slug) return null;
 
-  const raw = thirteenNewsArticles.find((item) => item.slug === slug);
+  const raw = newsArticles.find((item) => item.slug === slug);
   if (!raw) return null;
 
   return adaptNewsDetail(raw);
