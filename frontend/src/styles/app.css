@@ -1455,7 +1455,7 @@ dialog p {
   --ft-muted: rgba(28, 20, 16, 0.68);
   --ft-border: rgba(28, 20, 16, 0.24);
   --ft-accent: #b45309;
-  background: var(--surface-cream);
+  background: var(--surface-warm);
   color: var(--ink);
   display: grid;
   grid-template-columns: 1fr 1fr;
