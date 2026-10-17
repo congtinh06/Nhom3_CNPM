@@ -11,10 +11,10 @@ export const CtaBandSection: React.FC = () => {
         <h2>{t.ctaTitle}</h2>
         <p>{t.ctaDesc}</p>
         <div className="cta-actions">
-          <Link className="home-btn home-btn-primary" to="/diem-du-lich">
+          <Link className="tb" to="/diem-du-lich">
             {t.ctaPrimary}
           </Link>
-          <Link className="home-btn home-btn-outline" to="/quet-ma">
+          <Link className="tb" to="/quet-ma">
             {t.ctaSecondary}
           </Link>
         </div>
