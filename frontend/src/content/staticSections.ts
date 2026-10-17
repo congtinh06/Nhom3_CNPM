@@ -90,10 +90,10 @@ export const drinksList: Drink[] = [
 export const tourismTeaserContent = {
   title: 'Du lịch Sài Gòn',
   photos: [
-    { hue: 10, caption: 'Dinh Độc Lập', src: '/images/pois/dinh-doc-lap.jpg' },
-    { hue: 30, caption: 'Chợ Bến Thành', src: '/images/pois/cho-ben-thanh.jpg' },
-    { hue: 16, caption: 'Địa đạo Củ Chi', src: '/images/home/tour-cu-chi.jpg' },
-    { hue: 42, caption: 'Nhà thờ Đức Bà', src: '/images/pois/nha-tho-duc-ba.jpg' },
+    { hue: 10, caption: 'Dinh Độc Lập', src: '/images/pois/dinh-doc-lap.jpg', link: '/diem-du-lich/dinh-doc-lap' },
+    { hue: 30, caption: 'Chợ Bến Thành', src: '/images/pois/cho-ben-thanh.jpg', link: '/diem-du-lich/cho-ben-thanh' },
+    { hue: 16, caption: 'Địa đạo Củ Chi', src: '/images/home/tour-cu-chi.jpg', link: '/diem-du-lich' },
+    { hue: 42, caption: 'Nhà thờ Đức Bà', src: '/images/pois/nha-tho-duc-ba.jpg', link: '/diem-du-lich/nha-tho-duc-ba' },
   ],
   paragraph:
     'Mỗi điểm đến kể một câu chuyện khác nhau: Dinh Độc Lập của lịch sử, Chợ Bến Thành của đời sống thường ngày, Địa đạo Củ Chi của ký ức chiến tranh và Nhà thờ Đức Bà của nét kiến trúc Pháp cổ.',
