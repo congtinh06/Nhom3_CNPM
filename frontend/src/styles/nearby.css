@@ -2764,13 +2764,80 @@ body:has(.nearby-sv-root:has(.nearby-sticky-player-bar)) #up {
 .place-qr-detail-wrap {
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-start;
   gap: 10px;
   margin: 4px 0 18px;
 }
 
+/* Hạng mục 3: QR is a secondary action — laid out horizontally and aligned
+   with the text column, never centred or competing with the listen button. */
 .place-qr-detail-card {
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  width: 100%;
+  max-width: 640px;
+  padding: 16px;
+  border: 1px solid var(--border-light, #E7E5E4);
+  border-radius: var(--radius-card, 16px);
+  background: var(--surface-white, #FFFFFF);
+  box-shadow: var(--shadow-sm);
+  box-sizing: border-box;
+}
+
+.place-qr-detail-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.place-qr-detail-order {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 9999px;
+  background-color: var(--accent-orange, #C2410C);
+  color: #ffffff;
+  font-family: var(--font-body);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+}
+
+.place-qr-detail-name {
+  margin: 2px 0 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-lg);
+  font-weight: 700;
+  line-height: var(--lh-tight);
+  color: var(--ink-text, #1C1917);
+}
+
+.place-qr-detail-hint {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-snug);
+  color: var(--ink-muted, #57534E);
+}
+
+.place-qr-detail-card .place-qr-action {
+  font-family: var(--font-body);
+}
+
+.place-qr-warning {
+  margin: 0;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: #FEF3C7;
+  border: 1px solid #FDE68A;
+  color: #92400E;
+  font-family: var(--font-body);
+  font-size: var(--fs-xs);
+  line-height: var(--lh-snug);
+  max-width: 640px;
 }
 
 .place-qr-share-btn {
@@ -2873,6 +2940,15 @@ body:has(.nearby-sv-root:has(.nearby-sticky-player-bar)) #up {
   }
   .place-qr-share-btn {
     display: inline-flex;
+  }
+
+  /* Keep the listen button reachable without scrolling past a large image */
+  .nearby-sv-root .nearby-hero-media {
+    max-height: 40vh;
+  }
+
+  .nearby-sv-root .hero-media-img {
+    max-height: 40vh;
   }
 }
 

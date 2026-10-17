@@ -270,11 +270,18 @@ export const PoiReadingSection: React.FC<PoiReadingSectionProps> = ({
             >
               <PlaceQR
                 poi={poi}
-                size={128}
+                size={144}
                 lang={currentLang}
                 label={displayName}
+                orderNumber={poi.stopOrder}
+                showHint={false}
                 showActions
               />
+              <div className="place-qr-detail-meta">
+                <span className="place-qr-detail-order">{poi.stopOrder}</span>
+                <h4 className="place-qr-detail-name">{displayName}</h4>
+                <p className="place-qr-detail-hint">{t(currentLang, 'qrScanHint')}</p>
+              </div>
             </div>
             <button
               type="button"

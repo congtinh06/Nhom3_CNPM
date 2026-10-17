@@ -117,6 +117,7 @@ export type NearbyKey =
   | 'qrCopyLink'
   | 'qrLinkCopied'
   | 'qrShare'
+  | 'qrLocalhostWarning'
   | 'qrModalTitle'
   | 'qrShowBtn'
   | 'myLocationLocating'
@@ -264,6 +265,8 @@ export const NEARBY_DICTIONARY: Record<SupportedLanguage, Record<NearbyKey, stri
     qrCopyLink: 'Sao chép link',
     qrLinkCopied: 'Đã sao chép liên kết',
     qrShare: 'Chia sẻ',
+    qrLocalhostWarning:
+      'Cảnh báo (chỉ khi phát triển): mã QR đang dùng địa chỉ localhost nên điện thoại không mở được. Hãy đặt VITE_QR_BASE_URL.',
     qrModalTitle: 'Mã QR',
     qrShowBtn: 'Hiện mã QR',
     myLocationLocating: 'Đang xác định vị trí...',
@@ -396,6 +399,8 @@ export const NEARBY_DICTIONARY: Record<SupportedLanguage, Record<NearbyKey, stri
     qrCopyLink: 'Copy link',
     qrLinkCopied: 'Link copied',
     qrShare: 'Share',
+    qrLocalhostWarning:
+      'Dev warning: the QR code points at localhost, so phones cannot open it. Set VITE_QR_BASE_URL.',
     qrModalTitle: 'QR code',
     qrShowBtn: 'Show QR code',
     myLocationLocating: 'Locating...',
@@ -528,6 +533,8 @@ export const NEARBY_DICTIONARY: Record<SupportedLanguage, Record<NearbyKey, stri
     qrCopyLink: '링크 복사',
     qrLinkCopied: '링크를 복사했습니다',
     qrShare: '공유',
+    qrLocalhostWarning:
+      '개발 경고: QR 코드가 localhost를 가리켜 휴대폰에서 열 수 없습니다. VITE_QR_BASE_URL을 설정하세요.',
     qrModalTitle: 'QR 코드',
     qrShowBtn: 'QR 코드 표시',
     myLocationLocating: '위치 확인 중...',
@@ -660,6 +667,8 @@ export const NEARBY_DICTIONARY: Record<SupportedLanguage, Record<NearbyKey, stri
     qrCopyLink: 'リンクをコピー',
     qrLinkCopied: 'リンクをコピーしました',
     qrShare: '共有',
+    qrLocalhostWarning:
+      '開発警告: QRコードがlocalhostを指しているため、スマートフォンで開けません。VITE_QR_BASE_URLを設定してください。',
     qrModalTitle: 'QRコード',
     qrShowBtn: 'QRコードを表示',
     myLocationLocating: '位置情報を取得中...',
@@ -694,6 +703,7 @@ export const UNREVIEWED_CJK_KEYS: NearbyKey[] = [
   'qrCopyLink',
   'qrLinkCopied',
   'qrShare',
+  'qrLocalhostWarning',
   'qrModalTitle',
   'qrShowBtn',
   'myLocationLocating',

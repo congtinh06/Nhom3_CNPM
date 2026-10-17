@@ -14,12 +14,25 @@ export interface PlaceQRProps {
   size?: number;
   lang: SupportedLanguage;
   label?: string;
+  orderNumber?: number | null;
   className?: string;
   showHint?: boolean;
   showActions?: boolean;
 }
 
 const SAMPLE_TOKEN_PREFIX = 'sample_qr_';
+
+/** Minimum edge length (px) of the exported PNG, per the QR spec. */
+const EXPORT_SIZE = 1024;
+
+const isLocalhost = (url: string): boolean => {
+  try {
+    const host = new URL(url).hostname;
+    return host === 'localhost' || host === '127.0.0.1' || host === '[::1]';
+  } catch {
+    return /localhost|127\.0\.0\.1/.test(url);
+  }
+};
 
 /**
  * Resolve the base URL used to build QR links. A build/deploy can override the
@@ -32,6 +45,14 @@ export function resolveQrBaseUrl(): string {
     return window.location.origin;
   }
   return '';
+}
+
+/** True only while developing against the local machine with no explicit QR domain. */
+export function shouldWarnQrLocalhost(): boolean {
+  if (!import.meta.env.DEV) return false;
+  const env = import.meta.env.VITE_QR_BASE_URL as string | undefined;
+  if (env && env.trim()) return false;
+  return isLocalhost(resolveQrBaseUrl());
 }
 
 export function isQrAvailable(poi?: PlaceQRPoi | null): boolean {
@@ -64,31 +85,60 @@ export const PlaceQR: React.FC<PlaceQRProps> = ({
   size = 128,
   lang,
   label,
+  orderNumber,
   className = '',
   showHint = true,
   showActions = false,
 }) => {
   const codeRef = useRef<HTMLDivElement | null>(null);
+  const exportRef = useRef<HTMLDivElement | null>(null);
   const [copied, setCopied] = useState(false);
 
   const content = buildPoiQrUrl(poi);
+  const warnLocalhost = showActions && shouldWarnQrLocalhost();
 
   const handleDownload = useCallback(() => {
     if (!content) return;
-    const canvas = codeRef.current?.querySelector('canvas');
-    if (!canvas) return;
+    const source = exportRef.current?.querySelector('canvas');
+    if (!source) return;
     try {
-      const url = canvas.toDataURL('image/png');
+      const pad = 32;
+      const textBand = 160;
+      const out = document.createElement('canvas');
+      out.width = source.width;
+      out.height = source.height + textBand;
+      const ctx = out.getContext('2d');
+      if (!ctx) return;
+
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, out.width, out.height);
+      ctx.drawImage(source, 0, 0);
+
+      ctx.fillStyle = '#1c1410';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      const centerX = out.width / 2;
+      if (label) {
+        ctx.font = '600 40px "Be Vietnam Pro", sans-serif';
+        ctx.fillText(label, centerX, source.height + pad + 34);
+      }
+      if (orderNumber) {
+        ctx.font = '400 30px "Be Vietnam Pro", sans-serif';
+        ctx.fillStyle = '#57534e';
+        ctx.fillText(`#${orderNumber}`, centerX, source.height + pad + 90);
+      }
+
+      const url = out.toDataURL('image/png');
       const link = document.createElement('a');
       link.href = url;
-      link.download = `${slugifyName(label || poi?.slug || '')}-qr.png`;
+      link.download = `${poi?.qrToken?.trim() || slugifyName(label || poi?.slug || '')}.png`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
     } catch {
       // Canvas export can fail in some browsers; nothing actionable here.
     }
-  }, [content, label, poi?.slug]);
+  }, [content, label, orderNumber, poi?.qrToken, poi?.slug]);
 
   const handleCopy = useCallback(() => {
     if (!content) return;
@@ -113,10 +163,10 @@ export const PlaceQR: React.FC<PlaceQRProps> = ({
         <QRCodeCanvas
           value={content}
           size={size}
-          level="M"
-          marginSize={2}
+          level="Q"
+          marginSize={4}
           bgColor="#ffffff"
-          fgColor="#2b1d16"
+          fgColor="#000000"
         />
       </div>
       {showHint && <p className="place-qr-hint">{t(lang, 'qrScanHint')}</p>}
@@ -128,6 +178,23 @@ export const PlaceQR: React.FC<PlaceQRProps> = ({
           <button type="button" className="place-qr-action" onClick={handleCopy}>
             {copied ? t(lang, 'qrLinkCopied') : t(lang, 'qrCopyLink')}
           </button>
+        </div>
+      )}
+      {warnLocalhost && <p className="place-qr-warning">{t(lang, 'qrLocalhostWarning')}</p>}
+      {showActions && (
+        <div
+          ref={exportRef}
+          aria-hidden="true"
+          style={{ position: 'absolute', width: 0, height: 0, overflow: 'hidden' }}
+        >
+          <QRCodeCanvas
+            value={content}
+            size={EXPORT_SIZE}
+            level="Q"
+            marginSize={4}
+            bgColor="#ffffff"
+            fgColor="#000000"
+          />
         </div>
       )}
     </div>
