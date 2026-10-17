@@ -1,48 +1,15 @@
 import React, { useRef, useLayoutEffect } from 'react';
+import { Link } from 'react-router-dom';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import heroImg from '../../img/gioi_thieu.png';
+import { useHomeI18n } from '../../content/homeI18n';
 
 gsap.registerPlugin(ScrollTrigger);
 
 export const CoverSection: React.FC = () => {
   const heroRef = useRef<HTMLElement>(null);
-  const titleRef = useRef<HTMLHeadingElement>(null);
-
-  useLayoutEffect(() => {
-    const fit = () => {
-      const t = titleRef.current, hero = heroRef.current;
-      if (!t || !hero) return;
-      const ctx = document.createElement('canvas').getContext('2d')!;
-      ctx.font = '100px "Playfair Display"';
-      const cap = ctx.measureText('T').actualBoundingBoxAscent / 100 || 0.72;
-      t.style.letterSpacing = '0px';
-      t.style.marginRight = '0px';
-      t.style.fontSize = '100px';
-      const w100 = t.offsetWidth;
-      const target = hero.clientWidth * (hero.clientWidth < 600 ? 0.90 : 0.86);
-      let size = (100 * target) / w100;
-      size = Math.min(size, (hero.clientHeight * 0.22) / cap);
-      t.style.fontSize = `${size}px`;
-      const n = t.querySelectorAll('span').length;
-      const extra = target - t.offsetWidth;
-      const ls = Math.max(0, Math.min(extra / (n - 1), size * 0.12));
-      t.style.letterSpacing = `${ls}px`;
-      t.style.marginRight = '0px';
-      t.style.marginTop = `${size * cap * 0.22 + 4}px`;
-    };
-
-    fit();
-    if (document.fonts) {
-      document.fonts.ready.then(() => {
-        fit();
-        ScrollTrigger.refresh();
-      });
-    }
-
-    window.addEventListener('resize', fit);
-    return () => window.removeEventListener('resize', fit);
-  }, []);
+  const { t } = useHomeI18n();
 
   useLayoutEffect(() => {
     const ctx = gsap.context(() => {
@@ -51,24 +18,36 @@ export const CoverSection: React.FC = () => {
         const tl = gsap.timeline({ defaults: { ease: 'power4.out' } });
         tl.fromTo(
           '.hero-kicker',
-          { y: 25, opacity: 0 },
-          { y: 0, opacity: 1, duration: 1.0, delay: 0.1 }
-        ).fromTo(
-          '.hero-title span',
-          { y: 65, opacity: 0 },
-          { y: 0, opacity: 1, duration: 1.2, stagger: 0.025 },
-          '-=0.75'
-        );
+          { y: 24, opacity: 0 },
+          { y: 0, opacity: 1, duration: 0.9, delay: 0.1 }
+        )
+          .fromTo(
+            '.hero-title',
+            { y: 40, opacity: 0 },
+            { y: 0, opacity: 1, duration: 1.0 },
+            '-=0.55'
+          )
+          .fromTo(
+            '.hero-desc',
+            { y: 28, opacity: 0 },
+            { y: 0, opacity: 1, duration: 0.9 },
+            '-=0.6'
+          )
+          .fromTo(
+            '.hero-cta > *',
+            { y: 20, opacity: 0 },
+            { y: 0, opacity: 1, duration: 0.7, stagger: 0.12 },
+            '-=0.5'
+          );
 
         gsap.to('.hero-wrap', {
-          y: -80,
+          y: -60,
           opacity: 0,
-          scale: 0.96,
           ease: 'power1.out',
           scrollTrigger: {
             trigger: '.hero',
             start: 'top top',
-            end: '75% top',
+            end: '70% top',
             scrub: 1.2,
           },
         });
@@ -92,18 +71,21 @@ export const CoverSection: React.FC = () => {
 
   return (
     <section className="hero" id="top" ref={heroRef}>
-      <img className="hero-bg" src={heroImg} alt="Sài Gòn" />
+      <img className="hero-bg" src={heroImg} alt="" aria-hidden="true" />
       <div className="hero-shade" />
       <div className="hero-block">
         <div className="hero-wrap">
-          <p className="hero-kicker">VẺ ĐẸP ĐẤT NƯỚC VÀ CON NGƯỜI</p>
-          <h1 className="hero-title" ref={titleRef} aria-label="Thành Phố Hồ Chí Minh">
-            {'THÀNH PHỐ HỒ CHÍ MINH'.split('').map((c, i) => (
-              <span key={i} aria-hidden="true">
-                {c === ' ' ? '\u00A0' : c}
-              </span>
-            ))}
-          </h1>
+          <p className="hero-kicker">{t.heroKicker}</p>
+          <h1 className="hero-title">{t.heroTitle}</h1>
+          <p className="hero-desc">{t.heroDesc}</p>
+          <div className="hero-cta">
+            <Link className="hero-btn hero-btn-primary" to="/diem-du-lich">
+              {t.heroCtaPrimary}
+            </Link>
+            <Link className="hero-btn hero-btn-secondary" to="/quet-ma">
+              {t.heroCtaSecondary}
+            </Link>
+          </div>
         </div>
       </div>
     </section>
