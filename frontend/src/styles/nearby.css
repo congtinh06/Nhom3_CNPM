@@ -1578,7 +1578,78 @@ html:lang(ja) .nearby-sv-root,
   max-width: 720px;
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: var(--space-24);
+}
+
+/* ==========================================================================
+   3C.1 Reading detail layout — two columns on desktop, single column on mobile.
+   Left = POI image (4:3, sticky); right = name, category, listen bar, text.
+   No float: the image never wraps or overlaps the text.
+   ========================================================================== */
+.nearby-sv-root .poi-reading-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-24);
+  align-items: start;
+}
+
+.nearby-sv-root .poi-reading-media {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  border-radius: var(--radius-card);
+  overflow: hidden;
+  background-color: #F5F2EC;
+  border: 1px solid var(--border-light, #E7E5E4);
+  box-shadow: var(--shadow-sm);
+}
+
+.nearby-sv-root .poi-reading-media-img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Left column stack: POI image above the QR card */
+.nearby-sv-root .poi-reading-aside {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-24);
+  min-width: 0;
+}
+
+/* QR card sits under the image and fills the narrow left column */
+.nearby-sv-root .poi-reading-aside .place-qr-detail-card {
+  max-width: none;
+  column-gap: var(--space-16);
+}
+
+.nearby-sv-root .poi-reading-aside .place-qr-share-btn {
+  align-self: flex-start;
+}
+
+.nearby-sv-root .poi-reading-content {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-24);
+}
+
+.nearby-sv-root .poi-reading-head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+
+.nearby-sv-root .poi-reading-category {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  letter-spacing: var(--ls-label);
+  text-transform: uppercase;
+  line-height: var(--lh-tight);
+  color: var(--accent-orange, #C2410C);
 }
 
 .nearby-sv-root .reading-stop-title {
@@ -1589,8 +1660,50 @@ html:lang(ja) .nearby-sv-root,
   margin: 0;
   text-transform: none;
   letter-spacing: -0.015em;
-  border-top: 1px solid var(--border-light, #E7E5E4);
-  padding-top: 24px;
+}
+
+/* Listen bar inside the reading detail (mirrors the hero control state) */
+.nearby-sv-root .poi-reading-listen-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-16);
+  flex-wrap: wrap;
+}
+
+.nearby-sv-root .poi-reading-play-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-8);
+  min-height: 44px;
+  padding: 0 22px;
+  border-radius: var(--radius-pill);
+  border: none;
+  background-color: var(--accent-orange, #C2410C);
+  color: #ffffff;
+  font-family: var(--font-body);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: var(--shadow-orange-soft);
+  transition: background-color 0.15s ease, transform 0.15s ease;
+}
+
+.nearby-sv-root .poi-reading-play-btn:hover {
+  transform: translateY(-1px);
+}
+
+.nearby-sv-root .poi-reading-play-btn:focus-visible {
+  outline: 2px solid var(--accent-orange, #C2410C);
+  outline-offset: 2px;
+}
+
+.nearby-sv-root .poi-reading-duration {
+  font-family: var(--font-body);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--ink-muted, #57534E);
+  font-variant-numeric: tabular-nums;
 }
 
 .nearby-sv-root .reading-untranslated-notice {
@@ -1602,24 +1715,23 @@ html:lang(ja) .nearby-sv-root,
 }
 
 .nearby-sv-root .reading-body-flow {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-24);
   font-size: 17px;
-  line-height: 1.75;
+  line-height: var(--lh-body);
   color: #2b2724;
   word-break: break-word;
   white-space: normal;
 }
 
 .nearby-sv-root .reading-body-flow .reading-paragraph {
-  margin: 0 0 24px;
+  margin: 0;
   font-size: 17px;
-  line-height: 1.75;
+  line-height: var(--lh-body);
   text-indent: 0;
   white-space: normal;
   color: #2b2724;
-}
-
-.nearby-sv-root .reading-body-flow .reading-paragraph:last-child {
-  margin-bottom: 0;
 }
 
 /* Chữ đầu đoạn mở bài lớn hơn một chút (chỉ đoạn đầu tiên của bài) */
@@ -1631,82 +1743,12 @@ html:lang(ja) .nearby-sv-root,
 }
 
 /* ==========================================================================
-   Hạng mục 4: narration sections with image frames + large slide
+   Narration sections: text grouping + active highlight only.
+   The per-section image frames + the sticky slider live on another branch and
+   are intentionally not rendered in this layout.
    ========================================================================== */
-.nearby-sv-root .narration-slide {
-  position: sticky;
-  top: 72px;
-  z-index: 4;
-  width: 100%;
-  aspect-ratio: 16 / 9;
-  max-height: 44vh;
-  border-radius: var(--radius-card, 16px);
-  overflow: hidden;
-  background-color: #F5F2EC;
-  border: 1px solid var(--border-light, #E7E5E4);
-  box-shadow: var(--shadow-sm);
-}
-
-.nearby-sv-root .narration-slide-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-  animation: narration-slide-fade 300ms ease;
-}
-
-.nearby-sv-root .narration-slide-fallback {
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(135deg, #f3e3cf, #fff1c7);
-}
-
-@keyframes narration-slide-fade {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-.nearby-sv-root .narration-dots {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 10px;
-  display: flex;
-  justify-content: center;
-  gap: 6px;
-}
-
-.nearby-sv-root .narration-dot {
-  width: 8px;
-  height: 8px;
-  padding: 0;
-  border: none;
-  border-radius: 9999px;
-  background-color: rgba(255, 255, 255, 0.6);
-  box-shadow: 0 0 0 1px rgba(28, 25, 23, 0.18);
-  cursor: pointer;
-  transition: width 180ms ease, background-color 180ms ease;
-}
-
-.nearby-sv-root .narration-dot.is-active {
-  width: 22px;
-  background-color: var(--accent-orange, #C2410C);
-}
-
-.nearby-sv-root .narration-dot:focus-visible {
-  outline: 2px solid var(--accent-orange, #C2410C);
-  outline-offset: 2px;
-}
-
 .nearby-sv-root .narration-section {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 16px;
-  margin: 0 0 28px;
+  margin: 0;
   padding: 4px 0;
   border-left: 4px solid transparent;
   border-radius: 0 var(--radius-btn, 8px) var(--radius-btn, 8px) 0;
@@ -1719,63 +1761,40 @@ html:lang(ja) .nearby-sv-root,
   padding: 12px 16px;
 }
 
-.nearby-sv-root .narration-section .reading-paragraph {
-  margin-bottom: 0;
-}
-
-.nearby-sv-root .narration-section-media {
-  margin: 0;
-}
-
-.nearby-sv-root .narration-section-img {
-  width: 100%;
-  aspect-ratio: 16 / 9;
-  object-fit: cover;
-  border-radius: var(--radius-btn, 8px);
-  display: block;
-  background-color: #F5F2EC;
-}
-
-.nearby-sv-root .narration-section-caption {
-  margin-top: 6px;
-  font-family: var(--font-body);
-  font-size: var(--fs-sm);
-  line-height: var(--lh-snug);
-  color: var(--ink-muted, #57534E);
-}
-
-.nearby-sv-root .narration-section-credit {
-  color: var(--ink-subtle, #57534E);
-  font-size: var(--fs-xs);
-}
-
-@media (min-width: 720px) {
-  .nearby-sv-root .narration-section.has-media {
-    grid-template-columns: 1fr 1fr;
-    align-items: center;
-    gap: 24px;
-  }
-  .nearby-sv-root .narration-section.media-left .narration-section-media {
-    order: 1;
-  }
-  .nearby-sv-root .narration-section.media-left .reading-paragraph {
-    order: 2;
-  }
-  .nearby-sv-root .narration-section.media-right .narration-section-media {
-    order: 2;
-  }
-  .nearby-sv-root .narration-section.media-right .reading-paragraph {
-    order: 1;
-  }
-}
-
 @media (prefers-reduced-motion: reduce) {
-  .nearby-sv-root .narration-slide-img {
-    animation: none;
-  }
-  .nearby-sv-root .narration-section,
-  .nearby-sv-root .narration-dot {
+  .nearby-sv-root .narration-section {
     transition: none;
+  }
+}
+
+@media (min-width: 900px) {
+  /* Match the width of the hero / stops sections above (1160px inner) */
+  .nearby-sv-root .nearby-reading-container {
+    max-width: 1160px;
+  }
+
+  /* Two columns of equal width: image + QR left, narration right, >= 48px apart */
+  .nearby-sv-root .poi-reading-layout {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: calc(var(--space-40) + var(--space-8));
+  }
+
+  /* Stick below the sticky control bar so the image + QR follow long text */
+  .nearby-sv-root .poi-reading-aside {
+    position: sticky;
+    top: calc(var(--header-height, 64px) + var(--ctrl-bar-height, 44px) + var(--space-16));
+    align-self: start;
+  }
+
+  .nearby-sv-root .reading-body-flow {
+    max-width: 70ch;
+  }
+}
+
+@media (max-width: 899.98px) {
+  /* Cap the image so the text stays in view on a single column */
+  .nearby-sv-root .poi-reading-media {
+    max-height: 40vh;
   }
 }
 
@@ -2921,12 +2940,18 @@ body:has(.nearby-sv-root:has(.nearby-sticky-player-bar)) #up {
 /* Hạng mục 3: QR is a secondary action — laid out horizontally and aligned
    with the text column, never centred or competing with the listen button. */
 .place-qr-detail-card {
-  display: flex;
-  align-items: center;
-  gap: 20px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-areas:
+    "code meta"
+    "code actions"
+    "warn warn";
+  align-items: start;
+  column-gap: var(--space-24);
+  row-gap: var(--space-16);
   width: 100%;
   max-width: 640px;
-  padding: 16px;
+  padding: var(--space-16);
   border: 1px solid var(--border-light, #E7E5E4);
   border-radius: var(--radius-card, 16px);
   background: var(--surface-white, #FFFFFF);
@@ -2934,7 +2959,28 @@ body:has(.nearby-sv-root:has(.nearby-sticky-player-bar)) #up {
   box-sizing: border-box;
 }
 
+/* Flatten the shared QR component so its code and actions become grid items,
+   letting the actions sit in the right-hand meta column. */
+.nearby-sv-root .place-qr-detail-card .place-qr {
+  display: contents;
+}
+
+.place-qr-detail-card .place-qr-code {
+  grid-area: code;
+  align-self: start;
+}
+
+.place-qr-detail-card .place-qr-actions {
+  grid-area: actions;
+  justify-content: flex-start;
+}
+
+.place-qr-detail-card .place-qr-warning {
+  grid-area: warn;
+}
+
 .place-qr-detail-meta {
+  grid-area: meta;
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -2955,8 +3001,15 @@ body:has(.nearby-sv-root:has(.nearby-sticky-player-bar)) #up {
   font-weight: 600;
 }
 
+.place-qr-detail-title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  min-width: 0;
+}
+
 .place-qr-detail-name {
-  margin: 2px 0 0;
+  margin: 0;
   font-family: var(--font-display);
   font-size: var(--fs-lg);
   font-weight: 700;
@@ -3083,14 +3136,16 @@ body:has(.nearby-sv-root:has(.nearby-sticky-player-bar)) #up {
   text-align: center;
 }
 
-@media (max-width: 640px) {
+@media (max-width: 899.98px) {
   .place-qr-detail-card {
     display: none;
   }
   .place-qr-share-btn {
     display: inline-flex;
   }
+}
 
+@media (max-width: 640px) {
   /* Keep the listen button reachable without scrolling past a large image */
   .nearby-sv-root .nearby-hero-media {
     max-height: 40vh;

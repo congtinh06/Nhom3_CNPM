@@ -6,16 +6,15 @@ import { t } from '../../content/nearbyI18n';
 import { PlaceQR, isQrAvailable, buildPoiQrUrl } from '../common/PlaceQR';
 import { resolveImagePath } from './PoiCard';
 import { buildPoiSections } from '../../lib/poiSections';
-import creditsRaw from '../../content/poiImageCredits.json';
-
-type ImageCredit = { author?: string; license?: string; source?: string };
-const IMAGE_CREDITS = creditsRaw as Record<string, ImageCredit>;
+import { PlaybackStatus } from '../../hooks/useNearbyAudio';
 
 interface PoiReadingSectionProps {
   activeItem: SortedPoiItem;
   currentLang: SupportedLanguage;
   isPlaying: boolean;
   isCurrent: boolean;
+  playbackStatus?: PlaybackStatus;
+  duration?: number;
   activeSentenceIndex?: number | null;
   activeCharOffset?: number | null;
   activeCharLength?: number;
@@ -24,8 +23,12 @@ interface PoiReadingSectionProps {
   prevItem: SortedPoiItem | null;
   nextItem: SortedPoiItem | null;
   onSelectPoi: (poiId: string) => void;
+  onTogglePlay?: (poiId: string) => void;
   getPoiName: (poi: GeoPoi) => string;
   formattedDist?: string | null;
+  listenBtnText?: string;
+  pauseBtnText?: string;
+  resumeBtnText?: string;
 }
 
 export const PoiReadingSection: React.FC<PoiReadingSectionProps> = ({
@@ -33,6 +36,8 @@ export const PoiReadingSection: React.FC<PoiReadingSectionProps> = ({
   currentLang,
   isPlaying,
   isCurrent,
+  playbackStatus,
+  duration,
   activeCharOffset = null,
   activeCharLength = 0,
   syncMode = 'boundary',
@@ -40,23 +45,29 @@ export const PoiReadingSection: React.FC<PoiReadingSectionProps> = ({
   prevItem,
   nextItem,
   onSelectPoi,
+  onTogglePlay,
   getPoiName,
   formattedDist,
+  listenBtnText,
+  pauseBtnText,
+  resumeBtnText,
 }) => {
   const { poi } = activeItem;
   const currentWordRef = useRef<HTMLSpanElement | null>(null);
   const lastUserScrollTimeRef = useRef<number>(0);
 
   const displayName = getPoiName(poi);
+  const isNameFallback = !poi.name[currentLang] && currentLang !== 'vi';
+
   // Reading section is "read more" content, based strictly on the full layer:
   // If narration.full exists (vi, en): render paragraphs.
   // If narration.full does not exist (ja, ko): do not render the reading body at all.
   const fullParagraphs = getNarration(poi, currentLang, 'full');
   const showReadingBody = Boolean(fullParagraphs && fullParagraphs.length > 0);
 
-  // Hạng mục 4: each narration paragraph becomes a "section" that may carry its
-  // own image. POIs without an explicit `sections` field auto-split the existing
-  // full-narration paragraphs and reuse the cover image on the first one.
+  // Narration sections keep the text grouping + section boundaries used by the
+  // word-level highlight and the middle-band auto-scroll. Per-section images
+  // are intentionally not rendered in this layout (handled on another branch).
   const sections = useMemo(
     () => buildPoiSections(poi, currentLang, showReadingBody ? (fullParagraphs as string[]) : []),
     [poi, currentLang, fullParagraphs, showReadingBody]
@@ -100,8 +111,7 @@ export const PoiReadingSection: React.FC<PoiReadingSectionProps> = ({
     audioSourceType === 'speech' &&
     activeCharOffset !== null;
 
-  // Which section currently contains the spoken word (for the active highlight,
-  // the large NarrationSlide image and the progress dots).
+  // Which section currently contains the spoken word (for the active highlight).
   const activeSectionIndex = useMemo(() => {
     if (!isReadingActive || activeCharOffset === null) return -1;
     return paragraphRanges.findIndex(
@@ -140,6 +150,31 @@ export const PoiReadingSection: React.FC<PoiReadingSectionProps> = ({
       });
     }
   }, [isReadingActive, activeCharOffset]);
+
+  // Left column: the POI cover image (4:3, sticky on desktop).
+  const hasMedia = Boolean(poi.image || poi.slug);
+
+  // Category label for the content header (falls back to Vietnamese like the hero).
+  const categoryLabel = poi.category[currentLang] || poi.category.vi;
+  const isCatFallback = !poi.category[currentLang] && currentLang !== 'vi';
+
+  // Listen bar mirrors the hero's single-source-of-truth play/pause state.
+  const isCardPlaying = isCurrent && isPlaying;
+  const isCardPaused = isCurrent && !isPlaying && playbackStatus === 'paused';
+  const resolvedListenText = listenBtnText || t(currentLang, 'playBtn');
+  const resolvedPauseText = pauseBtnText || t(currentLang, 'pauseBtn');
+  const resolvedResumeText = resumeBtnText || t(currentLang, 'resumeBtn');
+  const listenLabel = isCardPlaying
+    ? resolvedPauseText
+    : isCardPaused
+    ? resolvedResumeText
+    : resolvedListenText;
+
+  const knownSeconds =
+    (isCardPlaying || isCardPaused) && duration && duration > 0 ? duration : null;
+  const durationLabel = knownSeconds
+    ? `${Math.floor(knownSeconds / 60)}:${String(Math.floor(knownSeconds % 60)).padStart(2, '0')}`
+    : null;
 
   // Facts row: Address and distance
   const rawAddress = (poi as any).address;
@@ -245,198 +280,178 @@ export const PoiReadingSection: React.FC<PoiReadingSectionProps> = ({
     );
   };
 
-  const activeSection = activeSectionIndex >= 0 ? sections[activeSectionIndex] : undefined;
-  const slideSrc = (activeSection?.image || '').trim() || poi.image || '';
-  const slideAlt = activeSection?.alt || displayName;
-
-  const jumpToSection = (idx: number) => {
-    const prefersReducedMotion =
-      typeof window !== 'undefined' &&
-      typeof window.matchMedia === 'function' &&
-      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    sectionRefs.current[idx]?.scrollIntoView({
-      block: 'center',
-      behavior: prefersReducedMotion ? 'auto' : 'smooth',
-    });
-  };
-
   return (
     <section className="nearby-reading-section" aria-label={`Nội dung thuyết minh: ${displayName}`}>
       <div className="nearby-reading-container" data-sync={syncMode}>
-        {/* Reading body: rendered only when the full narration layer exists for the current language */}
-        {showReadingBody && (
-          <>
-            <h3 className="reading-stop-title">{displayName}</h3>
-
-            {/* Hạng mục 4: large narration slide — shows the active section's image,
-                or the cover while idle, with clickable section progress dots. */}
-            {sections.length > 0 && (
-              <div
-                className="narration-slide"
-                data-playing={isReadingActive ? 'true' : 'false'}
-                aria-label={t(currentLang, 'narrationSlideAria')}
-              >
-                {slideSrc ? (
+        <div className="poi-reading-layout">
+          {/* Left column: POI image (4:3, sticky) with the QR card beneath it */}
+          {(hasMedia || qrAvailable) && (
+            <div className="poi-reading-aside">
+              {hasMedia && (
+                <div className="poi-reading-media">
                   <img
-                    key={slideSrc}
-                    className="narration-slide-img"
-                    src={resolveImagePath(slideSrc, poi.slug)}
-                    alt={slideAlt}
+                    className="poi-reading-media-img"
+                    src={resolveImagePath(poi.image, poi.slug)}
+                    alt={displayName}
                     loading="lazy"
                     decoding="async"
                   />
-                ) : (
-                  <div className="narration-slide-fallback" aria-hidden="true" />
-                )}
+                </div>
+              )}
 
-                {sections.length > 1 && (
-                  <div
-                    className="narration-dots"
-                    role="tablist"
-                    aria-label={t(currentLang, 'sectionProgressAria')}
-                  >
-                    {sections.map((_, i) => (
-                      <button
-                        key={i}
-                        type="button"
-                        role="tab"
-                        aria-selected={i === activeSectionIndex}
-                        className={`narration-dot${i === activeSectionIndex ? ' is-active' : ''}`}
-                        aria-label={`${i + 1} / ${sections.length}`}
-                        onClick={() => jumpToSection(i)}
-                      />
-                    ))}
+              {qrAvailable && (
+                <div
+                  className="place-qr-detail-card"
+                  role="region"
+                  aria-label={t(currentLang, 'qrCardAria')}
+                >
+                  <PlaceQR
+                    poi={poi}
+                    size={144}
+                    lang={currentLang}
+                    label={displayName}
+                    orderNumber={poi.stopOrder}
+                    showHint={false}
+                    showActions
+                  />
+                  <div className="place-qr-detail-meta">
+                    <div className="place-qr-detail-title">
+                      <span className="place-qr-detail-order">{poi.stopOrder}</span>
+                      <h4 className="place-qr-detail-name">{displayName}</h4>
+                    </div>
+                    <p className="place-qr-detail-hint">{t(currentLang, 'qrScanHint')}</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Right column: name, category, listen bar, narration paragraphs, facts, QR, nav */}
+          <div className="poi-reading-content">
+            <header className="poi-reading-head">
+              {categoryLabel && (
+                <p
+                  className="poi-reading-category"
+                  lang={isCatFallback ? 'vi' : currentLang}
+                >
+                  {categoryLabel}
+                </p>
+              )}
+              <h3 className="reading-stop-title" lang={isNameFallback ? 'vi' : currentLang}>
+                {displayName}
+              </h3>
+            </header>
+
+            {onTogglePlay && (
+              <div className="poi-reading-listen-bar">
+                <button
+                  type="button"
+                  className={`poi-reading-play-btn${isCardPlaying ? ' is-playing' : ''}`}
+                  data-id={poi.id}
+                  aria-pressed={isCardPlaying}
+                  onClick={() => onTogglePlay(poi.id)}
+                >
+                  {isCardPlaying ? (
+                    <span className="audio-wave-anim" aria-hidden="true">
+                      <span />
+                      <span />
+                      <span />
+                    </span>
+                  ) : (
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="currentColor"
+                      aria-hidden="true"
+                      className="play-icon-svg"
+                    >
+                      <polygon points="5 3 19 12 5 21 5 3" />
+                    </svg>
+                  )}
+                  <span>{listenLabel}</span>
+                </button>
+                {durationLabel && <span className="poi-reading-duration">{durationLabel}</span>}
+              </div>
+            )}
+
+            {/* Reading body: rendered only when the full narration layer exists for the current language */}
+            {showReadingBody && (
+              <div className="reading-body-flow" lang={currentLang} data-sync={syncMode}>
+                {sections.map((_section, pIdx) => {
+                  const pRange = paragraphRanges[pIdx];
+                  if (!pRange) return null;
+                  const isActiveSection = pIdx === activeSectionIndex;
+
+                  return (
+                    <div
+                      key={pIdx}
+                      ref={(el) => {
+                        sectionRefs.current[pIdx] = el;
+                      }}
+                      className={`narration-section${isActiveSection ? ' is-active' : ''}`}
+                    >
+                      {renderParagraphText(pRange)}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Optional facts (distance, address) */}
+            {hasFacts && (
+              <dl className="chapter-facts-row reading-facts-row">
+                {addressVal && (
+                  <div className="chapter-fact-pair">
+                    <dt className="chapter-fact-label">{addressLabel}:</dt>
+                    <dd className="chapter-fact-value">{addressVal}</dd>
                   </div>
                 )}
-              </div>
+                {hasDistance && (
+                  <div className="chapter-fact-pair">
+                    <dt className="chapter-fact-label">{distanceLabel}:</dt>
+                    <dd className="chapter-fact-value">{formattedDist}</dd>
+                  </div>
+                )}
+              </dl>
             )}
 
-            {/* Reading body: Comfortable 720px max-width, 17px font, 1.75 line height, no inner scroll */}
-            <div className="reading-body-flow" lang={currentLang} data-sync={syncMode}>
-              {sections.map((section, pIdx) => {
-                const pRange = paragraphRanges[pIdx];
-                if (!pRange) return null;
-                const credit = section.image ? IMAGE_CREDITS[section.image] : undefined;
-                const isActiveSection = pIdx === activeSectionIndex;
-
-                return (
-                  <figure
-                    key={pIdx}
-                    ref={(el) => {
-                      sectionRefs.current[pIdx] = el;
-                    }}
-                    className={`narration-section narration-section-${
-                      pIdx % 2 === 0 ? 'media-left' : 'media-right'
-                    }${section.image ? ' has-media' : ''}${isActiveSection ? ' is-active' : ''}`}
-                  >
-                    {section.image && (
-                      <div className="narration-section-media">
-                        <img
-                          className="narration-section-img"
-                          src={resolveImagePath(section.image, poi.slug)}
-                          alt={section.alt || ''}
-                          loading="lazy"
-                          decoding="async"
-                        />
-                        {(section.caption || credit) && (
-                          <figcaption className="narration-section-caption">
-                            {section.caption}
-                            {credit?.author && (
-                              <span className="narration-section-credit">
-                                {' '}
-                                {t(currentLang, 'photoCredit', {
-                                  author: credit.author,
-                                  license: credit.license || '',
-                                })}
-                              </span>
-                            )}
-                          </figcaption>
-                        )}
-                      </div>
-                    )}
-
-                    {renderParagraphText(pRange)}
-                  </figure>
-                );
-              })}
-            </div>
-          </>
-        )}
-
-        {/* Optional facts (address, distance) */}
-        {hasFacts && (
-          <dl className="chapter-facts-row reading-facts-row">
-            {addressVal && (
-              <div className="chapter-fact-pair">
-                <dt className="chapter-fact-label">{addressLabel}:</dt>
-                <dd className="chapter-fact-value">{addressVal}</dd>
-              </div>
+            {/* Mobile: QR card lives under the image; the share button replaces it here */}
+            {qrAvailable && (
+              <button
+                type="button"
+                className="place-qr-share-btn"
+                onClick={handleShare}
+                aria-label={t(currentLang, 'qrShare')}
+              >
+                {t(currentLang, 'qrShare')}
+              </button>
             )}
-            {hasDistance && (
-              <div className="chapter-fact-pair">
-                <dt className="chapter-fact-label">{distanceLabel}:</dt>
-                <dd className="chapter-fact-value">{formattedDist}</dd>
-              </div>
-            )}
-          </dl>
-        )}
 
-        {/* QR card: listen on a phone. Hidden on mobile (share button shown instead). */}
-        {qrAvailable && (
-          <div className="place-qr-detail-wrap">
-            <div
-              className="place-qr-detail-card"
-              role="region"
-              aria-label={t(currentLang, 'qrCardAria')}
-            >
-              <PlaceQR
-                poi={poi}
-                size={144}
-                lang={currentLang}
-                label={displayName}
-                orderNumber={poi.stopOrder}
-                showHint={false}
-                showActions
-              />
-              <div className="place-qr-detail-meta">
-                <span className="place-qr-detail-order">{poi.stopOrder}</span>
-                <h4 className="place-qr-detail-name">{displayName}</h4>
-                <p className="place-qr-detail-hint">{t(currentLang, 'qrScanHint')}</p>
-              </div>
-            </div>
-            <button
-              type="button"
-              className="place-qr-share-btn"
-              onClick={handleShare}
-              aria-label={t(currentLang, 'qrShare')}
-            >
-              {t(currentLang, 'qrShare')}
-            </button>
+            {/* Bottom Navigation: Previous / Next buttons (min 44px hit area, disabled at ends, no chevron icons) */}
+            <nav className="reading-nav-row" aria-label="Điều hướng các điểm dừng">
+              <button
+                type="button"
+                className="panel-nav-btn btn-prev"
+                disabled={!prevItem}
+                onClick={() => prevItem && onSelectPoi(prevItem.poi.id)}
+                aria-label={prevLabel}
+              >
+                <span className="nav-btn-text">{prevLabel}</span>
+              </button>
+
+              <button
+                type="button"
+                className="panel-nav-btn btn-next"
+                disabled={!nextItem}
+                onClick={() => nextItem && onSelectPoi(nextItem.poi.id)}
+                aria-label={nextLabel}
+              >
+                <span className="nav-btn-text">{nextLabel}</span>
+              </button>
+            </nav>
           </div>
-        )}
-
-        {/* Bottom Navigation: Previous / Next buttons (min 44px hit area, disabled at ends, no chevron icons) */}
-        <nav className="reading-nav-row" aria-label="Điều hướng các điểm dừng">
-          <button
-            type="button"
-            className="panel-nav-btn btn-prev"
-            disabled={!prevItem}
-            onClick={() => prevItem && onSelectPoi(prevItem.poi.id)}
-            aria-label={prevLabel}
-          >
-            <span className="nav-btn-text">{prevLabel}</span>
-          </button>
-
-          <button
-            type="button"
-            className="panel-nav-btn btn-next"
-            disabled={!nextItem}
-            onClick={() => nextItem && onSelectPoi(nextItem.poi.id)}
-            aria-label={nextLabel}
-          >
-            <span className="nav-btn-text">{nextLabel}</span>
-          </button>
-        </nav>
+        </div>
       </div>
     </section>
   );
