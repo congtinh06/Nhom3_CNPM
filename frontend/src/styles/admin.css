@@ -2039,3 +2039,144 @@
   box-shadow: var(--adm-shadow-md);
 }
 
+/* --------------------------------------------------------------------------
+   GĐ4 — Bảng dữ liệu, toolbar, biểu mẫu & badge
+   -------------------------------------------------------------------------- */
+
+/* Bảng: header dính, hàng thoáng, cuộn dọc trong khung */
+.adm-table-wrap {
+  border-color: var(--fb-border);
+  border-radius: var(--adm-radius);
+  box-shadow: var(--adm-shadow-xs);
+  max-height: min(72vh, 780px);
+  overflow: auto;
+}
+
+.adm-table {
+  font-size: 13.5px;
+}
+
+.adm-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  padding: 12px var(--adm-cell-px);
+  background-color: #F7F9FB;
+  color: var(--fb-text-secondary);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  border-bottom: 1px solid var(--fb-border);
+}
+
+.adm-table td {
+  padding: var(--adm-cell-py) var(--adm-cell-px);
+  border-bottom: 1px solid var(--fb-border-subtle);
+  vertical-align: middle;
+}
+
+.adm-table tbody tr:hover:not(.adm-table-row-loading) {
+  background-color: #F9FAFB;
+}
+
+.adm-table-row-loading td {
+  padding: var(--adm-cell-py) var(--adm-cell-px);
+}
+
+/* Nội dung ô: không ngắt dòng ngoài ý muốn */
+.adm-product-price,
+.adm-row-actions {
+  white-space: nowrap;
+}
+
+.adm-product-slug {
+  display: block;
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Toolbar lọc */
+.adm-toolbar {
+  border-color: var(--fb-border);
+  border-radius: var(--adm-radius);
+  box-shadow: var(--adm-shadow-xs);
+  padding: 12px 16px;
+  gap: 12px;
+}
+
+.adm-toolbar-left {
+  gap: 10px;
+}
+
+.adm-toolbar-left .adm-select {
+  min-width: 168px;
+  max-width: 240px;
+}
+
+/* Nút */
+.adm-btn,
+.adm-btn-sm {
+  border-radius: var(--adm-radius-sm);
+}
+
+/* Ô nhập liệu */
+.adm-input,
+.adm-select,
+.adm-textarea {
+  border-color: var(--fb-border);
+  border-radius: var(--adm-radius-sm);
+}
+
+.adm-input,
+.adm-select {
+  height: 38px;
+}
+
+.adm-input:focus,
+.adm-select:focus,
+.adm-textarea:focus {
+  border-color: var(--fb-accent, #C2410C);
+  box-shadow: 0 0 0 3px rgba(194, 65, 12, 0.12);
+}
+
+/* Badge dạng viên thuốc */
+.adm-badge {
+  padding: 3px 9px;
+  border-radius: 999px;
+}
+
+/* Khối phân trang & cảnh báo */
+.adm-pagination {
+  border-color: var(--fb-border);
+  border-radius: var(--adm-radius);
+  box-shadow: var(--adm-shadow-xs);
+}
+
+.adm-alert {
+  border-radius: var(--adm-radius-sm);
+}
+
+/* --------------------------------------------------------------------------
+   GĐ4 — Mật độ hiển thị (đặt class trên .adm-layout)
+   -------------------------------------------------------------------------- */
+.adm-density-compact {
+  --adm-cell-py: 8px;
+  --adm-cell-px: 14px;
+  --adm-card-pad: 16px;
+  --adm-gap: 14px;
+}
+
+.adm-density-compact .adm-table {
+  font-size: 13px;
+}
+
+.adm-density-compact .adm-metrics-row {
+  gap: 12px;
+}
+
+.adm-density-compact .adm-card {
+  gap: 12px;
+}
+
