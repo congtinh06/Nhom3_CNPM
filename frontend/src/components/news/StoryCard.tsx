@@ -3,6 +3,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { NewsItem, NEWS_CATEGORIES } from '../../types/domain';
 import { NeutralImagePlaceholder } from './EncausticTilePattern';
 import { SupportedLanguage } from '../../types';
+import { NewsExternalFlag } from './NewsExternalFlag';
+import { isExternalArticle } from './NewsCardLink';
 import '../../styles/news.css';
 
 export type StoryCardVariant = 'grid' | 'featured' | 'sidebar' | 'large' | 'row';
@@ -59,13 +61,35 @@ export const StoryCard: React.FC<StoryCardProps> = ({
   const imageUrl = item.thumbnail || item.coverImageUrl;
   const captionText = item.source ? item.source : item.imageCredit ? `Ảnh: ${item.imageCredit}` : '';
 
+  const isExternal = isExternalArticle(item);
+
   const handleCardClick = (e: React.MouseEvent) => {
     const target = e.target as HTMLElement;
     if (target.closest('button') || target.closest('a')) {
       return;
     }
-    navigate(`/tin-tuc/${item.slug}`);
+    if (isExternal && item.externalUrl) {
+      window.open(item.externalUrl, '_blank', 'noopener,noreferrer');
+    } else {
+      navigate(`/tin-tuc/${item.slug}`);
+    }
   };
+
+  const renderTitleLink = () =>
+    isExternal ? (
+      <a
+        href={item.externalUrl as string}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="story-title-link"
+      >
+        {item.title}
+      </a>
+    ) : (
+      <Link to={`/tin-tuc/${item.slug}`} className="story-title-link">
+        {item.title}
+      </Link>
+    );
 
 
   // 1. SIDEBAR VARIANT
@@ -95,11 +119,9 @@ export const StoryCard: React.FC<StoryCardProps> = ({
             )}
           </div>
 
-          <h3 className="story-sidebar-title">
-            <Link to={`/tin-tuc/${item.slug}`} className="story-title-link">
-              {item.title}
-            </Link>
-          </h3>
+          <h3 className="story-sidebar-title">{renderTitleLink()}</h3>
+
+          <NewsExternalFlag item={item} lang={lang} />
 
           <div className="story-sidebar-footer">
             {formattedDate && <time className="story-date">{formattedDate}</time>}
@@ -171,9 +193,7 @@ export const StoryCard: React.FC<StoryCardProps> = ({
 
         {/* Title: Playfair serif, sentence case, clamp 3 */}
         <h2 className={`story-title ${isFeatured ? 'story-title--featured' : 'story-title--grid'}`}>
-          <Link to={`/tin-tuc/${item.slug}`} className="story-title-link">
-            {item.title}
-          </Link>
+          {renderTitleLink()}
         </h2>
 
         {/* Date: 13px gray */}
@@ -182,6 +202,8 @@ export const StoryCard: React.FC<StoryCardProps> = ({
             {formattedDate}
           </time>
         )}
+
+        <NewsExternalFlag item={item} lang={lang} />
 
         {/* Excerpt: clamp 2 lines */}
         {(item.excerpt || item.summary) && (

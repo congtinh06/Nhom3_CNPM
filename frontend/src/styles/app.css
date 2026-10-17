@@ -1438,8 +1438,8 @@ dialog p {
 .ft {
   --ft-muted: rgba(255, 241, 199, 0.62);
   --ft-border: rgba(255, 241, 199, 0.28);
-  --ft-accent: #e8a33d;
-  background: var(--black);
+  --ft-accent: #f0c374;
+  background: var(--brown);
   color: var(--cream);
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -1498,9 +1498,9 @@ dialog p {
 
 .ft .tb {
   justify-self: start;
-  background: var(--brown);
-  color: #ffffff;
-  border: 1px solid var(--brown);
+  background: var(--cream);
+  color: var(--brown);
+  border: 1px solid var(--cream);
   border-radius: 4px;
   height: 40px;
   padding: 0 18px;
@@ -1508,9 +1508,9 @@ dialog p {
 }
 
 .ft .tb:hover {
-  background: #9f3615;
-  border-color: #9f3615;
-  color: #ffffff;
+  background: #ffffff;
+  border-color: #ffffff;
+  color: var(--brown);
 }
 
 .ft ul {

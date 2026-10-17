@@ -67,7 +67,7 @@ export function resolvePlayback(
   };
 }
 
-export function getAvailableVoices(): Promise<SpeechSynthesisVoice[]> {
+export function getAvailableVoices(timeoutMs = 250): Promise<SpeechSynthesisVoice[]> {
   if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
     return Promise.resolve([]);
   }
@@ -85,7 +85,7 @@ export function getAvailableVoices(): Promise<SpeechSynthesisVoice[]> {
       resolve(synth.getVoices?.() || []);
     };
     synth.addEventListener?.('voiceschanged', finish);
-    setTimeout(finish, 250);
+    setTimeout(finish, timeoutMs);
   });
 }
 

@@ -2,8 +2,27 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { api } from '../api/client';
 import { getSharedAudio } from '../lib/audioUnlock';
 import { useToast } from '../context/ToastContext';
+import { SupportedLanguage } from '../types';
+import {
+  findMatchingVoice,
+  getAvailableVoices,
+  NO_VOICE_MESSAGES,
+  SPEECH_LANG_MAP,
+} from './useNearbyAudio';
 
 export type PlayerState = 'idle' | 'loading' | 'playing' | 'error';
+
+// How long to wait for the browser to populate its speech voices before deciding
+// that a voice for the requested language is genuinely unavailable.
+const SPEECH_VOICE_WAIT_MS = 1500;
+
+// Speech synthesis is only offered for the languages the caller opts into.
+// Defaults to Vietnamese only, which is the historical behaviour for the map /
+// places section where the spoken text is always Vietnamese.
+const DEFAULT_SPEECH_LANGS: SupportedLanguage[] = ['vi'];
+
+const isSupportedLanguage = (value: string): value is SupportedLanguage =>
+  value === 'vi' || value === 'en' || value === 'ja' || value === 'ko';
 
 interface PlayParams {
   poiId: number;
@@ -12,6 +31,7 @@ interface PlayParams {
   title: string;
   textToSpeak?: string;
   lang: string;
+  speechLangs?: SupportedLanguage[];
 }
 
 const getSessionId = (): string => {
@@ -35,8 +55,11 @@ export const useAudioPlayer = () => {
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const rateLimitedUntilRef = useRef<number>(0);
+  const playTokenRef = useRef<number>(0);
 
   const stopAudio = useCallback(() => {
+    // Invalidate any pending async speech resolution (e.g. waiting for voices).
+    playTokenRef.current += 1;
     if (audioRef.current) {
       audioRef.current.pause();
       audioRef.current.currentTime = 0;
@@ -72,7 +95,7 @@ export const useAudioPlayer = () => {
   }, []);
 
   const playAudio = useCallback(
-    ({ poiId, audioUrl, audioStatus, title, textToSpeak, lang }: PlayParams) => {
+    ({ poiId, audioUrl, audioStatus, title, textToSpeak, lang, speechLangs }: PlayParams) => {
       if (playingPoiId === poiId) {
         stopAudio();
         return;
@@ -125,7 +148,11 @@ export const useAudioPlayer = () => {
         return;
       }
 
-      if (lang === 'vi') {
+      const allowedSpeechLangs = speechLangs ?? DEFAULT_SPEECH_LANGS;
+      const speechLang =
+        isSupportedLanguage(lang) && allowedSpeechLangs.includes(lang) ? lang : null;
+
+      if (speechLang) {
         if (typeof window === 'undefined' || !('speechSynthesis' in window) || !('SpeechSynthesisUtterance' in window)) {
           showToast('Trình duyệt chưa hỗ trợ đọc thuyết minh.');
           return;
@@ -134,35 +161,61 @@ export const useAudioPlayer = () => {
         const synthesis = window.speechSynthesis;
         synthesis.cancel();
 
+        // Capture a token so a language change / stop during the async voice wait
+        // cannot start a stale utterance.
+        const token = playTokenRef.current;
         const speechText = textToSpeak ? `${title}. ${textToSpeak}` : title;
-        const utterance = new SpeechSynthesisUtterance(speechText);
-        utterance.lang = 'vi-VN';
-        utterance.rate = 0.95;
+        const targetLocale = SPEECH_LANG_MAP[speechLang];
+        const noVoiceMessage = NO_VOICE_MESSAGES[speechLang] || NO_VOICE_MESSAGES.vi;
 
-        const voices = synthesis.getVoices();
-        const viVoice = voices.find((v) => /^vi/i.test(v.lang));
-        if (viVoice) {
-          utterance.voice = viVoice;
-        } else if (voices.length > 0) {
-          showToast('Thiết bị chưa có giọng đọc tiếng Việt, giọng đọc có thể không chuẩn.');
+        setPlayerState('loading');
+        setPlayingPoiId(poiId);
+
+        const speakWithMatchedVoice = (voices: SpeechSynthesisVoice[]) => {
+          if (token !== playTokenRef.current) return;
+
+          const matchedVoice = findMatchingVoice(voices, targetLocale);
+          if (!matchedVoice) {
+            // Never fall back to an unrelated/default voice for this language.
+            stopAudio();
+            showToast(noVoiceMessage);
+            return;
+          }
+
+          const utterance = new SpeechSynthesisUtterance(speechText);
+          utterance.lang = targetLocale;
+          utterance.voice = matchedVoice;
+          utterance.rate = 0.95;
+
+          utterance.onstart = () => {
+            if (token !== playTokenRef.current) return;
+            setPlayerState('playing');
+            setPlayingPoiId(poiId);
+            fireAnalytics(poiId, speechLang);
+          };
+
+          utterance.onend = () => {
+            if (token !== playTokenRef.current) return;
+            stopAudio();
+          };
+
+          utterance.onerror = (event) => {
+            console.warn('[useAudioPlayer] speech synthesis failed', event.error);
+            if (token !== playTokenRef.current) return;
+            stopAudio();
+          };
+
+          synthesis.speak(utterance);
+        };
+
+        // Voices are often populated asynchronously; wait briefly for voiceschanged
+        // before giving up so we do not falsely report a missing voice.
+        const syncVoices = synthesis.getVoices?.() ?? [];
+        if (syncVoices.length > 0) {
+          speakWithMatchedVoice(syncVoices);
+        } else {
+          getAvailableVoices(SPEECH_VOICE_WAIT_MS).then(speakWithMatchedVoice);
         }
-
-        utterance.onstart = () => {
-          setPlayerState('playing');
-          setPlayingPoiId(poiId);
-          fireAnalytics(poiId, lang);
-        };
-
-        utterance.onend = () => {
-          stopAudio();
-        };
-
-        utterance.onerror = (event) => {
-          console.warn('[useAudioPlayer] speech synthesis failed', event.error);
-          stopAudio();
-        };
-
-        synthesis.speak(utterance);
         return;
       }
 

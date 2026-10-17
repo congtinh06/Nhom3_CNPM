@@ -66,6 +66,7 @@ export function useAutoNarration({
 }: UseAutoNarrationProps) {
   const [userPos, setUserPos] = useState<PositionState | null>(null);
   const [gpsError, setGpsError] = useState<string>('');
+  const [isRequestingGps, setIsRequestingGps] = useState(false);
 
   const autoPlayedSetRef = useRef<Set<string>>(new Set());
   const queueRef = useRef<string[]>([]);
@@ -197,11 +198,14 @@ export function useAutoNarration({
       return;
     }
 
+    setIsRequestingGps(true);
     navigator.geolocation.getCurrentPosition(
       (pos) => {
+        setIsRequestingGps(false);
         applyPosition(pos.coords.latitude, pos.coords.longitude, 'gps');
       },
       (err) => {
+        setIsRequestingGps(false);
         let msg = gpsErrorMessage;
         if (err.code === 1) {
           msg =
@@ -271,6 +275,7 @@ export function useAutoNarration({
     userPos,
     gpsError,
     setGpsError,
+    isRequestingGps,
     applyPosition,
     applySimulatedPosition,
     requestGps,

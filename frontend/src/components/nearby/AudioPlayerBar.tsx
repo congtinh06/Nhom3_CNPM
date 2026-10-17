@@ -87,6 +87,7 @@ export const AudioPlayerBar: React.FC<AudioPlayerBarProps> = ({
       : clickToStartText || t(currentLang, 'clickToStart'));
 
   const progressPercent = duration > 0 ? Math.min(100, (currentTime / duration) * 100) : 0;
+  const isPaused = !isPlaying && currentTime > 0 && !notice;
   const locSpeedLabel = speedLabelText || t(currentLang, 'speedLabel');
   const locViewTx = viewTextBtnText || t(currentLang, 'viewTranscriptBtn');
 
@@ -125,6 +126,7 @@ export const AudioPlayerBar: React.FC<AudioPlayerBarProps> = ({
               className="player-play-btn"
               id="pPlay"
               type="button"
+              aria-pressed={isPlaying}
               aria-label={isPlaying ? t(currentLang, 'pauseBtn') : t(currentLang, 'playBtn')}
               onClick={onTogglePlay}
             >
@@ -177,8 +179,10 @@ export const AudioPlayerBar: React.FC<AudioPlayerBarProps> = ({
               >
                 <div className="speech-pulse-track">
                   <span
-                    className={`speech-pulse-bar ${isPlaying ? 'is-animating' : ''}`}
-                    style={{ width: isPlaying ? '100%' : '0%' }}
+                    className={`speech-pulse-bar ${isPlaying ? 'is-animating' : ''} ${
+                      isPaused ? 'is-paused' : ''
+                    }`}
+                    style={{ width: isPlaying || isPaused ? '100%' : '0%' }}
                   />
                 </div>
                 <span className="speech-engine-tag">{t(currentLang, 'speechEngineTag')}</span>

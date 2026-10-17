@@ -5,6 +5,11 @@ import { t, formatDistance, NATIVE_LANG_NAMES } from '../../content/nearbyI18n';
 
 export { NATIVE_LANG_NAMES };
 
+export interface SimStop {
+  id: string;
+  name: string;
+}
+
 interface ToolbarControlsProps {
   myLocationBtnText?: string;
   autoNarrationText?: string;
@@ -12,13 +17,18 @@ interface ToolbarControlsProps {
   isAutoEnabled: boolean;
   onToggleAuto: () => void;
   onRequestGps: () => void;
+  isLocatingGps?: boolean;
   currentLang: SupportedLanguage;
   radius: number;
   overrideRadius?: number | null;
   onChangeOverrideRadius?: (radius: number | null) => void;
   onChangeRadius: (radius: number) => void;
   isSimMode?: boolean;
-  onToggleSimMode?: () => void;
+  simStops?: SimStop[];
+  activeSimStopId?: string | null;
+  onPickSimStop?: (id: string) => void;
+  onApplySimCoords?: (lat: number, lng: number) => void;
+  onStopSim?: () => void;
   listenedCount?: number;
   stopsCount?: number;
   onResetProgress?: () => void;
@@ -32,25 +42,38 @@ export const ToolbarControls: React.FC<ToolbarControlsProps> = ({
   isAutoEnabled,
   onToggleAuto,
   onRequestGps,
+  isLocatingGps = false,
   currentLang,
   radius: _radius,
   overrideRadius = null,
   onChangeOverrideRadius,
   onChangeRadius,
   isSimMode = false,
-  onToggleSimMode,
+  simStops = [],
+  activeSimStopId = null,
+  onPickSimStop,
+  onApplySimCoords,
+  onStopSim,
   listenedCount = 0,
   stopsCount = 5,
   onResetProgress,
   statusMessage,
 }) => {
   const [showSettings, setShowSettings] = useState(false);
+  const [showSim, setShowSim] = useState(false);
+  const [simLat, setSimLat] = useState('');
+  const [simLng, setSimLng] = useState('');
+  const [simError, setSimError] = useState('');
   const settingsRef = useRef<HTMLDivElement>(null);
+  const simRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (settingsRef.current && !settingsRef.current.contains(e.target as Node)) {
         setShowSettings(false);
+      }
+      if (simRef.current && !simRef.current.contains(e.target as Node)) {
+        setShowSim(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -60,6 +83,20 @@ export const ToolbarControls: React.FC<ToolbarControlsProps> = ({
   const locAutoText = autoNarrationText || t(currentLang, 'autoNarration');
   const locMyLocText = myLocationBtnText || t(currentLang, 'myLocation');
   const locRadiusLabel = radiusLabelText || t(currentLang, 'radiusLabel');
+
+  const handleApplyCoords = () => {
+    const lat = Number.parseFloat(simLat);
+    const lng = Number.parseFloat(simLng);
+    const latOk = Number.isFinite(lat) && lat >= -90 && lat <= 90;
+    const lngOk = Number.isFinite(lng) && lng >= -180 && lng <= 180;
+    if (!latOk || !lngOk) {
+      setSimError(t(currentLang, 'simInvalidCoord'));
+      return;
+    }
+    onApplySimCoords?.(lat, lng);
+    setSimError('');
+    setShowSim(false);
+  };
 
   return (
     <nav className="nearby-sticky-controlbar" aria-label={t(currentLang, 'toolbarAriaLabel')}>
@@ -90,23 +127,110 @@ export const ToolbarControls: React.FC<ToolbarControlsProps> = ({
 
         {/* Right: GPS Location, Simulation Toggle & Settings */}
         <div className="controlbar-action-cluster">
-          {/* Simulation Mode Toggle Button */}
-          {onToggleSimMode && (
-            <button
-              type="button"
-              className={`nearby-action-btn btn-sim ${isSimMode ? 'is-active' : ''}`}
-              id="btnSim"
-              onClick={onToggleSimMode}
-              aria-pressed={isSimMode}
-              title={
-                isSimMode
-                  ? t(currentLang, 'simModeStopTitle')
-                  : t(currentLang, 'simModeStartTitle')
-              }
-            >
-              <Navigation size={15} aria-hidden="true" />
-              <span>{isSimMode ? t(currentLang, 'simModeActive') : t(currentLang, 'simMode')}</span>
-            </button>
+          {/* Simulation picker: choose a stop or enter coordinates */}
+          {onPickSimStop && (
+            <div className="settings-wrapper" ref={simRef}>
+              <button
+                type="button"
+                className={`nearby-action-btn btn-sim ${isSimMode ? 'is-active' : ''}`}
+                id="btnSim"
+                onClick={() => setShowSim((prev) => !prev)}
+                aria-expanded={showSim}
+                aria-pressed={isSimMode}
+                title={
+                  isSimMode ? t(currentLang, 'simModeStopTitle') : t(currentLang, 'simModeStartTitle')
+                }
+              >
+                <Navigation size={15} aria-hidden="true" />
+                <span>{isSimMode ? t(currentLang, 'simModeActive') : t(currentLang, 'simMode')}</span>
+              </button>
+
+              {showSim && (
+                <div
+                  className="settings-popover sim-popover"
+                  role="dialog"
+                  aria-label={t(currentLang, 'simPanelTitle')}
+                >
+                  {simStops.length > 0 && (
+                    <div className="popover-field">
+                      <span>{t(currentLang, 'simPickStopLabel')}</span>
+                      <div className="sim-stop-list">
+                        {simStops.map((stop) => (
+                          <button
+                            key={stop.id}
+                            type="button"
+                            className={`sim-stop-item ${activeSimStopId === stop.id ? 'is-active' : ''}`}
+                            onClick={() => {
+                              onPickSimStop(stop.id);
+                              setShowSim(false);
+                            }}
+                          >
+                            {stop.name}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="popover-field">
+                    <span>{t(currentLang, 'simManualLabel')}</span>
+                    <div className="sim-coord-row">
+                      <input
+                        className="sel-radius-input sim-coord-input"
+                        type="number"
+                        step="any"
+                        inputMode="decimal"
+                        placeholder={t(currentLang, 'simLatLabel')}
+                        aria-label={t(currentLang, 'simLatLabel')}
+                        value={simLat}
+                        onChange={(e) => {
+                          setSimLat(e.target.value);
+                          setSimError('');
+                        }}
+                      />
+                      <input
+                        className="sel-radius-input sim-coord-input"
+                        type="number"
+                        step="any"
+                        inputMode="decimal"
+                        placeholder={t(currentLang, 'simLngLabel')}
+                        aria-label={t(currentLang, 'simLngLabel')}
+                        value={simLng}
+                        onChange={(e) => {
+                          setSimLng(e.target.value);
+                          setSimError('');
+                        }}
+                      />
+                    </div>
+                    {simError && (
+                      <p className="sim-coord-error" role="alert">
+                        {simError}
+                      </p>
+                    )}
+                    <button
+                      type="button"
+                      className="btn-reset-progress sim-apply-btn"
+                      onClick={handleApplyCoords}
+                    >
+                      {t(currentLang, 'simApplyBtn')}
+                    </button>
+                  </div>
+
+                  {isSimMode && onStopSim && (
+                    <button
+                      type="button"
+                      className="btn-reset-progress"
+                      onClick={() => {
+                        onStopSim();
+                        setShowSim(false);
+                      }}
+                    >
+                      {t(currentLang, 'simStopBtn')}
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
           )}
 
           <button
@@ -114,15 +238,15 @@ export const ToolbarControls: React.FC<ToolbarControlsProps> = ({
             id="btnGps"
             type="button"
             onClick={onRequestGps}
+            disabled={isSimMode || isLocatingGps}
+            aria-busy={isLocatingGps}
             aria-label={locMyLocText}
             title={
-              isSimMode
-                ? t(currentLang, 'gpsDisabledInSimTitle')
-                : locMyLocText
+              isSimMode ? t(currentLang, 'gpsDisabledInSimTitle') : locMyLocText
             }
           >
             <LocateFixed size={16} aria-hidden="true" />
-            <span>{locMyLocText}</span>
+            <span>{isLocatingGps ? t(currentLang, 'myLocationLocating') : locMyLocText}</span>
           </button>
 
           <div className="settings-wrapper" ref={settingsRef}>

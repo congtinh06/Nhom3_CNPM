@@ -238,9 +238,9 @@ describe('News Feature Tests (Tin tức)', () => {
   });
 
   describe('5. Article Reading Page (/tin-tuc/:slug)', () => {
-    it('renders reading page with breadcrumb, serif H1, lead excerpt, NGHE button, and primary original link', async () => {
+    it('renders reading page with breadcrumb, serif H1, and a real external source link', async () => {
       render(
-        <MemoryRouter initialEntries={['/tin-tuc/dinh-doc-lap-nhung-can-phong-it-nguoi-de-y']}>
+        <MemoryRouter initialEntries={['/tin-tuc/ao-dai-qua-hon-100-nam']}>
           <Routes>
             <Route path="/tin-tuc/:slug" element={<NewsDetailPage />} />
           </Routes>
@@ -254,24 +254,45 @@ describe('News Feature Tests (Tin tức)', () => {
       // 2. Article Title H1
       const title = screen.getByRole('heading', {
         level: 1,
-        name: 'Dinh Độc Lập: Những căn phòng và dấu ấn lịch sử ít người để ý',
+        name: 'Áo dài Việt Nam: Hành trình hơn một thế kỷ của tà áo dân tộc',
       });
       expect(title).toBeInTheDocument();
 
-      // 3. Primary button linking to original source
-      const originalLink = screen.getByRole('link', { name: /Đọc bài gốc tại/i });
+      // 3. Primary button linking to the real external source (new tab, safe rel)
+      const originalLink = screen.getByRole('link', { name: /Đọc tại VnExpress/i });
       expect(originalLink).toBeInTheDocument();
+      expect(originalLink).toHaveAttribute(
+        'href',
+        'https://vnexpress.net/ao-dai-qua-hon-100-nam-4122267.html'
+      );
       expect(originalLink).toHaveAttribute('target', '_blank');
       expect(originalLink).toHaveAttribute('rel', 'noopener noreferrer');
 
       // 5. Back-to-list link keeping filter
       expect(screen.getByRole('link', { name: /Quay lại danh sách Tin tức/i })).toHaveAttribute(
         'href',
-        '/tin-tuc?category=diem-den'
+        '/tin-tuc?category=trang-phuc'
       );
 
       // 6. Related stories (3 articles)
       expect(screen.getByRole('region', { name: 'Bài viết liên quan' })).toBeInTheDocument();
+    });
+
+    it('omits the external-link button for internal-only articles (no dead source link)', async () => {
+      render(
+        <MemoryRouter initialEntries={['/tin-tuc/dinh-doc-lap-nhung-can-phong-it-nguoi-de-y']}>
+          <Routes>
+            <Route path="/tin-tuc/:slug" element={<NewsDetailPage />} />
+          </Routes>
+        </MemoryRouter>
+      );
+
+      await screen.findByRole('heading', {
+        level: 1,
+        name: 'Dinh Độc Lập: Những căn phòng và dấu ấn lịch sử ít người để ý',
+      });
+
+      expect(screen.queryByRole('link', { name: /Đọc tại|Đọc bài gốc/i })).not.toBeInTheDocument();
     });
 
     it('shows friendly not-found state when slug is unknown', async () => {
@@ -373,6 +394,53 @@ describe('News Feature Tests (Tin tức)', () => {
       expect(container.querySelector('.story-new-badge')).toBeNull();
       expect(container.querySelector('.story-cat-dot')).toBeNull();
       expect(container.querySelector('.story-cat-badge')).toBeNull();
+    });
+  });
+
+  describe('8. External source card behavior', () => {
+    it('renders external articles as new-tab links to the real publisher (whole card)', async () => {
+      render(
+        <MemoryRouter initialEntries={['/tin-tuc?c=trang-phuc']}>
+          <Routes>
+            <Route path="/tin-tuc" element={<NewsListPage />} />
+          </Routes>
+        </MemoryRouter>
+      );
+
+      await screen.findByRole('heading', { level: 2, name: /Áo dài Việt Nam/i });
+
+      const extLinks = screen.getAllByRole('link', { name: /mở bài gốc tại/i });
+      expect(extLinks.length).toBe(4); // lead + 3 side items for trang-phuc
+      extLinks.forEach((link) => {
+        expect(link).toHaveAttribute('target', '_blank');
+        expect(link).toHaveAttribute('rel', 'noopener noreferrer');
+        expect(link.getAttribute('href')).toMatch(/^https:\/\//);
+      });
+
+      // No in-site reading link is produced for those external-only cards
+      const internalForCat = screen
+        .getAllByRole('link')
+        .map((l) => l.getAttribute('href') || '')
+        .filter((href) => href.startsWith('/tin-tuc/'));
+      expect(internalForCat).toHaveLength(0);
+    });
+
+    it('keeps internal-only articles as in-site reading links', async () => {
+      render(
+        <MemoryRouter initialEntries={['/tin-tuc?c=diem-den']}>
+          <Routes>
+            <Route path="/tin-tuc" element={<NewsListPage />} />
+          </Routes>
+        </MemoryRouter>
+      );
+
+      await screen.findByRole('heading', { level: 2, name: /Dinh Độc Lập/i });
+
+      const internalLinks = screen
+        .getAllByRole('link')
+        .filter((link) => (link.getAttribute('href') || '').startsWith('/tin-tuc/'));
+      expect(internalLinks.length).toBeGreaterThan(0);
+      expect(screen.queryByRole('link', { name: /mở bài gốc tại/i })).toBeNull();
     });
   });
 });

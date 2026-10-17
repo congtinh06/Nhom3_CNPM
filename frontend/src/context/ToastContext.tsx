@@ -40,3 +40,11 @@ export const useToast = (): ToastContextValue => {
   }
   return ctx;
 };
+
+// Variant that degrades to a no-op when rendered outside ToastProvider so that
+// pages which only *optionally* surface toasts can still render standalone
+// (e.g. in unit tests) without crashing.
+export const useToastOptional = (): ToastContextValue => {
+  const ctx = useContext(ToastContext);
+  return ctx ?? { showToast: () => {} };
+};

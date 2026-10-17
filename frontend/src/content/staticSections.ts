@@ -9,13 +9,13 @@ export const coverContent = {
 export const introContent = {
   title: 'Giới thiệu chung',
   photosLeft: [
-    { hue: 12, caption: 'Ảnh: phố đi bộ Nguyễn Huệ' },
-    { hue: 30, caption: 'Ảnh: xe máy giờ tan tầm' },
-    { hue: 45, caption: 'Ảnh: quán cà phê vỉa hè' },
+    { hue: 12, caption: 'Phố đi bộ Nguyễn Huệ', src: '/images/home/intro-nguyen-hue.jpg' },
+    { hue: 30, caption: 'Xe máy giờ cao điểm', src: '/images/home/intro-traffic.jpg' },
+    { hue: 45, caption: 'Quán cà phê vỉa hè', src: '/images/home/intro-cafe.jpg' },
   ],
   paragraph:
     'Sài Gòn – TP. Hồ Chí Minh là thành phố lớn nhất cả nước, nơi giao thoa giữa Việt, Hoa, Khmer và dấu ấn kiến trúc Pháp. Chỉ một con phố có thể vừa có ngôi chùa trăm năm, vừa có nhà thờ gạch đỏ và tòa nhà chọc trời.',
-  photoRight: { hue: 8, caption: 'Ảnh dọc: Nhà thờ Đức Bà / Bưu điện Trung tâm' },
+  photoRight: { hue: 8, caption: 'Nhà thờ Đức Bà', src: '/images/pois/nha-tho-duc-ba.jpg' },
 };
 
 export const cultureContent = {
@@ -31,10 +31,10 @@ export const cultureContent = {
 
 export const costumeContent = {
   title: 'Trang phục truyền thống',
-  photoBig: { hue: 25, caption: 'Ảnh ngang: áo dài tại Dinh Độc Lập / Nhà thờ Đức Bà' },
+  photoBig: { hue: 25, caption: 'Áo dài', src: '/images/home/costume-ao-dai.jpg' },
   photosTwo: [
-    { hue: 15, caption: 'Ảnh: áo dài' },
-    { hue: 38, caption: 'Ảnh: áo bà ba' },
+    { hue: 15, caption: 'Áo dài', src: '/images/home/costume-ao-dai-2.jpg' },
+    { hue: 38, caption: 'Áo bà ba', src: '/images/home/costume-ao-ba-ba.jpg' },
   ],
   paragraph:
     'Áo dài và áo bà ba là hai hình ảnh quen thuộc của người Sài Gòn. Áo dài thường xuất hiện ở lễ Tết và dịp quan trọng, còn áo bà ba gắn với vùng sông nước Nam Bộ, giản dị và thoải mái.',
@@ -43,16 +43,16 @@ export const costumeContent = {
 export const foodContent = {
   title: 'Ẩm thực Sài Gòn',
   photosTop: [
-    { hue: 20, caption: 'Ảnh: cơm tấm' },
-    { hue: 32, caption: 'Ảnh: hủ tiếu' },
-    { hue: 10, caption: 'Ảnh: bánh xèo' },
+    { hue: 20, caption: 'Cơm tấm', src: '/images/dishes/com-tam-suon-bi-cha.webp' },
+    { hue: 32, caption: 'Hủ tiếu', src: '/images/dishes/hu-tieu-nam-vang.webp' },
+    { hue: 10, caption: 'Bánh xèo', src: '/images/dishes/banh-xeo-nam-bo.webp' },
   ],
   paragraph:
     'Ẩm thực Sài Gòn nổi tiếng nhờ sự đa dạng và giá cả dễ chịu. Cơm tấm, hủ tiếu, bánh mì, phá lấu hay ly cà phê sữa đá đều có thể tìm thấy ngay trên vỉa hè, trong hẻm nhỏ hoặc quanh các khu chợ.',
   photosBottom: [
-    { hue: 40, caption: 'Ảnh: bánh mì' },
-    { hue: 6, caption: 'Ảnh: phá lấu' },
-    { hue: 28, caption: 'Ảnh: cà phê sữa đá' },
+    { hue: 40, caption: 'Bánh mì', src: '/images/dishes/banh-mi-thit-nguoi-pate.webp' },
+    { hue: 6, caption: 'Phá lấu', src: '/images/home/food-pha-lau.jpg' },
+    { hue: 28, caption: 'Cà phê sữa đá', src: '/images/home/food-ca-phe-sua-da.jpg' },
   ],
 };
 
@@ -90,13 +90,13 @@ export const drinksList: Drink[] = [
 export const tourismTeaserContent = {
   title: 'Du lịch Sài Gòn',
   photos: [
-    { hue: 10, caption: 'Dinh Độc Lập' },
-    { hue: 30, caption: 'Chợ Bến Thành' },
-    { hue: 16, caption: 'Địa đạo Củ Chi' },
-    { hue: 42, caption: 'Landmark 81 & Bến Bạch Đằng' },
+    { hue: 10, caption: 'Dinh Độc Lập', src: '/images/pois/dinh-doc-lap.jpg', link: '/diem-du-lich/dinh-doc-lap' },
+    { hue: 30, caption: 'Chợ Bến Thành', src: '/images/pois/cho-ben-thanh.jpg', link: '/diem-du-lich/cho-ben-thanh' },
+    { hue: 16, caption: 'Địa đạo Củ Chi', src: '/images/home/tour-cu-chi.jpg', link: '/diem-du-lich' },
+    { hue: 42, caption: 'Nhà thờ Đức Bà', src: '/images/pois/nha-tho-duc-ba.jpg', link: '/diem-du-lich/nha-tho-duc-ba' },
   ],
   paragraph:
-    'Mỗi điểm đến kể một câu chuyện khác nhau: Dinh Độc Lập của lịch sử, Chợ Bến Thành của đời sống thường ngày, Địa đạo Củ Chi của ký ức chiến tranh và Landmark 81 của một thành phố đang vươn lên.',
+    'Mỗi điểm đến kể một câu chuyện khác nhau: Dinh Độc Lập của lịch sử, Chợ Bến Thành của đời sống thường ngày, Địa đạo Củ Chi của ký ức chiến tranh và Nhà thờ Đức Bà của nét kiến trúc Pháp cổ.',
 };
 
 export const siteContact = {

@@ -7,6 +7,8 @@ export interface NewsTranslation {
   categoryDiemDen: string;
   categoryVanHoa: string;
   categoryMeoThamQuan: string;
+  categoryTrangPhuc: string;
+  categoryVeDep: string;
   filterByPoi: string;
   listenBtn: string;
   listenThisArticle: string;
@@ -19,6 +21,7 @@ export interface NewsTranslation {
   minutesRead: string;
   newBadge: string;
   emptyFilterMessage: string;
+  readAtSource: string;
   relatedArticles: string;
   relatedPois: string;
   breadcrumbHome: string;
@@ -39,6 +42,8 @@ export const NEWS_TRANSLATIONS: Record<SupportedLanguage, NewsTranslation> = {
     categoryDiemDen: 'Điểm đến',
     categoryVanHoa: 'Văn hóa Sài Gòn',
     categoryMeoThamQuan: 'Mẹo tham quan',
+    categoryTrangPhuc: 'Trang phục truyền thống',
+    categoryVeDep: 'Vẻ đẹp Việt Nam',
     filterByPoi: 'Theo điểm tham quan',
     listenBtn: 'NGHE',
     listenThisArticle: 'Nghe bài này',
@@ -51,6 +56,7 @@ export const NEWS_TRANSLATIONS: Record<SupportedLanguage, NewsTranslation> = {
     minutesRead: 'PHÚT ĐỌC',
     newBadge: 'Mới',
     emptyFilterMessage: 'Không tìm thấy bài viết nào trong chuyên mục đã chọn.',
+    readAtSource: 'Đọc tại',
     relatedArticles: 'Bài liên quan',
     relatedPois: 'Điểm tham quan liên quan',
     breadcrumbHome: 'Trang chủ',
@@ -69,6 +75,8 @@ export const NEWS_TRANSLATIONS: Record<SupportedLanguage, NewsTranslation> = {
     categoryDiemDen: 'Destinations',
     categoryVanHoa: 'Saigon Culture',
     categoryMeoThamQuan: 'Visiting Tips',
+    categoryTrangPhuc: 'Traditional Attire',
+    categoryVeDep: 'Beauty of Vietnam',
     filterByPoi: 'By attraction',
     listenBtn: 'LISTEN',
     listenThisArticle: 'Listen to this article',
@@ -81,6 +89,7 @@ export const NEWS_TRANSLATIONS: Record<SupportedLanguage, NewsTranslation> = {
     minutesRead: 'MIN READ',
     newBadge: 'New',
     emptyFilterMessage: 'No articles found in the selected category.',
+    readAtSource: 'Read at',
     relatedArticles: 'Related Stories',
     relatedPois: 'Related Attractions',
     breadcrumbHome: 'Home',
@@ -99,6 +108,8 @@ export const NEWS_TRANSLATIONS: Record<SupportedLanguage, NewsTranslation> = {
     categoryDiemDen: '観光名所',
     categoryVanHoa: 'サイゴンの文化',
     categoryMeoThamQuan: '観光のヒント',
+    categoryTrangPhuc: '伝統衣装',
+    categoryVeDep: 'ベトナムの美',
     filterByPoi: '見どころ別',
     listenBtn: '聴く',
     listenThisArticle: 'この記事を聴く',
@@ -111,6 +122,7 @@ export const NEWS_TRANSLATIONS: Record<SupportedLanguage, NewsTranslation> = {
     minutesRead: '分で読める',
     newBadge: '新着',
     emptyFilterMessage: '選択されたカテゴリーに記事は見つかりませんでした。',
+    readAtSource: '元記事を読む：',
     relatedArticles: '関連記事',
     relatedPois: '関連する観光名所',
     breadcrumbHome: 'ホーム',
@@ -129,6 +141,8 @@ export const NEWS_TRANSLATIONS: Record<SupportedLanguage, NewsTranslation> = {
     categoryDiemDen: '여행지',
     categoryVanHoa: '사이공 문화',
     categoryMeoThamQuan: '관광 팁',
+    categoryTrangPhuc: '전통 의상',
+    categoryVeDep: '베트남의 아름다움',
     filterByPoi: '명소별 보기',
     listenBtn: '듣기',
     listenThisArticle: '이 기사 듣기',
@@ -141,6 +155,7 @@ export const NEWS_TRANSLATIONS: Record<SupportedLanguage, NewsTranslation> = {
     minutesRead: '분 소요',
     newBadge: '새소식',
     emptyFilterMessage: '선택한 카테고리에 등록된 기사가 없습니다.',
+    readAtSource: '원문 보기:',
     relatedArticles: '관련 기사',
     relatedPois: '관련 명소',
     breadcrumbHome: '홈',

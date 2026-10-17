@@ -518,6 +518,32 @@ export const OsmTileLayer: React.FC<OsmTileLayerProps> = ({
   return null;
 };
 
+interface UserAutoCenterProps {
+  userPos: PositionState | null;
+  centerOnUserToken: number;
+}
+
+// Flies the map to the user's position exactly once per "Vị trí của tôi" press
+// (signalled by a token bump). Later position updates leave the viewport alone.
+const UserAutoCenter: React.FC<UserAutoCenterProps> = ({ userPos, centerOnUserToken }) => {
+  const map = useMap();
+  const lastCenteredTokenRef = useRef<number>(0);
+
+  useEffect(() => {
+    if (!userPos || !centerOnUserToken) return;
+    if (lastCenteredTokenRef.current === centerOnUserToken) return;
+    lastCenteredTokenRef.current = centerOnUserToken;
+    try {
+      map.stop();
+      (map.flyTo as any)([userPos.lat, userPos.lng], 16, { duration: 0.8 });
+    } catch {
+      map.setView([userPos.lat, userPos.lng], 16);
+    }
+  }, [centerOnUserToken, userPos, map]);
+
+  return null;
+};
+
 interface PoiMapProps {
   pois: GeoPoi[];
   selectedPoiId: string | null;
@@ -525,20 +551,23 @@ interface PoiMapProps {
   hoveredPoiId?: string | null;
   currentPlayingId: string | null;
   isPlaying: boolean;
+  isPaused?: boolean;
   userPos: PositionState | null;
   radius: number;
   isAutoEnabled: boolean;
+  centerOnUserToken?: number;
   isSimMode?: boolean;
   onToggleSimMode?: () => void;
   onSetSimulatedPosition?: (lat: number, lng: number) => void;
   listenedPoiIds?: string[];
   onSelectPoi: (poiId: string) => void;
   onHoverPoi?: (poiId: string | null) => void;
-  onPlayPoi: (poiId: string) => void;
+  onTogglePlay: (poiId: string) => void;
   getPoiName: (poi: GeoPoi) => string;
   getPoiCategory: (poi: GeoPoi) => string;
   listenBtnText: string;
   pauseBtnText: string;
+  resumeBtnText?: string;
   radiusLabelText: string;
   mapCaptionText: string;
   currentLang?: SupportedLanguage;
@@ -551,20 +580,23 @@ export const PoiMap: React.FC<PoiMapProps> = ({
   hoveredPoiId,
   currentPlayingId,
   isPlaying,
+  isPaused = false,
   userPos,
   radius,
   isAutoEnabled: _isAutoEnabled,
+  centerOnUserToken = 0,
   isSimMode = false,
   onToggleSimMode,
   onSetSimulatedPosition,
   listenedPoiIds = [],
   onSelectPoi,
   onHoverPoi,
-  onPlayPoi,
+  onTogglePlay,
   getPoiName,
   getPoiCategory,
   listenBtnText,
   pauseBtnText,
+  resumeBtnText,
   mapCaptionText,
   currentLang = 'vi',
 }) => {
@@ -595,6 +627,8 @@ export const PoiMap: React.FC<PoiMapProps> = ({
   const clickedPoi = markerClickedPoiId
     ? pois.find((p) => p.id === markerClickedPoiId) || null
     : null;
+  const isClickedPlaying = Boolean(clickedPoi && currentPlayingId === clickedPoi.id && isPlaying);
+  const isClickedPaused = Boolean(clickedPoi && currentPlayingId === clickedPoi.id && isPaused);
 
   const handleEnterSchematic = useCallback(() => {
     setIsSchematic(true);
@@ -743,6 +777,9 @@ export const PoiMap: React.FC<PoiMapProps> = ({
           {/* Floating Controls: top-right stacked 40px round white buttons */}
           <FloatingMapControls pois={pois} userPos={userPos} currentLang={currentLang} />
 
+          {/* One-shot auto-center to the user's position after a GPS request */}
+          <UserAutoCenter userPos={userPos} centerOnUserToken={centerOnUserToken} />
+
           <MapClickHandler
             isSimMode={isSimMode}
             onSetSimulatedPosition={onSetSimulatedPosition}
@@ -845,6 +882,7 @@ export const PoiMap: React.FC<PoiMapProps> = ({
             const isActive = p.id === activePoiId || p.id === selectedPoiId;
             const isHovered = p.id === hoveredPoiId;
             const isCurPlaying = p.id === currentPlayingId && isPlaying;
+            const isCurPaused = p.id === currentPlayingId && isPaused;
             const isListened = listenedPoiIds.includes(p.id);
 
             return (
@@ -886,9 +924,14 @@ export const PoiMap: React.FC<PoiMapProps> = ({
                     <button
                       type="button"
                       className="nearby-popup-play-btn"
-                      onClick={() => onPlayPoi(p.id)}
+                      aria-pressed={isCurPlaying}
+                      onClick={() => onTogglePlay(p.id)}
                     >
-                      {isCurPlaying ? (pauseBtnText || t(currentLang, 'pauseBtn')) : (listenBtnText || t(currentLang, 'playBtn'))}
+                      {isCurPlaying
+                        ? pauseBtnText || t(currentLang, 'pauseBtn')
+                        : isCurPaused
+                        ? resumeBtnText || t(currentLang, 'resumeBtn')
+                        : listenBtnText || t(currentLang, 'playBtn')}
                     </button>
                   </div>
                 </Popup>
@@ -920,6 +963,11 @@ export const PoiMap: React.FC<PoiMapProps> = ({
               <div className="selected-card-info">
                 <div className="selected-card-top-row">
                   <span className="selected-card-cat">{getPoiCategory(clickedPoi)}</span>
+                  {listenedPoiIds.includes(clickedPoi.id) && (
+                    <span className="selected-card-listened">
+                      {t(currentLang, 'popupListenedTag')}
+                    </span>
+                  )}
                   {userPos && (
                     <span className="selected-card-dist">
                       {t(currentLang, 'distFormat', {
@@ -957,17 +1005,20 @@ export const PoiMap: React.FC<PoiMapProps> = ({
               </button>
             </div>
             <div className="selected-card-actions">
-              {/* Task 2f: Compact play button labeled "Phát" / "Tạm dừng" */}
+              {/* Task 2f: Compact play button labeled "Phát" / "Tạm dừng" / "Tiếp tục" */}
               <button
                 type="button"
                 className={`selected-card-play-btn ${
-                  currentPlayingId === clickedPoi.id && isPlaying ? 'is-playing' : ''
+                  isClickedPlaying ? 'is-playing' : isClickedPaused ? 'is-paused' : ''
                 }`}
-                onClick={() => onPlayPoi(clickedPoi.id)}
+                aria-pressed={isClickedPlaying}
+                onClick={() => onTogglePlay(clickedPoi.id)}
               >
-                {currentPlayingId === clickedPoi.id && isPlaying
-                  ? (pauseBtnText || t(currentLang, 'pauseBtn'))
-                  : (listenBtnText || t(currentLang, 'playBtn'))}
+                {isClickedPlaying
+                  ? pauseBtnText || t(currentLang, 'pauseBtn')
+                  : isClickedPaused
+                  ? resumeBtnText || t(currentLang, 'resumeBtn')
+                  : listenBtnText || t(currentLang, 'playBtn')}
               </button>
             </div>
           </div>

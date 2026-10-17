@@ -10,6 +10,7 @@ import {
   SPEECH_LANG_MAP,
   findMatchingVoice,
   useNearbyAudio,
+  NO_VOICE_MESSAGES,
 } from '../hooks/useNearbyAudio';
 import { ToastProvider } from '../context/ToastContext';
 import { AudioPlayerBar } from '../components/nearby/AudioPlayerBar';
@@ -43,6 +44,131 @@ describe('useAudioPlayer', () => {
 
     expect(result.current.playerState).toBe('idle');
     expect(result.current.playingPoiId).toBeNull();
+  });
+
+  it('does not speak and shows a clear notice when there is no Vietnamese voice', () => {
+    const speakSpy = vi.spyOn(window.speechSynthesis, 'speak').mockImplementation(() => {});
+    const getVoicesSpy = vi
+      .spyOn(window.speechSynthesis, 'getVoices')
+      .mockReturnValue([
+        { lang: 'en-US', name: 'Google US English', voiceURI: 'en' } as SpeechSynthesisVoice,
+      ]);
+
+    const { result } = renderHook(() => useAudioPlayer(), { wrapper });
+
+    act(() => {
+      result.current.playAudio({
+        poiId: 1,
+        title: 'Dinh Độc Lập',
+        textToSpeak: 'Di tích lịch sử nổi tiếng.',
+        lang: 'vi',
+      });
+    });
+
+    expect(speakSpy).not.toHaveBeenCalled();
+    expect(result.current.playerState).toBe('idle');
+    expect(result.current.playingPoiId).toBeNull();
+    expect(screen.getByText(NO_VOICE_MESSAGES.vi)).toBeInTheDocument();
+
+    speakSpy.mockRestore();
+    getVoicesSpy.mockRestore();
+  });
+
+  it('waits for asynchronously loaded voices before deciding a Vietnamese voice is missing', async () => {
+    const speakSpy = vi.spyOn(window.speechSynthesis, 'speak').mockImplementation(() => {});
+    const viVoice = {
+      lang: 'vi-VN',
+      name: 'Google Tiếng Việt',
+      voiceURI: 'vi',
+    } as SpeechSynthesisVoice;
+    let ready = false;
+    const getVoicesSpy = vi
+      .spyOn(window.speechSynthesis, 'getVoices')
+      .mockImplementation(() => (ready ? [viVoice] : []));
+    const listeners: Array<() => void> = [];
+    const addEventListenerSpy = vi
+      .spyOn(window.speechSynthesis, 'addEventListener')
+      .mockImplementation((event: string, handler: any) => {
+        if (event === 'voiceschanged') listeners.push(handler);
+      });
+
+    const { result } = renderHook(() => useAudioPlayer(), { wrapper });
+
+    act(() => {
+      result.current.playAudio({
+        poiId: 1,
+        title: 'Dinh Độc Lập',
+        textToSpeak: 'Di tích lịch sử nổi tiếng.',
+        lang: 'vi',
+      });
+    });
+
+    // Not spoken yet, but still loading while voices populate.
+    expect(speakSpy).not.toHaveBeenCalled();
+    expect(result.current.playerState).toBe('loading');
+
+    ready = true;
+    await act(async () => {
+      listeners.forEach((fn) => fn());
+      await Promise.resolve();
+    });
+
+    expect(speakSpy).toHaveBeenCalledTimes(1);
+    const utterance = speakSpy.mock.calls[0]?.[0] as SpeechSynthesisUtterance;
+    expect(utterance.voice).toBe(viVoice);
+
+    speakSpy.mockRestore();
+    getVoicesSpy.mockRestore();
+    addEventListenerSpy.mockRestore();
+  });
+
+  it('speaks other languages with a matching voice when the caller opts in', () => {
+    const speakSpy = vi.spyOn(window.speechSynthesis, 'speak').mockImplementation(() => {});
+    const enVoice = window.speechSynthesis
+      .getVoices()
+      .find((v) => v.lang === 'en-US') as SpeechSynthesisVoice;
+
+    const { result } = renderHook(() => useAudioPlayer(), { wrapper });
+
+    act(() => {
+      result.current.playAudio({
+        poiId: 1,
+        title: 'Independence Palace',
+        textToSpeak: 'A historic site.',
+        lang: 'en',
+        speechLangs: ['vi', 'en', 'ja', 'ko'],
+      });
+    });
+
+    expect(speakSpy).toHaveBeenCalledTimes(1);
+    const utterance = speakSpy.mock.calls[0]?.[0] as SpeechSynthesisUtterance;
+    expect(utterance.lang).toBe('en-US');
+    expect(utterance.voice).toBe(enVoice);
+
+    speakSpy.mockRestore();
+  });
+
+  it('does not speak non-Vietnamese languages when the caller does not opt in', () => {
+    const speakSpy = vi.spyOn(window.speechSynthesis, 'speak').mockImplementation(() => {});
+
+    const { result } = renderHook(() => useAudioPlayer(), { wrapper });
+
+    act(() => {
+      result.current.playAudio({
+        poiId: 1,
+        title: 'Independence Palace',
+        textToSpeak: 'A historic site.',
+        lang: 'en',
+      });
+    });
+
+    expect(speakSpy).not.toHaveBeenCalled();
+    expect(result.current.playerState).toBe('idle');
+    expect(
+      screen.getByText('Bản dịch âm thanh cho ngôn ngữ này chưa sẵn sàng.')
+    ).toBeInTheDocument();
+
+    speakSpy.mockRestore();
   });
 });
 

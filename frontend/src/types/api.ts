@@ -5,7 +5,12 @@
  * GET /api/content/news/{slug} -> ApiNewsDetail
  */
 
-export type ApiNewsCategory = 'diem-den' | 'van-hoa' | 'meo-tham-quan';
+export type ApiNewsCategory =
+  | 'diem-den'
+  | 'van-hoa'
+  | 'meo-tham-quan'
+  | 'trang-phuc'
+  | 've-dep';
 
 export interface ApiNewsListItem {
   id: string | number;
@@ -22,6 +27,7 @@ export interface ApiNewsListItem {
   relatedPoiSlugs?: string[];
   source?: string;
   sourceUrl?: string;
+  externalUrl?: string | null;
   thumbnail?: string | null;
   excerpt?: string;
   tags?: string[];

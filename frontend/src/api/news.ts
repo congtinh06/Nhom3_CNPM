@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { NewsListDomain, NewsDetail, NewsItem } from '../types/domain';
 import { adaptNewsListResponse, adaptNewsDetail } from './adapters';
-import { thirteenNewsArticles, fourNewsArticles, sampleAnnouncement } from '../content/newsFixtures';
+import { newsArticles, fourNewsArticles, sampleAnnouncement } from '../content/newsFixtures';
 
 export { getArticles, getArticleBySlug } from '../services/articleService';
 import { getArticles, getArticleBySlug } from '../services/articleService';
@@ -61,7 +61,7 @@ export async function fetchNewsDetail(slug: string, signal?: AbortSignal): Promi
   if (detail) return detail;
 
   // Fallback to fixture if slug matches
-  const found = thirteenNewsArticles.find((a) => a.slug === slug);
+  const found = newsArticles.find((a) => a.slug === slug);
   if (found) return adaptNewsDetail(found);
 
   return null;

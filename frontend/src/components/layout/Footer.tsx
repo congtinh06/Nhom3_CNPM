@@ -65,9 +65,22 @@ export const Footer: React.FC = () => {
 
       <div className="ftr-bottom">
         <span>{footerContent.copyright}</span>
-        <a href="#top" onClick={handleTopClick}>
-          {footerContent.backToTop}
-        </a>
+        <span
+          style={{
+            display: 'inline-flex',
+            gap: 16,
+            flexWrap: 'wrap',
+            alignItems: 'center',
+            justifyContent: 'flex-end',
+          }}
+        >
+          <a href="/privacy.html" target="_blank" rel="noopener noreferrer">
+            Chính sách quyền riêng tư
+          </a>
+          <a href="#top" onClick={handleTopClick}>
+            {footerContent.backToTop}
+          </a>
+        </span>
       </div>
     </footer>
   );

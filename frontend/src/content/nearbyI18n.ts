@@ -110,7 +110,29 @@ export type NearbyKey =
   | 'stopListHeading'
   | 'stopListAria'
   | 'detailAreaAria'
-  | 'noVoiceForLanguage';
+  | 'noVoiceForLanguage'
+  | 'qrCardAria'
+  | 'qrScanHint'
+  | 'qrDownload'
+  | 'qrCopyLink'
+  | 'qrLinkCopied'
+  | 'qrShare'
+  | 'qrLocalhostWarning'
+  | 'narrationSlideAria'
+  | 'sectionProgressAria'
+  | 'photoCredit'
+  | 'qrModalTitle'
+  | 'qrShowBtn'
+  | 'myLocationLocating'
+  | 'simPanelTitle'
+  | 'simPickStopLabel'
+  | 'simManualLabel'
+  | 'simLatLabel'
+  | 'simLngLabel'
+  | 'simApplyBtn'
+  | 'simStopBtn'
+  | 'simInvalidCoord'
+  | 'gpsLocatedToast';
 
 export const NATIVE_LANG_NAMES: Record<SupportedLanguage, string> = {
   vi: 'Tiếng Việt',
@@ -240,6 +262,29 @@ export const NEARBY_DICTIONARY: Record<SupportedLanguage, Record<NearbyKey, stri
     stopListAria: 'Danh sách các điểm dừng trong hành trình',
     detailAreaAria: 'Chi tiết điểm dừng đang chọn',
     noVoiceForLanguage: 'Thiết bị chưa có giọng đọc tiếng Việt.',
+    qrCardAria: 'Mã QR để mở điểm này trên điện thoại',
+    qrScanHint: 'Quét để nghe trên điện thoại',
+    qrDownload: 'Tải QR',
+    qrCopyLink: 'Sao chép link',
+    qrLinkCopied: 'Đã sao chép liên kết',
+    qrShare: 'Chia sẻ',
+    qrLocalhostWarning:
+      'Cảnh báo (chỉ khi phát triển): mã QR đang dùng địa chỉ localhost nên điện thoại không mở được. Hãy đặt VITE_QR_BASE_URL.',
+    narrationSlideAria: 'Hình ảnh của đoạn thuyết minh đang phát',
+    sectionProgressAria: 'Tiến độ các đoạn thuyết minh',
+    photoCredit: 'Ảnh: {author}{license}',
+    qrModalTitle: 'Mã QR',
+    qrShowBtn: 'Hiện mã QR',
+    myLocationLocating: 'Đang xác định vị trí...',
+    simPanelTitle: 'Giả lập vị trí',
+    simPickStopLabel: 'Chọn một điểm dừng',
+    simManualLabel: 'Hoặc nhập toạ độ thủ công',
+    simLatLabel: 'Vĩ độ',
+    simLngLabel: 'Kinh độ',
+    simApplyBtn: 'Đặt vị trí',
+    simStopBtn: 'Tắt giả lập',
+    simInvalidCoord: 'Toạ độ không hợp lệ.',
+    gpsLocatedToast: 'Đã xác định vị trí. Điểm gần nhất: {name}, cách {dist}.',
   },
   en: {
     heroEyebrow: 'AUDIO TOUR · 5 LANDMARKS',
@@ -354,6 +399,29 @@ export const NEARBY_DICTIONARY: Record<SupportedLanguage, Record<NearbyKey, stri
     stopListAria: 'List of tour stops in the itinerary',
     detailAreaAria: 'Selected stop details',
     noVoiceForLanguage: 'No English voice found on this device.',
+    qrCardAria: 'QR code to open this stop on your phone',
+    qrScanHint: 'Scan to listen on your phone',
+    qrDownload: 'Download QR',
+    qrCopyLink: 'Copy link',
+    qrLinkCopied: 'Link copied',
+    qrShare: 'Share',
+    qrLocalhostWarning:
+      'Dev warning: the QR code points at localhost, so phones cannot open it. Set VITE_QR_BASE_URL.',
+    narrationSlideAria: 'Image for the narration section being played',
+    sectionProgressAria: 'Narration section progress',
+    photoCredit: 'Photo: {author}{license}',
+    qrModalTitle: 'QR code',
+    qrShowBtn: 'Show QR code',
+    myLocationLocating: 'Locating...',
+    simPanelTitle: 'Simulate location',
+    simPickStopLabel: 'Pick a stop',
+    simManualLabel: 'Or enter coordinates',
+    simLatLabel: 'Latitude',
+    simLngLabel: 'Longitude',
+    simApplyBtn: 'Set location',
+    simStopBtn: 'Stop simulation',
+    simInvalidCoord: 'Invalid coordinates.',
+    gpsLocatedToast: 'Location found. Nearest spot: {name}, {dist} away.',
   },
   /* DRAFT: needs native review */
   ko: {
@@ -468,6 +536,29 @@ export const NEARBY_DICTIONARY: Record<SupportedLanguage, Record<NearbyKey, stri
     stopListAria: '투어 코스 명소 목록',
     detailAreaAria: '선택된 명소 상세 정보',
     noVoiceForLanguage: '이 기기에는 한국어 음성이 지원되지 않습니다.',
+    qrCardAria: '휴대폰에서 이 지점을 열 QR 코드',
+    qrScanHint: '휴대폰으로 스캔하여 듣기',
+    qrDownload: 'QR 다운로드',
+    qrCopyLink: '링크 복사',
+    qrLinkCopied: '링크를 복사했습니다',
+    qrShare: '공유',
+    qrLocalhostWarning:
+      '개발 경고: QR 코드가 localhost를 가리켜 휴대폰에서 열 수 없습니다. VITE_QR_BASE_URL을 설정하세요.',
+    narrationSlideAria: '재생 중인 해설 구간의 이미지',
+    sectionProgressAria: '해설 구간 진행률',
+    photoCredit: '사진: {author}{license}',
+    qrModalTitle: 'QR 코드',
+    qrShowBtn: 'QR 코드 표시',
+    myLocationLocating: '위치 확인 중...',
+    simPanelTitle: '위치 시뮬레이션',
+    simPickStopLabel: '명소 선택',
+    simManualLabel: '또는 좌표 직접 입력',
+    simLatLabel: '위도',
+    simLngLabel: '경도',
+    simApplyBtn: '위치 설정',
+    simStopBtn: '시뮬레이션 끄기',
+    simInvalidCoord: '좌표가 올바르지 않습니다.',
+    gpsLocatedToast: '위치 확인 완료. 가장 가까운 명소: {name}, {dist} 거리.',
   },
   /* DRAFT: needs native review */
   ja: {
@@ -582,6 +673,29 @@ export const NEARBY_DICTIONARY: Record<SupportedLanguage, Record<NearbyKey, stri
     stopListAria: 'ツアー行程のスポット一覧',
     detailAreaAria: '選択中のスポット詳細',
     noVoiceForLanguage: 'このデバイスには日本語の音声がありません。',
+    qrCardAria: 'スマートフォンでこのスポットを開くQRコード',
+    qrScanHint: 'スマートフォンでスキャンして再生',
+    qrDownload: 'QRをダウンロード',
+    qrCopyLink: 'リンクをコピー',
+    qrLinkCopied: 'リンクをコピーしました',
+    qrShare: '共有',
+    qrLocalhostWarning:
+      '開発警告: QRコードがlocalhostを指しているため、スマートフォンで開けません。VITE_QR_BASE_URLを設定してください。',
+    narrationSlideAria: '再生中の解説セクションの画像',
+    sectionProgressAria: '解説セクションの進捗',
+    photoCredit: '写真: {author}{license}',
+    qrModalTitle: 'QRコード',
+    qrShowBtn: 'QRコードを表示',
+    myLocationLocating: '位置情報を取得中...',
+    simPanelTitle: '位置シミュレーション',
+    simPickStopLabel: 'スポットを選択',
+    simManualLabel: 'または座標を入力',
+    simLatLabel: '緯度',
+    simLngLabel: '経度',
+    simApplyBtn: '位置を設定',
+    simStopBtn: 'シミュレーションを停止',
+    simInvalidCoord: '座標が正しくありません。',
+    gpsLocatedToast: '位置を取得しました。最寄りのスポット: {name}（{dist}）。',
   },
 };
 
@@ -598,6 +712,28 @@ export const UNREVIEWED_CJK_KEYS: NearbyKey[] = [
   'stopListHeading',
   'stopListAria',
   'detailAreaAria',
+  'qrCardAria',
+  'qrScanHint',
+  'qrDownload',
+  'qrCopyLink',
+  'qrLinkCopied',
+  'qrShare',
+  'qrLocalhostWarning',
+  'narrationSlideAria',
+  'sectionProgressAria',
+  'photoCredit',
+  'qrModalTitle',
+  'qrShowBtn',
+  'myLocationLocating',
+  'simPanelTitle',
+  'simPickStopLabel',
+  'simManualLabel',
+  'simLatLabel',
+  'simLngLabel',
+  'simApplyBtn',
+  'simStopBtn',
+  'simInvalidCoord',
+  'gpsLocatedToast',
 ];
 
 const LOCALE_MAP: Record<SupportedLanguage, string> = {
