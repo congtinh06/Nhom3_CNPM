@@ -14,6 +14,7 @@ declare global {
 
 const isNativeScrollRoute = (pathname: string): boolean => {
   return (
+    pathname.startsWith('/quan-tri') ||
     pathname.startsWith('/diem-du-lich') ||
     pathname.startsWith('/thuyet-minh') ||
     pathname.startsWith('/gan-toi') ||
