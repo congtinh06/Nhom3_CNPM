@@ -8,7 +8,7 @@ export const TourismTeaserSection: React.FC = () => {
       <h2>{tourismTeaserContent.title}</h2>
       <div className="four">
         {tourismTeaserContent.photos.map((photo, index) => (
-          <PhotoFrame key={index} hue={photo.hue} caption={photo.caption} />
+          <PhotoFrame key={index} hue={photo.hue} caption={photo.caption} src={photo.src} />
         ))}
       </div>
       <p>{tourismTeaserContent.paragraph}</p>

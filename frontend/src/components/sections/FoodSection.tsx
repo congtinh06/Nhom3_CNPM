@@ -7,7 +7,7 @@ export const FoodSection: React.FC = () => {
     <section className="s food" id="am-thuc">
       <div className="t">
         {foodContent.photosTop.map((photo, index) => (
-          <PhotoFrame key={index} hue={photo.hue} caption={photo.caption} />
+          <PhotoFrame key={index} hue={photo.hue} caption={photo.caption} src={photo.src} />
         ))}
       </div>
       <div className="m">
@@ -21,7 +21,7 @@ export const FoodSection: React.FC = () => {
       </div>
       <div className="b">
         {foodContent.photosBottom.map((photo, index) => (
-          <PhotoFrame key={index} hue={photo.hue} caption={photo.caption} />
+          <PhotoFrame key={index} hue={photo.hue} caption={photo.caption} src={photo.src} />
         ))}
       </div>
     </section>

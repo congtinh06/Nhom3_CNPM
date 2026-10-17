@@ -9,7 +9,7 @@ export const IntroSection: React.FC = () => {
       <div className="l">
         <div className="tri">
           {introContent.photosLeft.map((photo, index) => (
-            <PhotoFrame key={index} hue={photo.hue} caption={photo.caption} />
+            <PhotoFrame key={index} hue={photo.hue} caption={photo.caption} src={photo.src} />
           ))}
         </div>
         <p>{introContent.paragraph}</p>
@@ -19,6 +19,7 @@ export const IntroSection: React.FC = () => {
         className="big"
         hue={introContent.photoRight.hue}
         caption={introContent.photoRight.caption}
+        src={introContent.photoRight.src}
       />
     </section>
   );

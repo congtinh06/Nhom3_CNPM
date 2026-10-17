@@ -6,10 +6,8 @@ import { IntroSection } from '../components/sections/IntroSection';
 import { CostumeSection } from '../components/sections/CostumeSection';
 import { FoodSection } from '../components/sections/FoodSection';
 import { TourismTeaserSection } from '../components/sections/TourismTeaserSection';
-import { HowItWorksSection } from '../components/sections/HowItWorksSection';
 import { FeaturesSection } from '../components/sections/FeaturesSection';
 import { FaqSection } from '../components/sections/FaqSection';
-import { AboutSection } from '../components/sections/AboutSection';
 import { CtaBandSection } from '../components/sections/CtaBandSection';
 import { HomeNewsSection } from '../components/sections/HomeNewsSection';
 import { ContactSection } from '../components/sections/ContactSection';
@@ -49,10 +47,8 @@ export const HomePage: React.FC = () => {
       <CostumeSection />
       <FoodSection />
       <TourismTeaserSection />
-      <HowItWorksSection />
       <FeaturesSection />
       <FaqSection />
-      <AboutSection />
       <HomeNewsSection />
       <CtaBandSection />
       <ContactSection />
