@@ -21,6 +21,7 @@ export interface PoiSummary {
   code: string;
   qrToken: string;
   name: string;
+  slug?: string | null;
   latitude: number;
   longitude: number;
   triggerRadiusMeters: number;
@@ -48,6 +49,49 @@ export interface PoiDetail extends PoiSummary {
   audioDurationSeconds?: number | null;
   audioStatus: AudioStatus | string;
   fallbackLanguage: boolean;
+}
+
+export interface PoiGuideTranslation {
+  languageCode: string;
+  title: string;
+  summary?: string | null;
+  description?: string | null;
+  historicalSignificance?: string | null;
+  audioUrl?: string | null;
+  audioDurationSeconds?: number | null;
+  audioStatus?: string | null;
+  source?: string | null;
+}
+
+export interface PoiGuide {
+  id: number;
+  code: string;
+  qrToken: string;
+  name: string;
+  slug?: string | null;
+  latitude: number;
+  longitude: number;
+  triggerRadiusMeters: number;
+  address?: string | null;
+  thumbnailUrl?: string | null;
+  zoneId: number;
+  zoneCode: string;
+  categoryCode: string;
+  categoryNameVi?: string | null;
+  routeId?: number | null;
+  stopOrder?: number | null;
+  translations: Record<string, PoiGuideTranslation>;
+}
+
+export interface Route {
+  id: number;
+  zoneId: number;
+  zoneCode: string;
+  name: string;
+  description?: string | null;
+  displayOrder?: number | null;
+  status?: string;
+  stopCount: number;
 }
 
 export interface NearbyPoi {

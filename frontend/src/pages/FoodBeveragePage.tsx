@@ -1,6 +1,8 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { defaultProducts } from '../content/defaultProducts';
+import { enrichProducts } from '../content/productAdapter';
+import { api } from '../api/client';
 import { Product, ProductOptions } from '../types';
 import { SortOptionKey } from '../types/productFilter';
 import { useCart } from '../context/CartContext';
@@ -35,13 +37,38 @@ export const FoodBeveragePage: React.FC = () => {
 
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState<boolean>(false);
 
+  // Nguồn dữ liệu: API/DB (nguồn chung với admin). Nếu API lỗi, rơi về catalog tĩnh cũ.
+  const [apiProducts, setApiProducts] = useState<Product[] | null>(null);
+
+  useEffect(() => {
+    if (import.meta.env.MODE === 'test') return;
+    if (typeof api.getProducts !== 'function') return;
+    let cancelled = false;
+    api
+      .getProducts({ size: 200, sortBy: 'sortOrder' })
+      .then((page) => {
+        const items = page?.content ?? [];
+        if (!cancelled && items.length > 0) {
+          setApiProducts(enrichProducts(items));
+        }
+      })
+      .catch(() => {
+        // Giữ nguyên catalog tĩnh nếu API không sẵn sàng.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const baseProducts = apiProducts && apiProducts.length > 0 ? apiProducts : defaultProducts;
+
   // Selected product for Detail Modal
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
 
   // Filter and sort items dynamically
   const filteredProducts = useMemo(() => {
-    let list = [...defaultProducts];
+    let list = [...baseProducts];
 
     // 1. Keyword search (normalized lowercase Vietnamese)
     if (filters.keyword.trim()) {
@@ -110,7 +137,7 @@ export const FoodBeveragePage: React.FC = () => {
     }
 
     return list;
-  }, [filters]);
+  }, [filters, baseProducts]);
 
   // Pagination calculation
   const totalItems = filteredProducts.length;

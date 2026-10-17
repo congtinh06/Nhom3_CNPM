@@ -61,7 +61,7 @@ export const HOME_DICTIONARY: Record<SupportedLanguage, Record<HomeKey, string>>
     heroCtaSecondary: 'Quét mã QR',
     tourismTitle: 'Du lịch Sài Gòn',
     tourismParagraph:
-      'Năm điểm dừng nằm gần nhau ở trung tâm Quận 1. Mỗi điểm có thuyết minh tự động, bản đồ dẫn đường và mã QR riêng.',
+      'Bảy điểm dừng nằm gần nhau ở trung tâm Quận 1. Mỗi điểm có thuyết minh tự động, bản đồ dẫn đường và mã QR riêng.',
     tourismCta: 'Xem tuyến thuyết minh',
     tourismCardCta: 'Xem chi tiết',
     foodTitle: 'Ẩm thực Sài Gòn',
@@ -105,7 +105,7 @@ export const HOME_DICTIONARY: Record<SupportedLanguage, Record<HomeKey, string>>
       'Dùng nút ngôn ngữ ở thanh điều hướng hoặc trong trang điểm du lịch để chuyển giữa bốn ngôn ngữ.',
     ctaTitle: 'Sẵn sàng nghe Sài Gòn kể chuyện?',
     ctaDesc:
-      'Bắt đầu tuyến thuyết minh 5 điểm ở trung tâm Quận 1, hoặc quét mã QR khi bạn đã tới nơi.',
+      'Bắt đầu tuyến thuyết minh 7 điểm ở trung tâm Quận 1, hoặc quét mã QR khi bạn đã tới nơi.',
     ctaPrimary: 'Bắt đầu tuyến thuyết minh',
     ctaSecondary: 'Quét mã QR',
     aboutTitle: 'Về dự án',
@@ -121,7 +121,7 @@ export const HOME_DICTIONARY: Record<SupportedLanguage, Record<HomeKey, string>>
     heroCtaSecondary: 'Scan QR code',
     tourismTitle: 'Explore Saigon',
     tourismParagraph:
-      'Five stops sit close together in central District 1. Each one has automatic narration, a route map, and its own QR code.',
+      'Seven stops sit close together in central District 1. Each one has automatic narration, a route map, and its own QR code.',
     tourismCta: 'View the audio tour',
     tourismCardCta: 'View details',
     foodTitle: 'Saigon Cuisine',
@@ -165,7 +165,7 @@ export const HOME_DICTIONARY: Record<SupportedLanguage, Record<HomeKey, string>>
       'Use the language button in the navigation bar or on the attractions page to switch between the four languages.',
     ctaTitle: 'Ready to hear Saigon tell its story?',
     ctaDesc:
-      'Start the five-stop audio tour in central District 1, or scan the QR code once you arrive.',
+      'Start the seven-stop audio tour in central District 1, or scan the QR code once you arrive.',
     ctaPrimary: 'Start the audio tour',
     ctaSecondary: 'Scan QR code',
     aboutTitle: 'About the project',
@@ -181,7 +181,7 @@ export const HOME_DICTIONARY: Record<SupportedLanguage, Record<HomeKey, string>>
     heroCtaSecondary: 'QRコードを読み取る',
     tourismTitle: 'サイゴンを巡る',
     tourismParagraph:
-      '中心部1区に5つのスポットが近接しています。それぞれに自動音声ガイド、ルートマップ、専用のQRコードがあります。',
+      '中心部1区に7つのスポットが近接しています。それぞれに自動音声ガイド、ルートマップ、専用のQRコードがあります。',
     tourismCta: '音声ツアーを見る',
     tourismCardCta: '詳細を見る',
     foodTitle: 'サイゴングルメ',
@@ -225,7 +225,7 @@ export const HOME_DICTIONARY: Record<SupportedLanguage, Record<HomeKey, string>>
       'ナビゲーションバーまたは観光スポットページの言語ボタンで、4つの言語を切り替えられます。',
     ctaTitle: 'サイゴンの物語を聴く準備はできましたか？',
     ctaDesc:
-      '中心部1区の5スポットの音声ツアーを始めるか、現地に着いたらQRコードを読み取ってください。',
+      '中心部1区の7スポットの音声ツアーを始めるか、現地に着いたらQRコードを読み取ってください。',
     ctaPrimary: '音声ツアーを始める',
     ctaSecondary: 'QRコードを読み取る',
     aboutTitle: 'プロジェクトについて',
@@ -241,7 +241,7 @@ export const HOME_DICTIONARY: Record<SupportedLanguage, Record<HomeKey, string>>
     heroCtaSecondary: 'QR 코드 스캔',
     tourismTitle: '사이공 여행',
     tourismParagraph:
-      '1군 중심에 다섯 개의 명소가 가까이 모여 있습니다. 각 명소에는 자동 해설, 경로 지도, 전용 QR 코드가 있습니다.',
+      '1군 중심에 일곱 개의 명소가 가까이 모여 있습니다. 각 명소에는 자동 해설, 경로 지도, 전용 QR 코드가 있습니다.',
     tourismCta: '오디오 투어 보기',
     tourismCardCta: '상세 보기',
     foodTitle: '사이공 미식',
@@ -284,7 +284,7 @@ export const HOME_DICTIONARY: Record<SupportedLanguage, Record<HomeKey, string>>
     faq5A: '내비게이션 바나 관광 명소 페이지의 언어 버튼으로 네 가지 언어를 전환할 수 있습니다.',
     ctaTitle: '사이공의 이야기를 들을 준비 되셨나요?',
     ctaDesc:
-      '1군 중심의 5개 명소 오디오 투어를 시작하거나, 도착한 뒤 QR 코드를 스캔하세요.',
+      '1군 중심의 7개 명소 오디오 투어를 시작하거나, 도착한 뒤 QR 코드를 스캔하세요.',
     ctaPrimary: '오디오 투어 시작',
     ctaSecondary: 'QR 코드 스캔',
     aboutTitle: '프로젝트 소개',
