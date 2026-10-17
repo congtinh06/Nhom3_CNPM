@@ -1622,12 +1622,161 @@ html:lang(ja) .nearby-sv-root,
   margin-bottom: 0;
 }
 
-/* Chữ đầu đoạn mở bài lớn hơn một chút */
-.nearby-sv-root .reading-body-flow .reading-paragraph:first-of-type::first-letter {
+/* Chữ đầu đoạn mở bài lớn hơn một chút (chỉ đoạn đầu tiên của bài) */
+.nearby-sv-root .reading-body-flow .narration-section:first-child .reading-paragraph::first-letter {
   font-size: 1.35em;
   font-weight: 700;
   line-height: 1;
   color: var(--ink-text, #1C1917);
+}
+
+/* ==========================================================================
+   Hạng mục 4: narration sections with image frames + large slide
+   ========================================================================== */
+.nearby-sv-root .narration-slide {
+  position: sticky;
+  top: 72px;
+  z-index: 4;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  max-height: 44vh;
+  border-radius: var(--radius-card, 16px);
+  overflow: hidden;
+  background-color: #F5F2EC;
+  border: 1px solid var(--border-light, #E7E5E4);
+  box-shadow: var(--shadow-sm);
+}
+
+.nearby-sv-root .narration-slide-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  animation: narration-slide-fade 300ms ease;
+}
+
+.nearby-sv-root .narration-slide-fallback {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #f3e3cf, #fff1c7);
+}
+
+@keyframes narration-slide-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.nearby-sv-root .narration-dots {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 10px;
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+}
+
+.nearby-sv-root .narration-dot {
+  width: 8px;
+  height: 8px;
+  padding: 0;
+  border: none;
+  border-radius: 9999px;
+  background-color: rgba(255, 255, 255, 0.6);
+  box-shadow: 0 0 0 1px rgba(28, 25, 23, 0.18);
+  cursor: pointer;
+  transition: width 180ms ease, background-color 180ms ease;
+}
+
+.nearby-sv-root .narration-dot.is-active {
+  width: 22px;
+  background-color: var(--accent-orange, #C2410C);
+}
+
+.nearby-sv-root .narration-dot:focus-visible {
+  outline: 2px solid var(--accent-orange, #C2410C);
+  outline-offset: 2px;
+}
+
+.nearby-sv-root .narration-section {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  margin: 0 0 28px;
+  padding: 4px 0;
+  border-left: 4px solid transparent;
+  border-radius: 0 var(--radius-btn, 8px) var(--radius-btn, 8px) 0;
+  transition: background-color 240ms ease, border-color 240ms ease, padding 240ms ease;
+}
+
+.nearby-sv-root .narration-section.is-active {
+  background-color: var(--accent-peach, #FFF7ED);
+  border-left-color: var(--accent-orange, #C2410C);
+  padding: 12px 16px;
+}
+
+.nearby-sv-root .narration-section .reading-paragraph {
+  margin-bottom: 0;
+}
+
+.nearby-sv-root .narration-section-media {
+  margin: 0;
+}
+
+.nearby-sv-root .narration-section-img {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-radius: var(--radius-btn, 8px);
+  display: block;
+  background-color: #F5F2EC;
+}
+
+.nearby-sv-root .narration-section-caption {
+  margin-top: 6px;
+  font-family: var(--font-body);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-snug);
+  color: var(--ink-muted, #57534E);
+}
+
+.nearby-sv-root .narration-section-credit {
+  color: var(--ink-subtle, #57534E);
+  font-size: var(--fs-xs);
+}
+
+@media (min-width: 720px) {
+  .nearby-sv-root .narration-section.has-media {
+    grid-template-columns: 1fr 1fr;
+    align-items: center;
+    gap: 24px;
+  }
+  .nearby-sv-root .narration-section.media-left .narration-section-media {
+    order: 1;
+  }
+  .nearby-sv-root .narration-section.media-left .reading-paragraph {
+    order: 2;
+  }
+  .nearby-sv-root .narration-section.media-right .narration-section-media {
+    order: 2;
+  }
+  .nearby-sv-root .narration-section.media-right .reading-paragraph {
+    order: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nearby-sv-root .narration-slide-img {
+    animation: none;
+  }
+  .nearby-sv-root .narration-section,
+  .nearby-sv-root .narration-dot {
+    transition: none;
+  }
 }
 
 /* Word-level reading progress: plain inline spans, zero box, border, or background */

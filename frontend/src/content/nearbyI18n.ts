@@ -118,6 +118,9 @@ export type NearbyKey =
   | 'qrLinkCopied'
   | 'qrShare'
   | 'qrLocalhostWarning'
+  | 'narrationSlideAria'
+  | 'sectionProgressAria'
+  | 'photoCredit'
   | 'qrModalTitle'
   | 'qrShowBtn'
   | 'myLocationLocating'
@@ -267,6 +270,9 @@ export const NEARBY_DICTIONARY: Record<SupportedLanguage, Record<NearbyKey, stri
     qrShare: 'Chia sẻ',
     qrLocalhostWarning:
       'Cảnh báo (chỉ khi phát triển): mã QR đang dùng địa chỉ localhost nên điện thoại không mở được. Hãy đặt VITE_QR_BASE_URL.',
+    narrationSlideAria: 'Hình ảnh của đoạn thuyết minh đang phát',
+    sectionProgressAria: 'Tiến độ các đoạn thuyết minh',
+    photoCredit: 'Ảnh: {author}{license}',
     qrModalTitle: 'Mã QR',
     qrShowBtn: 'Hiện mã QR',
     myLocationLocating: 'Đang xác định vị trí...',
@@ -401,6 +407,9 @@ export const NEARBY_DICTIONARY: Record<SupportedLanguage, Record<NearbyKey, stri
     qrShare: 'Share',
     qrLocalhostWarning:
       'Dev warning: the QR code points at localhost, so phones cannot open it. Set VITE_QR_BASE_URL.',
+    narrationSlideAria: 'Image for the narration section being played',
+    sectionProgressAria: 'Narration section progress',
+    photoCredit: 'Photo: {author}{license}',
     qrModalTitle: 'QR code',
     qrShowBtn: 'Show QR code',
     myLocationLocating: 'Locating...',
@@ -535,6 +544,9 @@ export const NEARBY_DICTIONARY: Record<SupportedLanguage, Record<NearbyKey, stri
     qrShare: '공유',
     qrLocalhostWarning:
       '개발 경고: QR 코드가 localhost를 가리켜 휴대폰에서 열 수 없습니다. VITE_QR_BASE_URL을 설정하세요.',
+    narrationSlideAria: '재생 중인 해설 구간의 이미지',
+    sectionProgressAria: '해설 구간 진행률',
+    photoCredit: '사진: {author}{license}',
     qrModalTitle: 'QR 코드',
     qrShowBtn: 'QR 코드 표시',
     myLocationLocating: '위치 확인 중...',
@@ -669,6 +681,9 @@ export const NEARBY_DICTIONARY: Record<SupportedLanguage, Record<NearbyKey, stri
     qrShare: '共有',
     qrLocalhostWarning:
       '開発警告: QRコードがlocalhostを指しているため、スマートフォンで開けません。VITE_QR_BASE_URLを設定してください。',
+    narrationSlideAria: '再生中の解説セクションの画像',
+    sectionProgressAria: '解説セクションの進捗',
+    photoCredit: '写真: {author}{license}',
     qrModalTitle: 'QRコード',
     qrShowBtn: 'QRコードを表示',
     myLocationLocating: '位置情報を取得中...',
@@ -704,6 +719,9 @@ export const UNREVIEWED_CJK_KEYS: NearbyKey[] = [
   'qrLinkCopied',
   'qrShare',
   'qrLocalhostWarning',
+  'narrationSlideAria',
+  'sectionProgressAria',
+  'photoCredit',
   'qrModalTitle',
   'qrShowBtn',
   'myLocationLocating',
