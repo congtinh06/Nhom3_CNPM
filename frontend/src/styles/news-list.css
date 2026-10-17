@@ -822,3 +822,24 @@
     margin-top: 24px;
   }
 }
+
+/* Accessibility: honor reduced-motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  .nl-row-link,
+  .nl-row-img,
+  .nl-lead-img,
+  .nl-side-img,
+  .nl-more-btn,
+  .nl-tab,
+  .nl-freshness-btn {
+    transition: none !important;
+  }
+
+  .nl-row-link:hover {
+    transform: none;
+  }
+
+  .nl-row-link:hover .nl-row-img {
+    transform: none;
+  }
+}
