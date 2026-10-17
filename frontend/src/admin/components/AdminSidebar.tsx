@@ -1,51 +1,21 @@
-import { AdminLogo } from '../brand/AdminLogo';
+import React from 'react';
 import { NavLink, Link, useLocation } from 'react-router-dom';
-import { AdminNavItem } from '../types';
+import { AdminLogo } from '../brand/AdminLogo';
+import { AdminNavIcon } from './AdminNavIcon';
+import { ADMIN_NAV_SECTIONS } from '../config/nav';
+import type { AdminNavItem } from '../types';
 
 export interface AdminSidebarProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-const NAV_ITEMS: AdminNavItem[] = [
-  {
-    id: 'overview',
-    label: 'Tổng quan',
-    path: '/quan-tri/tong-quan',
-  },
-  {
-    id: 'pois',
-    label: 'Điểm thuyết minh',
-    path: '/quan-tri/diem-thuyet-minh',
-  },
-  {
-    id: 'zones',
-    label: 'Khu vực',
-    path: '/quan-tri/khu-vuc',
-  },
-  {
-    id: 'routes',
-    label: 'Lộ trình',
-    path: '/quan-tri/lo-trinh',
-  },
-  {
-    id: 'products',
-    label: 'Sản phẩm',
-    path: '/quan-tri/san-pham',
-  },
-  {
-    id: 'orders',
-    label: 'Đơn hàng',
-    path: '/quan-tri/don-hang',
-    badge: 'Sắp có',
-    isUpcoming: true,
-  },
-  {
-    id: 'users',
-    label: 'Người dùng',
-    path: '/quan-tri/nguoi-dung',
-  },
-];
+const isItemActive = (pathname: string, item: AdminNavItem): boolean => {
+  if (item.path === '/quan-tri/tong-quan') {
+    return pathname === '/quan-tri' || pathname === '/quan-tri/tong-quan';
+  }
+  return pathname === item.path || pathname.startsWith(`${item.path}/`);
+};
 
 export const AdminSidebar: React.FC<AdminSidebarProps> = ({ isOpen, onClose }) => {
   const location = useLocation();
@@ -73,44 +43,52 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({ isOpen, onClose }) =
         </div>
 
         <nav className="adm-sidebar-nav" aria-label="Menu quản trị">
-          <ul className="adm-nav-list">
-            {NAV_ITEMS.map((item) => {
-              const isNestedActive =
-                item.path !== '/quan-tri' &&
-                item.path !== '/quan-tri/tong-quan' &&
-                location.pathname.startsWith(item.path);
+          {ADMIN_NAV_SECTIONS.map((section) => (
+            <div key={section.id} className="adm-nav-section">
+              {section.label && (
+                <p className="adm-nav-section-label">{section.label}</p>
+              )}
+              <ul className="adm-nav-list">
+                {section.items.map((item) => {
+                  const active = isItemActive(location.pathname, item);
 
-              return (
-                <li key={item.id} className="adm-nav-item">
-                  {item.isUpcoming ? (
-                    <div
-                      className="adm-nav-link adm-nav-link-disabled"
-                      aria-disabled="true"
-                      title="Phân hệ đang trong lộ trình phát triển"
-                    >
-                      <span className="adm-nav-label">{item.label}</span>
-                      {item.badge && (
-                        <span className="adm-nav-badge">{item.badge}</span>
+                  return (
+                    <li key={item.id} className="adm-nav-item">
+                      {item.isUpcoming ? (
+                        <div
+                          className="adm-nav-link adm-nav-link-disabled"
+                          aria-disabled="true"
+                          title="Phân hệ đang trong lộ trình phát triển"
+                        >
+                          <span className="adm-nav-icon" aria-hidden="true">
+                            <AdminNavIcon id={item.id} />
+                          </span>
+                          <span className="adm-nav-label">{item.label}</span>
+                          {item.badge && (
+                            <span className="adm-nav-badge">{item.badge}</span>
+                          )}
+                        </div>
+                      ) : (
+                        <NavLink
+                          to={item.path}
+                          className={`adm-nav-link ${active ? 'adm-nav-link-active' : ''}`}
+                          onClick={onClose}
+                        >
+                          <span className="adm-nav-icon" aria-hidden="true">
+                            <AdminNavIcon id={item.id} />
+                          </span>
+                          <span className="adm-nav-label">{item.label}</span>
+                          {item.badge && (
+                            <span className="adm-nav-badge">{item.badge}</span>
+                          )}
+                        </NavLink>
                       )}
-                    </div>
-                  ) : (
-                    <NavLink
-                      to={item.path}
-                      className={({ isActive }) =>
-                        `adm-nav-link ${isActive || isNestedActive ? 'adm-nav-link-active' : ''}`
-                      }
-                      onClick={onClose}
-                    >
-                      <span className="adm-nav-label">{item.label}</span>
-                      {item.badge && (
-                        <span className="adm-nav-badge">{item.badge}</span>
-                      )}
-                    </NavLink>
-                  )}
-                </li>
-              );
-            })}
-          </ul>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          ))}
         </nav>
 
         <div className="adm-sidebar-foot">

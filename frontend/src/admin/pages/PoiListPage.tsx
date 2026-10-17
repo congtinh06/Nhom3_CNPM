@@ -218,7 +218,7 @@ export const PoiListPage: React.FC = () => {
           <h1 className="adm-page-title">Quản lý điểm thuyết minh</h1>
           <p className="adm-page-desc">
             Danh sách điểm đến, tọa độ kích hoạt và trạng thái thuyết minh đa ngôn ngữ trên
-            website SaigonVoice.
+            website Echora.
           </p>
         </div>
         <Link to="/quan-tri/diem-thuyet-minh/moi" className="adm-btn adm-btn-primary">

@@ -29,7 +29,7 @@ export const AdminLoginPage: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    document.title = 'Đăng nhập · Quản trị SaigonVoice';
+    document.title = `Đăng nhập · Quản trị ${BRAND_NAME}`;
   }, []);
 
   const handleSubmit = async (e: FormEvent) => {

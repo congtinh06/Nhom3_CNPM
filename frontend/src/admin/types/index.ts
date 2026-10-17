@@ -12,6 +12,12 @@ export interface AdminNavItem {
   isUpcoming?: boolean;
 }
 
+export interface AdminNavSection {
+  id: string;
+  label?: string;
+  items: AdminNavItem[];
+}
+
 export * from './product';
 export * from './poi';
 export * from './zone';

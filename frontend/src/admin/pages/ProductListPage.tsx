@@ -400,7 +400,7 @@ export const ProductListPage: React.FC = () => {
         <div>
           <h1 className="adm-page-title">Quản lý sản phẩm</h1>
           <p className="adm-page-desc">
-            Danh sách món ăn, thức uống và ẩm thực hiển thị trên website SaigonVoice.
+            Danh sách món ăn, thức uống và ẩm thực hiển thị trên website Echora.
           </p>
         </div>
         <Link to="/quan-tri/san-pham/moi" className="adm-btn adm-btn-primary">

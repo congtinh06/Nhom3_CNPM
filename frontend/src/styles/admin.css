@@ -104,6 +104,33 @@
   gap: 4px;
 }
 
+.adm-nav-section + .adm-nav-section {
+  margin-top: 18px;
+}
+
+.adm-nav-section-label {
+  margin: 0 0 8px;
+  padding: 0 12px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--fb-text-secondary, #78716C);
+}
+
+.adm-nav-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: currentColor;
+  opacity: 0.85;
+}
+
+.adm-nav-link-active .adm-nav-icon {
+  opacity: 1;
+}
+
 .adm-nav-item {
   margin: 0;
   padding: 0;
@@ -112,7 +139,7 @@
 .adm-nav-link {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: 10px;
   padding: 9px 12px;
   border-radius: 4px;
@@ -271,6 +298,106 @@
 .adm-logout-btn {
   font-size: 12px;
   padding: 5px 10px;
+}
+
+/* User menu (dropdown) */
+.adm-usermenu {
+  position: relative;
+}
+
+.adm-usermenu-trigger {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 6px 4px 4px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.adm-usermenu-trigger:hover,
+.adm-usermenu-trigger[aria-expanded="true"] {
+  background-color: var(--fb-border-subtle, #F5F5F4);
+  border-color: var(--fb-border, #E7E5E4);
+}
+
+.adm-usermenu-trigger:focus-visible {
+  outline: 2px solid var(--fb-accent, #C2410C);
+  outline-offset: 2px;
+}
+
+.adm-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: rgba(194, 65, 12, 0.12);
+  color: var(--fb-accent, #C2410C);
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  flex-shrink: 0;
+}
+
+.adm-usermenu-caret {
+  font-size: 10px;
+  color: var(--fb-text-secondary, #78716C);
+  line-height: 1;
+}
+
+.adm-usermenu-panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 220px;
+  background-color: var(--fb-surface, #FFFFFF);
+  border: 1px solid var(--fb-border, #E7E5E4);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(28, 25, 23, 0.12);
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  z-index: 120;
+}
+
+.adm-usermenu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 9px 10px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--fb-text-primary, #1C1917);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.adm-usermenu-item:hover {
+  background-color: var(--fb-border-subtle, #F5F5F4);
+  color: var(--fb-accent, #C2410C);
+}
+
+.adm-usermenu-item-danger:hover {
+  background-color: rgba(179, 38, 30, 0.08);
+  color: #B3261E;
+}
+
+.adm-usermenu-item-icon {
+  font-size: 14px;
+  line-height: 1;
 }
 
 /* --------------------------------------------------------------------------
@@ -1752,3 +1879,14 @@
   flex: 1 1 auto;
   min-width: 160px;
 }
+
+@media (max-width: 640px) {
+  .adm-usermenu-trigger .adm-user-info {
+    display: none;
+  }
+
+  .adm-usermenu-panel {
+    min-width: 190px;
+  }
+}
+
