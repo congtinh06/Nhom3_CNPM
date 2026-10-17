@@ -20,52 +20,36 @@ GO
 IF NOT EXISTS (SELECT 1 FROM dbo.zone WHERE code = 'D1_HISTORIC')
     INSERT INTO dbo.zone (code, name, description, center_lat, center_lng, radius_meters)
     VALUES ('D1_HISTORIC', N'Trung tâm Lịch sử', N'Khu vực tập trung các công trình kiến trúc lịch sử và văn hóa tiêu biểu của thành phố.', 10.7769000, 106.7009000, 600);
-ELSE
-    UPDATE dbo.zone SET name = N'Trung tâm Lịch sử', description = N'Khu vực tập trung các công trình kiến trúc lịch sử và văn hóa tiêu biểu của thành phố.', center_lat = 10.7769000, center_lng = 106.7009000, radius_meters = 600 WHERE code = 'D1_HISTORIC';
 
 IF NOT EXISTS (SELECT 1 FROM dbo.zone WHERE code = 'CHO_LON')
     INSERT INTO dbo.zone (code, name, description, center_lat, center_lng, radius_meters)
     VALUES ('CHO_LON', N'Khu Di sản Chợ Lớn', N'Khu phố cổ người Hoa lâu đời với nét văn hóa đặc sắc, chùa cổ, hội quán và ẩm thực truyền thống.', 10.7533000, 106.6575000, 700);
-ELSE
-    UPDATE dbo.zone SET name = N'Khu Di sản Chợ Lớn', description = N'Khu phố cổ người Hoa lâu đời với nét văn hóa đặc sắc, chùa cổ, hội quán và ẩm thực truyền thống.', center_lat = 10.7533000, center_lng = 106.6575000, radius_meters = 700 WHERE code = 'CHO_LON';
 
 IF NOT EXISTS (SELECT 1 FROM dbo.zone WHERE code = 'VINH_KHANH')
     INSERT INTO dbo.zone (code, name, description, center_lat, center_lng, radius_meters)
     VALUES ('VINH_KHANH', N'Phố Ẩm thực Vĩnh Khánh', N'Khu phố ẩm thực đường phố sôi động về đêm, nổi tiếng với các món ốc và hải sản tươi ngon.', 10.7600000, 106.7025000, 400);
-ELSE
-    UPDATE dbo.zone SET name = N'Phố Ẩm thực Vĩnh Khánh', description = N'Khu phố ẩm thực đường phố sôi động về đêm, nổi tiếng với các món ốc và hải sản tươi ngon.', center_lat = 10.7600000, center_lng = 106.7025000, radius_meters = 400 WHERE code = 'VINH_KHANH';
 
 IF NOT EXISTS (SELECT 1 FROM dbo.zone WHERE code = 'BA_SON')
     INSERT INTO dbo.zone (code, name, description, center_lat, center_lng, radius_meters)
     VALUES ('BA_SON', N'Khu Đô thị Ven sông & Cảng Ba Son', N'Khu vực gắn liền với di tích xưởng đóng tàu Ba Son lịch sử kết hợp cùng không gian đô thị hiện đại ven sông Sài Gòn.', 10.7835000, 106.7085000, 450);
-ELSE
-    UPDATE dbo.zone SET name = N'Khu Đô thị Ven sông & Cảng Ba Son', description = N'Khu vực gắn liền với di tích xưởng đóng tàu Ba Son lịch sử kết hợp cùng không gian đô thị hiện đại ven sông Sài Gòn.', center_lat = 10.7835000, center_lng = 106.7085000, radius_meters = 450 WHERE code = 'BA_SON';
 GO
 
 -- 2. SEED CÁC DANH MỤC DU LỊCH (CATEGORY)
 IF NOT EXISTS (SELECT 1 FROM dbo.category WHERE code = 'HISTORIC')
     INSERT INTO dbo.category (code, name_vi, name_en, icon_url)
     VALUES ('HISTORIC', N'Di tích Lịch sử', N'Historical Heritage', '/icons/historic.svg');
-ELSE
-    UPDATE dbo.category SET name_vi = N'Di tích Lịch sử', name_en = N'Historical Heritage', icon_url = '/icons/historic.svg' WHERE code = 'HISTORIC';
 
 IF NOT EXISTS (SELECT 1 FROM dbo.category WHERE code = 'ARCHITECTURE')
     INSERT INTO dbo.category (code, name_vi, name_en, icon_url)
     VALUES ('ARCHITECTURE', N'Kiến trúc & Nghệ thuật', N'Architecture & Art', '/icons/architecture.svg');
-ELSE
-    UPDATE dbo.category SET name_vi = N'Kiến trúc & Nghệ thuật', name_en = N'Architecture & Art', icon_url = '/icons/architecture.svg' WHERE code = 'ARCHITECTURE';
 
 IF NOT EXISTS (SELECT 1 FROM dbo.category WHERE code = 'FOOD')
     INSERT INTO dbo.category (code, name_vi, name_en, icon_url)
     VALUES ('FOOD', N'Ẩm thực & Chợ truyền thống', N'Food & Market', '/icons/food.svg');
-ELSE
-    UPDATE dbo.category SET name_vi = N'Ẩm thực & Chợ truyền thống', name_en = N'Food & Market', icon_url = '/icons/food.svg' WHERE code = 'FOOD';
 
 IF NOT EXISTS (SELECT 1 FROM dbo.category WHERE code = 'RELIGION')
     INSERT INTO dbo.category (code, name_vi, name_en, icon_url)
     VALUES ('RELIGION', N'Tín ngưỡng & Tôn giáo', N'Religion & Culture', '/icons/religion.svg');
-ELSE
-    UPDATE dbo.category SET name_vi = N'Tín ngưỡng & Tôn giáo', name_en = N'Religion & Culture', icon_url = '/icons/religion.svg' WHERE code = 'RELIGION';
 GO
 
 -- 3. SEED 5 ĐIỂM DỪNG (POI) & BẢN DỊCH TIẾNG VIỆT
@@ -170,41 +154,20 @@ In the front yard you will see aircraft, tanks, artillery, and many kinds of bom
 This is a place to visit in a quiet frame of mind. Some images are very heavy, so think carefully before bringing young children, and feel free to stop and rest whenever you need. It is not only a place to look back at the past, but also a place that reminds us to value peace.')
 ;
 
-UPDATE p
-SET p.slug = s.slug, p.zone_id = @Zone1,
-    p.category_id = (SELECT id FROM dbo.category WHERE code = s.category_code),
-    p.qr_token = s.qr_token, p.name = s.name, p.latitude = s.latitude, p.longitude = s.longitude,
-    p.trigger_radius_meters = s.trigger_radius_meters, p.thumbnail_url = s.thumbnail_url,
-    p.status = 'ACTIVE', p.updated_at = SYSUTCDATETIME()
-FROM dbo.poi p JOIN #PoiSeed s ON p.code = s.code;
-
+-- Chỉ chèn POI khi chưa tồn tại. Không UPDATE để tránh ghi đè dữ liệu admin đã sửa.
 INSERT INTO dbo.poi (zone_id, category_id, code, qr_token, slug, name, latitude, longitude, trigger_radius_meters, address, thumbnail_url, status, created_at, updated_at)
 SELECT @Zone1, (SELECT id FROM dbo.category WHERE code = s.category_code), s.code, s.qr_token, s.slug, s.name,
        s.latitude, s.longitude, s.trigger_radius_meters, NULL, s.thumbnail_url, 'ACTIVE', SYSUTCDATETIME(), SYSUTCDATETIME()
 FROM #PoiSeed s
 WHERE NOT EXISTS (SELECT 1 FROM dbo.poi p WHERE p.code = s.code);
 
--- Vietnamese source translation (authored)
-UPDATE tr
-SET tr.title = s.vi_title, tr.summary = s.vi_summary, tr.description = s.vi_description,
-    tr.historical_significance = NULL, tr.audio_status = 'PENDING', tr.content_hash = NULL,
-    tr.audio_url = NULL, tr.audio_duration_seconds = 0, tr.translation_source = 'MANUAL', tr.updated_at = SYSUTCDATETIME()
-FROM dbo.poi_translation tr JOIN dbo.poi p ON p.id = tr.poi_id JOIN #PoiSeed s ON s.code = p.code
-WHERE tr.language_code = 'vi';
-
+-- Vietnamese source translation (authored) - chỉ chèn khi chưa có.
 INSERT INTO dbo.poi_translation (poi_id, language_code, title, summary, description, historical_significance, audio_status, translation_source, updated_at)
 SELECT p.id, 'vi', s.vi_title, s.vi_summary, s.vi_description, NULL, 'PENDING', 'MANUAL', SYSUTCDATETIME()
 FROM #PoiSeed s JOIN dbo.poi p ON p.code = s.code
 WHERE NOT EXISTS (SELECT 1 FROM dbo.poi_translation tr WHERE tr.poi_id = p.id AND tr.language_code = 'vi');
 
--- English authored translation
-UPDATE tr
-SET tr.title = s.en_title, tr.summary = s.en_summary, tr.description = s.en_description,
-    tr.historical_significance = NULL, tr.audio_status = 'PENDING', tr.content_hash = NULL,
-    tr.audio_url = NULL, tr.audio_duration_seconds = 0, tr.translation_source = 'MANUAL', tr.updated_at = SYSUTCDATETIME()
-FROM dbo.poi_translation tr JOIN dbo.poi p ON p.id = tr.poi_id JOIN #PoiSeed s ON s.code = p.code
-WHERE tr.language_code = 'en';
-
+-- English authored translation - chỉ chèn khi chưa có.
 INSERT INTO dbo.poi_translation (poi_id, language_code, title, summary, description, historical_significance, audio_status, translation_source, updated_at)
 SELECT p.id, 'en', s.en_title, s.en_summary, s.en_description, NULL, 'PENDING', 'MANUAL', SYSUTCDATETIME()
 FROM #PoiSeed s JOIN dbo.poi p ON p.code = s.code
@@ -217,8 +180,8 @@ DROP TABLE #PoiSeed;
 -- Địa chỉ chỉ giữ số nhà và tên đường: Số 710 Đường Nguyễn Trãi
 IF NOT EXISTS (SELECT 1 FROM dbo.poi WHERE code = 'POI_THIEN_HAU_01')
 BEGIN
-    INSERT INTO dbo.poi (zone_id, category_id, code, qr_token, name, latitude, longitude, trigger_radius_meters, address, thumbnail_url)
-    VALUES (@Zone2, @CatReli, 'POI_THIEN_HAU_01', 'qr-thien-hau-01', N'Chùa Bà Thiên Hậu (Hội quán Tuệ Thành)', 10.7538000, 106.6601000, 35, N'Số 710 Đường Nguyễn Trãi', '/images/thienhau.jpg');
+    INSERT INTO dbo.poi (zone_id, category_id, code, qr_token, slug, name, latitude, longitude, trigger_radius_meters, address, thumbnail_url)
+    VALUES (@Zone2, @CatReli, 'POI_THIEN_HAU_01', 'qr-thien-hau-01', N'chua-ba-thien-hau', N'Chùa Bà Thiên Hậu (Hội quán Tuệ Thành)', 10.7538000, 106.6601000, 35, N'Số 710 Đường Nguyễn Trãi', '/images/thienhau.jpg');
 
     DECLARE @PoiId4 BIGINT = SCOPE_IDENTITY();
     INSERT INTO dbo.poi_translation (poi_id, language_code, title, summary, description, historical_significance, audio_status)
@@ -228,28 +191,13 @@ BEGIN
             N'Công trình được công nhận ngày 7/1/1993 là di tích kiến trúc nghệ thuật cấp quốc gia.',
             'PENDING');
 END
-ELSE
-BEGIN
-    UPDATE dbo.poi SET zone_id = @Zone2, category_id = @CatReli, name = N'Chùa Bà Thiên Hậu (Hội quán Tuệ Thành)',
-                       latitude = 10.7538000, longitude = 106.6601000, trigger_radius_meters = 35,
-                       address = N'Số 710 Đường Nguyễn Trãi', thumbnail_url = '/images/thienhau.jpg'
-    WHERE code = 'POI_THIEN_HAU_01';
-
-    DECLARE @ExistingPoiId4 BIGINT = (SELECT id FROM dbo.poi WHERE code = 'POI_THIEN_HAU_01');
-    UPDATE dbo.poi_translation 
-    SET title = N'Chùa Bà Thiên Hậu',
-        summary = N'Cơ sở tín ngưỡng cổ kính của cộng đồng người Hoa tại Chợ Lớn xây khoảng năm 1760, nổi tiếng với nghệ thuật phù điêu gốm độc đáo.',
-        description = N'Hội quán Tuệ Thành (Chùa Bà Thiên Hậu) do cộng đồng người Hoa gốc Quảng Đông xây dựng khoảng năm 1760 tại Chợ Lớn. Ngôi chùa nổi bật với kiến trúc tiền điện độc đáo và hệ thống phù điêu gốm nung tinh xảo trên mái.',
-        historical_significance = N'Công trình được công nhận ngày 7/1/1993 là di tích kiến trúc nghệ thuật cấp quốc gia.'
-    WHERE poi_id = @ExistingPoiId4 AND language_code = 'vi';
-END
 
 -- POI 5: Cầu Ba Son
 -- Địa chỉ chỉ giữ số nhà và tên đường: Đường Tôn Đức Thắng
 IF NOT EXISTS (SELECT 1 FROM dbo.poi WHERE code = 'POI_CAU_BA_SON_01')
 BEGIN
-    INSERT INTO dbo.poi (zone_id, category_id, code, qr_token, name, latitude, longitude, trigger_radius_meters, address, thumbnail_url)
-    VALUES (@Zone4, @CatArch, 'POI_CAU_BA_SON_01', 'qr-ba-son-01', N'Cầu Ba Son', 10.7818000, 106.7092000, 50, N'Đường Tôn Đức Thắng', '/images/bason.jpg');
+    INSERT INTO dbo.poi (zone_id, category_id, code, qr_token, slug, name, latitude, longitude, trigger_radius_meters, address, thumbnail_url)
+    VALUES (@Zone4, @CatArch, 'POI_CAU_BA_SON_01', 'qr-ba-son-01', N'cau-ba-son', N'Cầu Ba Son', 10.7818000, 106.7092000, 50, N'Đường Tôn Đức Thắng', '/images/bason.jpg');
 
     DECLARE @PoiId5 BIGINT = SCOPE_IDENTITY();
     INSERT INTO dbo.poi_translation (poi_id, language_code, title, summary, description, historical_significance, audio_status)
@@ -259,25 +207,7 @@ BEGIN
             N'Cầu từng mang tên Thủ Thiêm 2. Ngày 9/12/2022, HĐND TP.HCM thông qua việc đặt tên Ba Son, theo tên xưởng đóng tàu Ba Son lịch sử.',
             'PENDING');
 END
-ELSE
-BEGIN
-    UPDATE dbo.poi SET zone_id = @Zone4, category_id = @CatArch, name = N'Cầu Ba Son',
-                       latitude = 10.7818000, longitude = 106.7092000, trigger_radius_meters = 50,
-                       address = N'Đường Tôn Đức Thắng', thumbnail_url = '/images/bason.jpg'
-    WHERE code = 'POI_CAU_BA_SON_01';
-
-    DECLARE @ExistingPoiId5 BIGINT = (SELECT id FROM dbo.poi WHERE code = 'POI_CAU_BA_SON_01');
-    UPDATE dbo.poi_translation 
-    SET title = N'Cầu Ba Son',
-        summary = N'Cây cầu dây văng hiện đại bắc qua sông Sài Gòn, kết nối trung tâm thành phố với Khu đô thị mới Thủ Thiêm.',
-        description = N'Cầu Ba Son là cầu dây văng bất đối xứng bắc qua sông Sài Gòn, thông xe ngày 28/4/2022, với trụ tháp hình vòm cao 113 m nghiêng về phía Thủ Thiêm.',
-        historical_significance = N'Cầu từng mang tên Thủ Thiêm 2. Ngày 9/12/2022, HĐND TP.HCM thông qua việc đặt tên Ba Son, theo tên xưởng đóng tàu Ba Son lịch sử.'
-    WHERE poi_id = @ExistingPoiId5 AND language_code = 'vi';
-END
 GO
-
-UPDATE dbo.poi SET status = 'INACTIVE', updated_at = SYSUTCDATETIME()
-WHERE code IN ('POI_THIEN_HAU_01', 'POI_CAU_BA_SON_01');
 
 -- 4. SEED 3 TUYẾN THAM QUAN (ROUTE) & GÁN ĐIỂM DỪNG THEO THỨ TỰ (STOP_ORDER)
 DECLARE @RZone1 BIGINT = (SELECT id FROM dbo.zone WHERE code = 'D1_HISTORIC');
@@ -287,30 +217,25 @@ DECLARE @RZone4 BIGINT = (SELECT id FROM dbo.zone WHERE code = 'BA_SON');
 IF NOT EXISTS (SELECT 1 FROM dbo.route WHERE zone_id = @RZone1 AND name = N'Tuyến Kiến trúc Trung tâm Quận 1')
     INSERT INTO dbo.route (zone_id, name, description, display_order)
     VALUES (@RZone1, N'Tuyến Kiến trúc Trung tâm Quận 1', N'Tuyến đi bộ tham quan các công trình kiến trúc lịch sử tiêu biểu tại khu vực trung tâm quanh Nhà thờ Đức Bà và Chợ Bến Thành.', 1);
-ELSE
-    UPDATE dbo.route SET description = N'Tuyến đi bộ tham quan các công trình kiến trúc lịch sử tiêu biểu tại khu vực trung tâm quanh Nhà thờ Đức Bà và Chợ Bến Thành.', display_order = 1 WHERE zone_id = @RZone1 AND name = N'Tuyến Kiến trúc Trung tâm Quận 1';
 
 IF NOT EXISTS (SELECT 1 FROM dbo.route WHERE zone_id = @RZone2 AND name = N'Tuyến Hội quán Chợ Lớn')
     INSERT INTO dbo.route (zone_id, name, description, display_order)
     VALUES (@RZone2, N'Tuyến Hội quán Chợ Lớn', N'Khám phá các hội quán và chùa cổ của cộng đồng người Hoa tại Chợ Lớn.', 1);
-ELSE
-    UPDATE dbo.route SET description = N'Khám phá các hội quán và chùa cổ của cộng đồng người Hoa tại Chợ Lớn.', display_order = 1 WHERE zone_id = @RZone2 AND name = N'Tuyến Hội quán Chợ Lớn';
 
 IF NOT EXISTS (SELECT 1 FROM dbo.route WHERE zone_id = @RZone4 AND name = N'Tuyến Ven sông Ba Son')
     INSERT INTO dbo.route (zone_id, name, description, display_order)
     VALUES (@RZone4, N'Tuyến Ven sông Ba Son', N'Dạo bộ ngắm cảnh ven sông Sài Gòn quanh khu vực Ba Son.', 1);
-ELSE
-    UPDATE dbo.route SET description = N'Dạo bộ ngắm cảnh ven sông Sài Gòn quanh khu vực Ba Son.', display_order = 1 WHERE zone_id = @RZone4 AND name = N'Tuyến Ven sông Ba Son';
 
 DECLARE @Route1 BIGINT = (SELECT id FROM dbo.route WHERE zone_id = @RZone1 AND name = N'Tuyến Kiến trúc Trung tâm Quận 1');
 DECLARE @Route2 BIGINT = (SELECT id FROM dbo.route WHERE zone_id = @RZone2 AND name = N'Tuyến Hội quán Chợ Lớn');
 DECLARE @Route4 BIGINT = (SELECT id FROM dbo.route WHERE zone_id = @RZone4 AND name = N'Tuyến Ven sông Ba Son');
 
-UPDATE dbo.poi SET route_id = @Route1, stop_order = 1 WHERE code = 'POI_DUC_BA_01';
-UPDATE dbo.poi SET route_id = @Route1, stop_order = 2 WHERE code = 'POI_BUU_DIEN_01';
-UPDATE dbo.poi SET route_id = @Route1, stop_order = 3 WHERE code = 'POI_BEN_THANH_01';
-UPDATE dbo.poi SET route_id = @Route2, stop_order = 1 WHERE code = 'POI_THIEN_HAU_01';
-UPDATE dbo.poi SET route_id = @Route4, stop_order = 1 WHERE code = 'POI_CAU_BA_SON_01';
+-- Gán tuyến khi POI chưa thuộc tuyến nào (không ghi đè phân tuyến admin đã đặt).
+UPDATE dbo.poi SET route_id = @Route1, stop_order = 1 WHERE code = 'POI_DUC_BA_01' AND route_id IS NULL;
+UPDATE dbo.poi SET route_id = @Route1, stop_order = 2 WHERE code = 'POI_BUU_DIEN_01' AND route_id IS NULL;
+UPDATE dbo.poi SET route_id = @Route1, stop_order = 3 WHERE code = 'POI_BEN_THANH_01' AND route_id IS NULL;
+UPDATE dbo.poi SET route_id = @Route2, stop_order = 1 WHERE code = 'POI_THIEN_HAU_01' AND route_id IS NULL;
+UPDATE dbo.poi SET route_id = @Route4, stop_order = 1 WHERE code = 'POI_CAU_BA_SON_01' AND route_id IS NULL;
 GO
 
 IF NOT EXISTS (SELECT 1 FROM dbo.products WHERE slug = 'com-tam-suon-bi-cha')
