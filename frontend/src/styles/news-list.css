@@ -12,6 +12,12 @@
   padding-bottom: 0;
   box-sizing: border-box;
   -webkit-font-smoothing: antialiased;
+
+  /* Layout tokens */
+  --nl-radius: 8px;
+  --nl-radius-media: 8px;
+  --nl-gap: 28px;
+  --nl-gap-sm: 18px;
 }
 
 /* --------------------------------------------------------------------------
@@ -236,9 +242,16 @@
 }
 
 .nl-lead-link {
-  display: block;
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+  gap: 22px;
+  align-items: start;
   color: inherit;
   text-decoration: none;
+}
+
+.nl-lead-visual {
+  min-width: 0;
 }
 
 .nl-lead-link:focus-visible {
@@ -250,7 +263,7 @@
   width: 100%;
   aspect-ratio: 16 / 9;
   overflow: hidden;
-  border-radius: 2px;
+  border-radius: var(--nl-radius-media);
   background-color: var(--fb-border, #E7E5E4);
 }
 
@@ -273,7 +286,7 @@
 .nl-lead-body {
   display: flex;
   flex-direction: column;
-  margin-top: 10px;
+  margin-top: 0;
 }
 
 .nl-lead-title {
@@ -351,6 +364,28 @@
   display: flex;
   flex-direction: column;
   min-width: 0;
+}
+
+.nl-side-heading {
+  font-family: var(--font-display, "Playfair Display", Georgia, serif);
+  font-size: 1.0625rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--fb-text-primary, #1C1917);
+  margin: 0 0 12px 0;
+  padding-bottom: 8px;
+  border-bottom: 2px solid var(--fb-text-primary, #1C1917);
+}
+
+.nl-side-list {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.nl-side-list .nl-side-item:first-child {
+  padding-top: 0;
 }
 
 .nl-side-item {
@@ -462,7 +497,7 @@
   height: 100%;
   background-color: var(--fb-surface, #FFFFFF);
   border: 1px solid var(--fb-border, #E7E5E4);
-  border-radius: 12px;
+  border-radius: var(--nl-radius);
   overflow: hidden;
   color: inherit;
   text-decoration: none;
@@ -482,7 +517,7 @@
 
 .nl-row-media {
   width: 100%;
-  aspect-ratio: 16 / 10;
+  aspect-ratio: 16 / 9;
   overflow: hidden;
   background-color: var(--fb-border, #E7E5E4);
   flex-shrink: 0;
@@ -517,6 +552,10 @@
   margin: 0 0 8px 0;
   text-transform: none !important;
   transition: color 0.15s ease;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .nl-row-link:hover .nl-row-title {
@@ -547,6 +586,41 @@
   border: 1px solid var(--fb-border, #E7E5E4);
   box-sizing: border-box;
   border-radius: 2px;
+}
+
+/* "Xem thêm" pagination */
+.nl-more-wrap {
+  display: flex;
+  justify-content: center;
+  margin-top: 32px;
+}
+
+.nl-more-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 46px;
+  padding: 0 28px;
+  background-color: var(--fb-surface, #FFFFFF);
+  border: 1px solid var(--fb-border, #E7E5E4);
+  border-radius: 9999px;
+  color: var(--fb-text-primary, #1C1917);
+  font-family: var(--font-body);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.nl-more-btn:hover {
+  background-color: #F3EEE6;
+  border-color: var(--fb-accent, #C2410C);
+  color: var(--fb-accent-hover, #9A3412);
+}
+
+.nl-more-btn:focus-visible {
+  outline: 2px solid var(--fb-accent, #C2410C);
+  outline-offset: 3px;
 }
 
 /* --------------------------------------------------------------------------
@@ -671,16 +745,54 @@
     padding: 0 16px;
   }
 
+  .nl-lead-link {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
   .nl-lead-title {
     font-size: 1.5rem;
   }
 
+  .nl-lead-sapo {
+    font-size: 1rem;
+    -webkit-line-clamp: 3;
+  }
+
   .nl-feed-list {
     grid-template-columns: 1fr;
-    gap: 22px;
+    gap: var(--nl-gap-sm);
+  }
+
+  /* Mobile feed: compact small thumbnail on the left, text on the right */
+  .nl-row-link {
+    flex-direction: row;
+    align-items: flex-start;
+  }
+
+  .nl-row-media {
+    width: 116px;
+    min-width: 116px;
+    height: auto;
+    aspect-ratio: 4 / 3;
+    border-radius: var(--nl-radius) 0 0 var(--nl-radius);
+  }
+
+  .nl-row-body {
+    padding: 12px 14px;
   }
 
   .nl-row-title {
-    font-size: 1.125rem;
+    font-size: 1rem;
+    margin-bottom: 6px;
+    -webkit-line-clamp: 3;
+  }
+
+  .nl-row-excerpt {
+    display: none;
+  }
+
+  .nl-more-wrap {
+    margin-top: 24px;
   }
 }

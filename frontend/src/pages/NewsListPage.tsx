@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { RefreshCw } from 'lucide-react';
 import { useNewsListQuery } from '../api/news';
@@ -16,6 +16,8 @@ interface CategoryFilterOption {
   key: string;
   label: string;
 }
+
+const FEED_PAGE_SIZE = 6;
 
 const CATEGORY_OPTIONS: CategoryFilterOption[] = [
   { key: 'all', label: 'Tất cả' },
@@ -35,6 +37,12 @@ export const NewsListPage: React.FC = () => {
 
   const categoryParam = searchParams.get('c') || searchParams.get('category') || 'all';
   const poiParam = searchParams.get('poi') || '';
+
+  const [visibleFeedCount, setVisibleFeedCount] = useState(FEED_PAGE_SIZE);
+
+  useEffect(() => {
+    setVisibleFeedCount(FEED_PAGE_SIZE);
+  }, [categoryParam, poiParam]);
 
   const {
     displayedData,
@@ -92,7 +100,9 @@ export const NewsListPage: React.FC = () => {
 
   const heroArticle = sortedFilteredItems[0] || null;
   const sideArticles = sortedFilteredItems.slice(1, 4);
-  const feedArticles = sortedFilteredItems.slice(4);
+  const feedAll = sortedFilteredItems.slice(4);
+  const feedArticles = feedAll.slice(0, visibleFeedCount);
+  const hasMoreFeed = feedAll.length > feedArticles.length;
 
   return (
     <div className="nl-page-root">
@@ -208,9 +218,12 @@ export const NewsListPage: React.FC = () => {
 
             {sideArticles.length > 0 && (
               <section className="nl-top-side" aria-label="Tin nổi bật khác">
-                {sideArticles.map((item) => (
-                  <NewsSideItem key={item.id} item={item} lang={lang} />
-                ))}
+                <h2 className="nl-side-heading">Tin nổi bật</h2>
+                <div className="nl-side-list">
+                  {sideArticles.map((item) => (
+                    <NewsSideItem key={item.id} item={item} lang={lang} />
+                  ))}
+                </div>
               </section>
             )}
           </div>
@@ -226,6 +239,17 @@ export const NewsListPage: React.FC = () => {
                 <NewsRow key={item.id} item={item} lang={lang} />
               ))}
             </div>
+            {hasMoreFeed && (
+              <div className="nl-more-wrap">
+                <button
+                  type="button"
+                  className="nl-more-btn"
+                  onClick={() => setVisibleFeedCount((c) => c + FEED_PAGE_SIZE)}
+                >
+                  Xem thêm bài viết
+                </button>
+              </div>
+            )}
           </section>
         )}
         </main>
