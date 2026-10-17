@@ -1,11 +1,11 @@
-# TÀI LIỆU KIẾN TRÚC HỆ THỐNG SAIGONVOICE
+# TÀI LIỆU KIẾN TRÚC HỆ THỐNG ECHORA
 ## (Multilingual Automated Tourist Audio Guide Microservices Architecture)
 
 ---
 
 ## 1. Kiến Trúc Tổng Quan (System Architecture)
 
-Hệ thống **SaigonVoice** cung cấp nền tảng hướng dẫn viên du lịch tự động đa ngôn ngữ tại TP.HCM. Du khách quét mã QR tại điểm dừng tham quan hoặc đi vào vùng định vị GPS (bán kính 30–50 m); trình duyệt web tự động tải dữ liệu và phát âm thanh thuyết minh tương ứng.
+Hệ thống **Echora** cung cấp nền tảng hướng dẫn viên du lịch tự động đa ngôn ngữ tại TP.HCM. Du khách quét mã QR tại điểm dừng tham quan hoặc đi vào vùng định vị GPS (bán kính 30–50 m); trình duyệt web tự động tải dữ liệu và phát âm thanh thuyết minh tương ứng.
 
 ```
                             ┌────────────────────────┐

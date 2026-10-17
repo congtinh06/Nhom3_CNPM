@@ -1,4 +1,4 @@
-# SaigonVoice Analytics Service Contract
+# Echora Analytics Service Contract
 
 This document specifies the API contracts, message schemas, and integration points for `analytics-service`.
 

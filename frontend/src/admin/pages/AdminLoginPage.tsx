@@ -89,7 +89,7 @@ export const AdminLoginPage: React.FC = () => {
               className="adm-input"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="admin@saigonvoice.local"
+              placeholder="admin@echora.local"
               disabled={submitting}
               required
             />

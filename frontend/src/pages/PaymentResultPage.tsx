@@ -104,7 +104,7 @@ export const PaymentResultPage: React.FC = () => {
               </div>
               <h2>Cổng thanh toán giả lập</h2>
               <p className="gateway-subtitle">
-                Môi trường thử nghiệm thanh toán đơn hàng SaigonVoice
+                Môi trường thử nghiệm thanh toán đơn hàng Echora
               </p>
             </div>
 

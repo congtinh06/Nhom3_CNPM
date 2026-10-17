@@ -1,5 +1,5 @@
 -- ==============================================================================
--- SaigonVoice — Script khởi tạo 4 Databases & 4 Logins độc lập trên SQL Server 2022
+-- Echora — Script khởi tạo 4 Databases & 4 Logins độc lập trên SQL Server 2022
 -- Đảm bảo Idempotent (chạy lại không lỗi).
 -- Collation: Vietnamese_100_CI_AS (chuẩn Unicode phân biệt dấu thanh tiếng Việt)
 -- ==============================================================================
