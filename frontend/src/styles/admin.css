@@ -2110,9 +2110,15 @@
   gap: 10px;
 }
 
+.adm-toolbar-left .adm-search-wrap {
+  flex: 1 1 200px;
+  min-width: 200px;
+  max-width: 260px;
+}
+
 .adm-toolbar-left .adm-select {
-  min-width: 168px;
-  max-width: 240px;
+  min-width: 160px;
+  max-width: 224px;
 }
 
 /* Nút */
