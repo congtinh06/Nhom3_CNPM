@@ -5,6 +5,7 @@ import com.saigonvoice.content.dto.AdminPoiListItemDto;
 import com.saigonvoice.content.dto.CreatePoiRequest;
 import com.saigonvoice.content.dto.PoiBoundingBoxDto;
 import com.saigonvoice.content.dto.PoiDetailDto;
+import com.saigonvoice.content.dto.PoiGuideDto;
 import com.saigonvoice.content.dto.PoiInternalQrDto;
 import com.saigonvoice.content.dto.PoiPublishStatusDto;
 import com.saigonvoice.content.dto.PoiSummaryDto;
@@ -18,6 +19,8 @@ import java.util.List;
 public interface PoiContentService {
 
     List<PoiSummaryDto> getPois(Long zoneId);
+
+    List<PoiGuideDto> getPoiGuides(Long zoneId);
 
     Page<AdminPoiListItemDto> getAdminPois(Long zoneId, Long routeId, String status, String search, String audioStatus, Pageable pageable);
 

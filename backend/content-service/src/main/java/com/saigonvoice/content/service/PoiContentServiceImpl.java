@@ -7,6 +7,8 @@ import com.saigonvoice.content.dto.AdminPoiTranslationDto;
 import com.saigonvoice.content.dto.CreatePoiRequest;
 import com.saigonvoice.content.dto.PoiBoundingBoxDto;
 import com.saigonvoice.content.dto.PoiDetailDto;
+import com.saigonvoice.content.dto.PoiGuideDto;
+import com.saigonvoice.content.dto.PoiGuideTranslationDto;
 import com.saigonvoice.content.dto.PoiInternalQrDto;
 import com.saigonvoice.content.dto.PoiPublishStatusDto;
 import com.saigonvoice.content.dto.PoiSummaryDto;
@@ -71,6 +73,64 @@ public class PoiContentServiceImpl implements PoiContentService {
                 ? poiRepository.findByZoneIdAndStatus(zoneId, "ACTIVE")
                 : poiRepository.findByStatus("ACTIVE");
         return pois.stream().map(PoiMapper::toSummary).toList();
+    }
+
+    @Override
+    public List<PoiGuideDto> getPoiGuides(Long zoneId) {
+        List<Poi> pois = zoneId != null
+                ? poiRepository.findByZoneIdAndStatus(zoneId, "ACTIVE")
+                : poiRepository.findByStatus("ACTIVE");
+        if (pois.isEmpty()) {
+            return List.of();
+        }
+
+        List<Long> ids = pois.stream().map(Poi::getId).toList();
+        Map<Long, Map<String, PoiGuideTranslationDto>> translationsByPoi = new HashMap<>();
+        for (PoiTranslation t : translationRepository.findByPoiIdIn(ids)) {
+            translationsByPoi
+                    .computeIfAbsent(t.getPoi().getId(), k -> new LinkedHashMap<>())
+                    .put(t.getLanguageCode(), toGuideTranslation(t));
+        }
+
+        return pois.stream()
+                .map(poi -> toGuideDto(poi, translationsByPoi.getOrDefault(poi.getId(), Map.of())))
+                .toList();
+    }
+
+    private PoiGuideDto toGuideDto(Poi poi, Map<String, PoiGuideTranslationDto> translations) {
+        return PoiGuideDto.builder()
+                .id(poi.getId())
+                .code(poi.getCode())
+                .qrToken(poi.getQrToken())
+                .name(poi.getName())
+                .slug(poi.getSlug())
+                .latitude(poi.getLatitude())
+                .longitude(poi.getLongitude())
+                .triggerRadiusMeters(poi.getTriggerRadiusMeters())
+                .address(poi.getAddress())
+                .thumbnailUrl(poi.getThumbnailUrl())
+                .zoneId(poi.getZone() != null ? poi.getZone().getId() : null)
+                .zoneCode(poi.getZone() != null ? poi.getZone().getCode() : null)
+                .categoryCode(poi.getCategory() != null ? poi.getCategory().getCode() : null)
+                .categoryNameVi(poi.getCategory() != null ? poi.getCategory().getNameVi() : null)
+                .routeId(poi.getRoute() != null ? poi.getRoute().getId() : null)
+                .stopOrder(poi.getStopOrder())
+                .translations(translations)
+                .build();
+    }
+
+    private PoiGuideTranslationDto toGuideTranslation(PoiTranslation t) {
+        return PoiGuideTranslationDto.builder()
+                .languageCode(t.getLanguageCode())
+                .title(t.getTitle())
+                .summary(t.getSummary())
+                .description(t.getDescription())
+                .historicalSignificance(t.getHistoricalSignificance())
+                .audioUrl(t.getAudioUrl())
+                .audioDurationSeconds(t.getAudioDurationSeconds())
+                .audioStatus(t.getAudioStatus())
+                .source(t.getSource())
+                .build();
     }
 
     @Override
