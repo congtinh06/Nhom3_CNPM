@@ -1286,6 +1286,13 @@
   flex: 1 1 auto;
 }
 
+.adm-toolbar-left .adm-select {
+  width: auto;
+  flex: 0 1 auto;
+  min-width: 180px;
+  max-width: 260px;
+}
+
 .adm-toolbar-right {
   display: flex;
   align-items: center;
