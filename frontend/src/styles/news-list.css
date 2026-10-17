@@ -359,6 +359,32 @@
   color: var(--fb-text-secondary, #57534E);
 }
 
+/* External source flag (articles linking to the original publisher) */
+.nl-ext-flag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 8px;
+  padding: 3px 8px;
+  border-radius: var(--nl-radius, 8px);
+  border: 1px solid rgba(138, 47, 18, 0.28);
+  color: var(--brown, #8a2f12);
+  background: rgba(138, 47, 18, 0.06);
+  font-family: var(--font-body, Montserrat, sans-serif);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  line-height: 1.2;
+}
+
+.nl-side-link .nl-ext-flag {
+  margin-top: 6px;
+}
+
+.nl-row-body .nl-ext-flag {
+  margin-top: 6px;
+}
+
 /* Side items (top block right column) */
 .nl-top-side {
   display: flex;

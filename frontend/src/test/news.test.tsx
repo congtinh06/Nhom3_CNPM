@@ -396,4 +396,51 @@ describe('News Feature Tests (Tin tức)', () => {
       expect(container.querySelector('.story-cat-badge')).toBeNull();
     });
   });
+
+  describe('8. External source card behavior', () => {
+    it('renders external articles as new-tab links to the real publisher (whole card)', async () => {
+      render(
+        <MemoryRouter initialEntries={['/tin-tuc?c=trang-phuc']}>
+          <Routes>
+            <Route path="/tin-tuc" element={<NewsListPage />} />
+          </Routes>
+        </MemoryRouter>
+      );
+
+      await screen.findByRole('heading', { level: 2, name: /Áo dài Việt Nam/i });
+
+      const extLinks = screen.getAllByRole('link', { name: /mở bài gốc tại/i });
+      expect(extLinks.length).toBe(4); // lead + 3 side items for trang-phuc
+      extLinks.forEach((link) => {
+        expect(link).toHaveAttribute('target', '_blank');
+        expect(link).toHaveAttribute('rel', 'noopener noreferrer');
+        expect(link.getAttribute('href')).toMatch(/^https:\/\//);
+      });
+
+      // No in-site reading link is produced for those external-only cards
+      const internalForCat = screen
+        .getAllByRole('link')
+        .map((l) => l.getAttribute('href') || '')
+        .filter((href) => href.startsWith('/tin-tuc/'));
+      expect(internalForCat).toHaveLength(0);
+    });
+
+    it('keeps internal-only articles as in-site reading links', async () => {
+      render(
+        <MemoryRouter initialEntries={['/tin-tuc?c=diem-den']}>
+          <Routes>
+            <Route path="/tin-tuc" element={<NewsListPage />} />
+          </Routes>
+        </MemoryRouter>
+      );
+
+      await screen.findByRole('heading', { level: 2, name: /Dinh Độc Lập/i });
+
+      const internalLinks = screen
+        .getAllByRole('link')
+        .filter((link) => (link.getAttribute('href') || '').startsWith('/tin-tuc/'));
+      expect(internalLinks.length).toBeGreaterThan(0);
+      expect(screen.queryByRole('link', { name: /mở bài gốc tại/i })).toBeNull();
+    });
+  });
 });

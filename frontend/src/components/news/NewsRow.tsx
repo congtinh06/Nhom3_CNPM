@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
 import { NewsItem, NEWS_CATEGORIES } from '../../types/domain';
 import { SupportedLanguage } from '../../types';
 import { formatNewsDate, formatReadingTime, getCategoryLabel } from './newsFormatters';
 import { NewsMeta } from './NewsMeta';
+import { NewsCardLink } from './NewsCardLink';
+import { NewsExternalFlag } from './NewsExternalFlag';
 
 export interface NewsRowProps {
   item: NewsItem;
@@ -20,7 +21,7 @@ export const NewsRow: React.FC<NewsRowProps> = ({ item, lang = 'vi' }) => {
 
   return (
     <article className="nl-row-item" data-testid="news-row-item">
-      <Link to={`/tin-tuc/${item.slug}`} className="nl-row-link">
+      <NewsCardLink item={item} className="nl-row-link">
         <div className="nl-row-media">
           {imageUrl && !imageError ? (
             <img
@@ -47,8 +48,9 @@ export const NewsRow: React.FC<NewsRowProps> = ({ item, lang = 'vi' }) => {
             formattedDate={formattedDate}
             readingTime={readingTime}
           />
+          <NewsExternalFlag item={item} lang={lang} />
         </div>
-      </Link>
+      </NewsCardLink>
     </article>
   );
 };

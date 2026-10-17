@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
 import { NewsItem, NEWS_CATEGORIES } from '../../types/domain';
 import { SupportedLanguage } from '../../types';
 import { formatNewsDate, formatReadingTime, getCategoryLabel } from './newsFormatters';
 import { NewsMeta } from './NewsMeta';
+import { NewsCardLink } from './NewsCardLink';
+import { NewsExternalFlag } from './NewsExternalFlag';
 
 export interface NewsLeadStoryProps {
   item: NewsItem;
@@ -21,7 +22,7 @@ export const NewsLeadStory: React.FC<NewsLeadStoryProps> = ({ item, lang = 'vi' 
 
   return (
     <article className="nl-lead-card" data-testid="news-lead-story">
-      <Link to={`/tin-tuc/${item.slug}`} className="nl-lead-link">
+      <NewsCardLink item={item} className="nl-lead-link">
         <div className="nl-lead-visual">
           <div className="nl-lead-media">
             {imageUrl && !imageError ? (
@@ -51,8 +52,9 @@ export const NewsLeadStory: React.FC<NewsLeadStoryProps> = ({ item, lang = 'vi' 
             formattedDate={formattedDate}
             readingTime={readingTime}
           />
+          <NewsExternalFlag item={item} lang={lang} />
         </div>
-      </Link>
+      </NewsCardLink>
     </article>
   );
 };
