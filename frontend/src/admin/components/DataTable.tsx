@@ -15,6 +15,7 @@ export interface DataTableProps<T> {
   loading?: boolean;
   emptyText?: string;
   ariaLabel?: string;
+  stickyLastColumn?: boolean;
 }
 
 export function DataTable<T>({
@@ -24,15 +25,19 @@ export function DataTable<T>({
   loading = false,
   emptyText = 'Chưa có dữ liệu hiển thị.',
   ariaLabel = 'Bảng dữ liệu quản trị',
+  stickyLastColumn = false,
 }: DataTableProps<T>): React.ReactElement {
+  const isLastColumn = (index: number) => stickyLastColumn && index === columns.length - 1;
+
   return (
     <div className="adm-table-wrap">
       <table className="adm-table" aria-label={ariaLabel}>
         <thead>
           <tr>
-            {columns.map((col) => (
+            {columns.map((col, colIndex) => (
               <th
                 key={col.key}
+                className={isLastColumn(colIndex) ? 'adm-table-sticky-col' : undefined}
                 style={{
                   width: col.width,
                   textAlign: col.align || 'left',
@@ -64,9 +69,10 @@ export function DataTable<T>({
           ) : (
             data.map((item) => (
               <tr key={keyExtractor(item)}>
-                {columns.map((col) => (
+                {columns.map((col, colIndex) => (
                   <td
                     key={col.key}
+                    className={isLastColumn(colIndex) ? 'adm-table-sticky-col' : undefined}
                     style={{ textAlign: col.align || 'left' }}
                   >
                     {col.render

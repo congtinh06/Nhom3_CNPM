@@ -196,16 +196,26 @@ export const RouteListPage: React.FC = () => {
             Tuyến gom nhiều điểm thuyết minh theo thứ tự tham quan trong một khu vực.
           </p>
         </div>
-        <Link to="/quan-tri/lo-trinh/moi" className="adm-btn adm-btn-primary">
-          + Thêm tuyến
-        </Link>
+        <div className="adm-page-actions">
+          <button
+            type="button"
+            className="adm-btn adm-btn-secondary"
+            onClick={fetchList}
+            disabled={loading}
+          >
+            {loading ? 'Đang tải...' : 'Làm mới'}
+          </button>
+          <Link to="/quan-tri/lo-trinh/moi" className="adm-btn adm-btn-primary">
+            + Thêm tuyến
+          </Link>
+        </div>
       </div>
 
       {notice && (
         <AdminAlert variant="success" message={notice} onClose={() => setNotice(null)} />
       )}
 
-      <AdminToolbar onRefresh={fetchList} refreshing={loading}>
+      <AdminToolbar>
         <div className="adm-search-wrap">
           <input
             type="search"
@@ -286,6 +296,7 @@ export const RouteListPage: React.FC = () => {
             loading={loading}
             emptyText="Chưa có dữ liệu tuyến hiển thị."
             ariaLabel="Bảng danh sách tuyến tham quan quản trị"
+            stickyLastColumn
           />
 
           <AdminPagination

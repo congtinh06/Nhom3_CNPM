@@ -167,16 +167,26 @@ export const ZoneListPage: React.FC = () => {
             thuyết minh theo vị trí.
           </p>
         </div>
-        <Link to="/quan-tri/khu-vuc/moi" className="adm-btn adm-btn-primary">
-          + Thêm khu vực
-        </Link>
+        <div className="adm-page-actions">
+          <button
+            type="button"
+            className="adm-btn adm-btn-secondary"
+            onClick={fetchList}
+            disabled={loading}
+          >
+            {loading ? 'Đang tải...' : 'Làm mới'}
+          </button>
+          <Link to="/quan-tri/khu-vuc/moi" className="adm-btn adm-btn-primary">
+            + Thêm khu vực
+          </Link>
+        </div>
       </div>
 
       {notice && (
         <AdminAlert variant="success" message={notice} onClose={() => setNotice(null)} />
       )}
 
-      <AdminToolbar onRefresh={fetchList} refreshing={loading}>
+      <AdminToolbar>
         <div className="adm-search-wrap">
           <input
             type="search"
@@ -244,6 +254,7 @@ export const ZoneListPage: React.FC = () => {
             loading={loading}
             emptyText="Chưa có dữ liệu khu vực hiển thị."
             ariaLabel="Bảng danh sách khu vực quản trị"
+            stickyLastColumn
           />
 
           <AdminPagination

@@ -223,12 +223,22 @@ export const PoiListPage: React.FC = () => {
             website Echora.
           </p>
         </div>
-        <Link to="/quan-tri/diem-thuyet-minh/moi" className="adm-btn adm-btn-primary">
-          + Thêm điểm thuyết minh
-        </Link>
+        <div className="adm-page-actions">
+          <button
+            type="button"
+            className="adm-btn adm-btn-secondary"
+            onClick={fetchList}
+            disabled={loading}
+          >
+            {loading ? 'Đang tải...' : 'Làm mới'}
+          </button>
+          <Link to="/quan-tri/diem-thuyet-minh/moi" className="adm-btn adm-btn-primary">
+            + Thêm điểm thuyết minh
+          </Link>
+        </div>
       </div>
 
-      <AdminToolbar onRefresh={fetchList} refreshing={loading}>
+      <AdminToolbar>
         <div className="adm-search-wrap">
           <input
             type="search"
@@ -334,6 +344,7 @@ export const PoiListPage: React.FC = () => {
             loading={loading}
             emptyText="Chưa có dữ liệu điểm thuyết minh hiển thị."
             ariaLabel="Bảng danh sách điểm thuyết minh quản trị"
+            stickyLastColumn
           />
 
           <AdminPagination

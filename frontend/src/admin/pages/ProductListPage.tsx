@@ -406,9 +406,19 @@ export const ProductListPage: React.FC = () => {
             Danh sách món ăn, thức uống và ẩm thực hiển thị trên website Echora.
           </p>
         </div>
-        <Link to="/quan-tri/san-pham/moi" className="adm-btn adm-btn-primary">
-          + Thêm sản phẩm
-        </Link>
+        <div className="adm-page-actions">
+          <button
+            type="button"
+            className="adm-btn adm-btn-secondary"
+            onClick={fetchProducts}
+            disabled={loading}
+          >
+            {loading ? 'Đang tải...' : 'Làm mới'}
+          </button>
+          <Link to="/quan-tri/san-pham/moi" className="adm-btn adm-btn-primary">
+            + Thêm sản phẩm
+          </Link>
+        </div>
       </div>
 
       {actionNotice && (
@@ -428,7 +438,7 @@ export const ProductListPage: React.FC = () => {
       )}
 
       {/* Toolbar / Bộ lọc */}
-      <AdminToolbar onRefresh={fetchProducts} refreshing={loading}>
+      <AdminToolbar>
         <div className="adm-search-wrap">
           <input
             type="search"
@@ -518,6 +528,7 @@ export const ProductListPage: React.FC = () => {
             loading={loading}
             emptyText="Chưa có dữ liệu sản phẩm hiển thị."
             ariaLabel="Bảng danh sách sản phẩm quản trị"
+            stickyLastColumn
           />
 
           <AdminPagination

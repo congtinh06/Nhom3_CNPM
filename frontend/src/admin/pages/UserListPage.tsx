@@ -155,9 +155,19 @@ export const UserListPage: React.FC = () => {
             tài khoản khi cần thiết.
           </p>
         </div>
+        <div className="adm-page-actions">
+          <button
+            type="button"
+            className="adm-btn adm-btn-secondary"
+            onClick={fetchList}
+            disabled={loading}
+          >
+            {loading ? 'Đang tải...' : 'Làm mới'}
+          </button>
+        </div>
       </div>
 
-      <AdminToolbar onRefresh={fetchList} refreshing={loading}>
+      <AdminToolbar>
         <div className="adm-search-wrap">
           <input
             type="search"
@@ -238,6 +248,7 @@ export const UserListPage: React.FC = () => {
             loading={loading}
             emptyText="Chưa có dữ liệu người dùng hiển thị."
             ariaLabel="Bảng danh sách người dùng quản trị"
+            stickyLastColumn
           />
 
           <AdminPagination
