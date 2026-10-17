@@ -518,6 +518,32 @@ export const OsmTileLayer: React.FC<OsmTileLayerProps> = ({
   return null;
 };
 
+interface UserAutoCenterProps {
+  userPos: PositionState | null;
+  centerOnUserToken: number;
+}
+
+// Flies the map to the user's position exactly once per "Vị trí của tôi" press
+// (signalled by a token bump). Later position updates leave the viewport alone.
+const UserAutoCenter: React.FC<UserAutoCenterProps> = ({ userPos, centerOnUserToken }) => {
+  const map = useMap();
+  const lastCenteredTokenRef = useRef<number>(0);
+
+  useEffect(() => {
+    if (!userPos || !centerOnUserToken) return;
+    if (lastCenteredTokenRef.current === centerOnUserToken) return;
+    lastCenteredTokenRef.current = centerOnUserToken;
+    try {
+      map.stop();
+      (map.flyTo as any)([userPos.lat, userPos.lng], 16, { duration: 0.8 });
+    } catch {
+      map.setView([userPos.lat, userPos.lng], 16);
+    }
+  }, [centerOnUserToken, userPos, map]);
+
+  return null;
+};
+
 interface PoiMapProps {
   pois: GeoPoi[];
   selectedPoiId: string | null;
@@ -528,6 +554,7 @@ interface PoiMapProps {
   userPos: PositionState | null;
   radius: number;
   isAutoEnabled: boolean;
+  centerOnUserToken?: number;
   isSimMode?: boolean;
   onToggleSimMode?: () => void;
   onSetSimulatedPosition?: (lat: number, lng: number) => void;
@@ -554,6 +581,7 @@ export const PoiMap: React.FC<PoiMapProps> = ({
   userPos,
   radius,
   isAutoEnabled: _isAutoEnabled,
+  centerOnUserToken = 0,
   isSimMode = false,
   onToggleSimMode,
   onSetSimulatedPosition,
@@ -742,6 +770,9 @@ export const PoiMap: React.FC<PoiMapProps> = ({
 
           {/* Floating Controls: top-right stacked 40px round white buttons */}
           <FloatingMapControls pois={pois} userPos={userPos} currentLang={currentLang} />
+
+          {/* One-shot auto-center to the user's position after a GPS request */}
+          <UserAutoCenter userPos={userPos} centerOnUserToken={centerOnUserToken} />
 
           <MapClickHandler
             isSimMode={isSimMode}

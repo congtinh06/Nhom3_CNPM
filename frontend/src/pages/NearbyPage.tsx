@@ -6,6 +6,7 @@ import { useAutoNarration, haversine } from '../hooks/useAutoNarration';
 import { useNearbyAudio, splitTranscriptIntoSentences } from '../hooks/useNearbyAudio';
 import { unlockAudio } from '../lib/audioUnlock';
 import { t, formatDistance, NEARBY_DICTIONARY } from '../content/nearbyI18n';
+import { useToastOptional } from '../context/ToastContext';
 
 // Components
 import { PoiHeader } from '../components/nearby/PoiHeader';
@@ -136,6 +137,11 @@ export const NearbyPage: React.FC = () => {
   const [radius, setRadius] = useState<number>(50);
   const [overrideRadius, setOverrideRadius] = useState<number | null>(null);
   const [isSimMode, setIsSimMode] = useState<boolean>(false);
+  const [simStopId, setSimStopId] = useState<string | null>(null);
+  // Increments on every "Vị trí của tôi" press so the map auto-centers exactly once per press
+  const [flyToUserToken, setFlyToUserToken] = useState<number>(0);
+  const gpsToastShownRef = useRef<boolean>(false);
+  const { showToast } = useToastOptional();
   const [isAutoEnabled, setIsAutoEnabled] = useState<boolean>(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -286,6 +292,7 @@ export const NearbyPage: React.FC = () => {
   const {
     userPos,
     gpsError,
+    isRequestingGps,
     requestGps,
     checkAutoTrigger,
     setAutoDirect,
@@ -315,19 +322,62 @@ export const NearbyPage: React.FC = () => {
     isSimMode,
   });
 
-  // Toggle simulation mode: if starting and no position, place near Stop 1
-  const handleToggleSimMode = useCallback(() => {
-    setIsSimMode((prev) => {
-      const next = !prev;
-      if (next && !userPos) {
-        const initialPoi = pois[0];
-        if (initialPoi) {
-          applySimulatedPosition(initialPoi.lat, initialPoi.lng);
-        }
+  // Manual location simulation: pick a preset stop or enter raw coordinates.
+  const simStops = useMemo(
+    () => pois.map((p) => ({ id: p.id, name: p.name[currentLang] || p.name.vi })),
+    [pois, currentLang]
+  );
+
+  const handlePickSimStop = useCallback(
+    (id: string) => {
+      const poi = pois.find((p) => p.id === id);
+      if (!poi) return;
+      setSimStopId(id);
+      setIsSimMode(true);
+      applySimulatedPosition(poi.lat, poi.lng);
+      setSelectedId(id);
+      setActiveId(id);
+    },
+    [pois, applySimulatedPosition]
+  );
+
+  const handleApplySimCoords = useCallback(
+    (lat: number, lng: number) => {
+      setSimStopId(null);
+      setIsSimMode(true);
+      applySimulatedPosition(lat, lng);
+    },
+    [applySimulatedPosition]
+  );
+
+  const handleStopSim = useCallback(() => {
+    setIsSimMode(false);
+    setSimStopId(null);
+  }, []);
+
+  // One-time toast the first time a real GPS fix lands. Later watch updates
+  // (same source 'gps') must not re-trigger it.
+  useEffect(() => {
+    if (!userPos || userPos.source !== 'gps') return;
+    if (gpsToastShownRef.current) return;
+    let nearest: GeoPoi | null = null;
+    let nearestDist = Infinity;
+    for (const p of pois) {
+      const d = haversine(userPos.lat, userPos.lng, p.lat, p.lng);
+      if (d < nearestDist) {
+        nearestDist = d;
+        nearest = p;
       }
-      return next;
-    });
-  }, [userPos, pois, applySimulatedPosition]);
+    }
+    if (!nearest) return;
+    gpsToastShownRef.current = true;
+    showToast(
+      t(currentLang, 'gpsLocatedToast', {
+        name: getPoiName(nearest),
+        dist: formatDistance(nearestDist, currentLang),
+      })
+    );
+  }, [userPos, pois, currentLang, getPoiName, showToast]);
 
   // Calculate sorted POIs (Closest first if userPos exists; otherwise tour order by stopOrder)
   const sortedPois = useMemo(() => {
@@ -523,14 +573,23 @@ export const NearbyPage: React.FC = () => {
             checkAutoTrigger(userPos.lat, userPos.lng);
           }
         }}
-        onRequestGps={requestGps}
+        onRequestGps={() => {
+          // One fly-to per press; the token is consumed by the map on first fix
+          setFlyToUserToken((n) => n + 1);
+          requestGps();
+        }}
         currentLang={currentLang}
         radius={radius}
         overrideRadius={overrideRadius}
         onChangeOverrideRadius={setOverrideRadius}
         onChangeRadius={setRadius}
         isSimMode={isSimMode}
-        onToggleSimMode={handleToggleSimMode}
+        isLocatingGps={isRequestingGps}
+        simStops={simStops}
+        activeSimStopId={simStopId}
+        onPickSimStop={handlePickSimStop}
+        onApplySimCoords={handleApplySimCoords}
+        onStopSim={handleStopSim}
         listenedCount={listenedPoiIds.length}
         stopsCount={pois.length}
         onResetProgress={handleResetProgress}
@@ -614,11 +673,12 @@ export const NearbyPage: React.FC = () => {
               currentPlayingId={currentId}
               isPlaying={isPlaying}
               userPos={userPos}
+              centerOnUserToken={flyToUserToken}
               radius={overrideRadius != null ? overrideRadius : (activeSelectedPoi?.triggerRadius ?? 60)}
               isAutoEnabled={isAutoEnabled}
               isSimMode={isSimMode}
-              onToggleSimMode={handleToggleSimMode}
-              onSetSimulatedPosition={applySimulatedPosition}
+              onToggleSimMode={handleStopSim}
+              onSetSimulatedPosition={handleApplySimCoords}
               listenedPoiIds={listenedPoiIds}
               onSelectPoi={handleExplicitSelectPoi}
               onHoverPoi={setHoveredId}

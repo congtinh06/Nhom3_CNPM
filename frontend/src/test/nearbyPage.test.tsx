@@ -13,6 +13,8 @@ import { PoiHero } from '../components/nearby/PoiHero';
 import { PoiReadingSection } from '../components/nearby/PoiReadingSection';
 import { SortedPoiItem } from '../components/nearby/PoiList';
 import { snapToWordBoundary, useNearbyAudio } from '../hooks/useNearbyAudio';
+import { useAutoNarration } from '../hooks/useAutoNarration';
+import { ToastProvider } from '../context/ToastContext';
 
 import { defaultMockVoices } from './setup';
 
@@ -374,7 +376,7 @@ describe('NearbyPage - Clean Multilingual & Audio Narration Integration', () => 
     expect(playMock).not.toHaveBeenCalled();
   });
 
-  it('toggles simulation mode, displays "Chế độ giả lập" banner, and initializes simulated position', () => {
+  it('opens the simulation picker and simulates position from a preset stop', () => {
     render(
       <BrowserRouter>
         <NearbyPage />
@@ -388,11 +390,189 @@ describe('NearbyPage - Clean Multilingual & Audio Narration Integration', () => 
       fireEvent.click(simBtn);
     });
 
+    // The picker lists the preset stops; choose the first one
+    const stopItem = document.querySelector('.sim-stop-item') as HTMLButtonElement | null;
+    expect(stopItem).toBeTruthy();
+    act(() => {
+      fireEvent.click(stopItem!);
+    });
+
     // Verify simulation mode badge/banner appears
     const simMatches = screen.getAllByText(/Chế độ giả lập/i);
     expect(simMatches.length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText(/Bấm hoặc kéo chấm tròn để di chuyển/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Đang giả lập/i })).toBeInTheDocument();
+  });
+
+  it('simulates position from manually entered coordinates', () => {
+    render(
+      <BrowserRouter>
+        <NearbyPage />
+      </BrowserRouter>
+    );
+
+    act(() => {
+      fireEvent.click(screen.getByRole('button', { name: /Giả lập vị trí/i }));
+    });
+
+    fireEvent.change(screen.getByLabelText(/Vĩ độ/i), { target: { value: '10.7769' } });
+    fireEvent.change(screen.getByLabelText(/Kinh độ/i), { target: { value: '106.6953' } });
+
+    act(() => {
+      fireEvent.click(screen.getByRole('button', { name: /Đặt vị trí/i }));
+    });
+
+    expect(screen.getAllByText(/Chế độ giả lập/i).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByRole('button', { name: /Đang giả lập/i })).toBeInTheDocument();
+  });
+
+  it('rejects invalid coordinates and keeps simulation off', () => {
+    render(
+      <BrowserRouter>
+        <NearbyPage />
+      </BrowserRouter>
+    );
+
+    act(() => {
+      fireEvent.click(screen.getByRole('button', { name: /Giả lập vị trí/i }));
+    });
+
+    fireEvent.change(screen.getByLabelText(/Vĩ độ/i), { target: { value: '999' } });
+    fireEvent.change(screen.getByLabelText(/Kinh độ/i), { target: { value: '106.6953' } });
+
+    act(() => {
+      fireEvent.click(screen.getByRole('button', { name: /Đặt vị trí/i }));
+    });
+
+    expect(screen.getByText(/Toạ độ không hợp lệ/i)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Đang giả lập/i })).toBeNull();
+  });
+
+  it('shows a one-time "location found" toast on the first GPS fix, not on later updates', () => {
+    let watchCb: ((pos: any) => void) | null = null;
+    const mockGeolocation = {
+      getCurrentPosition: vi.fn((success: any) => {
+        success({
+          coords: {
+            latitude: 10.77709,
+            longitude: 106.6954,
+            accuracy: 10,
+            altitude: null,
+            altitudeAccuracy: null,
+            heading: null,
+            speed: null,
+          },
+          timestamp: Date.now(),
+        });
+      }),
+      watchPosition: vi.fn((cb: any) => {
+        watchCb = cb;
+        return 7;
+      }),
+      clearWatch: vi.fn(),
+    };
+    Object.defineProperty(navigator, 'geolocation', {
+      value: mockGeolocation,
+      writable: true,
+      configurable: true,
+    });
+
+    const { container } = render(
+      <ToastProvider>
+        <BrowserRouter>
+          <NearbyPage />
+        </BrowserRouter>
+      </ToastProvider>
+    );
+
+    // Enable auto so the hook subscribes to watchPosition for the later update
+    act(() => {
+      fireEvent.click(screen.getByRole('switch'));
+    });
+
+    act(() => {
+      fireEvent.click(screen.getByRole('button', { name: /Vị trí của tôi/i }));
+    });
+
+    const toast = container.querySelector('#ts');
+    expect(toast).not.toBeNull();
+    expect(toast?.textContent).toMatch(/Đã xác định vị trí\. Điểm gần nhất: Dinh Độc Lập/);
+    expect(toast?.textContent).toMatch(/cách .*(m|km)/);
+
+    // A later watch update (near Notre Dame) must NOT re-show or replace the toast
+    expect(watchCb).not.toBeNull();
+    act(() => {
+      watchCb!({
+        coords: {
+          latitude: 10.77972,
+          longitude: 106.69908,
+          accuracy: 5,
+          altitude: null,
+          altitudeAccuracy: null,
+          heading: null,
+          speed: null,
+        },
+        timestamp: Date.now(),
+      });
+    });
+
+    const toastAfter = container.querySelector('#ts');
+    expect(toastAfter?.textContent).toMatch(/Dinh Độc Lập/);
+    expect(toastAfter?.textContent).not.toMatch(/Nhà thờ Đức Bà/);
+  });
+
+  it('auto narration: far stays silent, inside radius plays once, leaving and re-entering does not replay', () => {
+    const autoPoi = {
+      id: 'poi-1',
+      name: { vi: 'Dinh Độc Lập', en: 'Independence Palace', ko: '통일궁', ja: '統一会堂' },
+      lat: 10.77695,
+      lng: 106.69537,
+      triggerRadius: 50,
+      category: { vi: 'Di tích lịch sử', en: 'Historic', ko: '유적', ja: '史跡' },
+      image: '',
+      audio: { vi: '', en: '', ko: '', ja: '' },
+      transcript: { vi: '', en: '', ko: '', ja: '' },
+    } as unknown as GeoPoi;
+
+    const playPoi = vi.fn();
+    const { result } = renderHook(() =>
+      useAutoNarration({
+        pois: [autoPoi],
+        isAutoEnabled: true,
+        currentPlayingId: null,
+        isPlaying: false,
+        playPoi,
+        gpsErrorMessage: 'err',
+      })
+    );
+
+    // 1. ~2.5 km away: no narration
+    act(() => {
+      result.current.applySimulatedPosition(10.8, 106.72);
+    });
+    expect(playPoi).not.toHaveBeenCalled();
+
+    // 2. Just outside the 50 m radius (~100 m north): still no narration
+    act(() => {
+      result.current.applySimulatedPosition(10.77785, 106.69537);
+    });
+    expect(playPoi).not.toHaveBeenCalled();
+
+    // 3. Inside the radius (~33 m north): auto narration starts once
+    act(() => {
+      result.current.applySimulatedPosition(10.77725, 106.69537);
+    });
+    expect(playPoi).toHaveBeenCalledTimes(1);
+    expect(playPoi).toHaveBeenCalledWith('poi-1', true);
+
+    // 4. Leave the radius, then re-enter: never replays an already-narrated stop
+    act(() => {
+      result.current.applySimulatedPosition(10.8, 106.72);
+    });
+    act(() => {
+      result.current.applySimulatedPosition(10.77725, 106.69537);
+    });
+    expect(playPoi).toHaveBeenCalledTimes(1);
   });
 
   it('tracks journey progress and renders single-line stats and localStorage sync', () => {

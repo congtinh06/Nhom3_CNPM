@@ -118,7 +118,17 @@ export type NearbyKey =
   | 'qrLinkCopied'
   | 'qrShare'
   | 'qrModalTitle'
-  | 'qrShowBtn';
+  | 'qrShowBtn'
+  | 'myLocationLocating'
+  | 'simPanelTitle'
+  | 'simPickStopLabel'
+  | 'simManualLabel'
+  | 'simLatLabel'
+  | 'simLngLabel'
+  | 'simApplyBtn'
+  | 'simStopBtn'
+  | 'simInvalidCoord'
+  | 'gpsLocatedToast';
 
 export const NATIVE_LANG_NAMES: Record<SupportedLanguage, string> = {
   vi: 'Tiếng Việt',
@@ -256,6 +266,16 @@ export const NEARBY_DICTIONARY: Record<SupportedLanguage, Record<NearbyKey, stri
     qrShare: 'Chia sẻ',
     qrModalTitle: 'Mã QR',
     qrShowBtn: 'Hiện mã QR',
+    myLocationLocating: 'Đang xác định vị trí...',
+    simPanelTitle: 'Giả lập vị trí',
+    simPickStopLabel: 'Chọn một điểm dừng',
+    simManualLabel: 'Hoặc nhập toạ độ thủ công',
+    simLatLabel: 'Vĩ độ',
+    simLngLabel: 'Kinh độ',
+    simApplyBtn: 'Đặt vị trí',
+    simStopBtn: 'Tắt giả lập',
+    simInvalidCoord: 'Toạ độ không hợp lệ.',
+    gpsLocatedToast: 'Đã xác định vị trí. Điểm gần nhất: {name}, cách {dist}.',
   },
   en: {
     heroEyebrow: 'AUDIO TOUR · 5 LANDMARKS',
@@ -378,6 +398,16 @@ export const NEARBY_DICTIONARY: Record<SupportedLanguage, Record<NearbyKey, stri
     qrShare: 'Share',
     qrModalTitle: 'QR code',
     qrShowBtn: 'Show QR code',
+    myLocationLocating: 'Locating...',
+    simPanelTitle: 'Simulate location',
+    simPickStopLabel: 'Pick a stop',
+    simManualLabel: 'Or enter coordinates',
+    simLatLabel: 'Latitude',
+    simLngLabel: 'Longitude',
+    simApplyBtn: 'Set location',
+    simStopBtn: 'Stop simulation',
+    simInvalidCoord: 'Invalid coordinates.',
+    gpsLocatedToast: 'Location found. Nearest spot: {name}, {dist} away.',
   },
   /* DRAFT: needs native review */
   ko: {
@@ -500,6 +530,16 @@ export const NEARBY_DICTIONARY: Record<SupportedLanguage, Record<NearbyKey, stri
     qrShare: '공유',
     qrModalTitle: 'QR 코드',
     qrShowBtn: 'QR 코드 표시',
+    myLocationLocating: '위치 확인 중...',
+    simPanelTitle: '위치 시뮬레이션',
+    simPickStopLabel: '명소 선택',
+    simManualLabel: '또는 좌표 직접 입력',
+    simLatLabel: '위도',
+    simLngLabel: '경도',
+    simApplyBtn: '위치 설정',
+    simStopBtn: '시뮬레이션 끄기',
+    simInvalidCoord: '좌표가 올바르지 않습니다.',
+    gpsLocatedToast: '위치 확인 완료. 가장 가까운 명소: {name}, {dist} 거리.',
   },
   /* DRAFT: needs native review */
   ja: {
@@ -622,6 +662,16 @@ export const NEARBY_DICTIONARY: Record<SupportedLanguage, Record<NearbyKey, stri
     qrShare: '共有',
     qrModalTitle: 'QRコード',
     qrShowBtn: 'QRコードを表示',
+    myLocationLocating: '位置情報を取得中...',
+    simPanelTitle: '位置シミュレーション',
+    simPickStopLabel: 'スポットを選択',
+    simManualLabel: 'または座標を入力',
+    simLatLabel: '緯度',
+    simLngLabel: '経度',
+    simApplyBtn: '位置を設定',
+    simStopBtn: 'シミュレーションを停止',
+    simInvalidCoord: '座標が正しくありません。',
+    gpsLocatedToast: '位置を取得しました。最寄りのスポット: {name}（{dist}）。',
   },
 };
 
@@ -646,6 +696,16 @@ export const UNREVIEWED_CJK_KEYS: NearbyKey[] = [
   'qrShare',
   'qrModalTitle',
   'qrShowBtn',
+  'myLocationLocating',
+  'simPanelTitle',
+  'simPickStopLabel',
+  'simManualLabel',
+  'simLatLabel',
+  'simLngLabel',
+  'simApplyBtn',
+  'simStopBtn',
+  'simInvalidCoord',
+  'gpsLocatedToast',
 ];
 
 const LOCALE_MAP: Record<SupportedLanguage, string> = {
