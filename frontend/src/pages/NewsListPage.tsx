@@ -6,6 +6,7 @@ import { NewsCategory, NEWS_CATEGORIES } from '../types/domain';
 import { useDocumentMeta } from '../hooks/useDocumentMeta';
 import { useNavbarLanguage } from '../content/languages';
 import { tNews } from '../content/newsI18n';
+import { PageHero } from '../components/common/PageHero';
 import { NewsLeadStory } from '../components/news/NewsLeadStory';
 import { NewsSideItem } from '../components/news/NewsSideItem';
 import { NewsRow } from '../components/news/NewsRow';
@@ -95,14 +96,19 @@ export const NewsListPage: React.FC = () => {
 
   return (
     <div className="nl-page-root">
-      <main className="nl-container" id="news-main-content">
-        <header className="nl-header" id="news-header">
-          <h1 className="nl-header-title">{tNews(lang, 'pageTitle')}</h1>
-          <p className="nl-header-subtitle">{tNews(lang, 'pageSubtitle')}</p>
-          <div className="nl-header-divider" role="separator" />
-        </header>
+      <PageHero
+        className="news-hero"
+        eyebrow=""
+        title={tNews(lang, 'pageTitle')}
+        subtitle={tNews(lang, 'pageSubtitle')}
+        imageSrc="/images/home/intro-nguyen-hue.jpg"
+        imagePosition="center"
+        imageCredit="Echora"
+      />
 
-        {hasNewArticles && (
+      <div className="nl-body">
+        <main className="nl-container" id="news-main-content">
+          {hasNewArticles && (
           <div className="nl-freshness-row">
             <button
               type="button"
@@ -222,7 +228,8 @@ export const NewsListPage: React.FC = () => {
             </div>
           </section>
         )}
-      </main>
+        </main>
+      </div>
     </div>
   );
 };
