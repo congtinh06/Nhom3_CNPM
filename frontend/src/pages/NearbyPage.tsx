@@ -288,6 +288,9 @@ export const NearbyPage: React.FC = () => {
     noVoiceNoticeText: () => t(currentLang, 'noVoiceForLanguage'),
   });
 
+  // Single source of truth for the paused state, shared by every play button
+  const isPaused = playbackStatus === 'paused';
+
   // Auto Narration & GPS Hook
   const {
     userPos,
@@ -672,6 +675,7 @@ export const NearbyPage: React.FC = () => {
               hoveredPoiId={hoveredId}
               currentPlayingId={currentId}
               isPlaying={isPlaying}
+              isPaused={isPaused}
               userPos={userPos}
               centerOnUserToken={flyToUserToken}
               radius={overrideRadius != null ? overrideRadius : (activeSelectedPoi?.triggerRadius ?? 60)}
@@ -682,14 +686,12 @@ export const NearbyPage: React.FC = () => {
               listenedPoiIds={listenedPoiIds}
               onSelectPoi={handleExplicitSelectPoi}
               onHoverPoi={setHoveredId}
-              onPlayPoi={(poiId) => {
-                handleExplicitSelectPoi(poiId);
-                playPoi(poiId, false);
-              }}
+              onTogglePlay={handleTogglePlayPoi}
               getPoiName={getPoiName}
               getPoiCategory={getPoiCategory}
               listenBtnText={t(currentLang, 'playBtn')}
               pauseBtnText={t(currentLang, 'pauseBtn')}
+              resumeBtnText={t(currentLang, 'resumeBtn')}
               radiusLabelText={t(currentLang, 'radiusLabel')}
               mapCaptionText={t(currentLang, 'mapCaption')}
               currentLang={currentLang}

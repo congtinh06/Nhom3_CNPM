@@ -1104,6 +1104,16 @@ html:lang(ja) .nearby-sv-root,
   background-color: var(--accent-hover);
 }
 
+.nearby-sv-root .selected-card-play-btn.is-paused {
+  background-color: #FFFFFF;
+  color: var(--accent-orange);
+  box-shadow: inset 0 0 0 1.5px var(--accent-orange);
+}
+
+.nearby-sv-root .selected-card-play-btn.is-paused:hover {
+  background-color: #FFF7ED;
+}
+
 .nearby-sv-root .selected-card-close-btn:focus-visible,
 .nearby-sv-root .selected-card-play-btn:focus-visible,
 .nearby-sv-root .btn-view-whole-tour:focus-visible {
@@ -2176,6 +2186,10 @@ html:lang(ja) .nearby-sv-root,
 
 .nearby-sv-root .speech-pulse-bar.is-animating {
   animation: speech-pulse-stream 1.5s infinite linear;
+}
+
+.nearby-sv-root .speech-pulse-bar.is-paused {
+  opacity: 0.45;
 }
 
 @keyframes speech-pulse-stream {

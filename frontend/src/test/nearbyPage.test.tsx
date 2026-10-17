@@ -1,6 +1,6 @@
 import React from 'react';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { render, screen, fireEvent, act, renderHook } from '@testing-library/react';
+import { render, screen, fireEvent, act, renderHook, within } from '@testing-library/react';
 import { BrowserRouter, MemoryRouter } from 'react-router-dom';
 import { NearbyPage, GeoPoi, getNarration, getHeroIntroText } from '../pages/NearbyPage';
 import nearbyPoisData from '../content/nearbyPois.json';
@@ -10,6 +10,7 @@ import { setStoredLanguage, getStoredLanguage, SUPPORTED_LANGUAGES } from '../co
 import { NEARBY_DICTIONARY, getMissingKeysCount, t } from '../content/nearbyI18n';
 import { api } from '../api/client';
 import { PoiHero } from '../components/nearby/PoiHero';
+import { PoiMap } from '../components/nearby/PoiMap';
 import { PoiReadingSection } from '../components/nearby/PoiReadingSection';
 import { SortedPoiItem } from '../components/nearby/PoiList';
 import { snapToWordBoundary, useNearbyAudio } from '../hooks/useNearbyAudio';
@@ -687,6 +688,101 @@ describe('NearbyPage - Clean Multilingual & Audio Narration Integration', () => 
 
       // Card is dismissed
       expect(screen.queryByTestId('nearby-selected-card')).not.toBeInTheDocument();
+    });
+
+    describe('Single source of truth for Play / Pause / Resume (Hạng mục 1)', () => {
+      const mapPois = nearbyPoisData as unknown as GeoPoi[];
+
+      const makeMapProps = (over: Partial<React.ComponentProps<typeof PoiMap>> = {}) => ({
+        pois: mapPois,
+        selectedPoiId: null as string | null,
+        activePoiId: null as string | null,
+        hoveredPoiId: null as string | null,
+        currentPlayingId: null as string | null,
+        isPlaying: false,
+        isPaused: false,
+        userPos: null,
+        radius: 60,
+        isAutoEnabled: true,
+        listenedPoiIds: [] as string[],
+        onSelectPoi: vi.fn(),
+        onHoverPoi: vi.fn(),
+        onTogglePlay: vi.fn(),
+        getPoiName: (p: GeoPoi) => p.name.vi,
+        getPoiCategory: (p: GeoPoi) => p.category.vi,
+        listenBtnText: 'Phát',
+        pauseBtnText: 'Tạm dừng',
+        resumeBtnText: 'Tiếp tục',
+        radiusLabelText: 'Bán kính',
+        mapCaptionText: 'Bản đồ',
+        currentLang: 'vi' as const,
+        ...over,
+      });
+
+      it('shows "Tiếp tục" on both marker popup and selected card when the current POI is paused, and resumes on click', () => {
+        const onTogglePlay = vi.fn();
+        render(
+          <PoiMap
+            {...makeMapProps({
+              currentPlayingId: 'poi-1',
+              isPlaying: false,
+              isPaused: true,
+              onTogglePlay,
+            })}
+          />
+        );
+
+        // Marker popup for poi-1 reflects the paused state
+        const popup = screen.getAllByTestId('leaflet-popup')[0]!;
+        const popupBtn = within(popup).getByRole('button');
+        expect(popupBtn).toHaveTextContent('Tiếp tục');
+
+        // Open the selected card for poi-1
+        fireEvent.click(screen.getAllByTestId('leaflet-marker')[0]!);
+        const card = screen.getByTestId('nearby-selected-card');
+        const cardBtn = within(card).getByRole('button', { name: 'Tiếp tục' });
+        expect(cardBtn).toHaveAttribute('aria-pressed', 'false');
+
+        fireEvent.click(cardBtn);
+        fireEvent.click(popupBtn);
+        expect(onTogglePlay).toHaveBeenCalledWith('poi-1');
+      });
+
+      it('shows "Tạm dừng" on both the popup and selected card while the current POI is playing', () => {
+        render(
+          <PoiMap
+            {...makeMapProps({
+              currentPlayingId: 'poi-1',
+              isPlaying: true,
+              isPaused: false,
+            })}
+          />
+        );
+
+        const popup = screen.getAllByTestId('leaflet-popup')[0]!;
+        expect(within(popup).getByRole('button')).toHaveTextContent('Tạm dừng');
+
+        fireEvent.click(screen.getAllByTestId('leaflet-marker')[0]!);
+        const card = screen.getByTestId('nearby-selected-card');
+        const cardBtn = within(card).getByRole('button', { name: 'Tạm dừng' });
+        expect(cardBtn).toHaveAttribute('aria-pressed', 'true');
+      });
+
+      it('shows "Phát" when the POI is not the one currently playing', () => {
+        render(
+          <PoiMap
+            {...makeMapProps({
+              currentPlayingId: 'poi-2',
+              isPlaying: true,
+              isPaused: false,
+            })}
+          />
+        );
+
+        fireEvent.click(screen.getAllByTestId('leaflet-marker')[0]!);
+        const card = screen.getByTestId('nearby-selected-card');
+        expect(within(card).getByRole('button', { name: 'Phát' })).toBeInTheDocument();
+      });
     });
 
     it('removes per-chapter language chips and shows notice when transcript is missing for current language', () => {

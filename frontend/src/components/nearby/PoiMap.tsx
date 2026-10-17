@@ -551,6 +551,7 @@ interface PoiMapProps {
   hoveredPoiId?: string | null;
   currentPlayingId: string | null;
   isPlaying: boolean;
+  isPaused?: boolean;
   userPos: PositionState | null;
   radius: number;
   isAutoEnabled: boolean;
@@ -561,11 +562,12 @@ interface PoiMapProps {
   listenedPoiIds?: string[];
   onSelectPoi: (poiId: string) => void;
   onHoverPoi?: (poiId: string | null) => void;
-  onPlayPoi: (poiId: string) => void;
+  onTogglePlay: (poiId: string) => void;
   getPoiName: (poi: GeoPoi) => string;
   getPoiCategory: (poi: GeoPoi) => string;
   listenBtnText: string;
   pauseBtnText: string;
+  resumeBtnText?: string;
   radiusLabelText: string;
   mapCaptionText: string;
   currentLang?: SupportedLanguage;
@@ -578,6 +580,7 @@ export const PoiMap: React.FC<PoiMapProps> = ({
   hoveredPoiId,
   currentPlayingId,
   isPlaying,
+  isPaused = false,
   userPos,
   radius,
   isAutoEnabled: _isAutoEnabled,
@@ -588,11 +591,12 @@ export const PoiMap: React.FC<PoiMapProps> = ({
   listenedPoiIds = [],
   onSelectPoi,
   onHoverPoi,
-  onPlayPoi,
+  onTogglePlay,
   getPoiName,
   getPoiCategory,
   listenBtnText,
   pauseBtnText,
+  resumeBtnText,
   mapCaptionText,
   currentLang = 'vi',
 }) => {
@@ -623,6 +627,8 @@ export const PoiMap: React.FC<PoiMapProps> = ({
   const clickedPoi = markerClickedPoiId
     ? pois.find((p) => p.id === markerClickedPoiId) || null
     : null;
+  const isClickedPlaying = Boolean(clickedPoi && currentPlayingId === clickedPoi.id && isPlaying);
+  const isClickedPaused = Boolean(clickedPoi && currentPlayingId === clickedPoi.id && isPaused);
 
   const handleEnterSchematic = useCallback(() => {
     setIsSchematic(true);
@@ -876,6 +882,7 @@ export const PoiMap: React.FC<PoiMapProps> = ({
             const isActive = p.id === activePoiId || p.id === selectedPoiId;
             const isHovered = p.id === hoveredPoiId;
             const isCurPlaying = p.id === currentPlayingId && isPlaying;
+            const isCurPaused = p.id === currentPlayingId && isPaused;
             const isListened = listenedPoiIds.includes(p.id);
 
             return (
@@ -917,9 +924,14 @@ export const PoiMap: React.FC<PoiMapProps> = ({
                     <button
                       type="button"
                       className="nearby-popup-play-btn"
-                      onClick={() => onPlayPoi(p.id)}
+                      aria-pressed={isCurPlaying}
+                      onClick={() => onTogglePlay(p.id)}
                     >
-                      {isCurPlaying ? (pauseBtnText || t(currentLang, 'pauseBtn')) : (listenBtnText || t(currentLang, 'playBtn'))}
+                      {isCurPlaying
+                        ? pauseBtnText || t(currentLang, 'pauseBtn')
+                        : isCurPaused
+                        ? resumeBtnText || t(currentLang, 'resumeBtn')
+                        : listenBtnText || t(currentLang, 'playBtn')}
                     </button>
                   </div>
                 </Popup>
@@ -988,17 +1000,20 @@ export const PoiMap: React.FC<PoiMapProps> = ({
               </button>
             </div>
             <div className="selected-card-actions">
-              {/* Task 2f: Compact play button labeled "Phát" / "Tạm dừng" */}
+              {/* Task 2f: Compact play button labeled "Phát" / "Tạm dừng" / "Tiếp tục" */}
               <button
                 type="button"
                 className={`selected-card-play-btn ${
-                  currentPlayingId === clickedPoi.id && isPlaying ? 'is-playing' : ''
+                  isClickedPlaying ? 'is-playing' : isClickedPaused ? 'is-paused' : ''
                 }`}
-                onClick={() => onPlayPoi(clickedPoi.id)}
+                aria-pressed={isClickedPlaying}
+                onClick={() => onTogglePlay(clickedPoi.id)}
               >
-                {currentPlayingId === clickedPoi.id && isPlaying
-                  ? (pauseBtnText || t(currentLang, 'pauseBtn'))
-                  : (listenBtnText || t(currentLang, 'playBtn'))}
+                {isClickedPlaying
+                  ? pauseBtnText || t(currentLang, 'pauseBtn')
+                  : isClickedPaused
+                  ? resumeBtnText || t(currentLang, 'resumeBtn')
+                  : listenBtnText || t(currentLang, 'playBtn')}
               </button>
             </div>
           </div>
