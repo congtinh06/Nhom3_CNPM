@@ -1,10 +1,51 @@
 :root {
+  /* Colors */
   --cream: #fff1c7;
   --brown: #8a2f12;
   --black: #000000;
   --white: #ffffff;
   --page: #f1ece2;
   --ink: #1c1410;
+  /* Home background rhythm: cream <-> warm white, one dark band */
+  --surface-cream: #fdf5e2;
+  --surface-warm: #fffdf8;
+  --band-dark: #160d09;
+  --footer-dark: #120a06;
+
+  /* Fonts */
+  --font-display: 'Playfair Display', Georgia, 'Times New Roman', serif;
+  --font-body: 'Be Vietnam Pro', 'Segoe UI', Arial, sans-serif;
+
+  /* Type scale */
+  --fs-hero: clamp(40px, 6.5vw, 84px);
+  --fs-h2: clamp(30px, 4.2vw, 52px);
+  --fs-h3: clamp(20px, 2.4vw, 26px);
+  --fs-body: 16px;
+  --fs-small: 14px;
+  --lh-heading: 1.25;
+  --lh-body: 1.65;
+
+  /* Spacing scale */
+  --sp-4: 4px;
+  --sp-8: 8px;
+  --sp-12: 12px;
+  --sp-16: 16px;
+  --sp-24: 24px;
+  --sp-32: 32px;
+  --sp-48: 48px;
+  --sp-64: 64px;
+
+  /* Radius */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --radius-pill: 999px;
+
+  /* Shadow */
+  --shadow-sm: 0 2px 8px rgba(28, 20, 16, 0.08);
+  --shadow-md: 0 10px 24px rgba(28, 20, 16, 0.1);
+  --shadow-lg: 0 18px 40px rgba(28, 20, 16, 0.16);
+
   box-sizing: border-box;
   padding-top: env(safe-area-inset-top, 0px);
   padding-bottom: env(safe-area-inset-bottom, 0px);

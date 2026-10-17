@@ -14,7 +14,7 @@ export const CoverSection: React.FC = () => {
       const t = titleRef.current, hero = heroRef.current;
       if (!t || !hero) return;
       const ctx = document.createElement('canvas').getContext('2d')!;
-      ctx.font = '100px Anton';
+      ctx.font = '100px "Playfair Display"';
       const cap = ctx.measureText('T').actualBoundingBoxAscent / 100 || 0.72;
       t.style.letterSpacing = '0px';
       t.style.marginRight = '0px';

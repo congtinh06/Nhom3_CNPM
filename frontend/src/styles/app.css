@@ -38,9 +38,9 @@ html.lenis {
 body {
   margin: 0;
   background: var(--page);
-  font-family: Montserrat, 'Segoe UI', Arial, sans-serif;
+  font-family: var(--font-body);
   color: var(--ink);
-  line-height: 1.6;
+  line-height: var(--lh-body);
   padding: 0;
   width: 100%;
   max-width: 100%;
@@ -49,10 +49,10 @@ body {
 
 h1,
 h2 {
-  font-family: Anton, Impact, 'Arial Narrow', sans-serif;
-  font-weight: 400;
+  font-family: var(--font-display);
+  font-weight: 700;
   margin: 0;
-  line-height: 1.05;
+  line-height: var(--lh-heading);
   text-transform: uppercase;
 }
 
@@ -167,8 +167,8 @@ select:focus-visible {
 }
 
 .hd .brand {
-  font-family: Anton, Impact, sans-serif;
-  font-weight: 400;
+  font-family: var(--font-display);
+  font-weight: 700;
   font-size: 24px;
   letter-spacing: 0.5px;
   color: var(--cream);
@@ -795,7 +795,7 @@ select:focus-visible {
 
 .hero-kicker {
   margin: 0 0 0.6vw;
-  font: 500 clamp(12px, 1.5vw, 20px)/1 Montserrat, sans-serif;
+  font: 500 clamp(12px, 1.5vw, 20px)/1 var(--font-body);
   letter-spacing: 0.12em;
   text-transform: uppercase;
   max-width: none;
@@ -809,9 +809,9 @@ select:focus-visible {
   margin: 0;
   white-space: nowrap;
   text-align: left;
-  font-family: Anton, Impact, sans-serif;
-  font-weight: 400;
-  line-height: 0.9;
+  font-family: var(--font-display);
+  font-weight: 700;
+  line-height: 0.95;
   letter-spacing: 0.01em;
   text-transform: uppercase;
   font-size: 41cqw;
@@ -825,7 +825,7 @@ select:focus-visible {
 
 /* 2. Intro */
 .intro {
-  background: var(--white);
+  background: var(--surface-cream);
   display: grid;
   grid-template-columns: 1.15fr 0.85fr;
   gap: 24px;
@@ -890,8 +890,8 @@ select:focus-visible {
 
 /* 4. Costume */
 .cos {
-  background: var(--black);
-  color: var(--cream);
+  background: var(--surface-warm);
+  color: var(--ink);
   display: grid;
   grid-template-columns: 1.3fr 1fr;
   gap: 20px;
@@ -1421,11 +1421,11 @@ dialog p {
 
 /* Contact */
 .ft {
-  --ft-muted: rgba(255, 241, 199, 0.62);
-  --ft-border: rgba(255, 241, 199, 0.28);
-  --ft-accent: #e8a33d;
-  background: var(--black);
-  color: var(--cream);
+  --ft-muted: rgba(28, 20, 16, 0.68);
+  --ft-border: rgba(28, 20, 16, 0.24);
+  --ft-accent: #b45309;
+  background: var(--surface-cream);
+  color: var(--ink);
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 28px;
@@ -1572,7 +1572,7 @@ dialog p {
 
 /* Footer */
 .ftr {
-  background: var(--black);
+  background: var(--footer-dark);
   color: var(--cream);
   margin-bottom: 0;
   padding-block: 40px 24px;
@@ -1586,7 +1586,8 @@ dialog p {
 }
 
 .ftr-br {
-  font-family: Anton, Impact, 'Arial Narrow', sans-serif;
+  font-family: var(--font-display);
+  font-weight: 700;
   font-size: 32px;
   line-height: 1;
   text-transform: uppercase;
@@ -1604,9 +1605,9 @@ dialog p {
 }
 
 .ftr-heading {
-  font-family: Anton, Impact, 'Arial Narrow', sans-serif;
+  font-family: var(--font-display);
   font-size: 16px;
-  font-weight: 400;
+  font-weight: 700;
   letter-spacing: 0.05em;
   text-transform: uppercase;
   color: var(--cream);

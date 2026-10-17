@@ -2,9 +2,9 @@
    Home page styles
    ========================================================= */
 
-/* --- Tourism section (dark brown band) --- */
+/* --- Tourism section (single dark brown band) --- */
 .tour {
-  background: var(--brown);
+  background: var(--band-dark);
   color: var(--cream);
   text-align: center;
 }
@@ -105,7 +105,7 @@
 
 /* --- Food section --- */
 .food-home {
-  background: var(--white);
+  background: var(--surface-cream);
   text-align: center;
 }
 
@@ -198,4 +198,49 @@
   .food-grid {
     grid-template-columns: 1fr;
   }
+}
+
+/* --- Design tokens applied to home sections --- */
+.intro h2,
+.cos h2,
+.food-home h2,
+.tour h2,
+.ft h2 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  text-transform: none;
+  line-height: var(--lh-heading);
+  font-size: var(--fs-h2);
+  letter-spacing: 0;
+}
+
+.intro p,
+.cos p,
+.food-desc,
+.tour-desc,
+.ft p {
+  font-family: var(--font-body);
+  line-height: var(--lh-body);
+  font-size: var(--fs-body);
+}
+
+/* News section on home: warm-white band + token typography */
+.home-news-section.s {
+  background-color: var(--surface-warm);
+}
+
+.home-news-section .home-news-title,
+.home-news-section .story-title {
+  font-family: var(--font-display);
+  font-weight: 800;
+  line-height: var(--lh-heading);
+  text-transform: none;
+}
+
+.home-news-section .home-news-desc,
+.home-news-section .story-date,
+.home-news-section .story-excerpt,
+.home-news-section .story-img-caption {
+  font-family: var(--font-body);
+  line-height: var(--lh-body);
 }
