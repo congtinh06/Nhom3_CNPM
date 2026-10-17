@@ -1,4 +1,5 @@
 @import './styles/app.css';
+@import './styles/home.css';
 @import './styles/foodBeverage.css';
 @import './styles/statusBadge.css';
 @import './styles/checkout.css';

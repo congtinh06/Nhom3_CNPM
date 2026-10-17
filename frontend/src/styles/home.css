@@ -1,0 +1,201 @@
+/* =========================================================
+   Home page styles
+   ========================================================= */
+
+/* --- Tourism section (dark brown band) --- */
+.tour {
+  background: var(--brown);
+  color: var(--cream);
+  text-align: center;
+}
+
+.tour h2 {
+  font-size: clamp(36px, 6vw, 72px);
+  margin-bottom: 12px;
+}
+
+.tour-desc {
+  max-width: 62ch;
+  margin: 0 auto 32px;
+  color: #f3e7c8;
+}
+
+.tour-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 14px;
+  margin-bottom: 28px;
+}
+
+.tour-card {
+  display: flex;
+  flex-direction: column;
+  text-decoration: none;
+  color: var(--cream);
+  background: rgba(0, 0, 0, 0.18);
+  border-radius: 12px;
+  overflow: hidden;
+  text-align: left;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.tour-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 18px 34px rgba(0, 0, 0, 0.35);
+}
+
+.tour-card:focus-visible {
+  outline: 3px solid var(--cream);
+  outline-offset: 2px;
+}
+
+.tour-card-media {
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+}
+
+.tour-card-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.tour-card-body {
+  padding: 12px 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.tour-card-cat {
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #f0d9a8;
+}
+
+.tour-card-title {
+  font-size: 17px;
+  line-height: 1.25;
+  margin: 0;
+}
+
+.tour-card-cta {
+  margin-top: 4px;
+  font-size: 13px;
+  color: #ffd9a0;
+}
+
+.tour-actions,
+.food-actions {
+  display: flex;
+  justify-content: center;
+}
+
+.tour .tb {
+  border-color: var(--cream);
+  color: var(--cream);
+}
+
+.tour .tb:hover {
+  background: var(--cream);
+  color: var(--brown);
+}
+
+/* --- Food section --- */
+.food-home {
+  background: var(--white);
+  text-align: center;
+}
+
+.food-home h2 {
+  color: var(--brown);
+  font-size: clamp(36px, 6vw, 72px);
+  margin-bottom: 12px;
+}
+
+.food-desc {
+  max-width: 62ch;
+  margin: 0 auto 32px;
+  color: var(--ink);
+}
+
+.food-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+.food-card {
+  display: flex;
+  flex-direction: column;
+  text-decoration: none;
+  color: var(--ink);
+  background: #fff;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 10px 24px rgba(28, 20, 16, 0.08);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  text-align: left;
+}
+
+.food-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 18px 34px rgba(28, 20, 16, 0.16);
+}
+
+.food-card:focus-visible {
+  outline: 3px solid var(--brown);
+  outline-offset: 2px;
+}
+
+.food-card-media {
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+}
+
+.food-card-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.food-card-body {
+  padding: 12px 14px 16px;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.food-card-title {
+  font-size: 16px;
+  margin: 0;
+}
+
+.food-card-price {
+  font-size: 14px;
+  color: var(--brown);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+@media (max-width: 900px) {
+  .tour-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .food-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 520px) {
+  .tour-grid,
+  .food-grid {
+    grid-template-columns: 1fr;
+  }
+}
