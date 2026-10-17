@@ -963,6 +963,11 @@ export const PoiMap: React.FC<PoiMapProps> = ({
               <div className="selected-card-info">
                 <div className="selected-card-top-row">
                   <span className="selected-card-cat">{getPoiCategory(clickedPoi)}</span>
+                  {listenedPoiIds.includes(clickedPoi.id) && (
+                    <span className="selected-card-listened">
+                      {t(currentLang, 'popupListenedTag')}
+                    </span>
+                  )}
                   {userPos && (
                     <span className="selected-card-dist">
                       {t(currentLang, 'distFormat', {

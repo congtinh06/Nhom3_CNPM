@@ -1008,7 +1008,7 @@ html:lang(ja) .nearby-sv-root,
 /* 4. Selected Stop Floating Card (Bottom-left of map panel) - Task 1b */
 .nearby-sv-root .nearby-selected-card {
   position: absolute;
-  bottom: 12px;
+  bottom: 36px;
   left: 12px;
   z-index: 450;
   max-width: min(320px, calc(100% - 24px));
@@ -1024,6 +1024,37 @@ html:lang(ja) .nearby-sv-root,
   pointer-events: auto;
   box-sizing: border-box;
 }
+
+/* Hạng mục 5: exactly ONE info card per selected POI.
+   Desktop → marker popup only (bottom card hidden).
+   Mobile  → single bottom-sheet card (popup hidden). */
+@media (min-width: 900px) {
+  .nearby-sv-root .nearby-selected-card {
+    display: none;
+  }
+}
+
+@media (max-width: 899px) {
+  .nearby-sv-root .leaflet-popup {
+    display: none !important;
+  }
+}
+
+.nearby-sv-root .selected-card-listened {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 8px;
+  border-radius: 9999px;
+  background-color: #F0FDF4;
+  border: 1px solid #BBF7D0;
+  color: #15803D;
+  font-family: var(--font-body);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+
 
 .nearby-sv-root .selected-card-header {
   display: flex;
