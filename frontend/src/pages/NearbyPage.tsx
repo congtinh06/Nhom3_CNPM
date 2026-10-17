@@ -706,6 +706,8 @@ export const NearbyPage: React.FC = () => {
             currentLang={currentLang}
             isPlaying={isPlaying}
             isCurrent={currentId === activeSortedItem.poi.id}
+            playbackStatus={playbackStatus}
+            duration={duration}
             activeSentenceIndex={activeSentenceIndex}
             activeCharOffset={activeCharOffset}
             activeCharLength={activeCharLength}
@@ -714,7 +716,11 @@ export const NearbyPage: React.FC = () => {
             prevItem={prevItem}
             nextItem={nextItem}
             onSelectPoi={handleExplicitSelectPoi}
+            onTogglePlay={handleTogglePlayPoi}
             getPoiName={getPoiName}
+            listenBtnText={t(currentLang, 'playBtn')}
+            pauseBtnText={t(currentLang, 'pauseBtn')}
+            resumeBtnText={t(currentLang, 'resumeBtn')}
             formattedDist={
               activeSortedItem.dist != null
                 ? formatDistance(activeSortedItem.dist, currentLang)
