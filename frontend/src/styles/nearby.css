@@ -24,6 +24,23 @@
   --border-light: var(--fb-border, #E7E5E4);
   --border-focus: var(--fb-border-subtle, #D6D3D1);
 
+  /* Typography tokens (Hạng mục 2): max 2 families, both Vietnamese-safe.
+     Resolve the shared --font-display / --font-body tokens so every
+     var(--font-body) elsewhere in this file has a concrete Vietnamese value. */
+  --font-display: "Playfair Display", Georgia, "Times New Roman", serif;
+  --font-body: "Be Vietnam Pro", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --fs-xs: 12px;
+  --fs-sm: 13.5px;
+  --fs-base: 16px;
+  --fs-lg: 18px;
+  --fs-xl: 22px;
+  --fs-2xl: clamp(28px, 2.5vw, 40px);
+  --fs-3xl: clamp(32px, 4.8vw, 60px);
+  --lh-tight: 1.25;
+  --lh-snug: 1.4;
+  --lh-body: 1.7;
+  --ls-label: 0.08em;
+
   /* New Tokens (Kept because no equal global token exists) */
   --accent-peach: #FFF7ED; /* Selected peach card/sentence background */
   --accent-tint: rgba(194, 65, 12, 0.16); /* Tinted large numeral watermark */
@@ -553,9 +570,9 @@ html:lang(ja) .nearby-sv-root,
 
 .nearby-sv-root .nearby-hero-title {
   font-family: var(--f-serif);
-  font-size: clamp(28px, 2.5vw, 40px);
+  font-size: var(--fs-2xl);
   font-weight: 700;
-  line-height: 1.2;
+  line-height: var(--lh-tight);
   color: var(--ink-text);
   margin: 0;
   text-transform: none;
@@ -1827,10 +1844,13 @@ html:lang(ja) .nearby-sv-root,
 
 /* Listen mode description: clamped to 2 lines */
 .nearby-sv-root .chapter-description-measure {
-  font-size: 16px;
-  line-height: 1.6;
+  font-family: var(--font-body);
+  font-size: var(--fs-base);
+  line-height: var(--lh-body);
   color: var(--ink-text, #1C1917);
-  max-width: 66ch;
+  max-width: 70ch;
+  text-wrap: pretty;
+  text-align: left;
   margin: 0 0 14px;
 }
 
@@ -2545,9 +2565,19 @@ html:lang(ja) .nearby-sv-root,
 }
 
 .nearby-sv-root .popup-listened-tag {
-  font-size: 11px;
-  color: #16A34A;
+  display: inline-flex;
+  align-items: center;
+  vertical-align: middle;
+  margin-left: 6px;
+  padding: 1px 8px;
+  border-radius: 9999px;
+  background-color: #F0FDF4;
+  border: 1px solid #BBF7D0;
+  color: #15803D;
+  font-family: var(--font-body);
+  font-size: var(--fs-xs);
   font-weight: 600;
+  letter-spacing: 0;
 }
 
 .nearby-sv-root .stat-chip-progress {
@@ -2814,5 +2844,37 @@ body:has(.nearby-sv-root:has(.nearby-sticky-player-bar)) #up {
     display: inline-flex;
   }
 }
+
+/* ==========================================================================
+   Typography corrections (Hạng mục 2) — Nearby-scoped only
+   The full-bleed page hero (PageHero) drops its negative letter-spacing and
+   tight line-height so Vietnamese uppercase diacritics never touch the line
+   above. Uses the same display family as the rest of the page.
+   ========================================================================== */
+.nearby-sv-root .page-hero-title {
+  font-family: var(--font-display);
+  line-height: var(--lh-tight);
+  letter-spacing: 0;
+  padding-top: 0.06em;
+}
+
+.nearby-sv-root .page-hero-eyebrow {
+  font-family: var(--font-body);
+  font-size: var(--fs-xs);
+  letter-spacing: var(--ls-label);
+}
+
+.nearby-sv-root .page-hero-subtitle {
+  font-family: var(--font-body);
+}
+
+/* Keep a single sans body font across the interactive controls on this page */
+.nearby-sv-root button,
+.nearby-sv-root input,
+.nearby-sv-root select,
+.nearby-sv-root textarea {
+  font-family: var(--font-body);
+}
+
 
 
