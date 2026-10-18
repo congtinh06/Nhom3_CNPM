@@ -2,10 +2,10 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import {
-  ADMIN_DETAIL_LABELS,
-  ADMIN_SECTION_LABELS,
-  ADMIN_SECTION_ROOTS,
-} from '../config/nav';
+  getAdminBreadcrumbs,
+  getAdminPageTitle,
+  resolveAdminMenuMatch,
+} from '../config/adminMenu';
 import { BRAND_NAME } from '../brand/brand';
 import { ChevronDown, ChevronLeft } from 'lucide-react';
 import type { AdminDensity } from '../types';
@@ -16,57 +16,11 @@ export interface AdminHeaderProps {
   onToggleDensity?: () => void;
 }
 
-interface Crumb {
+interface CrumbWithLink {
   label: string;
   to?: string;
 }
 
-function resolveTitle(pathname: string): string {
-  if (pathname === '/quan-tri' || pathname === '/quan-tri/tong-quan') {
-    return 'Tổng quan';
-  }
-  const root = ADMIN_SECTION_ROOTS.find(
-    (r) => pathname === r || pathname.startsWith(`${r}/`)
-  );
-  if (!root) {
-    return 'Trang quản trị';
-  }
-  const section = ADMIN_SECTION_LABELS[root] || 'Trang quản trị';
-  if (pathname === `${root}/moi`) {
-    return `Thêm mới ${section.toLowerCase()}`;
-  }
-  if (pathname.startsWith(`${root}/`)) {
-    const detail = ADMIN_DETAIL_LABELS[root];
-    return detail ? `${detail} ${section.toLowerCase()}` : `Chỉnh sửa ${section.toLowerCase()}`;
-  }
-  return section;
-}
-
-function resolveBreadcrumbs(pathname: string): Crumb[] {
-  if (pathname === '/quan-tri' || pathname === '/quan-tri/tong-quan') {
-    return [{ label: 'Quản trị' }, { label: 'Tổng quan' }];
-  }
-
-  const root = ADMIN_SECTION_ROOTS.find(
-    (r) => pathname === r || pathname.startsWith(`${r}/`)
-  );
-  if (!root) {
-    return [{ label: 'Quản trị' }, { label: 'Trang quản trị' }];
-  }
-
-  const section = ADMIN_SECTION_LABELS[root] || 'Trang quản trị';
-
-  if (pathname === root) {
-    return [{ label: 'Quản trị' }, { label: section }];
-  }
-
-  const leaf =
-    pathname === `${root}/moi`
-      ? 'Thêm mới'
-      : ADMIN_DETAIL_LABELS[root] || 'Chỉnh sửa';
-
-  return [{ label: 'Quản trị' }, { label: section, to: root }, { label: leaf }];
-}
 
 function getInitials(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean);
@@ -91,12 +45,35 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  const crumbs = resolveBreadcrumbs(location.pathname);
+  const rawCrumbs = getAdminBreadcrumbs(location.pathname, location.search);
+  const match = resolveAdminMenuMatch(location.pathname, location.search);
+
+  const crumbs: CrumbWithLink[] = rawCrumbs.map((c, index) => {
+    if (index === rawCrumbs.length - 1) {
+      return { label: c.label };
+    }
+    if (index === 0) {
+      return { label: c.label, to: '/quan-tri/tong-quan' };
+    }
+    if (index === 1 && match) {
+      if (match.item.path) {
+        return { label: c.label, to: match.item.path };
+      }
+    }
+    if (index === 2 && match?.child?.path) {
+      const fullPath = match.child.path + (match.child.matchSearch ? `?${match.child.matchSearch}` : '');
+      return { label: c.label, to: fullPath };
+    }
+    return { label: c.label, to: c.to };
+  });
+
   const displayName = user?.fullName || user?.email || 'Quản trị viên';
 
   useEffect(() => {
-    document.title = `${resolveTitle(location.pathname)} - Quản trị ${BRAND_NAME}`;
-  }, [location.pathname]);
+    const pageTitle = getAdminPageTitle(location.pathname, location.search);
+    document.title = `${pageTitle} - Quản trị ${BRAND_NAME}`;
+  }, [location.pathname, location.search]);
+
 
   useEffect(() => {
     setMenuOpen(false);
