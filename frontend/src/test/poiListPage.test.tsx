@@ -81,12 +81,37 @@ const mockZones = [
 
 const mockRoutes = [{ id: 7, zoneId: 1, name: 'Tuyến trung tâm' }];
 
+// Mô phỏng máy chủ: request size=1 + overallStatus=NEEDS_ATTENTION là dòng đếm,
+// còn lại lọc theo overallStatus/languageStatus như backend thật.
+const mockList = (
+  content: AdminPoiListItem[],
+  overrides: Partial<AdminPoiPageResponse> = {},
+  attentionTotal = 0
+) => {
+  vi.mocked(poiApi.getAdminPois).mockImplementation(async (params) => {
+    if (params.overallStatus === 'NEEDS_ATTENTION' && params.size === 1) {
+      return pageOf([], { totalElements: attentionTotal });
+    }
+    let filtered = content;
+    if (params.overallStatus) {
+      filtered = filtered.filter((poi) => poi.overallStatus === params.overallStatus);
+    }
+    if (params.languageStatus === 'ERROR') {
+      filtered = filtered.filter((poi) => (poi.languageSummary?.failed ?? 0) > 0);
+    }
+    if (params.languageStatus === 'PENDING') {
+      filtered = filtered.filter((poi) => (poi.languageSummary?.pending ?? 0) > 0);
+    }
+    return pageOf(filtered, overrides);
+  });
+};
+
 describe('PoiListPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(poiApi.getZones).mockResolvedValue(mockZones);
     vi.mocked(poiApi.getRoutes).mockResolvedValue(mockRoutes);
-    vi.mocked(poiApi.getAdminPois).mockResolvedValue(pageOf(mockRows));
+    mockList(mockRows);
   });
 
   const renderComponent = () =>
@@ -146,7 +171,11 @@ describe('PoiListPage', () => {
     // Mã điểm và phiên bản không còn hiển thị trên bảng
     expect(screen.queryByText('BEN_THANH')).not.toBeInTheDocument();
     expect(screen.queryByText('v3')).not.toBeInTheDocument();
-    expect(poiApi.getAdminPois).toHaveBeenCalledTimes(1);
+    // Một request cho danh sách + một request cho dòng đếm "Cần xử lý"
+    expect(poiApi.getAdminPois).toHaveBeenCalledTimes(2);
+    expect(poiApi.getAdminPois).toHaveBeenCalledWith(
+      expect.objectContaining({ overallStatus: 'NEEDS_ATTENTION', size: 1 })
+    );
   });
 
   it('mở popover chi tiết thuyết minh theo ngôn ngữ bằng bấm và đóng bằng Esc', async () => {
@@ -213,7 +242,7 @@ describe('PoiListPage', () => {
   });
 
   it('hiển thị EmptyState khi không có điểm nào', async () => {
-    vi.mocked(poiApi.getAdminPois).mockResolvedValue(pageOf([]));
+    mockList([]);
     renderComponent();
 
     await waitFor(() => {
@@ -258,7 +287,7 @@ describe('PoiListPage', () => {
     });
   });
 
-  it('lọc theo trạng thái trên trang hiện tại và vẫn gọi lại theo phân trang', async () => {
+  it('lọc theo trạng thái gửi overallStatus lên máy chủ', async () => {
     renderComponent();
 
     await waitFor(() => {
@@ -270,12 +299,15 @@ describe('PoiListPage', () => {
     });
 
     await waitFor(() => {
+      expect(poiApi.getAdminPois).toHaveBeenCalledWith(
+        expect.objectContaining({ overallStatus: 'HIDDEN', page: 0 })
+      );
       expect(screen.queryByText('Chợ Bến Thành')).not.toBeInTheDocument();
       expect(screen.getByText('Dinh Độc Lập')).toBeInTheDocument();
     });
   });
 
-  it('lọc theo ngôn ngữ chỉ giữ điểm có lỗi hoặc có chờ xử lý', async () => {
+  it('lọc theo ngôn ngữ gửi languageStatus lên máy chủ', async () => {
     renderComponent();
 
     await waitFor(() => {
@@ -287,6 +319,9 @@ describe('PoiListPage', () => {
     });
 
     await waitFor(() => {
+      expect(poiApi.getAdminPois).toHaveBeenCalledWith(
+        expect.objectContaining({ languageStatus: 'ERROR', page: 0 })
+      );
       expect(screen.queryByText('Chợ Bến Thành')).not.toBeInTheDocument();
       expect(screen.getByText('Dinh Độc Lập')).toBeInTheDocument();
     });
@@ -296,6 +331,9 @@ describe('PoiListPage', () => {
     });
 
     await waitFor(() => {
+      expect(poiApi.getAdminPois).toHaveBeenCalledWith(
+        expect.objectContaining({ languageStatus: 'PENDING', page: 0 })
+      );
       expect(screen.getByText('Chợ Bến Thành')).toBeInTheDocument();
       expect(screen.getByText('Dinh Độc Lập')).toBeInTheDocument();
     });
@@ -306,9 +344,7 @@ describe('PoiListPage', () => {
       ...mockRows[0]!,
       overallStatus: 'NEEDS_ATTENTION',
     };
-    vi.mocked(poiApi.getAdminPois).mockResolvedValue(
-      pageOf([needsAttentionRow, mockRows[1]!])
-    );
+    mockList([needsAttentionRow, mockRows[1]!], {}, 1);
     renderComponent();
 
     const summary = await screen.findByRole('button', { name: 'Cần xử lý: 1 điểm' });
@@ -316,15 +352,16 @@ describe('PoiListPage', () => {
 
     await waitFor(() => {
       expect(screen.getByLabelText('Lọc theo trạng thái')).toHaveValue('NEEDS_ATTENTION');
+      expect(poiApi.getAdminPois).toHaveBeenCalledWith(
+        expect.objectContaining({ overallStatus: 'NEEDS_ATTENTION', size: 10 })
+      );
       expect(screen.getByText('Chợ Bến Thành')).toBeInTheDocument();
       expect(screen.queryByText('Dinh Độc Lập')).not.toBeInTheDocument();
     });
   });
 
   it('phân trang phía máy chủ khi bấm Trang sau', async () => {
-    vi.mocked(poiApi.getAdminPois).mockResolvedValue(
-      pageOf(mockRows, { totalPages: 2, last: false })
-    );
+    mockList(mockRows, { totalPages: 2, last: false });
     renderComponent();
 
     await waitFor(() => {
@@ -334,7 +371,7 @@ describe('PoiListPage', () => {
     fireEvent.click(screen.getByRole('button', { name: /trang sau/i }));
 
     await waitFor(() => {
-      expect(poiApi.getAdminPois).toHaveBeenLastCalledWith(
+      expect(poiApi.getAdminPois).toHaveBeenCalledWith(
         expect.objectContaining({ page: 1 })
       );
     });

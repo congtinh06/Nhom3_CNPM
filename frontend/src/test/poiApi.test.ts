@@ -18,9 +18,23 @@ describe('poiApi', () => {
 
   it('getAdminPois: gọi GET /api/content/admin/pois với tham số phân trang/lọc', async () => {
     vi.mocked(adminClient.get).mockResolvedValueOnce({ data: {} });
-    await poiApi.getAdminPois({ page: 0, size: 20, search: 'ben', zoneId: 1 });
+    await poiApi.getAdminPois({
+      page: 0,
+      size: 20,
+      search: 'ben',
+      zoneId: 1,
+      overallStatus: 'NEEDS_ATTENTION',
+      languageStatus: 'ERROR',
+    });
     expect(adminClient.get).toHaveBeenCalledWith('/api/content/admin/pois', {
-      params: { page: 0, size: 20, search: 'ben', zoneId: 1 },
+      params: {
+        page: 0,
+        size: 20,
+        search: 'ben',
+        zoneId: 1,
+        overallStatus: 'NEEDS_ATTENTION',
+        languageStatus: 'ERROR',
+      },
     });
   });
 

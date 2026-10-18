@@ -190,6 +190,8 @@ export interface AdminPoiQueryParams {
   zoneId?: number;
   routeId?: number;
   audioStatus?: AudioStatusValue;
+  overallStatus?: PoiOverallStatus | string;
+  languageStatus?: 'ERROR' | 'PENDING' | string;
   sort?: string;
 }
 

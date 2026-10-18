@@ -11,9 +11,6 @@ import { DataTable, Column } from '../components/DataTable';
 import { StatusBadge } from '../components/StatusBadge';
 import { PoiLanguageSummary } from '../components/PoiLanguageSummary';
 import {
-  hasLanguageError,
-  hasLanguagePending,
-  isNeedsAttention,
   POI_LANGUAGE_FILTER_OPTIONS,
   POI_STATUS_FILTER_OPTIONS,
   POI_STATUS_LABEL,
@@ -35,6 +32,7 @@ export const PoiListPage: React.FC = () => {
   const [routes, setRoutes] = useState<PoiRouteOption[]>([]);
   const [totalElements, setTotalElements] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
+  const [needsAttentionCount, setNeedsAttentionCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -83,23 +81,42 @@ export const PoiListPage: React.FC = () => {
   const fetchList = useCallback(async () => {
     setLoading(true);
     setError(null);
+    const baseParams = {
+      search: search || undefined,
+      zoneId: zoneFilter ? Number(zoneFilter) : undefined,
+      routeId: routeFilter ? Number(routeFilter) : undefined,
+    };
+    const listParams: Parameters<typeof poiApi.getAdminPois>[0] = {
+      page,
+      size: PAGE_SIZE,
+      ...baseParams,
+    };
+    if (statusFilter) listParams.overallStatus = statusFilter;
+    if (languageFilter) listParams.languageStatus = languageFilter;
     try {
-      const result = await poiApi.getAdminPois({
-        page,
-        size: PAGE_SIZE,
-        search: search || undefined,
-        zoneId: zoneFilter ? Number(zoneFilter) : undefined,
-        routeId: routeFilter ? Number(routeFilter) : undefined,
-      });
+      const [result, attention] = await Promise.all([
+        poiApi.getAdminPois(listParams),
+        // Dòng "Cần xử lý: n điểm" đếm toàn bộ theo khu vực/tuyến/tìm kiếm,
+        // không phụ thuộc trang hiện tại hay bộ lọc trạng thái/ngôn ngữ.
+        poiApi
+          .getAdminPois({
+            page: 0,
+            size: 1,
+            ...baseParams,
+            overallStatus: 'NEEDS_ATTENTION',
+          })
+          .catch(() => null),
+      ]);
       setRows(result?.content || []);
       setTotalElements(result?.totalElements ?? 0);
       setTotalPages(result?.totalPages ?? 0);
+      setNeedsAttentionCount(attention?.totalElements ?? 0);
     } catch (err) {
       setError(normalizeAdminError(err).message);
     } finally {
       setLoading(false);
     }
-  }, [page, search, zoneFilter, routeFilter]);
+  }, [page, search, zoneFilter, routeFilter, statusFilter, languageFilter]);
 
   useEffect(() => {
     fetchList();
@@ -118,28 +135,6 @@ export const PoiListPage: React.FC = () => {
     setLanguageFilter('');
     setPage(0);
   };
-
-  // Backend chưa có tham số lọc theo trạng thái tổng thể và ngôn ngữ,
-  // nên hai bộ lọc này lọc trên trang hiện tại đang hiển thị.
-  const visibleRows = useMemo(
-    () =>
-      rows.filter((poi) => {
-        const statusKey = (poi.overallStatus || 'ACTIVE').toUpperCase();
-        const matchesStatus = !statusFilter || statusKey === statusFilter;
-        const matchesLanguage =
-          !languageFilter ||
-          (languageFilter === 'ERROR'
-            ? hasLanguageError(poi.languageSummary, poi.languages)
-            : hasLanguagePending(poi.languageSummary, poi.languages));
-        return matchesStatus && matchesLanguage;
-      }),
-    [rows, statusFilter, languageFilter]
-  );
-
-  const needsAttentionCount = useMemo(
-    () => rows.filter((poi) => isNeedsAttention(poi.overallStatus)).length,
-    [rows]
-  );
 
   const zoneNameById = useMemo(() => {
     const map = new Map<number, string>();
@@ -384,7 +379,7 @@ export const PoiListPage: React.FC = () => {
           message={error}
           onRetry={fetchList}
         />
-      ) : !loading && visibleRows.length === 0 ? (
+      ) : !loading && rows.length === 0 ? (
         hasActiveFilters ? (
           <EmptyState
             title="Không tìm thấy điểm thuyết minh phù hợp"
@@ -404,7 +399,7 @@ export const PoiListPage: React.FC = () => {
         <>
           <DataTable
             columns={columns}
-            data={visibleRows}
+            data={rows}
             keyExtractor={(item) => item.id}
             loading={loading}
             emptyText="Chưa có dữ liệu điểm thuyết minh hiển thị."
