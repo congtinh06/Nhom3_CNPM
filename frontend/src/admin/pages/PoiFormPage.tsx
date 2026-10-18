@@ -16,8 +16,11 @@ import { FormField } from '../components/FormField';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { PoiAudioStatusPanel } from '../components/PoiAudioStatusPanel';
 import { PoiLanguageSummary } from '../components/PoiLanguageSummary';
+import { PoiQrPanel } from '../components/PoiQrPanel';
+import { PoiTranslationReadonly } from '../components/PoiTranslationReadonly';
 import { StatusBadge } from '../components/StatusBadge';
 import { FormSection } from '../components/FormSection';
+import { AdminTabs } from '../components/AdminTabs';
 import { AdminAlert } from '../components/AdminAlert';
 import { resolveOverallStatus } from '../utils/poiStatus';
 
@@ -77,6 +80,14 @@ const FIELD_LABELS: Record<string, string> = {
   description: 'Mô tả',
   historicalSignificance: 'Ý nghĩa lịch sử',
 };
+
+type TabId = 'info' | 'content' | 'publish';
+
+const EDIT_TABS: { id: TabId; label: string }[] = [
+  { id: 'info', label: 'Thông tin' },
+  { id: 'content', label: 'Nội dung đa ngôn ngữ' },
+  { id: 'publish', label: 'Phát hành & QR' },
+];
 
 const BACKEND_FIELD_MESSAGES: Record<string, string> = {
   'zoneId is required': 'Khu vực không được để trống',
@@ -214,6 +225,7 @@ export const PoiFormPage: React.FC = () => {
   const [zoneCodeDisplay, setZoneCodeDisplay] = useState('');
 
   const [showLeaveDialog, setShowLeaveDialog] = useState(false);
+  const [activeTab, setActiveTab] = useState<TabId>('info');
   const pendingNavigationRef = useRef<string | null>(null);
 
   const loadAll = useCallback(async () => {
@@ -488,6 +500,393 @@ export const PoiFormPage: React.FC = () => {
   const overallConfig = resolveOverallStatus(detail?.overallStatus);
   const attentionReasons = detail?.attentionReasons ?? [];
 
+  const renderBasicFields = () => (
+    <>
+      <div className="adm-form-row">
+        <div className="adm-form-col">
+          <FormField
+            label="Khu vực"
+            htmlFor="zoneId"
+            required={!isEditMode}
+            error={errors.zoneId}
+            helperText={isEditMode ? 'Không thể thay đổi khu vực sau khi tạo.' : undefined}
+          >
+            {isEditMode ? (
+              <input
+                id="zoneId"
+                className="adm-input"
+                value={zoneCodeDisplay || formValues.zoneId}
+                readOnly
+                disabled
+              />
+            ) : (
+              <select
+                id="zoneId"
+                name="zoneId"
+                className="adm-select"
+                value={formValues.zoneId}
+                onChange={handleInputChange}
+                aria-invalid={Boolean(errors.zoneId)}
+              >
+                <option value="">-- Chọn khu vực --</option>
+                {zones.map((zone) => (
+                  <option key={zone.id} value={String(zone.id)}>
+                    {zone.name}
+                  </option>
+                ))}
+              </select>
+            )}
+          </FormField>
+        </div>
+
+        <div className="adm-form-col">
+          <FormField label="Danh mục" htmlFor="categoryId" required error={errors.categoryId}>
+            <select
+              id="categoryId"
+              name="categoryId"
+              className="adm-select"
+              value={formValues.categoryId}
+              onChange={handleInputChange}
+              aria-invalid={Boolean(errors.categoryId)}
+            >
+              <option value="">-- Chọn danh mục --</option>
+              {categoryOptions.map((cat) => (
+                <option key={cat.id} value={String(cat.id)}>
+                  {cat.nameVi}
+                </option>
+              ))}
+            </select>
+          </FormField>
+        </div>
+      </div>
+
+      <FormField
+        label="Tên điểm"
+        htmlFor="name"
+        required
+        error={errors.name}
+        helperText="Tối đa 255 ký tự. Ví dụ: Chợ Bến Thành"
+      >
+        <input
+          id="name"
+          name="name"
+          type="text"
+          className="adm-input"
+          value={formValues.name}
+          onChange={handleInputChange}
+          placeholder="Nhập tên điểm đến"
+          maxLength={255}
+          aria-invalid={Boolean(errors.name)}
+        />
+      </FormField>
+
+      {!isEditMode && (
+        <div className="adm-form-row">
+          <div className="adm-form-col">
+            <FormField
+              label="Mã điểm"
+              htmlFor="code"
+              required
+              error={errors.code}
+              helperText="Tối đa 50 ký tự, không trùng với điểm khác."
+            >
+              <input
+                id="code"
+                name="code"
+                type="text"
+                className="adm-input"
+                value={formValues.code}
+                onChange={handleInputChange}
+                placeholder="BEN_THANH"
+                maxLength={50}
+                aria-invalid={Boolean(errors.code)}
+              />
+            </FormField>
+          </div>
+          <div className="adm-form-col">
+            <FormField
+              label="Mã QR"
+              htmlFor="qrToken"
+              required
+              error={errors.qrToken}
+              helperText="Tối đa 100 ký tự, dùng để sinh mã QR."
+            >
+              <input
+                id="qrToken"
+                name="qrToken"
+                type="text"
+                className="adm-input"
+                value={formValues.qrToken}
+                onChange={handleInputChange}
+                placeholder="qr-ben-thanh-01"
+                maxLength={100}
+                aria-invalid={Boolean(errors.qrToken)}
+              />
+            </FormField>
+          </div>
+        </div>
+      )}
+
+      <div className="adm-form-row">
+        <div className="adm-form-col">
+          <FormField
+            label="Vĩ độ"
+            htmlFor="latitude"
+            required
+            error={errors.latitude}
+            helperText="Số trong khoảng -90 đến 90."
+          >
+            <input
+              id="latitude"
+              name="latitude"
+              type="number"
+              step="any"
+              className="adm-input"
+              value={formValues.latitude}
+              onChange={handleInputChange}
+              placeholder="10.7725"
+              aria-invalid={Boolean(errors.latitude)}
+            />
+          </FormField>
+        </div>
+        <div className="adm-form-col">
+          <FormField
+            label="Kinh độ"
+            htmlFor="longitude"
+            required
+            error={errors.longitude}
+            helperText="Số trong khoảng -180 đến 180."
+          >
+            <input
+              id="longitude"
+              name="longitude"
+              type="number"
+              step="any"
+              className="adm-input"
+              value={formValues.longitude}
+              onChange={handleInputChange}
+              placeholder="106.6980"
+              aria-invalid={Boolean(errors.longitude)}
+            />
+          </FormField>
+        </div>
+      </div>
+
+      <div className="adm-form-row">
+        <div className="adm-form-col">
+          <FormField
+            label="Bán kính kích hoạt (mét)"
+            htmlFor="triggerRadiusMeters"
+            error={errors.triggerRadiusMeters}
+            helperText="Mặc định 50 mét."
+          >
+            <input
+              id="triggerRadiusMeters"
+              name="triggerRadiusMeters"
+              type="number"
+              min={1}
+              className="adm-input"
+              value={formValues.triggerRadiusMeters}
+              onChange={handleInputChange}
+              aria-invalid={Boolean(errors.triggerRadiusMeters)}
+            />
+          </FormField>
+        </div>
+        <div className="adm-form-col">
+          <FormField
+            label="Địa chỉ"
+            htmlFor="address"
+            error={errors.address}
+            helperText="Tối đa 500 ký tự."
+          >
+            <input
+              id="address"
+              name="address"
+              type="text"
+              className="adm-input"
+              value={formValues.address}
+              onChange={handleInputChange}
+              placeholder="Lê Lợi, Quận 1, TP.HCM"
+              maxLength={500}
+              aria-invalid={Boolean(errors.address)}
+            />
+          </FormField>
+        </div>
+      </div>
+
+      <FormField
+        label="Ảnh đại diện"
+        htmlFor="thumbnailUrl"
+        error={errors.thumbnailUrl}
+        helperText="Tối đa 500 ký tự. Ví dụ: /img/pois/ben-thanh.jpg"
+      >
+        <input
+          id="thumbnailUrl"
+          name="thumbnailUrl"
+          type="text"
+          className="adm-input"
+          value={formValues.thumbnailUrl}
+          onChange={handleInputChange}
+          placeholder="/img/pois/ben-thanh.jpg"
+          maxLength={500}
+          aria-invalid={Boolean(errors.thumbnailUrl)}
+        />
+      </FormField>
+
+      <div className="adm-form-row">
+        <div className="adm-form-col">
+          <FormField
+            label="Tuyến (không bắt buộc)"
+            htmlFor="routeId"
+            error={errors.routeId}
+            helperText="Chọn khu vực trước để hiển thị tuyến tương ứng."
+          >
+            <select
+              id="routeId"
+              name="routeId"
+              className="adm-select"
+              value={formValues.routeId}
+              onChange={handleInputChange}
+              disabled={!formValues.zoneId}
+              aria-invalid={Boolean(errors.routeId)}
+            >
+              <option value="">-- Không gán tuyến --</option>
+              {routeOptions.map((route) => (
+                <option key={route.id} value={String(route.id)}>
+                  {route.name}
+                </option>
+              ))}
+            </select>
+          </FormField>
+        </div>
+        <div className="adm-form-col">
+          <FormField
+            label="Thứ tự điểm dừng"
+            htmlFor="stopOrder"
+            error={errors.stopOrder}
+            helperText="Chỉ nhập khi đã chọn tuyến."
+          >
+            <input
+              id="stopOrder"
+              name="stopOrder"
+              type="number"
+              min={1}
+              className="adm-input"
+              value={formValues.stopOrder}
+              onChange={handleInputChange}
+              aria-invalid={Boolean(errors.stopOrder)}
+            />
+          </FormField>
+        </div>
+      </div>
+    </>
+  );
+
+  const renderContentFields = () => (
+    <>
+      <p className="adm-form-hint">
+        Đây là nội dung gốc. Hệ thống sẽ tự động dịch và tạo audio cho các ngôn ngữ khác sau khi lưu.
+      </p>
+
+      <FormField
+        label="Tiêu đề"
+        htmlFor="title"
+        required
+        error={errors.title}
+        helperText="Tối đa 255 ký tự."
+      >
+        <input
+          id="title"
+          name="title"
+          type="text"
+          className="adm-input"
+          value={formValues.title}
+          onChange={handleInputChange}
+          placeholder="Chợ Bến Thành"
+          maxLength={255}
+          aria-invalid={Boolean(errors.title)}
+        />
+      </FormField>
+
+      <FormField
+        label="Tóm tắt"
+        htmlFor="summary"
+        required
+        error={errors.summary}
+        helperText="Tối đa 1000 ký tự."
+      >
+        <textarea
+          id="summary"
+          name="summary"
+          className="adm-textarea"
+          rows={3}
+          value={formValues.summary}
+          onChange={handleInputChange}
+          placeholder="Tóm tắt ngắn gọn về điểm đến"
+          maxLength={1000}
+          aria-invalid={Boolean(errors.summary)}
+        />
+      </FormField>
+
+      <FormField
+        label="Mô tả chi tiết"
+        htmlFor="description"
+        required
+        error={errors.description}
+      >
+        <textarea
+          id="description"
+          name="description"
+          className="adm-textarea"
+          rows={6}
+          value={formValues.description}
+          onChange={handleInputChange}
+          placeholder="Nội dung thuyết minh đầy đủ"
+          aria-invalid={Boolean(errors.description)}
+        />
+      </FormField>
+
+      <FormField
+        label="Ý nghĩa lịch sử (không bắt buộc)"
+        htmlFor="historicalSignificance"
+        error={errors.historicalSignificance}
+      >
+        <textarea
+          id="historicalSignificance"
+          name="historicalSignificance"
+          className="adm-textarea"
+          rows={3}
+          value={formValues.historicalSignificance}
+          onChange={handleInputChange}
+          placeholder="Giá trị văn hóa, lịch sử của điểm đến"
+          aria-invalid={Boolean(errors.historicalSignificance)}
+        />
+      </FormField>
+    </>
+  );
+
+  const renderActions = () => (
+    <div className="adm-form-actions">
+      <button
+        type="button"
+        className="adm-btn adm-btn-secondary"
+        onClick={() => handleNavigateBack('/quan-tri/diem-thuyet-minh')}
+        disabled={submitting}
+      >
+        Hủy bỏ
+      </button>
+      <button type="submit" className="adm-btn adm-btn-primary" disabled={submitting}>
+        {submitting
+          ? isEditMode
+            ? 'Đang lưu...'
+            : 'Đang tạo mới...'
+          : isEditMode
+          ? 'Lưu thay đổi'
+          : 'Tạo điểm thuyết minh'}
+      </button>
+    </div>
+  );
+
   return (
     <div className="adm-page">
       <div className="adm-page-head">
@@ -542,410 +941,75 @@ export const PoiFormPage: React.FC = () => {
         </div>
       ) : (
         <form onSubmit={handleSubmit} className="adm-form-container" noValidate>
-          <div className="adm-form-grid">
-            <FormSection title="Thông tin cơ bản">
+          {isEditMode ? (
+            <>
+              <AdminTabs
+                tabs={EDIT_TABS}
+                active={activeTab}
+                onChange={(tabId) => setActiveTab(tabId as TabId)}
+              />
+              <div className="adm-tab-panels">
+                <section
+                  className="adm-tab-panel"
+                  role="tabpanel"
+                  id="tabpanel-info"
+                  aria-labelledby="tab-info"
+                  hidden={activeTab !== 'info'}
+                >
+                  <FormSection title="Thông tin cơ bản">{renderBasicFields()}</FormSection>
+                </section>
 
-              <div className="adm-form-row">
-                <div className="adm-form-col">
-                  <FormField
-                    label="Khu vực"
-                    htmlFor="zoneId"
-                    required={!isEditMode}
-                    error={errors.zoneId}
-                    helperText={isEditMode ? 'Không thể thay đổi khu vực sau khi tạo.' : undefined}
-                  >
-                    {isEditMode ? (
-                      <input
-                        id="zoneId"
-                        className="adm-input"
-                        value={zoneCodeDisplay || formValues.zoneId}
-                        readOnly
-                        disabled
+                <section
+                  className="adm-tab-panel"
+                  role="tabpanel"
+                  id="tabpanel-content"
+                  aria-labelledby="tab-content"
+                  hidden={activeTab !== 'content'}
+                >
+                  <FormSection title="Nội dung thuyết minh tiếng Việt">
+                    {renderContentFields()}
+                  </FormSection>
+                  <PoiTranslationReadonly translations={detail?.translations} />
+                </section>
+
+                <section
+                  className="adm-tab-panel"
+                  role="tabpanel"
+                  id="tabpanel-publish"
+                  aria-labelledby="tab-publish"
+                  hidden={activeTab !== 'publish'}
+                >
+                  {poiId && detail && (
+                    <>
+                      <PoiAudioStatusPanel
+                        poiId={poiId}
+                        publishStatus={detail.publishStatus}
+                        publishAttempts={detail.publishAttempts}
+                        lastPublishAttemptAt={detail.lastPublishAttemptAt}
+                        translations={detail.translations}
+                        onReload={refreshDetail}
+                        reloading={detailReloading}
                       />
-                    ) : (
-                      <select
-                        id="zoneId"
-                        name="zoneId"
-                        className="adm-select"
-                        value={formValues.zoneId}
-                        onChange={handleInputChange}
-                        aria-invalid={Boolean(errors.zoneId)}
-                      >
-                        <option value="">-- Chọn khu vực --</option>
-                        {zones.map((zone) => (
-                          <option key={zone.id} value={String(zone.id)}>
-                            {zone.name}
-                          </option>
-                        ))}
-                      </select>
-                    )}
-                  </FormField>
-                </div>
-
-                <div className="adm-form-col">
-                  <FormField
-                    label="Danh mục"
-                    htmlFor="categoryId"
-                    required
-                    error={errors.categoryId}
-                  >
-                    <select
-                      id="categoryId"
-                      name="categoryId"
-                      className="adm-select"
-                      value={formValues.categoryId}
-                      onChange={handleInputChange}
-                      aria-invalid={Boolean(errors.categoryId)}
-                    >
-                      <option value="">-- Chọn danh mục --</option>
-                      {categoryOptions.map((cat) => (
-                        <option key={cat.id} value={String(cat.id)}>
-                          {cat.nameVi}
-                        </option>
-                      ))}
-                    </select>
-                  </FormField>
-                </div>
+                      <PoiQrPanel qrToken={detail.qrToken} poiName={detail.name} />
+                    </>
+                  )}
+                </section>
               </div>
+              {renderActions()}
+            </>
+          ) : (
+            <div className="adm-form-grid">
+              <FormSection title="Thông tin cơ bản">{renderBasicFields()}</FormSection>
 
-              <FormField
-                label="Tên điểm"
-                htmlFor="name"
-                required
-                error={errors.name}
-                helperText="Tối đa 255 ký tự. Ví dụ: Chợ Bến Thành"
-              >
-                <input
-                  id="name"
-                  name="name"
-                  type="text"
-                  className="adm-input"
-                  value={formValues.name}
-                  onChange={handleInputChange}
-                  placeholder="Nhập tên điểm đến"
-                  maxLength={255}
-                  aria-invalid={Boolean(errors.name)}
-                />
-              </FormField>
-
-              {!isEditMode && (
-                <div className="adm-form-row">
-                  <div className="adm-form-col">
-                    <FormField
-                      label="Mã điểm"
-                      htmlFor="code"
-                      required
-                      error={errors.code}
-                      helperText="Tối đa 50 ký tự, không trùng với điểm khác."
-                    >
-                      <input
-                        id="code"
-                        name="code"
-                        type="text"
-                        className="adm-input"
-                        value={formValues.code}
-                        onChange={handleInputChange}
-                        placeholder="BEN_THANH"
-                        maxLength={50}
-                        aria-invalid={Boolean(errors.code)}
-                      />
-                    </FormField>
-                  </div>
-                  <div className="adm-form-col">
-                    <FormField
-                      label="Mã QR"
-                      htmlFor="qrToken"
-                      required
-                      error={errors.qrToken}
-                      helperText="Tối đa 100 ký tự, dùng để sinh mã QR."
-                    >
-                      <input
-                        id="qrToken"
-                        name="qrToken"
-                        type="text"
-                        className="adm-input"
-                        value={formValues.qrToken}
-                        onChange={handleInputChange}
-                        placeholder="qr-ben-thanh-01"
-                        maxLength={100}
-                        aria-invalid={Boolean(errors.qrToken)}
-                      />
-                    </FormField>
-                  </div>
-                </div>
-              )}
-
-              <div className="adm-form-row">
-                <div className="adm-form-col">
-                  <FormField
-                    label="Vĩ độ"
-                    htmlFor="latitude"
-                    required
-                    error={errors.latitude}
-                    helperText="Số trong khoảng -90 đến 90."
-                  >
-                    <input
-                      id="latitude"
-                      name="latitude"
-                      type="number"
-                      step="any"
-                      className="adm-input"
-                      value={formValues.latitude}
-                      onChange={handleInputChange}
-                      placeholder="10.7725"
-                      aria-invalid={Boolean(errors.latitude)}
-                    />
-                  </FormField>
-                </div>
-                <div className="adm-form-col">
-                  <FormField
-                    label="Kinh độ"
-                    htmlFor="longitude"
-                    required
-                    error={errors.longitude}
-                    helperText="Số trong khoảng -180 đến 180."
-                  >
-                    <input
-                      id="longitude"
-                      name="longitude"
-                      type="number"
-                      step="any"
-                      className="adm-input"
-                      value={formValues.longitude}
-                      onChange={handleInputChange}
-                      placeholder="106.6980"
-                      aria-invalid={Boolean(errors.longitude)}
-                    />
-                  </FormField>
-                </div>
-              </div>
-
-              <div className="adm-form-row">
-                <div className="adm-form-col">
-                  <FormField
-                    label="Bán kính kích hoạt (mét)"
-                    htmlFor="triggerRadiusMeters"
-                    error={errors.triggerRadiusMeters}
-                    helperText="Mặc định 50 mét."
-                  >
-                    <input
-                      id="triggerRadiusMeters"
-                      name="triggerRadiusMeters"
-                      type="number"
-                      min={1}
-                      className="adm-input"
-                      value={formValues.triggerRadiusMeters}
-                      onChange={handleInputChange}
-                      aria-invalid={Boolean(errors.triggerRadiusMeters)}
-                    />
-                  </FormField>
-                </div>
-                <div className="adm-form-col">
-                  <FormField
-                    label="Địa chỉ"
-                    htmlFor="address"
-                    error={errors.address}
-                    helperText="Tối đa 500 ký tự."
-                  >
-                    <input
-                      id="address"
-                      name="address"
-                      type="text"
-                      className="adm-input"
-                      value={formValues.address}
-                      onChange={handleInputChange}
-                      placeholder="Lê Lợi, Quận 1, TP.HCM"
-                      maxLength={500}
-                      aria-invalid={Boolean(errors.address)}
-                    />
-                  </FormField>
-                </div>
-              </div>
-
-              <FormField
-                label="Ảnh đại diện"
-                htmlFor="thumbnailUrl"
-                error={errors.thumbnailUrl}
-                helperText="Tối đa 500 ký tự. Ví dụ: /img/pois/ben-thanh.jpg"
-              >
-                <input
-                  id="thumbnailUrl"
-                  name="thumbnailUrl"
-                  type="text"
-                  className="adm-input"
-                  value={formValues.thumbnailUrl}
-                  onChange={handleInputChange}
-                  placeholder="/img/pois/ben-thanh.jpg"
-                  maxLength={500}
-                  aria-invalid={Boolean(errors.thumbnailUrl)}
-                />
-              </FormField>
-
-              <div className="adm-form-row">
-                <div className="adm-form-col">
-                  <FormField
-                    label="Tuyến (không bắt buộc)"
-                    htmlFor="routeId"
-                    error={errors.routeId}
-                    helperText="Chọn khu vực trước để hiển thị tuyến tương ứng."
-                  >
-                    <select
-                      id="routeId"
-                      name="routeId"
-                      className="adm-select"
-                      value={formValues.routeId}
-                      onChange={handleInputChange}
-                      disabled={!formValues.zoneId}
-                      aria-invalid={Boolean(errors.routeId)}
-                    >
-                      <option value="">-- Không gán tuyến --</option>
-                      {routeOptions.map((route) => (
-                        <option key={route.id} value={String(route.id)}>
-                          {route.name}
-                        </option>
-                      ))}
-                    </select>
-                  </FormField>
-                </div>
-                <div className="adm-form-col">
-                  <FormField
-                    label="Thứ tự điểm dừng"
-                    htmlFor="stopOrder"
-                    error={errors.stopOrder}
-                    helperText="Chỉ nhập khi đã chọn tuyến."
-                  >
-                    <input
-                      id="stopOrder"
-                      name="stopOrder"
-                      type="number"
-                      min={1}
-                      className="adm-input"
-                      value={formValues.stopOrder}
-                      onChange={handleInputChange}
-                      aria-invalid={Boolean(errors.stopOrder)}
-                    />
-                  </FormField>
-                </div>
-              </div>
-            </FormSection>
-
-            <div className="adm-form-side">
-              <FormSection title="Nội dung thuyết minh tiếng Việt">
-                <p className="adm-form-hint">
-                  Đây là nội dung gốc. Hệ thống sẽ tự động dịch và tạo audio cho các ngôn ngữ khác
-                  sau khi lưu.
-                </p>
-
-                <FormField
-                  label="Tiêu đề"
-                  htmlFor="title"
-                  required
-                  error={errors.title}
-                  helperText="Tối đa 255 ký tự."
-                >
-                  <input
-                    id="title"
-                    name="title"
-                    type="text"
-                    className="adm-input"
-                    value={formValues.title}
-                    onChange={handleInputChange}
-                    placeholder="Chợ Bến Thành"
-                    maxLength={255}
-                    aria-invalid={Boolean(errors.title)}
-                  />
-                </FormField>
-
-                <FormField
-                  label="Tóm tắt"
-                  htmlFor="summary"
-                  required
-                  error={errors.summary}
-                  helperText="Tối đa 1000 ký tự."
-                >
-                  <textarea
-                    id="summary"
-                    name="summary"
-                    className="adm-textarea"
-                    rows={3}
-                    value={formValues.summary}
-                    onChange={handleInputChange}
-                    placeholder="Tóm tắt ngắn gọn về điểm đến"
-                    maxLength={1000}
-                    aria-invalid={Boolean(errors.summary)}
-                  />
-                </FormField>
-
-                <FormField
-                  label="Mô tả chi tiết"
-                  htmlFor="description"
-                  required
-                  error={errors.description}
-                >
-                  <textarea
-                    id="description"
-                    name="description"
-                    className="adm-textarea"
-                    rows={6}
-                    value={formValues.description}
-                    onChange={handleInputChange}
-                    placeholder="Nội dung thuyết minh đầy đủ"
-                    aria-invalid={Boolean(errors.description)}
-                  />
-                </FormField>
-
-                <FormField
-                  label="Ý nghĩa lịch sử (không bắt buộc)"
-                  htmlFor="historicalSignificance"
-                  error={errors.historicalSignificance}
-                >
-                  <textarea
-                    id="historicalSignificance"
-                    name="historicalSignificance"
-                    className="adm-textarea"
-                    rows={3}
-                    value={formValues.historicalSignificance}
-                    onChange={handleInputChange}
-                    placeholder="Giá trị văn hóa, lịch sử của điểm đến"
-                    aria-invalid={Boolean(errors.historicalSignificance)}
-                  />
-                </FormField>
-              </FormSection>
-
-              <div className="adm-form-actions">
-                <button
-                  type="button"
-                  className="adm-btn adm-btn-secondary"
-                  onClick={() => handleNavigateBack('/quan-tri/diem-thuyet-minh')}
-                  disabled={submitting}
-                >
-                  Hủy bỏ
-                </button>
-                <button type="submit" className="adm-btn adm-btn-primary" disabled={submitting}>
-                  {submitting
-                    ? isEditMode
-                      ? 'Đang lưu...'
-                      : 'Đang tạo mới...'
-                    : isEditMode
-                    ? 'Lưu thay đổi'
-                    : 'Tạo điểm thuyết minh'}
-                </button>
+              <div className="adm-form-side">
+                <FormSection title="Nội dung thuyết minh tiếng Việt">
+                  {renderContentFields()}
+                </FormSection>
+                {renderActions()}
               </div>
             </div>
-          </div>
+          )}
         </form>
-      )}
-
-      {isEditMode && !loading && poiId && detail && (
-        <PoiAudioStatusPanel
-          poiId={poiId}
-          publishStatus={detail.publishStatus}
-          publishAttempts={detail.publishAttempts}
-          lastPublishAttemptAt={detail.lastPublishAttemptAt}
-          translations={detail.translations}
-          onReload={refreshDetail}
-          reloading={detailReloading}
-        />
       )}
 
       <ConfirmDialog
