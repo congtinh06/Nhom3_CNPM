@@ -2621,3 +2621,19 @@
   justify-content: flex-end;
   margin-top: 10px;
 }
+
+
+/* --------------------------------------------------------------------------
+   GÐ5 - Chi?u cao hàng b?ng d?u theo ch? d? Tho?ng / G?n
+   -------------------------------------------------------------------------- */
+.adm-table tbody td {
+  height: 68px;
+}
+
+.adm-density-compact .adm-table tbody td {
+  height: 52px;
+}
+
+.adm-table tbody td.adm-table-empty {
+  height: auto;
+}
