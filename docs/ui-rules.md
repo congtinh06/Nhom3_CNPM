@@ -81,3 +81,33 @@ Guard fail nghĩa là có ký tự trang trí mới được thêm vào UI.
 - [ ] Ô rỗng dùng `-`; khoảng giá/thời gian dùng `-`.
 - [ ] Placeholder không có `...`; trạng thái tải giữ `...`.
 - [ ] Chạy guard ở mục 6 trước khi commit.
+
+## 8. Quy tắc riêng khu vực quản trị (`/quan-tri`)
+
+### 8.1. Nhãn trạng thái (chip/badge)
+
+- **Bỏ hoàn toàn chấm tròn** trong mọi chip, badge, nhãn trạng thái. Không thay bằng ký tự nào khác.
+- Dùng chung một component `frontend/src/admin/components/StatusBadge.tsx` cho tất cả trang admin, với 4 biến thể:
+  - `neutral`: trạng thái bình thường, chữ trơn màu xám, **không nền, không viền**.
+  - `muted`: trạng thái ẩn / tạm ngưng, chữ xám đậm hơn, không nền, không viền.
+  - `warning`: trạng thái cần chú ý, **nền vàng nhạt**, không viền.
+  - `danger`: trạng thái lỗi, **nền đỏ nhạt**, không viền.
+- Chỉ trạng thái **cần chú ý / lỗi** mới có nền; mọi trạng thái còn lại chỉ là chữ trơn.
+- Không dùng icon cho nhãn trạng thái (trừ khi có yêu cầu riêng).
+
+### 8.2. Nhãn & thuật ngữ
+
+- Toàn bộ nhãn admin dùng **tiếng Việt**.
+- **Không lộ thuật ngữ kỹ thuật** ra giao diện: `code` (mã kỹ thuật), `qrToken`, `thumbnail`, `v0`/`v1`... (phiên bản), tên trường DB.
+- Tách thông tin phụ bằng khoảng trắng / xuống dòng / dấu phẩy, không dùng dấu phân cách trang trí.
+
+### 8.3. Ô "Thuyết minh đa ngôn ngữ" (trang điểm thuyết minh)
+
+- Hiển thị chữ trơn tóm tắt số ngôn ngữ sẵn sàng (ví dụ `2/4 sẵn sàng`); chỉ thêm nhãn `danger` `N lỗi` khi có lỗi.
+- Rê chuột hoặc bấm mở popover liệt kê từng ngôn ngữ: tên tiếng Việt, trạng thái, thời lượng, lý do lỗi, thời điểm thử gần nhất.
+
+### 8.4. Trạng thái tổng hợp của điểm
+
+- `Đang hoạt động` (neutral): không có lý do cần chú ý.
+- `Cần chú ý` (warning): có ít nhất một lý do (lỗi audio, phát hành lỗi, chờ quá lâu, thiếu nội dung tiếng Việt, đang bảo trì).
+- `Đã ẩn` (muted): điểm đang ở trạng thái `INACTIVE`.
