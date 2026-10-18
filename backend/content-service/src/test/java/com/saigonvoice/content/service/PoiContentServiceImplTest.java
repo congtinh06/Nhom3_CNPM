@@ -46,6 +46,9 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -674,10 +677,12 @@ class PoiContentServiceImplTest {
                 .title("Central").audioStatus("READY").build();
         Pageable pageable = PageRequest.of(0, 20);
         Page<Poi> page = new PageImpl<>(List.of(samplePoi), pageable, 1);
-        when(poiRepository.searchAdminPois(null, null, null, null, null, pageable)).thenReturn(page);
+        when(poiRepository.searchAdminPois(any(), any(), any(), any(), any(), any(), any(), any(),
+                anyInt(), any(), eq(pageable))).thenReturn(page);
         when(translationRepository.findByPoiIdIn(List.of(100L))).thenReturn(List.of(viTranslation, en));
 
-        Page<AdminPoiListItemDto> result = poiContentService.getAdminPois(null, null, null, null, null, pageable);
+        Page<AdminPoiListItemDto> result =
+                poiContentService.getAdminPois(null, null, null, null, null, null, null, pageable);
 
         assertThat(result.getTotalElements()).isEqualTo(1);
         AdminPoiListItemDto row = result.getContent().get(0);
@@ -691,12 +696,67 @@ class PoiContentServiceImplTest {
     @DisplayName("getAdminPois: search được trim + lower-case thành LIKE pattern")
     void testGetAdminPois_SearchPattern() {
         Pageable pageable = PageRequest.of(0, 20);
-        when(poiRepository.searchAdminPois(1L, null, null, "%buu dien%", null, pageable))
+        when(poiRepository.searchAdminPois(eq(1L), any(), any(), eq("%buu dien%"), any(), any(), any(), any(),
+                anyInt(), any(), eq(pageable)))
                 .thenReturn(new PageImpl<>(List.of(samplePoi), pageable, 1));
         when(translationRepository.findByPoiIdIn(List.of(100L))).thenReturn(List.of());
 
         Page<AdminPoiListItemDto> result =
-                poiContentService.getAdminPois(1L, null, null, "  Buu Dien  ", null, pageable);
+                poiContentService.getAdminPois(1L, null, null, "  Buu Dien  ", null, null, null, pageable);
+
+        assertThat(result.getContent()).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("getAdminPois: overallStatus/languageStatus được chuẩn hóa hoa thường rồi chuyển xuống repository")
+    void testGetAdminPois_NormalizesFilters() {
+        Pageable pageable = PageRequest.of(0, 20);
+        when(poiRepository.searchAdminPois(any(), any(), any(), any(), any(),
+                eq("NEEDS_ATTENTION"), eq("ERROR"), eq(List.of("vi", "en", "ja", "ko")), eq(4),
+                any(), eq(pageable)))
+                .thenReturn(new PageImpl<>(List.of(samplePoi), pageable, 1));
+        when(translationRepository.findByPoiIdIn(List.of(100L))).thenReturn(List.of());
+
+        Page<AdminPoiListItemDto> result =
+                poiContentService.getAdminPois(null, null, null, null, null,
+                        " needs_attention ", " error ", pageable);
+
+        assertThat(result.getContent()).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("getAdminPois: overallStatus lạ -> BadRequest thay vì bỏ qua im lặng")
+    void testGetAdminPois_InvalidOverallStatus() {
+        Pageable pageable = PageRequest.of(0, 20);
+
+        assertThatThrownBy(() -> poiContentService.getAdminPois(
+                null, null, null, null, null, "PUBLISHED", null, pageable))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessageContaining("overallStatus");
+    }
+
+    @Test
+    @DisplayName("getAdminPois: languageStatus lạ -> BadRequest")
+    void testGetAdminPois_InvalidLanguageStatus() {
+        Pageable pageable = PageRequest.of(0, 20);
+
+        assertThatThrownBy(() -> poiContentService.getAdminPois(
+                null, null, null, null, null, null, "FAILED", pageable))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessageContaining("languageStatus");
+    }
+
+    @Test
+    @DisplayName("getAdminPois: blank filter -> truyền null xuống repository")
+    void testGetAdminPois_BlankFiltersBecomeNull() {
+        Pageable pageable = PageRequest.of(0, 20);
+        when(poiRepository.searchAdminPois(any(), any(), any(), any(), any(), isNull(), isNull(), any(),
+                anyInt(), any(), eq(pageable)))
+                .thenReturn(new PageImpl<>(List.of(samplePoi), pageable, 1));
+        when(translationRepository.findByPoiIdIn(List.of(100L))).thenReturn(List.of());
+
+        Page<AdminPoiListItemDto> result =
+                poiContentService.getAdminPois(null, null, null, null, null, "  ", "  ", pageable);
 
         assertThat(result.getContent()).hasSize(1);
     }

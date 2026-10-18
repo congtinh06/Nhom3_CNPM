@@ -31,6 +31,7 @@ import java.util.Map;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -100,7 +101,7 @@ class PoiAdminControllerTest {
     @Test
     @DisplayName("GET /api/content/admin/pois: role ADMIN -> 200 kèm trang + audioStatus theo ngôn ngữ")
     void testAdminList_Returns200() throws Exception {
-        when(poiContentService.getAdminPois(any(), any(), any(), any(), any(), any(Pageable.class)))
+        when(poiContentService.getAdminPois(any(), any(), any(), any(), any(), any(), any(), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of(sampleItem()), PageRequest.of(0, 20), 1));
 
         adminMockMvc.perform(get("/api/content/admin/pois")
@@ -112,6 +113,24 @@ class PoiAdminControllerTest {
                 .andExpect(jsonPath("$.content[0].version").value(0))
                 .andExpect(jsonPath("$.content[0].audioStatusByLanguage.vi").value("READY"))
                 .andExpect(jsonPath("$.totalElements").value(1));
+    }
+
+    @Test
+    @DisplayName("GET /api/content/admin/pois: truyền overallStatus/languageStatus xuống service")
+    void testAdminList_PassesStatusFilters() throws Exception {
+        when(poiContentService.getAdminPois(any(), any(), any(), any(), any(), any(), any(), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(sampleItem()), PageRequest.of(0, 20), 1));
+
+        adminMockMvc.perform(get("/api/content/admin/pois")
+                        .param("overallStatus", "NEEDS_ATTENTION")
+                        .param("languageStatus", "ERROR")
+                        .header(AdminRoleFilter.HEADER_ROLE, "ADMIN")
+                        .header(AdminRoleFilter.HEADER_INTERNAL_API_KEY, VALID_KEY))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(1));
+
+        verify(poiContentService).getAdminPois(any(), any(), any(), any(), any(),
+                eq("NEEDS_ATTENTION"), eq("ERROR"), any(Pageable.class));
     }
 
     @Test

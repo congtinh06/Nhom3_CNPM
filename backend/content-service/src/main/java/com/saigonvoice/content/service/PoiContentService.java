@@ -22,7 +22,9 @@ public interface PoiContentService {
 
     List<PoiGuideDto> getPoiGuides(Long zoneId);
 
-    Page<AdminPoiListItemDto> getAdminPois(Long zoneId, Long routeId, String status, String search, String audioStatus, Pageable pageable);
+    Page<AdminPoiListItemDto> getAdminPois(
+            Long zoneId, Long routeId, String status, String search, String audioStatus,
+            String overallStatus, String languageStatus, Pageable pageable);
 
     AdminPoiDetailDto getAdminPoiDetail(Long id);
 

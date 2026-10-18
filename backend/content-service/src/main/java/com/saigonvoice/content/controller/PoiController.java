@@ -77,9 +77,12 @@ public class PoiController {
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String search,
             @RequestParam(required = false) String audioStatus,
+            @RequestParam(required = false) String overallStatus,
+            @RequestParam(required = false) String languageStatus,
             @PageableDefault(size = 20, sort = "id", direction = Sort.Direction.ASC) Pageable pageable) {
         return ResponseEntity.ok(
-                poiContentService.getAdminPois(zoneId, routeId, status, search, audioStatus, pageable));
+                poiContentService.getAdminPois(
+                        zoneId, routeId, status, search, audioStatus, overallStatus, languageStatus, pageable));
     }
 
     @GetMapping("/api/content/admin/pois/{id}")

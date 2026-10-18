@@ -62,6 +62,9 @@ public class PoiContentServiceImpl implements PoiContentService {
     private static final String DEFAULT_LANG = "vi";
     private static final Set<String> PUBLISH_STATUSES = Set.of(PublishStatus.PENDING, PublishStatus.PUBLISHED, PublishStatus.FAILED);
     private static final List<String> SUPPORTED_LANGUAGES = List.of("vi", "en", "ja", "ko");
+    // Giá trị lọc hợp lệ cho overallStatus / languageStatus của danh sách admin.
+    private static final Set<String> OVERALL_STATUS_VALUES = Set.of("ACTIVE", "NEEDS_ATTENTION", "HIDDEN");
+    private static final Set<String> LANGUAGE_STATUS_VALUES = Set.of("ERROR", "PENDING");
     private static final Map<String, String> LANGUAGE_NAMES = Map.of(
             "vi", "Tiếng Việt",
             "en", "Tiếng Anh",
@@ -149,20 +152,38 @@ public class PoiContentServiceImpl implements PoiContentService {
 
     @Override
     public Page<AdminPoiListItemDto> getAdminPois(
-            Long zoneId, Long routeId, String status, String search, String audioStatus, Pageable pageable) {
+            Long zoneId, Long routeId, String status, String search, String audioStatus,
+            String overallStatus, String languageStatus, Pageable pageable) {
         String searchPattern = (search != null && !search.isBlank())
                 ? "%" + search.trim().toLowerCase(Locale.ROOT) + "%" : null;
         String normalizedStatus = (status != null && !status.isBlank()) ? status.trim().toUpperCase(Locale.ROOT) : null;
         String normalizedAudio = (audioStatus != null && !audioStatus.isBlank())
                 ? audioStatus.trim().toUpperCase(Locale.ROOT) : null;
+        String normalizedOverall = normalizeEnumFilter(overallStatus, OVERALL_STATUS_VALUES, "overallStatus");
+        String normalizedLanguage = normalizeEnumFilter(languageStatus, LANGUAGE_STATUS_VALUES, "languageStatus");
+        LocalDateTime pendingCutoff = TimeUtils.nowUtc().minusMinutes(pendingTimeoutMinutes);
 
         Page<Poi> page = poiRepository.searchAdminPois(
-                zoneId, routeId, normalizedStatus, searchPattern, normalizedAudio, pageable);
+                zoneId, routeId, normalizedStatus, searchPattern, normalizedAudio,
+                normalizedOverall, normalizedLanguage, SUPPORTED_LANGUAGES, SUPPORTED_LANGUAGES.size(),
+                pendingCutoff, pageable);
 
         List<Long> ids = page.getContent().stream().map(Poi::getId).toList();
         Map<Long, Map<String, PoiTranslation>> translationsByPoi = loadTranslations(ids);
 
         return page.map(poi -> toAdminListItem(poi, translationsByPoi.getOrDefault(poi.getId(), Map.of())));
+    }
+
+    // Giữ giá trị lọc viết hoa/thường tùy ý nhưng chặn giá trị lạ để lỗi rõ ràng thay vì im lặng bỏ qua.
+    private static String normalizeEnumFilter(String value, Set<String> allowed, String field) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        String normalized = value.trim().toUpperCase(Locale.ROOT);
+        if (!allowed.contains(normalized)) {
+            throw new BadRequestException(field + " must be one of: " + String.join(", ", allowed));
+        }
+        return normalized;
     }
 
     @Override
