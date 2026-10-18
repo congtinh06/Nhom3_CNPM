@@ -315,6 +315,11 @@
   width: 100%;
 }
 
+/* Cho popover mục con thoát ra khỏi khung nav khi thu gọn (nav có overflow để cuộn). */
+.adm-sidebar-collapsed .adm-sidebar-nav {
+  overflow: visible;
+}
+
 /* Floating Popover */
 .adm-nav-popover {
   position: absolute;
@@ -352,6 +357,11 @@
 
 .adm-nav-popover-upcoming {
   padding: 6px 8px;
+}
+
+/* Trong popover của sidebar thu gọn vẫn hiện nhãn "Sắp có" cho mục chưa mở. */
+.adm-sidebar-collapsed .adm-nav-popover .adm-nav-badge {
+  display: inline-block;
 }
 
 /* Collapse button in sidebar foot */
