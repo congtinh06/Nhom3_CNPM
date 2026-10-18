@@ -9,22 +9,15 @@ import {
   PoiZoneOption,
 } from '../types/poi';
 import { DataTable, Column } from '../components/DataTable';
-import { StatusBadge, StatusBadgeVariant } from '../components/StatusBadge';
+import { StatusBadge } from '../components/StatusBadge';
 import { PoiLanguageSummary } from '../components/PoiLanguageSummary';
+import { resolveOverallStatus } from '../utils/poiStatus';
 import { EmptyState } from '../components/EmptyState';
 import { ErrorState } from '../components/ErrorState';
 import { AdminToolbar } from '../components/AdminToolbar';
 import { AdminPagination } from '../components/AdminPagination';
 
 const PAGE_SIZE = 10;
-
-const OVERALL_STATUS_CONFIG: Record<string, { label: string; variant: StatusBadgeVariant }> = {
-  ACTIVE: { label: 'Đang hoạt động', variant: 'neutral' },
-  NEEDS_ATTENTION: { label: 'Cần chú ý', variant: 'warning' },
-  HIDDEN: { label: 'Đã ẩn', variant: 'muted' },
-};
-
-const DEFAULT_OVERALL_STATUS = { label: 'Đang hoạt động', variant: 'neutral' as StatusBadgeVariant };
 
 export const PoiListPage: React.FC = () => {
   const navigate = useNavigate();
@@ -156,7 +149,7 @@ export const PoiListPage: React.FC = () => {
       title: 'Trạng thái',
       width: '140px',
       render: (poi) => {
-        const config = OVERALL_STATUS_CONFIG[poi.overallStatus || 'ACTIVE'] || DEFAULT_OVERALL_STATUS;
+        const config = resolveOverallStatus(poi.overallStatus);
         const reasons = poi.attentionReasons || [];
         return (
           <StatusBadge

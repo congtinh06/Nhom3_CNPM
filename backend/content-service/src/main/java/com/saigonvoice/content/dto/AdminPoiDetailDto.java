@@ -4,6 +4,7 @@ import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 
 /** Chi tiết POI cho admin: gồm tất cả bản dịch trong 1 response. */
@@ -43,6 +44,11 @@ public class AdminPoiDetailDto {
     private String publishStatus;
     private Integer publishAttempts;
     private LocalDateTime lastPublishAttemptAt;
+
+    private String overallStatus;
+    private List<String> attentionReasons;
+    private AdminPoiLanguageSummaryDto languageSummary;
+    private List<AdminPoiLanguageDto> languages;
 
     // Tất cả bản dịch, key = languageCode (vi/en/ja/ko).
     private Map<String, AdminPoiTranslationDto> translations;

@@ -15,8 +15,11 @@ import {
 import { FormField } from '../components/FormField';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { PoiAudioStatusPanel } from '../components/PoiAudioStatusPanel';
+import { PoiLanguageSummary } from '../components/PoiLanguageSummary';
+import { StatusBadge } from '../components/StatusBadge';
 import { FormSection } from '../components/FormSection';
 import { AdminAlert } from '../components/AdminAlert';
+import { resolveOverallStatus } from '../utils/poiStatus';
 
 interface FormValues {
   zoneId: string;
@@ -482,6 +485,9 @@ export const PoiFormPage: React.FC = () => {
   const categoryOptions = flattenCategories(categories);
   const routeOptions = routes.filter((route) => String(route.zoneId) === formValues.zoneId);
 
+  const overallConfig = resolveOverallStatus(detail?.overallStatus);
+  const attentionReasons = detail?.attentionReasons ?? [];
+
   return (
     <div className="adm-page">
       <div className="adm-page-head">
@@ -501,6 +507,26 @@ export const PoiFormPage: React.FC = () => {
               ? `Cập nhật tọa độ, thông tin và nội dung thuyết minh tiếng Việt cho điểm #${poiId}.`
               : 'Điền thông tin điểm đến để du khách có thể quét mã và nghe thuyết minh.'}
           </p>
+          {isEditMode && detail && (
+            <>
+              <div className="adm-poi-status-row">
+                <StatusBadge
+                  variant={overallConfig.variant}
+                  title={attentionReasons.length > 0 ? attentionReasons.join('\n') : undefined}
+                >
+                  {overallConfig.label}
+                </StatusBadge>
+                <PoiLanguageSummary
+                  languages={detail.languages}
+                  summary={detail.languageSummary}
+                  poiName={detail.name}
+                />
+              </div>
+              {attentionReasons.length > 0 && (
+                <p className="adm-poi-status-reasons">{attentionReasons.join(', ')}</p>
+              )}
+            </>
+          )}
         </div>
       </div>
 
@@ -606,7 +632,7 @@ export const PoiFormPage: React.FC = () => {
                 <div className="adm-form-row">
                   <div className="adm-form-col">
                     <FormField
-                      label="Mã điểm (code)"
+                      label="Mã điểm"
                       htmlFor="code"
                       required
                       error={errors.code}
@@ -627,7 +653,7 @@ export const PoiFormPage: React.FC = () => {
                   </div>
                   <div className="adm-form-col">
                     <FormField
-                      label="Mã QR (qrToken)"
+                      label="Mã QR"
                       htmlFor="qrToken"
                       required
                       error={errors.qrToken}
@@ -652,7 +678,7 @@ export const PoiFormPage: React.FC = () => {
               <div className="adm-form-row">
                 <div className="adm-form-col">
                   <FormField
-                    label="Vĩ độ (latitude)"
+                    label="Vĩ độ"
                     htmlFor="latitude"
                     required
                     error={errors.latitude}
@@ -673,7 +699,7 @@ export const PoiFormPage: React.FC = () => {
                 </div>
                 <div className="adm-form-col">
                   <FormField
-                    label="Kinh độ (longitude)"
+                    label="Kinh độ"
                     htmlFor="longitude"
                     required
                     error={errors.longitude}
@@ -737,7 +763,7 @@ export const PoiFormPage: React.FC = () => {
               </div>
 
               <FormField
-                label="Đường dẫn ảnh đại diện (thumbnail)"
+                label="Ảnh đại diện"
                 htmlFor="thumbnailUrl"
                 error={errors.thumbnailUrl}
                 helperText="Tối đa 500 ký tự. Ví dụ: /img/pois/ben-thanh.jpg"

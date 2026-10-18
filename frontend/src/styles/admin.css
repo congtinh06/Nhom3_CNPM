@@ -672,17 +672,6 @@
   animation: admPulse 1.4s ease-in-out infinite;
 }
 
-.adm-lang-chip {
-  display: inline-block;
-  padding: 2px 6px;
-  border: 1px solid var(--fb-border, #E7E5E4);
-  border-radius: 2px;
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--fb-text-secondary, #78716C);
-  background-color: var(--fb-border-subtle, #F5F5F4);
-}
-
 /* --------------------------------------------------------------------------
    Forms & Inputs
    -------------------------------------------------------------------------- */
@@ -1698,8 +1687,15 @@
 }
 
 .adm-lang-status-note {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
   font-size: 12px;
   color: var(--fb-text-secondary, #78716C);
+}
+
+.adm-lang-status-error {
+  color: #B3261E;
 }
 
 .adm-publish-actions {
@@ -1985,6 +1981,20 @@
   align-items: center;
   gap: 10px;
   flex-wrap: wrap;
+}
+
+.adm-poi-status-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+
+.adm-poi-status-reasons {
+  font-size: 13px;
+  color: #B45309;
+  margin: 6px 0 0;
 }
 
 /* Header & Sidebar */

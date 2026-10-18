@@ -1,6 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { AdminPoiLanguage, AdminPoiLanguageSummary } from '../types/poi';
 import { StatusBadge } from './StatusBadge';
+import { formatDateTime } from '../utils/format';
 
 export interface PoiLanguageSummaryProps {
   languages?: AdminPoiLanguage[];
@@ -22,18 +23,6 @@ function durationLabel(language: AdminPoiLanguage): string {
     return `${language.audioDurationSeconds} giây`;
   }
   return '-';
-}
-
-function formatDateTime(value?: string | null): string {
-  if (!value) {
-    return '-';
-  }
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
-    return '-';
-  }
-  const pad = (n: number) => String(n).padStart(2, '0');
-  return `${pad(date.getDate())}/${pad(date.getMonth() + 1)}/${date.getFullYear()} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
 
 export const PoiLanguageSummary: React.FC<PoiLanguageSummaryProps> = ({ languages, summary, poiName }) => {

@@ -176,6 +176,10 @@ export interface AdminPoiDetail {
   publishStatus: PublishStatusValue | string;
   publishAttempts?: number | null;
   lastPublishAttemptAt?: string | null;
+  overallStatus?: PoiOverallStatus | string;
+  attentionReasons?: string[];
+  languageSummary?: AdminPoiLanguageSummary;
+  languages?: AdminPoiLanguage[];
   translations: Record<string, AdminPoiTranslation>;
 }
 

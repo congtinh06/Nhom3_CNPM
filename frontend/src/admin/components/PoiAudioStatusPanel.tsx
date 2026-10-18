@@ -4,6 +4,7 @@ import { normalizeAdminError } from '../api/adminClient';
 import { AdminPoiTranslation, POI_LANGUAGES } from '../types/poi';
 import { StatusBadge } from './StatusBadge';
 import { ConfirmDialog } from './ConfirmDialog';
+import { formatDateTime } from '../utils/format';
 
 export interface PoiAudioStatusPanelProps {
   poiId: number;
@@ -13,13 +14,6 @@ export interface PoiAudioStatusPanelProps {
   translations: Record<string, AdminPoiTranslation>;
   onReload: () => void | Promise<void>;
   reloading?: boolean;
-}
-
-function formatDateTime(value?: string | null): string {
-  if (!value) return '-';
-  const d = new Date(value);
-  if (isNaN(d.getTime())) return '-';
-  return d.toLocaleString('vi-VN');
 }
 
 export const PoiAudioStatusPanel: React.FC<PoiAudioStatusPanelProps> = ({
@@ -66,6 +60,8 @@ export const PoiAudioStatusPanel: React.FC<PoiAudioStatusPanelProps> = ({
       missing: !translation,
       audioStatus: translation?.audioStatus || 'PENDING',
       durationSeconds: translation?.audioDurationSeconds ?? null,
+      errorReason: translation?.errorReason ?? null,
+      lastAttemptAt: translation?.lastAttemptAt ?? null,
     };
   });
 
@@ -122,28 +118,36 @@ export const PoiAudioStatusPanel: React.FC<PoiAudioStatusPanelProps> = ({
         )}
 
         <div className="adm-lang-status-list">
-          {langStatuses.map((lang) => (
-            <div key={lang.code} className="adm-lang-status-row">
-              <span className="adm-lang-status-name">
-                <span className="adm-lang-chip">{lang.code.toUpperCase()}</span>
-                {lang.label}
-              </span>
-              <span className="adm-lang-status-badge">
-                {lang.missing ? (
-                  <span className="adm-date-text">Chưa có bản dịch</span>
-                ) : (
-                  <StatusBadge status={lang.audioStatus} />
-                )}
-              </span>
-              <span className="adm-lang-status-note">
-                {!lang.missing && lang.audioStatus === 'READY' && lang.durationSeconds
-                  ? `${Math.round(lang.durationSeconds)} giây`
-                  : !lang.missing && lang.audioStatus === 'FAILED_TTS'
-                  ? 'Lỗi tổng hợp giọng đọc. Hãy phát hành lại để tạo audio mới.'
-                  : ''}
-              </span>
-            </div>
-          ))}
+          {langStatuses.map((lang) => {
+            const errorText =
+              lang.errorReason ||
+              (lang.audioStatus === 'FAILED_TTS'
+                ? 'Lỗi tổng hợp giọng đọc. Hãy phát hành lại để tạo audio mới.'
+                : null);
+            return (
+              <div key={lang.code} className="adm-lang-status-row">
+                <span className="adm-lang-status-name">{lang.label}</span>
+                <span className="adm-lang-status-badge">
+                  {lang.missing ? (
+                    <span className="adm-date-text">Chưa có bản dịch</span>
+                  ) : (
+                    <StatusBadge status={lang.audioStatus} />
+                  )}
+                </span>
+                <span className="adm-lang-status-note">
+                  {!lang.missing && (
+                    <>
+                      {lang.audioStatus === 'READY' && lang.durationSeconds ? (
+                        <span>Thời lượng: {Math.round(lang.durationSeconds)} giây</span>
+                      ) : null}
+                      {errorText && <span className="adm-lang-status-error">{errorText}</span>}
+                      <span>Thử gần nhất: {formatDateTime(lang.lastAttemptAt)}</span>
+                    </>
+                  )}
+                </span>
+              </div>
+            );
+          })}
         </div>
 
         <div className="adm-publish-actions">

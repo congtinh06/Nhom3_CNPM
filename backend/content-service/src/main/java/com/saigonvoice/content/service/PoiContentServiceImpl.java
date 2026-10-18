@@ -435,6 +435,33 @@ public class PoiContentServiceImpl implements PoiContentService {
     }
 
     private AdminPoiListItemDto toAdminListItem(Poi poi, Map<String, PoiTranslation> translationsByLang) {
+        LanguageAggregate aggregate = aggregateLanguages(translationsByLang);
+        List<AdminPoiLanguageDto> languages = aggregate.languages;
+
+        List<String> attentionReasons = buildAttentionReasons(poi, languages, translationsByLang);
+
+        return AdminPoiListItemDto.builder()
+                .id(poi.getId())
+                .code(poi.getCode())
+                .name(poi.getName())
+                .slug(poi.getSlug())
+                .zoneId(poi.getZone() != null ? poi.getZone().getId() : null)
+                .zoneCode(poi.getZone() != null ? poi.getZone().getCode() : null)
+                .routeId(poi.getRoute() != null ? poi.getRoute().getId() : null)
+                .routeName(poi.getRoute() != null ? poi.getRoute().getName() : null)
+                .stopOrder(poi.getStopOrder())
+                .status(poi.getStatus())
+                .version(poi.getVersion())
+                .publishStatus(poi.getPublishStatus())
+                .audioStatusByLanguage(aggregate.audioStatusByLanguage)
+                .overallStatus(resolveOverallStatus(poi, attentionReasons))
+                .attentionReasons(attentionReasons)
+                .languageSummary(aggregate.summary)
+                .languages(languages)
+                .build();
+    }
+
+    private LanguageAggregate aggregateLanguages(Map<String, PoiTranslation> translationsByLang) {
         List<AdminPoiLanguageDto> languages = new ArrayList<>();
         Map<String, String> audioStatusByLanguage = new LinkedHashMap<>();
         int ready = 0;
@@ -464,34 +491,29 @@ public class PoiContentServiceImpl implements PoiContentService {
         }
 
         int total = SUPPORTED_LANGUAGES.size();
-        AdminPoiLanguageSummaryDto languageSummary = AdminPoiLanguageSummaryDto.builder()
+        AdminPoiLanguageSummaryDto summary = AdminPoiLanguageSummaryDto.builder()
                 .total(total)
                 .ready(ready)
                 .pending(total - ready - failed)
                 .failed(failed)
                 .build();
 
-        List<String> attentionReasons = buildAttentionReasons(poi, languages, translationsByLang);
+        return new LanguageAggregate(languages, summary, audioStatusByLanguage);
+    }
 
-        return AdminPoiListItemDto.builder()
-                .id(poi.getId())
-                .code(poi.getCode())
-                .name(poi.getName())
-                .slug(poi.getSlug())
-                .zoneId(poi.getZone() != null ? poi.getZone().getId() : null)
-                .zoneCode(poi.getZone() != null ? poi.getZone().getCode() : null)
-                .routeId(poi.getRoute() != null ? poi.getRoute().getId() : null)
-                .routeName(poi.getRoute() != null ? poi.getRoute().getName() : null)
-                .stopOrder(poi.getStopOrder())
-                .status(poi.getStatus())
-                .version(poi.getVersion())
-                .publishStatus(poi.getPublishStatus())
-                .audioStatusByLanguage(audioStatusByLanguage)
-                .overallStatus(resolveOverallStatus(poi, attentionReasons))
-                .attentionReasons(attentionReasons)
-                .languageSummary(languageSummary)
-                .languages(languages)
-                .build();
+    private static final class LanguageAggregate {
+        private final List<AdminPoiLanguageDto> languages;
+        private final AdminPoiLanguageSummaryDto summary;
+        private final Map<String, String> audioStatusByLanguage;
+
+        private LanguageAggregate(
+                List<AdminPoiLanguageDto> languages,
+                AdminPoiLanguageSummaryDto summary,
+                Map<String, String> audioStatusByLanguage) {
+            this.languages = languages;
+            this.summary = summary;
+            this.audioStatusByLanguage = audioStatusByLanguage;
+        }
     }
 
     private List<String> buildAttentionReasons(
@@ -547,14 +569,22 @@ public class PoiContentServiceImpl implements PoiContentService {
 
     private AdminPoiDetailDto mapToAdminDetail(Poi poi, List<PoiTranslation> translations, PoiTranslation primaryVi) {
         Map<String, AdminPoiTranslationDto> mapped = new LinkedHashMap<>();
+        Map<String, PoiTranslation> translationsByLang = new LinkedHashMap<>();
         if (primaryVi != null && primaryVi.getLanguageCode() != null) {
             mapped.put(primaryVi.getLanguageCode(), toAdminTranslation(primaryVi));
+            translationsByLang.put(primaryVi.getLanguageCode(), primaryVi);
         }
         if (translations != null) {
             for (PoiTranslation t : translations) {
+                if (t.getLanguageCode() != null) {
+                    translationsByLang.putIfAbsent(t.getLanguageCode(), t);
+                }
                 mapped.putIfAbsent(t.getLanguageCode(), toAdminTranslation(t));
             }
         }
+
+        LanguageAggregate aggregate = aggregateLanguages(translationsByLang);
+        List<String> attentionReasons = buildAttentionReasons(poi, aggregate.languages, translationsByLang);
 
         return AdminPoiDetailDto.builder()
                 .id(poi.getId())
@@ -580,6 +610,10 @@ public class PoiContentServiceImpl implements PoiContentService {
                 .publishStatus(poi.getPublishStatus())
                 .publishAttempts(poi.getPublishAttempts())
                 .lastPublishAttemptAt(poi.getLastPublishAttemptAt())
+                .overallStatus(resolveOverallStatus(poi, attentionReasons))
+                .attentionReasons(attentionReasons)
+                .languageSummary(aggregate.summary)
+                .languages(aggregate.languages)
                 .translations(mapped)
                 .build();
     }
