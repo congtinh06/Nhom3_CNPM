@@ -149,22 +149,51 @@ describe('PoiListPage', () => {
     expect(poiApi.getAdminPois).toHaveBeenCalledTimes(1);
   });
 
-  it('mở popover chi tiết thuyết minh theo ngôn ngữ', async () => {
+  it('mở popover chi tiết thuyết minh theo ngôn ngữ bằng bấm và đóng bằng Esc', async () => {
     renderComponent();
 
     await waitFor(() => {
       expect(screen.getByText('Dinh Độc Lập')).toBeInTheDocument();
     });
 
-    fireEvent.click(
-      screen.getByRole('button', { name: /trạng thái thuyết minh của dinh độc lập/i })
-    );
+    const trigger = screen.getByRole('button', {
+      name: 'Xem trạng thái ngôn ngữ của Dinh Độc Lập',
+    });
+    fireEvent.click(trigger);
 
     const dialog = await screen.findByRole('dialog');
     expect(within(dialog).getByText('Tiếng Việt')).toBeInTheDocument();
     expect(within(dialog).getByText('Tiếng Anh')).toBeInTheDocument();
     expect(within(dialog).getAllByText('Lỗi tổng hợp')).toHaveLength(3);
     expect(within(dialog).getAllByText('TTS timeout')).toHaveLength(3);
+    expect(within(dialog).getByRole('button', { name: 'Sắp có' })).toBeDisabled();
+
+    fireEvent.keyDown(trigger, { key: 'Escape' });
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    });
+  });
+
+  it('chỉ mở một popover ngôn ngữ tại một thời điểm', async () => {
+    renderComponent();
+
+    await waitFor(() => {
+      expect(screen.getByText('Chợ Bến Thành')).toBeInTheDocument();
+    });
+
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Xem trạng thái ngôn ngữ của Chợ Bến Thành' })
+    );
+    await screen.findByRole('dialog');
+
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Xem trạng thái ngôn ngữ của Dinh Độc Lập' })
+    );
+
+    await waitFor(() => {
+      const dialogs = screen.getAllByRole('dialog');
+      expect(dialogs).toHaveLength(1);
+    });
   });
 
   it('hiển thị ErrorState kèm nút Thử lại và tải lại thành công', async () => {

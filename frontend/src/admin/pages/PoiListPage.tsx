@@ -201,13 +201,23 @@ export const PoiListPage: React.FC = () => {
       render: (poi) => {
         const config = resolveOverallStatus(poi.overallStatus);
         const reasons = poi.attentionReasons || [];
+        const title = reasons.length > 0 ? reasons.join('\n') : undefined;
+        if (config.variant === 'warning') {
+          return (
+            <StatusBadge variant="warning" title={title}>
+              {config.label}
+            </StatusBadge>
+          );
+        }
         return (
-          <StatusBadge
-            variant={config.variant}
-            title={reasons.length > 0 ? reasons.join('\n') : undefined}
+          <span
+            className={
+              config.variant === 'muted' ? 'adm-status-text-muted' : 'adm-status-text'
+            }
+            title={title}
           >
             {config.label}
-          </StatusBadge>
+          </span>
         );
       },
     },

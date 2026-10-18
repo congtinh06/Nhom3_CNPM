@@ -2539,3 +2539,85 @@
 .adm-toolbar-left > .adm-btn {
   flex: 0 0 auto;
 }
+
+
+/* --------------------------------------------------------------------------
+   GÐ5 - Tr?ng thái d?ng ch? & popover ngôn ng?
+   -------------------------------------------------------------------------- */
+
+/* Tr?ng thái bình thu?ng: ch? xám thu?ng, không badge */
+.adm-status-text {
+  font-size: 13.5px;
+  color: var(--fb-text-secondary);
+}
+
+.adm-status-text-muted {
+  font-size: 13.5px;
+  font-weight: 500;
+  color: #4B5563;
+}
+
+/* Ô ngôn ng? có d?u hi?u b?m du?c */
+.adm-lang-summary {
+  font-size: 13.5px;
+  color: var(--fb-text-secondary);
+}
+
+.adm-lang-summary .adm-badge {
+  font-size: 12.5px;
+}
+
+.adm-lang-summary:hover .adm-lang-summary-text,
+.adm-lang-summary:focus-visible .adm-lang-summary-text {
+  text-decoration: underline;
+}
+
+.adm-lang-summary:focus-visible {
+  outline: 2px solid var(--fb-accent, #C2410C);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+.adm-lang-summary-wrap:focus-within .adm-lang-summary-text {
+  text-decoration: underline;
+}
+
+/* B?ng chi ti?t trong popover */
+.adm-lang-popover {
+  width: 400px;
+  padding: 12px;
+}
+
+.adm-lang-popover-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+}
+
+.adm-lang-popover-table th {
+  padding: 0 8px 6px 0;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--fb-text-secondary);
+  white-space: nowrap;
+}
+
+.adm-lang-popover-table td {
+  padding: 6px 8px 6px 0;
+  border-top: 1px solid var(--fb-border-subtle);
+  color: var(--fb-text-primary);
+  vertical-align: top;
+}
+
+.adm-lang-popover-plain {
+  color: var(--fb-text-secondary);
+}
+
+.adm-lang-popover-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 10px;
+}
