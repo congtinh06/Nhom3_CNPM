@@ -183,6 +183,221 @@
   color: var(--fb-text-secondary, #78716C);
 }
 
+.adm-nav-link-trigger {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  font-size: 13.5px;
+}
+
+.adm-nav-parent-active {
+  background-color: rgba(194, 65, 12, 0.04);
+  color: var(--fb-accent, #C2410C);
+  font-weight: 600;
+  border-left-color: var(--fb-accent, #C2410C);
+}
+
+.adm-nav-chevron-wrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: auto;
+  color: var(--fb-text-secondary, #78716C);
+}
+
+.adm-nav-chevron {
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.adm-nav-chevron-open {
+  transform: rotate(90deg);
+}
+
+/* Submenu */
+.adm-nav-submenu {
+  list-style: none;
+  margin: 3px 0 6px;
+  padding: 0 0 0 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.adm-nav-subitem {
+  margin: 0;
+  padding: 0;
+}
+
+.adm-nav-sublink {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 7px 10px;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--fb-text-secondary, #78716C);
+  text-decoration: none;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.adm-nav-sublink:hover:not(.adm-nav-sublink-disabled) {
+  background-color: var(--fb-border-subtle, #F5F5F4);
+  color: var(--fb-accent, #C2410C);
+}
+
+.adm-nav-sublink-active {
+  background-color: rgba(194, 65, 12, 0.08);
+  color: var(--fb-accent, #C2410C);
+  font-weight: 600;
+}
+
+.adm-nav-sublink-disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  color: var(--fb-text-secondary, #78716C);
+}
+
+.adm-nav-sublabel {
+  flex: 1 1 auto;
+}
+
+/* Sidebar Collapsed Desktop Mode */
+.adm-sidebar-collapsed {
+  width: 68px;
+}
+
+.adm-sidebar-collapsed .adm-brand-subtitle,
+.adm-sidebar-collapsed .adm-nav-section-label,
+.adm-sidebar-collapsed .adm-nav-label,
+.adm-sidebar-collapsed .adm-nav-badge,
+.adm-sidebar-collapsed .adm-nav-chevron-wrap,
+.adm-sidebar-collapsed .adm-sidebar-collapse-btn span:not(.adm-exit-icon),
+.adm-sidebar-collapsed .adm-exit-link span:not(.adm-exit-icon) {
+  display: none;
+}
+
+.adm-sidebar-collapsed .adm-sidebar-head {
+  padding: 16px 8px;
+  justify-content: center;
+}
+
+.adm-sidebar-collapsed .adm-brand-title {
+  font-size: 18px;
+}
+
+.adm-sidebar-collapsed .adm-nav-link {
+  justify-content: center;
+  padding: 10px 0;
+  border-left-width: 0;
+  border-radius: 6px;
+}
+
+.adm-sidebar-collapsed .adm-nav-item {
+  position: relative;
+}
+
+.adm-sidebar-collapsed .adm-sidebar-foot {
+  padding: 12px 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.adm-sidebar-collapsed .adm-sidebar-collapse-btn,
+.adm-sidebar-collapsed .adm-exit-link {
+  justify-content: center;
+  padding: 8px 0;
+  width: 100%;
+}
+
+/* Floating Popover */
+.adm-nav-popover {
+  position: absolute;
+  left: calc(100% + 8px);
+  top: 0;
+  width: 220px;
+  background-color: var(--fb-surface, #FFFFFF);
+  border: 1px solid var(--fb-border, #E7E5E4);
+  border-radius: 6px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  padding: 8px;
+  z-index: 1000;
+  animation: admFadeIn 0.15s ease;
+}
+
+.adm-nav-popover-title {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--fb-text-secondary, #78716C);
+  padding: 4px 8px 6px;
+  border-bottom: 1px solid var(--fb-border-subtle, #F5F5F4);
+  margin-bottom: 6px;
+}
+
+.adm-nav-popover-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.adm-nav-popover-upcoming {
+  padding: 6px 8px;
+}
+
+/* Collapse button in sidebar foot */
+.adm-sidebar-collapse-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+  color: var(--fb-text-secondary, #78716C);
+  text-decoration: none;
+  background: transparent;
+  border: 0;
+  width: 100%;
+  padding: 6px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: color 0.15s ease, background-color 0.15s ease;
+  margin-bottom: 4px;
+}
+
+.adm-sidebar-collapse-btn:hover {
+  color: var(--fb-accent, #C2410C);
+  background-color: var(--fb-border-subtle, #F5F5F4);
+}
+
+/* A11y Focus Rings */
+.adm-nav-link:focus-visible,
+.adm-nav-sublink:focus-visible,
+.adm-sidebar-collapse-btn:focus-visible,
+.adm-exit-link:focus-visible {
+  outline: 2px solid var(--fb-accent, #C2410C);
+  outline-offset: 2px;
+}
+
+@keyframes admFadeIn {
+  from {
+    opacity: 0;
+    transform: translateX(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
 .adm-sidebar-foot {
   padding: 16px;
   border-top: 1px solid var(--fb-border-subtle, #F5F5F4);
@@ -2448,10 +2663,10 @@
 
 
 /* --------------------------------------------------------------------------
-   Gï¿½5 - Danh sï¿½ch di?m thuy?t minh: ï¿½ b?ng, dï¿½ng tï¿½m t?t, b? l?c d?u hï¿½ng
+   G5 - Danh sch di?m thuy?t minh:  b?ng, dng tm t?t, b? l?c d?u hng
    -------------------------------------------------------------------------- */
 
-/* ï¿½ b?ng hai dï¿½ng: dï¿½ng chï¿½nh + dï¿½ng ph? */
+/* O bang hai dong: dong chinh + dong phu */
 .adm-cell-stack {
   display: flex;
   flex-direction: column;
@@ -2483,7 +2698,7 @@
   color: #B45309;
 }
 
-/* Caption b?ng dï¿½nh cho trï¿½nh d?c mï¿½n hï¿½nh, khï¿½ng hi?n tr?c quan */
+/* Caption b?ng dnh cho trnh d?c mn hnh, khng hi?n tr?c quan */
 .adm-table-caption {
   position: absolute;
   width: 1px;
@@ -2496,7 +2711,7 @@
   border: 0;
 }
 
-/* Dï¿½ng tï¿½m t?t phï¿½a trï¿½n b?ng */
+/* Dng tm t?t pha trn b?ng */
 .adm-list-summary {
   margin: -8px 0 0;
   font-size: 13px;
@@ -2523,7 +2738,7 @@
   border-radius: 2px;
 }
 
-/* ï¿½ l?c dï¿½n h?t hï¿½ng, cao d?u */
+/*  l?c dn h?t hng, cao d?u */
 .adm-toolbar-left {
   flex: 1 1 auto;
   gap: 12px;
@@ -2542,10 +2757,10 @@
 
 
 /* --------------------------------------------------------------------------
-   Gï¿½5 - Tr?ng thï¿½i d?ng ch? & popover ngï¿½n ng?
+   G5 - Tr?ng thi d?ng ch? & popover ngn ng?
    -------------------------------------------------------------------------- */
 
-/* Tr?ng thï¿½i bï¿½nh thu?ng: ch? xï¿½m thu?ng, khï¿½ng badge */
+/* Tr?ng thi bnh thu?ng: ch? xm thu?ng, khng badge */
 .adm-status-text {
   font-size: 13.5px;
   color: var(--fb-text-secondary);
@@ -2557,7 +2772,7 @@
   color: #4B5563;
 }
 
-/* ï¿½ ngï¿½n ng? cï¿½ d?u hi?u b?m du?c */
+/*  ngn ng? c d?u hi?u b?m du?c */
 .adm-lang-summary {
   font-size: 13.5px;
   color: var(--fb-text-secondary);
@@ -2624,7 +2839,7 @@
 
 
 /* --------------------------------------------------------------------------
-   Gï¿½5 - Chi?u cao hï¿½ng b?ng d?u theo ch? d? Tho?ng / G?n
+   G5 - Chi?u cao hng b?ng d?u theo ch? d? Tho?ng / G?n
    -------------------------------------------------------------------------- */
 .adm-table tbody td {
   height: 68px;
@@ -2640,7 +2855,7 @@
 
 
 /* --------------------------------------------------------------------------
-   Gï¿½5 - Thanh luu dï¿½nh dï¿½y & kh?i ?nh d?i di?n (bi?u m?u di?m thuy?t minh)
+   G5 - Thanh luu dnh dy & kh?i ?nh d?i di?n (bi?u m?u di?m thuy?t minh)
    -------------------------------------------------------------------------- */
 .adm-save-bar {
   position: sticky;
@@ -2712,7 +2927,7 @@
 }
 
 
-/* Dòng b? l?c không xu?ng hàng ? màn hình r?ng, có gói l?i trên màn hình h?p */
+/* Dng b? l?c khng xu?ng hng ? mn hnh r?ng, c gi l?i trn mn hnh h?p */
 .adm-toolbar {
   flex-wrap: nowrap;
 }
