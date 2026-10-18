@@ -420,7 +420,7 @@ export const OsmTileLayer: React.FC<OsmTileLayerProps> = ({
     const layerOptions: L.TileLayerOptions = {
       maxZoom: currentProvider.maxZoom ?? 19,
       referrerPolicy: currentProvider.referrerPolicy,
-      attribution: `${currentProvider.attribution} &bull; <small class="map-provider-tag">${currentProvider.name}</small>`,
+      attribution: `${currentProvider.attribution} | <small class="map-provider-tag">${currentProvider.name}</small>`,
       subdomains: currentProvider.subdomains ?? 'abc',
     };
 
@@ -668,7 +668,7 @@ export const PoiMap: React.FC<PoiMapProps> = ({
       html: `
         <div class="mk-pin-container ${activeClass} ${hoveredClass} ${playingClass} ${listenedClass}">
           <div class="mk-pin-node">
-            ${isListened ? '<span class="mk-pin-check">✓</span>' : `<span class="mk-pin-num">${num}</span>`}
+            ${isListened ? '<span class="mk-pin-check"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span>' : `<span class="mk-pin-num">${num}</span>`}
           </div>
           ${showLabel ? `<div class="mk-pin-label-pill">${name}</div>` : ''}
         </div>
@@ -716,7 +716,7 @@ export const PoiMap: React.FC<PoiMapProps> = ({
           <div className="sim-banner-left">
             <span className="sim-pulse-dot" aria-hidden="true" />
             <span className="sim-banner-text">
-              <strong>{t(currentLang, 'simBannerLabel')}</strong> — {t(currentLang, 'simBannerDesc')}
+              <strong>{t(currentLang, 'simBannerLabel')}</strong>: {t(currentLang, 'simBannerDesc')}
             </span>
           </div>
           {onToggleSimMode && (

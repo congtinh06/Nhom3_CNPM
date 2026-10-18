@@ -93,15 +93,15 @@ export const PoiHero: React.FC<PoiHeroProps> = ({
 
         {/* Right column: text content (spans full width if no image) */}
         <div className="nearby-hero-content">
-          {/* Eyebrow badge: uppercase small label (ĐIỂM 1 · loại điểm) */}
+          {/* Eyebrow badge: uppercase small label (ĐIỂM 1, loại điểm) */}
           <div className="hero-eyebrow-label" aria-hidden="true">
             {currentLang === 'en'
-              ? `STOP ${originalIndex + 1}${poi.category?.en || poi.category?.vi ? ` · ${poi.category?.en || poi.category?.vi}` : ''}`
+              ? `STOP ${originalIndex + 1}${poi.category?.en || poi.category?.vi ? `, ${poi.category?.en || poi.category?.vi}` : ''}`
               : currentLang === 'ja'
-              ? `スポット ${originalIndex + 1}${poi.category?.ja || poi.category?.vi ? ` · ${poi.category?.ja || poi.category?.vi}` : ''}`
+              ? `スポット ${originalIndex + 1}${poi.category?.ja || poi.category?.vi ? `, ${poi.category?.ja || poi.category?.vi}` : ''}`
               : currentLang === 'ko'
-              ? `정류장 ${originalIndex + 1}${poi.category?.ko || poi.category?.vi ? ` · ${poi.category?.ko || poi.category?.vi}` : ''}`
-              : `ĐIỂM ${originalIndex + 1}${poi.category?.vi ? ` · ${poi.category?.vi}` : ''}`}
+              ? `정류장 ${originalIndex + 1}${poi.category?.ko || poi.category?.vi ? `, ${poi.category?.ko || poi.category?.vi}` : ''}`
+              : `ĐIỂM ${originalIndex + 1}${poi.category?.vi ? `, ${poi.category?.vi}` : ''}`}
           </div>
 
           {/* Stop title */}

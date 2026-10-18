@@ -31,7 +31,7 @@ export const PlacesToolbar: React.FC<PlacesToolbarProps> = ({
           <input
             id="qi"
             type="search"
-            placeholder="Tìm địa điểm..."
+            placeholder="Tìm địa điểm"
             aria-label="Tìm địa điểm"
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}

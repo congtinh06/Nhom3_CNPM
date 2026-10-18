@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { Check } from 'lucide-react';
 import { GeoPoi } from '../../pages/NearbyPage';
 import { SupportedLanguage } from '../../types';
 import { splitTranscriptIntoSentences } from '../../hooks/useNearbyAudio';
@@ -257,7 +258,7 @@ export const PoiCard = React.memo<PoiCardProps>(function PoiCard({
           </span>
           {isListened && (
             <span className="stop-row-listened" title={t(currentLang, 'listenedTitle')}>
-              ✓
+              <Check size={14} />
             </span>
           )}
           {inTriggerZone && (
@@ -298,10 +299,10 @@ export const PoiCard = React.memo<PoiCardProps>(function PoiCard({
             data-id={poi.id}
             aria-label={
               isCardPlaying
-                ? `${resolvedPauseText.replace('❚❚ ', '')} ${displayName}`
+                ? `${resolvedPauseText} ${displayName}`
                 : isCurrent && !isCardPlaying
-                ? `${resolvedResumeText.replace('▶ ', '')} ${displayName}`
-                : `${resolvedListenText.replace('▶ ', '')} ${displayName}`
+                ? `${resolvedResumeText} ${displayName}`
+                : `${resolvedListenText} ${displayName}`
             }
             onClick={(e) => {
               e.stopPropagation();
@@ -328,10 +329,10 @@ export const PoiCard = React.memo<PoiCardProps>(function PoiCard({
             )}
             <span className="chapter-play-label">
               {isCardPlaying
-                ? resolvedPauseText.replace('❚❚ ', '')
+                ? resolvedPauseText
                 : isCurrent && !isCardPlaying
-                ? resolvedResumeText.replace('▶ ', '')
-                : resolvedListenText.replace('▶ ', '')}
+                ? resolvedResumeText
+                : resolvedListenText}
             </span>
           </button>
           {qrAvailable && (

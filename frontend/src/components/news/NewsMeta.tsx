@@ -70,13 +70,8 @@ export const NewsMeta: React.FC<NewsMetaProps> = ({
 
   return (
     <div className={className} data-testid="news-meta">
-      {parts.map((part, index) => (
+      {parts.map((part) => (
         <span key={part.key} className="nl-meta-part">
-          {index > 0 && (
-            <span className="nl-meta-sep" aria-hidden="true">
-              ·
-            </span>
-          )}
           {part.node}
         </span>
       ))}

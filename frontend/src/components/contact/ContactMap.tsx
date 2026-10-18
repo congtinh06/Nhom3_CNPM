@@ -73,7 +73,7 @@ export const ContactMap: React.FC<ContactMapProps> = () => {
                 Hotline: 0346358399
               </div>
               <div style={{ fontSize: '0.8rem', color: '#78716c', marginTop: 2 }}>
-                Giờ mở cửa: 8h – 23h
+                Giờ mở cửa: 8h - 23h
               </div>
             </div>
           </Popup>

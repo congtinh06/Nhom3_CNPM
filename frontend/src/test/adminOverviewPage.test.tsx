@@ -80,7 +80,7 @@ describe('AdminOverviewPage', () => {
 
     const zonesLink = await screen.findByRole('link', { name: /khu vực/i });
     await waitFor(() => {
-      expect(zonesLink).toHaveTextContent('—');
+      expect(zonesLink).toHaveTextContent('-');
     });
   });
 });

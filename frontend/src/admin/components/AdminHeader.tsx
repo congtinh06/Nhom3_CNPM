@@ -7,6 +7,7 @@ import {
   ADMIN_SECTION_ROOTS,
 } from '../config/nav';
 import { BRAND_NAME } from '../brand/brand';
+import { ChevronDown, ChevronLeft } from 'lucide-react';
 import type { AdminDensity } from '../types';
 
 export interface AdminHeaderProps {
@@ -94,7 +95,7 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
   const displayName = user?.fullName || user?.email || 'Quản trị viên';
 
   useEffect(() => {
-    document.title = `${resolveTitle(location.pathname)} · Quản trị ${BRAND_NAME}`;
+    document.title = `${resolveTitle(location.pathname)} - Quản trị ${BRAND_NAME}`;
   }, [location.pathname]);
 
   useEffect(() => {
@@ -215,7 +216,7 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
               <span className="adm-user-role">Quản trị viên</span>
             </span>
             <span className="adm-usermenu-caret" aria-hidden="true">
-              &#9662;
+              <ChevronDown />
             </span>
           </button>
 
@@ -223,7 +224,7 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
             <div className="adm-usermenu-panel" role="menu">
               <Link to="/" role="menuitem" className="adm-usermenu-item">
                 <span className="adm-usermenu-item-icon" aria-hidden="true">
-                  &#8592;
+                  <ChevronLeft />
                 </span>
                 Về website du khách
               </Link>

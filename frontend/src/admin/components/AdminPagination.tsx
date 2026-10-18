@@ -1,4 +1,5 @@
 import React from 'react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 export interface AdminPaginationProps {
   page: number;
@@ -34,7 +35,7 @@ export const AdminPagination: React.FC<AdminPaginationProps> = ({
           onClick={() => onPageChange(page - 1)}
           disabled={page <= 0 || disabled}
         >
-          &larr; Trang trước
+          <ChevronLeft /> Trang trước
         </button>
 
         <span className="adm-pagination-current">
@@ -47,7 +48,7 @@ export const AdminPagination: React.FC<AdminPaginationProps> = ({
           onClick={() => onPageChange(page + 1)}
           disabled={page >= totalPages - 1 || disabled}
         >
-          Trang sau &rarr;
+          Trang sau <ChevronRight />
         </button>
       </div>
     </div>

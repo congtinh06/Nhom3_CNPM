@@ -224,13 +224,13 @@ export const AdminOverviewPage: React.FC = () => {
                   {state?.loading
                     ? '...'
                     : state?.error
-                    ? '—'
+                    ? '-'
                     : state?.active != null
                     ? `${state.active.toLocaleString('vi-VN')} / ${(state.value ?? 0).toLocaleString('vi-VN')}`
                     : (state?.value ?? 0).toLocaleString('vi-VN')}
                 </div>
                 <span className="adm-metric-hint">
-                  {card.activeParams ? 'Đang hoạt động / Tổng' : 'Quản lý'} &rarr;
+                  {card.activeParams ? 'Đang hoạt động / Tổng' : 'Quản lý'}
                 </span>
               </Link>
             );

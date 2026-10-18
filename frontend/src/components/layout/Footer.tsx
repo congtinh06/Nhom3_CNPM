@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Phone, Mail, MapPin, Clock } from 'lucide-react';
+import { Phone, Mail, MapPin, Clock, ChevronUp } from 'lucide-react';
 import { footerContent, siteContact } from '../../content/staticSections';
 
 export const Footer: React.FC = () => {
@@ -77,8 +77,9 @@ export const Footer: React.FC = () => {
           <a href="/privacy.html" target="_blank" rel="noopener noreferrer">
             Chính sách quyền riêng tư
           </a>
-          <a href="#top" onClick={handleTopClick}>
+          <a href="#top" onClick={handleTopClick} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
             {footerContent.backToTop}
+            <ChevronUp size={16} aria-hidden="true" />
           </a>
         </span>
       </div>

@@ -139,7 +139,7 @@ describe('LoginPage', () => {
     renderWithAuth(<LoginPage />);
     expect(await screen.findByRole('heading', { name: 'Đăng nhập' })).toBeInTheDocument();
     expect(screen.getByPlaceholderText('ban@example.com')).toBeInTheDocument();
-    expect(screen.getByPlaceholderText('••••••••')).toBeInTheDocument();
+    expect(screen.getByLabelText('Mật khẩu')).toBeInTheDocument();
   });
 
   it('surfaces the server message when login fails with 401', async () => {
@@ -152,7 +152,7 @@ describe('LoginPage', () => {
     fireEvent.change(await screen.findByPlaceholderText('ban@example.com'), {
       target: { value: 'a@example.com' },
     });
-    fireEvent.change(screen.getByPlaceholderText('••••••••'), {
+    fireEvent.change(screen.getByLabelText('Mật khẩu'), {
       target: { value: 'matkhau123' },
     });
     fireEvent.click(screen.getByRole('button', { name: 'Đăng nhập' }));
@@ -179,7 +179,7 @@ describe('LoginPage', () => {
     fireEvent.change(await screen.findByPlaceholderText('ban@example.com'), {
       target: { value: '  a@example.com ' },
     });
-    fireEvent.change(screen.getByPlaceholderText('••••••••'), {
+    fireEvent.change(screen.getByLabelText('Mật khẩu'), {
       target: { value: 'matkhau123' },
     });
     fireEvent.click(screen.getByRole('checkbox', { name: /Duy trì đăng nhập/ }));

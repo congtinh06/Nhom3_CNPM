@@ -82,7 +82,6 @@ export const LoginForm: React.FC<LoginFormProps> = ({
           onChange={setPassword}
           autoComplete="current-password"
           required
-          placeholder="••••••••"
         />
 
         <div className="af-row">

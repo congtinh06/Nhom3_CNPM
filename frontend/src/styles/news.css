@@ -802,7 +802,7 @@
   border-radius: var(--news-radius-lg);
 }
 
-/* Meta row: category dot + CATEGORY · "x phút đọc" (+ "MỚI" badge) */
+/* Meta row: category dot + CATEGORY , "x phút đọc" (+ "MỚI" badge) */
 .story-meta-row {
   display: flex;
   align-items: center;

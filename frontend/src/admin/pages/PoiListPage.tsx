@@ -124,9 +124,8 @@ export const PoiListPage: React.FC = () => {
           >
             {poi.name}
           </Link>
-          <span className="adm-product-slug">
-            {poi.code} · v{poi.version}
-          </span>
+          <span className="adm-product-slug">{poi.code}</span>
+          <span className="adm-product-slug">v{poi.version}</span>
         </div>
       ),
     },
@@ -144,10 +143,12 @@ export const PoiListPage: React.FC = () => {
         poi.routeName ? (
           <span>
             {poi.routeName}
-            {poi.stopOrder != null ? ` · #${poi.stopOrder}` : ''}
+            {poi.stopOrder != null && (
+              <span className="adm-product-slug">Thứ tự {poi.stopOrder}</span>
+            )}
           </span>
         ) : (
-          <span className="adm-date-text">—</span>
+          <span className="adm-date-text">-</span>
         ),
     },
     {
@@ -178,7 +179,7 @@ export const PoiListPage: React.FC = () => {
                 {status ? (
                   <StatusBadge status={status} />
                 ) : (
-                  <span className="adm-date-text">—</span>
+                  <span className="adm-date-text">-</span>
                 )}
               </span>
             );
@@ -243,7 +244,7 @@ export const PoiListPage: React.FC = () => {
           <input
             type="search"
             className="adm-input adm-search-input"
-            placeholder="Tìm theo tên hoặc mã điểm..."
+            placeholder="Tìm theo tên hoặc mã điểm"
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             aria-label="Tìm kiếm điểm thuyết minh"

@@ -1,5 +1,5 @@
 /* ==========================================================================
-   SaigonVoice — Admin Foundation Design System (admin.css)
+   SaigonVoice - Admin Foundation Design System (admin.css)
    Strict rule: All selectors MUST start with .adm- prefix.
    Reuses core tokens: --fb-bg-primary, --fb-surface, --fb-accent, --fb-border,
    --font-display, --font-body. No global rules, no bare tag overrides.
@@ -1905,9 +1905,9 @@
 }
 
 /* ==========================================================================
-   GĐ4 — Enterprise polish (dashboard doanh nghiệp)
+   GĐ4 - Enterprise polish (dashboard doanh nghiệp)
    Token riêng cho khu vực quản trị + tinh chỉnh nền, chữ, độ nổi và mật độ.
-   Chỉ áp cho .adm-* — không ảnh hưởng website du khách.
+   Chỉ áp cho .adm-* - không ảnh hưởng website du khách.
    ========================================================================== */
 
 .adm-layout,
@@ -2047,7 +2047,7 @@
 }
 
 /* --------------------------------------------------------------------------
-   GĐ4 — Bảng dữ liệu, toolbar, biểu mẫu & badge
+   GĐ4 - Bảng dữ liệu, toolbar, biểu mẫu & badge
    -------------------------------------------------------------------------- */
 
 /* Bảng: header dính, hàng thoáng, cuộn dọc trong khung */
@@ -2190,7 +2190,7 @@
 }
 
 /* --------------------------------------------------------------------------
-   GĐ4 — Mật độ hiển thị (đặt class trên .adm-layout)
+   GĐ4 - Mật độ hiển thị (đặt class trên .adm-layout)
    -------------------------------------------------------------------------- */
 .adm-density-compact {
   --adm-cell-py: 8px;
@@ -2250,5 +2250,16 @@
   .adm-density-toggle {
     display: none;
   }
+}
+
+/* Icon spacing after replacing text arrow glyphs with SVG icons */
+.adm-back-link {
+  gap: 6px;
+}
+
+.adm-login-back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 

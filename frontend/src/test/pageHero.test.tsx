@@ -4,7 +4,7 @@ import { PageHero } from '../components/common/PageHero';
 
 describe('PageHero component', () => {
   const defaultProps = {
-    eyebrow: 'TUYẾN THUYẾT MINH · 5 ĐIỂM',
+    eyebrow: 'TUYẾN THUYẾT MINH, 5 ĐIỂM',
     title: 'Điểm du lịch Sài Gòn',
     subtitle: 'Khám phá các điểm đến di sản nổi tiếng tại trung tâm Thành phố Hồ Chí Minh',
     imageSrc: '/hero/hero-diem-du-lich.webp',
@@ -14,7 +14,7 @@ describe('PageHero component', () => {
   it('renders title, eyebrow, subtitle and exactly one H1', () => {
     const { container } = render(<PageHero {...defaultProps} />);
 
-    expect(screen.getByText('TUYẾN THUYẾT MINH · 5 ĐIỂM')).toBeInTheDocument();
+    expect(screen.getByText('TUYẾN THUYẾT MINH, 5 ĐIỂM')).toBeInTheDocument();
     expect(screen.getByText('Điểm du lịch Sài Gòn')).toBeInTheDocument();
     expect(
       screen.getByText('Khám phá các điểm đến di sản nổi tiếng tại trung tâm Thành phố Hồ Chí Minh')
@@ -76,7 +76,7 @@ describe('PageHero component', () => {
 
     // Title and text must remain intact and legible
     expect(screen.getByText('Điểm du lịch Sài Gòn')).toBeInTheDocument();
-    expect(screen.getByText('TUYẾN THUYẾT MINH · 5 ĐIỂM')).toBeInTheDocument();
+    expect(screen.getByText('TUYẾN THUYẾT MINH, 5 ĐIỂM')).toBeInTheDocument();
 
     // Credit is hidden on fallback to avoid misleading attribution
     expect(container.querySelector('.page-hero-credit')).toBeNull();

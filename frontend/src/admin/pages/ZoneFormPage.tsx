@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { ChevronLeft } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { zoneApi } from '../api/zoneApi';
 import { normalizeAdminError } from '../api/adminClient';
@@ -299,7 +300,7 @@ export const ZoneFormPage: React.FC = () => {
             className="adm-back-link"
             onClick={() => handleNavigateBack('/quan-tri/khu-vuc')}
           >
-            &larr; Quay lại danh sách khu vực
+            <ChevronLeft /> Quay lại danh sách khu vực
           </button>
           <h1 className="adm-page-title">
             {isEditMode ? 'Chỉnh sửa khu vực' : 'Thêm khu vực mới'}
@@ -387,7 +388,7 @@ export const ZoneFormPage: React.FC = () => {
                   rows={3}
                   value={formValues.description}
                   onChange={handleInputChange}
-                  placeholder="Mô tả ngắn về khu vực..."
+                  placeholder="Mô tả ngắn về khu vực"
                 />
               </FormField>
 

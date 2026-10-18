@@ -79,7 +79,7 @@ export const OrderList= ({
           type="text"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Tìm theo mã đơn (SV-...)"
+          placeholder="Tìm theo mã đơn"
           className="orders-search-input"
         />
       </div>

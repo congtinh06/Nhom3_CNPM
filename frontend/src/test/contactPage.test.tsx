@@ -67,7 +67,7 @@ describe('ContactPage Component', () => {
     renderContactPage();
 
     expect(screen.getAllByText(/338 An Dương Vương/)[0]).toBeInTheDocument();
-    expect(screen.getAllByText(/8h – 23h/)[0]).toBeInTheDocument();
+    expect(screen.getAllByText(/8h - 23h/)[0]).toBeInTheDocument();
     expect(screen.getByRole('link', { name: '0346358399' })).toHaveAttribute(
       'href',
       'tel:0346358399'

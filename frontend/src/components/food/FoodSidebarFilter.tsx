@@ -55,8 +55,8 @@ const HIERARCHICAL_CATEGORIES: CategoryGroup[] = [
 export const PRICE_OPTIONS: { key: PriceRangeFilter; label: string }[] = [
   { key: 'all', label: 'Tất cả khoảng giá' },
   { key: 'under-50k', label: 'Dưới 50.000đ' },
-  { key: '50k-100k', label: '50.000đ – 100.000đ' },
-  { key: '100k-200k', label: '100.000đ – 200.000đ' },
+  { key: '50k-100k', label: '50.000đ - 100.000đ' },
+  { key: '100k-200k', label: '100.000đ - 200.000đ' },
   { key: 'above-200k', label: 'Trên 200.000đ' },
 ];
 

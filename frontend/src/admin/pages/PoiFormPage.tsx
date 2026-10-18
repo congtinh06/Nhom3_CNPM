@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { ChevronLeft } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { poiApi } from '../api/poiApi';
 import { normalizeAdminError } from '../api/adminClient';
@@ -490,7 +491,7 @@ export const PoiFormPage: React.FC = () => {
             className="adm-back-link"
             onClick={() => handleNavigateBack('/quan-tri/diem-thuyet-minh')}
           >
-            &larr; Quay lại danh sách điểm thuyết minh
+            <ChevronLeft /> Quay lại danh sách điểm thuyết minh
           </button>
           <h1 className="adm-page-title">
             {isEditMode ? 'Chỉnh sửa điểm thuyết minh' : 'Thêm điểm thuyết minh mới'}
@@ -595,7 +596,7 @@ export const PoiFormPage: React.FC = () => {
                   className="adm-input"
                   value={formValues.name}
                   onChange={handleInputChange}
-                  placeholder="Nhập tên điểm đến..."
+                  placeholder="Nhập tên điểm đến"
                   maxLength={255}
                   aria-invalid={Boolean(errors.name)}
                 />
@@ -843,7 +844,7 @@ export const PoiFormPage: React.FC = () => {
                     rows={3}
                     value={formValues.summary}
                     onChange={handleInputChange}
-                    placeholder="Tóm tắt ngắn gọn về điểm đến..."
+                    placeholder="Tóm tắt ngắn gọn về điểm đến"
                     maxLength={1000}
                     aria-invalid={Boolean(errors.summary)}
                   />
@@ -862,7 +863,7 @@ export const PoiFormPage: React.FC = () => {
                     rows={6}
                     value={formValues.description}
                     onChange={handleInputChange}
-                    placeholder="Nội dung thuyết minh đầy đủ..."
+                    placeholder="Nội dung thuyết minh đầy đủ"
                     aria-invalid={Boolean(errors.description)}
                   />
                 </FormField>
@@ -879,7 +880,7 @@ export const PoiFormPage: React.FC = () => {
                     rows={3}
                     value={formValues.historicalSignificance}
                     onChange={handleInputChange}
-                    placeholder="Giá trị văn hóa, lịch sử của điểm đến..."
+                    placeholder="Giá trị văn hóa, lịch sử của điểm đến"
                     aria-invalid={Boolean(errors.historicalSignificance)}
                   />
                 </FormField>

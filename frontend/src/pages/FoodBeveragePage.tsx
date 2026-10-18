@@ -263,7 +263,6 @@ export const FoodBeveragePage: React.FC = () => {
                   <span className="editorial-count-badge">
                     {totalItems} sản phẩm
                   </span>
-                  <span className="editorial-meta-bullet" aria-hidden="true">•</span>
                   <p className="editorial-catalog-subtitle">
                     Khám phá hương vị đặc trưng của Sài Gòn
                   </p>

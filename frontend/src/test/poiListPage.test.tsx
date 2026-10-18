@@ -113,11 +113,13 @@ describe('PoiListPage', () => {
     await waitFor(() => {
       expect(screen.getByText('Chợ Bến Thành')).toBeInTheDocument();
       expect(screen.getByText('Dinh Độc Lập')).toBeInTheDocument();
-      expect(screen.getByText('BEN_THANH · v3')).toBeInTheDocument();
+      expect(screen.getByText('BEN_THANH')).toBeInTheDocument();
+      expect(screen.getByText('v3')).toBeInTheDocument();
     });
 
     const table = screen.getByRole('table');
-    expect(within(table).getByText('Tuyến trung tâm · #2')).toBeInTheDocument();
+    expect(within(table).getByText('Tuyến trung tâm')).toBeInTheDocument();
+    expect(within(table).getByText('Thứ tự 2')).toBeInTheDocument();
     expect(within(table).getByText('Đang hoạt động')).toBeInTheDocument();
     expect(within(table).getByText('Đã phát')).toBeInTheDocument();
     expect(within(table).getByText('Thất bại')).toBeInTheDocument();

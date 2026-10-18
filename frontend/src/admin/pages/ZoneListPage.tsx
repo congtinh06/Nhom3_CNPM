@@ -191,7 +191,7 @@ export const ZoneListPage: React.FC = () => {
           <input
             type="search"
             className="adm-input adm-search-input"
-            placeholder="Tìm theo tên hoặc mã khu vực..."
+            placeholder="Tìm theo tên hoặc mã khu vực"
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             aria-label="Tìm kiếm khu vực"

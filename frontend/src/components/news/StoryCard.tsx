@@ -110,7 +110,6 @@ export const StoryCard: React.FC<StoryCardProps> = ({
               />
               {categoryMeta.label.toUpperCase()}
             </span>
-            <span className="story-meta-dot" aria-hidden="true">·</span>
             <span className="story-read-time">{item.readingTime || item.readingMinutes || 3}P ĐỌC</span>
             {item.isNew && (
               <span className="story-new-badge" aria-label="Bài mới trong 48 giờ">
@@ -167,7 +166,7 @@ export const StoryCard: React.FC<StoryCardProps> = ({
 
       {/* 2. BODY CONTENT */}
       <div className="story-content">
-        {/* Meta row: dot · category · reading time · MỚI */}
+        {/* Meta row: category, reading time, MỚI */}
         <div className="story-meta-row">
           <span className="story-cat-badge" style={{ color: categoryMeta.hex }}>
             <span
@@ -177,8 +176,6 @@ export const StoryCard: React.FC<StoryCardProps> = ({
             />
             {categoryMeta.label.toUpperCase()}
           </span>
-
-          <span className="story-meta-dot" aria-hidden="true">·</span>
 
           <span className="story-read-time">
             {item.readingTime || item.readingMinutes || 3} PHÚT ĐỌC

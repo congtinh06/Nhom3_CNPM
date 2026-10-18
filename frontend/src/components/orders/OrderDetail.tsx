@@ -213,7 +213,7 @@ export const OrderDetail= ({
             THÔNG TIN NHẬN HÀNG
           </span>
           <div className="order-detail-meta-value">
-            <span style={{ fontWeight: 600 }}>{order.receiverName}</span> ·{' '}
+            <span style={{ fontWeight: 600 }}>{order.receiverName}</span>,{' '}
             <span>{formatPhone(order.phone)}</span>
             <p style={{ margin: '4px 0 0', color: '#78716C', lineHeight: 1.5 }}>
               {composeAddress(order)}

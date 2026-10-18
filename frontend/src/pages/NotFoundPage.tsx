@@ -1,5 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { ChevronLeft } from 'lucide-react';
 
 export const NotFoundPage: React.FC = () => {
   const navigate = useNavigate();
@@ -11,7 +12,7 @@ export const NotFoundPage: React.FC = () => {
         Trang bạn đang tìm kiếm không tồn tại hoặc đã được chuyển hướng.
       </p>
       <button type="button" className="tb" onClick={() => navigate('/')}>
-        ← Về trang chủ
+        <ChevronLeft /> Về trang chủ
       </button>
     </section>
   );

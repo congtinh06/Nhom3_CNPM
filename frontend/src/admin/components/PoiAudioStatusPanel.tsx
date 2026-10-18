@@ -16,9 +16,9 @@ export interface PoiAudioStatusPanelProps {
 }
 
 function formatDateTime(value?: string | null): string {
-  if (!value) return '—';
+  if (!value) return '-';
   const d = new Date(value);
-  if (isNaN(d.getTime())) return '—';
+  if (isNaN(d.getTime())) return '-';
   return d.toLocaleString('vi-VN');
 }
 
@@ -102,7 +102,7 @@ export const PoiAudioStatusPanel: React.FC<PoiAudioStatusPanelProps> = ({
             {currentStatus ? (
               <StatusBadge status={currentStatus} />
             ) : (
-              <span className="adm-date-text">—</span>
+              <span className="adm-date-text">-</span>
             )}
           </span>
         </div>

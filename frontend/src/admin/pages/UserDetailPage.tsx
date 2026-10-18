@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { ChevronLeft } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { userApi } from '../api/userApi';
 import { normalizeAdminError } from '../api/adminClient';
@@ -22,11 +23,11 @@ type PendingAction =
   | { kind: 'status'; value: UserStatusValue };
 
 function formatDateTime(value?: string | null): string {
-  if (!value) return '—';
+  if (!value) return '-';
   try {
     return new Date(value).toLocaleString('vi-VN');
   } catch {
-    return '—';
+    return '-';
   }
 }
 
@@ -179,7 +180,7 @@ export const UserDetailPage: React.FC = () => {
             className="adm-back-link"
             onClick={() => navigate('/quan-tri/nguoi-dung')}
           >
-            &larr; Quay lại danh sách người dùng
+            <ChevronLeft /> Quay lại danh sách người dùng
           </button>
           <h1 className="adm-page-title">{user.fullName}</h1>
           <p className="adm-page-desc">{user.email}</p>

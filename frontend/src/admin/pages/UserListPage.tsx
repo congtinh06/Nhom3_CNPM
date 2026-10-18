@@ -13,11 +13,11 @@ import { AdminPagination } from '../components/AdminPagination';
 const PAGE_SIZE = 10;
 
 function formatDate(value?: string | null): string {
-  if (!value) return '—';
+  if (!value) return '-';
   try {
     return new Date(value).toLocaleDateString('vi-VN');
   } catch {
-    return '—';
+    return '-';
   }
 }
 
@@ -172,7 +172,7 @@ export const UserListPage: React.FC = () => {
           <input
             type="search"
             className="adm-input adm-search-input"
-            placeholder="Tìm theo tên hoặc email..."
+            placeholder="Tìm theo tên hoặc email"
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             aria-label="Tìm kiếm người dùng"

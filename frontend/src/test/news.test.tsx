@@ -366,9 +366,9 @@ describe('News Feature Tests (Tin tức)', () => {
       // Part 0: Category (no separator)
       expect(metaParts[0]?.querySelector('.nl-meta-sep')).toBeNull();
 
-      // Part 1: Date (has leading separator, but no trailing separator)
-      expect(metaParts[1]?.querySelector('.nl-meta-sep')).not.toBeNull();
-      expect(metaParts[1]?.textContent).toBe('·14/10/2026');
+      // Part 1: Date (no separator at all)
+      expect(metaParts[1]?.querySelector('.nl-meta-sep')).toBeNull();
+      expect(metaParts[1]?.textContent).toBe('14/10/2026');
 
       // Check that there is no trailing separator element or reading time
       const lastElement = container.querySelector('.nl-meta')?.lastElementChild;

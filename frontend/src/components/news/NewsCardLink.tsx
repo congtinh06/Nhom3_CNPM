@@ -25,7 +25,7 @@ export const NewsCardLink: React.FC<NewsCardLinkProps> = ({ item, className, chi
         className={className}
         target="_blank"
         rel="noopener noreferrer"
-        aria-label={`${item.title} – mở bài gốc tại ${item.source} trong tab mới`}
+        aria-label={`${item.title}, mở bài gốc tại ${item.source} trong tab mới`}
       >
         {children}
       </a>
