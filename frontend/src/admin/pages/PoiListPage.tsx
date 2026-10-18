@@ -5,12 +5,12 @@ import { normalizeAdminError } from '../api/adminClient';
 import {
   AdminPoiListItem,
   AudioStatusValue,
-  POI_LANGUAGES,
   PoiRouteOption,
   PoiZoneOption,
 } from '../types/poi';
 import { DataTable, Column } from '../components/DataTable';
-import { StatusBadge } from '../components/StatusBadge';
+import { StatusBadge, StatusBadgeVariant } from '../components/StatusBadge';
+import { PoiLanguageSummary } from '../components/PoiLanguageSummary';
 import { EmptyState } from '../components/EmptyState';
 import { ErrorState } from '../components/ErrorState';
 import { AdminToolbar } from '../components/AdminToolbar';
@@ -18,11 +18,13 @@ import { AdminPagination } from '../components/AdminPagination';
 
 const PAGE_SIZE = 10;
 
-const POI_STATUS_LABELS: Record<string, string> = {
-  ACTIVE: 'Đang hoạt động',
-  INACTIVE: 'Đã ẩn',
-  MAINTENANCE: 'Bảo trì',
+const OVERALL_STATUS_CONFIG: Record<string, { label: string; variant: StatusBadgeVariant }> = {
+  ACTIVE: { label: 'Đang hoạt động', variant: 'neutral' },
+  NEEDS_ATTENTION: { label: 'Cần chú ý', variant: 'warning' },
+  HIDDEN: { label: 'Đã ẩn', variant: 'muted' },
 };
+
+const DEFAULT_OVERALL_STATUS = { label: 'Đang hoạt động', variant: 'neutral' as StatusBadgeVariant };
 
 export const PoiListPage: React.FC = () => {
   const navigate = useNavigate();
@@ -124,8 +126,6 @@ export const PoiListPage: React.FC = () => {
           >
             {poi.name}
           </Link>
-          <span className="adm-product-slug">{poi.code}</span>
-          <span className="adm-product-slug">v{poi.version}</span>
         </div>
       ),
     },
@@ -154,37 +154,30 @@ export const PoiListPage: React.FC = () => {
     {
       key: 'status',
       title: 'Trạng thái',
-      width: '130px',
-      render: (poi) => (
-        <span className="adm-date-text">
-          {POI_STATUS_LABELS[poi.status] || poi.status}
-        </span>
-      ),
+      width: '140px',
+      render: (poi) => {
+        const config = OVERALL_STATUS_CONFIG[poi.overallStatus || 'ACTIVE'] || DEFAULT_OVERALL_STATUS;
+        const reasons = poi.attentionReasons || [];
+        return (
+          <StatusBadge
+            variant={config.variant}
+            title={reasons.length > 0 ? reasons.join('\n') : undefined}
+          >
+            {config.label}
+          </StatusBadge>
+        );
+      },
     },
     {
       key: 'audio',
       title: 'Thuyết minh đa ngôn ngữ',
-      width: '220px',
+      width: '200px',
       render: (poi) => (
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-          {POI_LANGUAGES.map((lang) => {
-            const status = poi.audioStatusByLanguage?.[lang.code];
-            return (
-              <span
-                key={lang.code}
-                style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}
-                title={status ? `${lang.label}: ${status}` : `${lang.label}: chưa có bản dịch`}
-              >
-                <span className="adm-lang-chip">{lang.code.toUpperCase()}</span>
-                {status ? (
-                  <StatusBadge status={status} />
-                ) : (
-                  <span className="adm-date-text">-</span>
-                )}
-              </span>
-            );
-          })}
-        </div>
+        <PoiLanguageSummary
+          languages={poi.languages}
+          summary={poi.languageSummary}
+          poiName={poi.name}
+        />
       ),
     },
     {

@@ -793,6 +793,82 @@
 }
 
 /* --------------------------------------------------------------------------
+   POI language summary (list + popover)
+   -------------------------------------------------------------------------- */
+.adm-lang-summary-wrap {
+  position: relative;
+  display: inline-flex;
+}
+
+.adm-lang-summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  cursor: pointer;
+}
+
+.adm-lang-summary-text {
+  color: #6B7280;
+}
+
+.adm-lang-popover {
+  z-index: 60;
+  width: 300px;
+  max-width: 90vw;
+  padding: 10px 12px;
+  background-color: #FFFFFF;
+  border: 1px solid var(--fb-border, #E7E5E4);
+  border-radius: 6px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+.adm-lang-popover-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.adm-lang-popover-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.adm-lang-popover-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.adm-lang-popover-name {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--fb-text-primary, #1C1917);
+}
+
+.adm-lang-popover-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-size: 11.5px;
+  color: #6B7280;
+}
+
+.adm-lang-popover-error {
+  margin: 0;
+  font-size: 11.5px;
+  color: #B91C1C;
+}
+
+/* --------------------------------------------------------------------------
    Confirm Dialog
    -------------------------------------------------------------------------- */
 .adm-dialog-overlay {
