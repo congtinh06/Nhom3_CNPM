@@ -494,7 +494,7 @@
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 20px;
+  gap: 24px;
   flex-wrap: wrap;
 }
 
@@ -503,7 +503,7 @@
   font-size: 26px;
   font-weight: 700;
   color: var(--fb-text-primary, #1C1917);
-  margin: 0 0 6px;
+  margin: 0 0 8px;
   line-height: 1.2;
 }
 
@@ -2089,21 +2089,21 @@
   --adm-shadow-sm: 0 1px 3px rgba(16, 24, 40, 0.08), 0 1px 2px rgba(16, 24, 40, 0.04);
   --adm-shadow-md: 0 8px 24px -12px rgba(16, 24, 40, 0.18), 0 2px 6px rgba(16, 24, 40, 0.06);
 
-  /* Máº­t Ä‘á»™ hiá»ƒn thá»‹ (máº·c Ä‘á»‹nh: thoÃ¡ng) */
+  /* Máº­t Ä‘á»™ hiá»ƒn thá»‹ (máº·c Ä‘á»‹nh: thoÃ¡ng) â€” bÃ¡m thang 4/8/12/16/24/32 */
   --adm-cell-py: 14px;
   --adm-cell-px: 16px;
-  --adm-card-pad: 22px;
-  --adm-gap: 20px;
+  --adm-card-pad: 24px;
+  --adm-gap: 24px;
 }
 
 /* Ná»n & khung ná»™i dung (cÃ³ lá» hai bÃªn Ä‘á»ƒ ná»™i dung khÃ´ng cháº¡m mÃ©p mÃ n hÃ¬nh) */
 .adm-content {
-  padding: 28px 32px 56px;
+  padding: 32px 32px 48px;
 }
 
 @media (max-width: 992px) {
   .adm-content {
-    padding: 20px 16px 36px;
+    padding: 24px 16px 32px;
   }
 }
 
@@ -2378,7 +2378,7 @@
   --adm-cell-py: 8px;
   --adm-cell-px: 14px;
   --adm-card-pad: 16px;
-  --adm-gap: 14px;
+  --adm-gap: 16px;
 }
 
 .adm-density-compact .adm-table {
@@ -2448,10 +2448,10 @@
 
 
 /* --------------------------------------------------------------------------
-   GĞ5 - Danh sách di?m thuy?t minh: ô b?ng, dòng tóm t?t, b? l?c d?u hàng
+   Gï¿½5 - Danh sï¿½ch di?m thuy?t minh: ï¿½ b?ng, dï¿½ng tï¿½m t?t, b? l?c d?u hï¿½ng
    -------------------------------------------------------------------------- */
 
-/* Ô b?ng hai dòng: dòng chính + dòng ph? */
+/* ï¿½ b?ng hai dï¿½ng: dï¿½ng chï¿½nh + dï¿½ng ph? */
 .adm-cell-stack {
   display: flex;
   flex-direction: column;
@@ -2483,7 +2483,7 @@
   color: #B45309;
 }
 
-/* Caption b?ng dành cho trình d?c màn hình, không hi?n tr?c quan */
+/* Caption b?ng dï¿½nh cho trï¿½nh d?c mï¿½n hï¿½nh, khï¿½ng hi?n tr?c quan */
 .adm-table-caption {
   position: absolute;
   width: 1px;
@@ -2496,7 +2496,7 @@
   border: 0;
 }
 
-/* Dòng tóm t?t phía trên b?ng */
+/* Dï¿½ng tï¿½m t?t phï¿½a trï¿½n b?ng */
 .adm-list-summary {
   margin: -8px 0 0;
   font-size: 13px;
@@ -2523,7 +2523,7 @@
   border-radius: 2px;
 }
 
-/* Ô l?c dàn h?t hàng, cao d?u */
+/* ï¿½ l?c dï¿½n h?t hï¿½ng, cao d?u */
 .adm-toolbar-left {
   flex: 1 1 auto;
   gap: 12px;
@@ -2542,10 +2542,10 @@
 
 
 /* --------------------------------------------------------------------------
-   GĞ5 - Tr?ng thái d?ng ch? & popover ngôn ng?
+   Gï¿½5 - Tr?ng thï¿½i d?ng ch? & popover ngï¿½n ng?
    -------------------------------------------------------------------------- */
 
-/* Tr?ng thái bình thu?ng: ch? xám thu?ng, không badge */
+/* Tr?ng thï¿½i bï¿½nh thu?ng: ch? xï¿½m thu?ng, khï¿½ng badge */
 .adm-status-text {
   font-size: 13.5px;
   color: var(--fb-text-secondary);
@@ -2557,7 +2557,7 @@
   color: #4B5563;
 }
 
-/* Ô ngôn ng? có d?u hi?u b?m du?c */
+/* ï¿½ ngï¿½n ng? cï¿½ d?u hi?u b?m du?c */
 .adm-lang-summary {
   font-size: 13.5px;
   color: var(--fb-text-secondary);
@@ -2624,7 +2624,7 @@
 
 
 /* --------------------------------------------------------------------------
-   GĞ5 - Chi?u cao hàng b?ng d?u theo ch? d? Tho?ng / G?n
+   Gï¿½5 - Chi?u cao hï¿½ng b?ng d?u theo ch? d? Tho?ng / G?n
    -------------------------------------------------------------------------- */
 .adm-table tbody td {
   height: 68px;
@@ -2640,7 +2640,7 @@
 
 
 /* --------------------------------------------------------------------------
-   GĞ5 - Thanh luu dính dáy & kh?i ?nh d?i di?n (bi?u m?u di?m thuy?t minh)
+   Gï¿½5 - Thanh luu dï¿½nh dï¿½y & kh?i ?nh d?i di?n (bi?u m?u di?m thuy?t minh)
    -------------------------------------------------------------------------- */
 .adm-save-bar {
   position: sticky;
