@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { AdminSidebar } from '../admin/components/AdminSidebar';
 import { AdminHeader } from '../admin/components/AdminHeader';
@@ -33,9 +33,9 @@ describe('Admin Navigation cho Khu vực & Lộ trình (S4)', () => {
     });
   });
 
-  it('AdminSidebar có mục "Khu vực" và "Lộ trình" là link hoạt động', () => {
+  it('AdminSidebar có "Khu vực" là link hoạt động và "Lộ trình" là mục xổ xuống', () => {
     render(
-      <MemoryRouter initialEntries={['/quan-tri/tong-quan']}>
+      <MemoryRouter initialEntries={['/quan-tri/khu-vuc']}>
         <AdminSidebar isOpen={true} onClose={vi.fn()} />
       </MemoryRouter>
     );
@@ -44,12 +44,17 @@ describe('Admin Navigation cho Khu vực & Lộ trình (S4)', () => {
     expect(zoneLink).toHaveAttribute('href', '/quan-tri/khu-vuc');
     expect(zoneLink).not.toHaveClass('adm-nav-link-disabled');
 
-    const routeLink = screen.getByRole('link', { name: /lộ trình/i });
-    expect(routeLink).toHaveAttribute('href', '/quan-tri/lo-trinh');
-    expect(routeLink).not.toHaveClass('adm-nav-link-disabled');
+    const routeToggle = screen.getByRole('button', { name: /lộ trình/i });
+    expect(routeToggle).toHaveAttribute('aria-expanded', 'false');
+    fireEvent.click(routeToggle);
+    expect(routeToggle).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByRole('link', { name: /danh sách tuyến/i })).toHaveAttribute(
+      'href',
+      '/quan-tri/lo-trinh'
+    );
   });
 
-  it('AdminSidebar làm nổi bật mục "Khu vực" và "Lộ trình" ở route con lồng nhau', () => {
+  it('AdminSidebar làm nổi bật "Khu vực" và "Danh sách tuyến" ở route con lồng nhau', () => {
     const { unmount } = render(
       <MemoryRouter initialEntries={['/quan-tri/khu-vuc/moi']}>
         <AdminSidebar isOpen={true} onClose={vi.fn()} />
@@ -63,7 +68,10 @@ describe('Admin Navigation cho Khu vực & Lộ trình (S4)', () => {
         <AdminSidebar isOpen={true} onClose={vi.fn()} />
       </MemoryRouter>
     );
-    expect(screen.getByRole('link', { name: /lộ trình/i })).toHaveClass('adm-nav-link-active');
+    expect(screen.getByRole('button', { name: /lộ trình/i })).toHaveClass('adm-nav-parent-active');
+    expect(screen.getByRole('link', { name: /danh sách tuyến/i })).toHaveClass(
+      'adm-nav-sublink-active'
+    );
   });
 
   it('AdminHeader hiển thị breadcrumbs cho danh sách, thêm mới và chỉnh sửa khu vực', () => {
@@ -101,6 +109,7 @@ describe('Admin Navigation cho Khu vực & Lộ trình (S4)', () => {
       </MemoryRouter>
     );
     expect(screen.getByText('Lộ trình')).toBeInTheDocument();
+    expect(screen.getByText('Danh sách tuyến')).toBeInTheDocument();
     unmount1();
 
     const { unmount: unmount2 } = render(
@@ -108,7 +117,7 @@ describe('Admin Navigation cho Khu vực & Lộ trình (S4)', () => {
         <AdminHeader onToggleSidebar={vi.fn()} />
       </MemoryRouter>
     );
-    expect(screen.getByRole('link', { name: 'Lộ trình' })).toBeInTheDocument();
+    expect(screen.getByText('Lộ trình')).toBeInTheDocument();
     expect(screen.getByText('Thêm mới')).toBeInTheDocument();
     unmount2();
 
@@ -117,7 +126,7 @@ describe('Admin Navigation cho Khu vực & Lộ trình (S4)', () => {
         <AdminHeader onToggleSidebar={vi.fn()} />
       </MemoryRouter>
     );
-    expect(screen.getByRole('link', { name: 'Lộ trình' })).toBeInTheDocument();
+    expect(screen.getByText('Lộ trình')).toBeInTheDocument();
     expect(screen.getByText('Chỉnh sửa')).toBeInTheDocument();
   });
 });

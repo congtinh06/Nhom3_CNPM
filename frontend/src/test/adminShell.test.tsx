@@ -50,7 +50,7 @@ describe('Admin shell (GĐ2): grouped sidebar & header user menu', () => {
     const contentGroup = screen.getByText('Nội dung').closest('.adm-nav-section');
     expect(contentGroup).not.toBeNull();
     expect(contentGroup).toHaveTextContent('Điểm thuyết minh');
-    expect(contentGroup).toHaveTextContent('Sản phẩm');
+    expect(contentGroup).toHaveTextContent('Ẩm thực');
   });
 
   it('AdminSidebar hiển thị icon cho từng mục điều hướng', () => {
@@ -60,8 +60,11 @@ describe('Admin shell (GĐ2): grouped sidebar & header user menu', () => {
       </MemoryRouter>
     );
 
-    const productLink = screen.getByRole('link', { name: /sản phẩm/i });
-    expect(productLink.querySelector('.adm-nav-icon svg')).not.toBeNull();
+    const overviewLink = screen.getByRole('link', { name: /tổng quan/i });
+    expect(overviewLink.querySelector('.adm-nav-icon svg')).not.toBeNull();
+
+    const zoneLink = screen.getByRole('link', { name: /khu vực/i });
+    expect(zoneLink.querySelector('.adm-nav-icon svg')).not.toBeNull();
   });
 });
 
