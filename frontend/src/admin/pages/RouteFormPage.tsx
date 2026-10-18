@@ -484,7 +484,7 @@ export const RouteFormPage: React.FC = () => {
                         value={formValues.status}
                         onChange={handleInputChange}
                       >
-                        <option value="ACTIVE">Đang hoạt động</option>
+                        <option value="ACTIVE">Hoạt động</option>
                         <option value="INACTIVE">Tạm ngưng</option>
                       </select>
                     </FormField>

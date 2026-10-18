@@ -230,7 +230,7 @@ export const AdminOverviewPage: React.FC = () => {
                     : (state?.value ?? 0).toLocaleString('vi-VN')}
                 </div>
                 <span className="adm-metric-hint">
-                  {card.activeParams ? 'Đang hoạt động / Tổng' : 'Quản lý'}
+                  {card.activeParams ? 'Hoạt động / Tổng' : 'Quản lý'}
                 </span>
               </Link>
             );

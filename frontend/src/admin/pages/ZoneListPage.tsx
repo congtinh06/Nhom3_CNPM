@@ -208,7 +208,7 @@ export const ZoneListPage: React.FC = () => {
           aria-label="Lọc theo trạng thái khu vực"
         >
           <option value="">Tất cả trạng thái</option>
-          <option value="true">Đang hoạt động</option>
+          <option value="true">Hoạt động</option>
           <option value="false">Đã ẩn</option>
         </select>
 

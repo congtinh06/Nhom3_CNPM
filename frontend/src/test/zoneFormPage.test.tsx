@@ -117,7 +117,7 @@ describe('ZoneFormPage', () => {
       expect(screen.getByLabelText(/mã khu vực/i)).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByLabelText(/đang hoạt động/i));
+    fireEvent.click(screen.getByLabelText(/hoạt động \(hiển thị cho du khách\)/i));
     fireEvent.click(screen.getByRole('button', { name: /lưu thay đổi/i }));
 
     expect(

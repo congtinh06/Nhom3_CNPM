@@ -472,7 +472,7 @@ export const ZoneFormPage: React.FC = () => {
                         onChange={(e) => handleActiveChange(e.target.checked)}
                         aria-invalid={Boolean(errors.isActive)}
                       />
-                      <span>Đang hoạt động (hiển thị cho du khách)</span>
+                      <span>Hoạt động (hiển thị cho du khách)</span>
                     </label>
                     {errors.isActive && (
                       <span className="adm-field-error" role="alert">

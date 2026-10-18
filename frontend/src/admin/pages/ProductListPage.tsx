@@ -468,7 +468,7 @@ export const ProductListPage: React.FC = () => {
           aria-label="Lọc theo trạng thái"
         >
           <option value="">Tất cả trạng thái</option>
-          <option value="active">Đang hoạt động</option>
+          <option value="active">Hoạt động</option>
           <option value="inactive">Tạm ngưng</option>
         </select>
 

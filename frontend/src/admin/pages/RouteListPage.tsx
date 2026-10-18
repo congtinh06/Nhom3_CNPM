@@ -254,7 +254,7 @@ export const RouteListPage: React.FC = () => {
           aria-label="Lọc theo trạng thái tuyến"
         >
           <option value="">Tất cả trạng thái</option>
-          <option value="ACTIVE">Đang hoạt động</option>
+          <option value="ACTIVE">Hoạt động</option>
           <option value="INACTIVE">Tạm ngưng</option>
         </select>
 
