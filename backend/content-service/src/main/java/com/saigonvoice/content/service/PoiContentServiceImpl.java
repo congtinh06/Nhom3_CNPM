@@ -2,6 +2,8 @@ package com.saigonvoice.content.service;
 
 import com.saigonvoice.content.config.RabbitMQConfig;
 import com.saigonvoice.content.dto.AdminPoiDetailDto;
+import com.saigonvoice.content.dto.AdminPoiLanguageDto;
+import com.saigonvoice.content.dto.AdminPoiLanguageSummaryDto;
 import com.saigonvoice.content.dto.AdminPoiListItemDto;
 import com.saigonvoice.content.dto.AdminPoiTranslationDto;
 import com.saigonvoice.content.dto.CreatePoiRequest;
@@ -32,6 +34,7 @@ import com.saigonvoice.content.repository.ZoneRepository;
 import com.saigonvoice.content.util.TimeUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -40,6 +43,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -57,6 +61,12 @@ public class PoiContentServiceImpl implements PoiContentService {
 
     private static final String DEFAULT_LANG = "vi";
     private static final Set<String> PUBLISH_STATUSES = Set.of(PublishStatus.PENDING, PublishStatus.PUBLISHED, PublishStatus.FAILED);
+    private static final List<String> SUPPORTED_LANGUAGES = List.of("vi", "en", "ja", "ko");
+    private static final Map<String, String> LANGUAGE_NAMES = Map.of(
+            "vi", "Tiếng Việt",
+            "en", "Tiếng Anh",
+            "ja", "Tiếng Nhật",
+            "ko", "Tiếng Hàn");
 
     private final PoiRepository poiRepository;
     private final PoiTranslationRepository translationRepository;
@@ -66,6 +76,10 @@ public class PoiContentServiceImpl implements PoiContentService {
     private final ApplicationEventPublisher applicationEventPublisher;
     private final PoiPublishService poiPublishService;
     private final RouteStopsSynchronizer routeStopsSynchronizer;
+
+    // Ngưỡng coi một ngôn ngữ "chờ xử lý quá lâu" (phút).
+    @Value("${saigonvoice.audio.pending-timeout-minutes:30}")
+    private long pendingTimeoutMinutes = 30;
 
     @Override
     public List<PoiSummaryDto> getPois(Long zoneId) {
@@ -146,9 +160,9 @@ public class PoiContentServiceImpl implements PoiContentService {
                 zoneId, routeId, normalizedStatus, searchPattern, normalizedAudio, pageable);
 
         List<Long> ids = page.getContent().stream().map(Poi::getId).toList();
-        Map<Long, Map<String, String>> audioByPoi = loadAudioStatuses(ids);
+        Map<Long, Map<String, PoiTranslation>> translationsByPoi = loadTranslations(ids);
 
-        return page.map(poi -> toAdminListItem(poi, audioByPoi.getOrDefault(poi.getId(), Map.of())));
+        return page.map(poi -> toAdminListItem(poi, translationsByPoi.getOrDefault(poi.getId(), Map.of())));
     }
 
     @Override
@@ -158,14 +172,14 @@ public class PoiContentServiceImpl implements PoiContentService {
         return mapToAdminDetail(poi, translationRepository.findByPoiId(id), null);
     }
 
-    private Map<Long, Map<String, String>> loadAudioStatuses(List<Long> poiIds) {
+    private Map<Long, Map<String, PoiTranslation>> loadTranslations(List<Long> poiIds) {
         if (poiIds.isEmpty()) {
             return Map.of();
         }
-        Map<Long, Map<String, String>> result = new HashMap<>();
+        Map<Long, Map<String, PoiTranslation>> result = new HashMap<>();
         for (PoiTranslation t : translationRepository.findByPoiIdIn(poiIds)) {
             result.computeIfAbsent(t.getPoi().getId(), k -> new LinkedHashMap<>())
-                    .put(t.getLanguageCode(), t.getAudioStatus());
+                    .put(t.getLanguageCode(), t);
         }
         return result;
     }
@@ -339,6 +353,8 @@ public class PoiContentServiceImpl implements PoiContentService {
             // nếu đang PENDING hoặc FAILED thì giữ nguyên loại cũ
 
             viTranslation.setAudioStatus("PENDING");
+            viTranslation.setAudioErrorReason(null);
+            viTranslation.setAudioLastAttemptAt(null);
             poi.setPublishStatus(PublishStatus.PENDING);
             poi.setPublishAttempts(0);
             poi.setLastPublishError(null);
@@ -349,6 +365,8 @@ public class PoiContentServiceImpl implements PoiContentService {
             for (PoiTranslation trans : allTranslations) {
                 if (!DEFAULT_LANG.equalsIgnoreCase(trans.getLanguageCode())) {
                     trans.setAudioStatus("PENDING");
+                    trans.setAudioErrorReason(null);
+                    trans.setAudioLastAttemptAt(null);
                     trans.setUpdatedAt(now);
                     translationRepository.save(trans);
                 }
@@ -416,7 +434,45 @@ public class PoiContentServiceImpl implements PoiContentService {
         return null;
     }
 
-    private AdminPoiListItemDto toAdminListItem(Poi poi, Map<String, String> audioStatuses) {
+    private AdminPoiListItemDto toAdminListItem(Poi poi, Map<String, PoiTranslation> translationsByLang) {
+        List<AdminPoiLanguageDto> languages = new ArrayList<>();
+        Map<String, String> audioStatusByLanguage = new LinkedHashMap<>();
+        int ready = 0;
+        int failed = 0;
+
+        for (String code : SUPPORTED_LANGUAGES) {
+            PoiTranslation t = translationsByLang.get(code);
+            String status = (t != null && t.getAudioStatus() != null)
+                    ? t.getAudioStatus().toUpperCase(Locale.ROOT)
+                    : "PENDING";
+            if ("READY".equals(status)) {
+                ready++;
+            } else if ("FAILED".equals(status) || "FAILED_TTS".equals(status)) {
+                failed++;
+            }
+            if (t != null) {
+                audioStatusByLanguage.put(code, t.getAudioStatus());
+            }
+            languages.add(AdminPoiLanguageDto.builder()
+                    .languageCode(code)
+                    .languageName(LANGUAGE_NAMES.getOrDefault(code, code))
+                    .audioStatus(status)
+                    .audioDurationSeconds(t != null ? t.getAudioDurationSeconds() : null)
+                    .errorReason(t != null ? t.getAudioErrorReason() : null)
+                    .lastAttemptAt(t != null ? t.getAudioLastAttemptAt() : null)
+                    .build());
+        }
+
+        int total = SUPPORTED_LANGUAGES.size();
+        AdminPoiLanguageSummaryDto languageSummary = AdminPoiLanguageSummaryDto.builder()
+                .total(total)
+                .ready(ready)
+                .pending(total - ready - failed)
+                .failed(failed)
+                .build();
+
+        List<String> attentionReasons = buildAttentionReasons(poi, languages, translationsByLang);
+
         return AdminPoiListItemDto.builder()
                 .id(poi.getId())
                 .code(poi.getCode())
@@ -430,8 +486,59 @@ public class PoiContentServiceImpl implements PoiContentService {
                 .status(poi.getStatus())
                 .version(poi.getVersion())
                 .publishStatus(poi.getPublishStatus())
-                .audioStatusByLanguage(audioStatuses)
+                .audioStatusByLanguage(audioStatusByLanguage)
+                .overallStatus(resolveOverallStatus(poi, attentionReasons))
+                .attentionReasons(attentionReasons)
+                .languageSummary(languageSummary)
+                .languages(languages)
                 .build();
+    }
+
+    private List<String> buildAttentionReasons(
+            Poi poi, List<AdminPoiLanguageDto> languages, Map<String, PoiTranslation> translationsByLang) {
+        List<String> reasons = new ArrayList<>();
+
+        PoiTranslation vi = translationsByLang.get(DEFAULT_LANG);
+        if (vi == null || isBlank(vi.getTitle()) || isBlank(vi.getDescription())) {
+            reasons.add("Thiếu nội dung tiếng Việt");
+        }
+
+        if (PublishStatus.FAILED.equals(poi.getPublishStatus())) {
+            reasons.add("Phát hành thất bại");
+        }
+
+        LocalDateTime now = TimeUtils.nowUtc();
+        for (AdminPoiLanguageDto lang : languages) {
+            String name = lang.getLanguageName();
+            String status = lang.getAudioStatus();
+            if ("FAILED_TTS".equals(status)) {
+                reasons.add(name + ": lỗi tổng hợp giọng đọc");
+            } else if ("FAILED".equals(status)) {
+                reasons.add(name + ": dịch nội dung thất bại");
+            } else if ("PENDING".equals(status) || "PROCESSING".equals(status)) {
+                LocalDateTime attemptAt = lang.getLastAttemptAt();
+                if (attemptAt == null) {
+                    PoiTranslation t = translationsByLang.get(lang.getLanguageCode());
+                    attemptAt = t != null ? t.getUpdatedAt() : null;
+                }
+                if (attemptAt != null && attemptAt.plusMinutes(pendingTimeoutMinutes).isBefore(now)) {
+                    reasons.add(name + ": chờ xử lý quá " + pendingTimeoutMinutes + " phút");
+                }
+            }
+        }
+
+        return reasons;
+    }
+
+    private String resolveOverallStatus(Poi poi, List<String> attentionReasons) {
+        if (!"ACTIVE".equalsIgnoreCase(poi.getStatus())) {
+            return "HIDDEN";
+        }
+        return attentionReasons.isEmpty() ? "ACTIVE" : "NEEDS_ATTENTION";
+    }
+
+    private static boolean isBlank(String value) {
+        return value == null || value.isBlank();
     }
 
     private AdminPoiDetailDto mapToAdminDetail(Poi poi, List<PoiTranslation> translations, PoiTranslation primaryVi) {
@@ -484,6 +591,8 @@ public class PoiContentServiceImpl implements PoiContentService {
                 .audioDurationSeconds(t.getAudioDurationSeconds())
                 .audioStatus(t.getAudioStatus())
                 .source(t.getSource())
+                .errorReason(t.getAudioErrorReason())
+                .lastAttemptAt(t.getAudioLastAttemptAt())
                 .build();
     }
 

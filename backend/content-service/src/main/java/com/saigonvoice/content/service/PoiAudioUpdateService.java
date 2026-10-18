@@ -84,6 +84,8 @@ public class PoiAudioUpdateService {
         translation.setAudioDurationSeconds(event.getAudioDurationSeconds() != null ? event.getAudioDurationSeconds() : 0);
         translation.setAudioStatus(STATUS_READY);
         translation.setContentHash(event.getContentHash());
+        translation.setAudioErrorReason(null);
+        translation.setAudioLastAttemptAt(TimeUtils.nowUtc());
         translation.setUpdatedAt(TimeUtils.nowUtc());
         translationRepository.save(translation);
 
@@ -160,6 +162,8 @@ public class PoiAudioUpdateService {
         translation.setContentHash(event.getContentHash());
         translation.setAudioUrl(null);
         translation.setAudioDurationSeconds(0);
+        translation.setAudioErrorReason(truncate(event.getErrorMessage(), 500));
+        translation.setAudioLastAttemptAt(TimeUtils.nowUtc());
         translation.setUpdatedAt(TimeUtils.nowUtc());
         translationRepository.save(translation);
 
@@ -204,5 +208,12 @@ public class PoiAudioUpdateService {
 
     private static boolean isBlank(String value) {
         return value == null || value.isBlank();
+    }
+
+    private static String truncate(String value, int maxLength) {
+        if (value == null) {
+            return null;
+        }
+        return value.length() <= maxLength ? value : value.substring(0, maxLength);
     }
 }

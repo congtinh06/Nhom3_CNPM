@@ -53,6 +53,9 @@ saigonvoice:
     interval: PT60S
     min-age: PT30S
     max-attempts: 5
+  audio:
+    # Ngôn ngữ ở trạng thái chờ xử lý lâu hơn ngưỡng này sẽ bị đánh dấu "cần chú ý".
+    pending-timeout-minutes: 30
 
 management:
   endpoints:

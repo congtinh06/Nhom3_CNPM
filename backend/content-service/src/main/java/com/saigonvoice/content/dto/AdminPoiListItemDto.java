@@ -2,6 +2,7 @@ package com.saigonvoice.content.dto;
 
 import lombok.*;
 
+import java.util.List;
 import java.util.Map;
 
 /** Một dòng trong danh sách POI cho admin (server-side phân trang). */
@@ -30,4 +31,16 @@ public class AdminPoiListItemDto {
 
     // audioStatus theo ngôn ngữ (vi/en/ja/ko) — chỉ chứa ngôn ngữ đã có bản dịch.
     private Map<String, String> audioStatusByLanguage;
+
+    // Trạng thái tổng hợp cho cột "Trạng thái": ACTIVE | NEEDS_ATTENTION | HIDDEN.
+    private String overallStatus;
+
+    // Danh sách lý do cần chú ý (rỗng khi mọi thứ bình thường).
+    private List<String> attentionReasons;
+
+    // Tổng hợp nhanh số ngôn ngữ sẵn sàng / chờ / lỗi.
+    private AdminPoiLanguageSummaryDto languageSummary;
+
+    // Chi tiết trạng thái thuyết minh của từng ngôn ngữ (đủ 4 ngôn ngữ).
+    private List<AdminPoiLanguageDto> languages;
 }
