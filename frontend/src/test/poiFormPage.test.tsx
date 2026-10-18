@@ -263,7 +263,7 @@ describe('PoiFormPage', () => {
     renderEdit('10');
     await awaitEditLoaded();
 
-    expect(await screen.findByText('Cần chú ý')).toBeInTheDocument();
+    expect(await screen.findByText('Cần xử lý')).toBeInTheDocument();
     expect(screen.getByText('Đang bảo trì')).toBeInTheDocument();
     expect(screen.getByText('1/4 sẵn sàng')).toBeInTheDocument();
   });

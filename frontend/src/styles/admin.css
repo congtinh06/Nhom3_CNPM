@@ -2096,14 +2096,14 @@
   --adm-gap: 20px;
 }
 
-/* Nền & khung nội dung */
+/* Nền & khung nội dung (có lề hai bên để nội dung không chạm mép màn hình) */
 .adm-content {
-  padding: 28px 0 56px;
+  padding: 28px 32px 56px;
 }
 
 @media (max-width: 992px) {
   .adm-content {
-    padding: 20px 12px 36px;
+    padding: 20px 16px 36px;
   }
 }
 

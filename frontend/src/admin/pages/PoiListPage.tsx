@@ -174,14 +174,6 @@ export const PoiListPage: React.FC = () => {
       ),
     },
     {
-      key: 'publishStatus',
-      title: 'Phát hành',
-      width: '130px',
-      render: (poi) => (
-        <StatusBadge status={poi.publishStatus} />
-      ),
-    },
-    {
       key: 'actions',
       title: 'Thao tác',
       align: 'right',

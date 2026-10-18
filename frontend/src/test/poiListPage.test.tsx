@@ -136,10 +136,11 @@ describe('PoiListPage', () => {
     const table = screen.getByRole('table');
     expect(within(table).getByText('Tuyến trung tâm')).toBeInTheDocument();
     expect(within(table).getByText('Thứ tự 2')).toBeInTheDocument();
-    expect(within(table).getByText('Đang hoạt động')).toBeInTheDocument();
+    expect(within(table).getByText('Hoạt động')).toBeInTheDocument();
     expect(within(table).getByText('Đã ẩn')).toBeInTheDocument();
-    expect(within(table).getByText('Đã phát')).toBeInTheDocument();
-    expect(within(table).getByText('Thất bại')).toBeInTheDocument();
+    // Cột Phát hành đã bỏ khỏi bảng danh sách
+    expect(within(table).queryByText('Đã phát')).not.toBeInTheDocument();
+    expect(within(table).queryByText('Thất bại')).not.toBeInTheDocument();
     expect(within(table).getByText('2/4 sẵn sàng')).toBeInTheDocument();
     expect(within(table).getByText('0/4 sẵn sàng')).toBeInTheDocument();
     expect(within(table).getByText('3 lỗi')).toBeInTheDocument();
