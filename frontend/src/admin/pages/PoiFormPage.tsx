@@ -113,6 +113,28 @@ const BACKEND_FIELD_MESSAGES: Record<string, string> = {
   'stopOrder must be > 0': 'Thứ tự điểm dừng phải lớn hơn 0',
 };
 
+const DEFAULT_TRIGGER_RADIUS = 50;
+
+/** Chỉ hiện đếm ký tự khi người dùng đã dùng hơn 80% giới hạn cho phép. */
+function counterHint(value: string, max: number): string | undefined {
+  return value.length > max * 0.8 ? `${value.length}/${max} ký tự` : undefined;
+}
+
+function radiusHint(value: string): string | undefined {
+  const trimmed = value.trim();
+  if (!trimmed || trimmed === String(DEFAULT_TRIGGER_RADIUS)) return undefined;
+  return `Khác mặc định (${DEFAULT_TRIGGER_RADIUS} m)`;
+}
+
+const ThumbnailPreview: React.FC<{ url: string; alt: string }> = ({ url, alt }) => {
+  const [broken, setBroken] = React.useState(false);
+  React.useEffect(() => setBroken(false), [url]);
+  if (!url.trim() || broken) {
+    return <span className="adm-thumb-empty">Chưa có ảnh</span>;
+  }
+  return <img className="adm-thumb-img" src={url} alt={alt} onError={() => setBroken(true)} />;
+};
+
 function flattenCategories(categories: PoiCategoryOption[]): PoiCategoryOption[] {
   const result: PoiCategoryOption[] = [];
   categories.forEach((cat) => {
@@ -305,6 +327,16 @@ export const PoiFormPage: React.FC = () => {
   }, [isEditMode, poiId, categories]);
 
   const isDirty = JSON.stringify(formValues) !== JSON.stringify(initialValues);
+
+  useEffect(() => {
+    if (!isDirty) return undefined;
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = '';
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [isDirty]);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
@@ -565,7 +597,7 @@ export const PoiFormPage: React.FC = () => {
         htmlFor="name"
         required
         error={errors.name}
-        helperText="Tối đa 255 ký tự. Ví dụ: Chợ Bến Thành"
+        helperText={counterHint(formValues.name, 255)}
       >
         <input
           id="name"
@@ -574,7 +606,7 @@ export const PoiFormPage: React.FC = () => {
           className="adm-input"
           value={formValues.name}
           onChange={handleInputChange}
-          placeholder="Nhập tên điểm đến"
+          placeholder="Tên điểm đến"
           maxLength={255}
           aria-invalid={Boolean(errors.name)}
         />
@@ -588,7 +620,7 @@ export const PoiFormPage: React.FC = () => {
               htmlFor="code"
               required
               error={errors.code}
-              helperText="Tối đa 50 ký tự, không trùng với điểm khác."
+              helperText={counterHint(formValues.code, 50)}
             >
               <input
                 id="code"
@@ -597,7 +629,7 @@ export const PoiFormPage: React.FC = () => {
                 className="adm-input"
                 value={formValues.code}
                 onChange={handleInputChange}
-                placeholder="BEN_THANH"
+                placeholder="Mã điểm"
                 maxLength={50}
                 aria-invalid={Boolean(errors.code)}
               />
@@ -609,7 +641,7 @@ export const PoiFormPage: React.FC = () => {
               htmlFor="qrToken"
               required
               error={errors.qrToken}
-              helperText="Tối đa 100 ký tự, dùng để sinh mã QR."
+              helperText={counterHint(formValues.qrToken, 100)}
             >
               <input
                 id="qrToken"
@@ -618,7 +650,7 @@ export const PoiFormPage: React.FC = () => {
                 className="adm-input"
                 value={formValues.qrToken}
                 onChange={handleInputChange}
-                placeholder="qr-ben-thanh-01"
+                placeholder="Mã QR trên biển"
                 maxLength={100}
                 aria-invalid={Boolean(errors.qrToken)}
               />
@@ -644,7 +676,7 @@ export const PoiFormPage: React.FC = () => {
               className="adm-input"
               value={formValues.latitude}
               onChange={handleInputChange}
-              placeholder="10.7725"
+              placeholder="Vĩ độ"
               aria-invalid={Boolean(errors.latitude)}
             />
           </FormField>
@@ -665,7 +697,7 @@ export const PoiFormPage: React.FC = () => {
               className="adm-input"
               value={formValues.longitude}
               onChange={handleInputChange}
-              placeholder="106.6980"
+              placeholder="Kinh độ"
               aria-invalid={Boolean(errors.longitude)}
             />
           </FormField>
@@ -678,7 +710,7 @@ export const PoiFormPage: React.FC = () => {
             label="Bán kính kích hoạt (mét)"
             htmlFor="triggerRadiusMeters"
             error={errors.triggerRadiusMeters}
-            helperText="Mặc định 50 mét."
+            helperText={radiusHint(formValues.triggerRadiusMeters)}
           >
             <input
               id="triggerRadiusMeters"
@@ -697,7 +729,7 @@ export const PoiFormPage: React.FC = () => {
             label="Địa chỉ"
             htmlFor="address"
             error={errors.address}
-            helperText="Tối đa 500 ký tự."
+            helperText={counterHint(formValues.address, 500)}
           >
             <input
               id="address"
@@ -706,7 +738,7 @@ export const PoiFormPage: React.FC = () => {
               className="adm-input"
               value={formValues.address}
               onChange={handleInputChange}
-              placeholder="Lê Lợi, Quận 1, TP.HCM"
+              placeholder="Địa chỉ điểm đến"
               maxLength={500}
               aria-invalid={Boolean(errors.address)}
             />
@@ -718,19 +750,37 @@ export const PoiFormPage: React.FC = () => {
         label="Ảnh đại diện"
         htmlFor="thumbnailUrl"
         error={errors.thumbnailUrl}
-        helperText="Tối đa 500 ký tự. Ví dụ: /img/pois/ben-thanh.jpg"
+        helperText={counterHint(formValues.thumbnailUrl, 500)}
       >
-        <input
-          id="thumbnailUrl"
-          name="thumbnailUrl"
-          type="text"
-          className="adm-input"
-          value={formValues.thumbnailUrl}
-          onChange={handleInputChange}
-          placeholder="/img/pois/ben-thanh.jpg"
-          maxLength={500}
-          aria-invalid={Boolean(errors.thumbnailUrl)}
-        />
+        <div className="adm-thumb-row">
+          <div className="adm-thumb-preview">
+            <ThumbnailPreview
+              url={formValues.thumbnailUrl}
+              alt={`Ảnh đại diện của ${formValues.name.trim() || 'điểm thuyết minh'}`}
+            />
+          </div>
+          <div className="adm-thumb-fields">
+            <input
+              id="thumbnailUrl"
+              name="thumbnailUrl"
+              type="text"
+              className="adm-input"
+              value={formValues.thumbnailUrl}
+              onChange={handleInputChange}
+              placeholder="Đường dẫn ảnh"
+              maxLength={500}
+              aria-invalid={Boolean(errors.thumbnailUrl)}
+            />
+            <button
+              type="button"
+              className="adm-btn adm-btn-secondary adm-btn-sm"
+              disabled
+              title="Chức năng tải ảnh lên đang được chuẩn bị"
+            >
+              Tải ảnh lên: sắp có
+            </button>
+          </div>
+        </div>
       </FormField>
 
       <div className="adm-form-row">
@@ -793,7 +843,7 @@ export const PoiFormPage: React.FC = () => {
         htmlFor="title"
         required
         error={errors.title}
-        helperText="Tối đa 255 ký tự."
+        helperText={counterHint(formValues.title, 255)}
       >
         <input
           id="title"
@@ -802,7 +852,7 @@ export const PoiFormPage: React.FC = () => {
           className="adm-input"
           value={formValues.title}
           onChange={handleInputChange}
-          placeholder="Chợ Bến Thành"
+          placeholder="Tiêu đề tiếng Việt"
           maxLength={255}
           aria-invalid={Boolean(errors.title)}
         />
@@ -813,7 +863,7 @@ export const PoiFormPage: React.FC = () => {
         htmlFor="summary"
         required
         error={errors.summary}
-        helperText="Tối đa 1000 ký tự."
+        helperText={counterHint(formValues.summary, 1000)}
       >
         <textarea
           id="summary"
@@ -822,7 +872,7 @@ export const PoiFormPage: React.FC = () => {
           rows={3}
           value={formValues.summary}
           onChange={handleInputChange}
-          placeholder="Tóm tắt ngắn gọn về điểm đến"
+          placeholder="Tóm tắt ngắn"
           maxLength={1000}
           aria-invalid={Boolean(errors.summary)}
         />
@@ -841,7 +891,7 @@ export const PoiFormPage: React.FC = () => {
           rows={6}
           value={formValues.description}
           onChange={handleInputChange}
-          placeholder="Nội dung thuyết minh đầy đủ"
+          placeholder="Nội dung thuyết minh"
           aria-invalid={Boolean(errors.description)}
         />
       </FormField>
@@ -858,7 +908,7 @@ export const PoiFormPage: React.FC = () => {
           rows={3}
           value={formValues.historicalSignificance}
           onChange={handleInputChange}
-          placeholder="Giá trị văn hóa, lịch sử của điểm đến"
+          placeholder="Ý nghĩa lịch sử"
           aria-invalid={Boolean(errors.historicalSignificance)}
         />
       </FormField>
@@ -866,24 +916,29 @@ export const PoiFormPage: React.FC = () => {
   );
 
   const renderActions = () => (
-    <div className="adm-form-actions">
-      <button
-        type="button"
-        className="adm-btn adm-btn-secondary"
-        onClick={() => handleNavigateBack('/quan-tri/diem-thuyet-minh')}
-        disabled={submitting}
-      >
-        Hủy bỏ
-      </button>
-      <button type="submit" className="adm-btn adm-btn-primary" disabled={submitting}>
-        {submitting
-          ? isEditMode
-            ? 'Đang lưu...'
-            : 'Đang tạo mới...'
-          : isEditMode
-          ? 'Lưu thay đổi'
-          : 'Tạo điểm thuyết minh'}
-      </button>
+    <div className="adm-save-bar">
+      <span className="adm-save-bar-status" role="status">
+        {isDirty ? 'Có thay đổi chưa lưu' : ''}
+      </span>
+      <div className="adm-save-bar-actions">
+        <button
+          type="button"
+          className="adm-btn adm-btn-secondary"
+          onClick={() => handleNavigateBack('/quan-tri/diem-thuyet-minh')}
+          disabled={submitting}
+        >
+          Hủy bỏ
+        </button>
+        <button type="submit" className="adm-btn adm-btn-primary" disabled={submitting}>
+          {submitting
+            ? isEditMode
+              ? 'Đang lưu...'
+              : 'Đang tạo mới...'
+            : isEditMode
+            ? 'Lưu thay đổi'
+            : 'Tạo điểm thuyết minh'}
+        </button>
+      </div>
     </div>
   );
 
@@ -903,7 +958,9 @@ export const PoiFormPage: React.FC = () => {
           </h1>
           <p className="adm-page-desc">
             {isEditMode
-              ? `Cập nhật tọa độ, thông tin và nội dung thuyết minh tiếng Việt cho điểm #${poiId}.`
+              ? `Cập nhật thông tin và nội dung thuyết minh của ${
+                  detail?.name || 'điểm này'
+                }.`
               : 'Điền thông tin điểm đến để du khách có thể quét mã và nghe thuyết minh.'}
           </p>
           {isEditMode && detail && (
@@ -995,7 +1052,6 @@ export const PoiFormPage: React.FC = () => {
                   )}
                 </section>
               </div>
-              {renderActions()}
             </>
           ) : (
             <div className="adm-form-grid">
@@ -1005,10 +1061,10 @@ export const PoiFormPage: React.FC = () => {
                 <FormSection title="Nội dung thuyết minh tiếng Việt">
                   {renderContentFields()}
                 </FormSection>
-                {renderActions()}
               </div>
             </div>
           )}
+          {renderActions()}
         </form>
       )}
 

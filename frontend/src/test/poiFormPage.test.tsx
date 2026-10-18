@@ -392,4 +392,75 @@ describe('PoiFormPage', () => {
       expect(screen.getByTestId('poi-list-page')).toBeInTheDocument();
     });
   });
+
+  it('mô tả trang sửa dùng tên điểm thay cho mã số', async () => {
+    vi.mocked(poiApi.getAdminPoiDetail).mockResolvedValue(mockDetail);
+    renderEdit('10');
+    await awaitEditLoaded();
+
+    expect(
+      screen.getByText('Cập nhật thông tin và nội dung thuyết minh của Chợ Bến Thành.')
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/điểm #10/)).not.toBeInTheDocument();
+  });
+
+  it('thanh lưu dính hiện Có thay đổi chưa lưu khi biểu mẫu bị sửa', async () => {
+    vi.mocked(poiApi.getAdminPoiDetail).mockResolvedValue(mockDetail);
+    renderEdit('10');
+    await awaitEditLoaded();
+
+    expect(screen.queryByText('Có thay đổi chưa lưu')).not.toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText(/tên điểm/i), {
+      target: { value: 'Chợ Bến Thành mới' },
+    });
+
+    expect(screen.getByText('Có thay đổi chưa lưu')).toBeInTheDocument();
+  });
+
+  it('gợi ý bán kính chỉ hiện khi giá trị khác mặc định 50', async () => {
+    vi.mocked(poiApi.getAdminPoiDetail).mockResolvedValue({
+      ...mockDetail,
+      triggerRadiusMeters: 50,
+    });
+    renderEdit('10');
+    await awaitEditLoaded();
+
+    expect(screen.queryByText(/Khác mặc định/)).not.toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText(/bán kính kích hoạt/i), {
+      target: { value: '80' },
+    });
+
+    expect(screen.getByText('Khác mặc định (50 m)')).toBeInTheDocument();
+  });
+
+  it('chỉ hiện đếm ký tự khi đã dùng hơn 80% giới hạn', async () => {
+    vi.mocked(poiApi.getAdminPoiDetail).mockResolvedValue(mockDetail);
+    renderEdit('10');
+    await awaitEditLoaded();
+
+    fireEvent.change(screen.getByLabelText(/tên điểm/i), {
+      target: { value: 'A'.repeat(205) },
+    });
+
+    expect(screen.getByText('205/255 ký tự')).toBeInTheDocument();
+  });
+
+  it('khối ảnh đại diện có xem trước và nút tải ảnh lên dạng sắp có', async () => {
+    vi.mocked(poiApi.getAdminPoiDetail).mockResolvedValue(mockDetail);
+    renderEdit('10');
+    await awaitEditLoaded();
+
+    expect(screen.getByText('Chưa có ảnh')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Tải ảnh lên: sắp có' })).toBeDisabled();
+
+    fireEvent.change(screen.getByLabelText(/ảnh đại diện/i), {
+      target: { value: '/img/pois/ben-thanh.jpg' },
+    });
+
+    expect(
+      screen.getByAltText('Ảnh đại diện của Chợ Bến Thành')
+    ).toBeInTheDocument();
+  });
 });

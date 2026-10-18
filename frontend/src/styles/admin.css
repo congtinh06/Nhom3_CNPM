@@ -2637,3 +2637,76 @@
 .adm-table tbody td.adm-table-empty {
   height: auto;
 }
+
+
+/* --------------------------------------------------------------------------
+   GÐ5 - Thanh luu dính dáy & kh?i ?nh d?i di?n (bi?u m?u di?m thuy?t minh)
+   -------------------------------------------------------------------------- */
+.adm-save-bar {
+  position: sticky;
+  bottom: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 16px;
+  background-color: var(--fb-surface, #FFFFFF);
+  border: 1px solid var(--fb-border, #E7E5E4);
+  border-radius: var(--adm-radius);
+  box-shadow: var(--adm-shadow-md);
+}
+
+.adm-save-bar-status {
+  font-size: 13px;
+  color: #B45309;
+}
+
+.adm-save-bar-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.adm-thumb-row {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.adm-thumb-preview {
+  flex: 0 0 auto;
+  width: 96px;
+  height: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border: 1px solid var(--fb-border, #E7E5E4);
+  border-radius: 4px;
+  background-color: var(--fb-border-subtle, #F5F5F4);
+}
+
+.adm-thumb-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.adm-thumb-empty {
+  padding: 8px;
+  font-size: 11.5px;
+  color: var(--fb-text-secondary);
+  text-align: center;
+}
+
+.adm-thumb-fields {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.adm-thumb-fields .adm-input {
+  width: 100%;
+}
