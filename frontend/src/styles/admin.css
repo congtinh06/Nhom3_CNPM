@@ -2710,3 +2710,39 @@
 .adm-thumb-fields .adm-input {
   width: 100%;
 }
+
+
+/* Dòng b? l?c không xu?ng hàng ? màn hình r?ng, có gói l?i trên màn hình h?p */
+.adm-toolbar {
+  flex-wrap: nowrap;
+}
+
+.adm-toolbar-left {
+  flex-wrap: nowrap;
+  min-width: 0;
+}
+
+.adm-toolbar-left .adm-search-wrap {
+  min-width: 0;
+}
+
+.adm-lang-summary {
+  white-space: nowrap;
+}
+
+.adm-lang-summary-pending {
+  padding: 2px 8px;
+  border-radius: 3px;
+  background-color: #FFFBEB;
+  color: #B45309;
+}
+
+@media (max-width: 992px) {
+  .adm-toolbar {
+    flex-wrap: wrap;
+  }
+
+  .adm-toolbar-left {
+    flex-wrap: wrap;
+  }
+}

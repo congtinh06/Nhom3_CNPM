@@ -547,7 +547,11 @@ export const PoiFormPage: React.FC = () => {
               <input
                 id="zoneId"
                 className="adm-input"
-                value={zoneCodeDisplay || formValues.zoneId}
+                value={
+                  zones.find((zone) => String(zone.id) === formValues.zoneId)?.name ||
+                  zoneCodeDisplay ||
+                  formValues.zoneId
+                }
                 readOnly
                 disabled
               />

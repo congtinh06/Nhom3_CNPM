@@ -147,13 +147,16 @@ export const PoiLanguageSummary: React.FC<PoiLanguageSummaryProps> = ({
         aria-label={`Xem trạng thái ngôn ngữ của ${poiName}`}
         onClick={handleToggle}
       >
-        <span className="adm-lang-summary-text">
+        <span
+          className={
+            !failed && pending > 0
+              ? 'adm-lang-summary-text adm-lang-summary-pending'
+              : 'adm-lang-summary-text'
+          }
+        >
           {ready}/{total} sẵn sàng
         </span>
         {failed > 0 && <span className="adm-badge adm-badge-danger">{failed} lỗi</span>}
-        {!failed && pending > 0 && (
-          <span className="adm-badge adm-badge-warning">Chờ xử lý</span>
-        )}
       </button>
 
       {open && (

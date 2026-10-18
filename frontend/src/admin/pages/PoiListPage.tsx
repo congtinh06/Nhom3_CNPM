@@ -224,7 +224,7 @@ export const PoiListPage: React.FC = () => {
     {
       key: 'audio',
       title: 'Ngôn ngữ',
-      width: '170px',
+      width: '210px',
       render: (poi) => (
         <PoiLanguageSummary
           languages={poi.languages}
