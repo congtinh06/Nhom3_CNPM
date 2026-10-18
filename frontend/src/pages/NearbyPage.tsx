@@ -17,6 +17,7 @@ import { PoiMap } from '../components/nearby/PoiMap';
 import { PoiList } from '../components/nearby/PoiList';
 import { PoiHero } from '../components/nearby/PoiHero';
 import { PoiReadingSection } from '../components/nearby/PoiReadingSection';
+import { SouvenirStrip } from '../components/souvenir/SouvenirStrip';
 import { AudioPlayerBar } from '../components/nearby/AudioPlayerBar';
 import { PageHero } from '../components/common/PageHero';
 import { HERO_CONFIG } from '../config/heroImages';
@@ -752,6 +753,11 @@ export const NearbyPage: React.FC = () => {
                 : null
             }
           />
+        )}
+
+        {/* SOUVENIRS AVAILABLE AT THE ACTIVE STOP */}
+        {activeSortedItem?.poi.slug && (
+          <SouvenirStrip poiSlug={activeSortedItem.poi.slug} lang={currentLang} />
         )}
       </main>
 

@@ -213,7 +213,7 @@ export const Header: React.FC = () => {
       </div>
 
       {/* 2. Giữa: Trang chủ | Điểm du lịch | Khám phá (dropdown) | Giới thiệu | Liên hệ */}
-      {/* 2. Giữa: Trang chủ | Điểm du lịch | Ẩm thực | Hướng dẫn | Liên hệ */}
+      {/* 2. Giữa: Trang chủ | Điểm du lịch | Ẩm thực | Tin tức | Liên hệ */}
       <nav id="nv" className="hd-nav" aria-label="Chính">
         <a
           href="/"

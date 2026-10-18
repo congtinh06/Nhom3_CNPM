@@ -251,13 +251,13 @@ export function CheckoutPage() {
               Giỏ hàng của bạn đang trống
             </h2>
             <p className="checkout-empty-desc">
-              Vui lòng chọn món từ thực đơn trước khi tiến hành thanh toán.
+              Vui lòng chọn quà lưu niệm trước khi tiến hành thanh toán.
             </p>
             <Link
               to="/am-thuc"
               className="checkout-empty-btn"
             >
-              Khám phá thực đơn
+              Khám phá quà lưu niệm
             </Link>
           </div>
         ) : (

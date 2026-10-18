@@ -9,6 +9,7 @@ export interface CartItemMeta {
   slug?: string;
   category?: ProductCategory;
   imagePath?: string;
+  poiSlug?: string | null;
 }
 
 interface CartContextValue {
@@ -30,6 +31,7 @@ interface CartContextValue {
       slug?: string;
       category?: ProductCategory;
       imagePath?: string;
+      poiSlug?: string | null;
     }[]
   ) => void;
   isCartOpen: boolean;
@@ -80,8 +82,9 @@ const loadSavedMeta = (): Record<number, CartItemMeta> => {
               name: v.name,
               price: v.price,
               slug: typeof v.slug === 'string' ? v.slug : undefined,
-              category: (v.category === 'FOOD' || v.category === 'DRINK') ? v.category : undefined,
+              category: (v.category === 'FOOD' || v.category === 'DRINK' || v.category === 'SOUVENIR') ? v.category : undefined,
               imagePath: typeof v.imagePath === 'string' ? v.imagePath : undefined,
+              poiSlug: typeof v.poiSlug === 'string' ? v.poiSlug : undefined,
             };
           }
         }
@@ -121,13 +124,9 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return map;
   }, []);
 
-  const totalCount = useMemo(() => {
-    return Object.values(cart).reduce((sum, qty) => sum + qty, 0);
-  }, [cart]);
-
   const cartItems = useMemo(() => {
     return Object.entries(cart)
-      .map(([keyStr, qty]) => {
+      .map(([keyStr, qty]): CartItem | null => {
         const key = Number(keyStr);
         const meta = itemMeta[key];
         if (meta) {
@@ -139,6 +138,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
             slug: meta.slug,
             category: meta.category,
             imagePath: meta.imagePath,
+            poiSlug: meta.poiSlug,
           };
         }
         const drink = drinksMap.get(key);
@@ -160,11 +160,47 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
             slug: defaultProd.slug,
             category: defaultProd.category,
             imagePath: defaultProd.imagePath,
+            poiSlug: defaultProd.poiSlug,
           };
         }
         return null;
       })
       .filter((item): item is CartItem => item !== null);
+  }, [cart, itemMeta, drinksMap]);
+
+  // totalCount bám theo các dòng hiển thị được trong giỏ để không đếm nhầm khóa mồ côi.
+  const totalCount = useMemo(() => {
+    return cartItems.reduce((sum, item) => sum + item.quantity, 0);
+  }, [cartItems]);
+
+  // Dọn các khóa giỏ hàng không còn phân giải được (sản phẩm đã bị xóa) cùng metadata của chúng.
+  useEffect(() => {
+    const orphanKeys = Object.keys(cart)
+      .map((key) => Number(key))
+      .filter((key) => {
+        if (itemMeta[key]) return false;
+        if (drinksMap.has(key)) return false;
+        return !defaultProducts.some((p) => p.id === key);
+      });
+
+    if (orphanKeys.length === 0) return;
+
+    setCart((prev) => {
+      const next = { ...prev };
+      orphanKeys.forEach((key) => delete next[key]);
+      return next;
+    });
+    setItemMeta((prev) => {
+      let changed = false;
+      const next = { ...prev };
+      orphanKeys.forEach((key) => {
+        if (key in next) {
+          delete next[key];
+          changed = true;
+        }
+      });
+      return changed ? next : prev;
+    });
   }, [cart, itemMeta, drinksMap]);
 
   const totalAmount = useMemo(() => {
@@ -189,6 +225,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
           slug: product.slug,
           category: product.category,
           imagePath: product.imagePath,
+          poiSlug: product.poiSlug ?? undefined,
         },
       }));
       setCart((prev) => ({
@@ -257,6 +294,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         slug?: string;
         category?: ProductCategory;
         imagePath?: string;
+        poiSlug?: string | null;
       }[]
     ) => {
       setCart((prev) => {
@@ -276,6 +314,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
               slug: it.slug,
               category: it.category,
               imagePath: it.imagePath,
+              poiSlug: it.poiSlug,
             };
           }
         });
@@ -317,5 +356,13 @@ export const useCart = (): CartContextValue => {
     throw new Error('useCart must be used within CartProvider');
   }
   return ctx;
+};
+
+// Variant that degrades to a no-op when rendered outside CartProvider so that
+// components which only *optionally* add to cart can still render standalone
+// (e.g. in unit tests) without crashing.
+export const useCartOptional = (): Pick<CartContextValue, 'addToCart'> => {
+  const ctx = useContext(CartContext);
+  return { addToCart: ctx ? ctx.addToCart : () => {} };
 };
 

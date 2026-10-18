@@ -163,13 +163,13 @@ export const OrdersPage: React.FC = () => {
               <ShoppingBag size={28} strokeWidth={1.75} />
             </div>
             <h2>Bạn chưa có đơn hàng nào</h2>
-            <p>Hãy khám phá các món ẩm thực và thức uống đặc sắc của Sài Gòn để đặt đơn hàng đầu tiên.</p>
+            <p>Hãy khám phá các món quà lưu niệm đặc sắc của Sài Gòn để đặt đơn hàng đầu tiên.</p>
             <button
               type="button"
               className="orders-empty-btn"
-              onClick={() => navigate('/am-thuc-thuc-uong')}
+              onClick={() => navigate('/am-thuc')}
             >
-              Ẩm thực & Thức uống
+              Quà lưu niệm
             </button>
           </div>
         ) : (

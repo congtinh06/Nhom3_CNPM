@@ -117,6 +117,18 @@ class ProductControllerTest {
     }
 
     @Test
+    @DisplayName("GET /api/content/products?poiSlug=...: chuyển bộ lọc điểm du lịch vào tầng service")
+    void testGetPublicProducts_FilterByPoiSlug_PassesPoiSlug() throws Exception {
+        when(productService.getActiveProducts(argThat(f -> "chua-ba-thien-hau".equals(f.getPoiSlug()))))
+                .thenReturn(new PageImpl<>(List.of(sampleFoodDto), org.springframework.data.domain.PageRequest.of(0, 20), 1));
+
+        publicMockMvc.perform(get("/api/content/products")
+                        .param("poiSlug", "chua-ba-thien-hau"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].slug").value("com-tam-suon-bi-cha"));
+    }
+
+    @Test
     @DisplayName("GET /api/content/products/{slug}: trả 200 khi sản phẩm tồn tại và đang bán")
     void testGetProductBySlug_Found_Returns200() throws Exception {
         when(productService.getActiveProductBySlug("com-tam-suon-bi-cha"))
@@ -192,6 +204,41 @@ class ProductControllerTest {
                         .content(objectMapper.writeValueAsString(req)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.slug").value("com-tam-suon-bi-cha"));
+    }
+
+    @Test
+    @DisplayName("POST /api/admin/products: nhận poiId và trả về thông tin điểm du lịch đã gắn")
+    void testAdminCreateProduct_WithPoiId_ReturnsPoiInfo() throws Exception {
+        CreateProductRequest req = CreateProductRequest.builder()
+                .name("Tượng lưu niệm Chùa Bà")
+                .category(ProductCategory.SOUVENIR)
+                .price(new BigDecimal("45000"))
+                .poiId(7L)
+                .build();
+
+        ProductDto withPoi = ProductDto.builder()
+                .id(30L)
+                .slug("tuong-luu-niem-chua-ba")
+                .name("Tượng lưu niệm Chùa Bà")
+                .category(ProductCategory.SOUVENIR)
+                .price(new BigDecimal("45000"))
+                .poiId(7L)
+                .poiSlug("chua-ba-thien-hau")
+                .isActive(true)
+                .build();
+
+        when(productService.createProduct(argThat(r -> r.getPoiId() != null && r.getPoiId() == 7L)))
+                .thenReturn(withPoi);
+
+        adminMockMvc.perform(post("/api/admin/products")
+                        .header("X-User-Role", "ADMIN")
+                        .header("X-Internal-Api-Key", VALID_INTERNAL_KEY)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(req)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.category").value("SOUVENIR"))
+                .andExpect(jsonPath("$.poiId").value(7))
+                .andExpect(jsonPath("$.poiSlug").value("chua-ba-thien-hau"));
     }
 
     @Test

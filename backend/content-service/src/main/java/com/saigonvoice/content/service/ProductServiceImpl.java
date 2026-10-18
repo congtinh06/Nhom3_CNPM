@@ -17,7 +17,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.saigonvoice.content.entity.Category;
+import com.saigonvoice.content.entity.Poi;
 import com.saigonvoice.content.repository.CategoryRepository;
+import com.saigonvoice.content.repository.PoiRepository;
 import com.saigonvoice.content.repository.ProductSpecification;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -48,6 +50,7 @@ public class ProductServiceImpl implements ProductService {
 
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
+    private final PoiRepository poiRepository;
 
     @Value("${app.product.upload-dir:uploads/products}")
     private String uploadDir;
@@ -140,6 +143,8 @@ public class ProductServiceImpl implements ProductService {
                 ? request.getImagePath()
                 : "/img/products/" + slug + ".jpg";
 
+        Poi poi = resolvePoi(request.getPoiId());
+
         Product product = Product.builder()
                 .slug(slug)
                 .name(request.getName().trim())
@@ -148,6 +153,7 @@ public class ProductServiceImpl implements ProductService {
                 .description(request.getDescription())
                 .price(request.getPrice())
                 .imagePath(imagePath)
+                .poi(poi)
                 .isActive(request.getIsActive() != null ? request.getIsActive() : true)
                 .sortOrder(request.getSortOrder() != null ? request.getSortOrder() : 0)
                 .build();
@@ -227,6 +233,9 @@ public class ProductServiceImpl implements ProductService {
         product.setShortDescription(request.getShortDescription());
         product.setDescription(request.getDescription());
         product.setPrice(request.getPrice());
+        if (request.getPoiId() != null) {
+            product.setPoi(resolvePoi(request.getPoiId()));
+        }
         if (request.getImagePath() != null && !request.getImagePath().isBlank()) {
             product.setImagePath(request.getImagePath());
         }
@@ -246,6 +255,14 @@ public class ProductServiceImpl implements ProductService {
             rollbackMovedFiles(movedFiles);
             throw e;
         }
+    }
+
+    private Poi resolvePoi(Long poiId) {
+        if (poiId == null) {
+            return null;
+        }
+        return poiRepository.findById(poiId)
+                .orElseThrow(() -> new BadRequestException("Điểm du lịch không tồn tại: " + poiId));
     }
 
     private void rollbackMovedFiles(Map<Path, Path> movedFiles) {

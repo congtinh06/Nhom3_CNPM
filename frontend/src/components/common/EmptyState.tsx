@@ -98,13 +98,13 @@ export const EmptyState: React.FC<EmptyStateProps> = ({ keyword, onClearFilters 
       {/* Tiêu đề: Playfair Display, text-2xl */}
       <h3 className="empty-state-title">
         {keyword && keyword.trim()
-          ? `Chưa tìm thấy món nào cho "${keyword.trim()}"`
-          : 'Chưa tìm thấy món nào'}
+          ? `Chưa tìm thấy quà nào cho "${keyword.trim()}"`
+          : 'Chưa tìm thấy quà nào'}
       </h3>
 
       {/* Phụ đề: text-secondary */}
       <p className="empty-state-subtitle">
-        Thử lại với từ khóa khác hoặc xóa bộ lọc để khám phá các món ngon khác.
+        Thử lại với từ khóa khác hoặc xóa bộ lọc để khám phá các món quà khác.
       </p>
 
       {/* Nút hành động: Solid accent bg, white text, rounded-md, px-6 py-3 */}

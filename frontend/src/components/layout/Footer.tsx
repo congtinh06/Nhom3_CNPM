@@ -15,7 +15,7 @@ export const Footer: React.FC = () => {
         <div className="ftr-brand col">
           <div className="ftr-br">{footerContent.brand}</div>
           <p className="ftr-tagline">
-            Nghe kể chuyện Sài Gòn qua từng điểm đến và món ăn.
+            Nghe kể chuyện Sài Gòn qua từng điểm đến và món quà lưu niệm.
           </p>
         </div>
 
@@ -29,7 +29,7 @@ export const Footer: React.FC = () => {
               <Link to="/diem-du-lich">Điểm du lịch</Link>
             </li>
             <li>
-              <Link to="/am-thuc">Ẩm thực</Link>
+              <Link to="/am-thuc">Quà lưu niệm</Link>
             </li>
             <li>
               <Link to="/tin-tuc">Tin tức</Link>

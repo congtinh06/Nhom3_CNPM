@@ -6,6 +6,7 @@ import {
   PriceRangeFilter,
   RatingFilter,
   ProductTypeFilter,
+  SpotFilterKey,
   SortOptionKey,
   AdvancedSearchValues,
 } from '../types/productFilter';
@@ -14,6 +15,7 @@ const DEFAULT_FILTERS: ProductFilterState = {
   keyword: '',
   productType: 'all',
   category: 'all',
+  spot: 'all',
   priceRange: 'all',
   rating: 'all',
   sortBy: 'popular',
@@ -29,6 +31,7 @@ export const useProductFilters = () => {
     const q = searchParams.get('q') || '';
     const cat = (searchParams.get('cat') as CategoryFilterKey) || 'all';
     const type = (searchParams.get('type') as ProductTypeFilter) || 'all';
+    const spot = (searchParams.get('spot') as SpotFilterKey) || 'all';
     const price = (searchParams.get('price') as PriceRangeFilter) || 'all';
     const rating = (searchParams.get('rating') as RatingFilter) || 'all';
     const sort = (searchParams.get('sort') as SortOptionKey) || 'popular';
@@ -39,6 +42,7 @@ export const useProductFilters = () => {
       keyword: q,
       productType: type,
       category: cat,
+      spot,
       priceRange: price,
       rating: rating,
       sortBy: sort,
@@ -47,23 +51,34 @@ export const useProductFilters = () => {
     };
   });
 
-  // Đồng bộ hóa URL query params khi state thay đổi
+  // Đồng bộ hóa URL query params khi state thay đổi.
+  // Giữ nguyên các tham số không thuộc bộ lọc (ví dụ `tab` của trang Ẩm thực).
   const syncToUrl = useCallback(
     (nextState: ProductFilterState) => {
-      const params = new URLSearchParams();
+      const params = new URLSearchParams(searchParams);
 
-      if (nextState.keyword.trim()) params.set('q', nextState.keyword.trim());
-      if (nextState.productType !== 'all') params.set('type', nextState.productType);
-      if (nextState.category !== 'all') params.set('cat', nextState.category);
-      if (nextState.priceRange !== 'all') params.set('price', nextState.priceRange);
-      if (nextState.rating !== 'all') params.set('rating', nextState.rating);
-      if (nextState.sortBy !== 'popular') params.set('sort', nextState.sortBy);
+      const setOrDelete = (key: string, value: string, defaultValue: string) => {
+        if (value && value !== defaultValue) params.set(key, value);
+        else params.delete(key);
+      };
+
+      setOrDelete('q', nextState.keyword.trim(), '');
+      setOrDelete('type', nextState.productType, 'all');
+      setOrDelete('cat', nextState.category, 'all');
+      setOrDelete('spot', nextState.spot, 'all');
+      setOrDelete('price', nextState.priceRange, 'all');
+      setOrDelete('rating', nextState.rating, 'all');
+      setOrDelete('sort', nextState.sortBy, 'popular');
+
       if (!nextState.searchInDescription) params.set('desc', '0');
+      else params.delete('desc');
+
       if (nextState.page > 1) params.set('page', String(nextState.page));
+      else params.delete('page');
 
       setSearchParams(params, { replace: true });
     },
-    [setSearchParams]
+    [setSearchParams, searchParams]
   );
 
   // Lắng nghe thay đổi từ bên ngoài URL (ví dụ back/forward button hoặc header navigation)
@@ -83,6 +98,7 @@ export const useProductFilters = () => {
 
     const price = (searchParams.get('price') as PriceRangeFilter) || 'all';
     const rating = (searchParams.get('rating') as RatingFilter) || 'all';
+    const spot = (searchParams.get('spot') as SpotFilterKey) || 'all';
     const sort = (searchParams.get('sort') as SortOptionKey) || 'popular';
     const desc = searchParams.get('desc') !== '0';
     const page = parseInt(searchParams.get('page') || '1', 10);
@@ -92,6 +108,7 @@ export const useProductFilters = () => {
         prev.keyword === q &&
         prev.category === cat &&
         prev.productType === type &&
+        prev.spot === spot &&
         prev.priceRange === price &&
         prev.rating === rating &&
         prev.sortBy === sort &&
@@ -104,6 +121,7 @@ export const useProductFilters = () => {
         keyword: q,
         productType: type,
         category: cat,
+        spot,
         priceRange: price,
         rating: rating,
         sortBy: sort,
@@ -197,15 +215,20 @@ export const useProductFilters = () => {
     [syncToUrl]
   );
 
-  // Xóa toàn bộ bộ lọc
+  // Xóa toàn bộ bộ lọc (giữ lại tham số ngoài bộ lọc như `tab`)
   const handleResetFilters = useCallback(() => {
     setFilters(DEFAULT_FILTERS);
-    setSearchParams(new URLSearchParams(), { replace: true });
-  }, [setSearchParams]);
+    const params = new URLSearchParams(searchParams);
+    ['q', 'type', 'cat', 'spot', 'price', 'rating', 'sort', 'desc', 'page'].forEach((key) =>
+      params.delete(key)
+    );
+    setSearchParams(params, { replace: true });
+  }, [setSearchParams, searchParams]);
 
   const isAnyFilterActive =
     filters.category !== 'all' ||
     filters.productType !== 'all' ||
+    filters.spot !== 'all' ||
     filters.priceRange !== 'all' ||
     filters.rating !== 'all' ||
     !filters.searchInDescription ||

@@ -35,6 +35,14 @@ const PoiRedirect: React.FC = () => {
   return <Navigate to={slug ? `/diem-du-lich?stop=${slug}` : '/diem-du-lich'} replace />;
 };
 
+// Legacy souvenir URLs now forward into the "Quà lưu niệm" page at /am-thuc.
+const SouvenirTabRedirect: React.FC = () => <Navigate to="/am-thuc" replace />;
+
+const SouvenirSlugRedirect: React.FC = () => {
+  const { slug } = useParams<{ slug: string }>();
+  return <Navigate to={slug ? `/am-thuc/${slug}` : '/am-thuc'} replace />;
+};
+
 const AppContent: React.FC = () => {
   useSmoothScroll();
   const location = useLocation();
@@ -88,18 +96,22 @@ const AppContent: React.FC = () => {
             <Route path="/diem-du-lich/:slug" element={<PoiRedirect />} />
             <Route path="/thuyet-minh" element={<NearbyPage />} />
             <Route path="/gan-toi" element={<NearbyPage />} />
+            {/* "Quà lưu niệm" page (trước đây là trang Ẩm thực) */}
             <Route path="/am-thuc" element={<FoodBeveragePage />} />
             <Route path="/thuc-uong" element={<FoodBeveragePage />} />
             <Route path="/am-thuc-thuc-uong" element={<FoodBeveragePage />} />
+            {/* /qua-luu-niem only forwards into the page above */}
+            <Route path="/qua-luu-niem" element={<SouvenirTabRedirect />} />
             <Route path="/tin-tuc" element={<NewsListPage />} />
             <Route path="/tin-tuc/:slug" element={<NewsDetailPage />} />
             <Route path="/huong-dan" element={<GuidePage />} />
             <Route path="/lien-he" element={<ContactPage />} />
 
-            {/* Product detail routes */}
+            {/* Product detail routes (all legacy paths stay real) */}
             <Route path="/am-thuc-thuc-uong/:slug" element={<ProductDetailPage />} />
             <Route path="/am-thuc/:slug" element={<ProductDetailPage />} />
             <Route path="/thuc-uong/:slug" element={<ProductDetailPage />} />
+            <Route path="/qua-luu-niem/:slug" element={<SouvenirSlugRedirect />} />
 
             {/* Checkout & Orders */}
             <Route path="/thanh-toan" element={<CheckoutPage />} />

@@ -1,10 +1,12 @@
 package com.saigonvoice.content.service;
 
 import com.saigonvoice.content.dto.*;
+import com.saigonvoice.content.entity.Poi;
 import com.saigonvoice.content.entity.Product;
 import com.saigonvoice.content.entity.ProductCategory;
 import com.saigonvoice.content.exception.BadRequestException;
 import com.saigonvoice.content.exception.ResourceNotFoundException;
+import com.saigonvoice.content.repository.PoiRepository;
 import com.saigonvoice.content.repository.ProductRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -38,6 +40,9 @@ class ProductServiceImplTest {
 
     @Mock
     private ProductRepository productRepository;
+
+    @Mock
+    private PoiRepository poiRepository;
 
     @InjectMocks
     private ProductServiceImpl productService;
@@ -172,6 +177,74 @@ class ProductServiceImplTest {
         assertThatThrownBy(() -> productService.createProduct(request))
                 .isInstanceOf(BadRequestException.class)
                 .hasMessageContaining("Slug đã tồn tại");
+    }
+
+    @Test
+    @DisplayName("createProduct: có poiId -> gắn sản phẩm vào điểm du lịch tương ứng")
+    void createProduct_WithPoiId_LinksSpot() {
+        Poi poi = Poi.builder().id(7L).slug("chua-ba-thien-hau").name("Chùa Bà Thiên Hậu").build();
+
+        CreateProductRequest request = CreateProductRequest.builder()
+                .name("Tượng lưu niệm Chùa Bà")
+                .category(ProductCategory.SOUVENIR)
+                .price(new BigDecimal("45000"))
+                .poiId(7L)
+                .build();
+
+        when(productRepository.existsBySlug("tuong-luu-niem-chua-ba")).thenReturn(false);
+        when(poiRepository.findById(7L)).thenReturn(Optional.of(poi));
+        when(productRepository.save(any(Product.class))).thenAnswer(invocation -> {
+            Product p = invocation.getArgument(0);
+            p.setId(20L);
+            return p;
+        });
+
+        ProductDto dto = productService.createProduct(request);
+
+        assertThat(dto.getCategory()).isEqualTo(ProductCategory.SOUVENIR);
+        assertThat(dto.getPoiId()).isEqualTo(7L);
+        assertThat(dto.getPoiSlug()).isEqualTo("chua-ba-thien-hau");
+        verify(poiRepository).findById(7L);
+    }
+
+    @Test
+    @DisplayName("createProduct: poiId không tồn tại -> ném BadRequestException và không lưu")
+    void createProduct_UnknownPoiId_ThrowsBadRequest() {
+        CreateProductRequest request = CreateProductRequest.builder()
+                .name("Tượng lưu niệm")
+                .category(ProductCategory.SOUVENIR)
+                .price(new BigDecimal("45000"))
+                .poiId(999L)
+                .build();
+
+        when(productRepository.existsBySlug("tuong-luu-niem")).thenReturn(false);
+        when(poiRepository.findById(999L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> productService.createProduct(request))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessageContaining("Điểm du lịch không tồn tại");
+        verify(productRepository, never()).save(any(Product.class));
+    }
+
+    @Test
+    @DisplayName("updateProduct: cập nhật poiId -> đổi điểm du lịch gắn với sản phẩm")
+    void updateProduct_WithPoiId_LinksSpot() {
+        Poi poi = Poi.builder().id(3L).slug("buu-dien-trung-tam").name("Bưu điện Trung tâm").build();
+        when(productRepository.findById(1L)).thenReturn(Optional.of(activeFood));
+        when(poiRepository.findById(3L)).thenReturn(Optional.of(poi));
+        when(productRepository.save(any(Product.class))).thenAnswer(i -> i.getArgument(0));
+
+        UpdateProductRequest req = UpdateProductRequest.builder()
+                .name("Cơm tấm sườn bì chả")
+                .category(ProductCategory.FOOD)
+                .price(new BigDecimal("55000"))
+                .poiId(3L)
+                .build();
+
+        ProductDto updated = productService.updateProduct(1L, req);
+
+        assertThat(updated.getPoiId()).isEqualTo(3L);
+        assertThat(updated.getPoiSlug()).isEqualTo("buu-dien-trung-tam");
     }
 
     @Test

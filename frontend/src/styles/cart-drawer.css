@@ -162,6 +162,19 @@ dialog.cd-drawer::backdrop {
   flex-direction: column;
 }
 
+.cd-group + .cd-group {
+  margin-top: 8px;
+}
+
+.cd-group-title {
+  margin: 8px 0 2px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--fb-orange-brown, #A15C2B);
+}
+
 .cd-item-row {
   display: flex;
   gap: 16px;

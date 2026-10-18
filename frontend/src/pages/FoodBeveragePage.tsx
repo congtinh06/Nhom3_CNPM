@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { defaultProducts } from '../content/defaultProducts';
+import { RefreshCw } from 'lucide-react';
 import { enrichProducts } from '../content/productAdapter';
 import { api } from '../api/client';
 import { Product, ProductOptions } from '../types';
@@ -9,20 +9,31 @@ import { useCart } from '../context/CartContext';
 import { useToast } from '../context/ToastContext';
 import { useFavorites } from '../hooks/useFavorites';
 import { useProductFilters } from '../hooks/useProductFilters';
+import { useNavbarLanguage } from '../content/languages';
+import { getSpotName } from '../content/souvenirSpots';
 import { FoodHeroSection } from '../components/food/FoodHeroSection';
 import { FoodSidebarFilter } from '../components/food/FoodSidebarFilter';
 import { ProductCard } from '../components/food/ProductCard';
 import { ProductDetailModal } from '../components/food/ProductDetailModal';
 import { EmptyState } from '../components/common/EmptyState';
 import { Pagination } from '../components/common/Pagination';
+import '../styles/souvenir.css';
 
 const ITEMS_PER_PAGE = 8;
+
+// Trang "Ẩm thực" trước đây nay đổi nội dung thành quà lưu niệm, giữ nguyên bố cục (hero, bộ lọc, lưới sản phẩm).
+const PAGE_LABEL = 'Quà lưu niệm';
+const PAGE_HEADING = {
+  title: 'Quà lưu niệm Sài Gòn',
+  subtitle: 'Quà tặng và đặc sản gắn với từng điểm du lịch',
+};
 
 export const FoodBeveragePage: React.FC = () => {
   const navigate = useNavigate();
   const { addToCart } = useCart();
   const { showToast } = useToast();
   const { isFavorite, toggleFavorite } = useFavorites();
+  const { lang } = useNavbarLanguage();
 
   // Single Source of Truth for Filtering Logic
   const {
@@ -37,30 +48,44 @@ export const FoodBeveragePage: React.FC = () => {
 
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState<boolean>(false);
 
-  // Nguồn dữ liệu: API/DB (nguồn chung với admin). Nếu API lỗi, rơi về catalog tĩnh cũ.
+  // Nguồn dữ liệu: API/DB (nguồn chung với admin). Không còn catalog tĩnh dự phòng.
   const [apiProducts, setApiProducts] = useState<Product[] | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [hasError, setHasError] = useState<boolean>(false);
 
   useEffect(() => {
-    if (import.meta.env.MODE === 'test') return;
-    if (typeof api.getProducts !== 'function') return;
+    if (typeof api.getProducts !== 'function') {
+      setApiProducts([]);
+      setIsLoading(false);
+      return;
+    }
     let cancelled = false;
+    setIsLoading(true);
+    setHasError(false);
     api
       .getProducts({ size: 200, sortBy: 'sortOrder' })
       .then((page) => {
-        const items = page?.content ?? [];
-        if (!cancelled && items.length > 0) {
-          setApiProducts(enrichProducts(items));
-        }
+        if (cancelled) return;
+        setApiProducts(enrichProducts(page?.content ?? []));
       })
       .catch(() => {
-        // Giữ nguyên catalog tĩnh nếu API không sẵn sàng.
+        if (cancelled) return;
+        setApiProducts([]);
+        setHasError(true);
+      })
+      .finally(() => {
+        if (!cancelled) setIsLoading(false);
       });
     return () => {
       cancelled = true;
     };
   }, []);
 
-  const baseProducts = apiProducts && apiProducts.length > 0 ? apiProducts : defaultProducts;
+  // Trang chỉ hiển thị quà lưu niệm (SOUVENIR); món ăn/đồ uống đã bỏ.
+  const souvenirProducts = useMemo(() => {
+    const list = apiProducts ?? [];
+    return list.filter((item) => item.category === 'SOUVENIR');
+  }, [apiProducts]);
 
   // Selected product for Detail Modal
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
@@ -68,7 +93,7 @@ export const FoodBeveragePage: React.FC = () => {
 
   // Filter and sort items dynamically
   const filteredProducts = useMemo(() => {
-    let list = [...baseProducts];
+    let list = [...souvenirProducts];
 
     // 1. Keyword search (normalized lowercase Vietnamese)
     if (filters.keyword.trim()) {
@@ -83,17 +108,12 @@ export const FoodBeveragePage: React.FC = () => {
       });
     }
 
-    // 2. Product Type filter (FOOD / DRINK)
-    if (filters.productType !== 'all') {
-      list = list.filter((item) => item.category === filters.productType);
+    // 2. Spot filter (thay cho cây danh mục cũ)
+    if (filters.spot !== 'all') {
+      list = list.filter((item) => item.poiSlug === filters.spot);
     }
 
-    // 3. Category filter
-    if (filters.category !== 'all') {
-      list = list.filter((item) => item.subCategory === filters.category);
-    }
-
-    // 4. Price range filter
+    // 3. Price range filter
     if (filters.priceRange !== 'all') {
       switch (filters.priceRange) {
         case 'under-50k':
@@ -111,13 +131,13 @@ export const FoodBeveragePage: React.FC = () => {
       }
     }
 
-    // 5. Rating filter
+    // 4. Rating filter
     if (filters.rating !== 'all') {
       const minRating = Number(filters.rating);
       list = list.filter((item) => (item.rating || 5.0) >= minRating);
     }
 
-    // 6. Sorting
+    // 5. Sorting
     switch (filters.sortBy) {
       case 'popular':
         list.sort((a, b) => (b.reviewsCount || 0) - (a.reviewsCount || 0));
@@ -137,7 +157,7 @@ export const FoodBeveragePage: React.FC = () => {
     }
 
     return list;
-  }, [filters, baseProducts]);
+  }, [filters, souvenirProducts]);
 
   // Pagination calculation
   const totalItems = filteredProducts.length;
@@ -194,21 +214,23 @@ export const FoodBeveragePage: React.FC = () => {
     navigate('/thanh-toan');
   };
 
+  const heading = PAGE_HEADING;
+  const currentSpotLabel =
+    filters.spot !== 'all' ? getSpotName(filters.spot, lang) : '';
+
   return (
     <div className="food-beverage-page-container">
       {/* 1. HERO SECTION */}
       <FoodHeroSection
         filters={filters}
-        onSearch={(newKeyword, newCategory) => {
+        products={apiProducts ?? []}
+        onSearch={(newKeyword) => {
           handleSearch(newKeyword);
-          if (newCategory) {
-            handleChangeFilter('category', newCategory);
-          }
         }}
       />
 
       {/* 2. KHU VỰC SHOP (BỐ CỤC 2 CỘT: Cột trái 25% Sidebar Sticky, Cột phải 75% Product List) */}
-      <main className="food-shop-main-layout" id="shop-catalog-anchor">
+      <main className="food-shop-main-layout" id="shop-panel">
         <div className="food-shop-container">
           {/* CỘT TRÁI (25%): BỘ LỌC TÌM KIẾM DUY NHẤT (STICKY) */}
           <FoodSidebarFilter
@@ -217,14 +239,15 @@ export const FoodBeveragePage: React.FC = () => {
             onResetFilters={handleResetFilters}
             isOpenMobile={isMobileFilterOpen}
             onCloseMobile={() => setIsMobileFilterOpen(false)}
+            lang={lang}
           />
 
           {/* CỘT PHẢI: KHU VỰC SẢN PHẨM */}
-          <section className="food-catalog-section" aria-label="Danh sách món ăn và thức uống">
+          <section className="food-catalog-section" aria-label={heading.title}>
             {/* SECTION HEADER: Bố cục cùng 1 dòng, Trái: Breadcrumb + Title + Subtitle/Badge, Phải: Sắp xếp theo */}
             <div className="editorial-catalog-toolbar">
               <div className="toolbar-left-content">
-                {/* Breadcrumb: Trang chủ / Thực đơn */}
+                {/* Breadcrumb: Trang chủ / Quà lưu niệm */}
                 <nav aria-label="Breadcrumb" className="editorial-breadcrumb">
                   <a
                     href="/"
@@ -251,12 +274,12 @@ export const FoodBeveragePage: React.FC = () => {
                     <polyline points="9 18 15 12 9 6" />
                   </svg>
                   <span className="breadcrumb-current-text" aria-current="page">
-                    Thực đơn
+                    {PAGE_LABEL}
                   </span>
                 </nav>
 
-                {/* Tiêu đề mục: Thực đơn Sài Gòn (Playfair Display, text-4xl, font-bold) */}
-                <h1 className="editorial-catalog-heading">Thực đơn Sài Gòn</h1>
+                {/* Tiêu đề mục */}
+                <h1 className="editorial-catalog-heading">{heading.title}</h1>
 
                 {/* Hàng thông tin phụ: Badge số lượng sản phẩm + Subtitle mô tả */}
                 <div className="editorial-catalog-meta-row">
@@ -264,7 +287,7 @@ export const FoodBeveragePage: React.FC = () => {
                     {totalItems} sản phẩm
                   </span>
                   <p className="editorial-catalog-subtitle">
-                    Khám phá hương vị đặc trưng của Sài Gòn
+                    {heading.subtitle}
                   </p>
                 </div>
               </div>
@@ -360,25 +383,13 @@ export const FoodBeveragePage: React.FC = () => {
                       </button>
                     </span>
                   )}
-                  {filters.productType !== 'all' && (
+                  {filters.spot !== 'all' && (
                     <span className="active-pill">
-                      {filters.productType === 'FOOD' ? 'Món ăn' : 'Thức uống'}
+                      Điểm đến: {currentSpotLabel}
                       <button
                         type="button"
-                        onClick={() => handleChangeFilter('productType', 'all')}
-                        aria-label="Bỏ lọc loại sản phẩm"
-                      >
-                        ×
-                      </button>
-                    </span>
-                  )}
-                  {filters.category !== 'all' && (
-                    <span className="active-pill">
-                      Danh mục: {filters.category}
-                      <button
-                        type="button"
-                        onClick={() => handleChangeFilter('category', 'all')}
-                        aria-label="Bỏ lọc danh mục"
+                        onClick={() => handleChangeFilter('spot', 'all')}
+                        aria-label="Bỏ lọc điểm đến"
                       >
                         ×
                       </button>
@@ -420,8 +431,13 @@ export const FoodBeveragePage: React.FC = () => {
               </div>
             )}
 
-            {/* LƯỚI SẢN PHẨM CHÍNH HOẶC TRẠNG THÁI EMPTY STATE */}
-            {paginatedProducts.length > 0 ? (
+            {/* LƯỚI SẢN PHẨM CHÍNH HOẶC TRẠNG THÁI LOADING/EMPTY */}
+            {isLoading ? (
+              <div className="souvenir-status" role="status">
+                <RefreshCw size={26} aria-hidden="true" />
+                <p>Đang tải dữ liệu...</p>
+              </div>
+            ) : paginatedProducts.length > 0 ? (
               <div className="food-product-grid">
                 {paginatedProducts.map((product) => (
                   <ProductCard
@@ -436,7 +452,7 @@ export const FoodBeveragePage: React.FC = () => {
               </div>
             ) : (
               <EmptyState
-                keyword={filters.keyword}
+                keyword={hasError ? '' : filters.keyword}
                 onClearFilters={handleResetFilters}
               />
             )}
@@ -455,7 +471,7 @@ export const FoodBeveragePage: React.FC = () => {
         </div>
       </main>
 
-      {/* 4. MODAL CHI TIẾT SẢN PHẨM */}
+      {/* 3. MODAL CHI TIẾT SẢN PHẨM */}
       <ProductDetailModal
         product={selectedProduct}
         isOpen={isModalOpen}

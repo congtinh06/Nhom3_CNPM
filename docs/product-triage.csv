@@ -1,0 +1,41 @@
+id,slug,name,category,price,image_path,keep,spot_slug
+,tranh-ma-vang-dinh-doc-lap,Tranh mạ vàng Dinh Độc Lập,SOUVENIR,180000,/images/souvenirs/tranh-dinh-doc-lap.jpg,Y,dinh-doc-lap
+,mo-hinh-dinh-doc-lap,Mô hình Dinh Độc Lập,SOUVENIR,220000,/images/souvenirs/tranh-dinh-doc-lap.jpg,Y,dinh-doc-lap
+,nam-cham-dinh-doc-lap,Nam châm tủ lạnh Dinh Độc Lập,SOUVENIR,30000,/images/souvenirs/tranh-dinh-doc-lap.jpg,Y,dinh-doc-lap
+,buu-thiep-dinh-doc-lap,Bộ bưu thiếp Dinh Độc Lập,SOUVENIR,25000,/images/souvenirs/buu-thiep.jpg,Y,dinh-doc-lap
+,ca-phe-rang-xay-sai-gon,Cà phê rang xay Sài Gòn,SOUVENIR,120000,/images/souvenirs/ca-phe-phin.jpg,Y,dinh-doc-lap
+,ao-dai-cach-tan-sai-gon,Áo dài cách tân Sài Gòn,SOUVENIR,420000,/images/souvenirs/ao-dai.jpg,Y,dinh-doc-lap
+,tranh-theu-nha-tho-duc-ba,Tranh thêu tay Nhà thờ Đức Bà,SOUVENIR,260000,/images/souvenirs/tranh-nha-tho-duc-ba.jpg,Y,nha-tho-duc-ba
+,tranh-ma-vang-nha-tho-duc-ba,Tranh mạ vàng Nhà thờ Đức Bà,SOUVENIR,190000,/images/souvenirs/tranh-nha-tho-duc-ba.jpg,Y,nha-tho-duc-ba
+,nam-cham-nha-tho-duc-ba,Nam châm Nhà thờ Đức Bà,SOUVENIR,30000,/images/souvenirs/tranh-nha-tho-duc-ba.jpg,Y,nha-tho-duc-ba
+,buu-thiep-nha-tho-duc-ba,Bưu thiếp Nhà thờ Đức Bà,SOUVENIR,25000,/images/souvenirs/buu-thiep.jpg,Y,nha-tho-duc-ba
+,chuoi-hat-go-my-nghe,Chuỗi hạt gỗ mỹ nghệ,SOUVENIR,65000,/images/souvenirs/gom-bat-trang.jpg,Y,nha-tho-duc-ba
+,tem-suu-tam-sai-gon,Bộ tem sưu tầm Sài Gòn,SOUVENIR,50000,/images/souvenirs/buu-thiep.jpg,Y,buu-dien-trung-tam
+,buu-thiep-retro-sai-gon,Bưu thiếp retro Sài Gòn xưa,SOUVENIR,30000,/images/souvenirs/buu-thiep.jpg,Y,buu-dien-trung-tam
+,moc-khoa-buu-dien,Móc khóa Bưu điện Trung tâm,SOUVENIR,25000,/images/souvenirs/tranh-buu-dien.jpg,Y,buu-dien-trung-tam
+,tranh-ma-vang-buu-dien,Tranh mạ vàng Bưu điện Trung tâm,SOUVENIR,190000,/images/souvenirs/tranh-buu-dien.jpg,Y,buu-dien-trung-tam
+,ca-phe-sua-da-phin,Cà phê sữa đá phin quà tặng,SOUVENIR,90000,/images/souvenirs/ca-phe-sua-da.jpg,Y,buu-dien-trung-tam
+,lua-tam-sai-gon,Khăn lụa tơ tằm Sài Gòn,SOUVENIR,220000,/images/souvenirs/lua-viet-nam.jpg,Y,cho-ben-thanh
+,non-la-thu-cong,Nón lá thủ công,SOUVENIR,45000,/images/souvenirs/non-la.jpg,Y,cho-ben-thanh
+,do-may-tre-dan,Đồ mây tre đan,SOUVENIR,90000,/images/souvenirs/may-tre.jpg,Y,cho-ben-thanh
+,gom-su-bat-trang,Bộ ấm tách gốm Bát Tràng,SOUVENIR,170000,/images/souvenirs/gom-bat-trang.jpg,Y,cho-ben-thanh
+,quat-giay-sai-gon,Quạt giấy Sài Gòn,SOUVENIR,35000,/images/souvenirs/quat-giay.jpg,Y,cho-ben-thanh
+,banh-pia-tan-huong,Bánh pía Tân Hương,SOUVENIR,75000,/images/souvenirs/banh-pia.jpg,Y,cho-ben-thanh
+,keo-dua-ben-tre,Kẹo dừa Bến Tre,SOUVENIR,45000,/images/souvenirs/keo-dua.jpg,Y,cho-ben-thanh
+,hat-dieu-rang-muoi,Hạt điều rang muối,SOUVENIR,130000,/images/souvenirs/hat-dieu.jpg,Y,cho-ben-thanh
+,kho-bo-sai-gon,Khô bò Sài Gòn,SOUVENIR,150000,/images/souvenirs/kho-bo.jpg,Y,cho-ben-thanh
+,mut-trai-cay-sai-gon,Mứt trái cây Sài Gòn,SOUVENIR,95000,/images/souvenirs/mut-trai-cay.jpg,Y,cho-ben-thanh
+,tra-sen-sai-gon,Trà sen Sài Gòn,SOUVENIR,110000,/images/souvenirs/tra-sen.jpg,Y,cho-ben-thanh
+,tranh-ma-vang-cho-ben-thanh,Tranh mạ vàng Chợ Bến Thành,SOUVENIR,180000,/images/souvenirs/tranh-cho-ben-thanh.jpg,Y,cho-ben-thanh
+,tranh-co-dong-viet-nam,Tranh cổ động Việt Nam,SOUVENIR,120000,/images/souvenirs/tranh-co-dong.jpg,Y,bao-tang-chung-tich-chien-tranh
+,sach-lich-su-sai-gon,Sách lịch sử Sài Gòn,SOUVENIR,95000,/images/souvenirs/tranh-co-dong.jpg,Y,bao-tang-chung-tich-chien-tranh
+,huy-hieu-luu-niem,Huy hiệu lưu niệm,SOUVENIR,20000,/images/souvenirs/tranh-bao-tang.jpg,Y,bao-tang-chung-tich-chien-tranh
+,nam-cham-bao-tang,Nam châm Bảo tàng Chứng tích Chiến tranh,SOUVENIR,30000,/images/souvenirs/tranh-bao-tang.jpg,Y,bao-tang-chung-tich-chien-tranh
+,nhang-thom-chua-ba,Nhang thơm Chùa Bà Thiên Hậu,SOUVENIR,40000,/images/souvenirs/huong.jpg,Y,chua-ba-thien-hau
+,bao-li-xi-do,Bao lì xì đỏ may mắn,SOUVENIR,20000,/images/souvenirs/bao-li-xi.jpg,Y,chua-ba-thien-hau
+,vong-tay-da-may-man,Vòng tay đá may mắn,SOUVENIR,80000,/images/souvenirs/gom-bat-trang.jpg,Y,chua-ba-thien-hau
+,den-long-hoi-quan,Đèn lồng Hội quán,SOUVENIR,95000,/images/souvenirs/chua-ba-thien-hau.jpg,Y,chua-ba-thien-hau
+,tranh-cau-ba-son,Tranh Cầu Ba Son,SOUVENIR,170000,/images/souvenirs/tranh-cau-ba-son.jpg,Y,cau-ba-son
+,mat-ong-rung-ngap-man,Mật ong rừng ngập mặn Cần Giờ,SOUVENIR,150000,/images/souvenirs/mat-ong.jpg,Y,cau-ba-son
+,dau-dua-nguyen-chat,Dầu dừa nguyên chất,SOUVENIR,85000,/images/souvenirs/dau-dua.jpg,Y,cau-ba-son
+,duong-thot-not-an-giang,Đường thốt nốt An Giang,SOUVENIR,55000,/images/souvenirs/duong-thot-not.jpg,Y,cau-ba-son

@@ -1,12 +1,12 @@
-import React, { useState } from 'react';
-import { Filter, X, ChevronDown, ChevronRight, Star, Check } from 'lucide-react';
+import React from 'react';
+import { Filter, X, Star, Check } from 'lucide-react';
 import {
-  CategoryFilterKey,
   PriceRangeFilter,
   RatingFilter,
   ProductFilterState,
-  ProductTypeFilter,
 } from '../../types/productFilter';
+import { SupportedLanguage } from '../../types';
+import { SOUVENIR_SPOTS, getSpotName } from '../../content/souvenirSpots';
 
 interface FoodSidebarFilterProps {
   filters: ProductFilterState;
@@ -17,40 +17,8 @@ interface FoodSidebarFilterProps {
   onResetFilters: () => void;
   isOpenMobile: boolean;
   onCloseMobile: () => void;
+  lang: SupportedLanguage;
 }
-
-interface SubCategoryItem {
-  key: CategoryFilterKey;
-  label: string;
-}
-
-interface CategoryGroup {
-  type: ProductTypeFilter;
-  label: string;
-  subCategories: SubCategoryItem[];
-}
-
-const HIERARCHICAL_CATEGORIES: CategoryGroup[] = [
-  {
-    type: 'FOOD',
-    label: 'Món ăn',
-    subCategories: [
-      { key: 'mon-an', label: 'Món ăn Sài Gòn' },
-      { key: 'mon-an-vat', label: 'Món ăn vặt' },
-      { key: 'dac-san', label: 'Đặc sản Sài Gòn' },
-    ],
-  },
-  {
-    type: 'DRINK',
-    label: 'Đồ uống',
-    subCategories: [
-      { key: 'ca-phe', label: 'Cà phê' },
-      { key: 'tra', label: 'Trà' },
-      { key: 'nuoc-giai-khat', label: 'Nước giải khát' },
-      { key: 'sinh-to', label: 'Sinh tố' },
-    ],
-  },
-];
 
 export const PRICE_OPTIONS: { key: PriceRangeFilter; label: string }[] = [
   { key: 'all', label: 'Tất cả khoảng giá' },
@@ -73,45 +41,13 @@ export const FoodSidebarFilter: React.FC<FoodSidebarFilterProps> = ({
   onResetFilters,
   isOpenMobile,
   onCloseMobile,
+  lang,
 }) => {
-  // Trạng thái đóng/mở nhánh cây phân cấp (mặc định mở cả 2 nhánh Món ăn & Đồ uống)
-  const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({
-    FOOD: true,
-    DRINK: true,
-  });
-
-  const toggleGroup = (groupKey: string) => {
-    setExpandedGroups((prev) => ({
-      ...prev,
-      groupKey: !prev[groupKey],
-      [groupKey]: !prev[groupKey],
-    }));
-  };
-
   const isFiltered =
-    filters.category !== 'all' ||
-    filters.productType !== 'all' ||
+    filters.spot !== 'all' ||
     filters.priceRange !== 'all' ||
     filters.rating !== 'all' ||
     Boolean(filters.keyword.trim());
-
-  // Chọn "Tất cả"
-  const handleSelectAllCategories = () => {
-    onChangeFilter('productType', 'all');
-    onChangeFilter('category', 'all');
-  };
-
-  // Chọn nhánh cha (Món ăn hoặc Đồ uống)
-  const handleSelectParentGroup = (type: ProductTypeFilter) => {
-    onChangeFilter('productType', type);
-    onChangeFilter('category', 'all');
-  };
-
-  // Chọn danh mục con (Cà phê, Bánh mì, v.v.)
-  const handleSelectSubCategory = (type: ProductTypeFilter, catKey: CategoryFilterKey) => {
-    onChangeFilter('productType', type);
-    onChangeFilter('category', catKey);
-  };
 
   const filterContent = (
     <div className="editorial-sidebar-card" data-lenis-prevent>
@@ -134,91 +70,44 @@ export const FoodSidebarFilter: React.FC<FoodSidebarFilterProps> = ({
         )}
       </div>
 
-      {/* 2. Mục 'DANH MỤC' (Gộp LOẠI SẢN PHẨM & DANH MỤC thành cây phân cấp Collapse/Expand) */}
+      {/* 2. Mục 'ĐIỂM DU LỊCH' (Thay thế cây danh mục cũ bằng bộ lọc 7 điểm đến) */}
       <div className="editorial-filter-section">
         <div className="section-heading-row">
-          <h3 className="section-heading">DANH MỤC</h3>
+          <h3 className="section-heading">ĐIỂM DU LỊCH</h3>
         </div>
 
-        <div className="category-tree-list" role="tree">
-          {/* Lựa chọn: Tất cả */}
+        <div className="category-tree-list" role="radiogroup" aria-label="Lọc theo điểm du lịch">
           <div className="tree-node-item">
             <button
               type="button"
-              className={`tree-select-btn ${
-                filters.productType === 'all' && filters.category === 'all' ? 'is-selected' : ''
-              }`}
-              onClick={handleSelectAllCategories}
+              role="radio"
+              aria-checked={filters.spot === 'all'}
+              className={`tree-select-btn ${filters.spot === 'all' ? 'is-selected' : ''}`}
+              onClick={() => onChangeFilter('spot', 'all')}
             >
               <span className="custom-circle-radio">
-                {filters.productType === 'all' && filters.category === 'all' && (
-                  <span className="radio-inner-dot" />
-                )}
+                {filters.spot === 'all' && <span className="radio-inner-dot" />}
               </span>
-              <span className="tree-node-label font-medium">Tất cả sản phẩm</span>
+              <span className="tree-node-label font-medium">Tất cả điểm đến</span>
             </button>
           </div>
 
-          {/* Các nhóm Cha & Con */}
-          {HIERARCHICAL_CATEGORIES.map((group) => {
-            const isGroupExpanded = expandedGroups[group.type] ?? true;
-            const isParentSelected =
-              filters.productType === group.type && filters.category === 'all';
-            const hasChildSelected =
-              filters.productType === group.type && filters.category !== 'all';
-
+          {SOUVENIR_SPOTS.map((spot) => {
+            const isSelected = filters.spot === spot.slug;
             return (
-              <div key={group.type} className="tree-group-wrap">
-                {/* Dòng cha: Nút toggle chevron + Nút chọn nhóm */}
-                <div className="tree-parent-row">
-                  <button
-                    type="button"
-                    className="tree-chevron-btn"
-                    onClick={() => toggleGroup(group.type)}
-                    aria-label={`Mở rộng danh mục ${group.label}`}
-                  >
-                    {isGroupExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-                  </button>
-
-                  <button
-                    type="button"
-                    className={`tree-select-btn tree-parent-btn ${
-                      isParentSelected || hasChildSelected ? 'is-active-parent' : ''
-                    }`}
-                    onClick={() => handleSelectParentGroup(group.type)}
-                  >
-                    <span className="custom-circle-radio">
-                      {isParentSelected && <span className="radio-inner-dot" />}
-                    </span>
-                    <span className="tree-node-label">{group.label}</span>
-                  </button>
-                </div>
-
-                {/* Danh sách con có lùi đầu dòng (Indented sub-items) */}
-                {isGroupExpanded && (
-                  <div className="tree-children-list">
-                    {group.subCategories.map((sub) => {
-                      const isSubSelected =
-                        filters.productType === group.type && filters.category === sub.key;
-
-                      return (
-                        <button
-                          key={sub.key}
-                          type="button"
-                          className={`tree-select-btn tree-sub-btn ${
-                            isSubSelected ? 'is-selected' : ''
-                          }`}
-                          onClick={() => handleSelectSubCategory(group.type, sub.key)}
-                        >
-                          <span className="custom-circle-radio">
-                            {isSubSelected && <span className="radio-inner-dot" />}
-                          </span>
-                          <span className="tree-node-label">{sub.label}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
+              <div key={spot.slug} className="tree-node-item">
+                <button
+                  type="button"
+                  role="radio"
+                  aria-checked={isSelected}
+                  className={`tree-select-btn ${isSelected ? 'is-selected' : ''}`}
+                  onClick={() => onChangeFilter('spot', spot.slug)}
+                >
+                  <span className="custom-circle-radio">
+                    {isSelected && <span className="radio-inner-dot" />}
+                  </span>
+                  <span className="tree-node-label">{getSpotName(spot.slug, lang)}</span>
+                </button>
               </div>
             );
           })}

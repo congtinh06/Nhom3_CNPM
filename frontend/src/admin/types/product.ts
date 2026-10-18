@@ -1,4 +1,4 @@
-export type ProductCategory = 'FOOD' | 'DRINK';
+export type ProductCategory = 'FOOD' | 'DRINK' | 'SOUVENIR';
 
 export interface Product {
   id: number;
@@ -12,6 +12,8 @@ export interface Product {
   categoryId?: number | null;
   rating?: number;
   reviewsCount?: number;
+  poiId?: number | null;
+  poiSlug?: string | null;
   isActive: boolean;
   sortOrder: number;
   createdAt?: string;
@@ -26,6 +28,7 @@ export interface CreateProductInput {
   description?: string;
   price: number;
   imagePath?: string;
+  poiId?: number | null;
   isActive?: boolean;
   sortOrder?: number;
 }
@@ -38,6 +41,7 @@ export interface UpdateProductInput {
   description?: string;
   price: number;
   imagePath?: string;
+  poiId?: number | null;
   isActive?: boolean;
   sortOrder?: number;
 }

@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, X, Loader2 } from 'lucide-react';
-import { defaultProducts } from '../../content/defaultProducts';
 import { Product } from '../../types';
 import { formatPrice } from '../../utils/formatters';
 import {
@@ -13,10 +12,11 @@ import {
 interface FoodHeroSectionProps {
   onSearch: (keyword: string, category?: CategoryFilterKey) => void;
   filters: ProductFilterState;
+  products?: Product[];
   onApplyAdvanced?: (values: AdvancedSearchValues) => void;
 }
 
-const SUGGESTED_CHIPS = ['Cơm tấm', 'Bánh mì', 'Cà phê sữa đá', 'Bạc xỉu', 'Trà đào'];
+const SUGGESTED_CHIPS = ['Tranh mạ vàng', 'Nón lá', 'Bưu thiếp', 'Bánh pía', 'Trà sen', 'Cà phê'];
 
 /**
  * Chuẩn hóa chuỗi tiếng Việt: chuyển chữ thường, bỏ dấu thanh (NFD),
@@ -115,6 +115,7 @@ function getProductMatchRank(product: Product, normQuery: string): number | null
 export const FoodHeroSection: React.FC<FoodHeroSectionProps> = ({
   onSearch,
   filters,
+  products = [],
 }) => {
   const navigate = useNavigate();
   const [keyword, setKeyword] = useState(filters.keyword);
@@ -203,7 +204,7 @@ export const FoodHeroSection: React.FC<FoodHeroSectionProps> = ({
       const normQuery = removeVietnameseTones(q);
       const rankedItems: { product: Product; rank: number; index: number }[] = [];
 
-      defaultProducts.forEach((item, index) => {
+      products.forEach((item, index) => {
         if (!item.isActive) return;
         const rank = getProductMatchRank(item, normQuery);
         if (rank !== null) {
@@ -235,7 +236,7 @@ export const FoodHeroSection: React.FC<FoodHeroSectionProps> = ({
       setIsLoading(false);
       setHighlightedIndex(-1);
     }
-  }, []);
+  }, [products]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
@@ -265,7 +266,7 @@ export const FoodHeroSection: React.FC<FoodHeroSectionProps> = ({
   const handleSelectSuggestion = (product: Product) => {
     setIsOpen(false);
     setKeyword(product.name);
-    navigate(`/am-thuc-thuc-uong/${product.slug}`);
+    navigate(`/am-thuc/${product.slug}`);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -337,7 +338,7 @@ export const FoodHeroSection: React.FC<FoodHeroSectionProps> = ({
   };
 
   return (
-    <section className="editorial-hero-section" aria-label="Ẩm thực và thức uống Sài Gòn">
+    <section className="editorial-hero-section" aria-label="Quà lưu niệm Sài Gòn">
       {/* Background Image với lớp phủ tối 60% */}
       <div className="editorial-hero-bg-overlay" />
 
@@ -350,12 +351,12 @@ export const FoodHeroSection: React.FC<FoodHeroSectionProps> = ({
 
           {/* 2. Main Title: Playfair Display */}
           <h1 className="editorial-hero-title">
-            Ẩm Thực &amp; Thức Uống Sài Gòn
+            Quà Lưu Niệm Sài Gòn
           </h1>
 
           {/* 3. Subtitle */}
           <p className="editorial-hero-subtitle">
-            Hương vị nguyên bản đúc kết từ ký ức hè phố đến không gian ẩm thực tinh tế.
+            Đặc sản và quà tặng gắn với từng điểm du lịch của Sài Gòn.
           </p>
 
           {/* 4. Live Autocomplete Search Container */}
@@ -367,7 +368,7 @@ export const FoodHeroSection: React.FC<FoodHeroSectionProps> = ({
                   ref={inputRef}
                   type="text"
                   className="search-native-input"
-                  placeholder="Tìm kiếm món ngon, thức uống, đặc sản"
+                  placeholder="Tìm kiếm quà lưu niệm, đặc sản"
                   value={keyword}
                   onChange={handleInputChange}
                   onKeyDown={handleKeyDown}
@@ -376,7 +377,7 @@ export const FoodHeroSection: React.FC<FoodHeroSectionProps> = ({
                       setIsOpen(true);
                     }
                   }}
-                  aria-label="Tìm kiếm món ăn hoặc thức uống"
+                  aria-label="Tìm kiếm quà lưu niệm"
                   role="combobox"
                   aria-autocomplete="list"
                   aria-expanded={isOpen}
@@ -406,16 +407,16 @@ export const FoodHeroSection: React.FC<FoodHeroSectionProps> = ({
                 className="food-autocomplete-dropdown"
                 id="food-autocomplete-listbox"
                 role="listbox"
-                aria-label="Gợi ý món ăn"
+                aria-label="Gợi ý quà lưu niệm"
               >
                 {isLoading ? (
                   <div className="autocomplete-state-msg">
                     <Loader2 size={16} className="autocomplete-loading-spin" />
-                    <span>Đang tìm kiếm món...</span>
+                    <span>Đang tìm kiếm...</span>
                   </div>
                 ) : suggestions.length === 0 ? (
                   <div className="autocomplete-state-msg">
-                    <span>Không tìm thấy món phù hợp</span>
+                    <span>Không tìm thấy quà phù hợp</span>
                   </div>
                 ) : (
                   suggestions.map((item, index) => {
@@ -451,7 +452,7 @@ export const FoodHeroSection: React.FC<FoodHeroSectionProps> = ({
                               ? 'Món ăn vặt'
                               : item.category === 'DRINK'
                               ? 'Đồ uống'
-                              : 'Ẩm thực'}
+                              : 'Quà lưu niệm'}
                           </span>
                         </div>
                         <span className="suggestion-price">
@@ -465,9 +466,9 @@ export const FoodHeroSection: React.FC<FoodHeroSectionProps> = ({
             )}
           </div>
 
-          {/* 5. Gợi ý món quen chips */}
+          {/* 5. Quà phổ biến chips */}
           <div className="editorial-hero-chips-row">
-            <span className="chips-label">Gợi ý món quen:</span>
+            <span className="chips-label">Quà phổ biến:</span>
             <div className="chips-list">
               {SUGGESTED_CHIPS.map((chip) => (
                 <button

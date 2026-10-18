@@ -33,6 +33,9 @@ public class UpdateProductRequest {
     @NotNull(message = "Danh mục sản phẩm không được để trống")
     private ProductCategory category;
 
+    // Điểm du lịch gắn với sản phẩm lưu niệm. NULL = giữ nguyên điểm hiện có.
+    private Long poiId;
+
     @Size(max = 500, message = "Mô tả ngắn tối đa 500 ký tự")
     private String shortDescription;
 

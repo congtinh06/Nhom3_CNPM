@@ -159,7 +159,7 @@ const PoiListComponent: React.FC<PoiListProps> = ({
         </div>
       )}
 
-      {/* Stop list container: Shows all 5 stops without inner scrollbar */}
+      {/* Stop list container: scrolls independently to match the map height */}
       <div className="nearby-stop-list-container">
         <ol className="nearby-stop-list" role="list">
           {sortedPois.map((item) => {

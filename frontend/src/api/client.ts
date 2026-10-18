@@ -186,6 +186,7 @@ export const api = {
     params?: {
       category?: ProductCategory;
       categoryId?: number;
+      poiSlug?: string;
       keyword?: string;
       search?: string;
       minPrice?: number;

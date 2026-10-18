@@ -139,7 +139,7 @@ export interface AnalyticsSummaryResponse {
   topPois: TopPoiStat[];
 }
 
-export type ProductCategory = 'FOOD' | 'DRINK';
+export type ProductCategory = 'FOOD' | 'DRINK' | 'SOUVENIR';
 
 export type ProductSubCategory =
   | 'mon-an'
@@ -174,6 +174,8 @@ export interface Product {
   portion?: string;
   hasDrinkOptions?: boolean;
   imagePath: string;
+  poiId?: number | null;
+  poiSlug?: string | null;
   isActive: boolean;
   sortOrder: number;
   createdAt?: string;
@@ -207,6 +209,7 @@ export interface CartItem {
   slug?: string;
   category?: ProductCategory;
   imagePath?: string;
+  poiSlug?: string | null;
   options?: ProductOptions;
 }
 

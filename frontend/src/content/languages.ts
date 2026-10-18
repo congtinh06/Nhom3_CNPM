@@ -142,7 +142,7 @@ export interface NavTranslation {
 export const NAV_TRANSLATIONS: Record<SupportedLanguage, NavTranslation> = {
   vi: {
     home: 'Trang chủ',
-    food: 'Ẩm thực',
+    food: 'Quà lưu niệm',
     attractions: 'Điểm du lịch',
     guide: 'Hướng dẫn',
     news: 'Tin tức',
@@ -271,7 +271,7 @@ export const NAV_TRANSLATIONS: Record<SupportedLanguage, NavTranslation> = {
   },
   en: {
     home: 'Home',
-    food: 'Cuisine',
+    food: 'Souvenirs',
     attractions: 'Attractions',
     guide: 'Guide',
     news: 'News',
@@ -400,7 +400,7 @@ export const NAV_TRANSLATIONS: Record<SupportedLanguage, NavTranslation> = {
   },
   ja: {
     home: 'ホーム',
-    food: 'グルメ',
+    food: 'お土産',
     attractions: '観光名所',
     guide: '案内',
     news: 'ニュース',
@@ -529,7 +529,7 @@ export const NAV_TRANSLATIONS: Record<SupportedLanguage, NavTranslation> = {
   },
   ko: {
     home: '홈',
-    food: '음식',
+    food: '기념품',
     attractions: '관광 명소',
     guide: '이용 안내',
     news: '뉴스',

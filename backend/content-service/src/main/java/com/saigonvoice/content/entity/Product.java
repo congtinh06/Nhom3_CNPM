@@ -55,6 +55,11 @@ public class Product {
     @JoinColumn(name = "category_id")
     private Category categoryEntity;
 
+    // Điểm du lịch gắn với sản phẩm lưu niệm (NULL được: sản phẩm chưa gắn điểm nào).
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "poi_id")
+    private Poi poi;
+
     @Column(name = "is_active", nullable = false)
     @Builder.Default
     private Boolean isActive = true;

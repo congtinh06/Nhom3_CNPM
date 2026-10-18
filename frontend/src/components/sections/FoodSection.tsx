@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { PhotoFrame } from '../common/PhotoFrame';
-import { foodContent } from '../../content/staticSections';
+import { useHomeI18n } from '../../content/homeI18n';
 import { api } from '../../api/client';
 
 interface DishPhoto {
@@ -13,33 +13,39 @@ interface DishPhoto {
 const HUES = [20, 32, 10, 40, 6, 28];
 
 export const FoodSection: React.FC = () => {
-  const [top, setTop] = useState<DishPhoto[]>(foodContent.photosTop);
-  const [bottom, setBottom] = useState<DishPhoto[]>(foodContent.photosBottom);
+  const { t } = useHomeI18n();
+  const [photos, setPhotos] = useState<DishPhoto[]>([]);
 
   useEffect(() => {
     if (import.meta.env.MODE === 'test') return;
     if (typeof api.getProducts !== 'function') return;
     let cancelled = false;
     api
-      .getProducts({ category: 'FOOD', size: 6, sortBy: 'sortOrder' })
+      .getProducts({ size: 6, sortBy: 'sortOrder' })
       .then((page) => {
         const items = page?.content ?? [];
-        if (cancelled || items.length < 3) return;
-        const mapped: DishPhoto[] = items.slice(0, 6).map((item, index) => ({
-          hue: HUES[index % HUES.length] ?? 0,
-          caption: item.name,
-          src: item.imagePath,
-        }));
-        setTop(mapped.slice(0, 3));
-        setBottom(mapped.slice(3, 6).length > 0 ? mapped.slice(3, 6) : foodContent.photosBottom);
+        if (cancelled || items.length === 0) return;
+        setPhotos(
+          items.slice(0, 6).map((item, index) => ({
+            hue: HUES[index % HUES.length] ?? 0,
+            caption: item.name,
+            src: item.imagePath,
+          }))
+        );
       })
       .catch(() => {
-        // Giữ nội dung tĩnh nếu API không sẵn sàng.
+        // Không có món gắn với điểm đến thì ẩn cả mục.
       });
     return () => {
       cancelled = true;
     };
   }, []);
+
+  // Chỉ hiển thị khi có món thật sự gắn với một điểm đến.
+  if (photos.length === 0) return null;
+
+  const top = photos.slice(0, 3);
+  const bottom = photos.slice(3, 6);
 
   return (
     <section className="s food" id="am-thuc">
@@ -49,11 +55,11 @@ export const FoodSection: React.FC = () => {
         ))}
       </div>
       <div className="m">
-        <h2>{foodContent.title}</h2>
-        <p>{foodContent.paragraph}</p>
+        <h2>{t.foodTitle}</h2>
+        <p>{t.foodParagraph}</p>
         <div style={{ marginTop: 20 }}>
-          <Link to="/am-thuc-thuc-uong" className="tb" style={{ textDecoration: 'none' }}>
-            Khám phá Ẩm thực & Thức uống
+          <Link to="/am-thuc" className="tb" style={{ textDecoration: 'none' }}>
+            {t.foodCta}
           </Link>
         </div>
       </div>

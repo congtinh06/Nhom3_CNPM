@@ -18,6 +18,8 @@ public class ProductFilterRequest {
     private String keyword;
     private Long categoryId;
     private ProductCategory category;
+    // Lọc sản phẩm theo slug điểm du lịch (chỉ áp dụng cho danh sách công khai).
+    private String poiSlug;
     private BigDecimal minPrice;
     private BigDecimal maxPrice;
     private Double rating;

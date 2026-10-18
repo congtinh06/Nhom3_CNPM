@@ -1,0 +1,166 @@
+.souvenir-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 8px;
+  padding: 120px 20px 32px;
+  background: var(--fb-off-white, #faf6f0);
+  border-bottom: 1px solid var(--fb-border-light, #ece3d8);
+}
+
+.souvenir-hero-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: #fff;
+  color: var(--fb-orange-brown, #a15c2b);
+  box-shadow: var(--fb-shadow-subtle, 0 2px 10px rgba(0, 0, 0, 0.06));
+}
+
+.souvenir-hero-title {
+  margin: 6px 0 0;
+  font-family: var(--font-display, 'Anton', sans-serif);
+  font-size: 34px;
+  letter-spacing: 0.5px;
+  color: var(--fb-deep-brown, #3b2a1f);
+}
+
+.souvenir-hero-subtitle {
+  margin: 0;
+  max-width: 620px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--fb-text-muted, #7d6f64);
+}
+
+.souvenir-spot-filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 4px 0 24px;
+}
+
+.souvenir-spot-chip {
+  border: 1px solid var(--fb-border, #e3d7c9);
+  background: #fff;
+  color: var(--fb-deep-brown, #3b2a1f);
+  border-radius: 999px;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--fb-transition, all 0.2s ease);
+}
+
+.souvenir-spot-chip:hover {
+  border-color: var(--fb-orange-brown, #a15c2b);
+}
+
+.souvenir-spot-chip.is-active {
+  background: var(--fb-orange-brown, #a15c2b);
+  border-color: var(--fb-orange-brown, #a15c2b);
+  color: #fff;
+}
+
+.souvenir-status {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 220px;
+  padding: 40px 20px;
+  text-align: center;
+  color: var(--fb-text-muted, #7d6f64);
+}
+
+.souvenir-empty-title {
+  margin: 0;
+  font-family: var(--font-display, 'Anton', sans-serif);
+  font-size: 18px;
+  color: var(--fb-deep-brown, #3b2a1f);
+}
+
+.souvenir-empty-hint {
+  margin: 0;
+  font-size: 13px;
+}
+
+@media (max-width: 720px) {
+  .souvenir-hero {
+    padding-top: 100px;
+  }
+
+  .souvenir-hero-title {
+    font-size: 26px;
+  }
+}
+
+.souvenir-strip {
+  width: 100%;
+  padding: 28px 24px;
+  background: #fff;
+  border: 1px solid var(--fb-border, #e3d7c9);
+  border-radius: var(--fb-radius-lg, 16px);
+  box-sizing: border-box;
+}
+
+.souvenir-strip-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.souvenir-strip-title {
+  margin: 0;
+  font-family: var(--font-display, 'Anton', sans-serif);
+  font-size: 20px;
+  color: var(--fb-deep-brown, #3b2a1f);
+}
+
+.souvenir-strip-link {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--fb-orange-brown, #a15c2b);
+  text-decoration: none;
+}
+
+/* Tab switcher cho trang "Ẩm thực" (Món ngon quanh điểm | Quà lưu niệm) */
+.shop-tabs {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 24px 20px 0;
+  background: var(--fb-off-white, #faf6f0);
+}
+
+.shop-tab {
+  border: 1px solid var(--fb-border, #e3d7c9);
+  background: #fff;
+  color: var(--fb-deep-brown, #3b2a1f);
+  border-radius: 999px;
+  padding: 10px 22px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--fb-transition, all 0.2s ease);
+}
+
+.shop-tab:hover {
+  border-color: var(--fb-orange-brown, #a15c2b);
+}
+
+.shop-tab.is-active {
+  background: var(--fb-orange-brown, #a15c2b);
+  border-color: var(--fb-orange-brown, #a15c2b);
+  color: #fff;
+}
+
+

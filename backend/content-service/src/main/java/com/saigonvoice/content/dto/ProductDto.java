@@ -24,6 +24,8 @@ public class ProductDto {
     private BigDecimal price;
     private String imagePath;
     private Long categoryId;
+    private Long poiId;
+    private String poiSlug;
     private BigDecimal rating;
     private Integer reviewsCount;
     private Boolean isActive;
@@ -41,6 +43,8 @@ public class ProductDto {
                 .name(product.getName())
                 .category(product.getCategory())
                 .categoryId(product.getCategoryEntity() != null ? product.getCategoryEntity().getId() : null)
+                .poiId(product.getPoi() != null ? product.getPoi().getId() : null)
+                .poiSlug(product.getPoi() != null ? product.getPoi().getSlug() : null)
                 .rating(product.getRating())
                 .reviewsCount(product.getReviewsCount())
                 .shortDescription(product.getShortDescription())

@@ -47,7 +47,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ category: 
   const [ice, setIce] = useState<'Ít' | 'Vừa' | 'Nhiều'>('Vừa');
   const [foodNote, setFoodNote] = useState<string>('Cay vừa');
 
-  const basePath = '/am-thuc-thuc-uong';
+  const basePath = '/am-thuc';
 
   const loadProductDetail = useCallback(async () => {
     if (!slug) return;
@@ -68,7 +68,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ category: 
         if (fallback) {
           setProduct(fallback);
         } else {
-          setError('Không tìm thấy món ăn hoặc món đã ngừng phục vụ.');
+          setError('Không tìm thấy sản phẩm hoặc sản phẩm đã ngừng bán.');
         }
       }
     } catch {
@@ -76,7 +76,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ category: 
       if (fallback) {
         setProduct(fallback);
       } else {
-        setError('Không tìm thấy món ăn hoặc không thể kết nối đến máy chủ.');
+        setError('Không tìm thấy sản phẩm hoặc không thể kết nối đến máy chủ.');
       }
     } finally {
       setLoading(false);
@@ -135,7 +135,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ category: 
       <div className="food-beverage-page-container" style={{ padding: '120px 20px', minHeight: '60vh' }}>
         <div style={{ textAlign: 'center', color: 'var(--fb-deep-brown)' }}>
           <RefreshCw size={32} className="spin-icon" style={{ margin: '0 auto 12px' }} />
-          <p>Đang tải thông tin món ăn...</p>
+          <p>Đang tải thông tin sản phẩm...</p>
         </div>
       </div>
     );
@@ -177,7 +177,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ category: 
           </Link>
           <ChevronRight size={13} />
           <Link to={basePath} style={{ color: 'var(--fb-orange-brown)', textDecoration: 'none', fontWeight: 600 }}>
-            Ẩm thực & Thức uống
+            Quà lưu niệm
           </Link>
           <ChevronRight size={13} />
           <span style={{ color: 'var(--fb-deep-brown)', fontWeight: 600 }} aria-current="page">

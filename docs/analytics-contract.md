@@ -65,7 +65,7 @@ Direct endpoint called by client applications (web/mobile) to record user intera
     "triggerType": "triggerType is required for SCAN and must be QR, GPS, or MANUAL",
     "languageCode": "languageCode must be one of: vi, en, ja, ko"
   }
-}
+}qua
 ```
 
 ### 1.4 Broker Failure Response (503 Service Unavailable)

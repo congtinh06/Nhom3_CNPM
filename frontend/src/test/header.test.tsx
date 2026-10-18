@@ -47,7 +47,7 @@ describe('Header Navigation Redesign', () => {
   });
 
   describe('Phần giữa: Cấu trúc điều hướng desktop', () => {
-    it('hiển thị đúng 5 mục: Trang chủ, Điểm du lịch, Ẩm thực, Tin tức, Liên hệ', async () => {
+    it('hiển thị đúng 5 mục: Trang chủ, Điểm du lịch, Quà lưu niệm, Tin tức, Liên hệ', async () => {
       renderHeader('/');
 
       const nav = await screen.findByRole('navigation', { name: 'Chính' });
@@ -65,8 +65,8 @@ describe('Header Navigation Redesign', () => {
       expect(attractionsLink).toHaveAttribute('title', 'Thuyết minh');
       expect(attractionsLink).toHaveAttribute('data-nav', 'thuyet-minh');
 
-      // Ẩm thực trỏ tới /am-thuc
-      const foodLink = screen.getByRole('link', { name: 'Ẩm thực' });
+      // Quà lưu niệm trỏ tới /am-thuc
+      const foodLink = screen.getByRole('link', { name: 'Quà lưu niệm' });
       expect(foodLink).toBeInTheDocument();
       expect(foodLink).toHaveAttribute('href', '/am-thuc');
 
@@ -80,14 +80,14 @@ describe('Header Navigation Redesign', () => {
       expect(contactLink).toBeInTheDocument();
       expect(contactLink).toHaveAttribute('href', '/lien-he');
 
-      // Danh sách thứ tự chính xác: Trang chủ, Điểm du lịch, Ẩm thực, Tin tức, Liên hệ
+      // Danh sách thứ tự chính xác: Trang chủ, Điểm du lịch, Quà lưu niệm, Tin tức, Liên hệ
       const directLinks = Array.from(nav.children)
         .filter((el) => el.tagName === 'A')
         .map((el) => el.textContent?.trim());
       expect(directLinks).toEqual([
         'Trang chủ',
         'Điểm du lịch',
-        'Ẩm thực',
+        'Quà lưu niệm',
         'Tin tức',
         'Liên hệ',
       ]);
@@ -101,7 +101,7 @@ describe('Header Navigation Redesign', () => {
     it('gạch chân màu nhấn và aria-current cho mục active tương ứng với trang hiện tại', async () => {
       renderHeader('/am-thuc');
 
-      const foodLink = await screen.findByRole('link', { name: 'Ẩm thực' });
+      const foodLink = await screen.findByRole('link', { name: 'Quà lưu niệm' });
       expect(foodLink).toHaveClass('active');
       expect(foodLink).toHaveAttribute('aria-current', 'page');
     });

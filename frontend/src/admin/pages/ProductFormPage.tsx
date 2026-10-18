@@ -8,6 +8,8 @@ import { FormField } from '../components/FormField';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { FormSection } from '../components/FormSection';
 import { AdminAlert } from '../components/AdminAlert';
+import { api } from '../../api/client';
+import { SOUVENIR_SPOTS } from '../../content/souvenirSpots';
 
 interface FormValues {
   name: string;
@@ -19,6 +21,7 @@ interface FormValues {
   sortOrder: string;
   isActive: boolean;
   imagePath: string;
+  poiId: string;
 }
 
 const DEFAULT_VALUES: FormValues = {
@@ -31,6 +34,7 @@ const DEFAULT_VALUES: FormValues = {
   sortOrder: '0',
   isActive: true,
   imagePath: '',
+  poiId: '',
 };
 
 const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
@@ -80,6 +84,7 @@ export const ProductFormPage: React.FC = () => {
         sortOrder: String(product.sortOrder ?? 0),
         isActive: product.isActive ?? true,
         imagePath: product.imagePath || '',
+        poiId: product.poiId != null ? String(product.poiId) : '',
       };
       setInitialValues(loaded);
       setFormValues(loaded);
@@ -99,6 +104,32 @@ export const ProductFormPage: React.FC = () => {
       fetchProduct();
     }
   }, [isEditMode, fetchProduct]);
+
+  // Điểm du lịch gắn với quà lưu niệm: chỉ hiển thị 7 điểm trong danh mục.
+  const [spotOptions, setSpotOptions] = useState<{ id: number; label: string }[]>([]);
+
+  useEffect(() => {
+    if (import.meta.env.MODE === 'test') return;
+    if (typeof api.getPois !== 'function') return;
+    let cancelled = false;
+    const knownSlugs = new Set(SOUVENIR_SPOTS.map((spot) => spot.slug));
+    api
+      .getPois()
+      .then((pois) => {
+        if (cancelled) return;
+        setSpotOptions(
+          pois
+            .filter((poi) => poi.slug && knownSlugs.has(poi.slug))
+            .map((poi) => ({ id: poi.id, label: poi.name }))
+        );
+      })
+      .catch(() => {
+        // Không tải được danh sách điểm thì để trống, người dùng vẫn có thể nhập sau.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   // Check dirty state
   const isDirty = JSON.stringify(formValues) !== JSON.stringify(initialValues) || Boolean(selectedFile);
@@ -258,6 +289,7 @@ export const ProductFormPage: React.FC = () => {
           sortOrder,
           isActive: formValues.isActive,
           imagePath: formValues.imagePath.trim() || undefined,
+          poiId: formValues.poiId ? Number(formValues.poiId) : undefined,
         };
 
         const updated = await productApi.updateProduct(effectiveProductId, updatePayload);
@@ -287,6 +319,7 @@ export const ProductFormPage: React.FC = () => {
           sortOrder,
           isActive: formValues.isActive,
           imagePath: formValues.imagePath.trim() || undefined,
+          poiId: formValues.poiId ? Number(formValues.poiId) : undefined,
         };
 
         const created = await productApi.createProduct(createPayload);
@@ -412,6 +445,7 @@ export const ProductFormPage: React.FC = () => {
                     >
                       <option value="FOOD">Món ăn (FOOD)</option>
                       <option value="DRINK">Đồ uống (DRINK)</option>
+                      <option value="SOUVENIR">Quà lưu niệm (SOUVENIR)</option>
                     </select>
                   </FormField>
                 </div>
@@ -440,6 +474,27 @@ export const ProductFormPage: React.FC = () => {
                   </FormField>
                 </div>
               </div>
+
+              <FormField
+                label="Điểm du lịch (quà lưu niệm)"
+                htmlFor="poiId"
+                helperText="Gắn sản phẩm với một trong bảy điểm du lịch. Để trống nếu không phải quà lưu niệm."
+              >
+                <select
+                  id="poiId"
+                  name="poiId"
+                  className="adm-select"
+                  value={formValues.poiId}
+                  onChange={handleInputChange}
+                >
+                  <option value="">Không gắn điểm</option>
+                  {spotOptions.map((spot) => (
+                    <option key={spot.id} value={String(spot.id)}>
+                      {spot.label}
+                    </option>
+                  ))}
+                </select>
+              </FormField>
 
               <FormField
                 label="Đường dẫn định danh (Slug)"

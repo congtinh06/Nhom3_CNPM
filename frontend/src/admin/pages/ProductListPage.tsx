@@ -282,7 +282,11 @@ export const ProductListPage: React.FC = () => {
       width: '120px',
       render: (product) => (
         <StatusBadge variant="neutral">
-          {product.category === 'FOOD' ? 'Món ăn' : 'Đồ uống'}
+          {product.category === 'FOOD'
+            ? 'Món ăn'
+            : product.category === 'DRINK'
+            ? 'Đồ uống'
+            : 'Quà lưu niệm'}
         </StatusBadge>
       ),
     },
@@ -459,6 +463,7 @@ export const ProductListPage: React.FC = () => {
           <option value="">Tất cả danh mục</option>
           <option value="FOOD">Món ăn (FOOD)</option>
           <option value="DRINK">Đồ uống (DRINK)</option>
+          <option value="SOUVENIR">Quà lưu niệm (SOUVENIR)</option>
         </select>
 
         <select

@@ -1,13 +1,22 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Minus, Plus, X } from 'lucide-react';
 import { useCart } from '../../context/CartContext';
 import { useNavbarLanguage } from '../../content/languages';
+import { getSpotName } from '../../content/souvenirSpots';
+import { CartItem } from '../../types';
 import { formatPrice as formatPriceUtil } from '../../utils/formatters';
 import '../../styles/cart-drawer.css';
 
 export const formatPrice = (n: number): string => {
   return formatPriceUtil(n);
+};
+
+const OTHER_GROUP_LABEL: Record<string, string> = {
+  vi: 'Khác',
+  en: 'Other',
+  ja: 'その他',
+  ko: '기타',
 };
 
 export const CartDialog: React.FC = () => {
@@ -23,9 +32,32 @@ export const CartDialog: React.FC = () => {
   } = useCart();
 
   const navigate = useNavigate();
-  const { t } = useNavbarLanguage();
+  const { t, lang } = useNavbarLanguage();
   const dialogRef = useRef<HTMLDialogElement>(null);
   const previouslyFocusedElement = useRef<HTMLElement | null>(null);
+
+  const otherLabel = OTHER_GROUP_LABEL[lang] || OTHER_GROUP_LABEL.vi;
+
+  // Gom nhóm sản phẩm trong giỏ theo điểm du lịch (sản phẩm cũ không có điểm nằm ở nhóm riêng).
+  const groups = useMemo(() => {
+    const order: string[] = [];
+    const map = new Map<string, CartItem[]>();
+    cartItems.forEach((item) => {
+      const key = item.poiSlug || '__other__';
+      if (!map.has(key)) {
+        map.set(key, []);
+        order.push(key);
+      }
+      map.get(key)!.push(item);
+    });
+    return order.map((key) => ({
+      key,
+      label: key === '__other__' ? null : getSpotName(key, lang),
+      items: map.get(key)!,
+    }));
+  }, [cartItems, lang]);
+
+  const showGroupHeadings = groups.length > 1;
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -110,7 +142,7 @@ export const CartDialog: React.FC = () => {
 
   const handleBrowseFood = () => {
     closeCart();
-    navigate('/am-thuc-thuc-uong');
+    navigate('/am-thuc');
   };
 
   return (
@@ -151,7 +183,7 @@ export const CartDialog: React.FC = () => {
           <div className="cd-empty-state">
             <p className="cd-empty-title">{t.shop.cartEmpty}</p>
             <p className="cd-empty-subtitle">
-              Khám phá thực đơn đặc sản Sài Gòn và chọn món bạn yêu thích.
+              Khám phá quà lưu niệm đặc sản Sài Gòn và chọn món bạn yêu thích.
             </p>
             <button
               type="button"
@@ -163,7 +195,12 @@ export const CartDialog: React.FC = () => {
           </div>
         ) : (
           <div className="cd-items-list">
-            {cartItems.map((item) => (
+            {groups.map((group) => (
+              <div key={group.key} className="cd-group">
+                {showGroupHeadings && (
+                  <div className="cd-group-title">{group.label ?? otherLabel}</div>
+                )}
+                {group.items.map((item) => (
               <div key={item.id} className="cd-item-row">
                 {/* Thumbnail 72x72 */}
                 <div className="cd-thumb-wrap">
@@ -233,6 +270,8 @@ export const CartDialog: React.FC = () => {
                     </button>
                   </div>
                 </div>
+              </div>
+                ))}
               </div>
             ))}
           </div>

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { renderHook, act } from '@testing-library/react';
+import { renderHook, act, waitFor } from '@testing-library/react';
 import React from 'react';
 import { CartProvider, useCart } from '../context/CartContext';
 
@@ -119,6 +119,24 @@ describe('CartContext', () => {
     expect(result.current.totalCount).toBe(3);
     expect(result.current.totalAmount).toBe(105000);
     expect(result.current.cartItems[0]?.name).toBe('Bánh mì đặc biệt');
+  });
+
+  it('dọn khóa giỏ hàng mồ côi (sản phẩm không còn phân giải được) và không tính vào totalCount', async () => {
+    // 987654 không có meta, không phải đồ uống, không thuộc catalog tĩnh => mồ côi.
+    localStorage.setItem('cart', JSON.stringify({ 987654: 4, 0: 2 }));
+
+    const { result } = renderHook(() => useCart(), { wrapper });
+
+    await waitFor(() => {
+      expect(result.current.totalCount).toBe(2);
+    });
+
+    expect(result.current.cartItems).toHaveLength(1);
+    expect(result.current.cartItems[0]?.id).toBe(0);
+
+    const stored = JSON.parse(localStorage.getItem('cart') || '{}');
+    expect(stored).not.toHaveProperty('987654');
+    expect(stored).toHaveProperty('0');
   });
 });
 

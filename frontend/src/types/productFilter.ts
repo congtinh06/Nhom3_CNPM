@@ -1,4 +1,4 @@
-export type ProductTypeFilter = 'all' | 'FOOD' | 'DRINK';
+export type ProductTypeFilter = 'all' | 'FOOD' | 'DRINK' | 'SOUVENIR';
 
 export type CategoryFilterKey =
   | 'all'
@@ -19,12 +19,16 @@ export type PriceRangeFilter =
 
 export type RatingFilter = 'all' | '5' | '4' | '3';
 
+// Điểm du lịch gắn với sản phẩm: 'all' hoặc slug của một trong 7 điểm.
+export type SpotFilterKey = 'all' | (string & {});
+
 export type SortOptionKey = 'popular' | 'newest' | 'price-asc' | 'price-desc' | 'rating-desc';
 
 export interface ProductFilterState {
   keyword: string;
   productType: ProductTypeFilter;
   category: CategoryFilterKey;
+  spot: SpotFilterKey;
   priceRange: PriceRangeFilter;
   rating: RatingFilter;
   sortBy: SortOptionKey;
