@@ -93,7 +93,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       await authApi.logout();
     } catch {
-      // Cookie có thể đã bị xóa sẵn — vẫn đăng xuất phía client.
+      // Cookie có thể đã bị xóa sẵn - vẫn đăng xuất phía client.
     }
     tokenStore.clear();
     setUser(null);

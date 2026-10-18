@@ -281,9 +281,9 @@ export const ProductListPage: React.FC = () => {
       title: 'Danh mục',
       width: '120px',
       render: (product) => (
-        <span className="adm-category-tag">
+        <StatusBadge variant="neutral">
           {product.category === 'FOOD' ? 'Món ăn' : 'Đồ uống'}
-        </span>
+        </StatusBadge>
       ),
     },
     {
@@ -346,7 +346,7 @@ export const ProductListPage: React.FC = () => {
       title: 'Cập nhật',
       width: '140px',
       render: (product) => {
-        if (!product.updatedAt && !product.createdAt) return '—';
+        if (!product.updatedAt && !product.createdAt) return '-';
         const dateStr = product.updatedAt || product.createdAt || '';
         try {
           const d = new Date(dateStr);
@@ -356,7 +356,7 @@ export const ProductListPage: React.FC = () => {
             </span>
           );
         } catch {
-          return '—';
+          return '-';
         }
       },
     },
@@ -443,7 +443,7 @@ export const ProductListPage: React.FC = () => {
           <input
             type="search"
             className="adm-input adm-search-input"
-            placeholder="Tìm theo tên sản phẩm..."
+            placeholder="Tìm theo tên sản phẩm"
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             aria-label="Tìm kiếm sản phẩm"

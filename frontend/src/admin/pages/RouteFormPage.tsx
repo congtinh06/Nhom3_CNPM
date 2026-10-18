@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { ChevronLeft, ChevronUp, ChevronDown } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { routeApi } from '../api/routeApi';
 import { zoneApi } from '../api/zoneApi';
@@ -367,7 +368,7 @@ export const RouteFormPage: React.FC = () => {
             className="adm-back-link"
             onClick={() => handleNavigateBack('/quan-tri/lo-trinh')}
           >
-            &larr; Quay lại danh sách tuyến
+            <ChevronLeft /> Quay lại danh sách tuyến
           </button>
           <h1 className="adm-page-title">
             {isEditMode ? 'Chỉnh sửa tuyến tham quan' : 'Thêm tuyến tham quan mới'}
@@ -499,7 +500,7 @@ export const RouteFormPage: React.FC = () => {
                   rows={3}
                   value={formValues.description}
                   onChange={handleInputChange}
-                  placeholder="Mô tả ngắn về tuyến tham quan..."
+                  placeholder="Mô tả ngắn về tuyến tham quan"
                 />
               </FormField>
 
@@ -568,7 +569,7 @@ export const RouteFormPage: React.FC = () => {
                               disabled={index === 0 || stopsSaving}
                               aria-label={`Di chuyển ${stop.name} lên trên`}
                             >
-                              &uarr;
+                              <ChevronUp />
                             </button>
                             <button
                               type="button"
@@ -577,7 +578,7 @@ export const RouteFormPage: React.FC = () => {
                               disabled={index === stops.length - 1 || stopsSaving}
                               aria-label={`Di chuyển ${stop.name} xuống dưới`}
                             >
-                              &darr;
+                              <ChevronDown />
                             </button>
                             <button
                               type="button"

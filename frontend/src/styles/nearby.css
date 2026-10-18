@@ -1026,8 +1026,8 @@ html:lang(ja) .nearby-sv-root,
 }
 
 /* Hạng mục 5: exactly ONE info card per selected POI.
-   Desktop → marker popup only (bottom card hidden).
-   Mobile  → single bottom-sheet card (popup hidden). */
+   Desktop -> marker popup only (bottom card hidden).
+   Mobile  -> single bottom-sheet card (popup hidden). */
 @media (min-width: 900px) {
   .nearby-sv-root .nearby-selected-card {
     display: none;
@@ -1582,7 +1582,7 @@ html:lang(ja) .nearby-sv-root,
 }
 
 /* ==========================================================================
-   3C.1 Reading detail layout — two columns on desktop, single column on mobile.
+   3C.1 Reading detail layout - two columns on desktop, single column on mobile.
    Left = POI image (4:3, sticky); right = name, category, listen bar, text.
    No float: the image never wraps or overlaps the text.
    ========================================================================== */
@@ -2937,7 +2937,7 @@ body:has(.nearby-sv-root:has(.nearby-sticky-player-bar)) #up {
   margin: 4px 0 18px;
 }
 
-/* Hạng mục 3: QR is a secondary action — laid out horizontally and aligned
+/* Hạng mục 3: QR is a secondary action - laid out horizontally and aligned
    with the text column, never centred or competing with the listen button. */
 .place-qr-detail-card {
   display: grid;
@@ -3157,7 +3157,7 @@ body:has(.nearby-sv-root:has(.nearby-sticky-player-bar)) #up {
 }
 
 /* ==========================================================================
-   Typography corrections (Hạng mục 2) — Nearby-scoped only
+   Typography corrections (Hạng mục 2) - Nearby-scoped only
    The full-bleed page hero (PageHero) drops its negative letter-spacing and
    tight line-height so Vietnamese uppercase diacritics never touch the line
    above. Uses the same display family as the rest of the page.

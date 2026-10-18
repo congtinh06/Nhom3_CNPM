@@ -21,6 +21,10 @@ vi.mock('../admin/components/PoiAudioStatusPanel', () => ({
   PoiAudioStatusPanel: () => null,
 }));
 
+vi.mock('qrcode.react', () => ({
+  QRCodeCanvas: () => null,
+}));
+
 const mockRoutes = [{ id: 7, zoneId: 1, name: 'Tuyến trung tâm' }];
 
 const mockDetail: AdminPoiDetail = {
@@ -43,6 +47,15 @@ const mockDetail: AdminPoiDetail = {
   version: 4,
   publishStatus: 'PUBLISHED',
   publishAttempts: 0,
+  overallStatus: 'NEEDS_ATTENTION',
+  attentionReasons: ['Đang bảo trì'],
+  languageSummary: { total: 4, ready: 1, pending: 2, failed: 1 },
+  languages: [
+    { languageCode: 'vi', languageName: 'Tiếng Việt', audioStatus: 'READY' },
+    { languageCode: 'en', languageName: 'Tiếng Anh', audioStatus: 'PENDING' },
+    { languageCode: 'ja', languageName: 'Tiếng Nhật', audioStatus: 'FAILED_TTS' },
+    { languageCode: 'ko', languageName: 'Tiếng Hàn', audioStatus: 'FAILED_TTS' },
+  ],
   translations: {
     vi: {
       languageCode: 'vi',
@@ -243,6 +256,29 @@ describe('PoiFormPage', () => {
       expect(screen.getByLabelText(/tóm tắt/i)).toHaveValue('Tóm tắt gốc');
       expect(screen.getByLabelText(/danh mục/i)).toHaveValue('2');
     });
+  });
+
+  it('hiển thị trạng thái tổng, lý do cần chú ý và tóm tắt ngôn ngữ ở chế độ chỉnh sửa', async () => {
+    vi.mocked(poiApi.getAdminPoiDetail).mockResolvedValue(mockDetail);
+    renderEdit('10');
+    await awaitEditLoaded();
+
+    expect(await screen.findByText('Cần chú ý')).toBeInTheDocument();
+    expect(screen.getByText('Đang bảo trì')).toBeInTheDocument();
+    expect(screen.getByText('1/4 sẵn sàng')).toBeInTheDocument();
+  });
+
+  it('chuyển tab hiển thị bản dịch ngôn ngữ khác và mã QR', async () => {
+    vi.mocked(poiApi.getAdminPoiDetail).mockResolvedValue(mockDetail);
+    renderEdit('10');
+    await awaitEditLoaded();
+
+    fireEvent.click(screen.getByRole('tab', { name: /nội dung đa ngôn ngữ/i }));
+    expect(await screen.findByText('Bản dịch ngôn ngữ khác')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('tab', { name: /phát hành & qr/i }));
+    expect(await screen.findByText('Mã QR của điểm')).toBeInTheDocument();
+    expect(screen.getByText('qr-ben-thanh')).toBeInTheDocument();
   });
 
   it('cho phép chỉnh sửa tuyến và thứ tự điểm dừng rồi gửi kèm version', async () => {

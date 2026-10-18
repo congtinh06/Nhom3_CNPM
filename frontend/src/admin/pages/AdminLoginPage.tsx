@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import { normalizeAdminError } from '../api/adminClient';
 import { FormField } from '../components/FormField';
 import { BRAND_NAME, BRAND_TAGLINE } from '../brand/brand';
+import { ChevronLeft } from 'lucide-react';
 
 export const AdminLoginPage: React.FC = () => {
   const navigate = useNavigate();
@@ -29,7 +30,7 @@ export const AdminLoginPage: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    document.title = `Đăng nhập · Quản trị ${BRAND_NAME}`;
+    document.title = `Đăng nhập - Quản trị ${BRAND_NAME}`;
   }, []);
 
   const handleSubmit = async (e: FormEvent) => {
@@ -104,7 +105,6 @@ export const AdminLoginPage: React.FC = () => {
               className="adm-input"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
               disabled={submitting}
               required
             />
@@ -121,7 +121,7 @@ export const AdminLoginPage: React.FC = () => {
 
         <div className="adm-login-foot">
           <Link to="/" className="adm-login-back-link">
-            &larr; Quay lại trang chủ du khách
+            <ChevronLeft /> Quay lại trang chủ du khách
           </Link>
         </div>
       </div>

@@ -150,7 +150,7 @@ export const LANG_DISPLAY_NAMES: Record<SupportedLanguage, Record<SupportedLangu
 
 export const NEARBY_DICTIONARY: Record<SupportedLanguage, Record<NearbyKey, string>> = {
   vi: {
-    heroEyebrow: 'TUYẾN THUYẾT MINH · 7 ĐIỂM',
+    heroEyebrow: 'TUYẾN THUYẾT MINH, 7 ĐIỂM',
     pageTitle: 'Điểm du lịch Sài Gòn',
     pageSubtitle:
       '7 điểm có thuyết minh. Bấm Phát ở bất kỳ điểm nào để phát ngay, hoặc bật thuyết minh tự động để trang tự phát khi bạn đi tới gần.',
@@ -287,7 +287,7 @@ export const NEARBY_DICTIONARY: Record<SupportedLanguage, Record<NearbyKey, stri
     gpsLocatedToast: 'Đã xác định vị trí. Điểm gần nhất: {name}, cách {dist}.',
   },
   en: {
-    heroEyebrow: 'AUDIO TOUR · 7 LANDMARKS',
+    heroEyebrow: 'AUDIO TOUR, 7 LANDMARKS',
     pageTitle: 'Saigon Attractions',
     pageSubtitle:
       '7 historic landmarks with audio guide. Click Play on any spot to listen immediately, or enable auto narration so the guide plays as you walk near.',
@@ -425,7 +425,7 @@ export const NEARBY_DICTIONARY: Record<SupportedLanguage, Record<NearbyKey, stri
   },
   /* DRAFT: needs native review */
   ko: {
-    heroEyebrow: '오디오 가이드 · 7대 명소',
+    heroEyebrow: '오디오 가이드, 7대 명소',
     pageTitle: '사이공 관광 명소',
     pageSubtitle:
       '오디오 해설이 제공되는 7개 명소. 원하는 곳에서 재생 버튼을 눌러 바로 청취하거나, 자동 해설을 켜서 근처에 도착하면 자동으로 청취할 수 있습니다.',
@@ -562,7 +562,7 @@ export const NEARBY_DICTIONARY: Record<SupportedLanguage, Record<NearbyKey, stri
   },
   /* DRAFT: needs native review */
   ja: {
-    heroEyebrow: '音声ガイド · 7大名所',
+    heroEyebrow: '音声ガイド, 7大名所',
     pageTitle: 'サイゴン観光スポット',
     pageSubtitle:
       '音声ガイド付きの7か所の名所。再生ボタンを押してすぐ聴くか、自動ガイドをオンにして近づいた際に自動再生できます。',

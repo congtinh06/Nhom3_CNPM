@@ -271,7 +271,7 @@ export function ContactSection({
               className={`checkout-select ${errors.province ? 'has-error' : ''}`}
             >
               <option value="">
-                {loadingProvinces ? 'Đang tải tỉnh thành...' : 'Chọn Tỉnh / Thành phố...'}
+                {loadingProvinces ? 'Đang tải tỉnh thành...' : 'Chọn Tỉnh / Thành phố'}
               </option>
               {provinces.map((prov) => (
                 <option key={prov.code} value={prov.code}>
@@ -298,7 +298,7 @@ export function ContactSection({
               <option value="">
                 {loadingDistricts
                   ? 'Đang tải quận huyện...'
-                  : 'Chọn Quận/Huyện...'}
+                  : 'Chọn Quận/Huyện'}
               </option>
               {districts.map((dist) => (
                 <option key={dist.code} value={dist.code}>
@@ -330,7 +330,7 @@ export function ContactSection({
                   ? 'Đang tải phường xã...'
                   : !formData.districtCode
                   ? 'Vui lòng chọn Quận/Huyện trước'
-                  : 'Chọn Phường/Xã...'}
+                  : 'Chọn Phường/Xã'}
               </option>
               {wards.map((w) => (
                 <option key={w.code} value={w.code}>
@@ -374,7 +374,7 @@ export function ContactSection({
             value={formData.note}
             onChange={(e) => onChange('note', e.target.value)}
             disabled={disabled}
-            placeholder="Ví dụ: ít đường, giao giờ hành chính..."
+            placeholder="Ví dụ: ít đường, giao giờ hành chính"
             className="checkout-textarea"
           />
         </div>

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
+import { ChevronUp } from 'lucide-react';
 
 export const BackToTop: React.FC = () => {
   const [visible, setVisible] = useState(false);
@@ -56,7 +57,7 @@ export const BackToTop: React.FC = () => {
       aria-label="Lên đầu trang"
       onClick={scrollToTop}
     >
-      ↑
+      <ChevronUp />
     </button>
   );
 };

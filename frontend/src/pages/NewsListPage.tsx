@@ -159,7 +159,6 @@ export const NewsListPage: React.FC = () => {
               Đang lọc theo: <strong>{activeCategoryLabel}</strong>
               {poiParam ? ` (#${poiParam})` : ''} ({sortedFilteredItems.length} bài viết)
             </span>
-            <span className="nl-filter-sep" aria-hidden="true">·</span>
             <button
               type="button"
               className="nl-filter-clear-btn"

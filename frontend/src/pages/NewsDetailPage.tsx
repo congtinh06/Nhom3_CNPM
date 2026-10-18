@@ -148,7 +148,7 @@ export const NewsDetailPage: React.FC = () => {
               <p className="nd-standfirst">{article.excerpt || article.summary}</p>
             )}
 
-            {/* 5. Meta line: Nguồn: X · dd/MM/yyyy · N phút đọc */}
+            {/* 5. Meta line: Nguồn: X , dd/MM/yyyy , N phút đọc */}
             <div className="nd-meta-row">
               <NewsMeta
                 source={article.source}
@@ -248,12 +248,9 @@ export const NewsDetailPage: React.FC = () => {
                               {sCatLabel}
                             </span>
                             {sDate && (
-                              <>
-                                <span className="nd-sidebar-sep" aria-hidden="true">·</span>
-                                <time className="nd-sidebar-date" dateTime={sItem.publishedAt}>
-                                  {sDate}
-                                </time>
-                              </>
+                              <time className="nd-sidebar-date" dateTime={sItem.publishedAt}>
+                                {sDate}
+                              </time>
                             )}
                           </div>
                         </Link>

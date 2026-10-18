@@ -51,7 +51,7 @@ describe('Component tests', () => {
       </BrowserRouter>
     );
 
-    expect(screen.getByPlaceholderText('Tìm địa điểm...')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('Tìm địa điểm')).toBeInTheDocument();
     expect(screen.getByText('Tất cả')).toBeInTheDocument();
     expect(screen.getByText('Lịch sử')).toBeInTheDocument();
     expect(screen.getByText('Yêu thích')).toBeInTheDocument();

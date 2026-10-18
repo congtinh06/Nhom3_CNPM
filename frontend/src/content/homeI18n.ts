@@ -141,7 +141,7 @@ export const HOME_DICTIONARY: Record<SupportedLanguage, Record<HomeKey, string>>
     feat1Title: 'Automatic GPS narration',
     feat1Desc: 'The story plays by itself as you get near a stop, with no button to press.',
     feat2Title: 'Scan the QR code on site',
-    feat2Desc: "No GPS needed — scan the code to open that stop's narration right away.",
+    feat2Desc: "No GPS needed, scan the code to open that stop\'s narration right away.",
     feat3Title: 'Four languages',
     feat3Desc: 'Vietnamese, English, Japanese and Korean for every stop.',
     feat4Title: 'Route map',

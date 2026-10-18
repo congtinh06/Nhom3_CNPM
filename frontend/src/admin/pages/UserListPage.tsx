@@ -13,11 +13,11 @@ import { AdminPagination } from '../components/AdminPagination';
 const PAGE_SIZE = 10;
 
 function formatDate(value?: string | null): string {
-  if (!value) return '—';
+  if (!value) return '-';
   try {
     return new Date(value).toLocaleDateString('vi-VN');
   } catch {
-    return '—';
+    return '-';
   }
 }
 
@@ -95,9 +95,9 @@ export const UserListPage: React.FC = () => {
       title: 'Vai trò',
       width: '140px',
       render: (user) => (
-        <span className={`adm-role-tag adm-role-tag-${user.role.toLowerCase()}`}>
+        <StatusBadge variant={user.role === 'ADMIN' ? 'neutral' : 'muted'}>
           {USER_ROLE_LABELS[user.role]}
-        </span>
+        </StatusBadge>
       ),
     },
     {
@@ -172,7 +172,7 @@ export const UserListPage: React.FC = () => {
           <input
             type="search"
             className="adm-input adm-search-input"
-            placeholder="Tìm theo tên hoặc email..."
+            placeholder="Tìm theo tên hoặc email"
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             aria-label="Tìm kiếm người dùng"

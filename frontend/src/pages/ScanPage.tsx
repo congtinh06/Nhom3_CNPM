@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Camera, Pause, Volume2 } from 'lucide-react';
+import { Camera, Pause, Volume2, ChevronLeft } from 'lucide-react';
 import { api } from '../api/client';
 import { normalizeApiError } from '../api/errors';
 import { useAudioPlayer } from '../hooks/useAudioPlayer';
@@ -189,7 +189,7 @@ export const ScanPage: React.FC = () => {
       <form onSubmit={handleSubmit} className="scan-form">
         <input
           type="text"
-          placeholder="Nhập mã QR (ví dụ: qr-dinh-doc-lap-01)..."
+          placeholder="Nhập mã QR (ví dụ: qr-dinh-doc-lap-01)"
           value={inputToken}
           onChange={(e) => setInputToken(e.target.value)}
           className="scan-input"
@@ -376,7 +376,7 @@ export const ScanPage: React.FC = () => {
       {!poiDetail && (
         <p className="scan-home">
           <button type="button" className="tb" onClick={() => navigate('/')}>
-            ← Về trang chủ
+            <ChevronLeft /> Về trang chủ
           </button>
         </p>
       )}

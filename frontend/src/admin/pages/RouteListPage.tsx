@@ -130,7 +130,7 @@ export const RouteListPage: React.FC = () => {
       width: '220px',
       render: (route) => (
         <div className="adm-route-zone-cell">
-          <span className="adm-category-tag">{route.zoneName}</span>
+          <StatusBadge variant="neutral">{route.zoneName}</StatusBadge>
           <span className="adm-product-slug">{route.zoneCode}</span>
         </div>
       ),
@@ -220,7 +220,7 @@ export const RouteListPage: React.FC = () => {
           <input
             type="search"
             className="adm-input adm-search-input"
-            placeholder="Tìm theo tên tuyến..."
+            placeholder="Tìm theo tên tuyến"
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             aria-label="Tìm kiếm tuyến"

@@ -61,6 +61,27 @@ describe('PoiAudioStatusPanel', () => {
     ).toBeInTheDocument();
   });
 
+  it('hiển thị lý do lỗi và thời điểm thử gần nhất của từng ngôn ngữ', () => {
+    renderPanel({
+      translations: {
+        vi: {
+          languageCode: 'vi',
+          title: 'Chợ Bến Thành',
+          summary: '',
+          description: '',
+          audioStatus: 'FAILED_TTS',
+          errorReason: 'Không kết nối được dịch vụ tổng hợp giọng đọc',
+          lastAttemptAt: '2026-10-15T03:49:00Z',
+        },
+      },
+    });
+
+    expect(
+      screen.getByText('Không kết nối được dịch vụ tổng hợp giọng đọc')
+    ).toBeInTheDocument();
+    expect(screen.getByText(/Thử gần nhất:/)).toBeInTheDocument();
+  });
+
   it('hủy hộp thoại thì không gọi phát hành lại', async () => {
     renderPanel();
 

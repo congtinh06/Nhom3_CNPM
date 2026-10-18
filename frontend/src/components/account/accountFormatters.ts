@@ -5,9 +5,9 @@ export function formatAccountDate(
   value: string | number | Date | null | undefined,
   lang: SupportedLanguage = 'vi'
 ): string {
-  if (!value) return '—';
+  if (!value) return '-';
   const date = value instanceof Date ? value : new Date(value);
-  if (Number.isNaN(date.getTime())) return '—';
+  if (Number.isNaN(date.getTime())) return '-';
 
   const locale = accountLocale(lang);
   const formatter = new Intl.DateTimeFormat(locale, {

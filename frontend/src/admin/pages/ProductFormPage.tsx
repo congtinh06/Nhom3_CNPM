@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { ChevronLeft } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { productApi } from '../api/productApi';
 import { normalizeAdminError } from '../api/adminClient';
@@ -341,7 +342,7 @@ export const ProductFormPage: React.FC = () => {
             className="adm-back-link"
             onClick={() => handleNavigateBack('/quan-tri/san-pham')}
           >
-            &larr; Quay lại danh sách sản phẩm
+            <ChevronLeft /> Quay lại danh sách sản phẩm
           </button>
           <h1 className="adm-page-title">
             {isEditMode ? 'Chỉnh sửa sản phẩm' : 'Thêm sản phẩm mới'}
@@ -383,7 +384,7 @@ export const ProductFormPage: React.FC = () => {
                   className="adm-input"
                   value={formValues.name}
                   onChange={handleInputChange}
-                  placeholder="Nhập tên món ăn hoặc đồ uống..."
+                  placeholder="Nhập tên món ăn hoặc đồ uống"
                   required
                   aria-invalid={Boolean(errors.name)}
                   aria-describedby={errors.name ? 'name-error' : 'name-helper'}
@@ -473,7 +474,7 @@ export const ProductFormPage: React.FC = () => {
                   rows={2}
                   value={formValues.shortDescription}
                   onChange={handleInputChange}
-                  placeholder="Mô tả ngắn gọn về hương vị, thành phần chính..."
+                  placeholder="Mô tả ngắn gọn về hương vị, thành phần chính"
                   maxLength={500}
                   aria-invalid={Boolean(errors.shortDescription)}
                   aria-describedby={
@@ -495,7 +496,7 @@ export const ProductFormPage: React.FC = () => {
                   rows={5}
                   value={formValues.description}
                   onChange={handleInputChange}
-                  placeholder="Giới thiệu đầy đủ chi tiết về món ăn..."
+                  placeholder="Giới thiệu đầy đủ chi tiết về món ăn"
                   aria-invalid={Boolean(errors.description)}
                   aria-describedby={errors.description ? 'description-error' : 'description-helper'}
                 />

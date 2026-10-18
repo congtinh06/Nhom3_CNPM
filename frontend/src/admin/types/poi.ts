@@ -2,6 +2,8 @@ export type PublishStatusValue = 'PENDING' | 'PUBLISHED' | 'FAILED';
 
 export type AudioStatusValue = 'PENDING' | 'PROCESSING' | 'READY' | 'FAILED_TTS';
 
+export type PoiOverallStatus = 'ACTIVE' | 'NEEDS_ATTENTION' | 'HIDDEN';
+
 export interface PoiSummary {
   id: number;
   code: string;
@@ -110,6 +112,24 @@ export interface AdminPoiTranslation {
   audioDurationSeconds?: number | null;
   audioStatus: AudioStatusValue | string;
   source?: string | null;
+  errorReason?: string | null;
+  lastAttemptAt?: string | null;
+}
+
+export interface AdminPoiLanguage {
+  languageCode: string;
+  languageName: string;
+  audioStatus: AudioStatusValue | string;
+  audioDurationSeconds?: number | null;
+  errorReason?: string | null;
+  lastAttemptAt?: string | null;
+}
+
+export interface AdminPoiLanguageSummary {
+  total: number;
+  ready: number;
+  pending: number;
+  failed: number;
 }
 
 export interface AdminPoiListItem {
@@ -126,6 +146,10 @@ export interface AdminPoiListItem {
   version: number;
   publishStatus: PublishStatusValue | string;
   audioStatusByLanguage: Record<string, string>;
+  overallStatus?: PoiOverallStatus | string;
+  attentionReasons?: string[];
+  languageSummary?: AdminPoiLanguageSummary;
+  languages?: AdminPoiLanguage[];
 }
 
 export interface AdminPoiDetail {
@@ -152,6 +176,10 @@ export interface AdminPoiDetail {
   publishStatus: PublishStatusValue | string;
   publishAttempts?: number | null;
   lastPublishAttemptAt?: string | null;
+  overallStatus?: PoiOverallStatus | string;
+  attentionReasons?: string[];
+  languageSummary?: AdminPoiLanguageSummary;
+  languages?: AdminPoiLanguage[];
   translations: Record<string, AdminPoiTranslation>;
 }
 

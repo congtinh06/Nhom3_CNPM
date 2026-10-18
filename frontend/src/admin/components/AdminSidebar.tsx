@@ -2,6 +2,7 @@ import React from 'react';
 import { NavLink, Link, useLocation } from 'react-router-dom';
 import { AdminLogo } from '../brand/AdminLogo';
 import { AdminNavIcon } from './AdminNavIcon';
+import { ChevronLeft } from 'lucide-react';
 import { ADMIN_NAV_SECTIONS } from '../config/nav';
 import type { AdminNavItem } from '../types';
 
@@ -94,7 +95,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({ isOpen, onClose }) =
         <div className="adm-sidebar-foot">
           <Link to="/" className="adm-exit-link" onClick={onClose}>
             <span className="adm-exit-icon" aria-hidden="true">
-              &larr;
+              <ChevronLeft />
             </span>
             <span>Về website du khách</span>
           </Link>

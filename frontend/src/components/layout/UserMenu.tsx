@@ -115,7 +115,7 @@ export const UserMenu: React.FC = () => {
     try {
       await logout();
     } catch {
-      // Cookie có thể đã bị xóa sẵn — vẫn đóng menu phía client.
+      // Cookie có thể đã bị xóa sẵn - vẫn đóng menu phía client.
     }
     setIsOpen(false);
   };

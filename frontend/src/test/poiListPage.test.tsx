@@ -38,7 +38,16 @@ const mockRows: AdminPoiListItem[] = [
     status: 'ACTIVE',
     version: 3,
     publishStatus: 'PUBLISHED',
-    audioStatusByLanguage: { vi: 'READY', en: 'PENDING' },
+    audioStatusByLanguage: { vi: 'PENDING', en: 'PENDING', ja: 'READY', ko: 'READY' },
+    overallStatus: 'ACTIVE',
+    attentionReasons: [],
+    languageSummary: { total: 4, ready: 2, pending: 2, failed: 0 },
+    languages: [
+      { languageCode: 'vi', languageName: 'Tiếng Việt', audioStatus: 'PENDING', audioDurationSeconds: 0, lastAttemptAt: '2026-10-14T08:00:00' },
+      { languageCode: 'en', languageName: 'Tiếng Anh', audioStatus: 'PENDING', audioDurationSeconds: 0, lastAttemptAt: '2026-10-14T08:00:00' },
+      { languageCode: 'ja', languageName: 'Tiếng Nhật', audioStatus: 'READY', audioDurationSeconds: 33, lastAttemptAt: '2026-10-14T08:00:00' },
+      { languageCode: 'ko', languageName: 'Tiếng Hàn', audioStatus: 'READY', audioDurationSeconds: 29, lastAttemptAt: '2026-10-14T08:00:00' },
+    ],
   },
   {
     id: 2,
@@ -52,7 +61,16 @@ const mockRows: AdminPoiListItem[] = [
     status: 'INACTIVE',
     version: 0,
     publishStatus: 'FAILED',
-    audioStatusByLanguage: { vi: 'FAILED_TTS' },
+    audioStatusByLanguage: { vi: 'FAILED_TTS', en: 'PENDING', ja: 'FAILED_TTS', ko: 'FAILED_TTS' },
+    overallStatus: 'HIDDEN',
+    attentionReasons: ['Tiếng Việt: lỗi tổng hợp giọng đọc'],
+    languageSummary: { total: 4, ready: 0, pending: 1, failed: 3 },
+    languages: [
+      { languageCode: 'vi', languageName: 'Tiếng Việt', audioStatus: 'FAILED_TTS', audioDurationSeconds: 0, errorReason: 'TTS timeout', lastAttemptAt: '2026-10-14T08:00:00' },
+      { languageCode: 'en', languageName: 'Tiếng Anh', audioStatus: 'PENDING', audioDurationSeconds: 0, lastAttemptAt: '2026-10-14T08:00:00' },
+      { languageCode: 'ja', languageName: 'Tiếng Nhật', audioStatus: 'FAILED_TTS', audioDurationSeconds: 0, errorReason: 'TTS timeout', lastAttemptAt: '2026-10-14T08:00:00' },
+      { languageCode: 'ko', languageName: 'Tiếng Hàn', audioStatus: 'FAILED_TTS', audioDurationSeconds: 0, errorReason: 'TTS timeout', lastAttemptAt: '2026-10-14T08:00:00' },
+    ],
   },
 ];
 
@@ -103,7 +121,7 @@ describe('PoiListPage', () => {
     });
   });
 
-  it('hiển thị danh sách điểm kèm khu vực, tuyến, trạng thái và audio theo ngôn ngữ', async () => {
+  it('hiển thị danh sách điểm kèm khu vực, tuyến, trạng thái và tóm tắt thuyết minh', async () => {
     renderComponent();
 
     expect(
@@ -113,18 +131,40 @@ describe('PoiListPage', () => {
     await waitFor(() => {
       expect(screen.getByText('Chợ Bến Thành')).toBeInTheDocument();
       expect(screen.getByText('Dinh Độc Lập')).toBeInTheDocument();
-      expect(screen.getByText('BEN_THANH · v3')).toBeInTheDocument();
     });
 
     const table = screen.getByRole('table');
-    expect(within(table).getByText('Tuyến trung tâm · #2')).toBeInTheDocument();
+    expect(within(table).getByText('Tuyến trung tâm')).toBeInTheDocument();
+    expect(within(table).getByText('Thứ tự 2')).toBeInTheDocument();
     expect(within(table).getByText('Đang hoạt động')).toBeInTheDocument();
+    expect(within(table).getByText('Đã ẩn')).toBeInTheDocument();
     expect(within(table).getByText('Đã phát')).toBeInTheDocument();
     expect(within(table).getByText('Thất bại')).toBeInTheDocument();
-    // audioStatus đọc trực tiếp từ dòng danh sách (không còn gộp 3 lần gọi publish-status)
-    expect(within(table).getByText('Sẵn sàng')).toBeInTheDocument();
-    expect(within(table).getByText('Lỗi tổng hợp')).toBeInTheDocument();
+    expect(within(table).getByText('2/4 sẵn sàng')).toBeInTheDocument();
+    expect(within(table).getByText('0/4 sẵn sàng')).toBeInTheDocument();
+    expect(within(table).getByText('3 lỗi')).toBeInTheDocument();
+    // Mã điểm và phiên bản không còn hiển thị trên bảng
+    expect(screen.queryByText('BEN_THANH')).not.toBeInTheDocument();
+    expect(screen.queryByText('v3')).not.toBeInTheDocument();
     expect(poiApi.getAdminPois).toHaveBeenCalledTimes(1);
+  });
+
+  it('mở popover chi tiết thuyết minh theo ngôn ngữ', async () => {
+    renderComponent();
+
+    await waitFor(() => {
+      expect(screen.getByText('Dinh Độc Lập')).toBeInTheDocument();
+    });
+
+    fireEvent.click(
+      screen.getByRole('button', { name: /trạng thái thuyết minh của dinh độc lập/i })
+    );
+
+    const dialog = await screen.findByRole('dialog');
+    expect(within(dialog).getByText('Tiếng Việt')).toBeInTheDocument();
+    expect(within(dialog).getByText('Tiếng Anh')).toBeInTheDocument();
+    expect(within(dialog).getAllByText('Lỗi tổng hợp')).toHaveLength(3);
+    expect(within(dialog).getAllByText('TTS timeout')).toHaveLength(3);
   });
 
   it('hiển thị ErrorState kèm nút Thử lại và tải lại thành công', async () => {

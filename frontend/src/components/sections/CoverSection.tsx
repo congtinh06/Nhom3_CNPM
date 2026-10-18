@@ -111,7 +111,7 @@ export const CoverSection: React.FC = () => {
               </span>
             ))}
           </h1>
-          <p className="hero-date">TP. Hồ Chí Minh · 10/2026</p>
+          <p className="hero-date">TP. Hồ Chí Minh, 10/2026</p>
         </div>
       </div>
     </section>

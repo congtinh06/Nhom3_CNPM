@@ -1,5 +1,5 @@
 /* =========================================================
-   Home additions — new sections, styled to match the
+   Home additions - new sections, styled to match the
    original Echora design language (Anton headings, brown/cream,
    white / black bands). Plus a few gentle refinements.
    ========================================================= */
@@ -85,7 +85,7 @@
 }
 
 /* =========================================================
-   FAQ  (warm cream band, always readable — no dark-mode var)
+   FAQ  (warm cream band, always readable - no dark-mode var)
    ========================================================= */
 .faq {
   background: #f7f0df;
@@ -264,7 +264,7 @@
 }
 
 /* =========================================================
-   Tin tức — dùng đúng bộ chữ của Trang chủ
+   Tin tức - dùng đúng bộ chữ của Trang chủ
    (Montserrat cho nội dung, Anton cho tiêu đề mục)
    ========================================================= */
 .home-news-section {
@@ -282,7 +282,7 @@
 }
 
 /* =========================================================
-   Du lịch Sài Gòn — thẻ có thể bấm & hiệu ứng hover
+   Du lịch Sài Gòn - thẻ có thể bấm & hiệu ứng hover
    ========================================================= */
 .pl-card {
   position: relative;

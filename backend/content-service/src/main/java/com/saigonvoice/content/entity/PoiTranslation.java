@@ -53,6 +53,14 @@ public class PoiTranslation {
     @Column(name = "content_hash", length = 64)
     private String contentHash;
 
+    // Lý do lỗi dịch/TTS gần nhất (nếu có), chỉ mang tính thông tin cho trang quản trị.
+    @Column(name = "audio_error_reason", length = 500)
+    private String audioErrorReason;
+
+    // Thời điểm thử tổng hợp audio gần nhất (READY hoặc FAILED); dùng để phát hiện chờ xử lý quá lâu.
+    @Column(name = "audio_last_attempt_at")
+    private LocalDateTime audioLastAttemptAt;
+
     // AUTO = dịch máy; MANUAL = văn bản do người viết (không bị dịch đè).
     @Column(name = "translation_source", nullable = false, length = 20)
     @Builder.Default

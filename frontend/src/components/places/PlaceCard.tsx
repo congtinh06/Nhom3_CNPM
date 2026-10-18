@@ -27,7 +27,7 @@ export const PlaceCard: React.FC<PlaceCardProps> = ({
   onToggleFavorite,
 }) => {
   const paddedIndex = String(index + 1).padStart(2, '0');
-  const tagText = `${paddedIndex} · ${categoryLabel.toUpperCase()}`;
+  const tagText = `${paddedIndex}, ${categoryLabel.toUpperCase()}`;
 
   return (
     <article

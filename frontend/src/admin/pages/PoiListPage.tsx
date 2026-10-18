@@ -5,24 +5,19 @@ import { normalizeAdminError } from '../api/adminClient';
 import {
   AdminPoiListItem,
   AudioStatusValue,
-  POI_LANGUAGES,
   PoiRouteOption,
   PoiZoneOption,
 } from '../types/poi';
 import { DataTable, Column } from '../components/DataTable';
 import { StatusBadge } from '../components/StatusBadge';
+import { PoiLanguageSummary } from '../components/PoiLanguageSummary';
+import { resolveOverallStatus } from '../utils/poiStatus';
 import { EmptyState } from '../components/EmptyState';
 import { ErrorState } from '../components/ErrorState';
 import { AdminToolbar } from '../components/AdminToolbar';
 import { AdminPagination } from '../components/AdminPagination';
 
 const PAGE_SIZE = 10;
-
-const POI_STATUS_LABELS: Record<string, string> = {
-  ACTIVE: 'Đang hoạt động',
-  INACTIVE: 'Đã ẩn',
-  MAINTENANCE: 'Bảo trì',
-};
 
 export const PoiListPage: React.FC = () => {
   const navigate = useNavigate();
@@ -124,9 +119,6 @@ export const PoiListPage: React.FC = () => {
           >
             {poi.name}
           </Link>
-          <span className="adm-product-slug">
-            {poi.code} · v{poi.version}
-          </span>
         </div>
       ),
     },
@@ -134,7 +126,7 @@ export const PoiListPage: React.FC = () => {
       key: 'zone',
       title: 'Khu vực',
       width: '110px',
-      render: (poi) => <span className="adm-category-tag">{poi.zoneCode}</span>,
+      render: (poi) => <StatusBadge variant="neutral">{poi.zoneCode}</StatusBadge>,
     },
     {
       key: 'route',
@@ -144,46 +136,41 @@ export const PoiListPage: React.FC = () => {
         poi.routeName ? (
           <span>
             {poi.routeName}
-            {poi.stopOrder != null ? ` · #${poi.stopOrder}` : ''}
+            {poi.stopOrder != null && (
+              <span className="adm-product-slug">Thứ tự {poi.stopOrder}</span>
+            )}
           </span>
         ) : (
-          <span className="adm-date-text">—</span>
+          <span className="adm-date-text">-</span>
         ),
     },
     {
       key: 'status',
       title: 'Trạng thái',
-      width: '130px',
-      render: (poi) => (
-        <span className="adm-date-text">
-          {POI_STATUS_LABELS[poi.status] || poi.status}
-        </span>
-      ),
+      width: '140px',
+      render: (poi) => {
+        const config = resolveOverallStatus(poi.overallStatus);
+        const reasons = poi.attentionReasons || [];
+        return (
+          <StatusBadge
+            variant={config.variant}
+            title={reasons.length > 0 ? reasons.join('\n') : undefined}
+          >
+            {config.label}
+          </StatusBadge>
+        );
+      },
     },
     {
       key: 'audio',
       title: 'Thuyết minh đa ngôn ngữ',
-      width: '220px',
+      width: '200px',
       render: (poi) => (
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-          {POI_LANGUAGES.map((lang) => {
-            const status = poi.audioStatusByLanguage?.[lang.code];
-            return (
-              <span
-                key={lang.code}
-                style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}
-                title={status ? `${lang.label}: ${status}` : `${lang.label}: chưa có bản dịch`}
-              >
-                <span className="adm-lang-chip">{lang.code.toUpperCase()}</span>
-                {status ? (
-                  <StatusBadge status={status} />
-                ) : (
-                  <span className="adm-date-text">—</span>
-                )}
-              </span>
-            );
-          })}
-        </div>
+        <PoiLanguageSummary
+          languages={poi.languages}
+          summary={poi.languageSummary}
+          poiName={poi.name}
+        />
       ),
     },
     {
@@ -243,7 +230,7 @@ export const PoiListPage: React.FC = () => {
           <input
             type="search"
             className="adm-input adm-search-input"
-            placeholder="Tìm theo tên hoặc mã điểm..."
+            placeholder="Tìm theo tên hoặc mã điểm"
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             aria-label="Tìm kiếm điểm thuyết minh"

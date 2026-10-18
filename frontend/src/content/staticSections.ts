@@ -3,7 +3,7 @@ import { Drink } from '../types';
 export const coverContent = {
   tagline: 'Vẻ đẹp văn hóa và điểm đến',
   title: 'Sài Gòn',
-  date: 'TP. Hồ Chí Minh · 10/2026',
+  date: 'TP. Hồ Chí Minh, 10/2026',
 };
 
 export const introContent = {
@@ -104,7 +104,7 @@ export const siteContact = {
   fullAddress: '338 An Dương Vương, Phường 4, Quận 5, TP. Hồ Chí Minh',
   phone: '0346358399',
   email: 'congtinh1932006@gmail.com',
-  hours: '8h – 23h',
+  hours: '8h - 23h',
   directionsUrl: 'https://www.google.com/maps/dir/?api=1&destination=10.7599%2C106.6791',
 };
 
@@ -120,6 +120,6 @@ export const footerContent = {
   brand: 'Echora',
   tagline: 'Audio guide for places and food',
   blurb: 'Khám phá văn hóa, ẩm thực và các điểm đến nổi bật của TP. Hồ Chí Minh.',
-  copyright: '© 2026 Echora – Văn hóa các điểm du lịch TP.HCM. Bản demo.',
-  backToTop: 'Về đầu trang ↑',
+  copyright: '© 2026 Echora, Văn hóa các điểm du lịch TP.HCM. Bản demo.',
+  backToTop: 'Về đầu trang',
 };

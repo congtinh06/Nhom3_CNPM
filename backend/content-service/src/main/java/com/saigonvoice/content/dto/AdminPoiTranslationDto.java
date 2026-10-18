@@ -2,6 +2,8 @@ package com.saigonvoice.content.dto;
 
 import lombok.*;
 
+import java.time.LocalDateTime;
+
 @Getter
 @Setter
 @NoArgsConstructor
@@ -18,4 +20,6 @@ public class AdminPoiTranslationDto {
     private Integer audioDurationSeconds;
     private String audioStatus;
     private String source;
+    private String errorReason;
+    private LocalDateTime lastAttemptAt;
 }

@@ -188,7 +188,7 @@ export const ContactPage: React.FC = () => {
                   target="_blank"
                   rel="noopener noreferrer"
                 >
-                  Chỉ đường ↗
+                  Chỉ đường
                 </a>
               </div>
 

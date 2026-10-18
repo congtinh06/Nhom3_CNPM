@@ -19,7 +19,7 @@ export const Pagination: React.FC<PaginationProps> = ({
     return null;
   }
 
-  // Tính toán phạm vi hiển thị mẫu: "Hiển thị [start]–[end] của [total] sản phẩm"
+  // Tính toán phạm vi hiển thị mẫu: "Hiển thị [start]-[end] của [total] sản phẩm"
   const startItem = totalItems === 0 ? 0 : (currentPage - 1) * pageSize + 1;
   const endItem = Math.min(currentPage * pageSize, totalItems);
 
@@ -106,7 +106,7 @@ export const Pagination: React.FC<PaginationProps> = ({
       {/* 1. Bên trái: Nhãn bối cảnh (Context Label) */}
       <div className="pagination-context-label">
         Hiển thị{' '}
-        <span className="font-semibold text-primary">{startItem}</span>–
+        <span className="font-semibold text-primary">{startItem}</span> -{' '}
         <span className="font-semibold text-primary">{endItem}</span> của{' '}
         <span className="font-semibold text-primary">{totalItems}</span> sản phẩm
       </div>
