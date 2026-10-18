@@ -1,17 +1,26 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { poiApi } from '../api/poiApi';
 import { normalizeAdminError } from '../api/adminClient';
 import {
   AdminPoiListItem,
-  AudioStatusValue,
   PoiRouteOption,
   PoiZoneOption,
 } from '../types/poi';
 import { DataTable, Column } from '../components/DataTable';
 import { StatusBadge } from '../components/StatusBadge';
 import { PoiLanguageSummary } from '../components/PoiLanguageSummary';
-import { resolveOverallStatus } from '../utils/poiStatus';
+import {
+  hasLanguageError,
+  hasLanguagePending,
+  isNeedsAttention,
+  POI_LANGUAGE_FILTER_OPTIONS,
+  POI_STATUS_FILTER_OPTIONS,
+  POI_STATUS_LABEL,
+  PoiLanguageFilterValue,
+  PoiStatusFilterValue,
+  resolveOverallStatus,
+} from '../utils/poiStatus';
 import { EmptyState } from '../components/EmptyState';
 import { ErrorState } from '../components/ErrorState';
 import { AdminToolbar } from '../components/AdminToolbar';
@@ -33,7 +42,8 @@ export const PoiListPage: React.FC = () => {
   const [search, setSearch] = useState('');
   const [zoneFilter, setZoneFilter] = useState('');
   const [routeFilter, setRouteFilter] = useState('');
-  const [audioFilter, setAudioFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState<PoiStatusFilterValue>('');
+  const [languageFilter, setLanguageFilter] = useState<PoiLanguageFilterValue>('');
   const [page, setPage] = useState(0);
 
   useEffect(() => {
@@ -80,7 +90,6 @@ export const PoiListPage: React.FC = () => {
         search: search || undefined,
         zoneId: zoneFilter ? Number(zoneFilter) : undefined,
         routeId: routeFilter ? Number(routeFilter) : undefined,
-        audioStatus: audioFilter ? (audioFilter as AudioStatusValue) : undefined,
       });
       setRows(result?.content || []);
       setTotalElements(result?.totalElements ?? 0);
@@ -90,22 +99,53 @@ export const PoiListPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [page, search, zoneFilter, routeFilter, audioFilter]);
+  }, [page, search, zoneFilter, routeFilter]);
 
   useEffect(() => {
     fetchList();
   }, [fetchList]);
 
-  const hasActiveFilters = Boolean(searchInput.trim() || zoneFilter || routeFilter || audioFilter);
+  const hasActiveFilters = Boolean(
+    searchInput.trim() || zoneFilter || routeFilter || statusFilter || languageFilter
+  );
 
   const handleClearFilters = () => {
     setSearchInput('');
     setSearch('');
     setZoneFilter('');
     setRouteFilter('');
-    setAudioFilter('');
+    setStatusFilter('');
+    setLanguageFilter('');
     setPage(0);
   };
+
+  // Backend chưa có tham số lọc theo trạng thái tổng thể và ngôn ngữ,
+  // nên hai bộ lọc này lọc trên trang hiện tại đang hiển thị.
+  const visibleRows = useMemo(
+    () =>
+      rows.filter((poi) => {
+        const statusKey = (poi.overallStatus || 'ACTIVE').toUpperCase();
+        const matchesStatus = !statusFilter || statusKey === statusFilter;
+        const matchesLanguage =
+          !languageFilter ||
+          (languageFilter === 'ERROR'
+            ? hasLanguageError(poi.languageSummary, poi.languages)
+            : hasLanguagePending(poi.languageSummary, poi.languages));
+        return matchesStatus && matchesLanguage;
+      }),
+    [rows, statusFilter, languageFilter]
+  );
+
+  const needsAttentionCount = useMemo(
+    () => rows.filter((poi) => isNeedsAttention(poi.overallStatus)).length,
+    [rows]
+  );
+
+  const zoneNameById = useMemo(() => {
+    const map = new Map<number, string>();
+    zones.forEach((zone) => map.set(zone.id, zone.name));
+    return map;
+  }, [zones]);
 
   const columns: Column<AdminPoiListItem>[] = [
     {
@@ -125,23 +165,33 @@ export const PoiListPage: React.FC = () => {
     {
       key: 'zone',
       title: 'Khu vực',
-      width: '110px',
-      render: (poi) => <StatusBadge variant="neutral">{poi.zoneCode}</StatusBadge>,
+      width: '150px',
+      render: (poi) => {
+        const zoneName = zoneNameById.get(poi.zoneId) || poi.zoneCode;
+        return (
+          <div className="adm-cell-stack">
+            <span className="adm-cell-primary">{zoneName}</span>
+            {poi.zoneCode && <span className="adm-cell-sub">{poi.zoneCode}</span>}
+          </div>
+        );
+      },
     },
     {
       key: 'route',
-      title: 'Tuyến / Thứ tự',
-      width: '160px',
+      title: 'Tuyến',
+      width: '190px',
       render: (poi) =>
         poi.routeName ? (
-          <span>
-            {poi.routeName}
+          <div className="adm-cell-stack">
+            <span className="adm-cell-primary adm-clamp-2" title={poi.routeName}>
+              {poi.routeName}
+            </span>
             {poi.stopOrder != null && (
-              <span className="adm-product-slug">Thứ tự {poi.stopOrder}</span>
+              <span className="adm-cell-sub">Thứ tự {poi.stopOrder}</span>
             )}
-          </span>
+          </div>
         ) : (
-          <span className="adm-date-text">-</span>
+          <span className="adm-text-warning">Chưa gán tuyến</span>
         ),
     },
     {
@@ -163,8 +213,8 @@ export const PoiListPage: React.FC = () => {
     },
     {
       key: 'audio',
-      title: 'Thuyết minh đa ngôn ngữ',
-      width: '200px',
+      title: 'Ngôn ngữ',
+      width: '170px',
       render: (poi) => (
         <PoiLanguageSummary
           languages={poi.languages}
@@ -198,31 +248,26 @@ export const PoiListPage: React.FC = () => {
         <div>
           <h1 className="adm-page-title">Quản lý điểm thuyết minh</h1>
           <p className="adm-page-desc">
-            Danh sách điểm đến, tọa độ kích hoạt và trạng thái thuyết minh đa ngôn ngữ trên
-            website Echora.
+            Danh sách điểm đến và trạng thái thuyết minh đa ngôn ngữ.
           </p>
         </div>
         <div className="adm-page-actions">
-          <button
-            type="button"
-            className="adm-btn adm-btn-secondary"
-            onClick={fetchList}
-            disabled={loading}
-          >
-            {loading ? 'Đang tải...' : 'Làm mới'}
-          </button>
           <Link to="/quan-tri/diem-thuyet-minh/moi" className="adm-btn adm-btn-primary">
             + Thêm điểm thuyết minh
           </Link>
         </div>
       </div>
 
-      <AdminToolbar>
+      <AdminToolbar
+        onRefresh={fetchList}
+        refreshing={loading}
+        refreshLabel="Làm mới"
+      >
         <div className="adm-search-wrap">
           <input
             type="search"
             className="adm-input adm-search-input"
-            placeholder="Tìm theo tên hoặc mã điểm"
+            placeholder="Tìm theo tên điểm"
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             aria-label="Tìm kiếm điểm thuyết minh"
@@ -257,7 +302,7 @@ export const PoiListPage: React.FC = () => {
           disabled={!zoneFilter}
           aria-label="Lọc theo tuyến"
         >
-          <option value="">Tất cả tuyến</option>
+          <option value="">{zoneFilter ? 'Tất cả tuyến' : 'Chọn khu vực trước'}</option>
           {routes.map((route) => (
             <option key={route.id} value={String(route.id)}>
               {route.name}
@@ -267,18 +312,34 @@ export const PoiListPage: React.FC = () => {
 
         <select
           className="adm-select"
-          value={audioFilter}
+          value={statusFilter}
           onChange={(e) => {
-            setAudioFilter(e.target.value);
+            setStatusFilter(e.target.value as PoiStatusFilterValue);
             setPage(0);
           }}
-          aria-label="Lọc theo trạng thái thuyết minh"
+          aria-label="Lọc theo trạng thái"
         >
-          <option value="">Tất cả trạng thái âm thanh</option>
-          <option value="PENDING">Chờ xử lý</option>
-          <option value="PROCESSING">Đang xử lý</option>
-          <option value="READY">Sẵn sàng</option>
-          <option value="FAILED_TTS">Lỗi tổng hợp</option>
+          {POI_STATUS_FILTER_OPTIONS.map((option) => (
+            <option key={option.value || 'all'} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+
+        <select
+          className="adm-select"
+          value={languageFilter}
+          onChange={(e) => {
+            setLanguageFilter(e.target.value as PoiLanguageFilterValue);
+            setPage(0);
+          }}
+          aria-label="Lọc theo ngôn ngữ"
+        >
+          {POI_LANGUAGE_FILTER_OPTIONS.map((option) => (
+            <option key={option.value || 'all'} value={option.value}>
+              {option.label}
+            </option>
+          ))}
         </select>
 
         {hasActiveFilters && (
@@ -292,17 +353,32 @@ export const PoiListPage: React.FC = () => {
         )}
       </AdminToolbar>
 
+      {needsAttentionCount > 0 && (
+        <p className="adm-list-summary">
+          <button
+            type="button"
+            className="adm-list-summary-btn"
+            onClick={() => {
+              setStatusFilter('NEEDS_ATTENTION');
+              setPage(0);
+            }}
+          >
+            {POI_STATUS_LABEL.NEEDS_ATTENTION}: {needsAttentionCount} điểm
+          </button>
+        </p>
+      )}
+
       {error ? (
         <ErrorState
           title="Không thể tải danh sách điểm thuyết minh"
           message={error}
           onRetry={fetchList}
         />
-      ) : !loading && rows.length === 0 ? (
+      ) : !loading && visibleRows.length === 0 ? (
         hasActiveFilters ? (
           <EmptyState
             title="Không tìm thấy điểm thuyết minh phù hợp"
-            description="Hãy thử thay đổi từ khóa tìm kiếm hoặc điều chỉnh bộ lọc khu vực, tuyến và trạng thái."
+            description="Hãy thử thay đổi từ khóa tìm kiếm hoặc điều chỉnh bộ lọc."
             actionText="Xóa toàn bộ bộ lọc"
             onAction={handleClearFilters}
           />
@@ -318,12 +394,13 @@ export const PoiListPage: React.FC = () => {
         <>
           <DataTable
             columns={columns}
-            data={rows}
+            data={visibleRows}
             keyExtractor={(item) => item.id}
             loading={loading}
             emptyText="Chưa có dữ liệu điểm thuyết minh hiển thị."
             ariaLabel="Bảng danh sách điểm thuyết minh quản trị"
             stickyLastColumn
+            caption="Danh sách điểm thuyết minh"
           />
 
           <AdminPagination

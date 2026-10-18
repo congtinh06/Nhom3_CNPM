@@ -116,7 +116,6 @@ describe('PoiListPage', () => {
         search: undefined,
         zoneId: undefined,
         routeId: undefined,
-        audioStatus: undefined,
       });
     });
   });
@@ -230,21 +229,66 @@ describe('PoiListPage', () => {
     });
   });
 
-  it('lọc theo trạng thái thuyết minh gửi audioStatus lên máy chủ', async () => {
+  it('lọc theo trạng thái trên trang hiện tại và vẫn gọi lại theo phân trang', async () => {
     renderComponent();
 
     await waitFor(() => {
       expect(screen.getByText('Chợ Bến Thành')).toBeInTheDocument();
     });
 
-    fireEvent.change(screen.getByLabelText(/lọc theo trạng thái thuyết minh/i), {
-      target: { value: 'FAILED_TTS' },
+    fireEvent.change(screen.getByLabelText('Lọc theo trạng thái'), {
+      target: { value: 'HIDDEN' },
     });
 
     await waitFor(() => {
-      expect(poiApi.getAdminPois).toHaveBeenLastCalledWith(
-        expect.objectContaining({ audioStatus: 'FAILED_TTS', page: 0 })
-      );
+      expect(screen.queryByText('Chợ Bến Thành')).not.toBeInTheDocument();
+      expect(screen.getByText('Dinh Độc Lập')).toBeInTheDocument();
+    });
+  });
+
+  it('lọc theo ngôn ngữ chỉ giữ điểm có lỗi hoặc có chờ xử lý', async () => {
+    renderComponent();
+
+    await waitFor(() => {
+      expect(screen.getByText('Chợ Bến Thành')).toBeInTheDocument();
+    });
+
+    fireEvent.change(screen.getByLabelText('Lọc theo ngôn ngữ'), {
+      target: { value: 'ERROR' },
+    });
+
+    await waitFor(() => {
+      expect(screen.queryByText('Chợ Bến Thành')).not.toBeInTheDocument();
+      expect(screen.getByText('Dinh Độc Lập')).toBeInTheDocument();
+    });
+
+    fireEvent.change(screen.getByLabelText('Lọc theo ngôn ngữ'), {
+      target: { value: 'PENDING' },
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('Chợ Bến Thành')).toBeInTheDocument();
+      expect(screen.getByText('Dinh Độc Lập')).toBeInTheDocument();
+    });
+  });
+
+  it('dòng tóm tắt Cần xử lý bấm để lọc nhanh theo trạng thái đó', async () => {
+    const needsAttentionRow: AdminPoiListItem = {
+      ...mockRows[0]!,
+      overallStatus: 'NEEDS_ATTENTION',
+    };
+    vi.mocked(poiApi.getAdminPois).mockResolvedValue(
+      pageOf([needsAttentionRow, mockRows[1]!])
+    );
+    renderComponent();
+
+    const summary = await screen.findByRole('button', { name: 'Cần xử lý: 1 điểm' });
+    fireEvent.click(summary);
+
+    await waitFor(() => {
+      expect(screen.getByLabelText('Lọc theo trạng thái')).toHaveValue('NEEDS_ATTENTION');
+      expect(screen.getByText('Chợ Bến Thành')).toBeInTheDocument();
+      expect(screen.queryByText('Dinh Độc Lập')).not.toBeInTheDocument();
     });
   });
 
