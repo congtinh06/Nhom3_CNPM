@@ -498,6 +498,10 @@ public class PoiContentServiceImpl implements PoiContentService {
             Poi poi, List<AdminPoiLanguageDto> languages, Map<String, PoiTranslation> translationsByLang) {
         List<String> reasons = new ArrayList<>();
 
+        if ("MAINTENANCE".equalsIgnoreCase(poi.getStatus())) {
+            reasons.add("Đang bảo trì");
+        }
+
         PoiTranslation vi = translationsByLang.get(DEFAULT_LANG);
         if (vi == null || isBlank(vi.getTitle()) || isBlank(vi.getDescription())) {
             reasons.add("Thiếu nội dung tiếng Việt");
@@ -531,7 +535,7 @@ public class PoiContentServiceImpl implements PoiContentService {
     }
 
     private String resolveOverallStatus(Poi poi, List<String> attentionReasons) {
-        if (!"ACTIVE".equalsIgnoreCase(poi.getStatus())) {
+        if ("INACTIVE".equalsIgnoreCase(poi.getStatus())) {
             return "HIDDEN";
         }
         return attentionReasons.isEmpty() ? "ACTIVE" : "NEEDS_ATTENTION";
