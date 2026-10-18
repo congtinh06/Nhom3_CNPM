@@ -95,9 +95,9 @@ export const UserListPage: React.FC = () => {
       title: 'Vai trò',
       width: '140px',
       render: (user) => (
-        <span className={`adm-role-tag adm-role-tag-${user.role.toLowerCase()}`}>
+        <StatusBadge variant={user.role === 'ADMIN' ? 'neutral' : 'muted'}>
           {USER_ROLE_LABELS[user.role]}
-        </span>
+        </StatusBadge>
       ),
     },
     {

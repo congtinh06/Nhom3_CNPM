@@ -130,7 +130,7 @@ export const RouteListPage: React.FC = () => {
       width: '220px',
       render: (route) => (
         <div className="adm-route-zone-cell">
-          <span className="adm-category-tag">{route.zoneName}</span>
+          <StatusBadge variant="neutral">{route.zoneName}</StatusBadge>
           <span className="adm-product-slug">{route.zoneCode}</span>
         </div>
       ),

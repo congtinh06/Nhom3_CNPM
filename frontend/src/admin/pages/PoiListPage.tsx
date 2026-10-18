@@ -133,7 +133,7 @@ export const PoiListPage: React.FC = () => {
       key: 'zone',
       title: 'Khu vực',
       width: '110px',
-      render: (poi) => <span className="adm-category-tag">{poi.zoneCode}</span>,
+      render: (poi) => <StatusBadge variant="neutral">{poi.zoneCode}</StatusBadge>,
     },
     {
       key: 'route',

@@ -281,9 +281,9 @@ export const ProductListPage: React.FC = () => {
       title: 'Danh mục',
       width: '120px',
       render: (product) => (
-        <span className="adm-category-tag">
+        <StatusBadge variant="neutral">
           {product.category === 'FOOD' ? 'Món ăn' : 'Đồ uống'}
-        </span>
+        </StatusBadge>
       ),
     },
     {
