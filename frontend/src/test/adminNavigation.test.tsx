@@ -37,42 +37,31 @@ describe('Admin Navigation & Sidebar & Breadcrumbs (S2)', () => {
     });
   });
 
-  it('mục "Ẩm thực" xổ xuống với "Món ăn"/"Thức uống", chọn đúng mục con theo danh mục', () => {
-    const { unmount } = render(
-      <MemoryRouter initialEntries={['/quan-tri/san-pham?category=FOOD']}>
+  it('mục "Quà lưu niệm" xổ xuống với "Sản phẩm", chọn đúng mục con theo danh mục', () => {
+    render(
+      <MemoryRouter initialEntries={['/quan-tri/san-pham?category=SOUVENIR']}>
         <AdminSidebar isOpen={true} onClose={vi.fn()} />
       </MemoryRouter>
     );
 
-    expect(screen.getByRole('button', { name: /ẩm thực/i })).toHaveAttribute(
+    expect(screen.getByRole('button', { name: /quà lưu niệm/i })).toHaveAttribute(
       'aria-expanded',
       'true'
     );
-    const dishLink = screen.getByRole('link', { name: /món ăn/i });
-    expect(dishLink).toHaveAttribute('href', '/quan-tri/san-pham?category=FOOD');
-    expect(dishLink).toHaveClass('adm-nav-sublink-active');
-    expect(dishLink).not.toHaveTextContent('Sắp có');
-    unmount();
-
-    render(
-      <MemoryRouter initialEntries={['/quan-tri/san-pham?category=DRINK']}>
-        <AdminSidebar isOpen={true} onClose={vi.fn()} />
-      </MemoryRouter>
-    );
-
-    const drinkLink = screen.getByRole('link', { name: /thức uống/i });
-    expect(drinkLink).toHaveAttribute('href', '/quan-tri/san-pham?category=DRINK');
-    expect(drinkLink).toHaveClass('adm-nav-sublink-active');
+    const productLink = screen.getByRole('link', { name: /sản phẩm/i });
+    expect(productLink).toHaveAttribute('href', '/quan-tri/san-pham?category=SOUVENIR');
+    expect(productLink).toHaveClass('adm-nav-sublink-active');
+    expect(productLink).not.toHaveTextContent('Sắp có');
   });
 
-  it('AdminSidebar làm nổi bật mục cha "Ẩm thực" ở route form (/quan-tri/san-pham/moi và /:id)', () => {
+  it('AdminSidebar làm nổi bật mục cha "Quà lưu niệm" ở route form (/quan-tri/san-pham/moi và /:id)', () => {
     const { unmount } = render(
       <MemoryRouter initialEntries={['/quan-tri/san-pham/moi']}>
         <AdminSidebar isOpen={true} onClose={vi.fn()} />
       </MemoryRouter>
     );
 
-    expect(screen.getByRole('button', { name: /ẩm thực/i })).toHaveClass('adm-nav-parent-active');
+    expect(screen.getByRole('button', { name: /quà lưu niệm/i })).toHaveClass('adm-nav-parent-active');
     unmount();
 
     render(
@@ -81,19 +70,19 @@ describe('Admin Navigation & Sidebar & Breadcrumbs (S2)', () => {
       </MemoryRouter>
     );
 
-    expect(screen.getByRole('button', { name: /ẩm thực/i })).toHaveClass('adm-nav-parent-active');
+    expect(screen.getByRole('button', { name: /quà lưu niệm/i })).toHaveClass('adm-nav-parent-active');
   });
 
-  it('AdminHeader hiển thị breadcrumbs cho danh sách (theo danh mục), thêm mới và chỉnh sửa ẩm thực', () => {
-    // 1. Danh sách món ăn (lọc theo danh mục)
+  it('AdminHeader hiển thị breadcrumbs cho danh sách (theo danh mục), thêm mới và chỉnh sửa quà lưu niệm', () => {
+    // 1. Danh sách quà lưu niệm (lọc theo danh mục)
     const { unmount: unmount1 } = render(
-      <MemoryRouter initialEntries={['/quan-tri/san-pham?category=FOOD']}>
+      <MemoryRouter initialEntries={['/quan-tri/san-pham?category=SOUVENIR']}>
         <AdminHeader onToggleSidebar={vi.fn()} />
       </MemoryRouter>
     );
     expect(screen.getByText('Quản trị')).toBeInTheDocument();
-    expect(screen.getByText('Ẩm thực')).toBeInTheDocument();
-    expect(screen.getByText('Món ăn')).toBeInTheDocument();
+    expect(screen.getByText('Quà lưu niệm')).toBeInTheDocument();
+    expect(screen.getByText('Sản phẩm')).toBeInTheDocument();
     unmount1();
 
     // 2. Thêm mới
@@ -103,7 +92,7 @@ describe('Admin Navigation & Sidebar & Breadcrumbs (S2)', () => {
       </MemoryRouter>
     );
     expect(screen.getByText('Quản trị')).toBeInTheDocument();
-    expect(screen.getByText('Ẩm thực')).toBeInTheDocument();
+    expect(screen.getByText('Quà lưu niệm')).toBeInTheDocument();
     expect(screen.getByText('Thêm mới')).toBeInTheDocument();
     unmount2();
 
@@ -114,7 +103,7 @@ describe('Admin Navigation & Sidebar & Breadcrumbs (S2)', () => {
       </MemoryRouter>
     );
     expect(screen.getByText('Quản trị')).toBeInTheDocument();
-    expect(screen.getByText('Ẩm thực')).toBeInTheDocument();
+    expect(screen.getByText('Quà lưu niệm')).toBeInTheDocument();
     expect(screen.getByText('Chỉnh sửa')).toBeInTheDocument();
   });
 
@@ -143,6 +132,25 @@ describe('Admin Navigation & Sidebar & Breadcrumbs (S2)', () => {
 
     expect(screen.getByRole('link', { name: /danh sách điểm/i })).toHaveClass(
       'adm-nav-sublink-active'
+    );
+  });
+
+  it('tô sáng đúng mục con khi ở các trang con của Điểm thuyết minh', () => {
+    render(
+      <MemoryRouter initialEntries={['/quan-tri/diem-thuyet-minh/ban-dich']}>
+        <AdminSidebar isOpen={true} onClose={vi.fn()} />
+      </MemoryRouter>
+    );
+
+    const i18nLink = screen.getByRole('link', { name: /bản dịch và audio/i });
+    expect(i18nLink).toHaveAttribute('href', '/quan-tri/diem-thuyet-minh/ban-dich');
+    expect(i18nLink).toHaveClass('adm-nav-sublink-active');
+    expect(screen.getByRole('link', { name: /danh sách điểm/i })).not.toHaveClass(
+      'adm-nav-sublink-active'
+    );
+    expect(screen.getByRole('link', { name: /mã qr/i })).toHaveAttribute(
+      'href',
+      '/quan-tri/diem-thuyet-minh/ma-qr'
     );
   });
 

@@ -98,3 +98,46 @@ export function hasLanguagePending(
   if (summary && typeof summary.pending === 'number' && summary.pending > 0) return true;
   return (languages ?? []).some((lang) => isPendingAudioStatus(lang.audioStatus));
 }
+
+export const POI_LANGUAGE_STATUS_LABEL: Record<string, string> = {
+  READY: 'Sẵn sàng',
+  PENDING: 'Chờ xử lý',
+  PROCESSING: 'Đang xử lý',
+  FAILED_TTS: 'Lỗi tổng hợp',
+  FAILED: 'Lỗi tổng hợp',
+  FAILED_TRANSLATION: 'Lỗi dịch thuật',
+};
+
+export interface LanguageStatusConfig {
+  label: string;
+  variant: StatusBadgeVariant;
+}
+
+// Đổi trạng thái audio của 1 ngôn ngữ thành nhãn + màu badge dùng chung cho
+// các trang con của Điểm thuyết minh (Bản dịch và audio, Nhật ký lỗi).
+export function resolveLanguageStatus(status?: string | null): LanguageStatusConfig {
+  const norm = (status || '').toUpperCase();
+  switch (norm) {
+    case 'READY':
+      return { label: 'Sẵn sàng', variant: 'neutral' };
+    case 'PENDING':
+      return { label: 'Chờ xử lý', variant: 'warning' };
+    case 'PROCESSING':
+      return { label: 'Đang xử lý', variant: 'warning' };
+    case 'FAILED':
+    case 'FAILED_TTS':
+      return { label: 'Lỗi tổng hợp', variant: 'danger' };
+    case 'FAILED_TRANSLATION':
+      return { label: 'Lỗi dịch thuật', variant: 'danger' };
+    default:
+      return {
+        label: norm ? POI_LANGUAGE_STATUS_LABEL[norm] ?? 'Không rõ' : 'Chưa có',
+        variant: 'muted',
+      };
+  }
+}
+
+export function isFailedLanguageStatus(status?: string | null): boolean {
+  const norm = (status || '').toUpperCase();
+  return norm === 'FAILED' || norm === 'FAILED_TTS' || norm === 'FAILED_TRANSLATION';
+}

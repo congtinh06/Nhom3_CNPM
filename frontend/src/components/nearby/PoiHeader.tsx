@@ -30,7 +30,7 @@ export const PoiHeader: React.FC<PoiHeaderProps> = ({
   const stopsPart = typeof stopsCount === 'number' && stopsCount > 0 ? t(currentLang, 'statStops', { count: formattedStops }) : '';
   const langsPart = typeof languagesCount === 'number' && languagesCount > 0 ? t(currentLang, 'statLanguages', { count: formattedLangs }) : '';
   const distPart = approxDistance ? t(currentLang, 'statTotalDistance', { distance: approxDistance }) : '';
-  const progressPart = typeof listenedCount === 'number' ? t(currentLang, 'statProgress', { listened: formattedListened, total: formattedStops || '5' }) : '';
+  const progressPart = typeof listenedCount === 'number' && stopsPart ? t(currentLang, 'statProgress', { listened: formattedListened, total: formattedStops }) : '';
 
   return (
     <div className="nearby-checkout-header" aria-label={t(currentLang, 'headerAriaLabel')}>

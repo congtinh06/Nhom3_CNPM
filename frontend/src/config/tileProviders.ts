@@ -11,6 +11,16 @@ export interface TileProviderConfig {
 }
 
 export const KNOWN_TILE_PROVIDERS = {
+  google: {
+    key: 'google',
+    name: 'Google Maps',
+    url: 'https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}',
+    subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+    maxZoom: 20,
+    attribution:
+      'Map data &copy; <a href="https://www.google.com/maps" target="_blank" rel="noopener noreferrer">Google Maps</a>',
+    referrerPolicy: 'strict-origin-when-cross-origin' as const,
+  },
   osm: {
     key: 'osm',
     name: 'OpenStreetMap',
@@ -44,7 +54,7 @@ export const KNOWN_TILE_PROVIDERS = {
 
 export type KnownTileProviderKey = keyof typeof KNOWN_TILE_PROVIDERS;
 
-export const DEFAULT_PROVIDERS_ORDER = 'osm,hot,opentopo';
+export const DEFAULT_PROVIDERS_ORDER = 'google,osm,hot,opentopo';
 
 export const getTileProviders = (customEnvOrder?: string): TileProviderConfig[] => {
   const rawOrder = customEnvOrder ?? (import.meta.env.VITE_TILE_PROVIDERS || DEFAULT_PROVIDERS_ORDER);

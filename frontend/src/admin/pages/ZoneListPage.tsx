@@ -8,9 +8,14 @@ import { StatusBadge } from '../components/StatusBadge';
 import { EmptyState } from '../components/EmptyState';
 import { ErrorState } from '../components/ErrorState';
 import { ConfirmDialog } from '../components/ConfirmDialog';
-import { AdminToolbar } from '../components/AdminToolbar';
+import { AdminFilterPanel } from '../components/AdminFilterPanel';
+import type {
+  AdminActiveFilter,
+  AdminSearchSuggestion,
+} from '../components/AdminFilterPanel';
 import { AdminPagination } from '../components/AdminPagination';
 import { AdminAlert } from '../components/AdminAlert';
+import { normalizeSearchText } from '../utils/text';
 
 const PAGE_SIZE = 10;
 
@@ -26,6 +31,7 @@ export const ZoneListPage: React.FC = () => {
   const [search, setSearch] = useState('');
   const [activeFilter, setActiveFilter] = useState('');
   const [page, setPage] = useState(0);
+  const [suggestionPool, setSuggestionPool] = useState<AdminZoneListItem[]>([]);
 
   const navigate = useNavigate();
   const [pendingToggle, setPendingToggle] = useState<AdminZoneListItem | null>(null);
@@ -49,7 +55,13 @@ export const ZoneListPage: React.FC = () => {
         search: search || undefined,
         isActive: activeFilter === '' ? undefined : activeFilter === 'true',
       });
-      setRows(result?.content || []);
+      const content = result?.content || [];
+      setRows(content);
+      setSuggestionPool((prev) => {
+        const byId = new Map(prev.map((zone) => [zone.id, zone]));
+        content.forEach((zone) => byId.set(zone.id, zone));
+        return Array.from(byId.values()).slice(0, 40);
+      });
       setTotalElements(result?.totalElements ?? 0);
       setTotalPages(result?.totalPages ?? 0);
     } catch (err) {
@@ -71,6 +83,81 @@ export const ZoneListPage: React.FC = () => {
     setActiveFilter('');
     setPage(0);
   };
+
+  const normalizedQuery = normalizeSearchText(searchInput);
+
+  const searchSuggestions: AdminSearchSuggestion[] = [
+    ...suggestionPool.map<AdminSearchSuggestion>((zone) => ({
+      id: `zone-${zone.id}`,
+      label: zone.name,
+      hint: `Mã khu vực: ${zone.code}`,
+      kind: 'keyword',
+      onSelect: () => {
+        setSearchInput(zone.name);
+        setSearch(zone.name);
+        setPage(0);
+      },
+    })),
+    {
+      id: 'status-active',
+      label: 'Khu vực đang hoạt động',
+      hint: 'Lọc theo trạng thái hiển thị',
+      kind: 'filter' as const,
+      onSelect: () => {
+        setSearchInput('');
+        setSearch('');
+        setActiveFilter('true');
+        setPage(0);
+      },
+    },
+    {
+      id: 'status-inactive',
+      label: 'Khu vực đã ẩn',
+      hint: 'Lọc theo trạng thái hiển thị',
+      kind: 'filter' as const,
+      onSelect: () => {
+        setSearchInput('');
+        setSearch('');
+        setActiveFilter('false');
+        setPage(0);
+      },
+    },
+  ].filter((suggestion) => {
+    if (!normalizedQuery) return true;
+    return normalizeSearchText(`${suggestion.label} ${suggestion.hint || ''}`).includes(
+      normalizedQuery
+    );
+  });
+
+  const activeFilters: AdminActiveFilter[] = [
+    ...(searchInput.trim()
+      ? [
+          {
+            id: 'search',
+            label: 'Từ khóa',
+            value: searchInput.trim(),
+            onRemove: () => {
+              setSearchInput('');
+              setSearch('');
+              setPage(0);
+            },
+          },
+        ]
+      : []),
+    ...(activeFilter
+      ? [
+          {
+            id: 'status',
+            label: 'Trạng thái',
+            value: activeFilter === 'true' ? 'Hoạt động' : 'Đã ẩn',
+            onRemove: () => {
+              setActiveFilter('');
+              setPage(0);
+            },
+          },
+        ]
+      : []),
+  ];
 
   const handleConfirmToggle = async () => {
     if (!pendingToggle || toggling) return;
@@ -186,42 +273,31 @@ export const ZoneListPage: React.FC = () => {
         <AdminAlert variant="success" message={notice} onClose={() => setNotice(null)} />
       )}
 
-      <AdminToolbar>
-        <div className="adm-search-wrap">
-          <input
-            type="search"
-            className="adm-input adm-search-input"
-            placeholder="Tìm theo tên hoặc mã khu vực"
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-            aria-label="Tìm kiếm khu vực"
-          />
-        </div>
-
-        <select
-          className="adm-select"
-          value={activeFilter}
-          onChange={(e) => {
-            setActiveFilter(e.target.value);
-            setPage(0);
-          }}
-          aria-label="Lọc theo trạng thái khu vực"
-        >
-          <option value="">Tất cả trạng thái</option>
-          <option value="true">Hoạt động</option>
-          <option value="false">Đã ẩn</option>
-        </select>
-
-        {hasActiveFilters && (
-          <button
-            type="button"
-            className="adm-btn adm-btn-ghost adm-btn-sm"
-            onClick={handleClearFilters}
+      <AdminFilterPanel
+        searchValue={searchInput}
+        onSearchChange={setSearchInput}
+        searchPlaceholder="Tìm theo tên hoặc mã khu vực"
+        searchAriaLabel="Tìm kiếm khu vực"
+        suggestions={searchSuggestions}
+        activeFilters={activeFilters}
+        onClearFilters={handleClearFilters}
+        totalLabel={loading ? 'Đang tải dữ liệu...' : `${totalElements.toLocaleString('vi-VN')} khu vực`}
+        filters={
+          <select
+            className="adm-select"
+            value={activeFilter}
+            onChange={(e) => {
+              setActiveFilter(e.target.value);
+              setPage(0);
+            }}
+            aria-label="Lọc theo trạng thái khu vực"
           >
-            Xóa bộ lọc
-          </button>
-        )}
-      </AdminToolbar>
+            <option value="">Tất cả trạng thái</option>
+            <option value="true">Hoạt động</option>
+            <option value="false">Đã ẩn</option>
+          </select>
+        }
+      />
 
       {error ? (
         <ErrorState

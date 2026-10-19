@@ -20,7 +20,7 @@ Nguồn & giấy phép (Wikimedia Commons / Wikipedia):
 - mat-ong.jpg — "Runny hunny" by Scott Bauer, USDA ARS — Public domain. https://commons.wikimedia.org/wiki/File:Runny_hunny.jpg
 - may-tre.jpg — "Bamboo forest" by Kamakura — CC BY-SA 3.0. https://commons.wikimedia.org/wiki/File:Bamboo_forest.jpg
 - mut-trai-cay.jpg — Nguồn: bài "Dried fruit" (Wikipedia). Xem trang file gốc để biết giấy phép. https://en.wikipedia.org/wiki/Dried_fruit
-- non-la.jpg — "Mrs Salesbury - wright" by John Michael Wright — Public domain. https://commons.wikimedia.org/wiki/File:Mrs_Salesbury_-_wright.jpg
+- non-la.jpg — "Vietnamese woman" by ZAC — CC BY 2.0. https://commons.wikimedia.org/wiki/File:Vietnamese_woman.jpg
 - quat-giay.jpg — "Brise Fan LACMA M.78.108.10" (không rõ tác giả) — Public domain. https://commons.wikimedia.org/wiki/File:Brise_Fan_LACMA_M.78.108.10.jpg
 - tranh-bao-tang.jpg — "War Remnants Museum, HCMC, front" by Prenn — CC BY-SA 3.0. https://commons.wikimedia.org/wiki/File:War_Remnants_Museum,_HCMC,_front.JPG
 - tranh-buu-dien.jpg — "Saigon Central Post Office (52681461470)" by Kevin Rutherford — CC BY-SA 2.0. https://commons.wikimedia.org/wiki/File:Saigon_Central_Post_Office_(52681461470).jpg
@@ -30,3 +30,15 @@ Nguồn & giấy phép (Wikimedia Commons / Wikipedia):
 - tranh-dinh-doc-lap.jpg — "20190923 Independence Palace-10" by Balon Greyjoy — CC0. https://commons.wikimedia.org/wiki/File:20190923_Independence_Palace-10.jpg
 - tranh-nha-tho-duc-ba.jpg — "Basílica de Nuestra Señora, Ciudad Ho Chi Minh, Vietnam, 2013-08-14, DD 03" by Diego Delso — CC BY-SA 3.0. https://commons.wikimedia.org/wiki/File:Bas%C3%ADlica_de_Nuestra_Se%C3%B1ora,_Ciudad_Ho_Chi_Minh,_Vietnam,_2013-08-14,_DD_03.JPG
 - tra-sen.jpg — "Vietnameselotustea" by Badagnani — CC BY 3.0. https://commons.wikimedia.org/wiki/File:Vietnameselotustea.jpg
+
+Ảnh bổ sung (Wikimedia Commons):
+
+- chuoi-hat-go.jpg — "Ziziphus budhensis seed bracelet (Bodhichitta mala)" by Cool Mike142857 — CC BY-SA 4.0. https://commons.wikimedia.org/wiki/File:Ziziphus_budhensis_seed_bracelet_(Bodhichitta_mala).jpg
+- den-long.jpg — "Den long Hoi An" by Viethavvh — Copyrighted free use. https://commons.wikimedia.org/wiki/File:Den_long_Hoi_An.jpg
+- huy-hieu.jpg — "Bicentennial Lapel Pin" — Public domain. https://commons.wikimedia.org/wiki/File:Bicentennial_Lapel_Pin.jpg
+- mo-hinh.jpg — "Architectural Model of Kalyan Minaret and Po-i-Kalyan Complex in Bukhara" by Abdullayev uz — CC BY-SA 4.0. https://commons.wikimedia.org/wiki/File:Architectural_Model_of_Kalyan_Minaret_and_Po-i-Kalyan_Complex_in_Bukhara.jpg
+- nam-cham.jpg — "Fridge magnets board" by Mervat Salman — CC BY-SA 4.0. https://commons.wikimedia.org/wiki/File:Fridge_magnets_board.jpg
+- sach-lich-su.jpg — "Book of Wei and Old History of the Five Dynasties" — CC0. https://commons.wikimedia.org/wiki/File:Book_of_Wei_and_Old_History_of_the_Five_Dynasties_(55372007695).jpg
+- tranh-co-dong.jpg — "50 Đồng – Việt Minh (1948-49, Propaganda leaflet) North Vietnam" by The Việt Minh — Public domain. https://commons.wikimedia.org/wiki/File:50_%C4%90%E1%BB%93ng_-_Vi%E1%BB%87t_Minh_(1948-49,_Propaganda_leaflet)_North_Vietnam_02.jpg
+- vong-tay-da.jpg — "Malachite Beads and Bracelet (Russia, 19 c.)" by shakko — CC BY-SA 3.0. https://commons.wikimedia.org/wiki/File:Malachite_Beads_and_Bracelet_(Russia,_19_c.).jpg
+

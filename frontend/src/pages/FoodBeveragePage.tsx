@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { RefreshCw } from 'lucide-react';
 import { enrichProducts } from '../content/productAdapter';
 import { api } from '../api/client';
-import { Product, ProductOptions } from '../types';
+import { Product } from '../types';
 import { SortOptionKey } from '../types/productFilter';
 import { useCart } from '../context/CartContext';
 import { useToast } from '../context/ToastContext';
@@ -14,7 +14,6 @@ import { getSpotName } from '../content/souvenirSpots';
 import { FoodHeroSection } from '../components/food/FoodHeroSection';
 import { FoodSidebarFilter } from '../components/food/FoodSidebarFilter';
 import { ProductCard } from '../components/food/ProductCard';
-import { ProductDetailModal } from '../components/food/ProductDetailModal';
 import { EmptyState } from '../components/common/EmptyState';
 import { Pagination } from '../components/common/Pagination';
 import '../styles/souvenir.css';
@@ -86,10 +85,6 @@ export const FoodBeveragePage: React.FC = () => {
     const list = apiProducts ?? [];
     return list.filter((item) => item.category === 'SOUVENIR');
   }, [apiProducts]);
-
-  // Selected product for Detail Modal
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
 
   // Filter and sort items dynamically
   const filteredProducts = useMemo(() => {
@@ -178,40 +173,9 @@ export const FoodBeveragePage: React.FC = () => {
     (window as unknown as { __pop?: () => void }).__pop?.();
   };
 
-  // Open modal
+  // Mở trang chi tiết quà lưu niệm thay cho modal chi tiết sản phẩm cũ
   const handleSelectProduct = (product: Product) => {
-    setSelectedProduct(product);
-    setIsModalOpen(true);
-  };
-
-  // Add from modal with custom options
-  const handleModalAddToCart = (
-    product: Product,
-    quantity: number,
-    options?: ProductOptions
-  ) => {
-    if (!product.isActive) return;
-    addToCart(product, quantity);
-    const optionsText = options?.size
-      ? ` (${options.size}, ${options.sugar} đường, ${options.ice} đá)`
-      : options?.note
-      ? ` (${options.note})`
-      : '';
-    showToast(`Đã thêm vào giỏ: ${quantity} × ${product.name}${optionsText}`);
-    (window as unknown as { __pop?: () => void }).__pop?.();
-  };
-
-  // Buy now: add to cart & immediately navigate to checkout
-  const handleModalBuyNow = (
-    product: Product,
-    quantity: number,
-    _options?: ProductOptions
-  ) => {
-    if (!product.isActive) return;
-    addToCart(product, quantity);
-    (window as unknown as { __pop?: () => void }).__pop?.();
-    setIsModalOpen(false);
-    navigate('/thanh-toan');
+    navigate(`/am-thuc/${product.slug}`);
   };
 
   const heading = PAGE_HEADING;
@@ -470,17 +434,6 @@ export const FoodBeveragePage: React.FC = () => {
           </section>
         </div>
       </main>
-
-      {/* 3. MODAL CHI TIẾT SẢN PHẨM */}
-      <ProductDetailModal
-        product={selectedProduct}
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onAddToCart={handleModalAddToCart}
-        onBuyNow={handleModalBuyNow}
-        isFavorited={selectedProduct ? isFavorite(selectedProduct.id) : false}
-        onToggleFavorite={toggleFavorite}
-      />
     </div>
   );
 };

@@ -1,7 +1,8 @@
-import { useState } from 'react';
-import { Trash2, Plus, Minus, Phone, Utensils } from 'lucide-react';
+import { ReactNode, useMemo, useState } from 'react';
+import { Trash2, Plus, Minus, ChevronDown, ChevronUp, Utensils } from 'lucide-react';
 import { formatPrice } from '../../utils/formatters';
-import { HOTLINE_NUMBER } from '../../config/constants';
+import { useNavbarLanguage } from '../../content/languages';
+import { getSpotName } from '../../content/souvenirSpots';
 
 export interface OrderSummaryItem {
   id: number;
@@ -9,6 +10,7 @@ export interface OrderSummaryItem {
   quantity: number;
   price: number;
   imageUrl?: string;
+  poiSlug?: string | null;
 }
 
 export interface OrderSummaryProps {
@@ -19,9 +21,10 @@ export interface OrderSummaryProps {
   totalCount: number;
   onUpdateQuantity: (id: number, quantity: number) => void;
   onRemoveItem: (id: number) => void;
-  onPlaceOrder: () => void;
-  submitting: boolean;
+  children?: ReactNode;
 }
+
+const OTHER_GROUP = '__other__';
 
 export function OrderSummary({
   items,
@@ -31,156 +34,148 @@ export function OrderSummary({
   totalCount,
   onUpdateQuantity,
   onRemoveItem,
-  onPlaceOrder,
-  submitting,
+  children,
 }: OrderSummaryProps) {
-  const [agreedTerms, setAgreedTerms] = useState(false);
+  const { lang, t } = useNavbarLanguage();
+  const c = t.shop.checkoutPage;
+  const [isOpen, setIsOpen] = useState(false);
   const isFreeShipping = shippingFee === 0;
 
+  const groups = useMemo(() => {
+    const map = new Map<string, OrderSummaryItem[]>();
+    for (const item of items) {
+      const key = item.poiSlug ? item.poiSlug : OTHER_GROUP;
+      const bucket = map.get(key);
+      if (bucket) {
+        bucket.push(item);
+      } else {
+        map.set(key, [item]);
+      }
+    }
+    return Array.from(map.entries());
+  }, [items]);
+
+  const groupTitle = (key: string): string =>
+    key === OTHER_GROUP
+      ? c.groupOther
+      : c.groupFromSpot.replace('{spot}', getSpotName(key, lang));
+
   return (
-    <aside className="checkout-card checkout-summary-card">
-      {/* Header */}
-      <h2 className="checkout-card-title">Tóm tắt đơn hàng</h2>
+    <aside className="co-card co-summary">
+      <div className="co-summary-head">
+        <h2 className="co-card-title">{c.summarySection}</h2>
+        <button
+          type="button"
+          className="co-summary-toggle"
+          aria-expanded={isOpen}
+          aria-controls="co-summary-body"
+          aria-label={isOpen ? c.collapseSummary : c.expandSummary}
+          onClick={() => setIsOpen((prev) => !prev)}
+        >
+          <span className="co-summary-meta">
+            <span>{c.itemCountValue.replace('{n}', String(totalCount))}</span>
+            <span className="co-summary-meta-total">{formatPrice(total)}</span>
+          </span>
+          {isOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+        </button>
+      </div>
 
-      {/* Item List */}
-      <div className="summary-items-list">
-        {items.map((item) => (
-          <div key={item.id} className="summary-item-row">
-            {/* Thumbnail + Name + Price */}
-            <div className="summary-item-left">
-              {item.imageUrl ? (
-                <img
-                  src={item.imageUrl}
-                  alt={item.name}
-                  className="summary-item-thumb"
-                  loading="lazy"
-                />
-              ) : (
-                <div className="summary-item-thumb-placeholder" aria-hidden="true">
-                  <Utensils size={18} />
+      <div
+        id="co-summary-body"
+        className={`co-summary-body ${isOpen ? 'is-open' : ''}`}
+      >
+        <div className="co-summary-groups">
+          {groups.map(([key, groupItems]) => (
+            <div key={key} className="co-summary-group">
+              <h3 className="co-summary-group-title">{groupTitle(key)}</h3>
+              {groupItems.map((item) => (
+                <div key={item.id} className="co-item">
+                  <div className="co-item-main">
+                    {item.imageUrl ? (
+                      <img
+                        src={item.imageUrl}
+                        alt={item.name}
+                        className="co-item-thumb"
+                        loading="lazy"
+                      />
+                    ) : (
+                      <span className="co-item-thumb co-item-thumb-empty" aria-hidden="true">
+                        <Utensils size={18} />
+                      </span>
+                    )}
+                    <div className="co-item-info">
+                      <span className="co-item-name">{item.name}</span>
+                      <span className="co-item-price">
+                        {formatPrice(item.price * item.quantity)}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="co-item-controls">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (item.quantity > 1) {
+                          onUpdateQuantity(item.id, item.quantity - 1);
+                        } else {
+                          onRemoveItem(item.id);
+                        }
+                      }}
+                      className="co-qty-btn"
+                      aria-label={c.decreaseQty.replace('{name}', item.name)}
+                    >
+                      <Minus size={12} strokeWidth={2.5} />
+                    </button>
+                    <span className="co-qty-val">{item.quantity}</span>
+                    <button
+                      type="button"
+                      onClick={() => onUpdateQuantity(item.id, item.quantity + 1)}
+                      className="co-qty-btn"
+                      aria-label={c.increaseQty.replace('{name}', item.name)}
+                    >
+                      <Plus size={12} strokeWidth={2.5} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => onRemoveItem(item.id)}
+                      className="co-trash-btn"
+                      aria-label={c.removeItem.replace('{name}', item.name)}
+                    >
+                      <Trash2 size={15} />
+                    </button>
+                  </div>
                 </div>
-              )}
-
-              <div className="summary-item-info">
-                <span className="summary-item-name">{item.name}</span>
-                <span className="summary-item-price">
-                  {formatPrice(item.price * item.quantity)}
-                </span>
-              </div>
+              ))}
             </div>
+          ))}
+        </div>
 
-            {/* Controls (− / + / Trash): phẳng, không viền nút browser */}
-            <div className="summary-item-controls">
-              <button
-                type="button"
-                onClick={() => {
-                  if (item.quantity > 1) {
-                    onUpdateQuantity(item.id, item.quantity - 1);
-                  } else {
-                    onRemoveItem(item.id);
-                  }
-                }}
-                className="summary-qty-btn"
-                aria-label={`Giảm số lượng ${item.name}`}
-              >
-                <Minus size={12} strokeWidth={2.5} />
-              </button>
-              <span className="summary-qty-val">{item.quantity}</span>
-              <button
-                type="button"
-                onClick={() => onUpdateQuantity(item.id, item.quantity + 1)}
-                className="summary-qty-btn"
-                aria-label={`Tăng số lượng ${item.name}`}
-              >
-                <Plus size={12} strokeWidth={2.5} />
-              </button>
-              <button
-                type="button"
-                onClick={() => onRemoveItem(item.id)}
-                className="summary-trash-btn"
-                title={`Xóa ${item.name}`}
-                aria-label={`Xóa ${item.name}`}
-              >
-                <Trash2 size={15} />
-              </button>
-            </div>
+        <div className="co-cost-list">
+          <div className="co-cost-line">
+            <span>{c.itemCountLabel}</span>
+            <span>{c.itemCountValue.replace('{n}', String(totalCount))}</span>
           </div>
-        ))}
-      </div>
-
-      {/* Cost Breakdown */}
-      <div className="summary-cost-list">
-        <div className="summary-cost-line">
-          <span>Số lượng món:</span>
-          <span>{totalCount} phần</span>
+          <div className="co-cost-line">
+            <span>{c.subtotalLabel}</span>
+            <span>{formatPrice(subtotal)}</span>
+          </div>
+          <div className="co-cost-line">
+            <span>{c.shippingFeeLabel}</span>
+            {isFreeShipping ? (
+              <span className="co-free-ship">{c.freeShip}</span>
+            ) : (
+              <span>{formatPrice(shippingFee)}</span>
+            )}
+          </div>
         </div>
 
-        <div className="summary-cost-line">
-          <span>Tạm tính:</span>
-          <span>{formatPrice(subtotal)}</span>
+        <div className="co-total-line">
+          <span className="co-total-label">{c.grandTotalLabel}</span>
+          <span className="co-total-val">{formatPrice(total)}</span>
         </div>
 
-        <div className="summary-cost-line">
-          <span>Phí giao hàng:</span>
-          {isFreeShipping ? (
-            <span className="summary-free-ship">Miễn phí</span>
-          ) : (
-            <span>{formatPrice(shippingFee)}</span>
-          )}
-        </div>
+        {children}
       </div>
-
-      {/* Total Row */}
-      <div className="summary-total-line">
-        <span className="summary-total-label">Tổng cộng:</span>
-        <span className="summary-total-val">{formatPrice(total)}</span>
-      </div>
-
-      {/* Terms Agreement Checkbox */}
-      <label className="summary-terms-label">
-        <input
-          type="checkbox"
-          checked={agreedTerms}
-          onChange={(e) => setAgreedTerms(e.target.checked)}
-        />
-        <span>
-          Tôi đồng ý với{' '}
-          <a
-            href="#"
-            onClick={(e) => e.preventDefault()}
-            style={{ color: '#C2410C', textDecoration: 'none', fontWeight: 600 }}
-          >
-            Điều khoản dịch vụ
-          </a>{' '}
-          của Echora.
-        </span>
-      </label>
-
-      {/* Hotline text */}
-      <p
-        style={{
-          fontSize: '12px',
-          color: '#78716C',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: '6px',
-          margin: '14px 0 0',
-        }}
-      >
-        <Phone size={13} style={{ color: '#A8A29E' }} aria-hidden="true" />
-        <span>Cần hỗ trợ? Gọi {HOTLINE_NUMBER} (7:00 - 22:00)</span>
-      </p>
-
-      {/* Place Order CTA Button */}
-      <button
-        type="button"
-        onClick={onPlaceOrder}
-        disabled={submitting || items.length === 0 || !agreedTerms}
-        className="checkout-order-submit-btn"
-      >
-        {submitting ? 'Đang xử lý...' : 'Đặt hàng'}
-      </button>
     </aside>
   );
 }

@@ -8,6 +8,7 @@ import { t } from '../../content/nearbyI18n';
 export interface SortedPoiItem {
   poi: GeoPoi;
   originalIndex: number;
+  stopNumber?: number;
   dist: number | null;
 }
 
@@ -30,13 +31,11 @@ export interface PoiListProps {
   onSelectPoi: (poiId: string) => void;
   onHoverPoi?: (poiId: string | null) => void;
   onTogglePlay?: (poiId: string) => void;
-  onChangeLanguage?: (lang: SupportedLanguage) => void;
   getPoiName: (poi: GeoPoi) => string;
   getPoiCategory: (poi: GeoPoi) => string;
   inZoneBadgeText?: string;
   nearBadgeText?: string;
   distFormatText?: (distStr: string) => string;
-  langVoiceAriaText?: string;
   listenBtnText?: string;
   pauseBtnText?: string;
   resumeBtnText?: string;
@@ -64,7 +63,7 @@ const StopRow: React.FC<StopRowProps> = ({
   onHover,
 }) => {
   const [thumbError, setThumbError] = useState(false);
-  const { poi, originalIndex } = item;
+  const { poi, originalIndex, stopNumber } = item;
   const poiName = getPoiName(poi);
   const poiCategory = getPoiCategory(poi);
   const hasImage = Boolean((poi.image || poi.slug) && !thumbError);
@@ -80,7 +79,7 @@ const StopRow: React.FC<StopRowProps> = ({
         onMouseLeave={() => onHover?.(poi.id, false)}
       >
         <span className="stop-badge-col">
-          <span className="stop-number-badge">{originalIndex + 1}</span>
+          <span className="stop-number-badge">{stopNumber ?? originalIndex + 1}</span>
         </span>
         {hasImage && (
           <img
@@ -159,7 +158,7 @@ const PoiListComponent: React.FC<PoiListProps> = ({
         </div>
       )}
 
-      {/* Stop list container: scrolls independently to match the map height */}
+      {/* Stop list container: grows with the page so every stop stays visible */}
       <div className="nearby-stop-list-container">
         <ol className="nearby-stop-list" role="list">
           {sortedPois.map((item) => {

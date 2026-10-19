@@ -65,15 +65,11 @@ export const ToolbarControls: React.FC<ToolbarControlsProps> = ({
   const [simLng, setSimLng] = useState('');
   const [simError, setSimError] = useState('');
   const settingsRef = useRef<HTMLDivElement>(null);
-  const simRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (settingsRef.current && !settingsRef.current.contains(e.target as Node)) {
         setShowSettings(false);
-      }
-      if (simRef.current && !simRef.current.contains(e.target as Node)) {
-        setShowSim(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -96,6 +92,7 @@ export const ToolbarControls: React.FC<ToolbarControlsProps> = ({
     onApplySimCoords?.(lat, lng);
     setSimError('');
     setShowSim(false);
+    setShowSettings(false);
   };
 
   return (
@@ -127,112 +124,6 @@ export const ToolbarControls: React.FC<ToolbarControlsProps> = ({
 
         {/* Right: GPS Location, Simulation Toggle & Settings */}
         <div className="controlbar-action-cluster">
-          {/* Simulation picker: choose a stop or enter coordinates */}
-          {onPickSimStop && (
-            <div className="settings-wrapper" ref={simRef}>
-              <button
-                type="button"
-                className={`nearby-action-btn btn-sim ${isSimMode ? 'is-active' : ''}`}
-                id="btnSim"
-                onClick={() => setShowSim((prev) => !prev)}
-                aria-expanded={showSim}
-                aria-pressed={isSimMode}
-                title={
-                  isSimMode ? t(currentLang, 'simModeStopTitle') : t(currentLang, 'simModeStartTitle')
-                }
-              >
-                <Navigation size={15} aria-hidden="true" />
-                <span>{isSimMode ? t(currentLang, 'simModeActive') : t(currentLang, 'simMode')}</span>
-              </button>
-
-              {showSim && (
-                <div
-                  className="settings-popover sim-popover"
-                  role="dialog"
-                  aria-label={t(currentLang, 'simPanelTitle')}
-                >
-                  {simStops.length > 0 && (
-                    <div className="popover-field">
-                      <span>{t(currentLang, 'simPickStopLabel')}</span>
-                      <div className="sim-stop-list">
-                        {simStops.map((stop) => (
-                          <button
-                            key={stop.id}
-                            type="button"
-                            className={`sim-stop-item ${activeSimStopId === stop.id ? 'is-active' : ''}`}
-                            onClick={() => {
-                              onPickSimStop(stop.id);
-                              setShowSim(false);
-                            }}
-                          >
-                            {stop.name}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="popover-field">
-                    <span>{t(currentLang, 'simManualLabel')}</span>
-                    <div className="sim-coord-row">
-                      <input
-                        className="sel-radius-input sim-coord-input"
-                        type="number"
-                        step="any"
-                        inputMode="decimal"
-                        placeholder={t(currentLang, 'simLatLabel')}
-                        aria-label={t(currentLang, 'simLatLabel')}
-                        value={simLat}
-                        onChange={(e) => {
-                          setSimLat(e.target.value);
-                          setSimError('');
-                        }}
-                      />
-                      <input
-                        className="sel-radius-input sim-coord-input"
-                        type="number"
-                        step="any"
-                        inputMode="decimal"
-                        placeholder={t(currentLang, 'simLngLabel')}
-                        aria-label={t(currentLang, 'simLngLabel')}
-                        value={simLng}
-                        onChange={(e) => {
-                          setSimLng(e.target.value);
-                          setSimError('');
-                        }}
-                      />
-                    </div>
-                    {simError && (
-                      <p className="sim-coord-error" role="alert">
-                        {simError}
-                      </p>
-                    )}
-                    <button
-                      type="button"
-                      className="btn-reset-progress sim-apply-btn"
-                      onClick={handleApplyCoords}
-                    >
-                      {t(currentLang, 'simApplyBtn')}
-                    </button>
-                  </div>
-
-                  {isSimMode && onStopSim && (
-                    <button
-                      type="button"
-                      className="btn-reset-progress"
-                      onClick={() => {
-                        onStopSim();
-                        setShowSim(false);
-                      }}
-                    >
-                      {t(currentLang, 'simStopBtn')}
-                    </button>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
-
           <button
             className={`nearby-action-btn btn-gps ${isSimMode ? 'is-disabled' : ''}`}
             id="btnGps"
@@ -291,6 +182,119 @@ export const ToolbarControls: React.FC<ToolbarControlsProps> = ({
                     <option value={2000}>{formatDistance(2000, currentLang)}</option>
                   </select>
                 </label>
+
+                {/* Demo tools: location simulation lives here, not in the main control bar */}
+                {onPickSimStop && (
+                  <div className="popover-demo-section">
+                    <div className="popover-demo-title">{t(currentLang, 'demoSection')}</div>
+                    <button
+                      type="button"
+                      className={`nearby-action-btn btn-sim ${isSimMode ? 'is-active' : ''}`}
+                      id="btnSim"
+                      onClick={() => setShowSim((prev) => !prev)}
+                      aria-expanded={showSim}
+                      aria-pressed={isSimMode}
+                      title={
+                        isSimMode
+                          ? t(currentLang, 'simModeStopTitle')
+                          : t(currentLang, 'simModeStartTitle')
+                      }
+                    >
+                      <Navigation size={15} aria-hidden="true" />
+                      <span>
+                        {isSimMode ? t(currentLang, 'simModeActive') : t(currentLang, 'simMode')}
+                      </span>
+                    </button>
+
+                    {showSim && (
+                      <div
+                        className="sim-popover-inline"
+                        role="dialog"
+                        aria-label={t(currentLang, 'simPanelTitle')}
+                      >
+                        {simStops.length > 0 && (
+                          <div className="popover-field">
+                            <span>{t(currentLang, 'simPickStopLabel')}</span>
+                            <div className="sim-stop-list">
+                              {simStops.map((stop) => (
+                                <button
+                                  key={stop.id}
+                                  type="button"
+                                  className={`sim-stop-item ${activeSimStopId === stop.id ? 'is-active' : ''}`}
+                                  onClick={() => {
+                                    onPickSimStop(stop.id);
+                                    setShowSim(false);
+                                    setShowSettings(false);
+                                  }}
+                                >
+                                  {stop.name}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        <div className="popover-field">
+                          <span>{t(currentLang, 'simManualLabel')}</span>
+                          <div className="sim-coord-row">
+                            <input
+                              className="sel-radius-input sim-coord-input"
+                              type="number"
+                              step="any"
+                              inputMode="decimal"
+                              placeholder={t(currentLang, 'simLatLabel')}
+                              aria-label={t(currentLang, 'simLatLabel')}
+                              value={simLat}
+                              onChange={(e) => {
+                                setSimLat(e.target.value);
+                                setSimError('');
+                              }}
+                            />
+                            <input
+                              className="sel-radius-input sim-coord-input"
+                              type="number"
+                              step="any"
+                              inputMode="decimal"
+                              placeholder={t(currentLang, 'simLngLabel')}
+                              aria-label={t(currentLang, 'simLngLabel')}
+                              value={simLng}
+                              onChange={(e) => {
+                                setSimLng(e.target.value);
+                                setSimError('');
+                              }}
+                            />
+                          </div>
+                          {simError && (
+                            <p className="sim-coord-error" role="alert">
+                              {simError}
+                            </p>
+                          )}
+                          <button
+                            type="button"
+                            className="btn-reset-progress sim-apply-btn"
+                            onClick={handleApplyCoords}
+                          >
+                            {t(currentLang, 'simApplyBtn')}
+                          </button>
+                        </div>
+
+                        {isSimMode && onStopSim && (
+                          <button
+                            type="button"
+                            className="btn-reset-progress"
+                            onClick={() => {
+                              onStopSim();
+                              setShowSim(false);
+                              setShowSettings(false);
+                            }}
+                          >
+                            {t(currentLang, 'simStopBtn')}
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 {/* Progress reset option */}
                 {onResetProgress && (

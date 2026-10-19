@@ -90,6 +90,7 @@ export function mapGuideToGeoPoi(guide: PoiGuide): GeoPoi {
   const description: Record<SupportedLanguage, string> = emptyByLang();
   const narration = emptyNarration();
   const audio: Record<SupportedLanguage, string | number> = emptyByLang();
+  const audioStatusByLanguage: Record<SupportedLanguage, string | null> = emptyByLang();
 
   for (const lang of LANGS) {
     const tr = guide.translations?.[lang];
@@ -112,6 +113,9 @@ export function mapGuideToGeoPoi(guide: PoiGuide): GeoPoi {
 
     const shortText = trSummary || fallback?.narration?.short?.[lang] || text;
     if (shortText) narration.short[lang] = shortText;
+
+    audio[lang] = tr?.audioUrl ?? '';
+    audioStatusByLanguage[lang] = tr?.audioStatus ?? null;
 
     const fullParas = splitParagraphs(trDescription);
     if (fullParas.length > 0) {
@@ -137,6 +141,7 @@ export function mapGuideToGeoPoi(guide: PoiGuide): GeoPoi {
     category,
     image: guide.thumbnailUrl || fallback?.image || '',
     audio,
+    audioStatusByLanguage,
     audioUrl,
     audioStatus,
     transcript,

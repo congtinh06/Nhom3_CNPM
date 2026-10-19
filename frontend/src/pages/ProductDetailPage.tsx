@@ -21,6 +21,7 @@ import { useToast } from '../context/ToastContext';
 import { useFavorites } from '../hooks/useFavorites';
 import { formatPrice } from '../utils/formatters';
 import { defaultProducts } from '../content/defaultProducts';
+import { useNavbarLanguage } from '../content/languages';
 import { Product, ProductCategory } from '../types';
 
 interface ProductDetailPageProps {
@@ -33,6 +34,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ category: 
   const { addToCart } = useCart();
   const { showToast } = useToast();
   const { isFavorite, toggleFavorite } = useFavorites();
+  const { t } = useNavbarLanguage();
 
   const [product, setProduct] = useState<Product | null>(null);
   const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
@@ -116,6 +118,8 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ category: 
     addToCart(product, quantity);
     const optionsText = product.hasDrinkOptions
       ? ` (${size}, ${sugar} đường, ${ice} đá)`
+      : product.category === 'SOUVENIR'
+      ? ''
       : ` (${foodNote})`;
     showToast(`Đã thêm vào giỏ: ${quantity} × ${product.name}${optionsText}`);
     setAddedAnimation(true);
@@ -146,9 +150,9 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ category: 
       <div className="food-beverage-page-container" style={{ padding: '120px 20px', minHeight: '60vh' }}>
         <div className="food-empty-state-card" style={{ maxWidth: 500, margin: '0 auto' }}>
           <AlertCircle size={40} color="var(--fb-saigon-red)" style={{ margin: '0 auto 12px' }} />
-          <h2 style={{ fontFamily: 'Anton, sans-serif', color: 'var(--fb-deep-brown)' }}>Món không khả dụng</h2>
+          <h2 style={{ fontFamily: 'Anton, sans-serif', color: 'var(--fb-deep-brown)' }}>{t.shop.productUnavailable}</h2>
           <p style={{ color: 'var(--fb-text-muted)', marginBottom: 20 }}>
-            {error || 'Món bạn đang tìm kiếm không tồn tại hoặc đã ngừng phục vụ.'}
+            {error || t.shop.productUnavailableDesc}
           </p>
           <button
             type="button"
@@ -156,7 +160,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ category: 
             onClick={() => navigate(basePath)}
           >
             <ArrowLeft size={16} />
-            <span>Quay lại thực đơn</span>
+            <span>{t.shop.backToSouvenirList}</span>
           </button>
         </div>
       </div>
@@ -166,6 +170,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ category: 
   const ratingValue = product.rating || 4.9;
   const reviewsCount = product.reviewsCount || 100;
   const isFavorited = isFavorite(product.id);
+  const isSouvenir = product.category === 'SOUVENIR';
 
   return (
     <div className="food-beverage-page-container" style={{ paddingTop: 90 }}>
@@ -214,17 +219,19 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ category: 
                 </button>
               </div>
 
-              {/* Info pills */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginTop: 14 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--fb-off-white)', padding: '10px 14px', borderRadius: 'var(--fb-radius-sm)', border: '1px solid var(--fb-border-light)', fontSize: 13, color: 'var(--fb-text-muted)' }}>
-                  <Clock size={16} color="var(--fb-orange-brown)" />
-                  <span>Chuẩn bị: {product.prepTime || '10 - 15 phút'}</span>
+              {/* Info pills: chỉ dành cho món ăn / đồ uống, ẩn với quà lưu niệm */}
+              {!isSouvenir && (
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginTop: 14 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--fb-off-white)', padding: '10px 14px', borderRadius: 'var(--fb-radius-sm)', border: '1px solid var(--fb-border-light)', fontSize: 13, color: 'var(--fb-text-muted)' }}>
+                    <Clock size={16} color="var(--fb-orange-brown)" />
+                    <span>Chuẩn bị: {product.prepTime || '10 - 15 phút'}</span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--fb-off-white)', padding: '10px 14px', borderRadius: 'var(--fb-radius-sm)', border: '1px solid var(--fb-border-light)', fontSize: 13, color: 'var(--fb-text-muted)' }}>
+                    <Utensils size={16} color="var(--fb-orange-brown)" />
+                    <span>Khẩu phần: {product.portion || '1 phần chuẩn'}</span>
+                  </div>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--fb-off-white)', padding: '10px 14px', borderRadius: 'var(--fb-radius-sm)', border: '1px solid var(--fb-border-light)', fontSize: 13, color: 'var(--fb-text-muted)' }}>
-                  <Utensils size={16} color="var(--fb-orange-brown)" />
-                  <span>Khẩu phần: {product.portion || '1 phần chuẩn'}</span>
-                </div>
-              </div>
+              )}
             </div>
 
             {/* Cột phải: Thông tin & Đặt món */}
@@ -273,8 +280,8 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ category: 
                 {product.description}
               </p>
 
-              {/* Options */}
-              {product.hasDrinkOptions ? (
+              {/* Options: chỉ hiển thị cho món ăn / đồ uống, ẩn với quà lưu niệm */}
+              {!isSouvenir && (product.hasDrinkOptions ? (
                 <div className="food-modal-options-section" style={{ marginBottom: 20 }}>
                   <div className="option-group">
                     <span className="option-title">Kích cỡ ly:</span>
@@ -346,7 +353,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ category: 
                     </div>
                   </div>
                 </div>
-              )}
+              ))}
 
               {/* Quantity row */}
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 0', borderTop: '1px solid var(--fb-border-light)', borderBottom: '1px solid var(--fb-border-light)', marginBottom: 24 }}>
@@ -420,7 +427,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ category: 
                   style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--fb-text-muted)', textDecoration: 'none' }}
                 >
                   <ArrowLeft size={15} />
-                  <span>Quay lại thực đơn mua sắm</span>
+                  <span>{t.shop.backToSouvenirList}</span>
                 </Link>
               </div>
             </div>
@@ -432,8 +439,8 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ category: 
       {relatedProducts.length > 0 && (
         <section style={{ maxWidth: 1200, margin: '40px auto 60px', padding: '0 20px' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-            <h2 style={{ fontFamily: 'Anton, sans-serif', fontSize: 22, color: 'var(--fb-deep-brown)', margin: 0 }}>
-              GỢI Ý MÓN CÙNG DANH MỤC
+            <h2 style={{ fontFamily: 'Anton, sans-serif', fontSize: 22, color: 'var(--fb-deep-brown)', margin: 0, textTransform: 'uppercase' }}>
+              {t.shop.relatedSouvenirHeading}
             </h2>
             <Link to={basePath} style={{ color: 'var(--fb-orange-brown)', fontSize: 13, fontWeight: 600, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 4 }}>
               <span>Xem tất cả</span>

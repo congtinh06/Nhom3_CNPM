@@ -384,6 +384,10 @@ describe('NearbyPage - Clean Multilingual & Audio Narration Integration', () => 
       </BrowserRouter>
     );
 
+    act(() => {
+      fireEvent.click(screen.getByRole('button', { name: /Cài đặt/i }));
+    });
+
     const simBtn = screen.getByRole('button', { name: /Giả lập vị trí/i });
     expect(simBtn).toBeInTheDocument();
 
@@ -402,6 +406,11 @@ describe('NearbyPage - Clean Multilingual & Audio Narration Integration', () => 
     const simMatches = screen.getAllByText(/Chế độ giả lập/i);
     expect(simMatches.length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText(/Bấm hoặc kéo chấm tròn để di chuyển/i)).toBeInTheDocument();
+
+    // Selecting a stop closes settings; reopen to see the active demo control
+    act(() => {
+      fireEvent.click(screen.getByRole('button', { name: /Cài đặt/i }));
+    });
     expect(screen.getByRole('button', { name: /Đang giả lập/i })).toBeInTheDocument();
   });
 
@@ -412,6 +421,9 @@ describe('NearbyPage - Clean Multilingual & Audio Narration Integration', () => 
       </BrowserRouter>
     );
 
+    act(() => {
+      fireEvent.click(screen.getByRole('button', { name: /Cài đặt/i }));
+    });
     act(() => {
       fireEvent.click(screen.getByRole('button', { name: /Giả lập vị trí/i }));
     });
@@ -424,6 +436,11 @@ describe('NearbyPage - Clean Multilingual & Audio Narration Integration', () => 
     });
 
     expect(screen.getAllByText(/Chế độ giả lập/i).length).toBeGreaterThanOrEqual(1);
+
+    // Applying coordinates closes settings; reopen to see the active demo control
+    act(() => {
+      fireEvent.click(screen.getByRole('button', { name: /Cài đặt/i }));
+    });
     expect(screen.getByRole('button', { name: /Đang giả lập/i })).toBeInTheDocument();
   });
 
@@ -434,6 +451,9 @@ describe('NearbyPage - Clean Multilingual & Audio Narration Integration', () => 
       </BrowserRouter>
     );
 
+    act(() => {
+      fireEvent.click(screen.getByRole('button', { name: /Cài đặt/i }));
+    });
     act(() => {
       fireEvent.click(screen.getByRole('button', { name: /Giả lập vị trí/i }));
     });

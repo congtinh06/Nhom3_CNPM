@@ -1,7 +1,7 @@
 import React from 'react';
 
 export interface AdminToolbarProps {
-  children: React.ReactNode;
+  children?: React.ReactNode;
   onRefresh?: () => void;
   refreshing?: boolean;
   refreshLabel?: string;

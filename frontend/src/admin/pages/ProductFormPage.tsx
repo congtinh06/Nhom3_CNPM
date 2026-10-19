@@ -27,7 +27,7 @@ interface FormValues {
 const DEFAULT_VALUES: FormValues = {
   name: '',
   slug: '',
-  category: 'FOOD',
+  category: 'SOUVENIR',
   price: '',
   shortDescription: '',
   description: '',
@@ -77,7 +77,7 @@ export const ProductFormPage: React.FC = () => {
       const loaded: FormValues = {
         name: product.name || '',
         slug: product.slug || '',
-        category: product.category || 'FOOD',
+        category: product.category || 'SOUVENIR',
         price: String(product.price ?? ''),
         shortDescription: product.shortDescription || '',
         description: product.description || '',
@@ -383,7 +383,7 @@ export const ProductFormPage: React.FC = () => {
           <p className="adm-page-desc">
             {isEditMode
               ? `Cập nhật thông tin chi tiết, hình ảnh và hiển thị cho sản phẩm #${productId}.`
-              : 'Điền thông tin món ăn hoặc đồ uống để đăng bán trên website du khách.'}
+              : 'Điền thông tin quà lưu niệm để đăng bán trên website du khách.'}
           </p>
         </div>
       </div>
@@ -408,7 +408,7 @@ export const ProductFormPage: React.FC = () => {
                 htmlFor="name"
                 required
                 error={errors.name}
-                helperText="Tối đa 255 ký tự. Ví dụ: Cơm tấm sườn bì chả"
+                helperText="Tối đa 255 ký tự. Ví dụ: Nam châm lưu niệm Chợ Bến Thành"
               >
                 <input
                   id="name"
@@ -417,7 +417,7 @@ export const ProductFormPage: React.FC = () => {
                   className="adm-input"
                   value={formValues.name}
                   onChange={handleInputChange}
-                  placeholder="Nhập tên món ăn hoặc đồ uống"
+                  placeholder="Nhập tên quà lưu niệm"
                   required
                   aria-invalid={Boolean(errors.name)}
                   aria-describedby={errors.name ? 'name-error' : 'name-helper'}
@@ -443,8 +443,6 @@ export const ProductFormPage: React.FC = () => {
                       aria-invalid={Boolean(errors.category)}
                       aria-describedby={errors.category ? 'category-error' : undefined}
                     >
-                      <option value="FOOD">Món ăn (FOOD)</option>
-                      <option value="DRINK">Đồ uống (DRINK)</option>
                       <option value="SOUVENIR">Quà lưu niệm (SOUVENIR)</option>
                     </select>
                   </FormField>
@@ -500,7 +498,7 @@ export const ProductFormPage: React.FC = () => {
                 label="Đường dẫn định danh (Slug)"
                 htmlFor="slug"
                 error={errors.slug}
-                helperText="Để trống để tự động sinh từ tên sản phẩm. Ví dụ: com-tam-suon-bi-cha"
+                helperText="Để trống để tự động sinh từ tên sản phẩm. Ví dụ: nam-cham-cho-ben-thanh"
               >
                 <input
                   id="slug"
@@ -509,7 +507,7 @@ export const ProductFormPage: React.FC = () => {
                   className="adm-input"
                   value={formValues.slug}
                   onChange={handleInputChange}
-                  placeholder="com-tam-suon-bi-cha"
+                  placeholder="nam-cham-cho-ben-thanh"
                   maxLength={150}
                   aria-invalid={Boolean(errors.slug)}
                   aria-describedby={errors.slug ? 'slug-error' : 'slug-helper'}
@@ -529,7 +527,7 @@ export const ProductFormPage: React.FC = () => {
                   rows={2}
                   value={formValues.shortDescription}
                   onChange={handleInputChange}
-                  placeholder="Mô tả ngắn gọn về hương vị, thành phần chính"
+                  placeholder="Mô tả ngắn gọn về quà lưu niệm, chất liệu, xuất xứ"
                   maxLength={500}
                   aria-invalid={Boolean(errors.shortDescription)}
                   aria-describedby={
@@ -542,7 +540,7 @@ export const ProductFormPage: React.FC = () => {
                 label="Mô tả chi tiết"
                 htmlFor="description"
                 error={errors.description}
-                helperText="Nội dung giới thiệu chi tiết, công thức, câu chuyện ẩm thực."
+                helperText="Nội dung giới thiệu chi tiết, câu chuyện sản phẩm."
               >
                 <textarea
                   id="description"
@@ -551,7 +549,7 @@ export const ProductFormPage: React.FC = () => {
                   rows={5}
                   value={formValues.description}
                   onChange={handleInputChange}
-                  placeholder="Giới thiệu đầy đủ chi tiết về món ăn"
+                  placeholder="Giới thiệu đầy đủ chi tiết về quà lưu niệm"
                   aria-invalid={Boolean(errors.description)}
                   aria-describedby={errors.description ? 'description-error' : 'description-helper'}
                 />

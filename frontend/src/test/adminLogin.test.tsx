@@ -54,7 +54,7 @@ describe('AdminLoginPage', () => {
     renderLoginPage();
 
     const emailInput = screen.getByLabelText(/email quản trị/i);
-    const passwordInput = screen.getByLabelText(/mật khẩu/i);
+    const passwordInput = screen.getByLabelText(/^mật khẩu/i);
     const submitBtn = screen.getByRole('button', { name: /đăng nhập vào hệ thống/i });
 
     fireEvent.change(emailInput, { target: { value: 'khach@saigonvoice.local' } });
@@ -74,6 +74,19 @@ describe('AdminLoginPage', () => {
     expect(screen.queryByTestId('admin-home')).not.toBeInTheDocument();
   });
 
+  it('hiện/ẩn mật khẩu bằng nút con mắt', () => {
+    renderLoginPage();
+
+    const passwordInput = screen.getByLabelText(/^mật khẩu/i);
+    expect(passwordInput).toHaveAttribute('type', 'password');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Hiện mật khẩu' }));
+    expect(passwordInput).toHaveAttribute('type', 'text');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Ẩn mật khẩu' }));
+    expect(passwordInput).toHaveAttribute('type', 'password');
+  });
+
   it('chuyển hướng vào trang quản trị khi đăng nhập thành công với vai trò ADMIN', async () => {
     const adminUser: AuthUser = {
       id: 1,
@@ -87,7 +100,7 @@ describe('AdminLoginPage', () => {
     renderLoginPage();
 
     const emailInput = screen.getByLabelText(/email quản trị/i);
-    const passwordInput = screen.getByLabelText(/mật khẩu/i);
+    const passwordInput = screen.getByLabelText(/^mật khẩu/i);
     const submitBtn = screen.getByRole('button', { name: /đăng nhập vào hệ thống/i });
 
     fireEvent.change(emailInput, { target: { value: 'admin@saigonvoice.local' } });

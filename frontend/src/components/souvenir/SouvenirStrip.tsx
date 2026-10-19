@@ -78,6 +78,8 @@ export const SouvenirStrip: React.FC<SouvenirStripProps> = ({ poiSlug, lang }) =
             onToggleFavorite={toggleFavorite}
             onAddToCart={handleAddToCart}
             onSelect={() => navigate(`/am-thuc/${product.slug}`)}
+            showRating={false}
+            neutralPlaceholder
           />
         ))}
       </div>

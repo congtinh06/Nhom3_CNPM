@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { FoodBeveragePage } from '../pages/FoodBeveragePage';
 import { CartProvider } from '../context/CartContext';
 import { ToastProvider } from '../context/ToastContext';
@@ -73,6 +73,21 @@ function renderPage(initialRoute = '/am-thuc') {
   );
 }
 
+function renderWithRouteProbe() {
+  return render(
+    <MemoryRouter initialEntries={['/am-thuc']}>
+      <ToastProvider>
+        <CartProvider>
+          <Routes>
+            <Route path="/am-thuc" element={<FoodBeveragePage />} />
+            <Route path="/am-thuc/:slug" element={<div>PRODUCT DETAIL ROUTE</div>} />
+          </Routes>
+        </CartProvider>
+      </ToastProvider>
+    </MemoryRouter>
+  );
+}
+
 describe('FoodBeveragePage - trang Quà lưu niệm', () => {
   beforeEach(() => {
     localStorage.clear();
@@ -129,5 +144,17 @@ describe('FoodBeveragePage - trang Quà lưu niệm', () => {
       expect(screen.queryByRole('heading', { name: 'Nam châm Chợ Bến Thành' })).not.toBeInTheDocument();
     });
     expect(await screen.findByRole('heading', { name: 'Quà lưu niệm Sài Gòn' })).toBeInTheDocument();
+  });
+
+  it('mở trang chi tiết khi bấm vào thẻ sản phẩm thay vì mở modal', async () => {
+    renderWithRouteProbe();
+
+    const card = await screen.findByRole('button', {
+      name: /^Nam châm Chợ Bến Thành/,
+    });
+    fireEvent.click(card);
+
+    expect(await screen.findByText('PRODUCT DETAIL ROUTE')).toBeInTheDocument();
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 });

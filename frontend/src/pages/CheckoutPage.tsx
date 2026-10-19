@@ -1,25 +1,26 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import '../styles/checkout.css';
+import '../styles/checkoutPage.css';
 import { useNavigate, Link } from 'react-router-dom';
 import { ShoppingBag, Phone } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import { createBackendOrder } from '../services/orderService';
 import { Stepper } from '../components/checkout/Stepper';
-import {
-  ContactSection,
-  ContactFormData,
-  ContactErrors,
-} from '../components/checkout/ContactSection';
-import {
-  DeliveryTimeSection,
-  DeliveryTimeType,
-} from '../components/checkout/DeliveryTimeSection';
-import {
-  PaymentSection,
-  PaymentMethod,
-} from '../components/checkout/PaymentSection';
+import { ContactSection, ContactFormData } from '../components/checkout/ContactSection';
+import { DeliveryOptionsSection } from '../components/checkout/DeliveryOptionsSection';
+import { PaymentSection, PaymentMethod } from '../components/checkout/PaymentSection';
 import { OrderSummary } from '../components/checkout/OrderSummary';
+import { PlaceOrderArea } from '../components/checkout/PlaceOrderArea';
+import {
+  CheckoutField,
+  cleanPhone,
+  firstInvalidField,
+  getPlaceOrderReason,
+  validateAll,
+} from '../components/checkout/checkoutValidation';
+import { useNavbarLanguage } from '../content/languages';
+import { useIsDesktop } from '../hooks/useIsDesktop';
 import {
   FREE_SHIPPING_THRESHOLD,
   SHIPPING_FEE,
@@ -40,6 +41,9 @@ function generateUUID(): string {
 export function CheckoutPage() {
   const navigate = useNavigate();
   const { user, isAuthenticated } = useAuth();
+  const { t } = useNavbarLanguage();
+  const c = t.shop.checkoutPage;
+  const isDesktop = useIsDesktop();
   const {
     cartItems,
     totalAmount,
@@ -49,7 +53,6 @@ export function CheckoutPage() {
     clearCart,
   } = useCart();
 
-  // Khách vãng lai: receiverName và email để trống ban đầu
   const [formData, setFormData] = useState<ContactFormData>({
     receiverName: '',
     phone: '',
@@ -61,19 +64,23 @@ export function CheckoutPage() {
     wardCode: '',
     wardName: '',
     streetAddress: '',
+    altAddress: '',
     note: '',
-    voucherCode: '',
+    deliveryTime: '',
+    deliverToOther: false,
+    otherReceiverName: '',
+    otherReceiverPhone: '',
   });
 
-  const [errors, setErrors] = useState<ContactErrors>({});
-  const [deliveryTime, setDeliveryTime] = useState<DeliveryTimeType>('NOW');
+  const [touched, setTouched] = useState<Partial<Record<CheckoutField, boolean>>>({});
+  const [submitted, setSubmitted] = useState(false);
+  const [agreedTerms, setAgreedTerms] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('COD');
   const [submitting, setSubmitting] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
 
   const hasPrefilledRef = useRef(false);
 
-  // Chỉ tự điền Họ tên và Email khi đã đăng nhập tài khoản thật
   useEffect(() => {
     if (isAuthenticated && user && !hasPrefilledRef.current) {
       setFormData((prev) => ({
@@ -85,84 +92,54 @@ export function CheckoutPage() {
     }
   }, [isAuthenticated, user]);
 
-  const handleFieldChange = (field: keyof ContactFormData, value: string) => {
+  const errors = useMemo(() => validateAll(formData), [formData]);
+
+  const reason = useMemo(
+    () =>
+      getPlaceOrderReason({
+        submitting,
+        cartCount: cartItems.length,
+        values: formData,
+        agreedTerms,
+      }),
+    [submitting, cartItems.length, formData, agreedTerms]
+  );
+
+  const handleFieldChange = (
+    field: keyof ContactFormData,
+    value: string | boolean
+  ) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
-    if (errors[field as keyof ContactErrors]) {
-      setErrors((prev) => ({ ...prev, [field]: undefined }));
-    }
   };
 
-  // Fees calculation
+  const handleFieldBlur = (field: CheckoutField) => {
+    setTouched((prev) => (prev[field] ? prev : { ...prev, [field]: true }));
+  };
+
   const subtotal = totalAmount;
   const shippingFee = subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_FEE;
   const total = subtotal + shippingFee;
 
-  const validateForm = (): boolean => {
-    const newErrors: ContactErrors = {};
-    let firstInvalidId: string | null = null;
-
-    if (!formData.receiverName.trim() || formData.receiverName.trim().length < 2) {
-      newErrors.receiverName = 'Vui lòng nhập họ và tên (tối thiểu 2 ký tự).';
-      firstInvalidId = 'receiverName';
-    }
-
-    const cleanPhone = formData.phone.replace(/[\s.-]/g, '');
-    const phoneRegex = /^(0|\+84)(3|5|7|8|9)[0-9]{8}$/;
-    if (!cleanPhone || !phoneRegex.test(cleanPhone)) {
-      newErrors.phone = 'Số điện thoại không hợp lệ (cần 10 chữ số, đầu 03/05/07/08/09).';
-      if (!firstInvalidId) firstInvalidId = 'phone';
-    }
-
-    if (formData.email.trim()) {
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(formData.email.trim())) {
-        newErrors.email = 'Địa chỉ email không đúng định dạng.';
-        if (!firstInvalidId) firstInvalidId = 'email';
-      }
-    }
-
-    if (!formData.provinceCode) {
-      newErrors.province = 'Vui lòng chọn Tỉnh / Thành phố.';
-      if (!firstInvalidId) firstInvalidId = 'province';
-    }
-
-    if (!formData.districtCode) {
-      newErrors.district = 'Vui lòng chọn Quận / Huyện.';
-      if (!firstInvalidId) firstInvalidId = 'district';
-    }
-
-    if (!formData.wardCode) {
-      newErrors.ward = 'Vui lòng chọn Phường / Xã.';
-      if (!firstInvalidId) firstInvalidId = 'ward';
-    }
-
-    if (!formData.streetAddress.trim() || formData.streetAddress.trim().length < 3) {
-      newErrors.streetAddress = 'Vui lòng nhập số nhà, tên đường chi tiết.';
-      if (!firstInvalidId) firstInvalidId = 'streetAddress';
-    }
-
-    setErrors(newErrors);
-
-    if (firstInvalidId) {
-      const el = document.getElementById(firstInvalidId);
-      if (el) el.focus();
-    }
-
-    return Object.keys(newErrors).length === 0;
-  };
-
   const handlePlaceOrder = async () => {
     if (submitting) return;
     setServerError(null);
+    setSubmitted(true);
 
-    if (cartItems.length === 0) {
-      setServerError('Giỏ hàng của bạn đang trống. Vui lòng chọn món trước khi đặt.');
+    if (cartItems.length === 0) return;
+
+    const invalid = firstInvalidField(formData);
+    if (invalid) {
+      const el = document.getElementById(invalid);
+      if (el) {
+        el.focus();
+        if (typeof el.scrollIntoView === 'function') {
+          el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        }
+      }
       return;
     }
 
-    if (!validateForm()) {
-      return;
-    }
+    if (!agreedTerms) return;
 
     setSubmitting(true);
     const idempotencyKey = generateUUID();
@@ -170,12 +147,32 @@ export function CheckoutPage() {
     try {
       const fullAddress = [
         formData.streetAddress.trim(),
+        formData.altAddress.trim(),
         formData.wardName,
         formData.districtName,
         formData.provinceName,
       ]
         .filter(Boolean)
         .join(', ');
+
+      const deliveryTimeLabel =
+        formData.deliveryTime === 'morning'
+          ? c.deliveryTimeMorning
+          : formData.deliveryTime === 'afternoon'
+          ? c.deliveryTimeAfternoon
+          : formData.deliveryTime === 'evening'
+          ? c.deliveryTimeEvening
+          : '';
+
+      const noteParts = [
+        formData.deliverToOther
+          ? `Người nhận: ${formData.otherReceiverName.trim()} - ${cleanPhone(
+              formData.otherReceiverPhone
+            )}`
+          : '',
+        deliveryTimeLabel ? `${c.deliveryTimeLabel}: ${deliveryTimeLabel}` : '',
+        formData.note.trim(),
+      ].filter(Boolean);
 
       const itemsPayload = cartItems.map((item) => ({
         productId: item.id,
@@ -189,10 +186,14 @@ export function CheckoutPage() {
 
       const order = await createBackendOrder(
         {
-          receiverName: formData.receiverName.trim(),
-          phone: formData.phone.replace(/[\s.-]/g, ''),
+          receiverName: formData.deliverToOther
+            ? formData.otherReceiverName.trim()
+            : formData.receiverName.trim(),
+          phone: formData.deliverToOther
+            ? cleanPhone(formData.otherReceiverPhone)
+            : cleanPhone(formData.phone),
           address: fullAddress,
-          note: formData.note.trim() || undefined,
+          note: noteParts.length > 0 ? noteParts.join(' | ') : undefined,
           paymentMethod,
           items: itemsPayload,
         },
@@ -229,16 +230,25 @@ export function CheckoutPage() {
     quantity: it.quantity,
     price: it.price,
     imageUrl: it.imagePath,
+    poiSlug: it.poiSlug,
   }));
+
+  const placeOrderArea = (
+    <PlaceOrderArea
+      agreedTerms={agreedTerms}
+      onAgreedTermsChange={setAgreedTerms}
+      reason={reason}
+      termsError={reason === 'terms'}
+      onPlaceOrder={handlePlaceOrder}
+      submitting={submitting}
+    />
+  );
 
   return (
     <div className="checkout-page-container">
-      <main className="checkout-main-wrap">
-        {/* Top Header Row: Title on Left, Stepper on Right */}
-        <div className="checkout-header-row">
-          <h1 className="checkout-heading">
-            Thanh toán đơn hàng
-          </h1>
+      <main className="co-wrap">
+        <div className="co-header-row">
+          <h1 className="co-title">{t.shop.checkoutTitle}</h1>
           <Stepper currentStep={2} />
         </div>
 
@@ -247,74 +257,73 @@ export function CheckoutPage() {
             <div className="checkout-empty-icon-wrap" aria-hidden="true">
               <ShoppingBag size={28} />
             </div>
-            <h2 className="checkout-empty-title">
-              Giỏ hàng của bạn đang trống
-            </h2>
+            <h2 className="checkout-empty-title">Giỏ hàng của bạn đang trống</h2>
             <p className="checkout-empty-desc">
               Vui lòng chọn quà lưu niệm trước khi tiến hành thanh toán.
             </p>
-            <Link
-              to="/am-thuc"
-              className="checkout-empty-btn"
-            >
+            <Link to="/am-thuc" className="checkout-empty-btn">
               Khám phá quà lưu niệm
             </Link>
           </div>
         ) : (
-          <div className="checkout-grid">
-            {/* Left Column: Contact + Delivery Time + Payment */}
-            <div className="checkout-left-col">
-              {serverError && (
-                <div
-                  className="checkout-alert-error"
-                  role="alert"
+          <>
+            <div className="co-grid">
+              <div className="co-left">
+                {serverError && (
+                  <div className="checkout-alert-error" role="alert">
+                    {serverError}
+                  </div>
+                )}
+
+                <ContactSection
+                  formData={formData}
+                  errors={errors}
+                  touched={touched}
+                  submitted={submitted}
+                  onChange={handleFieldChange}
+                  onBlur={handleFieldBlur}
+                  disabled={submitting}
+                />
+
+                <DeliveryOptionsSection
+                  formData={formData}
+                  errors={errors}
+                  touched={touched}
+                  submitted={submitted}
+                  onChange={handleFieldChange}
+                  onBlur={handleFieldBlur}
+                  disabled={submitting}
+                />
+
+                <PaymentSection
+                  selectedMethod={paymentMethod}
+                  onChange={setPaymentMethod}
+                  disabled={submitting}
+                />
+              </div>
+
+              <div className="co-right">
+                <OrderSummary
+                  items={summaryItems}
+                  subtotal={subtotal}
+                  shippingFee={shippingFee}
+                  total={total}
+                  totalCount={totalCount}
+                  onUpdateQuantity={updateQuantity}
+                  onRemoveItem={removeFromCart}
                 >
-                  {serverError}
-                </div>
-              )}
-
-              {/* Card 1: Thông tin nhận hàng (with cascading API) */}
-              <ContactSection
-                formData={formData}
-                errors={errors}
-                onChange={handleFieldChange}
-                disabled={submitting}
-              />
-
-              {/* Card 2: Thời gian giao hàng (Giao ngay / Hẹn giờ) */}
-              <DeliveryTimeSection
-                selectedType={deliveryTime}
-                onChange={setDeliveryTime}
-                disabled={submitting}
-              />
-
-              {/* Card 3: Phương thức thanh toán (COD / VietQR) */}
-              <PaymentSection
-                selectedMethod={paymentMethod}
-                onChange={setPaymentMethod}
-                disabled={submitting}
-              />
+                  {isDesktop ? placeOrderArea : null}
+                </OrderSummary>
+              </div>
             </div>
 
-            {/* Right Column: Tóm tắt đơn hàng */}
-            <div className="checkout-right-col">
-              <OrderSummary
-                items={summaryItems}
-                subtotal={subtotal}
-                shippingFee={shippingFee}
-                total={total}
-                totalCount={totalCount}
-                onUpdateQuantity={updateQuantity}
-                onRemoveItem={removeFromCart}
-                onPlaceOrder={handlePlaceOrder}
-                submitting={submitting}
-              />
-            </div>
-          </div>
+            {!isDesktop && (
+              <div className="co-mobile-placeorder">{placeOrderArea}</div>
+            )}
+          </>
         )}
       </main>
 
-      {/* Floating Hotline button at bottom right (cách mép dưới 20px, nút #up nằm trên cách 12px) */}
       <aside aria-label="Hỗ trợ khách hàng" className="checkout-hotline-floating">
         <a
           href={`tel:${HOTLINE_NUMBER.replace(/\s+/g, '')}`}

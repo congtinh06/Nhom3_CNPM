@@ -9,6 +9,8 @@ interface ProductCardProps {
   onToggleFavorite: (id: number) => void;
   onAddToCart: (product: Product, e: React.MouseEvent) => void;
   onSelect: (product: Product) => void;
+  showRating?: boolean;
+  neutralPlaceholder?: boolean;
 }
 
 export const ProductCard: React.FC<ProductCardProps> = ({
@@ -17,6 +19,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   onToggleFavorite,
   onAddToCart,
   onSelect,
+  showRating = true,
+  neutralPlaceholder = false,
 }) => {
   const [imageError, setImageError] = useState(false);
   const [justAdded, setJustAdded] = useState(false);
@@ -62,8 +66,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({
             onError={() => setImageError(true)}
           />
         ) : (
-          <div className="editorial-card-placeholder">
-            <span className="placeholder-brand">ECHORA</span>
+          <div className={`editorial-card-placeholder ${neutralPlaceholder ? 'is-neutral' : ''}`}>
+            {!neutralPlaceholder && <span className="placeholder-brand">ECHORA</span>}
             <span className="placeholder-name">{product.name}</span>
           </div>
         )}
@@ -98,11 +102,12 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 
       {/* 2. Nội dung thông tin món: padding 16px (p-4) */}
       <div className="editorial-card-content">
-        {/* Rating nhỏ tinh tế */}
-        <div className="editorial-rating-badge" aria-label={`Đánh giá ${ratingValue} sao`}>
-          <Star size={12} className="star-gold-fill" />
-          <span className="rating-num">{ratingValue.toFixed(1)}</span>
-        </div>
+        {showRating && (
+          <div className="editorial-rating-badge" aria-label={`Đánh giá ${ratingValue} sao`}>
+            <Star size={12} className="star-gold-fill" />
+            <span className="rating-num">{ratingValue.toFixed(1)}</span>
+          </div>
+        )}
 
         {/* Tên món: font-display (Playfair Display), text-lg, font-semibold, line-clamp-1 */}
         <h3 className="editorial-product-name" title={product.name}>

@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TÀI LIỆU VẤN ĐÁP GIỮA KỲ — TRỌNG TÂM CODE BACKEND & CI/CD (ECHORA)</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 18mm 15mm 18mm 18mm;
+        }
+        
+        body {
+            font-family: "Times New Roman", Times, serif;
+            color: #000000;
+            background-color: #ffffff;
+            line-height: 1.4;
+            font-size: 12.5pt;
+            margin: 0;
+            padding: 20px 30px;
+        }
+
+        h1, h2, h3, h4 {
+            font-family: "Times New Roman", Times, serif;
+            color: #000000;
+            font-weight: bold;
+            margin-top: 1.1em;
+            margin-bottom: 0.4em;
+            page-break-after: avoid;
+        }
+
+        h1 {
+            font-size: 19pt;
+            text-align: center;
+            text-transform: uppercase;
+            border-bottom: 2px solid #000000;
+            padding-bottom: 8px;
+            margin-top: 0;
+        }
+
+        .subtitle {
+            text-align: center;
+            font-style: italic;
+            font-size: 12.5pt;
+            margin-bottom: 18px;
+        }
+
+        .meta-box {
+            border: 1px solid #000000;
+            padding: 10px 14px;
+            margin-bottom: 20px;
+            background-color: #fafafa;
+            font-size: 12pt;
+        }
+
+        .meta-box p {
+            margin: 3px 0;
+        }
+
+        .card {
+            border: 1px solid #000000;
+            margin-bottom: 20px;
+            padding: 12px 16px;
+            page-break-inside: avoid;
+            background-color: #ffffff;
+        }
+
+        .card-title {
+            font-size: 13.5pt;
+            font-weight: bold;
+            border-bottom: 1px solid #333333;
+            padding-bottom: 4px;
+            margin-bottom: 8px;
+            color: #000000;
+        }
+
+        .tag {
+            display: inline-block;
+            border: 1px solid #000000;
+            padding: 1px 5px;
+            font-size: 10pt;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-right: 6px;
+            background-color: #eeeeee;
+        }
+
+        .code-box {
+            background-color: #f7f7f7;
+            border: 1px solid #333333;
+            padding: 8px 12px;
+            margin: 8px 0;
+            font-family: "Courier New", Courier, monospace;
+            font-size: 10.5pt;
+            color: #000000;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            line-height: 1.35;
+        }
+
+        .file-ref {
+            font-style: italic;
+            font-size: 11pt;
+            margin-bottom: 4px;
+            color: #000000;
+        }
+
+        .section-label {
+            font-weight: bold;
+            text-decoration: underline;
+            margin-top: 6px;
+            margin-bottom: 3px;
+        }
+
+        ul, ol {
+            margin-top: 3px;
+            margin-bottom: 6px;
+            padding-left: 22px;
+        }
+
+        li {
+            margin-bottom: 3px;
+        }
+
+        .answer-script {
+            background-color: #fcfcfc;
+            border-left: 3px solid #000000;
+            padding: 8px 12px;
+            margin-top: 8px;
+            font-style: normal;
+        }
+
+        .footer {
+            text-align: center;
+            font-size: 11pt;
+            font-style: italic;
+            border-top: 1px solid #000000;
+            padding-top: 8px;
+            margin-top: 25px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>TÀI LIỆU TRỌNG TÂM REVIEW CODE & VẤN ĐÁP GIỮA KỲ</h1>
+    <div class="subtitle">Chuyên đề: 6 Microservices, Giao tiếp Feign/RabbitMQ, Pipeline Thuyết minh, Bảo mật JWT & CI/CD</div>
+
+    <div class="meta-box">
+        <p><strong>Môn học:</strong> Công nghệ Phần mềm (CNPM) — Nhóm 3</p>
+        <p><strong>Dự án:</strong> ECHORA / SAIGONVOICE — Nền tảng Hướng dẫn viên Du lịch Đa ngôn ngữ Tự động</p>
+        <p><strong>Cấu trúc tài liệu:</strong> Tổng hợp kèm Mã nguồn thực tế (Code Snippets), Giải thích cơ chế kỹ thuật và Câu trả lời mẫu chuẩn vấn đáp.</p>
+        <p><strong>Định dạng:</strong> Phông chữ Times New Roman, màu chữ đen chuẩn mực in ấn.</p>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- CHỦ ĐỀ 1 -->
+    <!-- ========================================================================= -->
+    <div class="card">
+        <div class="card-title"><span class="tag">Chủ đề 01</span> 6 Microservices trong Hệ thống & Hai Luồng Giao Tiếp Cốt Lõi</div>
+        <p><strong>Câu hỏi của Thầy:</strong> <em>"Hệ thống gồm những service nào? Mở code chỉ cho thầy chỗ nào GỬI, chỗ nào NHẬN giữa các service?"</em></p>
+        
+        <div class="section-label">1. Đoạn code Giao tiếp Đồng bộ (Sync) qua REST OpenFeign:</div>
+        <div class="file-ref">📁 File GỬI: <code>backend/location-service/.../client/ContentServiceClient.java</code></div>
+        <div class="code-box">@FeignClient(name = "content-service-client", url = "${content-service.url}")
+public interface ContentServiceClient {
+    @GetMapping("/api/content/internal/pois/bounding-box")
+    List<PoiBoundingBoxDto> getPoisInBoundingBox(
+            @RequestParam BigDecimal minLat, @RequestParam BigDecimal maxLat,
+            @RequestParam BigDecimal minLng, @RequestParam BigDecimal maxLng);
+}</div>
+
+        <div class="file-ref">📁 File NHẬN: <code>backend/content-service/.../controller/PoiController.java (dòng 58)</code></div>
+        <div class="code-box">@GetMapping("/api/content/internal/pois/bounding-box")
+public ResponseEntity<List<PoiBoundingBoxDto>> getPoisInBoundingBox(...) {
+    return ResponseEntity.ok(poiContentService.getPoisInBoundingBox(...));
+}</div>
+
+        <div class="section-label">2. Đoạn code Giao tiếp Bất đồng bộ (Async) qua RabbitMQ:</div>
+        <div class="file-ref">📁 File BẮN TIN: <code>backend/content-service/.../messaging/PoiEventPublisher.java (dòng 41)</code></div>
+        <div class="code-box">rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE_NAME, routingKey, payload, correlation);</div>
+
+        <div class="file-ref">📁 File HỨNG TIN: <code>backend/translation-tts-service/.../listener/PoiEventListener.java (dòng 17)</code></div>
+        <div class="code-box">@RabbitListener(queues = {
+    "${app.rabbitmq.queues.poi-created:poi.created.queue}",
+    "${app.rabbitmq.queues.poi-updated:poi.updated.queue}"
+})
+public void onPoiEvent(PoiEventPayload event) {
+    pipelineService.processPoiEvent(event);
+}</div>
+
+        <div class="answer-script">
+            <strong>🗣️ Câu trả lời mẫu với Thầy:</strong><br>
+            "Dạ thưa thầy, hệ thống gồm 6 services (Gateway, Auth, Content, Location, Translation-TTS, Analytics). Trong đó có 2 luồng giao tiếp cốt lõi:
+            (1) <code>location-service</code> gọi <code>content-service</code> qua <strong>OpenFeign</strong> để lấy dữ liệu tọa độ tức thì cho du khách;
+            (2) <code>content-service</code> phát sự kiện sang <code>translation-tts-service</code> qua <strong>RabbitMQ</strong> để tự động dịch và sinh giọng đọc ngầm ở phía sau ạ."
+        </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- CHỦ ĐỀ 2 -->
+    <!-- ========================================================================= -->
+    <div class="card">
+        <div class="card-title"><span class="tag">Chủ đề 02</span> Bản chất của "Cửa Ngõ Định Tuyến" (API Gateway)</div>
+        <p><strong>Câu hỏi của Thầy:</strong> <em>"Cửa ngõ định tuyến là gì? Tại sao các controller như CategoryController có đường dẫn /api/content/categories nhưng client lại gọi vào cổng 8080?"</em></p>
+        
+        <div class="file-ref">📁 File tham chiếu: <code>backend/content-service/.../controller/CategoryController.java (dòng 14)</code></div>
+        <div class="code-box">@RestController
+@RequestMapping("/api/content/categories")
+public class CategoryController {
+    @GetMapping
+    public ResponseEntity<List<CategoryDto>> getAllCategories() { ... }
+}</div>
+
+        <div class="file-ref">📁 Bộ lọc tước bỏ Header giả mạo tại Gateway: <code>backend/api-gateway/.../UntrustedHeaderStripGlobalFilter.java</code></div>
+        <div class="code-box">@Override
+public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
+    ServerHttpRequest request = exchange.getRequest().mutate()
+            .headers(headers -> {
+                headers.remove("X-User-Role");
+                headers.remove("X-Internal-Api-Key");
+            }).build();
+    return chain.filter(exchange.mutate().request(request).build());
+}</div>
+
+        <div class="answer-script">
+            <strong>🗣️ Câu trả lời mẫu với Thầy:</strong><br>
+            "Dạ thưa thầy, <strong>API Gateway (cổng 8080)</strong> đóng vai trò là cửa ngõ tiếp nhận tập trung duy nhất (Reverse Proxy). Khi Frontend gọi <code>http://localhost:8080/api/content/categories</code>, Gateway sẽ nhận diện tiền tố <code>/api/content/**</code> và tự động <strong>định tuyến (chuyển tiếp)</strong> yêu cầu sang cổng nội bộ <code>8085</code> của <code>content-service</code>. Lợi ích là che giấu toàn bộ cổng nội bộ, đồng thời kiểm tra bảo mật, tước bỏ header giả mạo và giới hạn tần suất gọi API ngay tại cửa ngõ."
+        </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- CHỦ ĐỀ 3 -->
+    <!-- ========================================================================= -->
+    <div class="card">
+        <div class="card-title"><span class="tag">Chủ đề 03</span> REST OpenFeign — Bản chất và Khái niệm Học thuật</div>
+        <p><strong>Câu hỏi của Thầy:</strong> <em>"REST OpenFeign là gì? Tại sao không dùng RestTemplate hay HttpClient thông thường?"</em></p>
+        
+        <div class="file-ref">📁 File cấu hình: <code>backend/location-service/.../ContentServiceClientConfiguration.java</code></div>
+        <div class="code-box">@Bean
+public RequestInterceptor internalApiKeyRequestInterceptor() {
+    return template -> {
+        if (internalApiKey != null && !internalApiKey.trim().isEmpty()) {
+            template.header("X-Internal-Api-Key", internalApiKey);
+        }
+    };
+}</div>
+
+        <div class="answer-script">
+            <strong>🗣️ Câu trả lời mẫu với Thầy:</strong><br>
+            "Dạ thưa thầy, <strong>Spring Cloud OpenFeign</strong> là một Declarative REST Client (Client HTTP dạng khai báo). Thay vì phải tự mở kết nối, nối URL và ép kiểu JSON thủ công như RestTemplate, OpenFeign cho phép lập trình viên chỉ cần khai báo một <strong>Java Interface</strong> kèm các chú thích Spring Web. Spring Boot sẽ tự động sinh mã proxy gửi HTTP request bên dưới. Ngoài ra nhóm em cấu hình <code>RequestInterceptor</code> để tự động gắn khóa bảo mật nội bộ <code>X-Internal-Api-Key</code> sang service đích ạ."
+        </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- CHỦ ĐỀ 4 -->
+    <!-- ========================================================================= -->
+    <div class="card">
+        <div class="card-title"><span class="tag">Chủ đề 04</span> Cấu trúc một Class Java (Lý thuyết OOP) & Kiến trúc Phân tầng Dự án</div>
+        <p><strong>Câu hỏi của Thầy:</strong> <em>"Một Class Java về mặt lý thuyết gồm những phần nào? Cây thư mục của service phân chia theo mô hình gì?"</em></p>
+        
+        <div class="section-label">1. Cấu trúc lý thuyết của một Class Java (OOP):</div>
+        <ul>
+            <li><strong>Package Declaration:</strong> Khai báo không gian tên / vị trí gói.</li>
+            <li><strong>Imports:</strong> Nạp các thư viện phụ thuộc.</li>
+            <li><strong>Annotations / Metadata:</strong> Siêu dữ liệu chỉ dẫn hành vi cho Spring Boot (ví dụ: <code>@RestController</code>, <code>@Service</code>).</li>
+            <li><strong>Class Body:</strong> Gồm <em>Fields (Thuộc tính trạng thái)</em>, <em>Constructors (Hàm khởi tạo)</em>, và <em>Methods (Phương thức hành vi)</em>.</li>
+        </ul>
+
+        <div class="section-label">2. Mô hình Kiến trúc Phân tầng (Layered Architecture):</div>
+        <ul>
+            <li><code>controller</code>: <strong>Presentation Layer</strong> — Tiếp nhận request HTTP, kiểm tra hợp lệ dữ liệu và trả về ResponseEntity.</li>
+            <li><code>service</code>: <strong>Business Logic Layer</strong> — Thực thi quy tắc nghiệp vụ và thuật toán tính toán.</li>
+            <li><code>repository</code>: <strong>Data Access Layer</strong> — Tương tác trực tiếp với CSDL thông qua JPA/Hibernate (CRUD).</li>
+            <li><code>entity</code>: <strong>Domain Model</strong> — Ánh xạ trực tiếp với bảng trong CSDL (ORM).</li>
+            <li><code>dto</code>: <strong>Data Transfer Object</strong> — Đối tượng đóng gói dữ liệu truyền tải giữa các tầng.</li>
+        </ul>
+
+        <div class="answer-script">
+            <strong>🗣️ Câu trả lời mẫu với Thầy:</strong><br>
+            "Dạ thưa thầy, về mặt lập trình hướng đối tượng, một Class Java chuẩn gồm 5 thành phần: khai báo package, imports, annotations, thuộc tính và phương thức. Về mặt kiến trúc phần mềm, nhóm em tuân thủ mô hình phân tầng: Controller nhận request ➔ Service xử lý logic nghiệp vụ ➔ Repository thao tác cơ sở dữ liệu qua các thực thể Entity ạ!"
+        </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- CHỦ ĐỀ 5 -->
+    <!-- ========================================================================= -->
+    <div class="card">
+        <div class="card-title"><span class="tag">Chủ đề 05</span> Pipeline Thuyết Minh Tự Động Đa Ngôn Ngữ (Dịch & Tạo Audio AI)</div>
+        <p><strong>Câu hỏi của Thầy:</strong> <em>"Tính năng thuyết minh tự động hoạt động từ lúc nhập dữ liệu đến lúc tạo file audio ra sao?"</em></p>
+        
+        <div class="file-ref">📁 File xử lý pipeline: <code>backend/translation-tts-service/.../PoiPipelineServiceImpl.java (dòng 115-148)</code></div>
+        <div class="code-box">// 1. Kiểm tra giọng đọc trước khi gọi API dịch thuật (tiết kiệm quota)
+ttsVoiceProvider.getVoice(lang);
+
+// 2. Dịch thuật nội dung sang ngôn ngữ mục tiêu (en, ja, ko)
+TranslatedPoiContent translated = translationCacheService.getOrTranslate(
+        lang, event.getTitle(), event.getSummary(), event.getDescription(), ...);
+
+// 3. Gọi công cụ AI edge-tts sinh file âm thanh .mp3 lưu vào ổ đĩa
+TtsAudioResult audioResult = ttsAudioService.synthesize(lang, ttsScript, ...);
+
+// 4. Bắn sự kiện báo hoàn thành về cho content-service
+eventPublisher.publishAudioReady(PoiAudioReadyEvent.builder()
+        .poiId(event.getPoiId()).languageCode(lang).audioUrl(publicUrl)...build());</div>
+
+        <div class="answer-script">
+            <strong>🗣️ Câu trả lời mẫu với Thầy:</strong><br>
+            "Dạ thưa thầy, Quản trị viên chỉ cần nhập bài viết tiếng Việt 1 lần duy nhất. Sau khi commit DB, <code>PoiPublishRelay</code> phát sự kiện sang RabbitMQ. Service <code>translation-tts-service</code> nhận tin, tự động dịch sang 3 ngôn ngữ (Anh, Nhật, Hàn) và gọi công cụ AI <strong>edge-tts</strong> để xuất ra các file âm thanh <code>.mp3</code> lưu trong Docker Volume. Hoàn tất thì bắn sự kiện <code>poi.audio.ready</code> để cập nhật trạng thái địa điểm ạ."
+        </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- CHỦ ĐỀ 6 -->
+    <!-- ========================================================================= -->
+    <div class="card">
+        <div class="card-title"><span class="tag">Chủ đề 06</span> Kích Hoạt Âm Thanh Tự Động (GPS Haversine & Chống Phát Lặp)</div>
+        <p><strong>Câu hỏi của Thầy:</strong> <em>"Làm sao web tự phát âm thanh khi du khách đến gần? Nếu du khách đứng mãi ở một điểm thì loa có bị phát lặp lại không?"</em></p>
+        
+        <div class="file-ref">📁 File tính khoảng cách: <code>backend/location-service/.../service/LocationServiceImpl.java</code></div>
+        <div class="code-box">// Áp dụng công thức lượng giác Haversine tính khoảng cách theo mét
+double distance = HaversineGeoUtils.calculateDistanceMeters(
+        userLat, userLng, poi.getLatitude(), poi.getLongitude());
+
+// Kiểm tra với bán kính kích hoạt (30m - 50m)
+if (distance <= poi.getTriggerRadiusMeters()) {
+    return Optional.of(poi); // Kích hoạt phát thuyết minh
+}</div>
+
+        <div class="answer-script">
+            <strong>🗣️ Câu trả lời mẫu với Thầy:</strong><br>
+            "Dạ thưa thầy, khi du khách đi dạo, GPS gửi tọa độ về để <code>location-service</code> tính khoảng cách theo <strong>công thức Haversine</strong>. Khi khoảng cách nhỏ hơn bán kính kích hoạt (30–50m), Audio Player sẽ tự động phát. Phía Frontend có cơ chế <strong>chống phát lặp trong vòng 10 phút (Cooldown)</strong>, và nếu mạng yếu không tải được file MP3 thì hệ thống tự chuyển sang <strong>Web Speech API</strong> đọc văn bản trực tiếp ạ."
+        </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- CHỦ ĐỀ 7 -->
+    <!-- ========================================================================= -->
+    <div class="card">
+        <div class="card-title"><span class="tag">Chủ đề 07</span> Điều Kiện Kích Hoạt & Cơ Chế Chống Xử Lý Trùng Lặp (Idempotency)</div>
+        <p><strong>Câu hỏi của Thầy:</strong> <em>"Tại chỗ @RabbitListener nhận tin, cần điều kiện gì để tạo được file? Nếu RabbitMQ gửi lặp tin nhắn thì sao?"</em></p>
+        
+        <div class="file-ref">📁 File kiểm tra mã băm: <code>backend/translation-tts-service/.../PoiPipelineServiceImpl.java (dòng 75-87)</code></div>
+        <div class="code-box">// Tính mã băm nội dung SHA-256
+String contentHash = ContentHashUtils.computeHash(lang, event.getTitle(), event.getDescription(), ...);
+
+// Kiểm tra tính Idempotent trên bảng translation_job
+TranslationJob job = getOrCreateJob(event.getPoiId(), lang, contentHash);
+if ("DONE".equals(job.getStatus())) {
+    log.info("Job already DONE for poiId={}, lang={}, hash={}. Skipping.", event.getPoiId(), lang, contentHash);
+    return; // BỎ QUA NGAY LẬP TỨC - KHÔNG DỊCH LẠI
+}</div>
+
+        <div class="answer-script">
+            <strong>🗣️ Câu trả lời mẫu với Thầy:</strong><br>
+            "Dạ thưa thầy:  
+            (1) <strong>Về mặt điều kiện chạy:</strong> Dữ liệu phải có đầy đủ ID và tiêu đề; máy tính bắt buộc phải có kết nối Internet (vì AI <code>edge-tts</code> gọi dịch vụ Microsoft) và các container Docker (RabbitMQ, SQL Server) đang hoạt động.  
+            (2) <strong>Chống xử lý trùng (Idempotent):</strong> Hệ thống tính mã băm <code>content_hash</code> (SHA-256). Nếu bài viết đã có trạng thái <code>DONE</code> với hash trùng khớp, service lập tức bỏ qua, không dịch lại, giúp tiết kiệm 100% quota và RAM máy chủ ạ."
+        </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- CHỦ ĐỀ 8 -->
+    <!-- ========================================================================= -->
+    <div class="card">
+        <div class="card-title"><span class="tag">Chủ đề 08</span> Cơ Chế Bảo Mật, JWT Token & Phát Hiện Tái Sử Dụng (Reuse Detection)</div>
+        <p><strong>Câu hỏi của Thầy:</strong> <em>"Làm sao phân biệt Admin với Khách? Token lưu ở đâu? Lỡ Refresh Token bị hack thì sao?"</em></p>
+        
+        <div class="file-ref">📁 File kiểm tra tái sử dụng token: <code>backend/auth-service/.../service/AuthServiceImpl.java (dòng 320-326)</code></div>
+        <div class="code-box">RefreshToken token = found.get();
+if (token.isRevoked()) {
+    // Phát hiện token đã bị thu hồi mà vẫn gửi lại -> DẤU HIỆU BỊ HACK / TÁI SỬ DỤNG
+    log.warn("Phát hiện refresh token reuse, thu hồi toàn bộ phiên userId={}", token.getUser().getId());
+    refreshTokenService.revokeAllForUser(token.getUser().getId(), RefreshToken.REASON_REUSE_DETECTED);
+    throw new UnauthorizedException("Phiên đăng nhập không hợp lệ hoặc đã hết hạn.");
+}</div>
+
+        <div class="answer-script">
+            <strong>🗣️ Câu trả lời mẫu với Thầy:</strong><br>
+            "Dạ thưa thầy:  
+            - Phân quyền bằng <strong>Access Token (JWT)</strong> chứa claim <code>role: ADMIN</code>, do Gateway kiểm tra ở bộ lọc <code>AdminAuthGlobalFilter</code>. Khách thường vào trang quản trị bị chặn ngay với mã HTTP 403 Forbidden.  
+            - <strong>Refresh Token</strong> lưu trong <strong>HttpOnly Cookie</strong> để chống rò rỉ qua tấn công XSS.  
+            - Áp dụng chuẩn RFC 6819 với cơ chế <strong>Reuse Detection</strong>: Nếu một Refresh Token cũ bị kẻ gian dùng lại, hệ thống lập tức thu hồi toàn bộ các phiên đăng nhập của tài khoản đó, buộc đăng nhập lại để bảo vệ tài khoản ạ!"
+        </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- CHỦ ĐỀ 9 -->
+    <!-- ========================================================================= -->
+    <div class="card">
+        <div class="card-title"><span class="tag">Chủ đề 09</span> Các Trang Xác Thực Trên Giao Diện Frontend</div>
+        <p><strong>Câu hỏi của Thầy:</strong> <em>"Trang nào trên website thực hiện đăng nhập và bảo vệ tuyến đường (Route Guard)?"</em></p>
+        
+        <div class="file-ref">📁 File chặn tuyến quản trị: <code>frontend/src/admin/routes/AdminRouteGuard.tsx (dòng 23-26)</code></div>
+        <div class="code-box">if (!isAdmin) {
+    return <Navigate to="/quan-tri/dang-nhap" replace state={{ from: location }} />;
+}
+return <Outlet />;</div>
+
+        <div class="answer-script">
+            <strong>🗣️ Câu trả lời mẫu với Thầy:</strong><br>
+            "Dạ thưa thầy, trên web có 2 khu vực xác thực rõ rệt:  
+            (1) <strong>Khu vực Quản trị:</strong> Trang đăng nhập riêng tại <code>/quan-tri/dang-nhap</code>. Nếu người dùng thường hoặc khách vãng lai cố tình gõ link <code>/quan-tri</code>, component <code>AdminRouteGuard</code> sẽ chặn lại và tự động chuyển hướng về trang đăng nhập này.  
+            (2) <strong>Khu vực Du khách:</strong> Hộp thoại Modal nổi tại <code>/dang-nhap</code>, cho phép đăng nhập mà không cần reload lại bản đồ ạ."
+        </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- CHỦ ĐỀ 10 -->
+    <!-- ========================================================================= -->
+    <div class="card">
+        <div class="card-title"><span class="tag">Chủ đề 10</span> Thực Trạng CI/CD, Triển Khai Vercel & Xử Lý Sự Cố Hàng Đợi (DLQ)</div>
+        <p><strong>Câu hỏi của Thầy:</strong> <em>"Dự án đã có CI/CD hoàn chỉnh chưa? Deploy lên Vercel là gì? Nếu RabbitMQ sập thì tin nhắn đi về đâu?"</em></p>
+        
+        <div class="section-label">1. File Workflow CI: <code>.github/workflows/content-service.yml (dòng 41-53)</code></div>
+        <div class="code-box">- name: Run tests
+  run: mvn -B test
+
+- name: Build Docker image (no push)
+  run: docker build -t content-service:ci backend/content-service</div>
+
+        <div class="section-label">2. Cấu hình Dead Letter Queue (DLQ): <code>backend/content-service/.../RabbitMQConfig.java</code></div>
+        <div class="code-box">args.put("x-dead-letter-exchange", "saigonvoice.dlx");
+args.put("x-dead-letter-routing-key", "poi.created.dlq");</div>
+
+        <div class="answer-script">
+            <strong>🗣️ Câu trả lời mẫu với Thầy:</strong><br>
+            "Dạ thưa thầy:  
+            - <strong>Thực trạng CI/CD:</strong> Hiện tại ở giữa kỳ, nhóm em đã hoàn thiện <strong>CI (Continuous Integration)</strong> trên GitHub Actions để tự động chạy Unit Test và đóng gói thử Docker image. Việc đẩy lên Vercel chính là <strong>CD cho phần Frontend</strong>. Còn phần CD tự động deploy Backend lên VPS nhóm em lên kế hoạch hoàn thiện vào cuối kỳ.  
+            - <strong>Xử lý lỗi RabbitMQ:</strong> Mọi hàng đợi đều gắn kèm <strong>Dead Letter Exchange (DLX)</strong>. Khi tin nhắn bị lỗi hoặc container sập, tin nhắn sẽ tự động rơi vào <strong>Dead Letter Queue (DLQ)</strong> chứ không bao giờ bị mất dữ liệu ạ!"
+        </div>
+    </div>
+
+    <div class="footer">
+        <p><strong>TÀI LIỆU ÔN TẬP VẤN ĐÁP GIỮA KỲ — DỰ ÁN ECHORA (NHÓM 3)</strong></p>
+        <p>Được biên soạn bám sát 100% mã nguồn thực tế và các câu hỏi trọng tâm của Hội đồng Giảng viên.</p>
+    </div>
+
+</body>
+</html>

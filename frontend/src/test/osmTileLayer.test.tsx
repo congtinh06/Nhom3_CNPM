@@ -53,15 +53,23 @@ describe('Tile Provider Failover Chain & Lifecycle', () => {
   });
 
   it('parses chain order from env and configures all provider attributes and links', () => {
-    // 1. Default chain: osm, hot, opentopo
+    // 1. Default chain: google, osm, hot, opentopo
     const defaultChain = getTileProviders();
-    expect(defaultChain.map((p) => p.key)).toEqual(['osm', 'hot', 'opentopo']);
+    expect(defaultChain.map((p) => p.key)).toEqual(['google', 'osm', 'hot', 'opentopo']);
 
     // 2. Custom chain from env parameter
     const customChain = getTileProviders('opentopo, hot');
     expect(customChain.map((p) => p.key)).toEqual(['opentopo', 'hot']);
 
-    // 3. Provider details: OSM
+    // 3. Provider details: Google Maps
+    const google = KNOWN_TILE_PROVIDERS.google;
+    expect(google.url).toBe('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}');
+    expect(google.subdomains).toEqual(['mt0', 'mt1', 'mt2', 'mt3']);
+    expect(google.maxZoom).toBe(20);
+    expect(google.attribution).toContain('Google Maps');
+    expect(google.referrerPolicy).toBe('strict-origin-when-cross-origin');
+
+    // 4. Provider details: OSM
     const osm = KNOWN_TILE_PROVIDERS.osm;
     expect(osm.url).toBe('https://tile.openstreetmap.org/{z}/{x}/{y}.png');
     expect(osm.maxZoom).toBe(19);
@@ -69,7 +77,7 @@ describe('Tile Provider Failover Chain & Lifecycle', () => {
     expect(osm.attribution).toContain('https://www.openstreetmap.org/copyright');
     expect(osm.referrerPolicy).toBe('strict-origin-when-cross-origin');
 
-    // 4. Provider details: HOT (Humanitarian)
+    // 5. Provider details: HOT (Humanitarian)
     const hot = KNOWN_TILE_PROVIDERS.hot;
     expect(hot.url).toBe('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png');
     expect(hot.subdomains).toEqual(['a', 'b', 'c']);
@@ -78,7 +86,7 @@ describe('Tile Provider Failover Chain & Lifecycle', () => {
     expect(hot.attribution).toContain('OpenStreetMap France');
     expect(hot.referrerPolicy).toBe('strict-origin-when-cross-origin');
 
-    // 5. Provider details: OpenTopoMap
+    // 6. Provider details: OpenTopoMap
     const opentopo = KNOWN_TILE_PROVIDERS.opentopo;
     expect(opentopo.url).toBe('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png');
     expect(opentopo.subdomains).toEqual(['a', 'b', 'c']);
@@ -135,21 +143,32 @@ describe('Tile Provider Failover Chain & Lifecycle', () => {
       />
     );
 
-    // Initial provider: osm
+    // Initial provider: google
     let activeLayer = tileLayerRef.current!;
-    expect((activeLayer as any)._url).toBe(KNOWN_TILE_PROVIDERS.osm.url);
+    expect((activeLayer as any)._url).toBe(KNOWN_TILE_PROVIDERS.google.url);
     expect(addedLayers.size).toBe(1);
 
-    // 1st and 2nd errors on osm: no switch
+    // 1st and 2nd errors on google: no switch
+    act(() => {
+      activeLayer.fire('tileerror', { tile: { src: 'https://mt0.google.com/vt/lyrs=m&x=1&y=1&z=15' } });
+      activeLayer.fire('tileerror', { tile: { src: 'https://mt1.google.com/vt/lyrs=m&x=1&y=2&z=15' } });
+    });
+    expect((tileLayerRef.current as any)._url).toBe(KNOWN_TILE_PROVIDERS.google.url);
+    expect(onEnterSchematic).not.toHaveBeenCalled();
+
+    // 3rd consecutive error: switches to provider 2 (osm)
+    act(() => {
+      activeLayer.fire('tileerror', { tile: { src: 'https://mt2.google.com/vt/lyrs=m&x=1&y=3&z=15' } });
+    });
+    expect(addedLayers.size).toBe(1);
+    activeLayer = tileLayerRef.current!;
+    expect((activeLayer as any)._url).toBe(KNOWN_TILE_PROVIDERS.osm.url);
+    expect(onEnterSchematic).not.toHaveBeenCalled();
+
+    // 3 consecutive errors on osm: switches to provider 3 (hot)
     act(() => {
       activeLayer.fire('tileerror', { tile: { src: 'https://tile.openstreetmap.org/15/1/1.png' } });
       activeLayer.fire('tileerror', { tile: { src: 'https://tile.openstreetmap.org/15/1/2.png' } });
-    });
-    expect((tileLayerRef.current as any)._url).toBe(KNOWN_TILE_PROVIDERS.osm.url);
-    expect(onEnterSchematic).not.toHaveBeenCalled();
-
-    // 3rd consecutive error: switches to provider 2 (hot)
-    act(() => {
       activeLayer.fire('tileerror', { tile: { src: 'https://tile.openstreetmap.org/15/1/3.png' } });
     });
     expect(addedLayers.size).toBe(1);
@@ -157,7 +176,7 @@ describe('Tile Provider Failover Chain & Lifecycle', () => {
     expect((activeLayer as any)._url).toBe(KNOWN_TILE_PROVIDERS.hot.url);
     expect(onEnterSchematic).not.toHaveBeenCalled();
 
-    // 3 consecutive errors on hot: switches to provider 3 (opentopo)
+    // 3 consecutive errors on hot: switches to provider 4 (opentopo)
     act(() => {
       activeLayer.fire('tileerror', { tile: { src: 'https://a.tile.openstreetmap.fr/hot/15/1/1.png' } });
       activeLayer.fire('tileerror', { tile: { src: 'https://a.tile.openstreetmap.fr/hot/15/1/2.png' } });
@@ -193,33 +212,33 @@ describe('Tile Provider Failover Chain & Lifecycle', () => {
     );
 
     const layer = tileLayerRef.current!;
-    expect((layer as any)._url).toBe(KNOWN_TILE_PROVIDERS.osm.url);
+    expect((layer as any)._url).toBe(KNOWN_TILE_PROVIDERS.google.url);
 
     // 2 errors occur
     act(() => {
-      layer.fire('tileerror', { tile: { src: 'https://tile.openstreetmap.org/15/1/1.png' } });
-      layer.fire('tileerror', { tile: { src: 'https://tile.openstreetmap.org/15/1/2.png' } });
+      layer.fire('tileerror', { tile: { src: 'https://mt0.google.com/vt/lyrs=m&x=1&y=1&z=15' } });
+      layer.fire('tileerror', { tile: { src: 'https://mt1.google.com/vt/lyrs=m&x=1&y=2&z=15' } });
     });
-    expect((tileLayerRef.current as any)._url).toBe(KNOWN_TILE_PROVIDERS.osm.url);
+    expect((tileLayerRef.current as any)._url).toBe(KNOWN_TILE_PROVIDERS.google.url);
 
     // Successful tileload resets counter and saves provider
     act(() => {
       layer.fire('tileload');
     });
     expect(onExitSchematic).toHaveBeenCalledTimes(1);
-    expect(sessionStorage.getItem(STORAGE_KEY_WORKING_PROVIDER)).toBe('osm');
+    expect(sessionStorage.getItem(STORAGE_KEY_WORKING_PROVIDER)).toBe('google');
 
     // Next single error does NOT switch because counter was reset to 0
     act(() => {
-      layer.fire('tileerror', { tile: { src: 'https://tile.openstreetmap.org/15/1/3.png' } });
+      layer.fire('tileerror', { tile: { src: 'https://mt2.google.com/vt/lyrs=m&x=1&y=3&z=15' } });
     });
-    expect((tileLayerRef.current as any)._url).toBe(KNOWN_TILE_PROVIDERS.osm.url);
+    expect((tileLayerRef.current as any)._url).toBe(KNOWN_TILE_PROVIDERS.google.url);
   });
 
   it('remembers last working provider in sessionStorage and starts from it on next visit', () => {
     // Simulate previous visit where "hot" worked
     saveWorkingProvider('hot');
-    expect(getInitialProviderIndex(TILE_PROVIDERS)).toBe(1);
+    expect(getInitialProviderIndex(TILE_PROVIDERS)).toBe(2);
 
     const tileLayerRef = { current: null as L.TileLayer | null };
 
@@ -250,13 +269,13 @@ describe('Tile Provider Failover Chain & Lifecycle', () => {
       />
     );
 
-    // Cause failover to hot
+    // Cause failover to osm
     act(() => {
-      tileLayerRef.current!.fire('tileerror', { tile: { src: 'https://tile.openstreetmap.org/15/1/1.png' } });
-      tileLayerRef.current!.fire('tileerror', { tile: { src: 'https://tile.openstreetmap.org/15/1/2.png' } });
-      tileLayerRef.current!.fire('tileerror', { tile: { src: 'https://tile.openstreetmap.org/15/1/3.png' } });
+      tileLayerRef.current!.fire('tileerror', { tile: { src: 'https://mt0.google.com/vt/lyrs=m&x=1&y=1&z=15' } });
+      tileLayerRef.current!.fire('tileerror', { tile: { src: 'https://mt1.google.com/vt/lyrs=m&x=1&y=2&z=15' } });
+      tileLayerRef.current!.fire('tileerror', { tile: { src: 'https://mt2.google.com/vt/lyrs=m&x=1&y=3&z=15' } });
     });
-    expect((tileLayerRef.current as any)._url).toBe(KNOWN_TILE_PROVIDERS.hot.url);
+    expect((tileLayerRef.current as any)._url).toBe(KNOWN_TILE_PROVIDERS.osm.url);
 
     // User clicks "Thử lại" (retryTrigger increments)
     rerender(
@@ -269,8 +288,8 @@ describe('Tile Provider Failover Chain & Lifecycle', () => {
       />
     );
 
-    // Restarts from first provider (osm)
-    expect((tileLayerRef.current as any)._url).toBe(KNOWN_TILE_PROVIDERS.osm.url);
+    // Restarts from first provider (google)
+    expect((tileLayerRef.current as any)._url).toBe(KNOWN_TILE_PROVIDERS.google.url);
     expect(addedLayers.size).toBe(1);
   });
 });

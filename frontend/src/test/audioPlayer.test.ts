@@ -18,6 +18,7 @@ import { GeoPoi } from '../pages/NearbyPage';
 import { SupportedLanguage } from '../types';
 import { TILE_PROVIDERS } from '../components/nearby/PoiMap';
 import nearbyPoisData from '../content/nearbyPois.json';
+import { formatNarrationNumerals } from '../lib/numerals';
 
 describe('useAudioPlayer', () => {
   beforeEach(() => {
@@ -219,42 +220,34 @@ describe('AudioPlayerBar - No Space Hijack / No Arrow or 15s Seek (a11y)', () =>
     transcript: { vi: 'Test transcript', en: '', ko: '', ja: '' },
   };
 
-  it('does not render any +/- 15s seek buttons and retains the HTML5 seek slider', () => {
+  it('renders only play/pause and transcript controls, with no seek or speed controls', () => {
     render(
       React.createElement(AudioPlayerBar, {
         activePoi: mockPoi,
         currentLang: 'vi',
         isPlaying: false,
         currentTime: 10,
-        duration: 100,
-        speed: 1,
-        showTranscript: false,
         notice: '',
         noticeWarn: false,
-        isHtml5Audio: true,
         onTogglePlay: vi.fn(),
-        onSeek: vi.fn(),
-        onChangeSpeed: vi.fn(),
         onViewChapterTranscript: vi.fn(),
-        resolveAudio: () => ({ hasAudioInLang: true, actualLang: 'vi' as const, actualTxLang: 'vi' as const, text: 'Test' }),
         getPoiName: (p) => p.name.vi,
         noPoiSelectedText: 'Chưa chọn',
         playingInLangText: (l) => `Đang phát ${l}`,
         pausedStatusText: 'Tạm dừng',
         clickToStartText: 'Bấm để phát',
-        speedLabelText: 'Tốc độ',
         viewTextBtnText: 'Xem',
-        hideTextBtnText: 'Ẩn',
-        fallbackTxNoticeText: () => '',
       })
     );
 
-    // Verify NO +/- 15s buttons are rendered
+    // Verify NO +/- 15s seek buttons or progress slider are rendered
     expect(screen.queryByLabelText(/15 giây/i)).not.toBeInTheDocument();
     expect(screen.queryByText('15')).not.toBeInTheDocument();
+    expect(screen.queryByRole('progressbar')).not.toBeInTheDocument();
 
-    // Verify HTML5 seek slider is retained
-    expect(screen.getByRole('progressbar', { name: /Tiến trình phát âm thanh/i })).toBeInTheDocument();
+    // Verify the two remaining controls
+    expect(screen.getByRole('button', { name: /Phát/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Xem' })).toBeInTheDocument();
   });
 
   it('keeps the player landmark non-focusable and does not hijack Space or arrow keys', () => {
@@ -265,26 +258,16 @@ describe('AudioPlayerBar - No Space Hijack / No Arrow or 15s Seek (a11y)', () =>
         currentLang: 'vi',
         isPlaying: false,
         currentTime: 10,
-        duration: 100,
-        speed: 1,
-        showTranscript: false,
         notice: '',
         noticeWarn: false,
-        isHtml5Audio: true,
         onTogglePlay,
-        onSeek: vi.fn(),
-        onChangeSpeed: vi.fn(),
         onViewChapterTranscript: vi.fn(),
-        resolveAudio: () => ({ hasAudioInLang: true, actualLang: 'vi' as const, actualTxLang: 'vi' as const, text: 'Test' }),
         getPoiName: (p) => p.name.vi,
         noPoiSelectedText: 'Chưa chọn',
         playingInLangText: (l) => `Đang phát ${l}`,
         pausedStatusText: 'Tạm dừng',
         clickToStartText: 'Bấm để phát',
-        speedLabelText: 'Tốc độ',
         viewTextBtnText: 'Xem',
-        hideTextBtnText: 'Ẩn',
-        fallbackTxNoticeText: () => '',
       })
     );
 
@@ -407,8 +390,9 @@ describe('Audio Resolution, Voice Selection & Linkage (Tasks 1 to 6)', () => {
         expect(fullResolution.source).toBe('speech');
         expect(fullResolution.text.trim().length).toBeGreaterThan(0);
 
-        const expectedFull = poi.narration?.full?.[lang]?.join(' ') || poi.transcript[lang];
-        expect(fullResolution.text).toBe(expectedFull);
+        const expectedFull =
+          poi.narration?.full?.[lang]?.join(' ') || poi.transcript[lang];
+        expect(fullResolution.text).toBe(formatNarrationNumerals(expectedFull, lang));
 
         // 2. Short layer: equals narration.short (or transcript fallback)
         const shortResolution = resolvePlayback(poi, lang, 'short');
@@ -417,7 +401,7 @@ describe('Audio Resolution, Voice Selection & Linkage (Tasks 1 to 6)', () => {
         expect(shortResolution.text.trim().length).toBeGreaterThan(0);
 
         const expectedShort = poi.narration?.short?.[lang] || poi.transcript[lang];
-        expect(shortResolution.text).toBe(expectedShort);
+        expect(shortResolution.text).toBe(formatNarrationNumerals(expectedShort, lang));
       }
     }
   });
@@ -440,10 +424,15 @@ describe('Audio Resolution, Voice Selection & Linkage (Tasks 1 to 6)', () => {
       audioUrl: '/api/tts/audio/poi_1_vi_ab12cd34.mp3',
       audioStatus: 'READY',
     };
-    for (const lang of languages) {
+    // The legacy single-field values are the Vietnamese source audio, so they only
+    // apply to vi; every other language must not fall back to them.
+    const viRes = resolvePlayback(remotePoi, 'vi', 'short');
+    expect(viRes.source).toBe('remote');
+    expect(viRes.url).toBe('/api/tts/audio/poi_1_vi_ab12cd34.mp3');
+    for (const lang of ['en', 'ja', 'ko'] as SupportedLanguage[]) {
       const remoteRes = resolvePlayback(remotePoi, lang, 'short');
-      expect(remoteRes.source).toBe('remote');
-      expect(remoteRes.url).toBe('/api/tts/audio/poi_1_vi_ab12cd34.mp3');
+      expect(remoteRes.source).toBe('speech');
+      expect(remoteRes.url).toBeUndefined();
     }
 
     // A non-READY status must never be treated as remote.
@@ -453,6 +442,31 @@ describe('Audio Resolution, Voice Selection & Linkage (Tasks 1 to 6)', () => {
       audioStatus: 'PENDING',
     };
     expect(resolvePlayback(pendingPoi, 'vi', 'short').source).toBe('speech');
+  });
+
+  it('(b2) remote audio follows the selected language and never another language', () => {
+    const viUrl = '/api/tts/audio/poi_1_vi_ab12cd34.mp3';
+    const jaUrl = '/api/tts/audio/poi_1_ja_deadbeef.mp3';
+
+    // ja is READY: the ja entry must play, regardless of the Vietnamese entry.
+    const jaReady: GeoPoi = {
+      ...pois[0]!,
+      audio: { vi: '', en: '', ja: jaUrl, ko: '' },
+      audioStatusByLanguage: { vi: null, en: null, ja: 'READY', ko: null },
+    };
+    const jaRes = resolvePlayback(jaReady, 'ja', 'short');
+    expect(jaRes.source).toBe('remote');
+    expect(jaRes.url).toBe(jaUrl);
+
+    // ja is not READY while vi is READY: use speech for ja, never the vi url.
+    const jaPending: GeoPoi = {
+      ...pois[0]!,
+      audio: { vi: viUrl, en: '', ja: '', ko: '' },
+      audioStatusByLanguage: { vi: 'READY', en: null, ja: 'PENDING', ko: null },
+    };
+    const mixed = resolvePlayback(jaPending, 'ja', 'short');
+    expect(mixed.source).toBe('speech');
+    expect(mixed.url).toBeUndefined();
   });
 
   it('(c) utterance.lang matches the selected language', () => {

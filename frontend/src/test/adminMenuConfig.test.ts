@@ -65,9 +65,19 @@ describe('Cấu hình menu quản trị', () => {
       'Nhật ký xử lý lỗi',
     ]);
     expect(pois?.children?.[0]?.path).toBe('/quan-tri/diem-thuyet-minh');
+    expect(pois?.children?.find((c) => c.id === 'pois-i18n')?.path).toBe(
+      '/quan-tri/diem-thuyet-minh/ban-dich'
+    );
+    expect(pois?.children?.find((c) => c.id === 'pois-qr')?.path).toBe(
+      '/quan-tri/diem-thuyet-minh/ma-qr'
+    );
+    expect(pois?.children?.find((c) => c.id === 'pois-error-log')?.path).toBe(
+      '/quan-tri/diem-thuyet-minh/nhat-ky-loi'
+    );
+    expect(pois?.children?.find((c) => c.id === 'pois-segments')?.isUpcoming).toBe(true);
     const food = allItems.find((i) => i.id === 'food');
-    expect(food?.children?.[0]).toMatchObject({ label: 'Món ăn', matchSearch: 'category=FOOD' });
-    expect(food?.children?.[1]).toMatchObject({ label: 'Thức uống', matchSearch: 'category=DRINK' });
+    expect(food?.label).toBe('Quà lưu niệm');
+    expect(food?.children?.[0]).toMatchObject({ label: 'Sản phẩm', matchSearch: 'category=SOUVENIR' });
     const users = allItems.find((i) => i.id === 'users');
     expect(users?.children?.[0]).toMatchObject({ label: 'Tài khoản', path: '/quan-tri/nguoi-dung' });
   });
@@ -108,15 +118,41 @@ describe('Breadcrumb từ cấu hình menu', () => {
     ]);
   });
 
-  it('ẩm thực phân theo query, trang form không chọn mục con nào', () => {
-    expect(getAdminBreadcrumbs('/quan-tri/san-pham', '?category=FOOD')).toEqual([
+  it('các trang con của Điểm thuyết minh có breadcrumb và chọn đúng mục con', () => {
+    expect(getAdminBreadcrumbs('/quan-tri/diem-thuyet-minh/ban-dich')).toEqual([
       { label: ADMIN_MENU_ROOT_LABEL },
-      { label: 'Ẩm thực' },
-      { label: 'Món ăn' },
+      { label: 'Điểm thuyết minh' },
+      { label: 'Bản dịch và audio' },
+    ]);
+    expect(getAdminBreadcrumbs('/quan-tri/diem-thuyet-minh/ma-qr')).toEqual([
+      { label: ADMIN_MENU_ROOT_LABEL },
+      { label: 'Điểm thuyết minh' },
+      { label: 'Mã QR' },
+    ]);
+    expect(getAdminBreadcrumbs('/quan-tri/diem-thuyet-minh/nhat-ky-loi')).toEqual([
+      { label: ADMIN_MENU_ROOT_LABEL },
+      { label: 'Điểm thuyết minh' },
+      { label: 'Nhật ký xử lý lỗi' },
+    ]);
+    expect(resolveAdminMenuMatch('/quan-tri/diem-thuyet-minh/ban-dich')?.child?.id).toBe(
+      'pois-i18n'
+    );
+    expect(resolveAdminMenuMatch('/quan-tri/diem-thuyet-minh/ma-qr')?.child?.id).toBe('pois-qr');
+    expect(resolveAdminMenuMatch('/quan-tri/diem-thuyet-minh/nhat-ky-loi')?.child?.id).toBe(
+      'pois-error-log'
+    );
+    expect(resolveAdminMenuMatch('/quan-tri/diem-thuyet-minh/12')?.child?.id).toBe('pois-list');
+  });
+
+  it('quà lưu niệm phân theo query, trang form không chọn mục con nào', () => {
+    expect(getAdminBreadcrumbs('/quan-tri/san-pham', '?category=SOUVENIR')).toEqual([
+      { label: ADMIN_MENU_ROOT_LABEL },
+      { label: 'Quà lưu niệm' },
+      { label: 'Sản phẩm' },
     ]);
     expect(getAdminBreadcrumbs('/quan-tri/san-pham/moi')).toEqual([
       { label: ADMIN_MENU_ROOT_LABEL },
-      { label: 'Ẩm thực' },
+      { label: 'Quà lưu niệm' },
       { label: 'Thêm mới' },
     ]);
   });
@@ -134,14 +170,14 @@ describe('Breadcrumb từ cấu hình menu', () => {
 
   it('tiêu đề trang lấy nhãn cuối của breadcrumb', () => {
     expect(getAdminPageTitle('/quan-tri/diem-thuyet-minh')).toBe('Danh sách điểm');
-    expect(getAdminPageTitle('/quan-tri/san-pham', '?category=DRINK')).toBe('Thức uống');
+    expect(getAdminPageTitle('/quan-tri/san-pham', '?category=SOUVENIR')).toBe('Sản phẩm');
   });
 });
 
 describe('Tô sáng theo URL và lọc theo vai trò', () => {
   it('khớp đúng mục con theo cả path và query', () => {
-    expect(resolveAdminMenuMatch('/quan-tri/san-pham', '?category=DRINK')?.child?.id).toBe(
-      'food-drinks'
+    expect(resolveAdminMenuMatch('/quan-tri/san-pham', '?category=SOUVENIR')?.child?.id).toBe(
+      'food-souvenirs'
     );
     expect(resolveAdminMenuMatch('/quan-tri/san-pham')?.child).toBeUndefined();
     expect(resolveAdminMenuMatch('/quan-tri/diem-thuyet-minh/3')?.child?.id).toBe('pois-list');

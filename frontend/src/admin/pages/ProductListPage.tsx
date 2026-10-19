@@ -255,7 +255,7 @@ export const ProductListPage: React.FC = () => {
             />
           ) : (
             <div className="adm-product-thumb-placeholder" aria-hidden="true">
-              Món
+              Quà
             </div>
           )}
         </div>
@@ -405,9 +405,11 @@ export const ProductListPage: React.FC = () => {
     <div className="adm-page">
       <div className="adm-page-head">
         <div>
-          <h1 className="adm-page-title">Quản lý sản phẩm</h1>
+          <h1 className="adm-page-title">
+            {categoryParam === 'SOUVENIR' ? 'Quản lý quà lưu niệm' : 'Quản lý sản phẩm'}
+          </h1>
           <p className="adm-page-desc">
-            Danh sách món ăn, thức uống và ẩm thực hiển thị trên website Echora.
+            Danh sách quà lưu niệm hiển thị trên website Echora.
           </p>
         </div>
         <div className="adm-page-actions">
@@ -461,8 +463,6 @@ export const ProductListPage: React.FC = () => {
           aria-label="Lọc theo danh mục"
         >
           <option value="">Tất cả danh mục</option>
-          <option value="FOOD">Món ăn (FOOD)</option>
-          <option value="DRINK">Đồ uống (DRINK)</option>
           <option value="SOUVENIR">Quà lưu niệm (SOUVENIR)</option>
         </select>
 
@@ -519,7 +519,7 @@ export const ProductListPage: React.FC = () => {
         ) : (
           <EmptyState
             title="Chưa có sản phẩm nào trong hệ thống"
-            description="Bắt đầu thêm món ăn hoặc đồ uống đầu tiên để hiển thị cho du khách khám phá ẩm thực Sài Gòn."
+            description="Bắt đầu thêm quà lưu niệm đầu tiên để hiển thị cho du khách khám phá Sài Gòn."
             actionText="+ Thêm sản phẩm mới"
             onAction={() => navigate('/quan-tri/san-pham/moi')}
           />
@@ -551,7 +551,7 @@ export const ProductListPage: React.FC = () => {
       <ConfirmDialog
         isOpen={Boolean(pendingStatusProduct)}
         title="Xác nhận tạm ngưng sản phẩm"
-        message={`Bạn có chắc chắn muốn tạm ngưng hiển thị sản phẩm "${pendingStatusProduct?.name}" trên website? Du khách sẽ không thể tìm kiếm hoặc đặt món ăn này.`}
+        message={`Bạn có chắc chắn muốn tạm ngưng hiển thị sản phẩm "${pendingStatusProduct?.name}" trên website? Du khách sẽ không thể tìm kiếm hoặc đặt sản phẩm này.`}
         confirmText={statusDialogSubmitting ? 'Đang xử lý...' : 'Tạm ngưng sản phẩm'}
         cancelText="Hủy bỏ"
         variant="danger"

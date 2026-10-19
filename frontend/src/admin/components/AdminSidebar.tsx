@@ -170,7 +170,8 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
       );
     }
 
-    const childActive = isMenuChildActive(leaf, location.pathname, location.search);
+    // Tô sáng đúng mục con đang active (dùng mục con đã giải cụ thể nhất).
+    const childActive = currentMatch?.child?.id === leaf.id;
     const fullPath = leaf.path + (leaf.matchSearch ? `?${leaf.matchSearch}` : '');
 
     return (

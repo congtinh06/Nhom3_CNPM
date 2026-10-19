@@ -1,4 +1,5 @@
 import { SupportedLanguage } from '../types';
+import { formatNarrationNumerals } from './numerals';
 
 export type LocalizedString = Partial<Record<SupportedLanguage, string>> | string | undefined;
 
@@ -45,7 +46,7 @@ export function buildPoiSections(
   if (defined.length > 0) {
     return defined
       .map((section) => ({
-        text: pick(section.text, lang),
+        text: formatNarrationNumerals(pick(section.text, lang), lang),
         image: section.image?.trim() || '',
         caption: pick(section.caption, lang),
         alt: pick(section.alt, lang),
@@ -57,7 +58,7 @@ export function buildPoiSections(
   return (fallbackParagraphs || [])
     .filter((p) => Boolean(p && p.trim()))
     .map((text, idx) => ({
-      text,
+      text: formatNarrationNumerals(text, lang),
       image: idx === 0 ? cover : '',
       caption: '',
       alt: '',

@@ -4,10 +4,12 @@ import { SupportedLanguage } from '../../types';
 import { resolveImagePath } from './PoiCard';
 import { t } from '../../content/nearbyI18n';
 import { PlaybackStatus } from '../../hooks/useNearbyAudio';
+import { buildGoogleMapsDirectionsUrl } from '../../utils/directions';
 
 interface PoiHeroProps {
   poi: GeoPoi;
   originalIndex: number;
+  stopNumber?: number;
   totalStops: number;
   currentLang: SupportedLanguage;
   isPlaying: boolean;
@@ -19,12 +21,14 @@ interface PoiHeroProps {
   pauseBtnText?: string;
   resumeBtnText?: string;
   getPoiName: (poi: GeoPoi) => string;
+  userPos?: { lat: number; lng: number } | null;
   heroRef?: React.RefObject<HTMLDivElement>;
 }
 
 export const PoiHero: React.FC<PoiHeroProps> = ({
   poi,
   originalIndex,
+  stopNumber,
   totalStops,
   currentLang,
   isPlaying,
@@ -36,6 +40,7 @@ export const PoiHero: React.FC<PoiHeroProps> = ({
   pauseBtnText,
   resumeBtnText,
   getPoiName,
+  userPos,
   heroRef,
 }) => {
   const [imageError, setImageError] = useState(false);
@@ -47,6 +52,19 @@ export const PoiHero: React.FC<PoiHeroProps> = ({
   const hasNameInLang = Boolean(poi.name[currentLang]);
   const isNameFallback = !hasNameInLang && currentLang !== 'vi';
   const displayName = getPoiName(poi);
+  const displayStopNumber = stopNumber ?? originalIndex + 1;
+  const categoryLabel = poi.category?.[currentLang] || poi.category?.vi || '';
+  const eyebrowPrefix =
+    currentLang === 'en'
+      ? 'Stop'
+      : currentLang === 'ja'
+      ? 'スポット'
+      : currentLang === 'ko'
+      ? '정류장'
+      : 'Điểm';
+  const eyebrowText = categoryLabel
+    ? `${eyebrowPrefix} ${displayStopNumber} - ${categoryLabel}`
+    : `${eyebrowPrefix} ${displayStopNumber}`;
 
   // Hero intro: first two sentences of short narration text (2-line clamped)
   const introText = getHeroIntroText(poi, currentLang);
@@ -73,7 +91,7 @@ export const PoiHero: React.FC<PoiHeroProps> = ({
     <section
       ref={heroRef}
       className={`nearby-hero-section ${hasValidImage ? 'has-media' : 'no-media'}`}
-      aria-label={`${originalIndex + 1}. ${displayName}`}
+      aria-label={`${displayStopNumber}. ${displayName}`}
       id="active-stop-hero"
     >
       <div className="nearby-hero-container">
@@ -95,13 +113,7 @@ export const PoiHero: React.FC<PoiHeroProps> = ({
         <div className="nearby-hero-content">
           {/* Eyebrow badge: uppercase small label (ĐIỂM 1, loại điểm) */}
           <div className="hero-eyebrow-label" aria-hidden="true">
-            {currentLang === 'en'
-              ? `STOP ${originalIndex + 1}${poi.category?.en || poi.category?.vi ? `, ${poi.category?.en || poi.category?.vi}` : ''}`
-              : currentLang === 'ja'
-              ? `スポット ${originalIndex + 1}${poi.category?.ja || poi.category?.vi ? `, ${poi.category?.ja || poi.category?.vi}` : ''}`
-              : currentLang === 'ko'
-              ? `정류장 ${originalIndex + 1}${poi.category?.ko || poi.category?.vi ? `, ${poi.category?.ko || poi.category?.vi}` : ''}`
-              : `ĐIỂM ${originalIndex + 1}${poi.category?.vi ? `, ${poi.category?.vi}` : ''}`}
+            {eyebrowText}
           </div>
 
           {/* Stop title */}
@@ -171,15 +183,25 @@ export const PoiHero: React.FC<PoiHeroProps> = ({
               </span>
             </button>
 
+            <a
+              className="hero-directions-btn"
+              href={buildGoogleMapsDirectionsUrl(poi, userPos)}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={t(currentLang, 'directionsAria', { name: displayName })}
+            >
+              <span>{t(currentLang, 'directionsBtn')}</span>
+            </a>
+
             {formattedAudioDuration && (
               <span className="hero-audio-duration">{formattedAudioDuration}</span>
             )}
 
             <span
               className="hero-position-indicator"
-              aria-label={`Điểm ${originalIndex + 1} trên ${totalStops}`}
+              aria-label={`${displayStopNumber} / ${totalStops}`}
             >
-              {originalIndex + 1} / {totalStops}
+              {displayStopNumber} / {totalStops}
             </span>
           </div>
         </div>

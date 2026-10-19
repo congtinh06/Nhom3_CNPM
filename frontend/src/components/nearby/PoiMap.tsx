@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
-import { MapContainer, Marker, Popup, Circle, Polyline, useMap, useMapEvents } from 'react-leaflet';
+import { MapContainer, Marker, Popup, Circle, useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { SupportedLanguage } from '../../types';
@@ -7,6 +7,7 @@ import { GeoPoi } from '../../pages/NearbyPage';
 import { PositionState, haversine } from '../../hooks/useAutoNarration';
 import { resolveImagePath } from './PoiCard';
 import { t, formatDistance } from '../../content/nearbyI18n';
+import { buildGoogleMapsDirectionsUrl } from '../../utils/directions';
 
 interface MapControllerProps {
   pois: GeoPoi[];
@@ -397,13 +398,6 @@ export const OsmTileLayer: React.FC<OsmTileLayerProps> = ({
   const consecutiveErrorsRef = useRef<number>(0);
   const lastRetryRef = useRef<number>(retryTrigger);
 
-  // Set Leaflet attribution prefix to false so only the OSM attribution shows
-  useEffect(() => {
-    if (map.attributionControl) {
-      map.attributionControl.setPrefix(false);
-    }
-  }, [map]);
-
   // "Thử lại" restarts the chain from the first provider
   useEffect(() => {
     if (retryTrigger !== lastRetryRef.current) {
@@ -420,7 +414,6 @@ export const OsmTileLayer: React.FC<OsmTileLayerProps> = ({
     const layerOptions: L.TileLayerOptions = {
       maxZoom: currentProvider.maxZoom ?? 19,
       referrerPolicy: currentProvider.referrerPolicy,
-      attribution: `${currentProvider.attribution} | <small class="map-provider-tag">${currentProvider.name}</small>`,
       subdomains: currentProvider.subdomains ?? 'abc',
     };
 
@@ -758,6 +751,7 @@ export const PoiMap: React.FC<PoiMapProps> = ({
           center={[10.7769, 106.6954]}
           zoom={15}
           zoomControl={false}
+          attributionControl={false}
           scrollWheelZoom={false}
           style={{
             width: '100%',
@@ -792,46 +786,7 @@ export const PoiMap: React.FC<PoiMapProps> = ({
             onInitialFitDone={() => setIsInitialMount(false)}
           />
 
-          {/* 1. Route: 6px accent polyline read from CSS token with 2px white casing */}
-          {pois.map((p, idx) => {
-            if (idx === pois.length - 1) return null;
-            const nextPoi = pois[idx + 1];
-            if (!nextPoi) return null;
-            const pair: [number, number][] = [
-              [p.lat, p.lng],
-              [nextPoi.lat, nextPoi.lng],
-            ];
-            const isSegmentListened = listenedPoiIds.includes(nextPoi.id);
-
-            return (
-              <React.Fragment key={`segment-${p.id}-${nextPoi.id}`}>
-                {/* White casing underneath */}
-                <Polyline
-                  positions={pair}
-                  pathOptions={{
-                    color: '#FFFFFF',
-                    weight: 12,
-                    opacity: 0.95,
-                    lineCap: 'round',
-                    lineJoin: 'round',
-                  }}
-                />
-                {/* Accent polyline from CSS token */}
-                <Polyline
-                  positions={pair}
-                  pathOptions={{
-                    color: routeAccentColor,
-                    weight: 8,
-                    opacity: 1,
-                    lineCap: 'round',
-                    lineJoin: 'round',
-                    dashArray: isSegmentListened ? undefined : '6, 8',
-                  }}
-                />
-              </React.Fragment>
-            );
-          })}
-
+          {/* No inline directions on this map; only the Google Maps basemap is shown */}
           {/* 3. Geofence ring: translucent accent circle from CSS token around active stop */}
           {activePoi && (
             <Circle
@@ -933,6 +888,16 @@ export const PoiMap: React.FC<PoiMapProps> = ({
                         ? resumeBtnText || t(currentLang, 'resumeBtn')
                         : listenBtnText || t(currentLang, 'playBtn')}
                     </button>
+                    <a
+                      className="nearby-popup-directions-btn"
+                      href={buildGoogleMapsDirectionsUrl(p, userPos)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label={t(currentLang, 'directionsAria', { name: getPoiName(p) })}
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {t(currentLang, 'directionsBtn')}
+                    </a>
                   </div>
                 </Popup>
               </Marker>
@@ -1020,6 +985,16 @@ export const PoiMap: React.FC<PoiMapProps> = ({
                   ? resumeBtnText || t(currentLang, 'resumeBtn')
                   : listenBtnText || t(currentLang, 'playBtn')}
               </button>
+              <a
+                className="selected-card-directions-btn"
+                href={buildGoogleMapsDirectionsUrl(clickedPoi, userPos)}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={t(currentLang, 'directionsAria', { name: getPoiName(clickedPoi) })}
+                title={t(currentLang, 'directionsBtn')}
+              >
+                {t(currentLang, 'directionsBtn')}
+              </a>
             </div>
           </div>
         )}

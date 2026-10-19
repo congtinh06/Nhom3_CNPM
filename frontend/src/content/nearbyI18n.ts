@@ -54,6 +54,8 @@ export type NearbyKey =
   | 'retryBtn'
   | 'selectedCardAria'
   | 'selectedCardClose'
+  | 'directionsBtn'
+  | 'directionsAria'
   | 'popupListenedTag'
   | 'chaptersAriaLabel'
   | 'listTitle'
@@ -132,7 +134,12 @@ export type NearbyKey =
   | 'simApplyBtn'
   | 'simStopBtn'
   | 'simInvalidCoord'
-  | 'gpsLocatedToast';
+  | 'gpsLocatedToast'
+  | 'autoStatusOff'
+  | 'autoStatusWaiting'
+  | 'autoStatusTracking'
+  | 'autoStatusDenied'
+  | 'demoSection';
 
 export const NATIVE_LANG_NAMES: Record<SupportedLanguage, string> = {
   vi: 'Tiếng Việt',
@@ -150,7 +157,7 @@ export const LANG_DISPLAY_NAMES: Record<SupportedLanguage, Record<SupportedLangu
 
 export const NEARBY_DICTIONARY: Record<SupportedLanguage, Record<NearbyKey, string>> = {
   vi: {
-    heroEyebrow: 'TUYẾN THUYẾT MINH, 7 ĐIỂM',
+    heroEyebrow: 'Tuyến thuyết minh - 7 điểm',
     pageTitle: 'Điểm du lịch Sài Gòn',
     pageSubtitle:
       '7 điểm có thuyết minh. Bấm Phát ở bất kỳ điểm nào để phát ngay, hoặc bật thuyết minh tự động để trang tự phát khi bạn đi tới gần.',
@@ -188,7 +195,7 @@ export const NEARBY_DICTIONARY: Record<SupportedLanguage, Record<NearbyKey, stri
     nearestPrefix: 'điểm gần nhất là',
     nearestSuffix: 'điểm gần nhất là <b>{name}</b>, cách {dist}.',
     mapAriaLabel: 'Bản đồ tương tác các điểm du lịch',
-    mapCaption: 'Bản đồ tương tác OpenStreetMap hiển thị vị trí 7 điểm di sản văn hóa Sài Gòn.',
+    mapCaption: 'Bản đồ tương tác Google Maps hiển thị vị trí 7 điểm di sản văn hóa Sài Gòn.',
     simBannerLabel: 'Chế độ giả lập',
     simBannerDesc: 'Bấm hoặc kéo chấm tròn để di chuyển',
     simBannerExit: 'Tắt',
@@ -204,6 +211,8 @@ export const NEARBY_DICTIONARY: Record<SupportedLanguage, Record<NearbyKey, stri
     retryBtn: 'Thử lại',
     selectedCardAria: 'Thông tin điểm dừng đang chọn',
     selectedCardClose: 'Đóng thẻ địa điểm',
+    directionsBtn: 'Chỉ đường',
+    directionsAria: 'Chỉ đường từ vị trí hiện tại đến {name}',
     popupListenedTag: '(Đã nghe)',
     chaptersAriaLabel: 'Nội dung các chặng tour',
     listTitle: '7 điểm thuyết minh',
@@ -285,9 +294,14 @@ export const NEARBY_DICTIONARY: Record<SupportedLanguage, Record<NearbyKey, stri
     simStopBtn: 'Tắt giả lập',
     simInvalidCoord: 'Toạ độ không hợp lệ.',
     gpsLocatedToast: 'Đã xác định vị trí. Điểm gần nhất: {name}, cách {dist}.',
+    autoStatusOff: 'Thuyết minh tự động đang tắt.',
+    autoStatusWaiting: 'Thuyết minh tự động đang bật, đang chờ vị trí (bán kính {radius}).',
+    autoStatusTracking: 'Thuyết minh tự động đang bật (bán kính {radius}). Gần nhất: {name} ({dist}).',
+    autoStatusDenied: 'Thuyết minh tự động đang bật nhưng chưa được cấp quyền vị trí (bán kính {radius}).',
+    demoSection: 'Khu vực thử nghiệm',
   },
   en: {
-    heroEyebrow: 'AUDIO TOUR, 7 LANDMARKS',
+    heroEyebrow: 'Audio tour - 7 landmarks',
     pageTitle: 'Saigon Attractions',
     pageSubtitle:
       '7 historic landmarks with audio guide. Click Play on any spot to listen immediately, or enable auto narration so the guide plays as you walk near.',
@@ -325,7 +339,7 @@ export const NEARBY_DICTIONARY: Record<SupportedLanguage, Record<NearbyKey, stri
     nearestPrefix: 'nearest spot is',
     nearestSuffix: 'nearest spot is <b>{name}</b>, {dist} away.',
     mapAriaLabel: 'Interactive tour map',
-    mapCaption: 'Interactive OpenStreetMap showing 7 heritage landmarks of Saigon.',
+    mapCaption: 'Interactive Google Map showing 7 heritage landmarks of Saigon.',
     simBannerLabel: 'Simulation mode',
     simBannerDesc: 'Click or drag dot to move',
     simBannerExit: 'Exit',
@@ -341,6 +355,8 @@ export const NEARBY_DICTIONARY: Record<SupportedLanguage, Record<NearbyKey, stri
     retryBtn: 'Retry',
     selectedCardAria: 'Selected landmark card',
     selectedCardClose: 'Close landmark card',
+    directionsBtn: 'Directions',
+    directionsAria: 'Directions from your current location to {name}',
     popupListenedTag: '(Listened)',
     chaptersAriaLabel: 'Tour chapter contents',
     listTitle: '7 Audio Tour Spots',
@@ -422,10 +438,15 @@ export const NEARBY_DICTIONARY: Record<SupportedLanguage, Record<NearbyKey, stri
     simStopBtn: 'Stop simulation',
     simInvalidCoord: 'Invalid coordinates.',
     gpsLocatedToast: 'Location found. Nearest spot: {name}, {dist} away.',
+    autoStatusOff: 'Auto narration is off.',
+    autoStatusWaiting: 'Auto narration is on. Waiting for your location (radius {radius}).',
+    autoStatusTracking: 'Auto narration is on (radius {radius}). Nearest: {name} ({dist}).',
+    autoStatusDenied: 'Auto narration is on but location access is blocked (radius {radius}).',
+    demoSection: 'Demo tools',
   },
   /* DRAFT: needs native review */
   ko: {
-    heroEyebrow: '오디오 가이드, 7대 명소',
+    heroEyebrow: '오디오 가이드 - 7대 명소',
     pageTitle: '사이공 관광 명소',
     pageSubtitle:
       '오디오 해설이 제공되는 7개 명소. 원하는 곳에서 재생 버튼을 눌러 바로 청취하거나, 자동 해설을 켜서 근처에 도착하면 자동으로 청취할 수 있습니다.',
@@ -463,7 +484,7 @@ export const NEARBY_DICTIONARY: Record<SupportedLanguage, Record<NearbyKey, stri
     nearestPrefix: '가장 가까운 명소는',
     nearestSuffix: '가장 가까운 명소는 <b>{name}</b> ({dist} 거리)입니다.',
     mapAriaLabel: '대화형 투어 지도',
-    mapCaption: '사이공 7대 문화유산 위치를 표시하는 오픈스트리트맵.',
+    mapCaption: '사이공 7대 문화유산 위치를 표시하는 구글 지도.',
     simBannerLabel: '시뮬레이션 모드',
     simBannerDesc: '이동하려면 원을 클릭하거나 드래그하세요',
     simBannerExit: '종료',
@@ -479,6 +500,8 @@ export const NEARBY_DICTIONARY: Record<SupportedLanguage, Record<NearbyKey, stri
     retryBtn: '다시 시도',
     selectedCardAria: '선택된 명소 정보',
     selectedCardClose: '명소 카드 닫기',
+    directionsBtn: '길찾기',
+    directionsAria: '현재 위치에서 {name}(으)로 가는 길',
     popupListenedTag: '(청취 완료)',
     chaptersAriaLabel: '투어 코스 내용',
     listTitle: '7개 오디오 해설 명소',
@@ -559,10 +582,15 @@ export const NEARBY_DICTIONARY: Record<SupportedLanguage, Record<NearbyKey, stri
     simStopBtn: '시뮬레이션 끄기',
     simInvalidCoord: '좌표가 올바르지 않습니다.',
     gpsLocatedToast: '위치 확인 완료. 가장 가까운 명소: {name}, {dist} 거리.',
+    autoStatusOff: '자동 해설이 꺼져 있습니다.',
+    autoStatusWaiting: '자동 해설이 켜져 있습니다. 위치를 확인하는 중입니다 (반경 {radius}).',
+    autoStatusTracking: '자동 해설이 켜져 있습니다 (반경 {radius}). 가장 가까운 곳: {name} ({dist}).',
+    autoStatusDenied: '자동 해설이 켜져 있지만 위치 접근 권한이 없습니다 (반경 {radius}).',
+    demoSection: '데모 도구',
   },
   /* DRAFT: needs native review */
   ja: {
-    heroEyebrow: '音声ガイド, 7大名所',
+    heroEyebrow: '音声ガイド - 7大名所',
     pageTitle: 'サイゴン観光スポット',
     pageSubtitle:
       '音声ガイド付きの7か所の名所。再生ボタンを押してすぐ聴くか、自動ガイドをオンにして近づいた際に自動再生できます。',
@@ -600,7 +628,7 @@ export const NEARBY_DICTIONARY: Record<SupportedLanguage, Record<NearbyKey, stri
     nearestPrefix: '最寄りのスポットは',
     nearestSuffix: '最寄りのスポットは<b>{name}</b>（{dist}）です。',
     mapAriaLabel: 'インタラクティブツアー地図',
-    mapCaption: 'サイゴンの7大文化遺産を表示するオープンストリートマップ。',
+    mapCaption: 'サイゴンの7大文化遺産を表示する Google マップ。',
     simBannerLabel: 'シミュレーションモード',
     simBannerDesc: 'ドットをクリックまたはドラッグして移動',
     simBannerExit: '終了',
@@ -616,6 +644,8 @@ export const NEARBY_DICTIONARY: Record<SupportedLanguage, Record<NearbyKey, stri
     retryBtn: '再試行',
     selectedCardAria: '選択中のスポット情報',
     selectedCardClose: 'スポットカードを閉じる',
+    directionsBtn: '経路',
+    directionsAria: '現在地から{name}への経路',
     popupListenedTag: '(再生済み)',
     chaptersAriaLabel: 'ツアーチャプター内容',
     listTitle: '7つのガイドスポット',
@@ -696,6 +726,11 @@ export const NEARBY_DICTIONARY: Record<SupportedLanguage, Record<NearbyKey, stri
     simStopBtn: 'シミュレーションを停止',
     simInvalidCoord: '座標が正しくありません。',
     gpsLocatedToast: '位置を取得しました。最寄りのスポット: {name}（{dist}）。',
+    autoStatusOff: '自動ガイドはオフです。',
+    autoStatusWaiting: '自動ガイドはオンです。位置情報を待っています（半径 {radius}）。',
+    autoStatusTracking: '自動ガイドはオンです（半径 {radius}）。最寄り: {name}（{dist}）。',
+    autoStatusDenied: '自動ガイドはオンですが、位置情報へのアクセスが許可されていません（半径 {radius}）。',
+    demoSection: 'デモ用ツール',
   },
 };
 
@@ -756,6 +791,21 @@ export function formatDistance(metres: number, lang: SupportedLanguage): string 
     minimumFractionDigits: 1,
     maximumFractionDigits: 1,
   }).format(km);
+  return `${formatted} km`;
+}
+
+export function formatDistanceRounded(metres: number, lang: SupportedLanguage): string {
+  const locale = LOCALE_MAP[lang] || 'vi-VN';
+  if (metres < 1000) {
+    const formatted = new Intl.NumberFormat(locale, { maximumFractionDigits: 0 }).format(
+      Math.round(metres)
+    );
+    return `${formatted} m`;
+  }
+  const km = metres / 1000;
+  const formatted = new Intl.NumberFormat(locale, { maximumFractionDigits: 0 }).format(
+    Math.round(km)
+  );
   return `${formatted} km`;
 }
 

@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { buildPoiSections } from '../lib/poiSections';
+import { formatNarrationNumerals } from '../lib/numerals';
 
 describe('buildPoiSections (Hạng mục 4)', () => {
   it('auto-splits existing paragraphs and reuses the cover image on the first section only', () => {
@@ -43,5 +44,37 @@ describe('buildPoiSections (Hạng mục 4)', () => {
     const sections = buildPoiSections(poi, 'vi', []);
     expect(sections).toHaveLength(1);
     expect(sections[0]!.text).toBe('Có chữ');
+  });
+});
+
+describe('formatNarrationNumerals', () => {
+  it('converts years written in words after "năm"', () => {
+    expect(
+      formatNarrationNumerals(
+        'Xe tăng tiến vào ngày ba mươi tháng tư năm một nghìn chín trăm bảy mươi lăm.',
+        'vi'
+      )
+    ).toBe('Xe tăng tiến vào ngày ba mươi tháng tư năm 1975.');
+  });
+
+  it('converts centuries after "thế kỷ"', () => {
+    expect(formatNarrationNumerals('Xây dựng từ thế kỷ mười chín.', 'vi')).toBe(
+      'Xây dựng từ thế kỷ 19.'
+    );
+  });
+
+  it('converts decades after "những năm"', () => {
+    expect(formatNarrationNumerals('Tòa nhà được xây vào những năm sáu mươi.', 'vi')).toBe(
+      'Tòa nhà được xây vào những năm 1960.'
+    );
+  });
+
+  it('leaves quantities, names and other languages untouched', () => {
+    expect(formatNarrationNumerals('Có một nghìn người tại Quận Một.', 'vi')).toBe(
+      'Có một nghìn người tại Quận Một.'
+    );
+    expect(formatNarrationNumerals('Built in nineteen seventy-five.', 'en')).toBe(
+      'Built in nineteen seventy-five.'
+    );
   });
 });

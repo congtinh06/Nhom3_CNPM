@@ -375,6 +375,12 @@ export const PoiReadingSection: React.FC<PoiReadingSectionProps> = ({
               </div>
             )}
 
+            {!showReadingBody && (
+              <p className="reading-body-fallback" lang={currentLang}>
+                {t(currentLang, 'noTranscript')}
+              </p>
+            )}
+
             {/* Reading body: rendered only when the full narration layer exists for the current language */}
             {showReadingBody && (
               <div className="reading-body-flow" lang={currentLang} data-sync={syncMode}>

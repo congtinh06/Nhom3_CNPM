@@ -267,6 +267,82 @@ describe('RouteListPage', () => {
     expect(routeApi.getAdminRoutes).toHaveBeenCalledTimes(1);
   });
 
+  it('gợi ý bộ lọc khu vực áp dụng bộ lọc và hiển thị chip có thể xóa', async () => {
+    renderComponent();
+
+    await waitFor(() => {
+      expect(screen.getByText('Tuyến di sản')).toBeInTheDocument();
+    });
+
+    const searchInput = screen.getByLabelText(/tìm kiếm tuyến/i);
+    fireEvent.focus(searchInput);
+    const suggestionList = await screen.findByRole('listbox', {
+      name: /gợi ý tìm kiếm và bộ lọc/i,
+    });
+    fireEvent.click(within(suggestionList).getByRole('option', { name: /^Quận 3/i }));
+
+    await waitFor(() => {
+      expect(routeApi.getAdminRoutes).toHaveBeenLastCalledWith(
+        expect.objectContaining({ zoneId: 2, page: 0 })
+      );
+    });
+
+    const chip = await screen.findByRole('button', {
+      name: /xóa bộ lọc khu vực: quận 3/i,
+    });
+    fireEvent.click(chip);
+
+    await waitFor(() => {
+      expect(routeApi.getAdminRoutes).toHaveBeenLastCalledWith(
+        expect.objectContaining({ zoneId: undefined, page: 0 })
+      );
+    });
+  });
+
+  it('gợi ý bộ lọc trạng thái tuyến áp dụng trạng thái và chip tương ứng', async () => {
+    renderComponent();
+
+    await waitFor(() => {
+      expect(screen.getByText('Tuyến di sản')).toBeInTheDocument();
+    });
+
+    const searchInput = screen.getByLabelText(/tìm kiếm tuyến/i);
+    fireEvent.focus(searchInput);
+    fireEvent.click(await screen.findByRole('option', { name: /tuyến đang hoạt động/i }));
+
+    await waitFor(() => {
+      expect(routeApi.getAdminRoutes).toHaveBeenLastCalledWith(
+        expect.objectContaining({ status: 'ACTIVE', page: 0 })
+      );
+    });
+
+    expect(
+      screen.getByRole('button', { name: /xóa bộ lọc trạng thái: hoạt động/i })
+    ).toBeInTheDocument();
+  });
+
+  it('gợi ý từ khóa chọn tên tuyến và gửi tìm kiếm lên máy chủ', async () => {
+    renderComponent();
+
+    await waitFor(() => {
+      expect(screen.getByText('Tuyến di sản')).toBeInTheDocument();
+    });
+
+    const searchInput = screen.getByLabelText(/tìm kiếm tuyến/i);
+    fireEvent.change(searchInput, { target: { value: 'ẩm' } });
+    fireEvent.click(await screen.findByRole('option', { name: /tuyến ẩm thực/i }));
+
+    await waitFor(() => {
+      expect(routeApi.getAdminRoutes).toHaveBeenLastCalledWith(
+        expect.objectContaining({ search: 'Tuyến ẩm thực', page: 0 })
+      );
+    });
+    expect(searchInput).toHaveValue('Tuyến ẩm thực');
+    expect(
+      screen.getByRole('button', { name: /xóa bộ lọc từ khóa: tuyến ẩm thực/i })
+    ).toBeInTheDocument();
+  });
+
   it('nút "Thêm tuyến mới" ở EmptyState điều hướng SPA, không tải lại trang', async () => {
     vi.mocked(routeApi.getAdminRoutes).mockResolvedValue(pageOf([]));
     renderComponent();

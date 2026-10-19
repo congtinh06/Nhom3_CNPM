@@ -22,6 +22,15 @@ const PoiListPage = lazy(() =>
 const PoiFormPage = lazy(() =>
   import('./pages/PoiFormPage').then((m) => ({ default: m.PoiFormPage }))
 );
+const PoiTranslationsPage = lazy(() =>
+  import('./pages/PoiTranslationsPage').then((m) => ({ default: m.PoiTranslationsPage }))
+);
+const PoiQrListPage = lazy(() =>
+  import('./pages/PoiQrListPage').then((m) => ({ default: m.PoiQrListPage }))
+);
+const PoiErrorLogPage = lazy(() =>
+  import('./pages/PoiErrorLogPage').then((m) => ({ default: m.PoiErrorLogPage }))
+);
 const ZoneListPage = lazy(() =>
   import('./pages/ZoneListPage').then((m) => ({ default: m.ZoneListPage }))
 );
@@ -33,6 +42,15 @@ const RouteListPage = lazy(() =>
 );
 const RouteFormPage = lazy(() =>
   import('./pages/RouteFormPage').then((m) => ({ default: m.RouteFormPage }))
+);
+const RouteStopsPage = lazy(() =>
+  import('./pages/RouteStopsPage').then((m) => ({ default: m.RouteStopsPage }))
+);
+const NewsListPage = lazy(() =>
+  import('./pages/NewsListPage').then((m) => ({ default: m.NewsListPage }))
+);
+const NewsFormPage = lazy(() =>
+  import('./pages/NewsFormPage').then((m) => ({ default: m.NewsFormPage }))
 );
 const UserListPage = lazy(() =>
   import('./pages/UserListPage').then((m) => ({ default: m.UserListPage }))
@@ -66,15 +84,24 @@ export const AdminRoutes: React.FC = () => {
           <Route path="san-pham" element={<ProductListPage />} />
           <Route path="san-pham/moi" element={<ProductFormPage />} />
           <Route path="san-pham/:id" element={<ProductFormPage />} />
+          {/* Điểm thuyết minh: danh sách + 3 trang con + form thêm/sửa */}
           <Route path="diem-thuyet-minh" element={<PoiListPage />} />
+          <Route path="diem-thuyet-minh/ban-dich" element={<PoiTranslationsPage />} />
+          <Route path="diem-thuyet-minh/ma-qr" element={<PoiQrListPage />} />
+          <Route path="diem-thuyet-minh/nhat-ky-loi" element={<PoiErrorLogPage />} />
           <Route path="diem-thuyet-minh/moi" element={<PoiFormPage />} />
           <Route path="diem-thuyet-minh/:id" element={<PoiFormPage />} />
           <Route path="khu-vuc" element={<ZoneListPage />} />
           <Route path="khu-vuc/moi" element={<ZoneFormPage />} />
           <Route path="khu-vuc/:id" element={<ZoneFormPage />} />
           <Route path="lo-trinh" element={<RouteListPage />} />
+          <Route path="lo-trinh/thu-tu-diem-dung" element={<RouteStopsPage />} />
           <Route path="lo-trinh/moi" element={<RouteFormPage />} />
           <Route path="lo-trinh/:id" element={<RouteFormPage />} />
+          {/* Tin tức: danh sách + form thêm/sửa */}
+          <Route path="tin-tuc" element={<NewsListPage />} />
+          <Route path="tin-tuc/moi" element={<NewsFormPage />} />
+          <Route path="tin-tuc/:id" element={<NewsFormPage />} />
           <Route path="nguoi-dung" element={<UserListPage />} />
           <Route path="nguoi-dung/:id" element={<UserDetailPage />} />
           <Route path="*" element={<Navigate to="/quan-tri/tong-quan" replace />} />

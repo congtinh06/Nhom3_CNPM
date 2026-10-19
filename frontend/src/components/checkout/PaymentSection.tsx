@@ -1,4 +1,5 @@
 import { CreditCard } from 'lucide-react';
+import { useNavbarLanguage } from '../../content/languages';
 
 export type PaymentMethod = 'COD' | 'VIETQR';
 
@@ -13,23 +14,28 @@ export function PaymentSection({
   onChange,
   disabled = false,
 }: PaymentSectionProps) {
+  const { t } = useNavbarLanguage();
+  const c = t.shop.checkoutPage;
+
   return (
-    <section className="checkout-card">
-      {/* Header */}
-      <div className="checkout-card-header">
-        <div className="checkout-card-icon" aria-hidden="true">
-          <CreditCard size={18} strokeWidth={2} />
-        </div>
-        <h2 className="checkout-card-title">Phương thức thanh toán</h2>
+    <section className="co-card">
+      <div className="co-card-head">
+        <span className="co-card-index" aria-hidden="true">
+          4
+        </span>
+        <h2 className="co-card-title">{c.paymentSection}</h2>
       </div>
 
-      {/* Options List */}
-      <div className="checkout-options-stack" role="radiogroup" aria-label="Phương thức thanh toán">
-        {/* Option 1: COD */}
+      <div
+        className="co-pay-options"
+        role="radiogroup"
+        aria-label={c.paymentSection}
+      >
         <label
           htmlFor="payment-cod"
-          className={`checkout-option-card ${selectedMethod === 'COD' ? 'selected' : ''}`}
-          style={disabled ? { opacity: 0.6, cursor: 'not-allowed' } : undefined}
+          className={`co-pay-option ${selectedMethod === 'COD' ? 'is-selected' : ''} ${
+            disabled ? 'is-disabled' : ''
+          }`}
         >
           <input
             id="payment-cod"
@@ -39,25 +45,25 @@ export function PaymentSection({
             checked={selectedMethod === 'COD'}
             onChange={() => onChange('COD')}
             disabled={disabled}
-            style={{ display: 'none' }}
+            className="co-pay-input"
           />
-
-          {/* Radio indicator */}
-          <div className="checkout-radio-circle" aria-hidden="true">
-            <div className="checkout-radio-dot" />
-          </div>
-
-          <div className="option-content">
-            <span className="option-title">Thanh toán khi nhận hàng (COD)</span>
-            <p className="option-desc">Thanh toán tiền mặt trực tiếp khi nhận món</p>
-          </div>
+          <span className="co-radio" aria-hidden="true">
+            <span className="co-radio-dot" />
+          </span>
+          <span className="co-pay-text">
+            <span className="co-pay-title">
+              <CreditCard size={16} strokeWidth={2} aria-hidden="true" />
+              {c.codTitle}
+            </span>
+            <span className="co-pay-desc">{c.codDesc}</span>
+          </span>
         </label>
 
-        {/* Option 2: VietQR */}
         <label
           htmlFor="payment-vietqr"
-          className={`checkout-option-card ${selectedMethod === 'VIETQR' ? 'selected' : ''}`}
-          style={disabled ? { opacity: 0.6, cursor: 'not-allowed' } : undefined}
+          className={`co-pay-option ${
+            selectedMethod === 'VIETQR' ? 'is-selected' : ''
+          } ${disabled ? 'is-disabled' : ''}`}
         >
           <input
             id="payment-vietqr"
@@ -67,20 +73,22 @@ export function PaymentSection({
             checked={selectedMethod === 'VIETQR'}
             onChange={() => onChange('VIETQR')}
             disabled={disabled}
-            style={{ display: 'none' }}
+            className="co-pay-input"
           />
-
-          {/* Radio indicator */}
-          <div className="checkout-radio-circle" aria-hidden="true">
-            <div className="checkout-radio-dot" />
-          </div>
-
-          <div className="option-content">
-            <span className="option-title">Chuyển khoản ngân hàng (VietQR)</span>
-            <p className="option-desc">Quét mã QR qua app ngân hàng hoặc ví điện tử (mã QR hiển thị sau khi đặt hàng)</p>
-          </div>
+          <span className="co-radio" aria-hidden="true">
+            <span className="co-radio-dot" />
+          </span>
+          <span className="co-pay-text">
+            <span className="co-pay-title">
+              <CreditCard size={16} strokeWidth={2} aria-hidden="true" />
+              {c.vietQrTitle}
+            </span>
+            <span className="co-pay-desc">{c.vietQrDesc}</span>
+          </span>
         </label>
       </div>
+
+      <p className="co-pay-notice">{c.vietQrDemoNotice}</p>
     </section>
   );
 }

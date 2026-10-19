@@ -227,6 +227,56 @@ describe('ZoneListPage', () => {
     expect(zoneApi.getAdminZones).toHaveBeenCalledTimes(1);
   });
 
+  it('gợi ý bộ lọc trạng thái áp dụng bộ lọc và hiển thị chip có thể xóa', async () => {
+    renderComponent();
+
+    await waitFor(() => {
+      expect(screen.getByText('Trung tâm Quận 1')).toBeInTheDocument();
+    });
+
+    const searchInput = screen.getByLabelText(/tìm kiếm khu vực/i);
+    fireEvent.focus(searchInput);
+    fireEvent.click(await screen.findByRole('option', { name: /khu vực đang hoạt động/i }));
+
+    await waitFor(() => {
+      expect(zoneApi.getAdminZones).toHaveBeenLastCalledWith(
+        expect.objectContaining({ isActive: true, page: 0 })
+      );
+    });
+
+    const chip = await screen.findByRole('button', {
+      name: /xóa bộ lọc trạng thái: hoạt động/i,
+    });
+    fireEvent.click(chip);
+
+    await waitFor(() => {
+      expect(zoneApi.getAdminZones).toHaveBeenLastCalledWith(
+        expect.objectContaining({ isActive: undefined, page: 0 })
+      );
+    });
+    expect(screen.queryByRole('button', { name: /xóa bộ lọc trạng thái/i })).not.toBeInTheDocument();
+  });
+
+  it('gợi ý từ khóa chọn tên khu vực và gửi tìm kiếm lên máy chủ', async () => {
+    renderComponent();
+
+    await waitFor(() => {
+      expect(screen.getByText('Trung tâm Quận 1')).toBeInTheDocument();
+    });
+
+    const searchInput = screen.getByLabelText(/tìm kiếm khu vực/i);
+    fireEvent.change(searchInput, { target: { value: 'phố' } });
+    fireEvent.click(await screen.findByRole('option', { name: /phố ẩm thực quận 3/i }));
+
+    await waitFor(() => {
+      expect(zoneApi.getAdminZones).toHaveBeenLastCalledWith(
+        expect.objectContaining({ search: 'Phố ẩm thực Quận 3', page: 0 })
+      );
+    });
+    expect(searchInput).toHaveValue('Phố ẩm thực Quận 3');
+    expect(screen.getByRole('button', { name: /xóa bộ lọc từ khóa: phố ẩm thực quận 3/i })).toBeInTheDocument();
+  });
+
   it('nút "Thêm khu vực mới" ở EmptyState điều hướng SPA, không tải lại trang', async () => {
     vi.mocked(zoneApi.getAdminZones).mockResolvedValue(pageOf([]));
     renderComponent();

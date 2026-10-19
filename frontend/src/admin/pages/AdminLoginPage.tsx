@@ -4,7 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import { normalizeAdminError } from '../api/adminClient';
 import { FormField } from '../components/FormField';
 import { BRAND_NAME, BRAND_TAGLINE } from '../brand/brand';
-import { ChevronLeft } from 'lucide-react';
+import { ChevronLeft, Eye, EyeOff } from 'lucide-react';
 
 export const AdminLoginPage: React.FC = () => {
   const navigate = useNavigate();
@@ -13,6 +13,7 @@ export const AdminLoginPage: React.FC = () => {
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -97,17 +98,33 @@ export const AdminLoginPage: React.FC = () => {
           </FormField>
 
           <FormField label="Mật khẩu" htmlFor="adm-login-password" required>
-            <input
-              id="adm-login-password"
-              type="password"
-              name="password"
-              autoComplete="current-password"
-              className="adm-input"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              disabled={submitting}
-              required
-            />
+            <div className="adm-password-wrap">
+              <input
+                id="adm-login-password"
+                type={showPassword ? 'text' : 'password'}
+                name="password"
+                autoComplete="current-password"
+                className="adm-input"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                disabled={submitting}
+                required
+              />
+              <button
+                type="button"
+                className="adm-password-eye"
+                aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+                aria-pressed={showPassword}
+                onClick={() => setShowPassword((visible) => !visible)}
+                disabled={submitting}
+              >
+                {showPassword ? (
+                  <EyeOff size={16} strokeWidth={1.75} aria-hidden="true" />
+                ) : (
+                  <Eye size={16} strokeWidth={1.75} aria-hidden="true" />
+                )}
+              </button>
+            </div>
           </FormField>
 
           <button

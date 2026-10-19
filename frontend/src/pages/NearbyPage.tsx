@@ -7,7 +7,12 @@ import { SupportedLanguage } from '../types';
 import { useAutoNarration, haversine } from '../hooks/useAutoNarration';
 import { useNearbyAudio, splitTranscriptIntoSentences } from '../hooks/useNearbyAudio';
 import { unlockAudio } from '../lib/audioUnlock';
-import { t, formatDistance, NEARBY_DICTIONARY } from '../content/nearbyI18n';
+import {
+  t,
+  formatDistance,
+  formatDistanceRounded,
+  NEARBY_DICTIONARY,
+} from '../content/nearbyI18n';
 import { useToastOptional } from '../context/ToastContext';
 
 // Components
@@ -38,6 +43,7 @@ export interface GeoPoi {
   category: Record<SupportedLanguage, string>;
   image: string;
   audio: Record<SupportedLanguage, string | number>;
+  audioStatusByLanguage?: Partial<Record<SupportedLanguage, string | null>>;
   audioUrl?: string | null;
   audioStatus?: string | null;
   transcript: Record<SupportedLanguage, string>;
@@ -87,8 +93,16 @@ export function getHeroIntroText(poi: GeoPoi, lang: SupportedLanguage): string {
   const shortText = getNarration(poi, lang, 'short');
   if (!shortText) return '';
   const sentences = splitTranscriptIntoSentences(shortText);
-  if (sentences.length === 0) return shortText;
-  return sentences.slice(0, 2).map((s) => s.sentence).join(' ');
+  const intro = sentences.length === 0 ? shortText : sentences.slice(0, 2).map((s) => s.sentence).join(' ');
+
+  // The arrival narration opens with "Bạn đang đứng trước ..." / "You are standing
+  // in front of ...". Keep that phrase for the audio, but not in the hero copy.
+  const stripped = intro
+    .replace(/^Bạn đang đứng trước\s+/i, '')
+    .replace(/^Bạn đang đứng tại\s+/i, '')
+    .replace(/^You are (?:now )?standing (?:in front of|before)\s+/i, '');
+  if (stripped === intro) return intro;
+  return stripped.charAt(0).toLocaleUpperCase(lang === 'vi' ? 'vi' : lang) + stripped.slice(1);
 }
 
 export { NEARBY_DICTIONARY };
@@ -111,12 +125,13 @@ export const NearbyPage: React.FC = () => {
     (window as any).__nearbyPerf.rendersNearbyPage++;
   }
 
-  const { lang, changeLanguage } = useNavbarLanguage();
+  const { lang } = useNavbarLanguage();
   const currentLang = (lang as SupportedLanguage) || 'vi';
 
-  // Synchronize document.documentElement.lang with the single source of truth
+  // Synchronize document language and title with the single source of truth
   useEffect(() => {
     document.documentElement.lang = currentLang;
+    document.title = t(currentLang, 'pageTitle');
   }, [currentLang]);
 
   const rootRef = useRef<HTMLDivElement>(null);
@@ -269,7 +284,7 @@ export const NearbyPage: React.FC = () => {
         sum += haversine(p1.lat, p1.lng, p2.lat, p2.lng);
       }
     }
-    return formatDistance(sum, currentLang);
+    return formatDistanceRounded(sum, currentLang);
   }, [pois, currentLang]);
 
   const languagesCount = SUPPORTED_LANGUAGES.length;
@@ -282,21 +297,15 @@ export const NearbyPage: React.FC = () => {
     isPlaying,
     currentTime,
     duration,
-    speed,
-    showTranscript,
     notice,
     noticeWarn,
     audioSourceType,
-    isHtml5Audio,
     activeSentenceIndex,
     activeCharOffset,
     activeCharLength,
     syncMode,
-    resolveAudio,
     playPoi,
     togglePlay,
-    changeSpeed,
-    seekTime,
     stopAllAudio,
     lastManualStoppedId,
     lastManualStopTime,
@@ -408,11 +417,29 @@ export const NearbyPage: React.FC = () => {
     );
   }, [userPos, pois, currentLang, getPoiName, showToast]);
 
+  // Stable 1..N tour numbers, independent of the current sort mode (nearest or tour).
+  const tourNumberById = useMemo(() => {
+    const ordered = pois
+      .map((poi, originalIndex) => ({ poi, originalIndex }))
+      .sort(
+        (a, b) =>
+          (a.poi.stopOrder ?? a.originalIndex + 1) - (b.poi.stopOrder ?? b.originalIndex + 1)
+      );
+    const map = new Map<string, number>();
+    ordered.forEach((item, index) => map.set(item.poi.id, index + 1));
+    return map;
+  }, [pois]);
+
   // Calculate sorted POIs (Closest first if userPos exists; otherwise tour order by stopOrder)
   const sortedPois = useMemo(() => {
     const list = pois.map((p, index) => {
       const dist = userPos ? haversine(userPos.lat, userPos.lng, p.lat, p.lng) : null;
-      return { poi: p, originalIndex: index, dist };
+      return {
+        poi: p,
+        originalIndex: index,
+        stopNumber: tourNumberById.get(p.id) ?? index + 1,
+        dist,
+      };
     });
     if (userPos) {
       list.sort((a, b) => (a.dist ?? 0) - (b.dist ?? 0));
@@ -424,7 +451,7 @@ export const NearbyPage: React.FC = () => {
       );
     }
     return list;
-  }, [pois, userPos]);
+  }, [pois, userPos, tourNumberById]);
 
   // Effective active stop ID: falls back to the first stop so that Stop 1 is active on initial load
   const effectiveActiveId = activeId || selectedId || (sortedPois[0]?.poi.id ?? pois[0]?.id ?? null);
@@ -564,6 +591,45 @@ export const NearbyPage: React.FC = () => {
     [currentId, togglePlay, playPoi]
   );
 
+  // Auto-narration status line: always reflects the real configured radius and state.
+  const autoStatusMessage = useMemo(() => {
+    const configuredRadius = (() => {
+      if (overrideRadius != null) return formatDistance(overrideRadius, currentLang);
+      const radii = pois.map((p) => p.triggerRadius).filter((value) => value > 0);
+      if (radii.length === 0) return formatDistance(radius, currentLang);
+      const min = Math.min(...radii);
+      const max = Math.max(...radii);
+      return min === max
+        ? formatDistance(min, currentLang)
+        : `${formatDistance(min, currentLang)} - ${formatDistance(max, currentLang)}`;
+    })();
+
+    if (!isAutoEnabled) return t(currentLang, 'autoStatusOff');
+    if (isSimMode) return t(currentLang, 'statusSimActive');
+
+    const nearest = sortedPois[0];
+    if (userPos && nearest && nearest.dist != null) {
+      return t(currentLang, 'autoStatusTracking', {
+        radius: configuredRadius,
+        name: getPoiName(nearest.poi),
+        dist: formatDistance(nearest.dist, currentLang),
+      });
+    }
+    if (gpsError) return gpsError;
+    return t(currentLang, 'autoStatusWaiting', { radius: configuredRadius });
+  }, [
+    currentLang,
+    getPoiName,
+    gpsError,
+    isAutoEnabled,
+    isSimMode,
+    overrideRadius,
+    pois,
+    radius,
+    sortedPois,
+    userPos,
+  ]);
+
   return (
     <div className="nearby-sv-root" ref={rootRef}>
       {/* 1. FULL-BLEED PHOTO HERO BANNER */}
@@ -622,18 +688,7 @@ export const NearbyPage: React.FC = () => {
         listenedCount={listenedPoiIds.length}
         stopsCount={pois.length}
         onResetProgress={handleResetProgress}
-        statusMessage={
-          isAutoEnabled
-            ? userPos && sortedPois[0]
-              ? t(currentLang, 'statusNearestSummary', {
-                  name: getPoiName(sortedPois[0].poi),
-                  dist: formatDistance(sortedPois[0].dist ?? 0, currentLang),
-                })
-              : t(currentLang, 'statusTrackingGps')
-            : isSimMode
-            ? t(currentLang, 'statusSimActive')
-            : null
-        }
+        statusMessage={autoStatusMessage}
       />
 
       {/* 3. MAIN WORKSPACE (IZI.TRAVEL INSPIRED TOP-TO-BOTTOM ARCHITECTURE) */}
@@ -643,6 +698,7 @@ export const NearbyPage: React.FC = () => {
           <PoiHero
             poi={activeSelectedPoi}
             originalIndex={activeSortedItem?.originalIndex ?? 0}
+            stopNumber={activeSortedItem?.stopNumber ?? 1}
             totalStops={pois.length}
             currentLang={currentLang}
             isPlaying={isPlaying}
@@ -654,6 +710,7 @@ export const NearbyPage: React.FC = () => {
             pauseBtnText={t(currentLang, 'pauseBtn')}
             resumeBtnText={t(currentLang, 'resumeBtn')}
             getPoiName={getPoiName}
+            userPos={userPos}
             heroRef={heroRef}
           />
         )}
@@ -680,13 +737,11 @@ export const NearbyPage: React.FC = () => {
               onSelectPoi={handleExplicitSelectPoi}
               onHoverPoi={setHoveredId}
               onTogglePlay={handleTogglePlayPoi}
-              onChangeLanguage={changeLanguage}
               getPoiName={getPoiName}
               getPoiCategory={getPoiCategory}
               inZoneBadgeText={t(currentLang, 'inZoneBadge')}
               nearBadgeText={t(currentLang, 'nearBadge')}
               distFormatText={distFormatText}
-              langVoiceAriaText={t(currentLang, 'langVoiceAria')}
               listenBtnText={t(currentLang, 'playBtn')}
               pauseBtnText={t(currentLang, 'pauseBtn')}
               resumeBtnText={t(currentLang, 'resumeBtn')}
@@ -768,25 +823,16 @@ export const NearbyPage: React.FC = () => {
           currentLang={currentLang}
           isPlaying={isPlaying}
           currentTime={currentTime}
-          duration={duration}
-          speed={speed}
-          showTranscript={showTranscript}
           notice={notice}
           noticeWarn={noticeWarn}
-          isHtml5Audio={isHtml5Audio}
           onTogglePlay={togglePlay}
-          onSeek={seekTime}
-          onChangeSpeed={changeSpeed}
           onViewChapterTranscript={handleViewChapterTranscript}
-          resolveAudio={resolveAudio}
           getPoiName={getPoiName}
           noPoiSelectedText={t(currentLang, 'noPoiSelected')}
           playingInLangText={(l) => t(currentLang, 'playingInLang', { lang: l })}
           pausedStatusText={t(currentLang, 'pausedStatus')}
           clickToStartText={t(currentLang, 'clickToStart')}
-          speedLabelText={t(currentLang, 'speedLabel')}
           viewTextBtnText={t(currentLang, 'viewTranscriptBtn')}
-          fallbackTxNoticeText={(l) => t(currentLang, 'fallbackTxNotice', { lang: l })}
         />
       )}
     </div>

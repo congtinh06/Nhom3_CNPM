@@ -20,7 +20,7 @@ export interface AdminMenuLeaf {
   path?: string;
   isUpcoming?: boolean;
   roles?: UserRoleValue[];
-  // Chuỗi query bắt buộc phải khớp để chọn mục này, ví dụ 'category=FOOD'.
+  // Chuỗi query bắt buộc phải khớp để chọn mục này, ví dụ 'category=SOUVENIR'.
   matchSearch?: string;
 }
 
@@ -72,12 +72,18 @@ export const ADMIN_MENU: AdminMenuGroup[] = [
         id: 'pois',
         label: 'Điểm thuyết minh',
         icon: 'pois',
+        // Menu con của "Điểm thuyết minh":
+        // - pois-list: trang danh sách (PoiListPage)
+        // - pois-i18n: trang bản dịch & audio (PoiTranslationsPage)
+        // - pois-segments: đang phát triển (cần backend cho đoạn/ảnh)
+        // - pois-qr: trang mã QR (PoiQrListPage)
+        // - pois-error-log: trang nhật ký lỗi (PoiErrorLogPage)
         children: [
           { id: 'pois-list', label: 'Danh sách điểm', path: '/quan-tri/diem-thuyet-minh' },
-          { id: 'pois-i18n', label: 'Bản dịch và audio', isUpcoming: true },
+          { id: 'pois-i18n', label: 'Bản dịch và audio', path: '/quan-tri/diem-thuyet-minh/ban-dich' },
           { id: 'pois-segments', label: 'Đoạn và ảnh', isUpcoming: true },
-          { id: 'pois-qr', label: 'Mã QR', isUpcoming: true },
-          { id: 'pois-error-log', label: 'Nhật ký xử lý lỗi', isUpcoming: true },
+          { id: 'pois-qr', label: 'Mã QR', path: '/quan-tri/diem-thuyet-minh/ma-qr' },
+          { id: 'pois-error-log', label: 'Nhật ký xử lý lỗi', path: '/quan-tri/diem-thuyet-minh/nhat-ky-loi' },
         ],
       },
       {
@@ -92,28 +98,26 @@ export const ADMIN_MENU: AdminMenuGroup[] = [
         icon: 'routes',
         children: [
           { id: 'routes-list', label: 'Danh sách tuyến', path: '/quan-tri/lo-trinh' },
-          { id: 'routes-stops', label: 'Thứ tự điểm dừng', isUpcoming: true },
+          {
+            id: 'routes-stops',
+            label: 'Thứ tự điểm dừng',
+            path: '/quan-tri/lo-trinh/thu-tu-diem-dung',
+          },
         ],
       },
       {
         id: 'food',
-        label: 'Ẩm thực',
+        label: 'Quà lưu niệm',
         icon: 'food',
         children: [
           {
-            id: 'food-dishes',
-            label: 'Món ăn',
+            id: 'food-souvenirs',
+            label: 'Sản phẩm',
             path: '/quan-tri/san-pham',
-            matchSearch: 'category=FOOD',
-          },
-          {
-            id: 'food-drinks',
-            label: 'Thức uống',
-            path: '/quan-tri/san-pham',
-            matchSearch: 'category=DRINK',
+            matchSearch: 'category=SOUVENIR',
           },
           { id: 'food-categories', label: 'Danh mục', isUpcoming: true },
-          { id: 'food-featured', label: 'Món nổi bật', isUpcoming: true },
+          { id: 'food-featured', label: 'Sản phẩm nổi bật', isUpcoming: true },
         ],
       },
       {
@@ -121,7 +125,7 @@ export const ADMIN_MENU: AdminMenuGroup[] = [
         label: 'Tin tức',
         icon: 'news',
         children: [
-          { id: 'news-articles', label: 'Bài viết', isUpcoming: true },
+          { id: 'news-articles', label: 'Bài viết', path: '/quan-tri/tin-tuc' },
           { id: 'news-topics', label: 'Chuyên mục', isUpcoming: true },
         ],
       },
@@ -217,6 +221,31 @@ function stripSearch(search: string): string {
   return search.startsWith('?') ? search.slice(1) : search;
 }
 
+function isChildPathActive(child: AdminMenuLeaf, pathname: string): boolean {
+  if (!child.path || child.isUpcoming) {
+    return false;
+  }
+  return pathname === child.path || pathname.startsWith(`${child.path}/`);
+}
+
+// Chọn mục con khớp URL cụ thể nhất (đường dẫn dài nhất thắng). Nhờ vậy trang con
+// /quan-tri/diem-thuyet-minh/ban-dich không bị mục "/quan-tri/diem-thuyet-minh" lấn át.
+function pickActiveChild(
+  children: AdminMenuLeaf[],
+  pathname: string,
+  search: string
+): AdminMenuLeaf | undefined {
+  let best: AdminMenuLeaf | undefined;
+  for (const child of children) {
+    if (!isChildPathActive(child, pathname)) continue;
+    if (!matchesSearch(stripSearch(search), child.matchSearch)) continue;
+    if (!best || (child.path?.length ?? 0) > (best.path?.length ?? 0)) {
+      best = child;
+    }
+  }
+  return best;
+}
+
 // Tìm mục menu ứng với URL hiện tại (kèm chuỗi query), dùng cho tô sáng và breadcrumb.
 export function resolveAdminMenuMatch(
   pathname: string,
@@ -225,7 +254,7 @@ export function resolveAdminMenuMatch(
   for (const group of ADMIN_MENU) {
     for (const item of group.items) {
       if (item.children) {
-        const child = item.children.find((c) => isMenuChildActive(c, pathname, search));
+        const child = pickActiveChild(item.children, pathname, search);
         if (child) {
           return { group, item, child };
         }
@@ -251,21 +280,23 @@ export function resolveAdminMenuMatch(
   return null;
 }
 
-// Có đúng một mục con đang chọn theo URL hay không (dùng cho tô sáng mục xổ xuống).
+// Mục con đang chọn theo URL hay không (dùng cho tô sáng mục xổ xuống).
 export function isMenuChildActive(child: AdminMenuLeaf, pathname: string, search = ''): boolean {
-  if (!child.path || child.isUpcoming) {
-    return false;
-  }
-  const pathMatch = pathname === child.path || pathname.startsWith(`${child.path}/`);
-  return pathMatch && matchesSearch(stripSearch(search), child.matchSearch);
+  return isChildPathActive(child, pathname) && matchesSearch(stripSearch(search), child.matchSearch);
 }
 
 export function isMenuItemActive(item: AdminMenuItem, pathname: string, search = ''): boolean {
   return resolveAdminMenuMatch(pathname, search)?.item.id === item.id;
 }
 
-function buildDetailCrumb(item: AdminMenuItem, pathname: string): AdminBreadcrumb | null {
-  const matchedChild = item.children?.find((c) => isMenuChildActive(c, pathname));
+function buildDetailCrumb(
+  item: AdminMenuItem,
+  pathname: string,
+  search: string
+): AdminBreadcrumb | null {
+  const matchedChild = item.children
+    ? pickActiveChild(item.children, pathname, search)
+    : undefined;
   const leafPath =
     matchedChild?.path ||
     item.children?.find((c) => c.path && pathname.startsWith(`${c.path}/`))?.path ||
@@ -295,7 +326,7 @@ export function getAdminBreadcrumbs(pathname: string, search = ''): AdminBreadcr
   if (match.child) {
     crumbs.push({ label: match.child.label });
   }
-  const detail = buildDetailCrumb(match.item, pathname);
+  const detail = buildDetailCrumb(match.item, pathname, search);
   if (detail) {
     crumbs.push(detail);
   }

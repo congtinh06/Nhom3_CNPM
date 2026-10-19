@@ -163,4 +163,30 @@
   color: #fff;
 }
 
+.souvenir-strip .food-product-grid {
+  align-items: stretch;
+}
+
+.souvenir-strip .editorial-product-card {
+  height: 100%;
+}
+
+.souvenir-strip .editorial-card-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  padding: 16px;
+  box-sizing: border-box;
+  background: #F5F5F4;
+  text-align: center;
+}
+
+.souvenir-strip .editorial-card-placeholder .placeholder-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--fb-text-muted, #7d6f64);
+}
+
 

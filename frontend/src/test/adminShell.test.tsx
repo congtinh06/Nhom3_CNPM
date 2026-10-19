@@ -50,7 +50,7 @@ describe('Admin shell (GĐ2): grouped sidebar & header user menu', () => {
     const contentGroup = screen.getByText('Nội dung').closest('.adm-nav-section');
     expect(contentGroup).not.toBeNull();
     expect(contentGroup).toHaveTextContent('Điểm thuyết minh');
-    expect(contentGroup).toHaveTextContent('Ẩm thực');
+    expect(contentGroup).toHaveTextContent('Quà lưu niệm');
   });
 
   it('AdminSidebar hiển thị icon cho từng mục điều hướng', () => {

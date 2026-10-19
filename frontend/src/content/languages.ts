@@ -19,6 +19,83 @@ export interface ExploreItemTranslation {
   desc: string;
 }
 
+export interface CheckoutTranslation {
+  contactSection: string;
+  addressSection: string;
+  paymentSection: string;
+  summarySection: string;
+  nameLabel: string;
+  phoneLabel: string;
+  emailLabel: string;
+  provinceLabel: string;
+  districtLabel: string;
+  wardLabel: string;
+  streetLabel: string;
+  altAddressLabel: string;
+  altAddressPlaceholder: string;
+  deliverySection: string;
+  deliveryTimeLabel: string;
+  deliveryTimeAny: string;
+  deliveryTimeMorning: string;
+  deliveryTimeAfternoon: string;
+  deliveryTimeEvening: string;
+  deliveryTimeHint: string;
+  otherReceiverToggle: string;
+  otherReceiverNameLabel: string;
+  otherReceiverPhoneLabel: string;
+  noteLabel: string;
+  notePlaceholder: string;
+  selectProvince: string;
+  selectDistrict: string;
+  selectWard: string;
+  loadingProvinces: string;
+  loadingDistricts: string;
+  loadingWards: string;
+  chooseDistrictFirst: string;
+  errNameRequired: string;
+  errNameShort: string;
+  errPhoneRequired: string;
+  errPhoneInvalid: string;
+  errEmailInvalid: string;
+  errProvinceRequired: string;
+  errDistrictRequired: string;
+  errWardRequired: string;
+  errStreetRequired: string;
+  errStreetInvalid: string;
+  errOtherNameRequired: string;
+  errOtherPhoneRequired: string;
+  errOtherPhoneInvalid: string;
+  vietQrTitle: string;
+  vietQrDesc: string;
+  vietQrDemoNotice: string;
+  codTitle: string;
+  codDesc: string;
+  groupFromSpot: string;
+  groupOther: string;
+  itemCountLabel: string;
+  itemCountValue: string;
+  subtotalLabel: string;
+  shippingFeeLabel: string;
+  freeShip: string;
+  grandTotalLabel: string;
+  termsPrefix: string;
+  termsLink: string;
+  termsSuffix: string;
+  expandSummary: string;
+  collapseSummary: string;
+  placeOrder: string;
+  placingOrder: string;
+  reasonSubmitting: string;
+  reasonEmptyCart: string;
+  reasonRequired: string;
+  reasonInvalid: string;
+  reasonTerms: string;
+  supportLine: string;
+  decreaseQty: string;
+  increaseQty: string;
+  removeItem: string;
+}
+
 export interface ShopTranslation {
   foodTitle: string;
   foodSubtitle: string;
@@ -77,6 +154,11 @@ export interface ShopTranslation {
   paymentSuccess: string;
   paymentFailed: string;
   viewOrder: string;
+  productUnavailable: string;
+  productUnavailableDesc: string;
+  backToSouvenirList: string;
+  relatedSouvenirHeading: string;
+  checkoutPage: CheckoutTranslation;
 }
 
 export interface NavTranslation {
@@ -267,6 +349,86 @@ export const NAV_TRANSLATIONS: Record<SupportedLanguage, NavTranslation> = {
       paymentSuccess: 'Thanh toán thành công',
       paymentFailed: 'Thanh toán không thành công',
       viewOrder: 'Xem chi tiết đơn hàng',
+      productUnavailable: 'Sản phẩm không khả dụng',
+      productUnavailableDesc: 'Sản phẩm bạn đang tìm kiếm không tồn tại hoặc đã ngừng bán.',
+      backToSouvenirList: 'Quay lại danh sách quà lưu niệm',
+      relatedSouvenirHeading: 'Gợi ý sản phẩm cùng danh mục',
+      checkoutPage: {
+        contactSection: 'Thông tin liên hệ',
+        addressSection: 'Địa chỉ giao hàng',
+        paymentSection: 'Phương thức thanh toán',
+        summarySection: 'Tóm tắt đơn hàng',
+        nameLabel: 'Họ và tên',
+        phoneLabel: 'Số điện thoại',
+        emailLabel: 'Email (để nhận xác nhận đơn hàng)',
+        provinceLabel: 'Tỉnh / Thành phố',
+        districtLabel: 'Quận / Huyện',
+        wardLabel: 'Phường / Xã',
+        streetLabel: 'Số nhà, tên đường',
+        altAddressLabel: 'Địa chỉ khác (tùy chọn)',
+        altAddressPlaceholder: 'Ví dụ: tòa nhà B, căn hộ 1203, tầng 12',
+        deliverySection: 'Tùy chọn giao hàng',
+        deliveryTimeLabel: 'Khung giờ giao hàng mong muốn',
+        deliveryTimeAny: 'Không yêu cầu',
+        deliveryTimeMorning: 'Buổi sáng (8:00 - 12:00)',
+        deliveryTimeAfternoon: 'Buổi chiều (13:00 - 17:00)',
+        deliveryTimeEvening: 'Buổi tối (18:00 - 21:00)',
+        deliveryTimeHint: 'Thời gian chỉ mang tính tham khảo, Echora sẽ liên hệ xác nhận với bạn.',
+        otherReceiverToggle: 'Giao cho người khác',
+        otherReceiverNameLabel: 'Tên người nhận',
+        otherReceiverPhoneLabel: 'Số điện thoại người nhận',
+        noteLabel: 'Ghi chú giao hàng (tùy chọn)',
+        notePlaceholder: 'Ví dụ: gọi trước khi giao, giao giờ hành chính',
+        selectProvince: 'Chọn Tỉnh / Thành phố',
+        selectDistrict: 'Chọn Quận/Huyện',
+        selectWard: 'Chọn Phường/Xã',
+        loadingProvinces: 'Đang tải tỉnh thành',
+        loadingDistricts: 'Đang tải quận huyện',
+        loadingWards: 'Đang tải phường xã',
+        chooseDistrictFirst: 'Vui lòng chọn Quận/Huyện trước',
+        errNameRequired: 'Vui lòng nhập họ và tên.',
+        errNameShort: 'Họ và tên cần ít nhất 2 ký tự.',
+        errPhoneRequired: 'Vui lòng nhập số điện thoại.',
+        errPhoneInvalid: 'Số điện thoại gồm 10 chữ số và bắt đầu bằng 0.',
+        errEmailInvalid: 'Email chưa đúng định dạng, ví dụ ten@gmail.com.',
+        errProvinceRequired: 'Vui lòng chọn tỉnh / thành phố.',
+        errDistrictRequired: 'Vui lòng chọn quận / huyện.',
+        errWardRequired: 'Vui lòng chọn phường / xã.',
+        errStreetRequired: 'Vui lòng nhập số nhà và tên đường.',
+        errStreetInvalid: 'Số nhà và tên đường cần ít nhất 5 ký tự và có chữ cái, ví dụ 12 Nguyễn Huệ.',
+        errOtherNameRequired: 'Vui lòng nhập tên người nhận (ít nhất 2 ký tự).',
+        errOtherPhoneRequired: 'Vui lòng nhập số điện thoại người nhận.',
+        errOtherPhoneInvalid: 'Số điện thoại người nhận gồm 10 chữ số và bắt đầu bằng 0.',
+        vietQrTitle: 'Chuyển khoản VietQR',
+        vietQrDesc: 'Quét mã QR để thanh toán sau khi đặt hàng.',
+        vietQrDemoNotice: 'Thanh toán thử trong môi trường demo, không phát sinh giao dịch thật.',
+        codTitle: 'Thanh toán khi nhận hàng',
+        codDesc: 'Trả tiền mặt khi nhận được sản phẩm.',
+        groupFromSpot: 'Từ {spot}',
+        groupOther: 'Sản phẩm khác',
+        itemCountLabel: 'Số lượng sản phẩm',
+        itemCountValue: '{n} sản phẩm',
+        subtotalLabel: 'Tạm tính',
+        shippingFeeLabel: 'Phí giao hàng',
+        freeShip: 'Miễn phí',
+        grandTotalLabel: 'Tổng cộng',
+        termsPrefix: 'Tôi đồng ý với ',
+        termsLink: 'Điều khoản dịch vụ',
+        termsSuffix: ' của Echora.',
+        expandSummary: 'Mở rộng',
+        collapseSummary: 'Thu gọn',
+        placeOrder: 'Đặt hàng',
+        placingOrder: 'Đang đặt hàng',
+        reasonSubmitting: 'Đơn hàng đang được xử lý, vui lòng chờ.',
+        reasonEmptyCart: 'Giỏ hàng đang trống, hãy thêm sản phẩm trước khi đặt hàng.',
+        reasonRequired: 'Vui lòng điền đủ các ô có dấu * để đặt hàng.',
+        reasonInvalid: 'Một số thông tin chưa hợp lệ, vui lòng kiểm tra các ô báo lỗi.',
+        reasonTerms: 'Vui lòng đồng ý với Điều khoản dịch vụ để đặt hàng.',
+        supportLine: 'Cần hỗ trợ? Gọi {phone} ({hours})',
+        decreaseQty: 'Giảm số lượng {name}',
+        increaseQty: 'Tăng số lượng {name}',
+        removeItem: 'Xóa {name}',
+      },
     },
   },
   en: {
@@ -396,6 +558,86 @@ export const NAV_TRANSLATIONS: Record<SupportedLanguage, NavTranslation> = {
       paymentSuccess: 'Payment successful',
       paymentFailed: 'Payment unsuccessful',
       viewOrder: 'View order details',
+      productUnavailable: 'Product unavailable',
+      productUnavailableDesc: 'The product you are looking for does not exist or is no longer for sale.',
+      backToSouvenirList: 'Back to souvenir list',
+      relatedSouvenirHeading: 'Related products in the same category',
+      checkoutPage: {
+        contactSection: 'Contact details',
+        addressSection: 'Delivery address',
+        paymentSection: 'Payment method',
+        summarySection: 'Order summary',
+        nameLabel: 'Full name',
+        phoneLabel: 'Phone number',
+        emailLabel: 'Email (to receive order confirmation)',
+        provinceLabel: 'Province / City',
+        districtLabel: 'District',
+        wardLabel: 'Ward',
+        streetLabel: 'Street address',
+        altAddressLabel: 'Additional address (optional)',
+        altAddressPlaceholder: 'Example: building B, apartment 1203, floor 12',
+        deliverySection: 'Delivery options',
+        deliveryTimeLabel: 'Preferred delivery time',
+        deliveryTimeAny: 'No preference',
+        deliveryTimeMorning: 'Morning (8:00 - 12:00)',
+        deliveryTimeAfternoon: 'Afternoon (13:00 - 17:00)',
+        deliveryTimeEvening: 'Evening (18:00 - 21:00)',
+        deliveryTimeHint: 'The time is only a reference, Echora will contact you to confirm.',
+        otherReceiverToggle: 'Deliver to someone else',
+        otherReceiverNameLabel: 'Recipient name',
+        otherReceiverPhoneLabel: 'Recipient phone number',
+        noteLabel: 'Delivery notes (optional)',
+        notePlaceholder: 'Example: call before delivery, deliver during office hours',
+        selectProvince: 'Select province / city',
+        selectDistrict: 'Select district',
+        selectWard: 'Select ward',
+        loadingProvinces: 'Loading provinces',
+        loadingDistricts: 'Loading districts',
+        loadingWards: 'Loading wards',
+        chooseDistrictFirst: 'Please select a district first',
+        errNameRequired: 'Please enter your full name.',
+        errNameShort: 'Full name must be at least 2 characters.',
+        errPhoneRequired: 'Please enter your phone number.',
+        errPhoneInvalid: 'Phone number must be 10 digits and start with 0.',
+        errEmailInvalid: 'Email format is invalid, for example ten@gmail.com.',
+        errProvinceRequired: 'Please select a province / city.',
+        errDistrictRequired: 'Please select a district.',
+        errWardRequired: 'Please select a ward.',
+        errStreetRequired: 'Please enter your street address.',
+        errStreetInvalid: 'Street address must be at least 5 characters and contain a letter, for example 12 Nguyen Hue.',
+        errOtherNameRequired: 'Please enter the recipient name (at least 2 characters).',
+        errOtherPhoneRequired: 'Please enter the recipient phone number.',
+        errOtherPhoneInvalid: 'Recipient phone number must be 10 digits and start with 0.',
+        vietQrTitle: 'VietQR transfer',
+        vietQrDesc: 'Scan the QR code to pay after placing your order.',
+        vietQrDemoNotice: 'Test payment in a demo environment, no real transaction is made.',
+        codTitle: 'Cash on delivery',
+        codDesc: 'Pay in cash when you receive the products.',
+        groupFromSpot: 'From {spot}',
+        groupOther: 'Other products',
+        itemCountLabel: 'Number of products',
+        itemCountValue: '{n} products',
+        subtotalLabel: 'Subtotal',
+        shippingFeeLabel: 'Shipping fee',
+        freeShip: 'Free',
+        grandTotalLabel: 'Total',
+        termsPrefix: 'I agree to the ',
+        termsLink: 'Echora Terms of Service',
+        termsSuffix: '.',
+        expandSummary: 'Expand',
+        collapseSummary: 'Collapse',
+        placeOrder: 'Place order',
+        placingOrder: 'Placing order',
+        reasonSubmitting: 'Your order is being processed, please wait.',
+        reasonEmptyCart: 'Your cart is empty, please add products before placing an order.',
+        reasonRequired: 'Please fill in all fields marked with * to place your order.',
+        reasonInvalid: 'Some information is invalid, please check the highlighted fields.',
+        reasonTerms: 'Please agree to the Terms of Service to place your order.',
+        supportLine: 'Need help? Call {phone} ({hours})',
+        decreaseQty: 'Decrease quantity of {name}',
+        increaseQty: 'Increase quantity of {name}',
+        removeItem: 'Remove {name}',
+      },
     },
   },
   ja: {
@@ -525,6 +767,86 @@ export const NAV_TRANSLATIONS: Record<SupportedLanguage, NavTranslation> = {
       paymentSuccess: '決済が完了しました',
       paymentFailed: '決済に失敗しました',
       viewOrder: '注文詳細を見る',
+      productUnavailable: '商品をご利用いただけません',
+      productUnavailableDesc: 'お探しの商品は存在しないか、販売を終了しました。',
+      backToSouvenirList: 'お土産一覧に戻る',
+      relatedSouvenirHeading: '同じカテゴリのおすすめ商品',
+      checkoutPage: {
+        contactSection: '連絡先情報',
+        addressSection: '配達先住所',
+        paymentSection: 'お支払い方法',
+        summarySection: 'ご注文内容',
+        nameLabel: '氏名',
+        phoneLabel: '電話番号',
+        emailLabel: 'メールアドレス（注文確認用）',
+        provinceLabel: '省 / 市',
+        districtLabel: '区 / 郡',
+        wardLabel: '坊 / 社',
+        streetLabel: '番地・通り名',
+        altAddressLabel: '追加住所（任意）',
+        altAddressPlaceholder: '例：B棟、1203号室、12階',
+        deliverySection: '配達オプション',
+        deliveryTimeLabel: '希望の配達時間帯',
+        deliveryTimeAny: '指定なし',
+        deliveryTimeMorning: '午前 (8:00 - 12:00)',
+        deliveryTimeAfternoon: '午後 (13:00 - 17:00)',
+        deliveryTimeEvening: '夜間 (18:00 - 21:00)',
+        deliveryTimeHint: '時間帯は目安です。Echora より確認のご連絡をします。',
+        otherReceiverToggle: '別の人に届ける',
+        otherReceiverNameLabel: '受取人の氏名',
+        otherReceiverPhoneLabel: '受取人の電話番号',
+        noteLabel: '配達メモ（任意）',
+        notePlaceholder: '例：配達前に電話、平日日中に配達',
+        selectProvince: '省 / 市を選択',
+        selectDistrict: '区 / 郡を選択',
+        selectWard: '坊 / 社を選択',
+        loadingProvinces: '省 / 市を読み込み中',
+        loadingDistricts: '区 / 郡を読み込み中',
+        loadingWards: '坊 / 社を読み込み中',
+        chooseDistrictFirst: '先に区 / 郡を選択してください',
+        errNameRequired: '氏名を入力してください。',
+        errNameShort: '氏名は2文字以上で入力してください。',
+        errPhoneRequired: '電話番号を入力してください。',
+        errPhoneInvalid: '電話番号は10桁で0から始めてください。',
+        errEmailInvalid: 'メール形式が正しくありません。例：ten@gmail.com',
+        errProvinceRequired: '省 / 市を選択してください。',
+        errDistrictRequired: '区 / 郡を選択してください。',
+        errWardRequired: '坊 / 社を選択してください。',
+        errStreetRequired: '番地と通り名を入力してください。',
+        errStreetInvalid: '番地と通り名は5文字以上で文字を含めてください。例：12 Nguyen Hue',
+        errOtherNameRequired: '受取人の氏名を入力してください（2文字以上）。',
+        errOtherPhoneRequired: '受取人の電話番号を入力してください。',
+        errOtherPhoneInvalid: '受取人の電話番号は10桁で0から始めてください。',
+        vietQrTitle: 'VietQR 振込',
+        vietQrDesc: '注文後にQRコードを読み取ってお支払いください。',
+        vietQrDemoNotice: 'デモ環境でのテスト決済です。実際の取引は発生しません。',
+        codTitle: '代金引換',
+        codDesc: '商品受け取り時に現金でお支払いください。',
+        groupFromSpot: '{spot} から',
+        groupOther: 'その他の商品',
+        itemCountLabel: '商品数',
+        itemCountValue: '{n} 点',
+        subtotalLabel: '小計',
+        shippingFeeLabel: '配送料',
+        freeShip: '無料',
+        grandTotalLabel: '合計',
+        termsPrefix: '',
+        termsLink: 'Echora 利用規約',
+        termsSuffix: ' に同意します',
+        expandSummary: '展開する',
+        collapseSummary: '折りたたむ',
+        placeOrder: '注文を確定する',
+        placingOrder: '注文処理中',
+        reasonSubmitting: '注文を処理しています。しばらくお待ちください。',
+        reasonEmptyCart: 'カートが空です。商品を追加してから注文してください。',
+        reasonRequired: '* の付いた項目をすべて入力してください。',
+        reasonInvalid: '一部の情報が正しくありません。エラーの項目をご確認ください。',
+        reasonTerms: '注文するには利用規約に同意してください。',
+        supportLine: 'ご不明な点は {phone}（{hours}）までお電話ください',
+        decreaseQty: '{name} の数量を減らす',
+        increaseQty: '{name} の数量を増やす',
+        removeItem: '{name} を削除',
+      },
     },
   },
   ko: {
@@ -654,6 +976,86 @@ export const NAV_TRANSLATIONS: Record<SupportedLanguage, NavTranslation> = {
       paymentSuccess: '결제가 성공했습니다',
       paymentFailed: '결제에 실패했습니다',
       viewOrder: '주문 상세 보기',
+      productUnavailable: '상품을 이용할 수 없습니다',
+      productUnavailableDesc: '찾으시는 상품이 존재하지 않거나 판매가 중단되었습니다.',
+      backToSouvenirList: '기념품 목록으로 돌아가기',
+      relatedSouvenirHeading: '같은 카테고리의 추천 상품',
+      checkoutPage: {
+        contactSection: '연락처 정보',
+        addressSection: '배송 주소',
+        paymentSection: '결제 수단',
+        summarySection: '주문 요약',
+        nameLabel: '받는 분',
+        phoneLabel: '연락처',
+        emailLabel: '이메일 (주문 확인용)',
+        provinceLabel: '시 / 도',
+        districtLabel: '구 / 군',
+        wardLabel: '읍 / 면 / 동',
+        streetLabel: '도로명 주소',
+        altAddressLabel: '추가 주소 (선택)',
+        altAddressPlaceholder: '예: B동, 1203호, 12층',
+        deliverySection: '배송 옵션',
+        deliveryTimeLabel: '희망 배송 시간대',
+        deliveryTimeAny: '상관 없음',
+        deliveryTimeMorning: '오전 (8:00 - 12:00)',
+        deliveryTimeAfternoon: '오후 (13:00 - 17:00)',
+        deliveryTimeEvening: '저녁 (18:00 - 21:00)',
+        deliveryTimeHint: '시간대는 참고용이며, Echora가 확인을 위해 연락드립니다.',
+        otherReceiverToggle: '다른 사람에게 배송',
+        otherReceiverNameLabel: '받는 사람 이름',
+        otherReceiverPhoneLabel: '받는 사람 전화번호',
+        noteLabel: '배송 메모 (선택)',
+        notePlaceholder: '예: 배송 전 전화, 평일 업무 시간 배송',
+        selectProvince: '시 / 도 선택',
+        selectDistrict: '구 / 군 선택',
+        selectWard: '읍 / 면 / 동 선택',
+        loadingProvinces: '시 / 도 불러오는 중',
+        loadingDistricts: '구 / 군 불러오는 중',
+        loadingWards: '읍 / 면 / 동 불러오는 중',
+        chooseDistrictFirst: '먼저 구 / 군을 선택해 주세요',
+        errNameRequired: '받는 분 성함을 입력해 주세요.',
+        errNameShort: '성함은 2자 이상 입력해 주세요.',
+        errPhoneRequired: '연락처를 입력해 주세요.',
+        errPhoneInvalid: '연락처는 10자리이며 0으로 시작해야 합니다.',
+        errEmailInvalid: '이메일 형식이 올바르지 않습니다. 예: ten@gmail.com',
+        errProvinceRequired: '시 / 도를 선택해 주세요.',
+        errDistrictRequired: '구 / 군을 선택해 주세요.',
+        errWardRequired: '읍 / 면 / 동을 선택해 주세요.',
+        errStreetRequired: '도로명 주소를 입력해 주세요.',
+        errStreetInvalid: '도로명 주소는 5자 이상이며 문자를 포함해야 합니다. 예: 12 Nguyen Hue',
+        errOtherNameRequired: '받는 사람 이름을 입력해 주세요 (2자 이상).',
+        errOtherPhoneRequired: '받는 사람 전화번호를 입력해 주세요.',
+        errOtherPhoneInvalid: '받는 사람 전화번호는 10자리이며 0으로 시작해야 합니다.',
+        vietQrTitle: 'VietQR 계좌이체',
+        vietQrDesc: '주문 후 QR 코드를 스캔하여 결제해 주세요.',
+        vietQrDemoNotice: '데모 환경의 테스트 결제이며 실제 거래는 발생하지 않습니다.',
+        codTitle: '착불 결제',
+        codDesc: '상품 수령 시 현금으로 결제해 주세요.',
+        groupFromSpot: '{spot}에서',
+        groupOther: '기타 상품',
+        itemCountLabel: '상품 수량',
+        itemCountValue: '{n}개',
+        subtotalLabel: '소계',
+        shippingFeeLabel: '배송비',
+        freeShip: '무료',
+        grandTotalLabel: '총 금액',
+        termsPrefix: '',
+        termsLink: 'Echora 이용약관',
+        termsSuffix: '에 동의합니다.',
+        expandSummary: '펼치기',
+        collapseSummary: '접기',
+        placeOrder: '주문 완료',
+        placingOrder: '주문 처리 중',
+        reasonSubmitting: '주문을 처리 중입니다. 잠시만 기다려 주세요.',
+        reasonEmptyCart: '장바구니가 비어 있습니다. 상품을 추가한 후 주문해 주세요.',
+        reasonRequired: '* 표시된 항목을 모두 입력해 주세요.',
+        reasonInvalid: '일부 정보가 올바르지 않습니다. 오류 항목을 확인해 주세요.',
+        reasonTerms: '주문하려면 이용약관에 동의해 주세요.',
+        supportLine: '도움이 필요하시면 {phone} ({hours})로 전화해 주세요',
+        decreaseQty: '{name} 수량 줄이기',
+        increaseQty: '{name} 수량 늘리기',
+        removeItem: '{name} 삭제',
+      },
     },
   },
 };

@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { api } from '../api/client';
 import { SupportedLanguage } from '../types';
+import { formatNarrationNumerals } from '../lib/numerals';
 import { getSharedAudio } from '../lib/audioUnlock';
 import { GeoPoi, getNarration, NarrationLayer } from '../pages/NearbyPage';
 
@@ -51,7 +52,26 @@ export function resolvePlayback(
     text = poi.narration?.short?.[lang] || poi.transcript?.[lang] || '';
   }
 
-  if (poi.audioStatus === 'READY' && poi.audioUrl) {
+  text = formatNarrationNumerals(text, lang);
+
+  // Per-language remote audio: only the entry for the currently selected language
+  // may be used, and only when that entry is READY with a URL.
+  const perLangUrl = poi.audio?.[lang];
+  const perLangStatus = poi.audioStatusByLanguage?.[lang] ?? null;
+  const langUrl = typeof perLangUrl === 'string' ? perLangUrl : '';
+
+  if (perLangStatus === 'READY' && langUrl) {
+    return {
+      source: 'remote',
+      url: langUrl,
+      text,
+      lang,
+    };
+  }
+
+  // Legacy single-field values (audioUrl/audioStatus) are the Vietnamese source
+  // audio, so they only apply to vi. Other languages must never fall back to them.
+  if (lang === 'vi' && poi.audioStatus === 'READY' && poi.audioUrl) {
     return {
       source: 'remote',
       url: poi.audioUrl,
@@ -466,12 +486,9 @@ export function useNearbyAudio({
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [currentTime, setCurrentTime] = useState<number>(0);
   const [duration, setDuration] = useState<number>(0);
-  const [speed, setSpeed] = useState<number>(1);
-  const [showTranscript, setShowTranscript] = useState<boolean>(false);
   const [notice, setNotice] = useState<string>('');
   const [noticeWarn, setNoticeWarn] = useState<boolean>(false);
   const [audioSourceType, setAudioSourceType] = useState<AudioSourceType>('speech');
-  const [isHtml5Audio, setIsHtml5Audio] = useState<boolean>(false);
   const [activeSentenceIndex, setActiveSentenceIndex] = useState<number | null>(null);
   const [activeCharOffset, setActiveCharOffset] = useState<number | null>(null);
   const [activeCharLength, setActiveCharLength] = useState<number>(0);
@@ -481,11 +498,11 @@ export function useNearbyAudio({
   const requestTokenRef = useRef<number>(0);
   const audioElemRef = useRef<HTMLAudioElement | null>(null);
   const activeUtteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
+  const lastSpeechCancelAtRef = useRef<number>(0);
   const activeSourceTypeRef = useRef<AudioSourceType | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const boundaryWatchdogRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const prevLangRef = useRef<SupportedLanguage>(currentLang);
-  const speedRef = useRef<number>(1);
   const sentencesRef = useRef<ParsedSentence[]>([]);
   const currentTextLengthRef = useRef<number>(0);
   const currentFullTextRef = useRef<string>('');
@@ -561,6 +578,9 @@ export function useNearbyAudio({
 
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
       try {
+        if (window.speechSynthesis.speaking || window.speechSynthesis.pending) {
+          lastSpeechCancelAtRef.current = Date.now();
+        }
         window.speechSynthesis.cancel();
       } catch (err) {
         console.warn('[useNearbyAudio] speechSynthesis.cancel() failed during reset', err);
@@ -580,7 +600,6 @@ export function useNearbyAudio({
     setPlaybackStatus('idle');
     setIsPlaying(false);
     setIsLoading(false);
-    setIsHtml5Audio(false);
     setActiveSentenceIndex(null);
     setActiveCharOffset(null);
     setActiveCharLength(0);
@@ -634,7 +653,6 @@ export function useNearbyAudio({
     (
       text: string,
       langCode: SupportedLanguage,
-      playbackRate: number,
       token: number,
       startSentenceOffset: number = 0,
       isFullTextReading: boolean = false
@@ -667,12 +685,20 @@ export function useNearbyAudio({
         }
 
         try {
-          window.speechSynthesis.cancel();
+          // Chrome can drop a speak() that follows a redundant cancel() in the
+          // same tick, which made playback occasionally stall. Only cancel when
+          // the engine actually has something queued, and let the queue settle
+          // before enqueueing the new utterance.
+          const synth = window.speechSynthesis;
+          const hadPendingSpeech = Boolean(synth.speaking || synth.pending);
+          if (hadPendingSpeech) {
+            synth.cancel();
+          }
           const utterance = new SpeechSynthesisUtterance(text);
           activeUtteranceRef.current = utterance;
           utterance.lang = targetLocale; // Never left unset!
           utterance.voice = matchedVoice;
-          utterance.rate = playbackRate;
+          utterance.rate = 1;
 
           utterance.onboundary = (e: SpeechSynthesisEvent) => {
             if (token !== requestTokenRef.current) return;
@@ -750,7 +776,18 @@ export function useNearbyAudio({
           });
           activeSourceTypeRef.current = 'speech';
           setAudioSourceType('speech');
-          window.speechSynthesis.speak(utterance);
+          const startSpeech = () => {
+            if (token !== requestTokenRef.current) return;
+            synth.speak(utterance);
+          };
+          // Let the engine settle after a recent cancel(); speaking in the same
+          // tick is what intermittently swallows the first words.
+          const recentlyCancelled = Date.now() - lastSpeechCancelAtRef.current < 120;
+          if (hadPendingSpeech || recentlyCancelled) {
+            setTimeout(startSpeech, 50);
+          } else {
+            startSpeech();
+          }
         } catch (err) {
           console.warn('[useNearbyAudio] speechSynthesis.speak() failed', err);
         }
@@ -846,16 +883,14 @@ export function useNearbyAudio({
         const audio = getSharedAudio();
         audioElemRef.current = audio;
         audio.src = fullUrl;
-        audio.playbackRate = speedRef.current;
         audio.currentTime = 0;
 
         audio.onerror = () => {
           if (token !== requestTokenRef.current) return;
           logAudioDev('STOP', { sourceType: 'backend', stopId: poiId, token, reason: 'error' });
           console.warn('[NearbyAudio] remote audio error, falling back to speech', { poiId, url: fullUrl });
-          setIsHtml5Audio(false);
           setAudioSourceType('speech');
-          speakText(chosenText, currentLang, speedRef.current, token, 0);
+          speakText(chosenText, currentLang, token, 0);
         };
 
         audio.onloadedmetadata = () => {
@@ -905,7 +940,6 @@ export function useNearbyAudio({
                 });
                 activeSourceTypeRef.current = 'backend';
                 setAudioSourceType('backend');
-                setIsHtml5Audio(true);
                 setPlaybackStatus('playing');
                 setIsPlaying(true);
               })
@@ -918,37 +952,33 @@ export function useNearbyAudio({
                   setIsPlaying(false);
                 } else {
                   console.warn('[NearbyAudio] remote play rejected, falling back to speech', err);
-                  setIsHtml5Audio(false);
                   setAudioSourceType('speech');
-                  speakText(chosenText, currentLang, speedRef.current, token, 0);
+                  speakText(chosenText, currentLang, token, 0);
                 }
               });
           } else {
             activeSourceTypeRef.current = 'backend';
             setAudioSourceType('backend');
-            setIsHtml5Audio(true);
             setPlaybackStatus('playing');
             setIsPlaying(true);
           }
         } catch (err) {
           if (token !== requestTokenRef.current) return;
           console.warn('[NearbyAudio] remote playback threw, falling back to speech', err);
-          setIsHtml5Audio(false);
           setAudioSourceType('speech');
-          speakText(chosenText, currentLang, speedRef.current, token, 0);
+          speakText(chosenText, currentLang, token, 0);
         }
       } else {
         // Synchronously start speech narration.
         setAudioSourceType('speech');
-        setIsHtml5Audio(false);
-        speakText(chosenText, currentLang, speedRef.current, token, 0, hasFullText);
+        speakText(chosenText, currentLang, token, 0, hasFullText);
 
         stopTimer();
         timerRef.current = setInterval(() => {
           if (token !== requestTokenRef.current) return;
           setCurrentTime((prev) => {
             if (token !== requestTokenRef.current) return prev;
-            const next = prev + 0.1 * speedRef.current;
+            const next = prev + 0.1;
             if (hasFullText) {
               updateSentenceHighlight(next, estDuration);
               if (!hasBoundaryEventsRef.current) {
@@ -1102,7 +1132,6 @@ export function useNearbyAudio({
         speakText(
           remainingText,
           currentLang,
-          speedRef.current,
           resumeToken,
           currentSentenceIdx,
           hasFullText
@@ -1113,7 +1142,7 @@ export function useNearbyAudio({
           if (resumeToken !== requestTokenRef.current) return;
           setCurrentTime((prev) => {
             if (resumeToken !== requestTokenRef.current) return prev;
-            const next = prev + 0.1 * speedRef.current;
+            const next = prev + 0.1;
             if (hasFullText) {
               updateSentenceHighlight(next, duration);
               if (!hasBoundaryEventsRef.current) {
@@ -1166,39 +1195,6 @@ export function useNearbyAudio({
     activeSentenceIndex,
   ]);
 
-  const changeSpeed = useCallback(
-    (newSpeed: number) => {
-      setSpeed(newSpeed);
-      speedRef.current = newSpeed;
-      if (audioElemRef.current) {
-        audioElemRef.current.playbackRate = newSpeed;
-      }
-    },
-    []
-  );
-
-  const seekTime = useCallback(
-    (newTime: number) => {
-      // Seek is only supported for HTML5 audio
-      if (!isHtml5Audio) return;
-      const targetTime = Math.max(0, Math.min(duration, newTime));
-      setCurrentTime(targetTime);
-      if (audioElemRef.current) {
-        audioElemRef.current.currentTime = targetTime;
-        updateSentenceHighlight(targetTime, duration);
-      }
-    },
-    [isHtml5Audio, duration, updateSentenceHighlight]
-  );
-
-  const seekRelative = useCallback(
-    (offsetSeconds: number) => {
-      if (!isHtml5Audio) return;
-      seekTime(currentTime + offsetSeconds);
-    },
-    [isHtml5Audio, currentTime, seekTime]
-  );
-
   // Clean up on unmount or route change
   useEffect(() => {
     return () => {
@@ -1214,15 +1210,11 @@ export function useNearbyAudio({
     isPlaying,
     currentTime,
     duration,
-    speed,
-    showTranscript,
-    setShowTranscript,
     notice,
     setNotice,
     noticeWarn,
     setNoticeWarn,
     audioSourceType,
-    isHtml5Audio,
     activeSentenceIndex,
     activeCharOffset,
     activeCharLength,
@@ -1231,9 +1223,6 @@ export function useNearbyAudio({
     resolveAudio,
     playPoi,
     togglePlay,
-    changeSpeed,
-    seekTime,
-    seekRelative,
     stopAllAudio,
     lastManualStoppedId: lastManualStoppedIdRef.current,
     lastManualStopTime: lastManualStopTimeRef.current,

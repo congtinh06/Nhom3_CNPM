@@ -10,9 +10,14 @@ import { StatusBadge } from '../components/StatusBadge';
 import { EmptyState } from '../components/EmptyState';
 import { ErrorState } from '../components/ErrorState';
 import { ConfirmDialog } from '../components/ConfirmDialog';
-import { AdminToolbar } from '../components/AdminToolbar';
+import { AdminFilterPanel } from '../components/AdminFilterPanel';
+import type {
+  AdminActiveFilter,
+  AdminSearchSuggestion,
+} from '../components/AdminFilterPanel';
 import { AdminPagination } from '../components/AdminPagination';
 import { AdminAlert } from '../components/AdminAlert';
+import { normalizeSearchText } from '../utils/text';
 
 const PAGE_SIZE = 10;
 
@@ -30,6 +35,7 @@ export const RouteListPage: React.FC = () => {
   const [zoneFilter, setZoneFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [page, setPage] = useState(0);
+  const [suggestionPool, setSuggestionPool] = useState<AdminRouteListItem[]>([]);
 
   const navigate = useNavigate();
   const [pendingToggle, setPendingToggle] = useState<AdminRouteListItem | null>(null);
@@ -61,7 +67,13 @@ export const RouteListPage: React.FC = () => {
         zoneId: zoneFilter ? parseInt(zoneFilter, 10) : undefined,
         status: statusFilter || undefined,
       });
-      setRows(result?.content || []);
+      const content = result?.content || [];
+      setRows(content);
+      setSuggestionPool((prev) => {
+        const byId = new Map(prev.map((route) => [route.id, route]));
+        content.forEach((route) => byId.set(route.id, route));
+        return Array.from(byId.values()).slice(0, 40);
+      });
       setTotalElements(result?.totalElements ?? 0);
       setTotalPages(result?.totalPages ?? 0);
     } catch (err) {
@@ -84,6 +96,108 @@ export const RouteListPage: React.FC = () => {
     setStatusFilter('');
     setPage(0);
   };
+
+  const normalizedQuery = normalizeSearchText(searchInput);
+
+  const searchSuggestions: AdminSearchSuggestion[] = [
+    ...suggestionPool.map<AdminSearchSuggestion>((route) => ({
+      id: `route-${route.id}`,
+      label: route.name,
+      hint: `${route.zoneName} - ${route.stopCount} điểm dừng`,
+      kind: 'keyword',
+      onSelect: () => {
+        setSearchInput(route.name);
+        setSearch(route.name);
+        setPage(0);
+      },
+    })),
+    ...zones.map<AdminSearchSuggestion>((zone) => ({
+      id: `zone-${zone.id}`,
+      label: zone.name,
+      hint: `Lọc tất cả tuyến thuộc khu vực ${zone.code}`,
+      kind: 'filter',
+      onSelect: () => {
+        setSearchInput('');
+        setSearch('');
+        setZoneFilter(String(zone.id));
+        setPage(0);
+      },
+    })),
+    {
+      id: 'status-active',
+      label: 'Tuyến đang hoạt động',
+      hint: 'Lọc theo trạng thái tuyến',
+      kind: 'filter' as const,
+      onSelect: () => {
+        setSearchInput('');
+        setSearch('');
+        setStatusFilter('ACTIVE');
+        setPage(0);
+      },
+    },
+    {
+      id: 'status-inactive',
+      label: 'Tuyến tạm ngưng',
+      hint: 'Lọc theo trạng thái tuyến',
+      kind: 'filter' as const,
+      onSelect: () => {
+        setSearchInput('');
+        setSearch('');
+        setStatusFilter('INACTIVE');
+        setPage(0);
+      },
+    },
+  ].filter((suggestion) => {
+    if (!normalizedQuery) return true;
+    return normalizeSearchText(`${suggestion.label} ${suggestion.hint || ''}`).includes(
+      normalizedQuery
+    );
+  });
+
+  const selectedZone = zones.find((zone) => String(zone.id) === zoneFilter);
+
+  const activeFilters: AdminActiveFilter[] = [
+    ...(searchInput.trim()
+      ? [
+          {
+            id: 'search',
+            label: 'Từ khóa',
+            value: searchInput.trim(),
+            onRemove: () => {
+              setSearchInput('');
+              setSearch('');
+              setPage(0);
+            },
+          },
+        ]
+      : []),
+    ...(zoneFilter
+      ? [
+          {
+            id: 'zone',
+            label: 'Khu vực',
+            value: selectedZone ? selectedZone.name : `#${zoneFilter}`,
+            onRemove: () => {
+              setZoneFilter('');
+              setPage(0);
+            },
+          },
+        ]
+      : []),
+    ...(statusFilter
+      ? [
+          {
+            id: 'status',
+            label: 'Trạng thái',
+            value: statusFilter === 'ACTIVE' ? 'Hoạt động' : 'Tạm ngưng',
+            onRemove: () => {
+              setStatusFilter('');
+              setPage(0);
+            },
+          },
+        ]
+      : []),
+  ];
 
   const handleConfirmToggle = async () => {
     if (!pendingToggle || toggling) return;
@@ -215,59 +329,50 @@ export const RouteListPage: React.FC = () => {
         <AdminAlert variant="success" message={notice} onClose={() => setNotice(null)} />
       )}
 
-      <AdminToolbar>
-        <div className="adm-search-wrap">
-          <input
-            type="search"
-            className="adm-input adm-search-input"
-            placeholder="Tìm theo tên tuyến"
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-            aria-label="Tìm kiếm tuyến"
-          />
-        </div>
+      <AdminFilterPanel
+        searchValue={searchInput}
+        onSearchChange={setSearchInput}
+        searchPlaceholder="Tìm theo tên tuyến"
+        searchAriaLabel="Tìm kiếm tuyến"
+        suggestions={searchSuggestions}
+        activeFilters={activeFilters}
+        onClearFilters={handleClearFilters}
+        totalLabel={loading ? 'Đang tải dữ liệu...' : `${totalElements.toLocaleString('vi-VN')} tuyến`}
+        filters={
+          <>
+            <select
+              className="adm-select"
+              value={zoneFilter}
+              onChange={(e) => {
+                setZoneFilter(e.target.value);
+                setPage(0);
+              }}
+              aria-label="Lọc theo khu vực"
+            >
+              <option value="">Tất cả khu vực</option>
+              {zones.map((zone) => (
+                <option key={zone.id} value={zone.id}>
+                  {zone.name}
+                </option>
+              ))}
+            </select>
 
-        <select
-          className="adm-select"
-          value={zoneFilter}
-          onChange={(e) => {
-            setZoneFilter(e.target.value);
-            setPage(0);
-          }}
-          aria-label="Lọc theo khu vực"
-        >
-          <option value="">Tất cả khu vực</option>
-          {zones.map((zone) => (
-            <option key={zone.id} value={zone.id}>
-              {zone.name}
-            </option>
-          ))}
-        </select>
-
-        <select
-          className="adm-select"
-          value={statusFilter}
-          onChange={(e) => {
-            setStatusFilter(e.target.value);
-            setPage(0);
-          }}
-          aria-label="Lọc theo trạng thái tuyến"
-        >
-          <option value="">Tất cả trạng thái</option>
-          <option value="ACTIVE">Hoạt động</option>
-          <option value="INACTIVE">Tạm ngưng</option>
-        </select>
-
-        {hasActiveFilters && (
-          <button
-            type="button"
-            className="adm-btn adm-btn-ghost adm-btn-sm"
-            onClick={handleClearFilters}
-          >
-            Xóa bộ lọc
-          </button>
-        )}
-      </AdminToolbar>
+            <select
+              className="adm-select"
+              value={statusFilter}
+              onChange={(e) => {
+                setStatusFilter(e.target.value);
+                setPage(0);
+              }}
+              aria-label="Lọc theo trạng thái tuyến"
+            >
+              <option value="">Tất cả trạng thái</option>
+              <option value="ACTIVE">Hoạt động</option>
+              <option value="INACTIVE">Tạm ngưng</option>
+            </select>
+          </>
+        }
+      />
 
       {error ? (
         <ErrorState title="Không thể tải danh sách tuyến" message={error} onRetry={fetchList} />

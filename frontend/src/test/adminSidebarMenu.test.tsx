@@ -58,7 +58,7 @@ describe('Sidebar quản trị: xổ xuống, thu gọn và bàn phím', () => {
     renderSidebar('/quan-tri/tong-quan');
 
     const pois = screen.getByRole('button', { name: /điểm thuyết minh/i });
-    const food = screen.getByRole('button', { name: /ẩm thực/i });
+    const food = screen.getByRole('button', { name: /quà lưu niệm/i });
 
     expect(pois).toHaveAttribute('aria-expanded', 'false');
     expect(food).toHaveAttribute('aria-expanded', 'false');
@@ -92,12 +92,12 @@ describe('Sidebar quản trị: xổ xuống, thu gọn và bàn phím', () => {
   it('ghi nhớ nhóm đang mở theo người dùng trong localStorage', () => {
     const { unmount } = renderSidebar('/quan-tri/tong-quan');
 
-    fireEvent.click(screen.getByRole('button', { name: /ẩm thực/i }));
+    fireEvent.click(screen.getByRole('button', { name: /quà lưu niệm/i }));
     expect(localStorage.getItem('echora_admin_open_group_1')).toBe('food');
     unmount();
 
     renderSidebar('/quan-tri/tong-quan');
-    expect(screen.getByRole('button', { name: /ẩm thực/i })).toHaveAttribute(
+    expect(screen.getByRole('button', { name: /quà lưu niệm/i })).toHaveAttribute(
       'aria-expanded',
       'true'
     );
@@ -113,7 +113,7 @@ describe('Sidebar quản trị: xổ xuống, thu gọn và bàn phím', () => {
     expect(screen.queryByRole('link', { name: /thư viện ảnh/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /đơn hàng/i })).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: /ẩm thực/i }));
+    fireEvent.click(screen.getByRole('button', { name: /quà lưu niệm/i }));
     const upcomingChild = screen.getByText('Danh mục').closest('.adm-nav-sublink');
     expect(upcomingChild?.tagName).toBe('DIV');
     expect(upcomingChild).toHaveAttribute('aria-disabled', 'true');
