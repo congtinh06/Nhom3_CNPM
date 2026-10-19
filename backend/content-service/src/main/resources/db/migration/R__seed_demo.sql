@@ -184,12 +184,18 @@ BEGIN
     VALUES (@Zone2, @CatReli, 'POI_THIEN_HAU_01', 'qr-thien-hau-01', N'chua-ba-thien-hau', N'Chùa Bà Thiên Hậu (Hội quán Tuệ Thành)', 10.7538000, 106.6601000, 35, N'Số 710 Đường Nguyễn Trãi', '/images/thienhau.jpg');
 
     DECLARE @PoiId4 BIGINT = SCOPE_IDENTITY();
-    INSERT INTO dbo.poi_translation (poi_id, language_code, title, summary, description, historical_significance, audio_status)
+    INSERT INTO dbo.poi_translation (poi_id, language_code, title, summary, description, historical_significance, audio_status, translation_source, updated_at)
     VALUES (@PoiId4, 'vi', N'Chùa Bà Thiên Hậu', 
-            N'Cơ sở tín ngưỡng cổ kính của cộng đồng người Hoa tại Chợ Lớn xây khoảng năm 1760, nổi tiếng với nghệ thuật phù điêu gốm độc đáo.',
-            N'Hội quán Tuệ Thành (Chùa Bà Thiên Hậu) do cộng đồng người Hoa gốc Quảng Đông xây dựng khoảng năm 1760 tại Chợ Lớn. Ngôi chùa nổi bật với kiến trúc tiền điện độc đáo và hệ thống phù điêu gốm nung tinh xảo trên mái.',
-            N'Công trình được công nhận ngày 7/1/1993 là di tích kiến trúc nghệ thuật cấp quốc gia.',
-            'PENDING');
+            N'Bạn đang đứng trước Chùa Bà Thiên Hậu, hay Hội quán Tuệ Thành, một trong những ngôi chùa cổ và linh thiêng nhất của cộng đồng người Hoa tại Chợ Lớn. Công trình được xây dựng khoảng năm 1760, nổi tiếng với kiến trúc nhiều lớp và những phù điêu gốm nung rực rỡ trên mái.',
+            N'Hội quán Tuệ Thành, thường được gọi là Chùa Bà Thiên Hậu, nằm ở số 710 đường Nguyễn Trãi, Quận 5. Công trình do cộng đồng người Hoa gốc Quảng Đông xây dựng khoảng năm 1760 để thờ Bà Thiên Hậu, vị thần bảo hộ người đi biển và người buôn bán. Trải qua hơn hai thế kỷ, chùa vẫn là nơi sinh hoạt tín ngưỡng quen thuộc của người dân Chợ Lớn.
+
+Ngôi chùa được tổ chức theo kiểu hội quán với nhiều lớp không gian nối tiếp nhau, gồm tiền điện, trung điện và hậu điện. Điểm nổi bật là bộ khung gỗ chạm trổ, các hoành phi, câu đối và những phù điêu gốm nung nhiều màu trên mái. Các hình tượng nhân vật, rồng, chim và hoa lá được đắp nổi tỉ mỉ, tạo nên vẻ rực rỡ đặc trưng của kiến trúc người Hoa.
+
+Trong chùa có không gian thờ tự trang nghiêm, hương khói quanh năm và những dấu tích cho thấy sự gắn bó lâu đời của cộng đồng người Hoa với vùng đất Sài Gòn - Chợ Lớn. Khi tham quan, bạn nên đi nhẹ, nói khẽ, giữ trang phục lịch sự và hỏi trước nếu muốn chụp ảnh trong khu vực thờ tự.
+
+Công trình được công nhận là di tích kiến trúc nghệ thuật cấp quốc gia vào ngày 7 tháng 1 năm 1993. Chùa nằm gần nhiều điểm tham quan khác của Chợ Lớn, nên bạn có thể kết hợp ghé thăm trong cùng một buổi dạo quanh khu vực.',
+            N'Chùa được công nhận ngày 7/1/1993 là di tích kiến trúc nghệ thuật cấp quốc gia, ghi dấu vai trò trung tâm tín ngưỡng và sinh hoạt cộng đồng của người Hoa gốc Quảng Đông tại Chợ Lớn.',
+            'PENDING', 'MANUAL', SYSUTCDATETIME());
 END
 
 -- POI 5: Cầu Ba Son
@@ -200,12 +206,63 @@ BEGIN
     VALUES (@Zone4, @CatArch, 'POI_CAU_BA_SON_01', 'qr-ba-son-01', N'cau-ba-son', N'Cầu Ba Son', 10.7818000, 106.7092000, 50, N'Đường Tôn Đức Thắng', '/images/bason.jpg');
 
     DECLARE @PoiId5 BIGINT = SCOPE_IDENTITY();
-    INSERT INTO dbo.poi_translation (poi_id, language_code, title, summary, description, historical_significance, audio_status)
+    INSERT INTO dbo.poi_translation (poi_id, language_code, title, summary, description, historical_significance, audio_status, translation_source, updated_at)
     VALUES (@PoiId5, 'vi', N'Cầu Ba Son', 
-            N'Cây cầu dây văng hiện đại bắc qua sông Sài Gòn, kết nối trung tâm thành phố với Khu đô thị mới Thủ Thiêm.',
-            N'Cầu Ba Son là cầu dây văng bất đối xứng bắc qua sông Sài Gòn, thông xe ngày 28/4/2022, với trụ tháp hình vòm cao 113 m nghiêng về phía Thủ Thiêm.',
+            N'Bạn đang đứng trước Cầu Ba Son, cây cầu dây văng hiện đại bắc qua sông Sài Gòn. Cây cầu nối trung tâm thành phố với Khu đô thị mới Thủ Thiêm, với trụ tháp nghiêng cao 113 mét tạo thành điểm nhấn nổi bật trên sông.',
+            N'Cầu Ba Son là cầu dây văng bất đối xứng bắc qua sông Sài Gòn, nối khu vực đường Tôn Đức Thắng ở trung tâm thành phố với Khu đô thị mới Thủ Thiêm. Cầu thông xe ngày 28 tháng 4 năm 2022, góp phần rút ngắn hành trình giữa hai bờ và mở rộng kết nối giao thông của thành phố.
+
+Điểm dễ nhận ra nhất của cầu là trụ tháp hình vòm cao khoảng 113 mét, nghiêng về phía Thủ Thiêm. Hệ dây văng kéo các nhịp cầu tạo nên dáng vẻ thanh thoát, đồng thời mở ra góc nhìn rộng về sông Sài Gòn, bờ Thủ Thiêm và khu trung tâm.
+
+Cầu từng được gọi là Thủ Thiêm 2. Ngày 9 tháng 12 năm 2022, Hội đồng Nhân dân Thành phố Hồ Chí Minh thông qua việc đặt tên Ba Son, nhằm gắn cây cầu với tên gọi của xưởng đóng tàu Ba Son, một địa danh lịch sử bên bờ sông.
+
+Khi dạo bộ ven sông hoặc đi qua cầu, bạn có thể ngắm toàn cảnh khu vực, đặc biệt là vào buổi chiều khi ánh nắng phản chiếu trên mặt nước. Đây cũng là điểm kết nối thuận tiện để tiếp tục hành trình đến các khu vực ven sông của thành phố.',
             N'Cầu từng mang tên Thủ Thiêm 2. Ngày 9/12/2022, HĐND TP.HCM thông qua việc đặt tên Ba Son, theo tên xưởng đóng tàu Ba Son lịch sử.',
-            'PENDING');
+            'PENDING', 'MANUAL', SYSUTCDATETIME());
+END
+
+-- English authored translations for the two additional demo POIs.
+IF NOT EXISTS (
+    SELECT 1 FROM dbo.poi_translation t
+    JOIN dbo.poi p ON p.id = t.poi_id
+    WHERE p.code = 'POI_THIEN_HAU_01' AND t.language_code = 'en'
+)
+BEGIN
+    INSERT INTO dbo.poi_translation (poi_id, language_code, title, summary, description, historical_significance, audio_status, translation_source, updated_at)
+    SELECT p.id, 'en', N'Ba Thien Hau Pagoda',
+           N'You are standing in front of Ba Thien Hau Pagoda, also known as Tue Thanh Assembly Hall, one of the oldest and most revered Chinese temples in Cho Lon. Built around 1760, it is known for its multi-hall layout and the colorful ceramic reliefs covering its roof.',
+           N'Tue Thanh Assembly Hall, commonly called Ba Thien Hau Pagoda, stands at 710 Nguyen Trai Street in District 5. It was built around 1760 by the Cantonese Chinese community to honor Thien Hau, the goddess believed to protect seafarers and traders. After more than two centuries, the temple remains a living place of worship for the Cho Lon community.
+
+The temple follows the layout of a Chinese assembly hall, with a series of connected spaces leading from the front hall through the middle hall to the rear hall. Its wooden frames, horizontal boards, couplets and roof are richly decorated. The roof is especially notable for its glazed ceramic reliefs, where figures, dragons, birds and flowers are built up in fine detail.
+
+Inside, the atmosphere is quiet and incense-filled, with altars and ornaments that reflect the long presence of the Cantonese community in Saigon and Cho Lon. Visitors should dress respectfully, keep their voices low and ask before taking photographs in the worship areas.
+
+The temple was recognized as a national architectural and artistic relic on 7 January 1993. It sits close to several other attractions in Cho Lon, so it can easily be combined with a walk through the neighborhood.',
+           N'The temple was recognized as a national architectural and artistic relic on 7 January 1993, reflecting its role as a center of worship and community life for the Cantonese Chinese community in Cho Lon.',
+           'PENDING', 'MANUAL', SYSUTCDATETIME()
+    FROM dbo.poi p
+    WHERE p.code = 'POI_THIEN_HAU_01';
+END
+
+IF NOT EXISTS (
+    SELECT 1 FROM dbo.poi_translation t
+    JOIN dbo.poi p ON p.id = t.poi_id
+    WHERE p.code = 'POI_CAU_BA_SON_01' AND t.language_code = 'en'
+)
+BEGIN
+    INSERT INTO dbo.poi_translation (poi_id, language_code, title, summary, description, historical_significance, audio_status, translation_source, updated_at)
+    SELECT p.id, 'en', N'Ba Son Bridge',
+           N'You are standing in front of Ba Son Bridge, a modern cable-stayed bridge across the Saigon River. It links the city center with the Thu Thiem New Urban Area, and its 113-meter inclined tower has become a striking landmark on the river.',
+           N'Ba Son Bridge is an asymmetric cable-stayed bridge over the Saigon River, connecting Ton Duc Thang Street in the city center with the Thu Thiem New Urban Area. It opened to traffic on 28 April 2022, shortening the journey between the two banks and strengthening the city''s transport links.
+
+Its most recognizable feature is the 113-meter arched tower, which leans toward Thu Thiem. The cables fan out to support the bridge deck, giving the structure a light appearance and opening wide views of the Saigon River, the Thu Thiem bank and the city center.
+
+The bridge was once known as Thu Thiem 2. On 9 December 2022, the Ho Chi Minh City People''s Council approved the name Ba Son, linking the bridge to the historic Ba Son Shipyard on the riverbank.
+
+When walking along the riverside or crossing the bridge, you can take in the panorama of the area, especially in the late afternoon when sunlight reflects off the water. The bridge is also a convenient connection for continuing your journey to other riverside districts.',
+           N'The bridge was once known as Thu Thiem 2. On 9 December 2022, the Ho Chi Minh City People''s Council approved the name Ba Son, after the historic Ba Son Shipyard.',
+           'PENDING', 'MANUAL', SYSUTCDATETIME()
+    FROM dbo.poi p
+    WHERE p.code = 'POI_CAU_BA_SON_01';
 END
 GO
 
@@ -252,14 +309,14 @@ IF NOT EXISTS (SELECT 1 FROM dbo.products WHERE slug = 'mo-hinh-dinh-doc-lap')
     VALUES ('mo-hinh-dinh-doc-lap', N'Mô hình Dinh Độc Lập', 'SOUVENIR',
     N'Mô hình thu nhỏ Dinh Độc Lập chế tác tỉ mỉ, thích hợp trưng bày và sưu tầm.',
     N'Mô hình tái hiện Dinh Độc Lập với các khối nhà chính và hàng cột lớn đặc trưng. Từng chi tiết mái, cửa và lan can được gia công tỉ mỉ từ chất liệu nhẹ nhưng chắc chắn. Sản phẩm phù hợp đặt trên bàn làm việc, kệ sách hoặc làm quà tặng cho người yêu kiến trúc và lịch sử.',
-    220000, '/images/souvenirs/tranh-dinh-doc-lap.jpg', (SELECT id FROM dbo.poi WHERE code = 'POI_DINH_DOC_LAP_01'), 1, 2);
+    220000, '/images/souvenirs/mo-hinh.jpg', (SELECT id FROM dbo.poi WHERE code = 'POI_DINH_DOC_LAP_01'), 1, 2);
 
 IF NOT EXISTS (SELECT 1 FROM dbo.products WHERE slug = 'nam-cham-dinh-doc-lap')
     INSERT INTO dbo.products (slug, name, category, short_description, description, price, image_path, poi_id, is_active, sort_order)
     VALUES ('nam-cham-dinh-doc-lap', N'Nam châm tủ lạnh Dinh Độc Lập', 'SOUVENIR',
     N'Nam châm tủ lạnh in hình Dinh Độc Lập, món quà nhỏ gọn và dễ thương.',
     N'Nam châm ép nổi hình Dinh Độc Lập với màu sắc tươi sáng, mặt sau là nam châm dính chắc trên bề mặt kim loại. Kích thước nhỏ gọn nên dễ dàng mang theo trong hành lý hoặc làm quà tặng số đông. Sản phẩm giúp lưu giữ kỷ niệm chuyến tham quan Sài Gòn một cách gọn gàng.',
-    30000, '/images/souvenirs/tranh-dinh-doc-lap.jpg', (SELECT id FROM dbo.poi WHERE code = 'POI_DINH_DOC_LAP_01'), 1, 3);
+    30000, '/images/souvenirs/nam-cham.jpg', (SELECT id FROM dbo.poi WHERE code = 'POI_DINH_DOC_LAP_01'), 1, 3);
 
 IF NOT EXISTS (SELECT 1 FROM dbo.products WHERE slug = 'buu-thiep-dinh-doc-lap')
     INSERT INTO dbo.products (slug, name, category, short_description, description, price, image_path, poi_id, is_active, sort_order)
@@ -301,7 +358,7 @@ IF NOT EXISTS (SELECT 1 FROM dbo.products WHERE slug = 'nam-cham-nha-tho-duc-ba'
     VALUES ('nam-cham-nha-tho-duc-ba', N'Nam châm Nhà thờ Đức Bà', 'SOUVENIR',
     N'Nam châm tủ lạnh hình Nhà thờ Đức Bà, nhỏ gọn và dễ thương.',
     N'Nam châm ép nổi hình Nhà thờ Đức Bà với màu gạch hồng nổi bật, gắn chắc trên tủ lạnh hoặc bảng từ. Món quà nhỏ gọn, dễ mang theo và phù hợp để tặng nhiều người. Sản phẩm là cách gọn gàng để lưu giữ kỷ niệm về biểu tượng của Sài Gòn.',
-    30000, '/images/souvenirs/tranh-nha-tho-duc-ba.jpg', (SELECT id FROM dbo.poi WHERE code = 'POI_DUC_BA_01'), 1, 9);
+    30000, '/images/souvenirs/nam-cham.jpg', (SELECT id FROM dbo.poi WHERE code = 'POI_DUC_BA_01'), 1, 9);
 
 IF NOT EXISTS (SELECT 1 FROM dbo.products WHERE slug = 'buu-thiep-nha-tho-duc-ba')
     INSERT INTO dbo.products (slug, name, category, short_description, description, price, image_path, poi_id, is_active, sort_order)
@@ -315,7 +372,7 @@ IF NOT EXISTS (SELECT 1 FROM dbo.products WHERE slug = 'chuoi-hat-go-my-nghe')
     VALUES ('chuoi-hat-go-my-nghe', N'Chuỗi hạt gỗ mỹ nghệ', 'SOUVENIR',
     N'Chuỗi hạt gỗ mỹ nghệ chạm khắc tinh tế, hợp làm quà tặng.',
     N'Chuỗi hạt được tiện và chạm khắc thủ công từ gỗ, mỗi hạt đều mịn và thơm nhẹ mùi gỗ tự nhiên. Sản phẩm mang nét mộc mạc của làng nghề truyền thống Việt Nam. Thích hợp đeo trang trí, treo xe hoặc làm quà tặng cho người lớn tuổi.',
-    65000, '/images/souvenirs/gom-bat-trang.jpg', (SELECT id FROM dbo.poi WHERE code = 'POI_DUC_BA_01'), 1, 11);
+    65000, '/images/souvenirs/chuoi-hat-go.jpg', (SELECT id FROM dbo.poi WHERE code = 'POI_DUC_BA_01'), 1, 11);
 
 IF NOT EXISTS (SELECT 1 FROM dbo.products WHERE slug = 'tem-suu-tam-sai-gon')
     INSERT INTO dbo.products (slug, name, category, short_description, description, price, image_path, poi_id, is_active, sort_order)
@@ -448,21 +505,21 @@ IF NOT EXISTS (SELECT 1 FROM dbo.products WHERE slug = 'sach-lich-su-sai-gon')
     VALUES ('sach-lich-su-sai-gon', N'Sách lịch sử Sài Gòn', 'SOUVENIR',
     N'Sách ảnh về lịch sử và con người Sài Gòn, quà tặng cho người ham đọc.',
     N'Cuốn sách tập hợp tư liệu và hình ảnh về lịch sử hình thành, phát triển của Sài Gòn qua nhiều giai đoạn. Nội dung trình bày dễ đọc, kèm nhiều hình ảnh minh họa sinh động. Món quà thích hợp cho người muốn tìm hiểu sâu hơn về thành phố.',
-    95000, '/images/souvenirs/tranh-co-dong.jpg', (SELECT id FROM dbo.poi WHERE code = 'POI_BAO_TANG_CHUNG_TICH_01'), 1, 30);
+    95000, '/images/souvenirs/sach-lich-su.jpg', (SELECT id FROM dbo.poi WHERE code = 'POI_BAO_TANG_CHUNG_TICH_01'), 1, 30);
 
 IF NOT EXISTS (SELECT 1 FROM dbo.products WHERE slug = 'huy-hieu-luu-niem')
     INSERT INTO dbo.products (slug, name, category, short_description, description, price, image_path, poi_id, is_active, sort_order)
     VALUES ('huy-hieu-luu-niem', N'Huy hiệu lưu niệm', 'SOUVENIR',
     N'Huy hiệu ghim lưu niệm với thiết kế biểu tượng Sài Gòn.',
     N'Huy hiệu nhỏ gọn in họa tiết biểu tượng của thành phố và các điểm tham quan nổi tiếng. Mặt sau có kim ghim chắc chắn để cài lên áo, balo hoặc mũ. Món quà lưu niệm tiết kiệm, dễ sưu tầm và phù hợp tặng nhóm đông.',
-    20000, '/images/souvenirs/tranh-bao-tang.jpg', (SELECT id FROM dbo.poi WHERE code = 'POI_BAO_TANG_CHUNG_TICH_01'), 1, 31);
+    20000, '/images/souvenirs/huy-hieu.jpg', (SELECT id FROM dbo.poi WHERE code = 'POI_BAO_TANG_CHUNG_TICH_01'), 1, 31);
 
 IF NOT EXISTS (SELECT 1 FROM dbo.products WHERE slug = 'nam-cham-bao-tang')
     INSERT INTO dbo.products (slug, name, category, short_description, description, price, image_path, poi_id, is_active, sort_order)
     VALUES ('nam-cham-bao-tang', N'Nam châm Bảo tàng Chứng tích Chiến tranh', 'SOUVENIR',
     N'Nam châm tủ lạnh in hình Bảo tàng Chứng tích Chiến tranh.',
     N'Nam châm ép nổi tái hiện mặt tiền Bảo tàng Chứng tích Chiến tranh với màu sắc trang nghiêm. Sản phẩm gắn chắc trên bề mặt kim loại và dễ mang theo. Món lưu niệm nhỏ nhắc nhớ một địa chỉ mang nhiều giá trị lịch sử và hòa bình.',
-    30000, '/images/souvenirs/tranh-bao-tang.jpg', (SELECT id FROM dbo.poi WHERE code = 'POI_BAO_TANG_CHUNG_TICH_01'), 1, 32);
+    30000, '/images/souvenirs/nam-cham.jpg', (SELECT id FROM dbo.poi WHERE code = 'POI_BAO_TANG_CHUNG_TICH_01'), 1, 32);
 
 IF NOT EXISTS (SELECT 1 FROM dbo.products WHERE slug = 'nhang-thom-chua-ba')
     INSERT INTO dbo.products (slug, name, category, short_description, description, price, image_path, poi_id, is_active, sort_order)
@@ -483,14 +540,14 @@ IF NOT EXISTS (SELECT 1 FROM dbo.products WHERE slug = 'vong-tay-da-may-man')
     VALUES ('vong-tay-da-may-man', N'Vòng tay đá may mắn', 'SOUVENIR',
     N'Vòng tay đá tự nhiên mài bóng, tượng trưng cho bình an may mắn.',
     N'Vòng tay được mài và xâu từ những viên đá tự nhiên với màu sắc hài hòa. Sản phẩm đeo vừa tay, mang ý nghĩa cầu bình an và tài lộc theo quan niệm dân gian. Một món quà nhỏ được nhiều du khách lựa chọn khi ghé thăm Chợ Lớn.',
-    80000, '/images/souvenirs/gom-bat-trang.jpg', (SELECT id FROM dbo.poi WHERE code = 'POI_THIEN_HAU_01'), 1, 35);
+    80000, '/images/souvenirs/vong-tay-da.jpg', (SELECT id FROM dbo.poi WHERE code = 'POI_THIEN_HAU_01'), 1, 35);
 
 IF NOT EXISTS (SELECT 1 FROM dbo.products WHERE slug = 'den-long-hoi-quan')
     INSERT INTO dbo.products (slug, name, category, short_description, description, price, image_path, poi_id, is_active, sort_order)
     VALUES ('den-long-hoi-quan', N'Đèn lồng Hội quán', 'SOUVENIR',
     N'Đèn lồng đỏ trang trí mang nét văn hóa của người Hoa.',
     N'Đèn lồng được làm từ vải và khung tre với màu đỏ nổi bật, gấp gọn khi cần cất giữ. Sản phẩm gợi nhớ không gian rực rỡ của các hội quán người Hoa ở Chợ Lớn. Đèn dùng để trang trí nhà cửa, quán cà phê hoặc làm điểm nhấn chụp hình.',
-    95000, '/images/souvenirs/chua-ba-thien-hau.jpg', (SELECT id FROM dbo.poi WHERE code = 'POI_THIEN_HAU_01'), 1, 36);
+    95000, '/images/souvenirs/den-long.jpg', (SELECT id FROM dbo.poi WHERE code = 'POI_THIEN_HAU_01'), 1, 36);
 
 IF NOT EXISTS (SELECT 1 FROM dbo.products WHERE slug = 'tranh-cau-ba-son')
     INSERT INTO dbo.products (slug, name, category, short_description, description, price, image_path, poi_id, is_active, sort_order)

@@ -15,7 +15,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 RUN python3 -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
-RUN pip install --no-cache-dir edge-tts==7.2.8
+RUN pip install --no-cache-dir edge-tts==7.3.1
 
 WORKDIR /app
 RUN mkdir -p /app/storage/audio

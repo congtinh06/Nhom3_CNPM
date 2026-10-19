@@ -405,7 +405,9 @@ class ApiGatewayApplicationTest {
             "/api/content/routes/5",
             "/api/content/zones",
             "/api/content/zones/2",
-            "/api/content/products"
+            "/api/content/products",
+            "/api/content/news",
+            "/api/content/news/dinh-doc-lap-nhung-can-phong-it-nguoi-de-y"
     })
     void publicContentGetPathReachesDownstream(String path) {
         assertGetReachesDownstream(path);
