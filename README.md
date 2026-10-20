@@ -1,4 +1,4 @@
-# ECHORA — HỆ THỐNG HƯỚNG DẪN VIÊN DU LỊCH ĐA NGÔN NGỮ TỰ ĐỘNG
+# ECHORA — NỀN TẢNG HƯỚNG DẪN VIÊN DU LỊCH ĐA NGÔN NGỮ TỰ ĐỘNG
 ## Multilingual Automated Tourist Audio Guide & Local Experience Platform
 
 [![Vite Build](https://img.shields.io/badge/Vite-5.4.21-646CFF?logo=vite&logoColor=white)](https://vitejs.dev/)
@@ -14,185 +14,214 @@
 
 ## 1. Giới thiệu dự án (Overview)
 
-**Echora** là giải pháp nền tảng du lịch số thông minh dành cho du khách khám phá Thành phố Hồ Chí Minh. Dự án tích hợp công nghệ định vị GPS, bản đồ tương tác mã nguồn mở **Leaflet + OpenStreetMap**, mã QR tại điểm dừng, và hệ thống **thuyết minh âm thanh tự động đa ngôn ngữ** (`vi`, `en`, `ja`, `ko`).
+**Echora** là giải pháp nền tảng du lịch số thông minh hỗ trợ du khách khám phá di sản và văn hóa đô thị Thành phố Hồ Chí Minh. Hệ thống kết hợp công nghệ định vị vệ tinh GPS, bản đồ tương tác mã nguồn mở **Leaflet + OpenStreetMap**, mã QR tại điểm dừng tham quan, cùng cơ chế **thuyết minh âm thanh tự động đa ngôn ngữ** (`vi`, `en`, `ja`, `ko`).
 
-Bên cạnh trải nghiệm tham quan di sản, hệ thống còn cung cấp module **Văn hóa ẩm thực & Thức uống bản địa**, cho phép du khách tìm hiểu các món ngon đặc trưng Sài Gòn (cơm tấm, bánh mì, cà phê vợt...), đặt món giao tận nơi hoặc trải nghiệm thanh toán trực tuyến thuận tiện.
+Bên cạnh trải nghiệm audio tour, hệ thống tích hợp phân hệ **Văn hóa ẩm thực & Quà lưu niệm địa phương**, cho phép du khách khám phá các món ăn đặc trưng Sài Gòn, lưu giỏ hàng và trải nghiệm quy trình đặt hàng, thanh toán trực tuyến thuận tiện.
 
-### Tính năng nổi bật
+### Tính năng cốt lõi
 
 1. **Bản đồ Di sản Tương tác (Leaflet + OpenStreetMap)**:
-   - Hiển thị 5 điểm di sản nổi tiếng tại trung tâm Sài Gòn (Dinh Độc Lập, Nhà thờ Đức Bà, Bưu điện Trung tâm, Chợ Bến Thành, Bảo tàng Chứng tích Chiến tranh).
-   - Đánh dấu Marker tròn 1–5 màu nâu đỏ `#8B2E16` sang trọng, phóng to và đổi màu cam vàng `#E9A23B` khi chọn hoặc phát âm thanh.
-   - Tự động căn chỉnh vòng bán kính GPS của du khách (`map.fitBounds`) và chống lỗi xám bản đồ (`map.invalidateSize`).
-
-2. **Thuyết minh Tự động & Đa ngôn ngữ (Auto Narration & Multilingual Sync)**:
-   - Tự động kích hoạt giọng đọc khi du khách di chuyển vào bán kính kích hoạt (trigger radius 40–55 m).
-   - Kiểm soát phát âm thanh chặt chẽ: hàng đợi tuần tự, không phát chồng âm thanh, chống phát lặp lại cùng một địa điểm trong vòng 10 phút.
-   - Đồng bộ ngôn ngữ 2 chiều toàn diện giữa Navbar và Audio Player. Hỗ trợ 4 ngôn ngữ (`vi`, `en`, `ja`, `ko`) với cơ chế fallback thông minh về tiếng Việt kèm thông báo.
-   - Tích hợp Web Speech API chuẩn ngữ điệu bản xứ và tùy chỉnh tốc độ đọc (0.75x, 1x, 1.25x), thanh tua tiến trình và xem văn bản thuyết minh.
-
+   - Hiển thị trực quan các điểm di sản trung tâm (Dinh Độc Lập, Nhà thờ Đức Bà, Bưu điện Trung tâm, Chợ Bến Thành, Bảo tàng Chứng tích Chiến tranh).
+   - Tự động hiển thị bán kính kích hoạt Geofence và vị trí GPS thực tế của du khách.
+2. **Thuyết minh Tự động & Đồng bộ Đa ngữ (Auto Narration & Multilingual Sync)**:
+   - Tự động kích hoạt bài thuyết minh khi du khách bước vào vùng ảnh hưởng (bán kính 40–55m).
+   - Chống phát lặp âm thanh trong vòng 10 phút, hàng đợi phát tuần tự không chồng chéo.
+   - Hỗ trợ 4 ngôn ngữ (`vi`, `en`, `ja`, `ko`) với cơ chế bù trừ từ điển thông minh khi dịch tự động gặp sự cố.
 3. **Chế độ Thử nghiệm Tọa độ (GPS Simulation Mode)**:
-   - Hỗ trợ nhập tọa độ kiểm thử hoặc chọn nhanh các vị trí mẫu (Sát Dinh Độc Lập ≈10m, Sát Nhà thờ Đức Bà ≈10m, Giữa tour, Xa tour) để kích hoạt logic tự động thuyết minh như GPS thực tế.
-
-4. **Khám phá Ẩm thực & Thức uống Sài Gòn**:
-   - Danh mục sản phẩm (món ăn đường phố & thức uống thanh nhiệt).
-   - Trang chi tiết món ăn, gợi ý món cùng loại, giỏ hàng lưu `localStorage`.
-   - Đặt hàng với thông tin giao nhận, ghi chú đơn hàng và hỗ trợ thanh toán (COD hoặc Cổng thanh toán giả lập).
-
-5. **Xác thực Người dùng Hiện đại (Auth Modal & Security)**:
-   - Đăng nhập, Đăng ký, Quên mật khẩu, Xác thực email kích hoạt dưới dạng Modal nền nổi (Background Location) không reload trang.
-   - Bảo mật phiên làm việc với JWT access token ngắn hạn và Refresh Token lưu trữ an toàn trong `HttpOnly Cookie`, chống tấn công XSS/CSRF.
+   - Cho phép chọn vị trí mẫu giả lập (Sát di sản ≈10m, giữa tour, xa tour) để kiểm thử luồng tự động thuyết minh trực tiếp trên trình duyệt mà không cần di chuyển ngoài thực địa.
+4. **Khám phá Ẩm thực & Quà lưu niệm**:
+   - Danh mục món ăn, thức uống đặc trưng; trang chi tiết sản phẩm; giỏ hàng lưu trữ cục bộ và quy trình đặt hàng an toàn.
+5. **Bảo mật Xác thực Kép (JWT & HttpOnly Cookie)**:
+   - Phân quyền theo vai trò (`USER`, `ADMIN`); Access Token ngắn hạn lưu trong bộ nhớ và Refresh Token xoay vòng (Rotation) lưu trong HttpOnly Cookie chống tấn công XSS/CSRF.
 
 ---
 
 ## 2. Kiến trúc hệ thống (Architecture)
+
+Hệ thống được thiết kế theo kiến trúc Microservices phân tán, các dịch vụ nghiệp vụ vận hành độc lập và liên lạc qua REST API cùng Message Broker:
 
 ```
                             ┌──────────────────────────────────────────────┐
                             │      Frontend SPA (React 18 + TS + Vite)     │
                             │  Bản đồ Leaflet, Web Speech Audio, Giỏ hàng  │
                             └──────────────────────┬───────────────────────┘
-                                                   │ HTTP / REST (Port 5173)
+                                                   │ HTTP / REST
                                                    ▼
                             ┌──────────────────────────────────────────────┐
                             │            api-gateway (Spring Cloud)        │
-                            │  CORS, Path Guard, Rate Limiting, Admin Auth │
-                            │           Host: 8080 (Container: 8080)       │
+                            │  CORS, JWT Filter, Rate Limiting, Logging    │
+                            │           Cổng Host: 18080 (hoặc 8080)       │
                             └───────┬──────────────┬──────────────┬────────┘
                                     │              │              │
-      ┌─────────────────────────────┼──────────────┼──────────────┼────────────────────────┐
-      ▼                             ▼              ▼              ▼                        ▼
+       ┌────────────────────────────┼──────────────┼──────────────┼────────────────────────┐
+       ▼                            ▼              ▼              ▼                        ▼
 ┌──────────────────┐  ┌──────────────────┐┌──────────────────┐┌──────────────────┐┌──────────────────┐
-│  auth-service    │  │ content-service  ││ location-service ││translation-tts-  ││ analytics-service│
-│  (Port: 8086)    │  │ (Port: 8085)     ││ (Port: 8082)     ││service (Port:8083││ (Port: 8081)     │
-│ - JWT / Cookie   │  │ - Zone, Route,POI││ - GPS Haversine, ││ - Dịch tự động   ││ - Thu thập sự    │
-│ - Xác thực email │  │ - Món ăn/Thức uốn││   quét mã QR     ││ - edge-tts audio ││   kiện quét & play│
+│   auth-service   │  │ content-service  ││ location-service ││translation-tts-  ││ analytics-service│
+│   (Port: 8086)   │  │ (Port: 8085)     ││ (Port: 8082)     ││service (Port:8083││ (Port: 8081)     │
+│ - JWT / Cookie   │  │ - POI, Lộ trình  ││ - GPS Haversine, ││ - Dịch tự động   ││ - Thu thập sự    │
+│ - Xác thực email │  │ - Món ăn/Ẩm thực ││   quét mã QR     ││ - edge-tts audio ││   kiện du lịch   │
 └────────┬─────────┘  └────────┬─────────┘└────────┬─────────┘└────────┬─────────┘└────────┬─────────┘
          │                     │                   │                   │                   │
-         │                     │  saigonvoice.topic│                   │                   │
-         │                     ├───────────────────┼──────────────────▶│                   │
-         │                     │ (poi.created/upd) │                   │                   │
-         │                     │◀──────────────────┼───────────────────┤                   │
-         │                     │ (audio.ready/fail)│                   │                   │
-         │                     │                   │                   │                   │
-         │                     │                   │                   │                   ▼
-         │                     └───────────────────┼───────────────────┼────────▶ RabbitMQ Broker
-         │                                         ▼                   ▼           Host: 5672
-         ▼                                  OpenFeign Service     AMQP Event       UI: 15800
-   Microsoft SQL Server 2022                Communication         Exchange
-   Host: 1433 (4 DBs riêng biệt:
+         │                     │  AMQP Topic Exchange                  │                   │
+         │                     ├──────────────────────────────────────▶│                   │
+         │                     │ (poi.created / poi.updated)           │                   │
+         │                     │◀──────────────────────────────────────┤                   │
+         │                     │ (audio.ready / audio.failed)          │                   ▼
+         │                     └───────────────────────────────────────┼────────▶ RabbitMQ Broker
+         ▼                                                             ▼           Port: 5672
+   Microsoft SQL Server 2022                                           ▼           Dashboard: 15800
+   Host: 1433 (4 CSDL phân lập:
    auth, content, translation, analytics)
 ```
 
 ---
 
-## 3. Cấu trúc thư mục (Repository Structure)
+## 3. Cấu trúc thư mục dự án
 
-```
+```text
 Nhom3_CNPM/
 ├── backend/
-│   ├── api-gateway/              # Spring Cloud Gateway định tuyến, bảo mật và rate limiting
-│   ├── auth-service/             # Quản lý tài khoản, JWT token, xác thực email qua SMTP
-│   ├── content-service/          # Quản lý POI, Zone, Route, Danh mục & Sản phẩm Ẩm thực
-│   ├── location-service/         # Xử lý tọa độ GPS, bán kính kích hoạt và tra cứu mã QR
-│   ├── translation-tts-service/  # Dịch thuật đa ngôn ngữ và tạo file âm thanh TTS
-│   └── analytics-service/        # Thống kê lượt nghe, lượt quét QR theo thời gian thực
+│   ├── api-gateway/              # Cổng Gateway: kiểm soát an ninh, điều hướng, Rate Limit
+│   ├── auth-service/             # Xác thực người dùng, cấp phát JWT và Refresh Token
+│   ├── content-service/          # Quản lý điểm tham quan (POI), lộ trình, sản phẩm ẩm thực
+│   ├── location-service/         # Xử lý tính toán khoảng cách GPS (Haversine) và mã QR
+│   ├── translation-tts-service/  # Xử lý dịch thuật đa ngữ và tổng hợp âm thanh AI
+│   └── analytics-service/        # Tiếp nhận sự kiện nghe thuyết minh bất đồng bộ
 ├── frontend/
-│   ├── src/
-│   │   ├── api/                  # Axios HTTP client, token store và xử lý lỗi tập trung
-│   │   ├── components/           # UI Components (Header, AuthModal, CartDialog...)
-│   │   ├── content/              # Dữ liệu 5 POIs Sài Gòn, từ điển đa ngôn ngữ (vi, en, ja, ko)
-│   │   ├── context/              # React Context (AuthContext, CartContext, ToastContext)
-│   │   ├── hooks/                # Custom React hooks (useAudioPlayer, useNavbarLanguage...)
-│   │   ├── pages/                # Các trang: NearbyPage (Bản đồ), ScanPage, Shop, Orders...
-│   │   ├── styles/               # Design System CSS (bảng màu di sản Sài Gòn, responsive)
-│   │   ├── test/                 # 13 Test suites (62 unit & integration tests với Vitest)
-│   │   └── types/                # TypeScript type definitions
-│   ├── package.json
-│   └── vite.config.ts
+│   ├── src/                      # Mã nguồn React SPA (bản đồ, trình phát audio, giỏ hàng)
+│   ├── package.json              # Danh mục dependencies Frontend
+│   └── vite.config.ts            # Cấu hình đóng gói Vite
 ├── docker/
-│   └── init-databases.sql        # Script khởi tạo các CSDL phân lập trên SQL Server
-├── docs/                         # Tài liệu đặc tả kiến trúc, API và hợp đồng sự kiện
-├── docker-compose.yml            # Khởi chạy toàn bộ hệ thống Microservices & Hạ tầng
-├── .env.example                  # Mẫu biến môi trường cấu hình
-└── README.md
+│   └── init-databases.sql        # Kịch bản khởi tạo 4 CSDL phân lập trên SQL Server
+├── docs/
+│   ├── HUONG_DAN_CHAY_DU_AN.docx # Tài liệu hướng dẫn chạy dự án dạng Word
+│   └── report/                   # Báo cáo đồ án môn học hoàn chỉnh (Word + PDF)
+├── docker-compose.yml            # Khởi chạy toàn bộ hạ tầng CSDL, Broker và Microservices
+├── .env.example                  # Mẫu cấu hình biến môi trường
+└── README.md                     # Hướng dẫn tổng quan dự án
 ```
 
 ---
 
-## 4. Bảng phân bổ cổng dịch vụ (Service Ports)
+## 4. HƯỚNG DẪN CHẠY DỰ ÁN TRÊN MÁY (QUICK START GUIDE)
 
-| Dịch vụ / Ứng dụng | Cổng Host | Cổng Nội bộ | Công nghệ chính | Chức năng chính |
-|---|---|---|---|---|
-| **Frontend Web** | `5173` | `5173` | React 18, Vite, TypeScript | Giao diện du khách & bản đồ du lịch |
-| **API Gateway** | `8080` | `8080` | Spring Cloud Gateway | Điểm tiếp nhận request tập trung |
-| **Content Service** | `8085` | `8085` | Spring Boot 3, Flyway, JPA | Quản lý điểm tham quan, ẩm thực |
-| **Location Service** | `8082` | `8082` | Spring Boot 3, OpenFeign | Tính toán GPS và mã QR |
-| **Translation & TTS** | `8083` | `8083` | Spring Boot 3, Edge-TTS | Dịch thuật tự động và tạo giọng đọc |
-| **Analytics Service** | `8081` | `8081` | Spring Boot 3, RabbitMQ | Thống kê phân tích dữ liệu du lịch |
-| **Auth Service** | `8086` | `8086` | Spring Boot 3, JJWT, Mail | Đăng ký, đăng nhập, bảo mật JWT |
-| **SQL Server 2022** | `1433` | `1433` | MS SQL Server 2022 | Lưu trữ dữ liệu phân lập (4 DB) |
-| **RabbitMQ Broker** | `5672` | `5672` | RabbitMQ 3.13 | Điều phối sự kiện bất đồng bộ |
-| **RabbitMQ Dashboard** | `15800` | `15672` | RabbitMQ Management UI | Giao diện giám sát hàng đợi tin nhắn |
+Phần này hướng dẫn chi tiết cách chạy toàn bộ hệ thống bằng câu lệnh Terminal đơn giản, nhanh gọn.
+
+### 4.1. Điều kiện tiên quyết (Prerequisites)
+1. **Git**: Đã cài đặt trên máy ([Tải Git](https://git-scm.com/downloads)).
+2. **Docker Desktop**: Đã cài đặt và đang ở trạng thái **Running** ([Tải Docker Desktop](https://www.docker.com/products/docker-desktop/)).
+3. **Node.js 18+ & npm**: Cần thiết nếu muốn chạy riêng Frontend chế độ phát triển ([Tải Node.js](https://nodejs.org/)).
 
 ---
 
-## 5. Danh sách API Endpoints chính (Core REST APIs)
+### 4.2. Bước 1: Kéo mã nguồn mới nhất (Git Clone / Pull)
+Mở Terminal (PowerShell trên Windows hoặc Terminal trên macOS/Linux):
 
-Toàn bộ các yêu cầu từ Client đều đi qua **API Gateway** (`http://localhost:8080`):
+```bash
+# 1. Tải mã nguồn về máy (nếu chưa clone)
+git clone https://github.com/congtinh06/Nhom3_CNPM.git
 
-> `Ghi chú`: `8080` là cổng mặc định trong `docker-compose.yml`. Trên máy dev nếu cổng `8080` đã bị chiếm, `docker-compose.override.yml` sẽ map gateway ra `18080`.
+# 2. Di chuyển vào thư mục dự án
+cd Nhom3_CNPM
 
-| Phân hệ / Service | Phương thức | Endpoint | Mô tả chức năng |
-|---|---|---|---|
-| **Auth Service** | `POST` | `/api/auth/register` | Đăng ký tài khoản du khách mới |
-| | `POST` | `/api/auth/login` | Đăng nhập, nhận JWT Access Token & Refresh Cookie |
-| | `POST` | `/api/auth/refresh` | Làm mới phiên đăng nhập bằng Refresh Token |
-| | `POST` | `/api/auth/logout` | Đăng xuất và thu hồi Refresh Token |
-| | `GET` | `/api/auth/me` | Lấy thông tin tài khoản đang đăng nhập |
-| **Content Service** | `GET` | `/api/content/pois` | Danh sách các điểm tham quan di sản Sài Gòn |
-| | `GET` | `/api/content/pois/{slug}` | Chi tiết điểm tham quan và bản dịch đa ngữ |
-| | `GET` | `/api/content/products` | Danh sách món ăn ẩm thực và thức uống |
-| | `GET` | `/api/content/products/{slug}` | Chi tiết món ăn kèm giá và mô tả |
-| **Location Service** | `GET` | `/api/location/nearby` | Tìm điểm du lịch gần nhất dựa theo GPS du khách |
-| | `GET` | `/api/location/scan/{code}` | Lấy thông tin thuyết minh khi quét mã QR tại điểm |
-| **TTS & Dịch thuật** | `POST` | `/api/tts/synthesize` | Tạo âm thanh thuyết minh đa ngữ qua edge-tts |
-| **Analytics Service**| `POST` | `/api/analytics/events` | Ghi nhận lượt nghe thuyết minh và quét mã QR |
+# 3. Kéo code mới nhất từ nhánh chính
+git checkout main
+git pull origin main
+```
+
+*(Mẹo: Nếu gặp xung đột do có file chỉnh sửa dở dang, chạy: `git stash` $\rightarrow$ `git pull origin main` $\rightarrow$ `git stash pop`)*
 
 ---
 
-## 6. Hướng dẫn cài đặt và khởi chạy (Getting Started)
+### 4.3. Bước 2: Thiết lập file cấu hình môi trường (.env)
+Dự án sử dụng cơ chế bảo mật thông qua biến môi trường. Sao chép các tệp mẫu sang `.env` trước khi chạy:
 
-### 6.1. Cấu hình biến môi trường (.env)
+* **Trên Windows PowerShell:**
+```powershell
+Copy-Item .env.example .env
+Copy-Item frontend\.env.example frontend\.env
+```
 
-Sao chép file cấu hình mẫu từ thư mục gốc:
-
+* **Trên Linux / macOS / Git Bash:**
 ```bash
 cp .env.example .env
+cp frontend/.env.example frontend/.env
 ```
 
-Các biến môi trường quan trọng:
-- `MSSQL_SA_PASSWORD`: Mật khẩu tài khoản quản trị `sa` của SQL Server.
-- `CONTENT_DB_USER` / `CONTENT_DB_PASSWORD`: Thông tin truy cập CSDL Content.
-- `AUTH_DB_USER` / `AUTH_DB_PASSWORD`: Thông tin truy cập CSDL Auth.
-- `JWT_SECRET`: Khóa bí mật dùng ký và xác thực mã JWT Token.
-- `RABBITMQ_DEFAULT_USER` / `RABBITMQ_DEFAULT_PASS`: Tài khoản RabbitMQ Broker.
+> **Lưu ý bảo mật quan trọng:**
+> - Mở file `.env` vừa tạo và điền các giá trị bí mật của riêng bạn:
+>   - `JWT_SECRET`: Điền chuỗi ngẫu nhiên tối thiểu 32 ký tự (bắt buộc để `auth-service` khởi động).
+>   - `MSSQL_SA_PASSWORD`: Đặt mật khẩu quản trị SQL Server mạnh (tối thiểu 8 ký tự, gồm chữ hoa, chữ thường, số, ký tự đặc biệt).
+>   - `ADMIN_SEED_PASSWORD`: Đặt mật khẩu tài khoản quản trị hệ thống.
+> - Tuyệt đối không commit tệp `.env` lên kho mã nguồn công khai (tệp này đã được cấu hình trong `.gitignore`).
 
-### 6.2. Khởi chạy Backend bằng Docker Compose
+---
 
-**Yêu cầu**: Đã cài đặt Docker Desktop.
+### 4.4. Bước 3: Khởi động toàn bộ hệ thống với Docker Compose
+Đảm bảo **Docker Desktop đang bật**, sau đó chạy lệnh:
 
 ```bash
-# Khởi chạy toàn bộ hạ tầng CSDL, Message Queue và các Microservices
+# Build và chạy ngầm toàn bộ dịch vụ (lần đầu có thể mất vài phút tải image)
 docker compose up -d --build
 
-# Kiểm tra trạng thái các container đang chạy
+# Kiểm tra trạng thái các container
 docker compose ps
 ```
 
-### 6.3. Khởi chạy Frontend (React + Vite)
+*Kết quả đạt yêu cầu:* Các dịch vụ hiển thị trạng thái `Up` hoặc `Up (healthy)`. Riêng container `mssql-db-init` báo `Exited (0)` là hoàn toàn bình thường (đã hoàn thành việc tạo CSDL ban đầu và tự động thoát).
 
-**Yêu cầu**: Node.js 18+ và npm.
+**Các lệnh hỗ trợ quản lý Docker:**
+```bash
+# Xem log trực tiếp của hệ thống (nhấn Ctrl+C để thoát)
+docker compose logs -f
+
+# Xem log riêng một dịch vụ cụ thể
+docker compose logs -f api-gateway
+
+# Dừng hệ thống (vẫn giữ nguyên dữ liệu trong CSDL)
+docker compose down
+
+# Khởi động lại hệ thống sạch từ đầu (xóa toàn bộ CSDL và dựng lại)
+docker compose down -v
+docker compose up -d --build
+```
+
+---
+
+### 4.5. Bước 4: Kiểm tra các cổng và địa chỉ truy cập
+Sau khi hệ thống khởi động thành công, bạn mở trình duyệt truy cập:
+
+| Phân hệ / Chức năng | Đường dẫn (URL) | Ghi chú |
+|---|---|---|
+| **Ứng dụng Web (Frontend)** | `http://localhost:8088` | Giao diện du khách & bản đồ di sản (bản Docker) |
+| **Cổng API Gateway** | `http://localhost:18080/actuator/health` | Kiểm tra sức khỏe toàn bộ microservices |
+| **Bảng quản trị RabbitMQ** | `http://localhost:15800` | Quản lý hàng đợi (đăng nhập bằng tài khoản trong `.env`) |
+| **Trang Quản trị (Admin)** | `http://localhost:8088/quan-tri` | Dành cho người quản trị nội dung POI và sản phẩm |
+
+> **Ghi chú về cổng API Gateway:** Mặc định dự án có cấu hình ánh xạ cổng ra `18080` (tránh xung đột với cổng `8080` vốn thường bị các phần mềm Windows khác chiếm dụng).
+
+---
+
+### 4.6. Bước 5: Thao tác CSDL SQL Server 2022 qua Terminal
+CSDL SQL Server 2022 đã được đóng gói sẵn trong container `mssql` (lắng nghe cổng `1433`). Bạn có thể thực thi truy vấn trực tiếp qua Terminal mà không cần cài đặt thêm phần mềm quản lý:
+
+```bash
+# 1. Liệt kê danh sách các CSDL trong hệ thống:
+docker exec -it mssql /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "YourStrong!Passw0rd2026" -C -Q "SELECT name FROM sys.databases"
+
+# 2. Xem các bảng dữ liệu trong CSDL nội dung du lịch (saigonvoice_content_db):
+docker exec -it mssql /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "YourStrong!Passw0rd2026" -C -d saigonvoice_content_db -Q "SELECT name FROM sys.tables"
+
+# 3. Mở cửa sổ dòng lệnh SQL tương tác trực tiếp (SQL Shell):
+docker exec -it mssql /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "YourStrong!Passw0rd2026" -C
+# (Trong shell: gõ lệnh SQL kết thúc bằng GO để thực thi, gõ QUIT để thoát)
+```
+*(Thay thế `"YourStrong!Passw0rd2026"` bằng giá trị `MSSQL_SA_PASSWORD` bạn đã cấu hình trong tệp `.env`)*.
+
+---
+
+### 4.7. Bước 6: Chạy riêng giao diện phát triển Frontend (Tùy chọn)
+Nếu bạn cần chỉnh sửa giao diện web và muốn thấy thay đổi ngay lập tức với Hot Reload của Vite:
 
 ```bash
 # 1. Di chuyển vào thư mục frontend
@@ -201,74 +230,49 @@ cd frontend
 # 2. Cài đặt các thư viện phụ thuộc
 npm install
 
-# 3. Khởi chạy môi trường phát triển (Dev Server)
+# 3. Chạy môi trường phát triển (Dev Server)
 npm run dev
 ```
-
-Truy cập giao diện tại: **http://localhost:5173**
-
-### 6.4. Tài khoản kiểm thử & Quản trị mặc định (Test & Admin Credentials)
-
-Hệ thống cung cấp sẵn các tài khoản kiểm thử đã được kích hoạt sẵn (`ACTIVE`), cho phép đăng nhập trực tiếp tại modal **Đăng nhập** (`/dang-nhap`) mà không cần trải qua bước xác thực email:
-
-| Vai trò | Tài khoản (Email) | Mật khẩu | Chức năng kiểm thử chính |
-|---|---|---|---|
-| **Người dùng / Du khách (USER)** | `user@echora.local` | `User@123456` | Trải nghiệm đặt món ẩm thực, xem lịch sử đơn hàng, nghe audio thuyết minh di sản |
-| **Quản trị viên (ADMIN)** | `admin@echora.local` | `Admin@123456` | Đăng nhập tài khoản ADMIN với Bearer JWT để quản lý sản phẩm món ăn, duyệt trạng thái POI và truy cập trang Quản trị (`http://localhost:5173/quan-tri`) |
-
-> **Cấu hình tự động khởi tạo trong `.env`**:
-> Khi `auth-service` khởi động, hệ thống sẽ tự động tạo sẵn 2 tài khoản trên nếu chưa có trong CSDL:
-> ```env
-> SEED_ADMIN_EMAIL=admin@echora.local
-> SEED_ADMIN_PASSWORD=Admin@123456
-> SEED_TEST_USER_EMAIL=user@echora.local
-> SEED_TEST_USER_PASSWORD=User@123456
-> ```
-> *(Ngoài ra, người dùng vẫn có thể đăng ký tài khoản mới tự do tại `/dang-ky`. Trong môi trường dev không có SMTP thật, link/token xác thực email sẽ được ghi trực tiếp vào log của container `auth-service`)*.
-
-### 6.5. Trang Quản trị (Admin Console)
-
-Khu vực quản trị dành riêng cho vai trò `ADMIN`, truy cập tại **http://localhost:5173/quan-tri** (trang đăng nhập: `/quan-tri/dang-nhap`).
-
-- **Xác thực**: đăng nhập bằng Bearer JWT, yêu cầu vai trò `ADMIN`. `api-gateway` và bộ lọc `AdminRoleFilter` (ở `content-service`) chặn mọi truy cập thiếu quyền. **Không còn dùng cơ chế `X-Admin-Key`/`ADMIN_API_KEY` cũ.**
-- **Phân hệ**: Tổng quan · Sản phẩm · Điểm thuyết minh (POI) · Khu vực · Lộ trình · Người dùng.
-- **API chính**: `/api/content/admin/**`, `/api/admin/products/**`, `/api/auth/admin/users`, `/api/analytics/summary`.
-- **Tải theo trang (lazy-load)**: mỗi trang quản trị được tách thành chunk riêng, chỉ tải khi truy cập.
-- **Uploads & hiển thị ảnh**: ảnh sản phẩm tối đa **2 MB (3 MB ở tầng nginx)**, lưu trong volume `product-uploads-data` và phục vụ qua `/img/products/{filename}` (gateway route `content-service-product-images` → `content-service`, nginx proxy `/img/products/`).
-- **Khóa lạc hậu (optimistic lock)**: POI, khu vực và lộ trình đều có trường `version`. Khi lưu với `version` cũ, API trả **409 Conflict**; giao diện hiển thị hộp thoại thông báo dữ liệu đã thay đổi và tùy chọn tải lại.
-- **Giới hạn đã biết**: access token có hiệu lực ~15 phút (thay đổi vai trò/trạng thái tài khoản có độ trễ ngắn); dữ liệu analytics không tách theo người dùng.
+Truy cập giao diện phát triển tại: **http://localhost:5173**
 
 ---
 
-## 7. Kiểm thử hệ thống (Automated Testing)
+### 4.8. Xử lý sự cố thường gặp (Troubleshooting)
+1. **Lỗi `JWT_SECRET is required`**: Chưa cấu hình `JWT_SECRET` trong file `.env`. Hãy mở file `.env`, điền chuỗi ký tự ngẫu nhiên tối thiểu 32 ký tự rồi khởi động lại.
+2. **Lỗi `Port ... already in use`**: Cổng `18080`, `1433` hoặc `15800` đang bị ứng dụng khác chiếm dụng. Kiểm tra tiến trình đang chạy bằng lệnh: `netstat -ano | findstr :18080`.
+3. **Container thoát hoặc unhealthy**: Xem chi tiết nguyên nhân lỗi thông qua lệnh: `docker compose logs <tên_service>`.
+4. **Không kết nối được Docker**: Kiểm tra xem ứng dụng **Docker Desktop** đã được mở và khởi động hoàn tất hay chưa.
 
-Dự án trang bị hệ thống kiểm thử tự động toàn diện cho cả Backend và Frontend:
+---
 
-### 7.1. Kiểm thử Frontend (Vitest & React Testing Library)
+## 5. Tài khoản kiểm thử hệ thống (Test Accounts)
 
+Hệ thống hỗ trợ cơ chế tự động khởi tạo tài khoản mẫu trong môi trường phát triển để phục vụ kiểm thử đồ án:
+* **Tài khoản Người dùng (User / Guest)**: Dùng để trải nghiệm đặt món, xem lịch sử đơn hàng và nghe audio tour.
+* **Tài khoản Quản trị viên (Admin)**: Dùng để quản lý POI, duyệt bài thuyết minh, quản lý sản phẩm ẩm thực tại `/quan-tri`.
+
+> **Bảo mật tài khoản:** Toàn bộ thông tin email và mật khẩu khởi tạo của tài khoản kiểm thử được định nghĩa an toàn trong tệp `.env` (`ADMIN_SEED_EMAIL`, `ADMIN_SEED_PASSWORD`, `SEED_TEST_USER_EMAIL`, `SEED_TEST_USER_PASSWORD`), không công khai trực tiếp trên tài liệu nhằm đảm bảo nguyên tắc bảo mật.
+
+---
+
+## 6. Kiểm thử tự động (Automated Testing)
+
+Dự án tích hợp bộ kiểm thử tự động toàn diện đảm bảo độ ổn định và chất lượng mã nguồn:
+
+### Kiểm thử Frontend (Vitest & React Testing Library)
 ```bash
 cd frontend
 
-# Chạy toàn bộ 13 test suites (62 tests)
+# Chạy toàn bộ 13 test suites (62 unit & integration tests)
 npm test -- --run
 
-# Kiểm tra kiểu dữ liệu TypeScript và build bundle sản xuất
+# Kiểm tra kiểu TypeScript và biên dịch bundle
 npm run build
 ```
 
-> **Kết quả kiểm thử Frontend**:
-> - **13/13 Test Files passed (100%)**
-> - **62/62 Tests passed (100%)** bao gồm:
->   - Kiểm tra bản đồ di sản Leaflet & OpenStreetMap.
->   - Kiểm tra chuyển đổi đa ngôn ngữ và phát thuyết minh tiếng Anh `en-US`.
->   - Kiểm tra fallback ngôn ngữ khi thiếu file giọng đọc.
->   - Kiểm tra giả lập GPS và tự động thuyết minh khi tới gần.
->   - Kiểm tra luồng xác thực Auth Modal, giỏ hàng CartContext, và điều hướng Header.
-
-### 7.2. Kiểm thử Backend (Maven)
-
+### Kiểm thử Backend (Maven)
 ```bash
-# Chạy kiểm thử cho từng microservice
+# Chạy unit test cho từng phân hệ microservice
 mvn -f backend/content-service/pom.xml test
 mvn -f backend/location-service/pom.xml test
 mvn -f backend/translation-tts-service/pom.xml test
@@ -279,9 +283,10 @@ mvn -f backend/api-gateway/pom.xml test
 
 ---
 
-## 8. Thông tin đồ án (Project Information)
+## 7. Thông tin đồ án (Project Information)
 
-- **Môn học**: Công nghệ Phần mềm (CNPM) — Nhóm 3
-- **Đề tài**: Nền tảng hướng dẫn viên du lịch số tự động thuyết minh Sài Gòn (Echora)
-- **Repository**: [https://github.com/congtinh06/Nhom3_CNPM](https://github.com/congtinh06/Nhom3_CNPM)
-- **Công nghệ**: React 18, TypeScript, Vite, Spring Boot 3, SQL Server 2022, RabbitMQ, Docker Compose, Leaflet OSM.
+* **Học phần**: Công nghệ Phần mềm (CNPM) — Nhóm 3
+* **Đề tài**: Nền tảng hướng dẫn viên du lịch số tự động thuyết minh di sản Sài Gòn (Echora)
+* **Kho mã nguồn (GitHub)**: [https://github.com/congtinh06/Nhom3_CNPM](https://github.com/congtinh06/Nhom3_CNPM)
+* **Tài liệu hướng dẫn Word**: [docs/HUONG_DAN_CHAY_DU_AN.docx](file:///f:/Nhom3_CNPM/docs/HUONG_DAN_CHAY_DU_AN.docx)
+* **Báo cáo đồ án chính thức**: [docs/report/BaoCao_CNPM_Echora.docx](file:///f:/Nhom3_CNPM/docs/report/BaoCao_CNPM_Echora.docx) và [docs/report/BaoCao_CNPM_Echora.pdf](file:///f:/Nhom3_CNPM/docs/report/BaoCao_CNPM_Echora.pdf)

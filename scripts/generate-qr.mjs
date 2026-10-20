@@ -164,7 +164,7 @@ function renderHtml(baseUrl, cells, generatedAt) {
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>SaigonVoice - QR điểm du lịch</title>
+  <title>Echora - QR điểm du lịch</title>
   <style>
     :root { color-scheme: light; }
     * { box-sizing: border-box; }
@@ -208,7 +208,7 @@ function renderHtml(baseUrl, cells, generatedAt) {
 </head>
 <body>
   <header>
-    <h1>QR điểm du lịch - SaigonVoice</h1>
+    <h1>QR điểm du lịch - Echora</h1>
     <p class="sub">Base URL: ${escapeHtml(baseUrl)} &middot; tạo lúc ${escapeHtml(generatedAt)}</p>
     <p class="sub">Mở trang này trên màn hình máy tính, dùng điện thoại mở trình duyệt và quét từng mã.</p>
   </header>

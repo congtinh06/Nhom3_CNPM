@@ -53,6 +53,7 @@ vi.mock('react-leaflet', () => ({
 describe('NearbyPage - Clean Multilingual & Audio Narration Integration', () => {
   beforeEach(() => {
     localStorage.clear();
+    localStorage.setItem('echora:premium', '1');
     window.history.replaceState(null, '', '/diem-du-lich');
     setStoredLanguage('vi');
 

@@ -107,7 +107,7 @@ services:
       - saigonvoice-net
 
   # ==========================================
-  # 3. Microservices Nghiệp Vụ (SaigonVoice)
+  # 3. Microservices Nghiệp Vụ (Echora)
   # ==========================================
   content-service:
     build:
@@ -262,8 +262,8 @@ services:
       MAIL_USERNAME: ${MAIL_USERNAME:-}
       MAIL_PASSWORD: ${MAIL_PASSWORD:-}
       MAIL_FROM: ${MAIL_FROM:-Echora <no-reply@echora.local>}
-      SEED_ADMIN_EMAIL: ${SEED_ADMIN_EMAIL:-admin@echora.local}
-      SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD:-Admin@123456}
+      ADMIN_SEED_EMAIL: ${ADMIN_SEED_EMAIL:-quantri@echora.test}
+      ADMIN_SEED_PASSWORD: ${ADMIN_SEED_PASSWORD:-}
       SEED_TEST_USER_EMAIL: ${SEED_TEST_USER_EMAIL:-user@echora.local}
       SEED_TEST_USER_PASSWORD: ${SEED_TEST_USER_PASSWORD:-User@123456}
     depends_on:

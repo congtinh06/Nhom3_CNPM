@@ -1,5 +1,5 @@
 -- ==============================================================================
--- SaigonVoice — Flyway V2: Đăng nhập bằng Google (Google Identity Services)
+-- Echora — Flyway V2: Đăng nhập bằng Google (Google Identity Services)
 -- Bổ sung cột google_sub (định danh Google, unique nhưng cho phép NULL) và cho
 -- phép password_hash NULL đối với tài khoản chỉ đăng nhập bằng Google.
 -- Migration idempotent: an toàn khi chạy trên database đã có dữ liệu.

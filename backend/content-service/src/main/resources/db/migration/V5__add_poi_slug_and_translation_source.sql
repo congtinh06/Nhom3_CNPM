@@ -1,5 +1,5 @@
 -- ==============================================================================
--- SaigonVoice — Flyway V5 Migration
+-- Echora — Flyway V5 Migration
 -- 1. Thêm cột slug cho POI (định danh thân thiện URL, khớp nearbyPois.json của FE).
 --    Cho phép NULL vì các POI cũ/nội bộ chưa có slug. Unique khi khác NULL.
 -- 2. Thêm cột translation_source cho poi_translation: 'AUTO' (dịch máy) hoặc

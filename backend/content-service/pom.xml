@@ -13,7 +13,7 @@
     <artifactId>content-service</artifactId>
     <version>1.0.0</version>
     <name>content-service</name>
-    <description>SaigonVoice Content Service - Tourist zones, POIs, and multilingual audio</description>
+    <description>Echora Content Service - Tourist zones, POIs, and multilingual audio</description>
 
     <properties>
         <java.version>17</java.version>

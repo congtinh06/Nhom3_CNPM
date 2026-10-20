@@ -52,6 +52,7 @@ async function renderScanPage() {
       <MemoryRouter initialEntries={['/qr/qr-dinh-doc-lap-01']}>
         <Routes>
           <Route path="/qr/:token" element={<ScanPage />} />
+          <Route path="/nang-cap" element={<div>Trang nâng cấp Premium</div>} />
         </Routes>
       </MemoryRouter>
     );
@@ -62,6 +63,7 @@ describe('ScanPage language chips', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     localStorage.clear();
+    localStorage.setItem('echora:premium', '1');
     vi.spyOn(api, 'getPoiByQr').mockResolvedValue(mockDetail);
   });
 
@@ -95,5 +97,17 @@ describe('ScanPage language chips', () => {
 
     expect(stopAudioMock).not.toHaveBeenCalled();
     expect(playAudioMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('routes free users to Premium instead of loading a locked language', async () => {
+    localStorage.removeItem('echora:premium');
+    await renderScanPage();
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'EN' }));
+    });
+
+    expect(screen.getByText('Trang nâng cấp Premium')).toBeInTheDocument();
+    expect(api.getPoiByQr).not.toHaveBeenLastCalledWith('qr-dinh-doc-lap-01', 'en');
   });
 });

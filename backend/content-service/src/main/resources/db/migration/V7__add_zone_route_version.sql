@@ -1,5 +1,5 @@
 -- ==============================================================================
--- SaigonVoice — Flyway V7 Migration
+-- Echora — Flyway V7 Migration
 -- Thêm cột version cho zone và route (optimistic lock cho thao tác admin)
 -- ==============================================================================
 SET ANSI_NULLS ON;

@@ -1,5 +1,5 @@
 -- ==============================================================================
--- SaigonVoice — Flyway V6 Migration
+-- Echora — Flyway V6 Migration
 -- Thêm cột version cho poi: khoá lạc hậu (optimistic lock) cho thao tác admin.
 -- Client gửi kèm version khi PUT; nếu không khớp -> 409 để tránh ghi đè lẫn nhau.
 -- Cột quản lý thủ công (không dùng @Version của JPA) để kiểm soát rõ ràng.

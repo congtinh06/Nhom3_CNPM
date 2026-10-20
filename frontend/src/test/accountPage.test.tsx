@@ -66,6 +66,7 @@ describe('AccountPage', () => {
     vi.clearAllMocks();
     tokenStore.clear();
     localStorage.clear();
+    localStorage.setItem('echora:premium', '1');
     vi.mocked(authApi.refresh).mockResolvedValue({
       accessToken: 'tok',
       expiresIn: 900,

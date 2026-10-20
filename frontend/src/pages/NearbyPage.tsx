@@ -1,8 +1,12 @@
 import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Lock } from 'lucide-react';
 import nearbyPoisData from '../content/nearbyPois.json';
 import { api } from '../api/client';
 import { mapGuidesToGeoPois } from '../content/poiGuideAdapter';
 import { useNavbarLanguage, SUPPORTED_LANGUAGES } from '../content/languages';
+import { useToastOptional } from '../context/ToastContext';
+import { usePremium, buildPremiumPath } from '../context/PremiumContext';
 import { SupportedLanguage } from '../types';
 import { useAutoNarration, haversine } from '../hooks/useAutoNarration';
 import { useNearbyAudio, splitTranscriptIntoSentences } from '../hooks/useNearbyAudio';
@@ -13,7 +17,6 @@ import {
   formatDistanceRounded,
   NEARBY_DICTIONARY,
 } from '../content/nearbyI18n';
-import { useToastOptional } from '../context/ToastContext';
 
 // Components
 import { PoiHeader } from '../components/nearby/PoiHeader';
@@ -107,6 +110,40 @@ export function getHeroIntroText(poi: GeoPoi, lang: SupportedLanguage): string {
 
 export { NEARBY_DICTIONARY };
 
+const PREMIUM_GATE_COPY: Record<
+  SupportedLanguage,
+  { title: string; description: string; cta: string; warning: string }
+> = {
+  vi: {
+    title: 'Bản dịch nâng cao đang khóa',
+    description:
+      'Bạn có thể đọc nội dung bằng ngôn ngữ này, nhưng cần Premium để nghe thuyết minh.',
+    cta: 'Mở khóa Premium',
+    warning: 'Cần nâng cấp Premium để nghe thuyết minh bằng ngôn ngữ này.',
+  },
+  en: {
+    title: 'Premium narration is locked',
+    description:
+      'You can read this language, but Premium is required to listen to the narration.',
+    cta: 'Unlock Premium',
+    warning: 'Upgrade to Premium to listen to narration in this language.',
+  },
+  ja: {
+    title: 'Premium 音声ガイドはロック中です',
+    description:
+      'この言語の本文は読めますが、音声ガイドを聞くには Premium が必要です。',
+    cta: 'Premium を解除',
+    warning: 'この言語の音声ガイドを聞くには Premium へのアップグレードが必要です。',
+  },
+  ko: {
+    title: 'Premium 해설이 잠겨 있습니다',
+    description:
+      '이 언어의 본문은 읽을 수 있지만, 해설을 들으려면 Premium이 필요합니다.',
+    cta: 'Premium 열기',
+    warning: '이 언어의 해설을 들으려면 Premium으로 업그레이드해야 합니다.',
+  },
+};
+
 if (import.meta.env.DEV && typeof window !== 'undefined') {
   if (!(window as any).__nearbyPerf) {
     (window as any).__nearbyPerf = {
@@ -126,7 +163,21 @@ export const NearbyPage: React.FC = () => {
   }
 
   const { lang } = useNavbarLanguage();
+  const navigate = useNavigate();
+  const { canAccessLanguage } = usePremium();
+  const { showToast } = useToastOptional();
   const currentLang = (lang as SupportedLanguage) || 'vi';
+  const isLanguageLocked = !canAccessLanguage(currentLang);
+
+  const openPremiumForLanguage = useCallback(() => {
+    const returnTo = `${window.location.pathname}${window.location.search}`;
+    navigate(buildPremiumPath(currentLang, returnTo));
+  }, [currentLang, navigate]);
+
+  const warnAndOpenPremium = useCallback(() => {
+    showToast(PREMIUM_GATE_COPY[currentLang].warning);
+    openPremiumForLanguage();
+  }, [currentLang, openPremiumForLanguage, showToast]);
 
   // Synchronize document language and title with the single source of truth
   useEffect(() => {
@@ -182,7 +233,6 @@ export const NearbyPage: React.FC = () => {
   // Increments on every "Vị trí của tôi" press so the map auto-centers exactly once per press
   const [flyToUserToken, setFlyToUserToken] = useState<number>(0);
   const gpsToastShownRef = useRef<boolean>(false);
-  const { showToast } = useToastOptional();
   const [isAutoEnabled, setIsAutoEnabled] = useState<boolean>(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -344,6 +394,7 @@ export const NearbyPage: React.FC = () => {
     lastManualStoppedId,
     lastManualStopTime,
     playPoi: (poiId, isAuto) => {
+      if (isLanguageLocked) return;
       setSelectedId(poiId);
       setActiveId(poiId);
       playPoi(poiId, isAuto);
@@ -359,6 +410,13 @@ export const NearbyPage: React.FC = () => {
     overrideRadius,
     isSimMode,
   });
+
+  useEffect(() => {
+    if (!isLanguageLocked || !isAutoEnabled) return;
+    setIsAutoEnabled(false);
+    setAutoDirect(false);
+    stopAllAudio();
+  }, [isLanguageLocked, isAutoEnabled, setAutoDirect, stopAllAudio]);
 
   // Manual location simulation: pick a preset stop or enter raw coordinates.
   const simStops = useMemo(
@@ -578,6 +636,10 @@ export const NearbyPage: React.FC = () => {
 
   const handleTogglePlayPoi = useCallback(
     (poiId: string) => {
+      if (isLanguageLocked) {
+        warnAndOpenPremium();
+        return;
+      }
       // Must run synchronously inside the tap gesture, before any async work.
       unlockAudio();
       setSelectedId(poiId);
@@ -588,7 +650,7 @@ export const NearbyPage: React.FC = () => {
         playPoi(poiId, false);
       }
     },
-    [currentId, togglePlay, playPoi]
+    [currentId, isLanguageLocked, warnAndOpenPremium, togglePlay, playPoi]
   );
 
   // Auto-narration status line: always reflects the real configured radius and state.
@@ -644,6 +706,21 @@ export const NearbyPage: React.FC = () => {
       />
 
       {/* 2. STATS CHIPS UNDER HERO */}
+      {isLanguageLocked && (
+        <section className="nearby-premium-gate" role="status" aria-live="polite">
+          <span className="nearby-premium-gate-icon" aria-hidden="true">
+            <Lock size={20} strokeWidth={1.8} />
+          </span>
+          <div className="nearby-premium-gate-copy">
+            <strong>{PREMIUM_GATE_COPY[currentLang].title}</strong>
+            <p>{PREMIUM_GATE_COPY[currentLang].description}</p>
+          </div>
+          <button type="button" onClick={openPremiumForLanguage}>
+            {PREMIUM_GATE_COPY[currentLang].cta}
+          </button>
+        </section>
+      )}
+
       <PoiHeader
         stopsCount={pois.length}
         languagesCount={languagesCount}
@@ -659,6 +736,10 @@ export const NearbyPage: React.FC = () => {
         radiusLabelText={t(currentLang, 'radiusLabel')}
         isAutoEnabled={isAutoEnabled}
         onToggleAuto={() => {
+          if (isLanguageLocked) {
+            warnAndOpenPremium();
+            return;
+          }
           // Must run synchronously inside the tap gesture, before any async work.
           unlockAudio();
           const nextVal = !isAutoEnabled;
@@ -825,7 +906,13 @@ export const NearbyPage: React.FC = () => {
           currentTime={currentTime}
           notice={notice}
           noticeWarn={noticeWarn}
-          onTogglePlay={togglePlay}
+          onTogglePlay={() => {
+            if (isLanguageLocked) {
+              warnAndOpenPremium();
+              return;
+            }
+            togglePlay();
+          }}
           onViewChapterTranscript={handleViewChapterTranscript}
           getPoiName={getPoiName}
           noPoiSelectedText={t(currentLang, 'noPoiSelected')}

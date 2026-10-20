@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, useLocation, Navigate, useParams } from '
 import { ToastProvider } from './context/ToastContext';
 import { CartProvider } from './context/CartContext';
 import { AuthProvider } from './context/AuthContext';
+import { PremiumProvider } from './context/PremiumContext';
 import { Header } from './components/layout/Header';
 import { Footer } from './components/layout/Footer';
 import { CartDialog } from './components/cart/CartDialog';
@@ -23,6 +24,7 @@ import { GuidePage } from './pages/GuidePage';
 import { ContactPage } from './pages/ContactPage';
 import { NewsListPage } from './pages/NewsListPage';
 import { NewsDetailPage } from './pages/NewsDetailPage';
+import { PremiumPage } from './pages/PremiumPage';
 import { AuthModal } from './components/auth/AuthModal';
 
 import { useSmoothScroll } from './hooks/useSmoothScroll';
@@ -106,6 +108,7 @@ const AppContent: React.FC = () => {
             <Route path="/tin-tuc/:slug" element={<NewsDetailPage />} />
             <Route path="/huong-dan" element={<GuidePage />} />
             <Route path="/lien-he" element={<ContactPage />} />
+            <Route path="/nang-cap" element={<PremiumPage />} />
 
             {/* Product detail routes (all legacy paths stay real) */}
             <Route path="/am-thuc-thuc-uong/:slug" element={<ProductDetailPage />} />
@@ -145,11 +148,13 @@ export const App: React.FC = () => {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <ToastProvider>
-          <CartProvider>
-            <AppContent />
-          </CartProvider>
-        </ToastProvider>
+        <PremiumProvider>
+          <ToastProvider>
+            <CartProvider>
+              <AppContent />
+            </CartProvider>
+          </ToastProvider>
+        </PremiumProvider>
       </AuthProvider>
     </BrowserRouter>
   );

@@ -1,5 +1,5 @@
 /* ==========================================================================
-   SaigonVoice - Admin Foundation Design System (admin.css)
+   Echora - Admin Foundation Design System (admin.css)
    Strict rule: All selectors MUST start with .adm- prefix.
    Reuses core tokens: --fb-bg-primary, --fb-surface, --fb-accent, --fb-border,
    --font-display, --font-body. No global rules, no bare tag overrides.
@@ -956,49 +956,6 @@
   opacity: 0.7;
 }
 
-.adm-password-wrap {
-  position: relative;
-  display: block;
-}
-
-.adm-password-wrap .adm-input {
-  padding-right: 40px;
-}
-
-.adm-password-eye {
-  position: absolute;
-  top: 50%;
-  right: 6px;
-  transform: translateY(-50%);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  padding: 0;
-  border: 0;
-  border-radius: 4px;
-  background: transparent;
-  color: #78716C;
-  cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease;
-}
-
-.adm-password-eye:hover:not(:disabled) {
-  background: rgba(194, 65, 12, 0.08);
-  color: var(--fb-accent, #C2410C);
-}
-
-.adm-password-eye:focus-visible {
-  outline: 2px solid var(--fb-accent, #C2410C);
-  outline-offset: 1px;
-}
-
-.adm-password-eye:disabled {
-  cursor: not-allowed;
-  opacity: 0.6;
-}
-
 .adm-form-field-error .adm-input {
   border-color: #B3261E;
 }
@@ -1249,103 +1206,205 @@
 .adm-login-screen {
   min-height: 100vh;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 24px 16px;
-  background-color: var(--fb-bg-primary, #FDFBF7);
+  padding: 0;
+  background-color: var(--fb-bg-primary, #F3F5F7);
   font-family: var(--font-body, "Be Vietnam Pro", -apple-system, BlinkMacSystemFont, sans-serif);
 }
 
-.adm-login-card {
-  background-color: var(--fb-surface, #FFFFFF);
-  border: 1px solid var(--fb-border, #E7E5E4);
-  border-radius: 6px;
-  padding: 36px 32px 28px;
-  max-width: 420px;
+.adm-login-shell {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   width: 100%;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
+  min-height: 100vh;
 }
 
-.adm-login-head {
-  text-align: center;
+.adm-login-brand-panel {
   display: flex;
-  flex-direction: column;
   align-items: center;
+  justify-content: center;
+  padding: 48px;
+  background-color: var(--fb-bg-primary, #F3F5F7);
+  border-right: 1px solid var(--fb-border, #E3E7EB);
+}
+
+.adm-login-brand-inner {
+  width: 100%;
+  max-width: 460px;
 }
 
 .adm-login-brand {
+  display: block;
+  margin-bottom: 10px;
   font-family: var(--font-display, "Playfair Display", Georgia, serif);
-  font-size: 24px;
+  font-size: clamp(40px, 5vw, 64px);
   font-weight: 700;
-  color: var(--fb-accent, #C2410C);
-  margin-bottom: 2px;
+  line-height: 1.05;
+  color: var(--fb-text-primary, #1F2937);
 }
 
-.adm-login-tagline {
-  font-size: 12.5px;
-  color: var(--fb-text-secondary, #78716C);
-  font-style: italic;
-  margin: 0 0 10px;
+.adm-login-brand-desc {
+  margin: 0;
+  max-width: 34ch;
+  font-size: 15px;
+  line-height: 1.5;
+  color: #4B5563;
+}
+
+.adm-login-form-panel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 32px;
+  background-color: var(--fb-surface, #FFFFFF);
+}
+
+.adm-login-form-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  max-width: 400px;
+  padding: 28px 24px;
+  border: 1px solid var(--fb-border, #E3E7EB);
+  border-radius: 4px;
+  background-color: var(--fb-surface, #FFFFFF);
+}
+
+.adm-login-head {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .adm-login-title {
+  margin: 0;
   font-family: var(--font-body, "Be Vietnam Pro", -apple-system, BlinkMacSystemFont, sans-serif);
-  font-size: 18px;
+  font-size: 22px;
   font-weight: 600;
-  color: var(--fb-text-primary, #1C1917);
-  line-height: 1.3;
-  margin: 0 0 6px;
+  line-height: 1.25;
+  color: var(--fb-text-primary, #1F2937);
   text-transform: none;
 }
 
 .adm-login-subtitle {
-  font-size: 13px;
-  color: var(--fb-text-secondary, #78716C);
   margin: 0;
-  line-height: 1.4;
-}
-
-.adm-auth-err {
-  padding: 10px 14px;
-  background-color: #FEF2F2;
-  border: 1px solid #FECACA;
-  border-radius: 4px;
-  color: #B91C1C;
-  font-size: 13px;
-  font-weight: 500;
+  font-size: 13.5px;
+  line-height: 1.45;
+  color: #4B5563;
 }
 
 .adm-login-form {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 14px;
+}
+
+.adm-login-form .adm-input {
+  height: 40px;
+  padding: 8px 12px;
+  border: 1px solid #A8B2BD;
+  border-radius: 4px;
+  box-shadow: none;
+}
+
+.adm-login-form .adm-input::placeholder {
+  color: #6B7280;
+}
+
+.adm-login-form .adm-input:hover:not(:disabled) {
+  border-color: #6B7280;
+}
+
+.adm-login-form .adm-input:focus {
+  border-color: var(--fb-accent, #C2410C);
+  outline: 2px solid var(--fb-accent, #C2410C);
+  outline-offset: 0;
+  box-shadow: none;
+}
+
+.adm-login-form .adm-input:disabled {
+  background-color: #F3F4F6;
+  color: #6B7280;
 }
 
 .adm-login-submit {
   width: 100%;
+  margin-top: 2px;
   padding: 10px 16px;
+  border-radius: 4px;
+  box-shadow: none;
   font-size: 14px;
-  margin-top: 4px;
+  font-weight: 600;
+}
+
+.adm-login-submit:disabled {
+  opacity: 1;
+  background-color: #E5E7EB;
+  border-color: #E5E7EB;
+  color: #4B5563;
+}
+
+.adm-auth-err {
+  padding: 10px 12px;
+  background-color: #FEF2F2;
+  border: 1px solid #FCA5A5;
+  border-radius: 4px;
+  color: #991B1B;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.45;
 }
 
 .adm-login-foot {
   text-align: center;
-  padding-top: 8px;
-  border-top: 1px solid var(--fb-border-subtle, #F5F5F4);
+  padding-top: 12px;
+  border-top: 1px solid var(--fb-border, #E3E7EB);
 }
 
 .adm-login-back-link {
-  font-size: 12.5px;
-  color: var(--fb-text-secondary, #78716C);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  color: #4B5563;
   text-decoration: none;
 }
 
 .adm-login-back-link:hover {
   color: var(--fb-accent, #C2410C);
   text-decoration: underline;
+}
+
+@media (max-width: 1023px) {
+  .adm-login-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .adm-login-brand-panel {
+    justify-content: flex-start;
+    padding: 32px 24px 24px;
+    border-right: 0;
+    border-bottom: 1px solid var(--fb-border, #E3E7EB);
+  }
+
+  .adm-login-brand {
+    font-size: 36px;
+    margin-bottom: 8px;
+  }
+
+  .adm-login-brand-desc {
+    font-size: 14px;
+  }
+
+  .adm-login-form-panel {
+    align-items: flex-start;
+    padding: 24px;
+  }
+
+  .adm-login-form-inner {
+    margin: 0 auto;
+    padding: 24px 20px;
+  }
 }
 
 .adm-screen-loader {

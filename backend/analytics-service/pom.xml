@@ -13,7 +13,7 @@
     <artifactId>analytics-service</artifactId>
     <version>1.0.0</version>
     <name>analytics-service</name>
-    <description>SaigonVoice Analytics Microservice - Tourist and Scan Stats</description>
+    <description>Echora Analytics Microservice - Tourist and Scan Stats</description>
 
     <properties>
         <java.version>17</java.version>

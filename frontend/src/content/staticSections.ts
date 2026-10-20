@@ -118,7 +118,7 @@ export const contactContent = {
 
 export const footerContent = {
   brand: 'Echora',
-  tagline: 'Audio guide for places and food',
+  tagline: 'Audio guide for places and souvenirs',
   blurb: 'Khám phá văn hóa, ẩm thực và các điểm đến nổi bật của TP. Hồ Chí Minh.',
   copyright: '© 2026 Echora, Văn hóa các điểm du lịch TP.HCM. Bản demo.',
   backToTop: 'Về đầu trang',

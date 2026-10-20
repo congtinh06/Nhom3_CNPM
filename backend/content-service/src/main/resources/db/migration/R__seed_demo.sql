@@ -1,5 +1,5 @@
 -- ==============================================================================
--- SaigonVoice — Flyway Repeatable Migration: Seed Data mẫu cho saigonvoice_content_db
+-- Echora — Flyway Repeatable Migration: Seed Data mẫu cho saigonvoice_content_db
 -- File này là Repeatable migration (R__...), chạy tự động sau các versioned migrations.
 -- Khi nội dung file thay đổi, Flyway tự nạp lại mà không làm lệch checksum của V1.
 --

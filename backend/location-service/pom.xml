@@ -13,7 +13,7 @@
     <artifactId>location-service</artifactId>
     <version>1.0.0</version>
     <name>location-service</name>
-    <description>SaigonVoice Location Service - QR and Geofencing Microservice</description>
+    <description>Echora Location Service - QR and Geofencing Microservice</description>
 
     <properties>
         <java.version>17</java.version>

@@ -47,8 +47,8 @@ app:
     from: ${MAIL_FROM:Echora <no-reply@echora.local>}
     start-tls: ${MAIL_STARTTLS:true}
   admin:
-    email: ${SEED_ADMIN_EMAIL:admin@echora.local}
-    password: ${SEED_ADMIN_PASSWORD:Admin@123456}
+    email: ${ADMIN_SEED_EMAIL:quantri@echora.test}
+    password: ${ADMIN_SEED_PASSWORD:}
   test-user:
     email: ${SEED_TEST_USER_EMAIL:user@echora.local}
     password: ${SEED_TEST_USER_PASSWORD:User@123456}

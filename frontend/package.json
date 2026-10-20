@@ -1,6 +1,6 @@
 {
   "name": "saigonvoice-frontend",
-  "description": "Frontend giao diện người dùng cho hệ thống thuyết minh du lịch tự động SaigonVoice",
+  "description": "Frontend giao diện người dùng cho hệ thống thuyết minh du lịch tự động Echora",
   "private": true,
   "version": "1.0.0",
   "type": "module",

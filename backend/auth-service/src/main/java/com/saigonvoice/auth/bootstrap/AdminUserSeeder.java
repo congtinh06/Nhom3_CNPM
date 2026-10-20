@@ -24,6 +24,8 @@ import java.util.Locale;
 @Slf4j
 public class AdminUserSeeder implements ApplicationRunner {
 
+    private static final String LEGACY_ADMIN_EMAIL = "admin@echora.local";
+
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final PasswordPolicy passwordPolicy;
@@ -58,23 +60,29 @@ public class AdminUserSeeder implements ApplicationRunner {
         boolean hasEmail = adminEmail != null && !adminEmail.isBlank();
         boolean hasPassword = adminPassword != null && !adminPassword.isBlank();
 
-        if (!hasEmail && !hasPassword) {
-            log.info("SEED_ADMIN_EMAIL chưa được đặt -> bỏ qua việc tạo tài khoản ADMIN mặc định.");
-            return;
-        }
         if (!hasEmail || !hasPassword) {
-            throw new IllegalStateException(
-                    "SEED_ADMIN_EMAIL và SEED_ADMIN_PASSWORD phải được đặt cùng nhau.");
+            log.info("ADMIN_SEED_EMAIL/ADMIN_SEED_PASSWORD chưa được đặt đầy đủ -> bỏ qua việc tạo tài khoản ADMIN mặc định.");
+            return;
         }
 
         List<String> violations = passwordPolicy.validate(adminPassword);
         if (!violations.isEmpty()) {
-            throw new IllegalStateException("SEED_ADMIN_PASSWORD không đạt yêu cầu: " + violations);
+            throw new IllegalStateException("ADMIN_SEED_PASSWORD không đạt yêu cầu: " + violations);
         }
 
         String normalizedEmail = adminEmail.trim().toLowerCase(Locale.ROOT);
-        if (userRepository.existsByEmail(normalizedEmail)) {
+        if (userRepository.findByEmail(normalizedEmail).isPresent()) {
             log.info("Tài khoản ADMIN {} đã tồn tại, không tạo lại.", normalizedEmail);
+            return;
+        }
+
+        User legacyAdmin = userRepository.findByEmail(LEGACY_ADMIN_EMAIL).orElse(null);
+        if (legacyAdmin != null) {
+            legacyAdmin.setEmail(normalizedEmail);
+            legacyAdmin.setUpdatedAt(LocalDateTime.now());
+            userRepository.save(legacyAdmin);
+            log.info("Đã chuyển email tài khoản ADMIN {} sang {} (giữ nguyên mật khẩu và vai trò).",
+                    LEGACY_ADMIN_EMAIL, normalizedEmail);
             return;
         }
 

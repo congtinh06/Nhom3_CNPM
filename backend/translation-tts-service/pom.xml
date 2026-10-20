@@ -13,7 +13,7 @@
     <artifactId>translation-tts-service</artifactId>
     <version>1.0.0</version>
     <name>translation-tts-service</name>
-    <description>SaigonVoice Translation and TTS Consumer Microservice</description>
+    <description>Echora Translation and TTS Consumer Microservice</description>
 
     <properties>
         <java.version>17</java.version>

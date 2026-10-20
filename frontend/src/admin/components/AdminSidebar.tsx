@@ -4,7 +4,6 @@ import { AdminLogo } from '../brand/AdminLogo';
 import {
   AdminNavIcon,
   AdminChevronIcon,
-  AdminChevronLeftIcon,
   AdminSidebarCollapseIcon,
 } from './AdminNavIcon';
 import {
@@ -428,9 +427,6 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
             onClick={onClose}
             title={isCollapsed ? 'Về website du khách' : undefined}
           >
-            <span className="adm-exit-icon" aria-hidden="true">
-              <AdminChevronLeftIcon />
-            </span>
             {!isCollapsed && <span>Về website du khách</span>}
           </Link>
         </div>

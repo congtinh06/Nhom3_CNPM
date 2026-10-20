@@ -441,6 +441,9 @@
 }
 
 .ac-lang-code {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   font-size: 11px;
   letter-spacing: 0.08em;
   font-weight: 600;
@@ -453,6 +456,14 @@
 .ac-lang-option.ac-lang-active .ac-lang-code {
   color: var(--ac-accent);
   border-color: var(--ac-accent);
+}
+
+.ac-lang-option.ac-lang-locked .ac-lang-name {
+  color: var(--ac-text-muted);
+}
+
+.ac-lang-option.ac-lang-locked .ac-lang-code {
+  border-style: dashed;
 }
 
 .ac-muted {

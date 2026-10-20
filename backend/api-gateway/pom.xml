@@ -13,7 +13,7 @@
     <artifactId>api-gateway</artifactId>
     <version>1.0.0</version>
     <name>api-gateway</name>
-    <description>SaigonVoice Central Spring Cloud API Gateway</description>
+    <description>Echora Central Spring Cloud API Gateway</description>
 
     <properties>
         <java.version>17</java.version>

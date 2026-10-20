@@ -1,5 +1,5 @@
 -- ==============================================================================
--- SaigonVoice - Flyway V3: Doi email tai khoan ADMIN mac dinh sang ten mien moi
+-- Echora - Flyway V3: Doi email tai khoan ADMIN mac dinh sang ten mien moi
 -- admin@saigonvoice.local -> admin@echora.local
 -- Migration idempotent: khong lam gi neu email cu khong ton tai hoac email moi
 -- da duoc dung.

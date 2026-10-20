@@ -34,7 +34,7 @@ export const HERO_CONFIG: Record<HeroPageKey, HeroImageConfig> = {
     src: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=2400&q=80',
     srcMobile: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=1200&q=80',
     position: 'center right',
-    credit: 'Saigon Voice Studio',
+    credit: 'Echora Studio',
     subject: 'Classic architecture and vibrant Saigon streetscape',
     expectedSize: '2400x1200 high-res landscape',
   },

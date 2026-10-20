@@ -13,7 +13,7 @@
     <artifactId>auth-service</artifactId>
     <version>1.0.0</version>
     <name>auth-service</name>
-    <description>SaigonVoice Auth Service - Dang ky, dang nhap, phien JWT va khoi phuc mat khau</description>
+    <description>Echora Auth Service - Dang ky, dang nhap, phien JWT va khoi phuc mat khau</description>
 
     <properties>
         <java.version>17</java.version>

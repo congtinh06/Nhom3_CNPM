@@ -3,11 +3,15 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import {
   ShoppingBag,
   ChevronDown,
+  Crown,
+  Lock,
   Menu,
   X,
 } from 'lucide-react';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
+import { useToastOptional } from '../../context/ToastContext';
+import { usePremium, buildPremiumPath } from '../../context/PremiumContext';
 import {
   useNavbarLanguage,
   SUPPORTED_LANGUAGES,
@@ -21,6 +25,8 @@ export const Header: React.FC = () => {
   const { totalCount, openCart } = useCart();
   const { lang, currentOption, t, changeLanguage } = useNavbarLanguage();
   const { user, isAuthenticated, logout } = useAuth();
+  const { isPremium, canAccessLanguage } = usePremium();
+  const { showToast } = useToastOptional();
   const displayName = user?.fullName || (user?.email ? user.email.split('@')[0] : '');
 
   const location = useLocation();
@@ -167,7 +173,22 @@ export const Header: React.FC = () => {
     }
   };
 
+  const openPremiumPage = useCallback(
+    (requestedLanguage?: LanguageOption['code']) => {
+      const returnTo = `${location.pathname}${location.search}${location.hash}`;
+      setIsLangOpen(false);
+      setIsMenuOpen(false);
+      navigate(buildPremiumPath(requestedLanguage, returnTo));
+    },
+    [location.hash, location.pathname, location.search, navigate]
+  );
+
   const handleLanguageSelect = (option: LanguageOption) => {
+    if (!canAccessLanguage(option.code)) {
+      showToast('Cần nâng cấp Premium để nghe thuyết minh bằng ngôn ngữ này.');
+      openPremiumPage(option.code);
+      return;
+    }
     changeLanguage(option.code);
     setIsLangOpen(false);
     setIsMenuOpen(false);
@@ -320,25 +341,50 @@ export const Header: React.FC = () => {
             role="menu"
             aria-label="Ngôn ngữ hỗ trợ"
           >
-            {SUPPORTED_LANGUAGES.map((opt) => (
-              <button
-                key={opt.code}
-                type="button"
-                role="menuitem"
-                className={`dropdown-item lang-item ${opt.code === lang ? 'active' : ''}`}
-                onClick={() => handleLanguageSelect(opt)}
-              >
-                <div className="lang-item-left">
-                  <CountryFlag code={opt.code} width={18} height={13} />
-                  <span className="lang-name">{opt.label}</span>
-                </div>
-                <span className="lang-short-tag">{opt.short}</span>
-              </button>
-            ))}
+            {SUPPORTED_LANGUAGES.map((opt) => {
+              const locked = !canAccessLanguage(opt.code);
+              return (
+                <button
+                  key={opt.code}
+                  type="button"
+                  role="menuitem"
+                  className={`dropdown-item lang-item ${
+                    opt.code === lang ? 'active' : ''
+                  } ${locked ? 'is-locked' : ''}`.trim()}
+                  title={locked ? 'Cần Premium để nghe thuyết minh' : undefined}
+                  onClick={() => handleLanguageSelect(opt)}
+                >
+                  <div className="lang-item-left">
+                    <CountryFlag code={opt.code} width={18} height={13} />
+                    <span className="lang-name">{opt.label}</span>
+                  </div>
+                  <span className="lang-item-right">
+                    {locked && (
+                      <Lock
+                        size={11}
+                        strokeWidth={2}
+                        className="lang-lock-icon"
+                        aria-hidden="true"
+                      />
+                    )}
+                    <span className="lang-short-tag">{opt.short}</span>
+                  </span>
+                </button>
+              );
+            })}
           </div>
         </div>
 
         {/* Giỏ hàng (chỉ icon, badge tròn nhỏ góc trên phải khi totalCount > 0) */}
+        <button
+          type="button"
+          className={`hd-premium-btn ${isPremium ? 'is-active' : ''}`}
+          aria-label={isPremium ? 'Premium đang hoạt động' : 'Nâng cấp Premium'}
+          onClick={() => openPremiumPage()}
+        >
+          <Crown size={15} strokeWidth={1.9} aria-hidden="true" />
+        </button>
+
         <button
           type="button"
           id="cb"

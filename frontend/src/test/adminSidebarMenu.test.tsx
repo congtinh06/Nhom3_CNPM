@@ -15,7 +15,7 @@ function mockAuth(role: 'ADMIN' | 'USER') {
     status: 'authenticated',
     user: {
       id: 1,
-      email: 'admin@echora.local',
+      email: 'quantri@echora.test',
       fullName: 'Quản Trị Viên',
       role,
       emailVerified: true,

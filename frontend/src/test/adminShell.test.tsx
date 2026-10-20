@@ -16,7 +16,7 @@ function mockAdminAuth() {
     status: 'authenticated',
     user: {
       id: 1,
-      email: 'admin@echora.local',
+      email: 'quantri@echora.test',
       fullName: 'Quản Trị Viên',
       role: 'ADMIN',
       emailVerified: true,
@@ -118,7 +118,7 @@ describe('Admin shell (GĐ2): header user menu dropdown', () => {
       status: 'authenticated',
       user: {
         id: 1,
-        email: 'admin@echora.local',
+        email: 'quantri@echora.test',
         fullName: 'Quản Trị Viên',
         role: 'ADMIN',
         emailVerified: true,

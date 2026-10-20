@@ -1,5 +1,5 @@
 -- ==============================================================================
--- SaigonVoice — Flyway V1 Migration: Schema & Seed Data cho saigonvoice_content_db
+-- Echora — Flyway V1 Migration: Schema & Seed Data cho saigonvoice_content_db
 -- Toàn bộ chuỗi Unicode đều có tiền tố N'...' để tránh mất dấu tiếng Việt/Nhật/Hàn.
 -- Hoàn toàn không còn bảng phishing cũ (đã loại bỏ poi_cache).
 -- ==============================================================================

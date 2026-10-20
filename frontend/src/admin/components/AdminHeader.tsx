@@ -7,7 +7,7 @@ import {
   resolveAdminMenuMatch,
 } from '../config/adminMenu';
 import { BRAND_NAME } from '../brand/brand';
-import { ChevronDown, ChevronLeft } from 'lucide-react';
+import { ChevronDown } from 'lucide-react';
 import type { AdminDensity } from '../types';
 
 export interface AdminHeaderProps {
@@ -200,9 +200,6 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
           {menuOpen && (
             <div className="adm-usermenu-panel" role="menu">
               <Link to="/" role="menuitem" className="adm-usermenu-item">
-                <span className="adm-usermenu-item-icon" aria-hidden="true">
-                  <ChevronLeft />
-                </span>
                 Về website du khách
               </Link>
               <button

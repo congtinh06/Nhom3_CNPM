@@ -11,6 +11,14 @@ vi.mock('../context/AuthContext', () => ({
 
 const mockUseAuth = vi.mocked(useAuth);
 
+const adminUser: AuthUser = {
+  id: 1,
+  email: 'quantri@echora.test',
+  fullName: 'Quản Trị Viên',
+  role: 'ADMIN',
+  emailVerified: true,
+};
+
 describe('AdminLoginPage', () => {
   const mockLogin = vi.fn();
   const mockLogout = vi.fn();
@@ -41,6 +49,100 @@ describe('AdminLoginPage', () => {
     );
   }
 
+  it('hiển thị đúng nội dung và không còn tagline tiếng Anh', () => {
+    renderLoginPage();
+
+    expect(screen.getByRole('heading', { name: 'Đăng nhập quản trị' })).toBeInTheDocument();
+    expect(screen.getByText('Quản lý và kiểm duyệt nội dung thuyết minh')).toBeInTheDocument();
+    expect(screen.getByText('Thuyết minh tự động cho địa điểm và quà lưu niệm')).toBeInTheDocument();
+    expect(screen.getByLabelText(/email quản trị/i)).toHaveAttribute(
+      'placeholder',
+      'Nhập email quản trị'
+    );
+    const passwordInput = screen.getByLabelText(/^mật khẩu/i);
+    expect(passwordInput).toHaveAttribute('type', 'password');
+    expect(passwordInput).not.toHaveAttribute('placeholder');
+    expect(screen.getByRole('button', { name: 'Đăng nhập' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /hiện mật khẩu|ẩn mật khẩu/i })).not.toBeInTheDocument();
+    expect(screen.queryByText(/audio guide/i)).not.toBeInTheDocument();
+  });
+
+  it('chuẩn hóa email về chữ thường và cắt khoảng trắng trước khi gửi', async () => {
+    mockLogin.mockResolvedValue(adminUser);
+
+    renderLoginPage();
+
+    fireEvent.change(screen.getByLabelText(/email quản trị/i), {
+      target: { value: '  QUANTRI@ECHORA.TEST  ' },
+    });
+    fireEvent.change(screen.getByLabelText(/^mật khẩu/i), { target: { value: 'Admin@123456' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Đăng nhập' }));
+
+    await waitFor(() => {
+      expect(mockLogin).toHaveBeenCalledWith({
+        email: 'quantri@echora.test',
+        password: 'Admin@123456',
+      });
+    });
+  });
+
+  it('hiển thị trạng thái đang đăng nhập và khóa nút', async () => {
+    let resolveLogin!: (user: AuthUser) => void;
+    mockLogin.mockReturnValue(
+      new Promise<AuthUser>((resolve) => {
+        resolveLogin = resolve;
+      })
+    );
+
+    renderLoginPage();
+
+    fireEvent.change(screen.getByLabelText(/email quản trị/i), {
+      target: { value: 'quantri@echora.test' },
+    });
+    fireEvent.change(screen.getByLabelText(/^mật khẩu/i), { target: { value: 'Admin@123456' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Đăng nhập' }));
+
+    const loadingButton = await screen.findByRole('button', { name: 'Đang đăng nhập...' });
+    expect(loadingButton).toBeDisabled();
+
+    resolveLogin(adminUser);
+    await waitFor(() => {
+      expect(screen.getByTestId('admin-home')).toBeInTheDocument();
+    });
+  });
+
+  it('hiển thị lỗi đăng nhập dạng inline, không lộ email có tồn tại hay không', async () => {
+    mockLogin.mockRejectedValue(new Error('Email hoặc mật khẩu không đúng.'));
+
+    renderLoginPage();
+
+    fireEvent.change(screen.getByLabelText(/email quản trị/i), {
+      target: { value: 'quantri@echora.test' },
+    });
+    fireEvent.change(screen.getByLabelText(/^mật khẩu/i), { target: { value: 'SaiMatKhau1' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Đăng nhập' }));
+
+    const errorAlert = await screen.findByRole('alert');
+    expect(errorAlert).toHaveTextContent('Email hoặc mật khẩu không đúng.');
+    expect(errorAlert).not.toHaveTextContent(/không tồn tại/i);
+  });
+
+  it('hiển thị lỗi tài khoản bị khóa bằng tiếng Việt', async () => {
+    mockLogin.mockRejectedValue(new Error('Tài khoản đã bị khóa. Vui lòng liên hệ quản trị viên.'));
+
+    renderLoginPage();
+
+    fireEvent.change(screen.getByLabelText(/email quản trị/i), {
+      target: { value: 'quantri@echora.test' },
+    });
+    fireEvent.change(screen.getByLabelText(/^mật khẩu/i), { target: { value: 'Admin@123456' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Đăng nhập' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Tài khoản đã bị khóa. Vui lòng liên hệ quản trị viên.'
+    );
+  });
+
   it('đăng xuất ngay lập tức và báo lỗi nếu tài khoản đăng nhập không phải ADMIN', async () => {
     const regularUser: AuthUser = {
       id: 5,
@@ -53,13 +155,11 @@ describe('AdminLoginPage', () => {
 
     renderLoginPage();
 
-    const emailInput = screen.getByLabelText(/email quản trị/i);
-    const passwordInput = screen.getByLabelText(/^mật khẩu/i);
-    const submitBtn = screen.getByRole('button', { name: /đăng nhập vào hệ thống/i });
-
-    fireEvent.change(emailInput, { target: { value: 'khach@saigonvoice.local' } });
-    fireEvent.change(passwordInput, { target: { value: 'Password123' } });
-    fireEvent.click(submitBtn);
+    fireEvent.change(screen.getByLabelText(/email quản trị/i), {
+      target: { value: 'khach@saigonvoice.local' },
+    });
+    fireEvent.change(screen.getByLabelText(/^mật khẩu/i), { target: { value: 'Password123' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Đăng nhập' }));
 
     await waitFor(() => {
       expect(mockLogin).toHaveBeenCalledWith({
@@ -74,43 +174,21 @@ describe('AdminLoginPage', () => {
     expect(screen.queryByTestId('admin-home')).not.toBeInTheDocument();
   });
 
-  it('hiện/ẩn mật khẩu bằng nút con mắt', () => {
-    renderLoginPage();
-
-    const passwordInput = screen.getByLabelText(/^mật khẩu/i);
-    expect(passwordInput).toHaveAttribute('type', 'password');
-
-    fireEvent.click(screen.getByRole('button', { name: 'Hiện mật khẩu' }));
-    expect(passwordInput).toHaveAttribute('type', 'text');
-
-    fireEvent.click(screen.getByRole('button', { name: 'Ẩn mật khẩu' }));
-    expect(passwordInput).toHaveAttribute('type', 'password');
-  });
-
   it('chuyển hướng vào trang quản trị khi đăng nhập thành công với vai trò ADMIN', async () => {
-    const adminUser: AuthUser = {
-      id: 1,
-      email: 'admin@saigonvoice.local',
-      fullName: 'Quản Trị Viên',
-      role: 'ADMIN',
-      emailVerified: true,
-    };
     mockLogin.mockResolvedValue(adminUser);
 
     renderLoginPage();
 
-    const emailInput = screen.getByLabelText(/email quản trị/i);
-    const passwordInput = screen.getByLabelText(/^mật khẩu/i);
-    const submitBtn = screen.getByRole('button', { name: /đăng nhập vào hệ thống/i });
-
-    fireEvent.change(emailInput, { target: { value: 'admin@saigonvoice.local' } });
-    fireEvent.change(passwordInput, { target: { value: 'AdminPass!123' } });
-    fireEvent.click(submitBtn);
+    fireEvent.change(screen.getByLabelText(/email quản trị/i), {
+      target: { value: 'quantri@echora.test' },
+    });
+    fireEvent.change(screen.getByLabelText(/^mật khẩu/i), { target: { value: 'Admin@123456' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Đăng nhập' }));
 
     await waitFor(() => {
       expect(mockLogin).toHaveBeenCalledWith({
-        email: 'admin@saigonvoice.local',
-        password: 'AdminPass!123',
+        email: 'quantri@echora.test',
+        password: 'Admin@123456',
       });
       expect(mockLogout).not.toHaveBeenCalled();
     });

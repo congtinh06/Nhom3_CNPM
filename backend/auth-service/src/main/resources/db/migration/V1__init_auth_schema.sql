@@ -1,5 +1,5 @@
 -- ==============================================================================
--- SaigonVoice — Flyway V1 Migration: Schema cho saigonvoice_auth_db
+-- Echora — Flyway V1 Migration: Schema cho saigonvoice_auth_db
 -- Toàn bộ chuỗi Unicode đều có tiền tố N'...' để tránh mất dấu tiếng Việt.
 -- Collation của database là Vietnamese_100_CI_AS -> UNIQUE trên email tự động
 -- không phân biệt hoa/thường và dấu; service vẫn chuẩn hóa email về chữ thường.
