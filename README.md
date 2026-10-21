@@ -134,7 +134,7 @@ git pull origin main
 ---
 
 ### 4.3. Bước 2: Thiết lập file cấu hình môi trường (.env)
-Dự án sử dụng cơ chế bảo mật thông qua biến môi trường. Sao chép các tệp mẫu sang `.env` trước khi chạy:
+Dự án sử dụng cơ chế bảo mật thông qua biến môi trường. Tệp `.env.example` đã được nhóm điền sẵn đầy đủ toàn bộ cấu hình mẫu, mật khẩu CSDL và khóa bí mật dùng cho môi trường nội bộ. Thành viên mới chỉ cần sao chép sang `.env`:
 
 * **Trên Windows PowerShell:**
 ```powershell
@@ -148,27 +148,22 @@ cp .env.example .env
 cp frontend/.env.example frontend/.env
 ```
 
-> **Lưu ý bảo mật quan trọng:**
-> - Mở file `.env` vừa tạo và điền các giá trị bí mật của riêng bạn:
->   - `JWT_SECRET`: Điền chuỗi ngẫu nhiên tối thiểu 32 ký tự (bắt buộc để `auth-service` khởi động).
->   - `MSSQL_SA_PASSWORD`: Đặt mật khẩu quản trị SQL Server mạnh (tối thiểu 8 ký tự, gồm chữ hoa, chữ thường, số, ký tự đặc biệt).
->   - `ADMIN_SEED_PASSWORD`: Đặt mật khẩu tài khoản quản trị hệ thống.
-> - Tuyệt đối không commit tệp `.env` lên kho mã nguồn công khai (tệp này đã được cấu hình trong `.gitignore`).
+> **Ghi chú:** Tệp `.env.example` đã thiết lập sẵn mật khẩu đồng bộ (`Saigon@123`, `Admin@123456`, khóa JWT, cổng VNPAY sandbox) nên sau khi copy bạn có thể khởi động ngay mà không cần cấu hình thủ công.
 
 ---
 
 ### 4.4. Bước 3: Khởi động toàn bộ hệ thống với Docker Compose
-Đảm bảo **Docker Desktop đang bật**, sau đó chạy lệnh:
+Đảm bảo **Docker Desktop đang bật** (trạng thái Engine Running màu xanh), sau đó mở Terminal tại thư mục dự án và chạy lệnh:
 
 ```bash
-# Build và chạy ngầm toàn bộ dịch vụ (lần đầu có thể mất vài phút tải image)
+# Build và chạy ngầm toàn bộ dịch vụ (lần đầu có thể mất 2-4 phút tải images)
 docker compose up -d --build
 
 # Kiểm tra trạng thái các container
 docker compose ps
 ```
 
-*Kết quả đạt yêu cầu:* Các dịch vụ hiển thị trạng thái `Up` hoặc `Up (healthy)`. Riêng container `mssql-db-init` báo `Exited (0)` là hoàn toàn bình thường (đã hoàn thành việc tạo CSDL ban đầu và tự động thoát).
+*Kết quả đạt yêu cầu:* Toàn bộ các dịch vụ hiển thị trạng thái `Up` hoặc `Up (healthy)`. File `init-databases.sql` sẽ tự động khởi tạo 5 CSDL độc lập trên SQL Server ngay trong lần chạy đầu tiên.
 
 **Các lệnh hỗ trợ quản lý Docker:**
 ```bash
@@ -181,7 +176,7 @@ docker compose logs -f api-gateway
 # Dừng hệ thống (vẫn giữ nguyên dữ liệu trong CSDL)
 docker compose down
 
-# Khởi động lại hệ thống sạch từ đầu (xóa toàn bộ CSDL và dựng lại)
+# Khởi động lại hệ thống sạch từ đầu (xóa toàn bộ CSDL và dựng lại mới)
 docker compose down -v
 docker compose up -d --build
 ```
@@ -191,37 +186,41 @@ docker compose up -d --build
 ### 4.5. Bước 4: Kiểm tra các cổng và địa chỉ truy cập
 Sau khi hệ thống khởi động thành công, bạn mở trình duyệt truy cập:
 
-| Phân hệ / Chức năng | Đường dẫn (URL) | Ghi chú |
+| Phân hệ / Dịch vụ | Đường dẫn (URL) | Tài khoản / Ghi chú |
 |---|---|---|
-| **Ứng dụng Web (Frontend)** | `http://localhost:8088` | Giao diện du khách & bản đồ di sản (bản Docker) |
+| **Ứng dụng Web (Frontend Docker)** | `http://localhost:8088` | Giao diện du khách & bản đồ di sản |
+| **Giao diện Dev (Hot Reload)** | `http://localhost:5173` | Chạy khi gõ `npm run dev` ở thư mục frontend |
+| **Trang Quản trị (Admin)** | `http://localhost:8088/quan-tri` | Đăng nhập bằng tài khoản Quản trị viên (xem mục 5) |
 | **Cổng API Gateway** | `http://localhost:18080/actuator/health` | Kiểm tra sức khỏe toàn bộ microservices |
-| **Bảng quản trị RabbitMQ** | `http://localhost:15800` | Quản lý hàng đợi (đăng nhập bằng tài khoản trong `.env`) |
-| **Trang Quản trị (Admin)** | `http://localhost:8088/quan-tri` | Dành cho người quản trị nội dung POI và sản phẩm |
+| **Bảng quản trị RabbitMQ** | `http://localhost:15800` | User: `saigonvoice_app` / Pass: `SgVoice_Rabbit!2026` |
+| **Cơ sở dữ liệu SQL Server** | `localhost:1433` | User: `sa` / Pass: `Saigon@123` |
 
-> **Ghi chú về cổng API Gateway:** Mặc định dự án có cấu hình ánh xạ cổng ra `18080` (tránh xung đột với cổng `8080` vốn thường bị các phần mềm Windows khác chiếm dụng).
+> **Ghi chú về cổng API Gateway:** Dự án sử dụng cổng ánh xạ máy chủ `18080` (tránh xung đột với cổng `8080` mặc định vốn thường bị các tiến trình nội bộ của Windows chiếm dụng).
 
 ---
 
 ### 4.6. Bước 5: Thao tác CSDL SQL Server 2022 qua Terminal
-CSDL SQL Server 2022 đã được đóng gói sẵn trong container `mssql` (lắng nghe cổng `1433`). Bạn có thể thực thi truy vấn trực tiếp qua Terminal mà không cần cài đặt thêm phần mềm quản lý:
+CSDL SQL Server 2022 đã được đóng gói sẵn trong container `mssql` (lắng nghe cổng `1433`). Bạn có thể thực thi truy vấn trực tiếp qua Terminal:
 
 ```bash
 # 1. Liệt kê danh sách các CSDL trong hệ thống:
-docker exec -it mssql /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "YourStrong!Passw0rd2026" -C -Q "SELECT name FROM sys.databases"
+docker exec -it mssql /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "Saigon@123" -C -Q "SELECT name FROM sys.databases;"
 
 # 2. Xem các bảng dữ liệu trong CSDL nội dung du lịch (saigonvoice_content_db):
-docker exec -it mssql /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "YourStrong!Passw0rd2026" -C -d saigonvoice_content_db -Q "SELECT name FROM sys.tables"
+docker exec -it mssql /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "Saigon@123" -C -d saigonvoice_content_db -Q "SELECT name FROM sys.tables;"
 
-# 3. Mở cửa sổ dòng lệnh SQL tương tác trực tiếp (SQL Shell):
-docker exec -it mssql /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "YourStrong!Passw0rd2026" -C
+# 3. Xem danh sách 7 điểm du lịch kèm bán kính kích hoạt tự động (35m - 60m):
+docker exec -it mssql /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "Saigon@123" -C -d saigonvoice_content_db -Q "SELECT id, name, trigger_radius_meters FROM dbo.poi;"
+
+# 4. Mở cửa sổ dòng lệnh SQL tương tác trực tiếp (SQL Shell):
+docker exec -it mssql /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "Saigon@123" -C
 # (Trong shell: gõ lệnh SQL kết thúc bằng GO để thực thi, gõ QUIT để thoát)
 ```
-*(Thay thế `"YourStrong!Passw0rd2026"` bằng giá trị `MSSQL_SA_PASSWORD` bạn đã cấu hình trong tệp `.env`)*.
 
 ---
 
 ### 4.7. Bước 6: Chạy riêng giao diện phát triển Frontend (Tùy chọn)
-Nếu bạn cần chỉnh sửa giao diện web và muốn thấy thay đổi ngay lập tức với Hot Reload của Vite:
+Nếu bạn cần chỉnh sửa giao diện web và muốn thấy thay đổi tức thì với Hot Reload của Vite:
 
 ```bash
 # 1. Di chuyển vào thư mục frontend
@@ -238,20 +237,44 @@ Truy cập giao diện phát triển tại: **http://localhost:5173**
 ---
 
 ### 4.8. Xử lý sự cố thường gặp (Troubleshooting)
-1. **Lỗi `JWT_SECRET is required`**: Chưa cấu hình `JWT_SECRET` trong file `.env`. Hãy mở file `.env`, điền chuỗi ký tự ngẫu nhiên tối thiểu 32 ký tự rồi khởi động lại.
-2. **Lỗi `Port ... already in use`**: Cổng `18080`, `1433` hoặc `15800` đang bị ứng dụng khác chiếm dụng. Kiểm tra tiến trình đang chạy bằng lệnh: `netstat -ano | findstr :18080`.
-3. **Container thoát hoặc unhealthy**: Xem chi tiết nguyên nhân lỗi thông qua lệnh: `docker compose logs <tên_service>`.
+1. **Lỗi `JWT_SECRET is required`**: Chưa có file `.env`. Hãy chạy `Copy-Item .env.example .env` (hoặc `cp .env.example .env`) rồi khởi động lại.
+2. **Lỗi `Port ... already in use`**: Cổng `18080`, `1433` hoặc `15800` đang bị ứng dụng khác chiếm dụng. Kiểm tra tiến trình bằng lệnh: `netstat -ano | findstr :18080`.
+3. **Container thoát hoặc unhealthy**: Xem chi tiết nguyên nhân lỗi qua: `docker compose logs <tên_service>`.
 4. **Không kết nối được Docker**: Kiểm tra xem ứng dụng **Docker Desktop** đã được mở và khởi động hoàn tất hay chưa.
 
 ---
 
-## 5. Tài khoản kiểm thử hệ thống (Test Accounts)
+## 5. Danh mục Tài khoản & Mật khẩu hệ thống (System Credentials)
 
-Hệ thống hỗ trợ cơ chế tự động khởi tạo tài khoản mẫu trong môi trường phát triển để phục vụ kiểm thử đồ án:
-* **Tài khoản Người dùng (User / Guest)**: Dùng để trải nghiệm đặt món, xem lịch sử đơn hàng và nghe audio tour.
-* **Tài khoản Quản trị viên (Admin)**: Dùng để quản lý POI, duyệt bài thuyết minh, quản lý sản phẩm ẩm thực tại `/quan-tri`.
+Dưới đây là bảng tổng hợp toàn bộ tài khoản mẫu đã được cấu hình sẵn trong hệ thống để thành viên nhóm kiểm thử và báo cáo:
 
-> **Bảo mật tài khoản:** Toàn bộ thông tin email và mật khẩu khởi tạo của tài khoản kiểm thử được định nghĩa an toàn trong tệp `.env` (`ADMIN_SEED_EMAIL`, `ADMIN_SEED_PASSWORD`, `SEED_TEST_USER_EMAIL`, `SEED_TEST_USER_PASSWORD`), không công khai trực tiếp trên tài liệu nhằm đảm bảo nguyên tắc bảo mật.
+### 5.1. Tài khoản Đăng nhập Ứng dụng Web
+| Loại tài khoản | Email đăng nhập | Mật khẩu | Quyền hạn / Mục đích |
+|---|---|---|---|
+| **Quản trị viên (Admin)** | `quantri@echora.test` | `Admin@123456` | Quản lý POI, duyệt bài thuyết minh, quản lý sản phẩm quà lưu niệm tại `/quan-tri` |
+| **Người dùng mẫu (User)** | `user@saigonvoice.local` | `User@123456` | Trải nghiệm nghe audio tour, đặt hàng quà lưu niệm, lịch sử đơn hàng |
+
+### 5.2. Mật khẩu Hạ tầng & Cơ sở dữ liệu (Database & Broker)
+| Phân hệ / CSDL | Địa chỉ & Cổng | Tên đăng nhập (User) | Mật khẩu (Password) |
+|---|---|---|---|
+| **SQL Server (System Admin)** | `localhost:1433` | `sa` | `Saigon@123` |
+| **CSDL Nội dung du lịch** | `saigonvoice_content_db` | `content_user` | `Zpu0fBATzxn6nIriiirxbgNm` |
+| **CSDL Bản dịch & TTS** | `saigonvoice_translation_db` | `translation_user` | `6CWO1eUnX5NcbRkRnBCZYGGb` |
+| **CSDL Thống kê lượt nghe** | `saigonvoice_analytics_db` | `analytics_user` | `e2GHyc3TbAHyfpvlLzYCt3fG` |
+| **CSDL Xác thực tài khoản** | `saigonvoice_auth_db` | `auth_user` | `Auth!Pass2026` |
+| **CSDL Đơn hàng & Thanh toán**| `saigonvoice_order_db` | `order_user` | `Order!Pass2026` |
+| **RabbitMQ Management Dashboard** | `http://localhost:15800` | `saigonvoice_app` | `SgVoice_Rabbit!2026` |
+
+### 5.3. Cấu hình Cổng thanh toán Thử nghiệm VNPAY Sandbox
+* **Mã định danh website (TMN Code):** `SQYS1VK9`
+* **Chuỗi khóa bí mật (Hash Secret):** `MMSXWBZDMNKEHMJPNKJJYGFOQFBZVNCI`
+* **URL Cổng thanh toán:** `https://sandbox.vnpayment.vn/paymentv2/vpcpay.html`
+* **Thông tin thẻ ATM Test của VNPAY Sandbox:**
+  * **Ngân hàng:** `NCB`
+  * **Số thẻ:** `9704198526191432198`
+  * **Tên chủ thẻ:** `NGUYEN VAN A`
+  * **Ngày phát hành:** `07/15`
+  * **Mã OTP xác thực:** `123456`
 
 ---
 
