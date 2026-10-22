@@ -1,10 +1,10 @@
--- ==============================================================================
--- Echora — Script khởi tạo 4 Databases & 4 Logins độc lập trên SQL Server 2022
+﻿-- ==============================================================================
+-- Echora — Script khởi tạo 5 Databases & 5 Logins độc lập trên SQL Server 2022
 -- Đảm bảo Idempotent (chạy lại không lỗi).
 -- Collation: Vietnamese_100_CI_AS (chuẩn Unicode phân biệt dấu thanh tiếng Việt)
 -- ==============================================================================
 
--- 1. TẠO 4 DATABASE ĐỘC LẬP
+-- 1. TẠO 5 DATABASE ĐỘC LẬP
 IF DB_ID('saigonvoice_content_db') IS NULL
 BEGIN
     PRINT 'Creating database [saigonvoice_content_db]...';
@@ -30,6 +30,13 @@ IF DB_ID('saigonvoice_auth_db') IS NULL
 BEGIN
     PRINT 'Creating database [saigonvoice_auth_db]...';
     CREATE DATABASE saigonvoice_auth_db COLLATE Vietnamese_100_CI_AS;
+END
+GO
+
+IF DB_ID('saigonvoice_order_db') IS NULL
+BEGIN
+    PRINT 'Creating database [saigonvoice_order_db]...';
+    CREATE DATABASE saigonvoice_order_db COLLATE Vietnamese_100_CI_AS;
 END
 GO
 
@@ -86,6 +93,19 @@ BEGIN
 END
 GO
 
+-- order_user
+IF NOT EXISTS (SELECT * FROM sys.server_principals WHERE name = '$(ORDER_DB_USER)')
+BEGIN
+    PRINT 'Creating login [$(ORDER_DB_USER)]...';
+    CREATE LOGIN [$(ORDER_DB_USER)] WITH PASSWORD = '$(ORDER_DB_PASSWORD)', DEFAULT_DATABASE = saigonvoice_order_db, CHECK_POLICY = OFF;
+END
+ELSE
+BEGIN
+    PRINT 'Updating password for login [$(ORDER_DB_USER)]...';
+    ALTER LOGIN [$(ORDER_DB_USER)] WITH PASSWORD = '$(ORDER_DB_PASSWORD)';
+END
+GO
+
 -- 3. GÁN USER VÀ PHÂN QUYỀN CÔ LẬP TRÊN TỪNG DATABASE (KHÔNG TRUY CẬP CHÉO)
 -- saigonvoice_content_db: Chỉ content_user có quyền
 USE saigonvoice_content_db;
@@ -131,5 +151,16 @@ GO
 ALTER ROLE db_owner ADD MEMBER [$(AUTH_DB_USER)];
 GO
 
-PRINT 'All 4 databases, logins, and isolated permissions configured successfully!';
+-- saigonvoice_order_db: Chỉ order_user có quyền
+USE saigonvoice_order_db;
+GO
+IF NOT EXISTS (SELECT * FROM sys.database_principals WHERE name = '$(ORDER_DB_USER)')
+BEGIN
+    CREATE USER [$(ORDER_DB_USER)] FOR LOGIN [$(ORDER_DB_USER)];
+END
+GO
+ALTER ROLE db_owner ADD MEMBER [$(ORDER_DB_USER)];
+GO
+
+PRINT 'All 5 databases, logins, and isolated permissions configured successfully!';
 GO

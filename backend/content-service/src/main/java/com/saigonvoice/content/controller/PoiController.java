@@ -37,8 +37,10 @@ public class PoiController {
 
     // Toàn bộ POI ACTIVE kèm mọi bản dịch - nguồn dữ liệu cho bản đồ thuyết minh của du khách.
     @GetMapping("/api/content/pois/guide")
-    public ResponseEntity<List<PoiGuideDto>> getPoiGuides(@RequestParam(required = false) Long zoneId) {
-        return ResponseEntity.ok(poiContentService.getPoiGuides(zoneId));
+    public ResponseEntity<List<PoiGuideDto>> getPoiGuides(
+            @RequestParam(required = false) Long zoneId,
+            @RequestAttribute(value = "premiumEntitlement", required = false) Boolean premium) {
+        return ResponseEntity.ok(poiContentService.getPoiGuides(zoneId, Boolean.TRUE.equals(premium)));
     }
 
     @GetMapping("/api/content/pois/{id}")
@@ -64,7 +66,6 @@ public class PoiController {
             @RequestParam BigDecimal maxLng) {
         return ResponseEntity.ok(poiContentService.getPoisInBoundingBox(zoneId, minLat, maxLat, minLng, maxLng));
     }
-
     @GetMapping("/api/content/internal/pois/qr/{qrToken}")
     public ResponseEntity<PoiInternalQrDto> getInternalPoiByQrToken(@PathVariable String qrToken) {
         return ResponseEntity.ok(poiContentService.getInternalPoiByQrToken(qrToken));

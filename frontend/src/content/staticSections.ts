@@ -31,10 +31,10 @@ export const cultureContent = {
 
 export const costumeContent = {
   title: 'Trang phục truyền thống',
-  photoBig: { hue: 25, caption: 'Áo dài', src: '/images/home/costume-ao-dai.jpg' },
+  photoBig: { hue: 25, caption: 'Áo dài', src: 'https://images.pexels.com/photos/35809725/pexels-photo-35809725.jpeg' },
   photosTwo: [
-    { hue: 15, caption: 'Áo dài', src: '/images/home/costume-ao-dai-2.jpg' },
-    { hue: 38, caption: 'Áo bà ba', src: '/images/home/costume-ao-ba-ba.jpg' },
+    { hue: 15, caption: 'Áo dài', src: 'https://media.istockphoto.com/id/964884610/vi/anh/ph%E1%BB%A5-n%E1%BB%AF-xinh-%C4%91%E1%BA%B9p-v%E1%BB%9Bi-trang-ph%E1%BB%A5c-truy%E1%BB%81n-th%E1%BB%91ng-v%C4%83n-h%C3%B3a-vi%E1%BB%87t-nam-%C3%A1o-d%C3%A0i-l%C3%A0-trang-ph%E1%BB%A5c-truy%E1%BB%81n-th%E1%BB%91ng.jpg?b=1&s=612x612&w=0&k=20&c=u3jVZBqvIIIRKHoA-D5qjbNWqb3CrVOWDdHtlQgxxVo=' },
+    { hue: 38, caption: 'Áo dài', src: 'https://media.istockphoto.com/id/1134293994/vi/anh/trang-ph%E1%BB%A5c-truy%E1%BB%81n-th%E1%BB%91ng-vi%E1%BB%87t-nam-%C3%A1o-d%C3%A0i.jpg?b=1&s=612x612&w=0&k=20&c=8hHW__q4ICDUT-NQl9BzgoiskqY1qdE5dZHbgaPsXyg=' },
   ],
   paragraph:
     'Áo dài và áo bà ba là hai hình ảnh quen thuộc của người Sài Gòn. Áo dài thường xuất hiện ở lễ Tết và dịp quan trọng, còn áo bà ba gắn với vùng sông nước Nam Bộ, giản dị và thoải mái.',

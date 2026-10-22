@@ -20,8 +20,6 @@ export interface PoiListProps {
   currentPlayingId?: string | null;
   isPlaying?: boolean;
   currentLang: SupportedLanguage;
-  radius?: number;
-  overrideRadius?: number | null;
   listenedPoiIds?: string[];
   statusMessage?: ReactNode;
   listTitle: string;

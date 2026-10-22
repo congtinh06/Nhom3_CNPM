@@ -4,7 +4,6 @@ import { GeoPoi } from '../pages/NearbyPage';
 export interface PositionState {
   lat: number;
   lng: number;
-  source: 'gps' | 'sim';
   accuracy?: number;
 }
 
@@ -38,11 +37,8 @@ interface UseAutoNarrationProps {
   gpsErrorDeniedText?: string;
   gpsErrorUnavailableText?: string;
   gpsErrorTimeoutText?: string;
-  gpsErrorSimActiveText?: string;
   gpsErrorNotSupportedText?: string;
   gpsErrorInsecureText?: string;
-  overrideRadius?: number | null;
-  isSimMode?: boolean;
 }
 
 export function useAutoNarration({
@@ -58,11 +54,8 @@ export function useAutoNarration({
   gpsErrorDeniedText,
   gpsErrorUnavailableText,
   gpsErrorTimeoutText,
-  gpsErrorSimActiveText,
   gpsErrorNotSupportedText,
   gpsErrorInsecureText,
-  overrideRadius,
-  isSimMode = false,
 }: UseAutoNarrationProps) {
   const [userPos, setUserPos] = useState<PositionState | null>(null);
   const [gpsError, setGpsError] = useState<string>('');
@@ -109,12 +102,11 @@ export function useAutoNarration({
 
       const triggerHits = pois
         .map((p) => {
-          const effectiveRadius = overrideRadius ?? p.triggerRadius;
           return {
             poi: p,
             dist: haversine(lat, lng, p.lat, p.lng),
-            radius: effectiveRadius,
-          };
+            radius: p.triggerRadius ?? 50,
+          };  
         })
         .filter((item) => {
           const alreadyPlayed = autoPlayedSetRef.current.has(item.poi.id);
@@ -149,15 +141,14 @@ export function useAutoNarration({
       currentPlayingId,
       lastManualStoppedId,
       lastManualStopTime,
-      overrideRadius,
       playPoi,
     ]
   );
 
   // Unified pipeline to apply position
   const applyPosition = useCallback(
-    (lat: number, lng: number, source: 'gps' | 'sim') => {
-      setUserPos({ lat, lng, source });
+    (lat: number, lng: number) => {
+      setUserPos({ lat, lng });
       setGpsError('');
       checkAutoTrigger(lat, lng);
     },
@@ -174,14 +165,6 @@ export function useAutoNarration({
 
   // Request single GPS position
   const requestGps = useCallback(() => {
-    if (isSimMode) {
-      setGpsError(
-        gpsErrorSimActiveText ||
-          'Đang ở chế độ giả lập vị trí. Tắt chế độ giả lập để dùng GPS thật.'
-      );
-      return;
-    }
-
     if (typeof window === 'undefined' || !navigator.geolocation) {
       setGpsError(
         gpsErrorNotSupportedText || 'Thiết bị hoặc trình duyệt không hỗ trợ định vị GPS.'
@@ -202,7 +185,7 @@ export function useAutoNarration({
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         setIsRequestingGps(false);
-        applyPosition(pos.coords.latitude, pos.coords.longitude, 'gps');
+          applyPosition(pos.coords.latitude, pos.coords.longitude);
       },
       (err) => {
         setIsRequestingGps(false);
@@ -227,19 +210,18 @@ export function useAutoNarration({
     gpsErrorDeniedText,
     gpsErrorUnavailableText,
     gpsErrorTimeoutText,
-    gpsErrorSimActiveText,
     gpsErrorNotSupportedText,
     gpsErrorInsecureText,
-    isSimMode,
   ]);
 
   // Keep watching position if auto is enabled and user has real GPS
+  const hasUserPos = userPos !== null;
   useEffect(() => {
-    if (isAutoEnabled && userPos?.source === 'gps' && navigator.geolocation) {
+    if (isAutoEnabled && hasUserPos && navigator.geolocation) {
       clearGpsWatch();
       watchIdRef.current = navigator.geolocation.watchPosition(
         (pos) => {
-          applyPosition(pos.coords.latitude, pos.coords.longitude, 'gps');
+        applyPosition(pos.coords.latitude, pos.coords.longitude);
         },
         (err) => {
           if (err.code === 1) {
@@ -255,7 +237,7 @@ export function useAutoNarration({
     return () => {
       clearGpsWatch();
     };
-  }, [isAutoEnabled, userPos?.source, applyPosition, clearGpsWatch, gpsErrorDeniedText]);
+  }, [isAutoEnabled, hasUserPos, applyPosition, clearGpsWatch, gpsErrorDeniedText]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -264,20 +246,12 @@ export function useAutoNarration({
     };
   }, [clearGpsWatch]);
 
-  const applySimulatedPosition = useCallback(
-    (lat: number, lng: number) => {
-      applyPosition(lat, lng, 'sim');
-    },
-    [applyPosition]
-  );
-
   return {
     userPos,
     gpsError,
     setGpsError,
     isRequestingGps,
     applyPosition,
-    applySimulatedPosition,
     requestGps,
     checkAutoTrigger,
     setAutoDirect,

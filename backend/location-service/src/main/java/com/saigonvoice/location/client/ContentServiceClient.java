@@ -11,9 +11,9 @@ import java.math.BigDecimal;
 import java.util.List;
 
 @FeignClient(
-        name = "content-service-client",
-        url = "${content-service.url}",
-        configuration = ContentServiceClientConfiguration.class
+    name = "content-service-client",
+    url = "${content-service.url}",
+    configuration = ContentServiceClientConfiguration.class
 )
 public interface ContentServiceClient {
 

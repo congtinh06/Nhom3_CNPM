@@ -30,6 +30,7 @@ public class InternalPathBlockFilter implements GlobalFilter, Ordered {
     private static final String ADMIN_CONTENT_PREFIX = "/api/content/admin";
     private static final String ADMIN_AUTH_PREFIX = "/api/auth/admin";
     private static final String ADMIN_PRODUCTS_PREFIX = "/api/admin/products";
+    private static final String ADMIN_ORDERS_PREFIX = "/api/admin/orders";
     private static final String PRODUCT_IMAGES_PREFIX = "/img/products";
 
     private static final Pattern POI_DETAIL_OR_PUBLISH = Pattern.compile("^/api/content/admin/pois/\\d+(/publish-status)?$");
@@ -47,6 +48,10 @@ public class InternalPathBlockFilter implements GlobalFilter, Ordered {
     private static final Pattern PRODUCT_STATUS = Pattern.compile("^/api/admin/products/\\d+/status$");
     private static final Pattern PRODUCT_SORT_ORDER = Pattern.compile("^/api/admin/products/\\d+/sort-order$");
     private static final Pattern PRODUCT_IMAGE = Pattern.compile("^/api/admin/products/\\d+/image$");
+    private static final Pattern ADMIN_ORDER_DETAIL = Pattern.compile("^/api/admin/orders/[A-Za-z0-9-]+$");
+    private static final Pattern ADMIN_ORDER_STATUS = Pattern.compile("^/api/admin/orders/[A-Za-z0-9-]+/status$");
+    private static final Pattern ADMIN_ORDER_CONFIRM = Pattern.compile("^/api/admin/orders/[A-Za-z0-9-]+/confirm-payment$");
+    private static final Pattern ADMIN_ORDER_REJECT = Pattern.compile("^/api/admin/orders/[A-Za-z0-9-]+/reject-payment$");
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
@@ -96,6 +101,18 @@ public class InternalPathBlockFilter implements GlobalFilter, Ordered {
             String normalized = normalizePath(path);
             if (!isAllowedAdminAuthMethod(normalized, method)) {
                 log.warn("Blocked disallowed method [{}] on admin auth endpoint: {}", method, path);
+                return sendMethodNotAllowed(exchange);
+            }
+            return chain.filter(exchange);
+        }
+
+        if (path.equals(ADMIN_ORDERS_PREFIX) || path.startsWith(ADMIN_ORDERS_PREFIX + "/")) {
+            if (HttpMethod.OPTIONS.equals(method)) {
+                return chain.filter(exchange);
+            }
+            String normalized = normalizePath(path);
+            if (!isAllowedAdminOrderMethod(normalized, method)) {
+                log.warn("Blocked disallowed method [{}] on admin order endpoint: {}", method, path);
                 return sendMethodNotAllowed(exchange);
             }
             return chain.filter(exchange);
@@ -209,6 +226,22 @@ public class InternalPathBlockFilter implements GlobalFilter, Ordered {
 
         // Cho phép GET trên các route admin mới bổ sung
         return HttpMethod.GET.equals(method);
+    }
+
+    private boolean isAllowedAdminOrderMethod(String path, HttpMethod method) {
+        if (path.equals("/api/admin/orders")) {
+            return HttpMethod.GET.equals(method);
+        }
+        if (ADMIN_ORDER_DETAIL.matcher(path).matches()) {
+            return HttpMethod.GET.equals(method);
+        }
+        if (ADMIN_ORDER_STATUS.matcher(path).matches()) {
+            return HttpMethod.PATCH.equals(method) || HttpMethod.PUT.equals(method);
+        }
+        if (ADMIN_ORDER_CONFIRM.matcher(path).matches() || ADMIN_ORDER_REJECT.matcher(path).matches()) {
+            return HttpMethod.POST.equals(method);
+        }
+        return false;
     }
 
     private boolean isAllowedAdminProductMethod(String path, HttpMethod method) {

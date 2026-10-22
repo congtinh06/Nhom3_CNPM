@@ -26,6 +26,7 @@ import { NewsListPage } from './pages/NewsListPage';
 import { NewsDetailPage } from './pages/NewsDetailPage';
 import { PremiumPage } from './pages/PremiumPage';
 import { AuthModal } from './components/auth/AuthModal';
+import { RequireAuth } from './components/auth/RequireAuth';
 
 import { useSmoothScroll } from './hooks/useSmoothScroll';
 
@@ -83,7 +84,7 @@ const AppContent: React.FC = () => {
   return (
     <>
       <Header />
-      <main>
+      <main className={`app-main${location.pathname === '/' ? ' home-route' : ' inner-route'}`}>
         <Suspense fallback={<div className="s sp" style={{ minHeight: '60vh', marginTop: 100 }}><p>Đang tải dữ liệu...</p></div>}>
           <Routes location={backgroundLocation || location}>
             <Route path="/" element={<HomePage />} />
@@ -117,10 +118,38 @@ const AppContent: React.FC = () => {
             <Route path="/qua-luu-niem/:slug" element={<SouvenirSlugRedirect />} />
 
             {/* Checkout & Orders */}
-            <Route path="/thanh-toan" element={<CheckoutPage />} />
-            <Route path="/thanh-toan/qr/:orderCode" element={<VietQrPage />} />
-            <Route path="/thanh-toan/ket-qua" element={<PaymentResultPage />} />
-            <Route path="/don-hang" element={<OrdersPage />} />
+            <Route
+              path="/thanh-toan"
+              element={
+                <RequireAuth>
+                  <CheckoutPage />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/thanh-toan/qr/:orderCode"
+              element={
+                <RequireAuth>
+                  <VietQrPage />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/thanh-toan/ket-qua"
+              element={
+                <RequireAuth>
+                  <PaymentResultPage />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/don-hang"
+              element={
+                <RequireAuth>
+                  <OrdersPage />
+                </RequireAuth>
+              }
+            />
 
             {/* QR Scan */}
             <Route path="/qr/:token" element={<ScanPage />} />

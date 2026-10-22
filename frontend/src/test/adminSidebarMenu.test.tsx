@@ -19,6 +19,8 @@ function mockAuth(role: 'ADMIN' | 'USER') {
       fullName: 'Quản Trị Viên',
       role,
       emailVerified: true,
+      plan: 'FREE',
+      premiumActive: false,
     },
     isAuthenticated: true,
     isAdmin: role === 'ADMIN',
@@ -111,7 +113,10 @@ describe('Sidebar quản trị: xổ xuống, thu gọn và bàn phím', () => {
     expect(gallery).toHaveAttribute('aria-disabled', 'true');
     expect(gallery).toHaveTextContent('Sắp có');
     expect(screen.queryByRole('link', { name: /thư viện ảnh/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: /đơn hàng/i })).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /đơn hàng/i })).toHaveAttribute(
+      'href',
+      '/quan-tri/don-hang'
+    );
 
     fireEvent.click(screen.getByRole('button', { name: /quà lưu niệm/i }));
     const upcomingChild = screen.getByText('Danh mục').closest('.adm-nav-sublink');

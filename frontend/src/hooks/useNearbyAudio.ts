@@ -497,6 +497,7 @@ export function useNearbyAudio({
 
   const requestTokenRef = useRef<number>(0);
   const audioElemRef = useRef<HTMLAudioElement | null>(null);
+  const objectUrlRef = useRef<string | null>(null);
   const activeUtteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
   const lastSpeechCancelAtRef = useRef<number>(0);
   const activeSourceTypeRef = useRef<AudioSourceType | null>(null);
@@ -567,13 +568,18 @@ export function useNearbyAudio({
       a.onloadedmetadata = null;
       a.pause();
       a.currentTime = 0;
-      a.src = '';
+      a.removeAttribute('src');
       try {
         a.load();
       } catch (err) {
         console.warn('[useNearbyAudio] resetting audio element failed', err);
       }
       audioElemRef.current = null;
+    }
+
+    if (objectUrlRef.current) {
+      URL.revokeObjectURL(objectUrlRef.current);
+      objectUrlRef.current = null;
     }
 
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
@@ -866,8 +872,9 @@ export function useNearbyAudio({
       }
 
       if (playback.source === 'remote' && playback.url) {
-        // Backend TTS path: reuse the audio element unlocked by a user gesture.
-        const fullUrl = api.getAudioUrl(playback.url);
+        // Backend TTS is protected by the gateway, so fetch it with the bearer
+        // token and play from an object URL instead of assigning the URL directly.
+        const remotePath = playback.url;
 
         stopTimer();
         stopWatchdog();
@@ -880,94 +887,126 @@ export function useNearbyAudio({
         }
         activeUtteranceRef.current = null;
 
-        const audio = getSharedAudio();
-        audioElemRef.current = audio;
-        audio.src = fullUrl;
-        audio.currentTime = 0;
-
-        audio.onerror = () => {
-          if (token !== requestTokenRef.current) return;
-          logAudioDev('STOP', { sourceType: 'backend', stopId: poiId, token, reason: 'error' });
-          console.warn('[NearbyAudio] remote audio error, falling back to speech', { poiId, url: fullUrl });
-          setAudioSourceType('speech');
-          speakText(chosenText, currentLang, token, 0);
-        };
-
-        audio.onloadedmetadata = () => {
-          if (token !== requestTokenRef.current) return;
-          if (audio.duration && !isNaN(audio.duration)) {
-            setDuration(Math.round(audio.duration));
+        const releaseObjectUrl = () => {
+          if (objectUrlRef.current) {
+            URL.revokeObjectURL(objectUrlRef.current);
+            objectUrlRef.current = null;
           }
         };
 
-        audio.ontimeupdate = () => {
-          if (token !== requestTokenRef.current) return;
-          setCurrentTime(audio.currentTime);
-          setActiveSentenceIndex(null);
-          checkListenedProgress(poiId, audio.currentTime);
-        };
+        const loadAndPlayRemote = async () => {
+          try {
+            const blob = await api.getAudioBlob(remotePath);
+            if (token !== requestTokenRef.current) return;
 
-        audio.onended = () => {
-          if (token !== requestTokenRef.current) return;
-          logAudioDev('STOP', { sourceType: 'backend', stopId: poiId, token, reason: 'ended' });
-          activeSourceTypeRef.current = null;
-          setPlaybackStatus('idle');
-          setIsPlaying(false);
-          setActiveSentenceIndex(null);
-          setCurrentId(null);
-          setCurrentTime(0);
-          setDuration(0);
-          setNotice('');
-          if (poiId) onPoiListenedRef.current?.(poiId);
-          audioElemRef.current = null;
-        };
+            const objectUrl = URL.createObjectURL(blob);
+            if (token !== requestTokenRef.current) {
+              URL.revokeObjectURL(objectUrl);
+              return;
+            }
+            objectUrlRef.current = objectUrl;
 
-        try {
-          const playPromise = audio.play();
-          if (playPromise && typeof playPromise.then === 'function') {
-            playPromise
-              .then(() => {
-                if (token !== requestTokenRef.current) {
-                  audio.pause();
-                  return;
-                }
-                logAudioDev('START', {
-                  sourceType: 'backend',
-                  stopId: poiId,
-                  lang: currentLang,
-                  trigger: triggerType,
-                  token,
-                });
+            const audio = getSharedAudio();
+            audioElemRef.current = audio;
+            audio.src = objectUrl;
+            audio.currentTime = 0;
+
+            audio.onerror = () => {
+              if (token !== requestTokenRef.current) return;
+              logAudioDev('STOP', { sourceType: 'backend', stopId: poiId, token, reason: 'error' });
+              console.warn('[NearbyAudio] remote audio error, falling back to speech', { poiId });
+              releaseObjectUrl();
+              setAudioSourceType('speech');
+              speakText(chosenText, currentLang, token, 0);
+            };
+
+            audio.onloadedmetadata = () => {
+              if (token !== requestTokenRef.current) return;
+              if (audio.duration && !isNaN(audio.duration)) {
+                setDuration(Math.round(audio.duration));
+              }
+            };
+
+            audio.ontimeupdate = () => {
+              if (token !== requestTokenRef.current) return;
+              setCurrentTime(audio.currentTime);
+              setActiveSentenceIndex(null);
+              checkListenedProgress(poiId, audio.currentTime);
+            };
+
+            audio.onended = () => {
+              if (token !== requestTokenRef.current) return;
+              logAudioDev('STOP', { sourceType: 'backend', stopId: poiId, token, reason: 'ended' });
+              activeSourceTypeRef.current = null;
+              setPlaybackStatus('idle');
+              setIsPlaying(false);
+              setActiveSentenceIndex(null);
+              setCurrentId(null);
+              setCurrentTime(0);
+              setDuration(0);
+              setNotice('');
+              releaseObjectUrl();
+              if (poiId) onPoiListenedRef.current?.(poiId);
+              audioElemRef.current = null;
+            };
+
+            try {
+              const playPromise = audio.play();
+              if (playPromise && typeof playPromise.then === 'function') {
+                playPromise
+                  .then(() => {
+                    if (token !== requestTokenRef.current) {
+                      audio.pause();
+                      return;
+                    }
+                    logAudioDev('START', {
+                      sourceType: 'backend',
+                      stopId: poiId,
+                      lang: currentLang,
+                      trigger: triggerType,
+                      token,
+                    });
+                    activeSourceTypeRef.current = 'backend';
+                    setAudioSourceType('backend');
+                    setPlaybackStatus('playing');
+                    setIsPlaying(true);
+                  })
+                  .catch((err) => {
+                    if (token !== requestTokenRef.current) return;
+                    if (err?.name === 'NotAllowedError' || err?.message?.includes('NotAllowedError')) {
+                      setNotice(clickToPlayText || 'Bấm để phát');
+                      setNoticeWarn(true);
+                      setPlaybackStatus('idle');
+                      setIsPlaying(false);
+                    } else {
+                      console.warn('[NearbyAudio] remote play rejected, falling back to speech', err);
+                      releaseObjectUrl();
+                      setAudioSourceType('speech');
+                      speakText(chosenText, currentLang, token, 0);
+                    }
+                  });
+              } else {
                 activeSourceTypeRef.current = 'backend';
                 setAudioSourceType('backend');
                 setPlaybackStatus('playing');
                 setIsPlaying(true);
-              })
-              .catch((err) => {
-                if (token !== requestTokenRef.current) return;
-                if (err?.name === 'NotAllowedError' || err?.message?.includes('NotAllowedError')) {
-                  setNotice(clickToPlayText || 'Bấm để phát');
-                  setNoticeWarn(true);
-                  setPlaybackStatus('idle');
-                  setIsPlaying(false);
-                } else {
-                  console.warn('[NearbyAudio] remote play rejected, falling back to speech', err);
-                  setAudioSourceType('speech');
-                  speakText(chosenText, currentLang, token, 0);
-                }
-              });
-          } else {
-            activeSourceTypeRef.current = 'backend';
-            setAudioSourceType('backend');
-            setPlaybackStatus('playing');
-            setIsPlaying(true);
+              }
+            } catch (err) {
+              if (token !== requestTokenRef.current) return;
+              console.warn('[NearbyAudio] remote playback threw, falling back to speech', err);
+              releaseObjectUrl();
+              setAudioSourceType('speech');
+              speakText(chosenText, currentLang, token, 0);
+            }
+          } catch (err) {
+            if (token !== requestTokenRef.current) return;
+            console.warn('[NearbyAudio] authenticated remote audio load failed, falling back to speech', err);
+            setAudioSourceType('speech');
+            speakText(chosenText, currentLang, token, 0);
           }
-        } catch (err) {
-          if (token !== requestTokenRef.current) return;
-          console.warn('[NearbyAudio] remote playback threw, falling back to speech', err);
-          setAudioSourceType('speech');
-          speakText(chosenText, currentLang, token, 0);
-        }
+        };
+
+        void loadAndPlayRemote();
       } else {
         // Synchronously start speech narration.
         setAudioSourceType('speech');

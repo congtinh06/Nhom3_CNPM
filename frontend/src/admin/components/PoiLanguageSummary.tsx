@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { AdminPoiLanguage, AdminPoiLanguageSummary, POI_LANGUAGES } from '../types/poi';
 import { formatDateTime } from '../utils/format';
 
@@ -74,6 +74,7 @@ export const PoiLanguageSummary: React.FC<PoiLanguageSummaryProps> = ({
   const [open, setOpen] = useState(false);
   const [position, setPosition] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
   const triggerRef = useRef<HTMLButtonElement>(null);
+  const popoverRef = useRef<HTMLDivElement>(null);
 
   const ready = summary?.ready ?? list.filter((l) => (l.audioStatus || '').toUpperCase() === 'READY').length;
   const total = summary?.total ?? list.length;
@@ -115,6 +116,24 @@ export const PoiLanguageSummary: React.FC<PoiLanguageSummaryProps> = ({
       triggerRef.current?.focus();
     }
   };
+
+  useLayoutEffect(() => {
+    if (!open) return;
+    const trigger = triggerRef.current;
+    const popover = popoverRef.current;
+    if (!trigger || !popover) return;
+    const rect = trigger.getBoundingClientRect();
+    const popRect = popover.getBoundingClientRect();
+    const margin = 8;
+    const gap = 6;
+    let top = rect.bottom + gap;
+    if (top + popRect.height > window.innerHeight - margin) {
+      const above = rect.top - gap - popRect.height;
+      top = above >= margin ? above : Math.max(margin, window.innerHeight - margin - popRect.height);
+    }
+    const left = Math.max(margin, Math.min(rect.left, window.innerWidth - popRect.width - margin));
+    setPosition((prev) => (prev.top === top && prev.left === left ? prev : { top, left }));
+  }, [open]);
 
   useEffect(() => {
     if (!open) return undefined;
@@ -161,6 +180,7 @@ export const PoiLanguageSummary: React.FC<PoiLanguageSummaryProps> = ({
 
       {open && (
         <div
+          ref={popoverRef}
           className="adm-lang-popover"
           role="dialog"
           aria-label={`Trạng thái ngôn ngữ của ${poiName}`}

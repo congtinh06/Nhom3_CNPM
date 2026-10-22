@@ -47,6 +47,8 @@ describe('UserMenu Admin Link', () => {
       fullName: 'Quản Trị Viên',
       role: 'ADMIN',
       emailVerified: true,
+      plan: 'FREE',
+      premiumActive: false,
     };
     vi.mocked(authApi.refresh).mockResolvedValue({
       accessToken: 'admin-token',
@@ -70,6 +72,8 @@ describe('UserMenu Admin Link', () => {
       fullName: 'Khách Du Lịch',
       role: 'USER',
       emailVerified: true,
+      plan: 'FREE',
+      premiumActive: false,
     };
     vi.mocked(authApi.refresh).mockResolvedValue({
       accessToken: 'user-token',

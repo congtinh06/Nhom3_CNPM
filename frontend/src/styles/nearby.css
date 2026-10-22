@@ -370,7 +370,7 @@ html:lang(ja) .nearby-sv-root,
   color: var(--ink-muted);
   border-left: 1px solid var(--border-light);
   padding-left: 10px;
-  max-width: 320px;
+  max-width: 600px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -441,8 +441,9 @@ html:lang(ja) .nearby-sv-root,
   outline-offset: 2px;
 }
 
-/* Settings Popover */
-.nearby-sv-root .settings-wrapper {
+/* Settings / Simulation Popover */
+.nearby-sv-root .settings-wrapper,
+.nearby-sv-root .sim-wrapper {
   position: relative;
 }
 
@@ -1555,7 +1556,6 @@ html:lang(ja) .nearby-sv-root,
   padding: 8px 12px;
   border-radius: 8px;
   border: 1px solid transparent;
-  border-left: 4px solid transparent;
   background: transparent;
   color: var(--fb-text-primary, #1C1917);
   font-family: var(--font-body);
@@ -1652,8 +1652,8 @@ html:lang(ja) .nearby-sv-root,
 /* Mục đang chọn: nền kem nhạt + viền trái cam 4px thay vì khối cam đặc */
 .nearby-sv-root .nearby-stop-row.is-active {
   background-color: #FFF7ED;
-  border-left: 4px solid var(--accent-orange, #C2410C);
-  border-radius: 4px 8px 8px 4px;
+  border-color: #FED7AA;
+  border-radius: 8px;
   color: var(--fb-text-primary, #1C1917);
   box-shadow: var(--shadow-sm);
 }
@@ -1882,14 +1882,12 @@ html:lang(ja) .nearby-sv-root,
 .nearby-sv-root .narration-section {
   margin: 0;
   padding: 4px 0;
-  border-left: 4px solid transparent;
-  border-radius: 0 var(--radius-btn, 8px) var(--radius-btn, 8px) 0;
-  transition: background-color 240ms ease, border-color 240ms ease, padding 240ms ease;
+  border-radius: var(--radius-btn, 8px);
+  transition: background-color 240ms ease, padding 240ms ease;
 }
 
 .nearby-sv-root .narration-section.is-active {
   background-color: var(--accent-peach, #FFF7ED);
-  border-left-color: var(--accent-orange, #C2410C);
   padding: 12px 16px;
 }
 

@@ -48,6 +48,20 @@ spring:
           uri: ${ANALYTICS_SERVICE_URL:http://localhost:8081}
           predicates:
             - Path=/api/analytics/**
+        - id: order-service
+          uri: ${ORDER_SERVICE_URL:http://localhost:8087}
+          predicates:
+            - Path=/api/orders/**
+          metadata:
+            connect-timeout: ${GATEWAY_CONNECT_TIMEOUT_MS:3000}
+            response-timeout: ${GATEWAY_ORDER_RESPONSE_TIMEOUT_MS:15000}
+        - id: order-service-admin
+          uri: ${ORDER_SERVICE_URL:http://localhost:8087}
+          predicates:
+            - Path=/api/admin/orders/**
+          metadata:
+            connect-timeout: ${GATEWAY_CONNECT_TIMEOUT_MS:3000}
+            response-timeout: ${GATEWAY_ORDER_RESPONSE_TIMEOUT_MS:15000}
 
 frontend:
   url: ${FRONTEND_URL:http://localhost:5173}

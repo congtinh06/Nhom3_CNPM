@@ -75,19 +75,20 @@ class CorsConfigTest {
     }
 
     @Test
-    void onlyGetPostPutOptionsAreAllowedMethods() {
+    void allowedMethodsCoverAdminPatchRequests() {
         CorsWebFilter filter = filterWith("https://ok.example.com", "");
 
-        for (HttpMethod allowed : new HttpMethod[]{HttpMethod.GET, HttpMethod.POST, HttpMethod.PUT}) {
+        for (HttpMethod allowed : new HttpMethod[]{HttpMethod.GET, HttpMethod.POST, HttpMethod.PUT, HttpMethod.PATCH}) {
             MockServerWebExchange exchange = preflight(filter, "https://ok.example.com", allowed);
             assertThat(isAllowed(exchange, "https://ok.example.com"))
                     .as("preflight for " + allowed + " must be allowed")
                     .isTrue();
             assertThat(exchange.getResponse().getHeaders().getAccessControlAllowMethods())
-                    .containsExactlyInAnyOrder(HttpMethod.GET, HttpMethod.POST, HttpMethod.PUT, HttpMethod.OPTIONS);
+                    .containsExactlyInAnyOrder(
+                            HttpMethod.GET, HttpMethod.POST, HttpMethod.PUT, HttpMethod.PATCH, HttpMethod.OPTIONS);
         }
 
-        for (HttpMethod rejected : new HttpMethod[]{HttpMethod.PATCH, HttpMethod.DELETE, HttpMethod.HEAD, HttpMethod.TRACE}) {
+        for (HttpMethod rejected : new HttpMethod[]{HttpMethod.DELETE, HttpMethod.HEAD, HttpMethod.TRACE}) {
             MockServerWebExchange exchange = preflight(filter, "https://ok.example.com", rejected);
             assertThat(isAllowed(exchange, "https://ok.example.com"))
                     .as("preflight for " + rejected + " must be rejected")

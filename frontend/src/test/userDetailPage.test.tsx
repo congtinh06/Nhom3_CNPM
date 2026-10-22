@@ -43,6 +43,8 @@ function setAuth(currentUserId: number) {
       fullName: 'Quản Trị Viên',
       role: 'ADMIN',
       emailVerified: true,
+      plan: 'FREE',
+      premiumActive: false,
     },
     isAuthenticated: true,
     isAdmin: true,

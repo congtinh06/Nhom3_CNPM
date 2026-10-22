@@ -226,10 +226,7 @@ export const NearbyPage: React.FC = () => {
   }, [apiPois]);
 
   // Toolbar & map states
-  const [radius, setRadius] = useState<number>(50);
-  const [overrideRadius, setOverrideRadius] = useState<number | null>(null);
-  const [isSimMode, setIsSimMode] = useState<boolean>(false);
-  const [simStopId, setSimStopId] = useState<string | null>(null);
+  const radius = 50;
   // Increments on every "Vị trí của tôi" press so the map auto-centers exactly once per press
   const [flyToUserToken, setFlyToUserToken] = useState<number>(0);
   const gpsToastShownRef = useRef<boolean>(false);
@@ -260,15 +257,6 @@ export const NearbyPage: React.FC = () => {
       }
       return next;
     });
-  }, []);
-
-  const handleResetProgress = useCallback(() => {
-    setListenedPoiIds([]);
-    try {
-      localStorage.removeItem('saigonvoice_listened_pois');
-    } catch {
-      // Ignore
-    }
   }, []);
 
   const isPlayerActiveRef = useRef<boolean>(false);
@@ -384,7 +372,6 @@ export const NearbyPage: React.FC = () => {
     requestGps,
     checkAutoTrigger,
     setAutoDirect,
-    applySimulatedPosition,
   } = useAutoNarration({
     pois,
     isAutoEnabled,
@@ -404,11 +391,8 @@ export const NearbyPage: React.FC = () => {
     gpsErrorDeniedText: t(currentLang, 'gpsErrorDenied'),
     gpsErrorUnavailableText: t(currentLang, 'gpsErrorUnavailable'),
     gpsErrorTimeoutText: t(currentLang, 'gpsErrorTimeout'),
-    gpsErrorSimActiveText: t(currentLang, 'gpsErrorSimActive'),
     gpsErrorNotSupportedText: t(currentLang, 'gpsErrorNotSupported'),
     gpsErrorInsecureText: t(currentLang, 'gpsErrorInsecure'),
-    overrideRadius,
-    isSimMode,
   });
 
   useEffect(() => {
@@ -418,43 +402,10 @@ export const NearbyPage: React.FC = () => {
     stopAllAudio();
   }, [isLanguageLocked, isAutoEnabled, setAutoDirect, stopAllAudio]);
 
-  // Manual location simulation: pick a preset stop or enter raw coordinates.
-  const simStops = useMemo(
-    () => pois.map((p) => ({ id: p.id, name: p.name[currentLang] || p.name.vi })),
-    [pois, currentLang]
-  );
-
-  const handlePickSimStop = useCallback(
-    (id: string) => {
-      const poi = pois.find((p) => p.id === id);
-      if (!poi) return;
-      setSimStopId(id);
-      setIsSimMode(true);
-      applySimulatedPosition(poi.lat, poi.lng);
-      setSelectedId(id);
-      setActiveId(id);
-    },
-    [pois, applySimulatedPosition]
-  );
-
-  const handleApplySimCoords = useCallback(
-    (lat: number, lng: number) => {
-      setSimStopId(null);
-      setIsSimMode(true);
-      applySimulatedPosition(lat, lng);
-    },
-    [applySimulatedPosition]
-  );
-
-  const handleStopSim = useCallback(() => {
-    setIsSimMode(false);
-    setSimStopId(null);
-  }, []);
-
-  // One-time toast the first time a real GPS fix lands. Later watch updates
-  // (same source 'gps') must not re-trigger it.
+  // One-time toast the first time a GPS fix lands. Later watch updates
+  // must not re-trigger it.
   useEffect(() => {
-    if (!userPos || userPos.source !== 'gps') return;
+    if (!userPos) return;
     if (gpsToastShownRef.current) return;
     let nearest: GeoPoi | null = null;
     let nearestDist = Infinity;
@@ -656,7 +607,6 @@ export const NearbyPage: React.FC = () => {
   // Auto-narration status line: always reflects the real configured radius and state.
   const autoStatusMessage = useMemo(() => {
     const configuredRadius = (() => {
-      if (overrideRadius != null) return formatDistance(overrideRadius, currentLang);
       const radii = pois.map((p) => p.triggerRadius).filter((value) => value > 0);
       if (radii.length === 0) return formatDistance(radius, currentLang);
       const min = Math.min(...radii);
@@ -667,7 +617,6 @@ export const NearbyPage: React.FC = () => {
     })();
 
     if (!isAutoEnabled) return t(currentLang, 'autoStatusOff');
-    if (isSimMode) return t(currentLang, 'statusSimActive');
 
     const nearest = sortedPois[0];
     if (userPos && nearest && nearest.dist != null) {
@@ -684,8 +633,6 @@ export const NearbyPage: React.FC = () => {
     getPoiName,
     gpsError,
     isAutoEnabled,
-    isSimMode,
-    overrideRadius,
     pois,
     radius,
     sortedPois,
@@ -733,7 +680,6 @@ export const NearbyPage: React.FC = () => {
       <ToolbarControls
         myLocationBtnText={t(currentLang, 'myLocation')}
         autoNarrationText={t(currentLang, 'autoNarration')}
-        radiusLabelText={t(currentLang, 'radiusLabel')}
         isAutoEnabled={isAutoEnabled}
         onToggleAuto={() => {
           if (isLanguageLocked) {
@@ -755,20 +701,7 @@ export const NearbyPage: React.FC = () => {
           requestGps();
         }}
         currentLang={currentLang}
-        radius={radius}
-        overrideRadius={overrideRadius}
-        onChangeOverrideRadius={setOverrideRadius}
-        onChangeRadius={setRadius}
-        isSimMode={isSimMode}
         isLocatingGps={isRequestingGps}
-        simStops={simStops}
-        activeSimStopId={simStopId}
-        onPickSimStop={handlePickSimStop}
-        onApplySimCoords={handleApplySimCoords}
-        onStopSim={handleStopSim}
-        listenedCount={listenedPoiIds.length}
-        stopsCount={pois.length}
-        onResetProgress={handleResetProgress}
         statusMessage={autoStatusMessage}
       />
 
@@ -807,8 +740,6 @@ export const NearbyPage: React.FC = () => {
               currentPlayingId={currentId}
               isPlaying={isPlaying}
               currentLang={currentLang}
-              radius={overrideRadius != null ? overrideRadius : (activeSelectedPoi?.triggerRadius ?? 60)}
-              overrideRadius={overrideRadius}
               listenedPoiIds={listenedPoiIds}
               statusMessage={statusMessage}
               listTitle={t(currentLang, 'listTitle')}
@@ -840,11 +771,8 @@ export const NearbyPage: React.FC = () => {
               isPaused={isPaused}
               userPos={userPos}
               centerOnUserToken={flyToUserToken}
-              radius={overrideRadius != null ? overrideRadius : (activeSelectedPoi?.triggerRadius ?? 60)}
+              radius={activeSelectedPoi?.triggerRadius ?? 60}
               isAutoEnabled={isAutoEnabled}
-              isSimMode={isSimMode}
-              onToggleSimMode={handleStopSim}
-              onSetSimulatedPosition={handleApplySimCoords}
               listenedPoiIds={listenedPoiIds}
               onSelectPoi={handleExplicitSelectPoi}
               onHoverPoi={setHoveredId}
@@ -854,7 +782,6 @@ export const NearbyPage: React.FC = () => {
               listenBtnText={t(currentLang, 'playBtn')}
               pauseBtnText={t(currentLang, 'pauseBtn')}
               resumeBtnText={t(currentLang, 'resumeBtn')}
-              radiusLabelText={t(currentLang, 'radiusLabel')}
               mapCaptionText={t(currentLang, 'mapCaption')}
               currentLang={currentLang}
             />

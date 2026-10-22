@@ -5,7 +5,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { ShoppingBag, Phone } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
-import { createBackendOrder } from '../services/orderService';
+import { createBackendOrder, createVnPayPayment } from '../services/orderService';
 import { Stepper } from '../components/checkout/Stepper';
 import { ContactSection, ContactFormData } from '../components/checkout/ContactSection';
 import { DeliveryOptionsSection } from '../components/checkout/DeliveryOptionsSection';
@@ -179,11 +179,6 @@ export function CheckoutPage() {
         quantity: item.quantity,
       }));
 
-      const metaLookup: Record<number, { name: string; price: number }> = {};
-      cartItems.forEach((item) => {
-        metaLookup[item.id] = { name: item.name, price: item.price };
-      });
-
       const order = await createBackendOrder(
         {
           receiverName: formData.deliverToOther
@@ -197,13 +192,15 @@ export function CheckoutPage() {
           paymentMethod,
           items: itemsPayload,
         },
-        idempotencyKey,
-        metaLookup
+        idempotencyKey
       );
 
       clearCart();
 
-      if (paymentMethod === 'VIETQR') {
+      if (paymentMethod === 'VNPAY') {
+        const paymentUrl = order.paymentUrl ?? (await createVnPayPayment(order.orderCode));
+        window.location.assign(paymentUrl);
+      } else if (paymentMethod === 'VIETQR') {
         navigate(`/thanh-toan/qr/${encodeURIComponent(order.orderCode)}`, {
           replace: true,
         });

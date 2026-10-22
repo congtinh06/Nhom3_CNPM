@@ -222,7 +222,7 @@ export type BackendOrderStatus =
   | 'COMPLETED'
   | 'CANCELLED';
 
-export type PaymentMethod = 'COD' | 'MOCK_GATEWAY' | 'VIETQR';
+export type PaymentMethod = 'COD' | 'MOCK_GATEWAY' | 'VIETQR' | 'VNPAY';
 export type PaymentStatus = 'PENDING' | 'SUCCESS' | 'FAILED';
 
 export interface BackendOrderItem {
@@ -238,6 +238,8 @@ export interface BackendOrder {
   id: number;
   orderCode: string;
   userId?: number;
+  orderType?: 'PRODUCT' | 'PREMIUM';
+  premiumPackage?: string;
   totalAmount: number;
   status: BackendOrderStatus;
   receiverName: string;
@@ -260,6 +262,7 @@ export interface BackendOrder {
   shippingFee?: number;
   discountAmount?: number;
   voucherCode?: string;
+  paymentUrl?: string;
 }
 
 export interface VietQrPaymentInfo {
@@ -317,12 +320,17 @@ export interface SamplePlace {
 
 export type AuthRole = 'USER' | 'ADMIN';
 
+export type AuthPlan = 'FREE' | 'PREMIUM';
+
 export interface AuthUser {
   id: number;
   fullName: string;
   email: string;
   role: AuthRole;
   emailVerified: boolean;
+  plan: AuthPlan;
+  premiumActive: boolean;
+  premiumExpiresAt?: string | null;
   createdAt?: string;
 }
 

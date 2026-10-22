@@ -43,6 +43,8 @@ public class OriginCheckFilter extends OncePerRequestFilter {
     public OriginCheckFilter(@Value("${app.security.frontend-url:}") String frontendUrl) {
         allowedOrigins.add("http://localhost:5173");
         allowedOrigins.add("http://127.0.0.1:5173");
+        allowedOrigins.add("http://localhost:8088");
+        allowedOrigins.add("http://127.0.0.1:8088");
         if (frontendUrl != null && !frontendUrl.isBlank()) {
             allowedOrigins.add(frontendUrl.trim());
         }

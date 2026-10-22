@@ -20,7 +20,7 @@ public interface PoiContentService {
 
     List<PoiSummaryDto> getPois(Long zoneId);
 
-    List<PoiGuideDto> getPoiGuides(Long zoneId);
+    List<PoiGuideDto> getPoiGuides(Long zoneId, boolean includePremiumTranslations);
 
     Page<AdminPoiListItemDto> getAdminPois(
             Long zoneId, Long routeId, String status, String search, String audioStatus,

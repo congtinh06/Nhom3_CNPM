@@ -1,15 +1,15 @@
 import { apiClient } from '../api/client';
+import { normalizeApiError } from '../api/errors';
+import { cacheOrder, loadCachedOrders, saveCachedOrders } from './orderCache';
 import {
   Order,
   OrderItem,
   BackendOrder,
-  BackendOrderItem,
   CreateOrderPayload,
-  BackendOrderStatus,
+  PaymentStatus,
 } from '../types';
 
 const STORAGE_KEY = 'orders';
-const BACKEND_ORDERS_KEY = 'sv:backend_orders';
 
 const isOrderItem = (item: unknown): item is OrderItem => {
   if (typeof item !== 'object' || item === null) return false;
@@ -107,235 +107,139 @@ export const cancelOrder = (orderId: string): Order | null => {
 };
 
 // ==========================================
-// Backend Order API & Local Fallback
+// Backend Order API (đơn hàng luôn gắn với tài khoản đang đăng nhập)
 // ==========================================
 
-const loadLocalBackendOrders = (): BackendOrder[] => {
-  try {
-    const raw = localStorage.getItem(BACKEND_ORDERS_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    if (Array.isArray(parsed)) {
-      return parsed as BackendOrder[];
-    }
-    return [];
-  } catch {
-    return [];
+const toOrderError = (error: unknown, fallback: string): Error => {
+  const normalized = normalizeApiError(error);
+  if (normalized.status === 401) {
+    return new Error('Vui lòng đăng nhập để tiếp tục.');
   }
-};
-
-const saveLocalBackendOrders = (orders: BackendOrder[]): void => {
-  try {
-    localStorage.setItem(BACKEND_ORDERS_KEY, JSON.stringify(orders));
-  } catch {
-    // Ignore quota errors
-  }
-};
-
-const generateOrderCode = (): string => {
-  const now = new Date();
-  const yyyy = now.getFullYear();
-  const mm = String(now.getMonth() + 1).padStart(2, '0');
-  const dd = String(now.getDate()).padStart(2, '0');
-  const rand = Math.floor(1000 + Math.random() * 9000);
-  return `SV-${yyyy}${mm}${dd}-${rand}`;
+  return new Error(normalized.message || fallback);
 };
 
 export const createBackendOrder = async (
   payload: CreateOrderPayload,
   idempotencyKey: string,
-  itemMetaLookup?: Record<number, { name: string; price: number }>
 ): Promise<BackendOrder> => {
   try {
-    const res = await apiClient.post<BackendOrder>('/api/orders', payload, {
-      headers: {
-        'Idempotency-Key': idempotencyKey,
-      },
+    const response = await apiClient.post<BackendOrder>('/api/orders', payload, {
+      headers: { 'Idempotency-Key': idempotencyKey },
     });
-    // Lưu một bản sao cục bộ để xem đơn liền ngay cả khi chuyển trang
-    const current = loadLocalBackendOrders();
-    saveLocalBackendOrders([res.data, ...current.filter((o) => o.orderCode !== res.data.orderCode)]);
-    return res.data;
-  } catch {
-    // Fallback giả lập nội bộ (nếu service chưa online hoặc gateway chặn đường dẫn)
-    const nowIso = new Date().toISOString();
-    const orderCode = generateOrderCode();
-    const items: BackendOrderItem[] = payload.items.map((it) => {
-      const meta = itemMetaLookup?.[it.productId];
-      const name = meta?.name || `Món #${it.productId}`;
-      const unitPrice = meta?.price || 0;
-      return {
-        productId: it.productId,
-        productName: name,
-        unitPrice,
-        quantity: it.quantity,
-      };
-    });
+    cacheOrder(response.data);
+    return response.data;
+  } catch (error) {
+    throw toOrderError(error, 'Không thể tạo đơn hàng. Vui lòng thử lại.');
+  }
+};
 
-    const totalAmount = items.reduce((sum, it) => sum + it.unitPrice * it.quantity, 0);
-    const initialStatus: BackendOrderStatus =
-      payload.paymentMethod === 'COD' ? 'PROCESSING' : 'PENDING_PAYMENT';
-
-    const localOrder: BackendOrder = {
-      id: Date.now(),
-      orderCode,
-      totalAmount,
-      status: initialStatus,
-      receiverName: payload.receiverName.trim(),
-      phone: payload.phone.trim(),
-      address: payload.address.trim(),
-      note: payload.note?.trim(),
-      paymentMethod: payload.paymentMethod,
-      paymentStatus: 'PENDING',
-      items,
-      createdAt: nowIso,
-      updatedAt: nowIso,
-    };
-
-    const current = loadLocalBackendOrders();
-    saveLocalBackendOrders([localOrder, ...current]);
-    return localOrder;
+export const createPremiumOrder = async (): Promise<BackendOrder> => {
+  const idempotencyKey = `premium-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+  try {
+    const response = await apiClient.post<BackendOrder>(
+      '/api/orders/premium',
+      { packageCode: 'PREMIUM_LANGUAGES' },
+      { headers: { 'Idempotency-Key': idempotencyKey } },
+    );
+    cacheOrder(response.data);
+    return response.data;
+  } catch (error) {
+    throw toOrderError(error, 'Không thể tạo thanh toán Premium. Vui lòng thử lại.');
   }
 };
 
 export const getMyOrders = async (): Promise<BackendOrder[]> => {
   try {
-    const res = await apiClient.get<BackendOrder[]>('/api/orders/my');
-    if (Array.isArray(res.data) && res.data.length > 0) {
-      saveLocalBackendOrders(res.data);
-      return res.data;
-    }
-    // Nếu API trả về mảng rỗng thì kết hợp với local fallback
-    const local = loadLocalBackendOrders();
-    return local;
-  } catch {
-    return loadLocalBackendOrders();
+    const response = await apiClient.get<BackendOrder[]>('/api/orders/my');
+    const orders = response.data ?? [];
+    saveCachedOrders(orders);
+    return orders;
+  } catch (error) {
+    throw toOrderError(error, 'Không thể tải danh sách đơn hàng.');
   }
 };
 
 export const getOrderByCode = async (orderCode: string): Promise<BackendOrder | null> => {
   try {
-    const res = await apiClient.get<BackendOrder>(`/api/orders/${encodeURIComponent(orderCode)}`);
-    return res.data;
-  } catch {
-    const local = loadLocalBackendOrders();
-    return local.find((o) => o.orderCode === orderCode) || null;
+    const response = await apiClient.get<BackendOrder>(
+      `/api/orders/${encodeURIComponent(orderCode)}`,
+    );
+    cacheOrder(response.data);
+    return response.data;
+  } catch (error) {
+    if (normalizeApiError(error).status === 404) {
+      return null;
+    }
+    throw toOrderError(error, 'Không thể tải thông tin đơn hàng.');
   }
 };
 
-export const cancelBackendOrder = async (orderCode: string): Promise<BackendOrder | null> => {
+export const cancelBackendOrder = async (orderCode: string): Promise<BackendOrder> => {
   try {
-    const res = await apiClient.post<BackendOrder>(`/api/orders/${encodeURIComponent(orderCode)}/cancel`);
-    const local = loadLocalBackendOrders();
-    const updated = local.map((o) => (o.orderCode === orderCode ? res.data : o));
-    saveLocalBackendOrders(updated);
-    return res.data;
-  } catch {
-    const local = loadLocalBackendOrders();
-    let updatedOrder: BackendOrder | null = null;
-    const updated = local.map((o) => {
-      if (o.orderCode === orderCode && (o.status === 'PENDING_PAYMENT' || o.status === 'PROCESSING')) {
-        updatedOrder = {
-          ...o,
-          status: 'CANCELLED',
-          updatedAt: new Date().toISOString(),
-        };
-        return updatedOrder;
-      }
-      return o;
-    });
-    if (updatedOrder) {
-      saveLocalBackendOrders(updated);
-    }
-    return updatedOrder;
+    const response = await apiClient.post<BackendOrder>(
+      `/api/orders/${encodeURIComponent(orderCode)}/cancel`,
+    );
+    cacheOrder(response.data);
+    return response.data;
+  } catch (error) {
+    throw toOrderError(error, 'Không thể hủy đơn hàng.');
   }
 };
 
 export const confirmMockPayment = async (
   orderCode: string,
-  outcome: 'SUCCESS' | 'FAILED'
+  outcome: Exclude<PaymentStatus, 'PENDING'> = 'SUCCESS',
 ): Promise<BackendOrder> => {
   try {
-    const res = await apiClient.post<BackendOrder>(
+    const response = await apiClient.post<BackendOrder>(
       `/api/orders/${encodeURIComponent(orderCode)}/pay/mock-confirm`,
       null,
-      {
-        params: { outcome },
-      }
+      { params: { outcome } },
     );
-    const local = loadLocalBackendOrders();
-    saveLocalBackendOrders(local.map((o) => (o.orderCode === orderCode ? res.data : o)));
-    return res.data;
-  } catch {
-    const local = loadLocalBackendOrders();
-    const nowIso = new Date().toISOString();
-    let target = local.find((o) => o.orderCode === orderCode);
-    if (!target) {
-      target = {
-        id: Date.now(),
-        orderCode,
-        totalAmount: 0,
-        status: outcome === 'SUCCESS' ? 'PAID' : 'PENDING_PAYMENT',
-        receiverName: '',
-        phone: '',
-        address: '',
-        paymentMethod: 'MOCK_GATEWAY',
-        paymentStatus: outcome === 'SUCCESS' ? 'SUCCESS' : 'FAILED',
-        items: [],
-        createdAt: nowIso,
-        updatedAt: nowIso,
-      };
-      saveLocalBackendOrders([target, ...local]);
-      return target;
-    }
+    cacheOrder(response.data);
+    return response.data;
+  } catch (error) {
+    throw toOrderError(error, 'Không thể xác nhận thanh toán.');
+  }
+};
 
-    const updatedOrder: BackendOrder = {
-      ...target,
-      status: outcome === 'SUCCESS' ? 'PAID' : target.status,
-      paymentStatus: outcome === 'SUCCESS' ? 'SUCCESS' : 'FAILED',
-      updatedAt: nowIso,
-    };
-    saveLocalBackendOrders(local.map((o) => (o.orderCode === orderCode ? updatedOrder : o)));
-    return updatedOrder;
+export const createVnPayPayment = async (orderCode: string): Promise<string> => {
+  try {
+    const response = await apiClient.post<{ paymentUrl: string }>(
+      `/api/orders/${encodeURIComponent(orderCode)}/payments/vnpay`,
+    );
+    return response.data.paymentUrl;
+  } catch (error) {
+    throw toOrderError(error, 'Không thể tạo liên kết thanh toán VNPAY.');
   }
 };
 
 export const getLocalOrderByCode = (orderCode: string): BackendOrder | null => {
-  const local = loadLocalBackendOrders();
-  return local.find((o) => o.orderCode === orderCode) ?? null;
+  const found = loadCachedOrders().find((o) => o.orderCode === orderCode);
+  return found ?? null;
 };
 
-export const markVietQrOrderPaid = (orderCode: string): BackendOrder | null => {
-  const local = loadLocalBackendOrders();
-  const nowIso = new Date().toISOString();
-  const existing = local.find((o) => o.orderCode === orderCode);
-  if (existing) {
-    const updated: BackendOrder = {
-      ...existing,
-      status: 'PAID',
-      paymentStatus: 'SUCCESS',
-      updatedAt: nowIso,
-    };
-    saveLocalBackendOrders(local.map((o) => (o.orderCode === orderCode ? updated : o)));
-    return updated;
+export const markVietQrOrderPaid = async (orderCode: string): Promise<BackendOrder | null> => {
+  try {
+    return await confirmMockPayment(orderCode, 'SUCCESS');
+  } catch {
+    return null;
   }
-  return null;
 };
 
-export const renewVietQrOrderExpiry = (orderCode: string, minutes: number = 15): string | null => {
-  const local = loadLocalBackendOrders();
-  const newExpiry = new Date(Date.now() + minutes * 60 * 1000).toISOString();
-  const existing = local.find((o) => o.orderCode === orderCode);
-  if (existing) {
-    const updated: BackendOrder = {
-      ...existing,
-      expiresAt: newExpiry,
-      updatedAt: new Date().toISOString(),
-    };
-    saveLocalBackendOrders(local.map((o) => (o.orderCode === orderCode ? updated : o)));
-    return newExpiry;
+export const renewVietQrOrderExpiry = async (
+  orderCode: string,
+  minutes: number = 15,
+): Promise<string | null> => {
+  try {
+    const response = await apiClient.post<BackendOrder>(
+      `/api/orders/${encodeURIComponent(orderCode)}/extend-expiry`,
+      null,
+      { params: { minutes } },
+    );
+    cacheOrder(response.data);
+    return response.data.expiresAt ?? null;
+  } catch {
+    return null;
   }
-  return null;
 };
-
-

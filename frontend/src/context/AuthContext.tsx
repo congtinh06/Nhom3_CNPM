@@ -1,5 +1,6 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { authApi } from '../api/auth';
+import { clearLocalOrderCache } from '../services/orderCache';
 import { LOGGED_OUT_EVENT, tokenStore } from '../api/tokenStore';
 import { AuthSession, AuthUser, LoginPayload, RegisterPayload } from '../types';
 
@@ -96,14 +97,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Cookie có thể đã bị xóa sẵn - vẫn đăng xuất phía client.
     }
     tokenStore.clear();
+    clearLocalOrderCache();
     setUser(null);
     setStatus('guest');
   }, []);
 
   const reloadUser = useCallback(async (): Promise<void> => {
     try {
-      const fresh = await authApi.me();
-      setUser(fresh);
+      const session = await authApi.refresh();
+      tokenStore.set(session.accessToken);
+      setUser(session.user);
       setStatus('authenticated');
     } catch {
       tokenStore.clear();

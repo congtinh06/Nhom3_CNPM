@@ -29,6 +29,8 @@ public class CorsConfig {
         Set<String> allowedOrigins = new LinkedHashSet<>();
         allowedOrigins.add("http://localhost:5173");
         allowedOrigins.add("http://127.0.0.1:5173");
+        allowedOrigins.add("http://localhost:8088");
+        allowedOrigins.add("http://127.0.0.1:8088");
 
         String configured = (frontendUrls != null && !frontendUrls.isBlank()) ? frontendUrls : frontendUrl;
         if (configured != null) {
@@ -42,7 +44,7 @@ public class CorsConfig {
         }
 
         config.setAllowedOrigins(new ArrayList<>(allowedOrigins));
-        config.setAllowedMethods(List.of("GET", "POST", "PUT", "OPTIONS"));
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "OPTIONS"));
         config.setAllowedHeaders(List.of(
                 "Content-Type",
                 "Authorization",

@@ -49,7 +49,7 @@ class AudioControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(content().contentType("audio/mpeg"))
                 .andExpect(header().string(HttpHeaders.ACCEPT_RANGES, "bytes"))
-                .andExpect(header().string(HttpHeaders.CACHE_CONTROL, "public, max-age=86400"));
+                .andExpect(header().string(HttpHeaders.CACHE_CONTROL, "private, max-age=86400"));
 
         verify(audioStorageService).resolveAudioPath(fileName);
     }
@@ -68,7 +68,7 @@ class AudioControllerTest {
                 .andExpect(status().isPartialContent())
                 .andExpect(content().contentType("audio/mpeg"))
                 .andExpect(header().string(HttpHeaders.ACCEPT_RANGES, "bytes"))
-                .andExpect(header().string(HttpHeaders.CACHE_CONTROL, "public, max-age=86400"));
+                .andExpect(header().string(HttpHeaders.CACHE_CONTROL, "private, max-age=86400"));
     }
 
     @Test

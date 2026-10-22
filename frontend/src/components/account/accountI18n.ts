@@ -11,6 +11,37 @@ export interface AccountTranslation {
   navOrders: string;
   navSecurity: string;
   navPreferences: string;
+  navPremium: string;
+  planLabel: string;
+  planFree: string;
+  planPremium: string;
+  profileInfoTitle: string;
+  profileStatusTitle: string;
+  securitySessionsTitle: string;
+  logoutAllNote: string;
+  premiumTitle: string;
+  premiumDesc: string;
+  premiumActive: string;
+  premiumInactive: string;
+  premiumActiveNote: string;
+  premiumFreeNote: string;
+  premiumStatusLabel: string;
+  premiumStatusActive: string;
+  premiumStatusInactive: string;
+  premiumExpires: string;
+  premiumNoExpiry: string;
+  premiumBenefitsTitle: string;
+  premiumLanguagesTitle: string;
+  premiumLanguagesDesc: string;
+  premiumAudioTitle: string;
+  premiumAudioDesc: string;
+  premiumQrTitle: string;
+  premiumQrDesc: string;
+  premiumUnlocked: string;
+  premiumLocked: string;
+  premiumUpgrade: string;
+  premiumRenew: string;
+  premiumFreeLanguages: string;
   profileTitle: string;
   profileDesc: string;
   fullName: string;
@@ -67,6 +98,40 @@ const ACCOUNT_TRANSLATIONS: Record<SupportedLanguage, AccountTranslation> = {
     navOrders: 'Đơn hàng',
     navSecurity: 'Bảo mật',
     navPreferences: 'Tùy chọn',
+    navPremium: 'Premium',
+    planLabel: 'Gói tài khoản',
+    planFree: 'Miễn phí',
+    planPremium: 'Premium',
+    profileInfoTitle: 'Thông tin cá nhân',
+    profileStatusTitle: 'Trạng thái tài khoản',
+    securitySessionsTitle: 'Phiên đăng nhập',
+    logoutAllNote:
+      'Đăng xuất khỏi mọi thiết bị sẽ kết thúc tất cả phiên đang hoạt động. Bạn sẽ cần đăng nhập lại.',
+    premiumTitle: 'Premium',
+    premiumDesc: 'Quản lý quyền lợi Premium và thời hạn sử dụng của tài khoản.',
+    premiumActive: 'Premium đang hoạt động',
+    premiumInactive: 'Chưa kích hoạt Premium',
+    premiumActiveNote:
+      'Bạn đang có quyền truy cập toàn bộ thuyết minh tiếng Anh, Nhật và Hàn trên mọi điểm đến.',
+    premiumFreeNote:
+      'Nâng cấp để mở khóa thuyết minh tiếng Anh, Nhật và Hàn cho toàn bộ hành trình.',
+    premiumStatusLabel: 'Trạng thái',
+    premiumStatusActive: 'Đang hoạt động',
+    premiumStatusInactive: 'Chưa kích hoạt',
+    premiumExpires: 'Có hiệu lực đến',
+    premiumNoExpiry: 'Không thời hạn',
+    premiumBenefitsTitle: 'Quyền lợi của bạn',
+    premiumLanguagesTitle: '3 ngôn ngữ quốc tế',
+    premiumLanguagesDesc: 'Nghe thuyết minh tiếng Anh, Nhật và Hàn với đúng giọng đọc.',
+    premiumAudioTitle: 'Toàn bộ nội dung ngoại ngữ',
+    premiumAudioDesc: 'Mở khóa mọi bản thuyết minh ngoại ngữ của các điểm đến.',
+    premiumQrTitle: 'Quét QR cho khách quốc tế',
+    premiumQrDesc: 'Khách quét mã tại điểm đến và nghe ngay bằng ngôn ngữ đã chọn.',
+    premiumUnlocked: 'Đã mở khóa',
+    premiumLocked: 'Cần Premium',
+    premiumUpgrade: 'Nâng cấp Premium',
+    premiumRenew: 'Gia hạn Premium',
+    premiumFreeLanguages: 'Tiếng Việt luôn miễn phí cho mọi tài khoản.',
     profileTitle: 'Hồ sơ cá nhân',
     profileDesc: 'Thông tin tài khoản dùng để nhận diện bạn trên Echora.',
     fullName: 'Họ và tên',
@@ -121,6 +186,40 @@ const ACCOUNT_TRANSLATIONS: Record<SupportedLanguage, AccountTranslation> = {
     navOrders: 'Orders',
     navSecurity: 'Security',
     navPreferences: 'Preferences',
+    navPremium: 'Premium',
+    planLabel: 'Account plan',
+    planFree: 'Free',
+    planPremium: 'Premium',
+    profileInfoTitle: 'Personal information',
+    profileStatusTitle: 'Account status',
+    securitySessionsTitle: 'Active sessions',
+    logoutAllNote:
+      'Signing out of all devices ends every active session. You will need to sign in again.',
+    premiumTitle: 'Premium',
+    premiumDesc: 'Manage your Premium benefits and entitlement period.',
+    premiumActive: 'Premium is active',
+    premiumInactive: 'Premium is not active',
+    premiumActiveNote:
+      'You can access every English, Japanese and Korean narration across all stops.',
+    premiumFreeNote:
+      'Upgrade to unlock English, Japanese and Korean narration across the whole journey.',
+    premiumStatusLabel: 'Status',
+    premiumStatusActive: 'Active',
+    premiumStatusInactive: 'Not active',
+    premiumExpires: 'Valid until',
+    premiumNoExpiry: 'No expiry',
+    premiumBenefitsTitle: 'Your benefits',
+    premiumLanguagesTitle: '3 international languages',
+    premiumLanguagesDesc: 'Hear English, Japanese and Korean narration with matching voices.',
+    premiumAudioTitle: 'All foreign-language content',
+    premiumAudioDesc: 'Unlock every foreign-language narration script across the stops.',
+    premiumQrTitle: 'QR access for international guests',
+    premiumQrDesc: 'Guests scan the code at a stop and listen in their chosen language.',
+    premiumUnlocked: 'Unlocked',
+    premiumLocked: 'Premium required',
+    premiumUpgrade: 'Upgrade to Premium',
+    premiumRenew: 'Renew Premium',
+    premiumFreeLanguages: 'Vietnamese is always free for every account.',
     profileTitle: 'Personal profile',
     profileDesc: 'Account details used to identify you across Echora.',
     fullName: 'Full name',
@@ -175,6 +274,40 @@ const ACCOUNT_TRANSLATIONS: Record<SupportedLanguage, AccountTranslation> = {
     navOrders: '注文',
     navSecurity: 'セキュリティ',
     navPreferences: '表示設定',
+    navPremium: 'Premium',
+    planLabel: 'アカウントプラン',
+    planFree: '無料',
+    planPremium: 'Premium',
+    profileInfoTitle: '個人情報',
+    profileStatusTitle: 'アカウントの状態',
+    securitySessionsTitle: 'ログインセッション',
+    logoutAllNote:
+      'すべての端末からログアウトすると、現在のセッションがすべて終了します。再度ログインが必要です。',
+    premiumTitle: 'Premium',
+    premiumDesc: 'Premium の特典と有効期間を管理します。',
+    premiumActive: 'Premium 利用中',
+    premiumInactive: 'Premium 未登録',
+    premiumActiveNote:
+      'すべてのスポットで英語、日本語、韓国語の音声ガイドを利用できます。',
+    premiumFreeNote:
+      'アップグレードすると、旅のすべてのスポットで英語、日本語、韓国語の音声ガイドを利用できます。',
+    premiumStatusLabel: '状態',
+    premiumStatusActive: '利用中',
+    premiumStatusInactive: '未登録',
+    premiumExpires: '有効期限',
+    premiumNoExpiry: '期限なし',
+    premiumBenefitsTitle: '利用できる特典',
+    premiumLanguagesTitle: '3つの国際言語',
+    premiumLanguagesDesc: '英語、日本語、韓国語の音声ガイドを各言語の声で聞けます。',
+    premiumAudioTitle: 'すべての外国語コンテンツ',
+    premiumAudioDesc: '各スポットの外国語音声ガイドをすべて利用できます。',
+    premiumQrTitle: '海外からのお客様向け QR',
+    premiumQrDesc: 'スポットで QR を読み取り、選んだ言語ですぐに聞けます。',
+    premiumUnlocked: '利用可能',
+    premiumLocked: 'Premium が必要',
+    premiumUpgrade: 'Premium にアップグレード',
+    premiumRenew: 'Premium を更新',
+    premiumFreeLanguages: 'ベトナム語はすべてのアカウントで無料です。',
     profileTitle: 'プロフィール',
     profileDesc: 'Echora でお客様を識別するためのアカウント情報です。',
     fullName: '氏名',
@@ -229,6 +362,40 @@ const ACCOUNT_TRANSLATIONS: Record<SupportedLanguage, AccountTranslation> = {
     navOrders: '주문',
     navSecurity: '보안',
     navPreferences: '환경설정',
+    navPremium: 'Premium',
+    planLabel: '계정 요금제',
+    planFree: '무료',
+    planPremium: 'Premium',
+    profileInfoTitle: '개인 정보',
+    profileStatusTitle: '계정 상태',
+    securitySessionsTitle: '로그인 세션',
+    logoutAllNote:
+      '모든 기기에서 로그아웃하면 현재 활성화된 모든 세션이 종료됩니다. 다시 로그인해야 합니다.',
+    premiumTitle: 'Premium',
+    premiumDesc: 'Premium 혜택과 이용 기간을 관리하세요.',
+    premiumActive: 'Premium 사용 중',
+    premiumInactive: 'Premium 미활성화',
+    premiumActiveNote:
+      '모든 명소에서 영어, 일본어, 한국어 해설을 이용할 수 있습니다.',
+    premiumFreeNote:
+      '업그레이드하면 여행의 모든 명소에서 영어, 일본어, 한국어 해설을 이용할 수 있습니다.',
+    premiumStatusLabel: '상태',
+    premiumStatusActive: '사용 중',
+    premiumStatusInactive: '미활성화',
+    premiumExpires: '유효 기간',
+    premiumNoExpiry: '기간 제한 없음',
+    premiumBenefitsTitle: '이용 가능한 혜택',
+    premiumLanguagesTitle: '3개 국제 언어',
+    premiumLanguagesDesc: '영어, 일본어, 한국어 해설을 각 언어에 맞는 음성으로 들을 수 있습니다.',
+    premiumAudioTitle: '모든 외국어 콘텐츠',
+    premiumAudioDesc: '모든 명소의 외국어 해설을 이용할 수 있습니다.',
+    premiumQrTitle: '외국인 방문객을 위한 QR',
+    premiumQrDesc: '명소에서 QR을 스캔하고 선택한 언어로 바로 들을 수 있습니다.',
+    premiumUnlocked: '이용 가능',
+    premiumLocked: 'Premium 필요',
+    premiumUpgrade: 'Premium으로 업그레이드',
+    premiumRenew: 'Premium 갱신',
+    premiumFreeLanguages: '베트남어는 모든 계정에서 무료입니다.',
     profileTitle: '개인 프로필',
     profileDesc: 'Echora에서 회원님을 식별하는 데 사용되는 계정 정보입니다.',
     fullName: '이름',

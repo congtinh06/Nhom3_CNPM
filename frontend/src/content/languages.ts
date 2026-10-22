@@ -68,6 +68,8 @@ export interface CheckoutTranslation {
   vietQrTitle: string;
   vietQrDesc: string;
   vietQrDemoNotice: string;
+  vnpayTitle: string;
+  vnpayDesc: string;
   codTitle: string;
   codDesc: string;
   groupFromSpot: string;
@@ -402,6 +404,8 @@ export const NAV_TRANSLATIONS: Record<SupportedLanguage, NavTranslation> = {
         vietQrTitle: 'Chuyển khoản VietQR',
         vietQrDesc: 'Quét mã QR để thanh toán sau khi đặt hàng.',
         vietQrDemoNotice: 'Thanh toán thử trong môi trường demo, không phát sinh giao dịch thật.',
+        vnpayTitle: 'Cổng thanh toán VNPAY',
+        vnpayDesc: 'Chuyển sang cổng VNPAY để thanh toán bằng thẻ ATM, Visa/Mastercard hoặc QR.',
         codTitle: 'Thanh toán khi nhận hàng',
         codDesc: 'Trả tiền mặt khi nhận được sản phẩm.',
         groupFromSpot: 'Từ {spot}',
@@ -611,6 +615,8 @@ export const NAV_TRANSLATIONS: Record<SupportedLanguage, NavTranslation> = {
         vietQrTitle: 'VietQR transfer',
         vietQrDesc: 'Scan the QR code to pay after placing your order.',
         vietQrDemoNotice: 'Test payment in a demo environment, no real transaction is made.',
+        vnpayTitle: 'VNPAY payment gateway',
+        vnpayDesc: 'Continue to VNPAY to pay by ATM card, Visa/Mastercard or QR.',
         codTitle: 'Cash on delivery',
         codDesc: 'Pay in cash when you receive the products.',
         groupFromSpot: 'From {spot}',
@@ -820,6 +826,8 @@ export const NAV_TRANSLATIONS: Record<SupportedLanguage, NavTranslation> = {
         vietQrTitle: 'VietQR 振込',
         vietQrDesc: '注文後にQRコードを読み取ってお支払いください。',
         vietQrDemoNotice: 'デモ環境でのテスト決済です。実際の取引は発生しません。',
+        vnpayTitle: 'VNPAY 決済ゲートウェイ',
+        vnpayDesc: 'VNPAY に移動し、ATM カード、Visa/Mastercard、QR でお支払いください。',
         codTitle: '代金引換',
         codDesc: '商品受け取り時に現金でお支払いください。',
         groupFromSpot: '{spot} から',
@@ -1029,6 +1037,8 @@ export const NAV_TRANSLATIONS: Record<SupportedLanguage, NavTranslation> = {
         vietQrTitle: 'VietQR 계좌이체',
         vietQrDesc: '주문 후 QR 코드를 스캔하여 결제해 주세요.',
         vietQrDemoNotice: '데모 환경의 테스트 결제이며 실제 거래는 발생하지 않습니다.',
+        vnpayTitle: 'VNPAY 결제 게이트웨이',
+        vnpayDesc: 'VNPAY로 이동하여 ATM 카드, Visa/Mastercard 또는 QR로 결제하세요.',
         codTitle: '착불 결제',
         codDesc: '상품 수령 시 현금으로 결제해 주세요.',
         groupFromSpot: '{spot}에서',

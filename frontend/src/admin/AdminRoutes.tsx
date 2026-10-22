@@ -58,6 +58,12 @@ const UserListPage = lazy(() =>
 const UserDetailPage = lazy(() =>
   import('./pages/UserDetailPage').then((m) => ({ default: m.UserDetailPage }))
 );
+const OrderListPage = lazy(() =>
+  import('./pages/OrderListPage').then((m) => ({ default: m.OrderListPage }))
+);
+const OrderDetailPage = lazy(() =>
+  import('./pages/OrderDetailPage').then((m) => ({ default: m.OrderDetailPage }))
+);
 
 const PageFallback: React.FC = () => (
   <div className="adm-screen-loader" role="status" aria-live="polite">
@@ -104,6 +110,8 @@ export const AdminRoutes: React.FC = () => {
           <Route path="tin-tuc/:id" element={<NewsFormPage />} />
           <Route path="nguoi-dung" element={<UserListPage />} />
           <Route path="nguoi-dung/:id" element={<UserDetailPage />} />
+          <Route path="don-hang" element={<OrderListPage />} />
+          <Route path="don-hang/:orderCode" element={<OrderDetailPage />} />
           <Route path="*" element={<Navigate to="/quan-tri/tong-quan" replace />} />
         </Route>
       </Routes>

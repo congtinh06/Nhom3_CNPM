@@ -93,7 +93,7 @@ public class PoiContentServiceImpl implements PoiContentService {
     }
 
     @Override
-    public List<PoiGuideDto> getPoiGuides(Long zoneId) {
+    public List<PoiGuideDto> getPoiGuides(Long zoneId, boolean includePremiumTranslations) {
         List<Poi> pois = zoneId != null
                 ? poiRepository.findByZoneIdAndStatus(zoneId, "ACTIVE")
                 : poiRepository.findByStatus("ACTIVE");
@@ -104,6 +104,9 @@ public class PoiContentServiceImpl implements PoiContentService {
         List<Long> ids = pois.stream().map(Poi::getId).toList();
         Map<Long, Map<String, PoiGuideTranslationDto>> translationsByPoi = new HashMap<>();
         for (PoiTranslation t : translationRepository.findByPoiIdIn(ids)) {
+            if (!includePremiumTranslations && !"vi".equalsIgnoreCase(t.getLanguageCode())) {
+                continue;
+            }
             translationsByPoi
                     .computeIfAbsent(t.getPoi().getId(), k -> new LinkedHashMap<>())
                     .put(t.getLanguageCode(), toGuideTranslation(t));

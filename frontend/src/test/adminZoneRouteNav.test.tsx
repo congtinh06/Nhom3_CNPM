@@ -22,6 +22,8 @@ describe('Admin Navigation cho Khu vực & Lộ trình (S4)', () => {
         fullName: 'Quản Trị Viên',
         role: 'ADMIN',
         emailVerified: true,
+        plan: 'FREE',
+        premiumActive: false,
       },
       isAuthenticated: true,
       isAdmin: true,

@@ -35,6 +35,8 @@ const USER = {
   email: 'a@example.com',
   role: 'USER' as const,
   emailVerified: true,
+  plan: 'FREE' as const,
+  premiumActive: false,
 };
 
 function renderWithAuth(ui: React.ReactElement, initialPath = '/dang-nhap') {

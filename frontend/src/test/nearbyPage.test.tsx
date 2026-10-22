@@ -19,6 +19,17 @@ import { ToastProvider } from '../context/ToastContext';
 
 import { defaultMockVoices } from './setup';
 
+vi.mock('../context/PremiumContext', () => ({
+  usePremium: () => ({
+    isPremium: true,
+    plan: 'PREMIUM',
+    premiumExpiresAt: null,
+    canAccessLanguage: () => true,
+    refreshEntitlement: vi.fn(),
+  }),
+  buildPremiumPath: () => '/nang-cap',
+}));
+
 // Mock react-leaflet components since jsdom doesn't support canvas/WebGL
 vi.mock('react-leaflet', () => ({
   MapContainer: ({ children }: { children: React.ReactNode }) => (
@@ -53,7 +64,6 @@ vi.mock('react-leaflet', () => ({
 describe('NearbyPage - Clean Multilingual & Audio Narration Integration', () => {
   beforeEach(() => {
     localStorage.clear();
-    localStorage.setItem('echora:premium', '1');
     window.history.replaceState(null, '', '/diem-du-lich');
     setStoredLanguage('vi');
 
@@ -378,98 +388,6 @@ describe('NearbyPage - Clean Multilingual & Audio Narration Integration', () => 
     expect(playMock).not.toHaveBeenCalled();
   });
 
-  it('opens the simulation picker and simulates position from a preset stop', () => {
-    render(
-      <BrowserRouter>
-        <NearbyPage />
-      </BrowserRouter>
-    );
-
-    act(() => {
-      fireEvent.click(screen.getByRole('button', { name: /Cài đặt/i }));
-    });
-
-    const simBtn = screen.getByRole('button', { name: /Giả lập vị trí/i });
-    expect(simBtn).toBeInTheDocument();
-
-    act(() => {
-      fireEvent.click(simBtn);
-    });
-
-    // The picker lists the preset stops; choose the first one
-    const stopItem = document.querySelector('.sim-stop-item') as HTMLButtonElement | null;
-    expect(stopItem).toBeTruthy();
-    act(() => {
-      fireEvent.click(stopItem!);
-    });
-
-    // Verify simulation mode badge/banner appears
-    const simMatches = screen.getAllByText(/Chế độ giả lập/i);
-    expect(simMatches.length).toBeGreaterThanOrEqual(1);
-    expect(screen.getByText(/Bấm hoặc kéo chấm tròn để di chuyển/i)).toBeInTheDocument();
-
-    // Selecting a stop closes settings; reopen to see the active demo control
-    act(() => {
-      fireEvent.click(screen.getByRole('button', { name: /Cài đặt/i }));
-    });
-    expect(screen.getByRole('button', { name: /Đang giả lập/i })).toBeInTheDocument();
-  });
-
-  it('simulates position from manually entered coordinates', () => {
-    render(
-      <BrowserRouter>
-        <NearbyPage />
-      </BrowserRouter>
-    );
-
-    act(() => {
-      fireEvent.click(screen.getByRole('button', { name: /Cài đặt/i }));
-    });
-    act(() => {
-      fireEvent.click(screen.getByRole('button', { name: /Giả lập vị trí/i }));
-    });
-
-    fireEvent.change(screen.getByLabelText(/Vĩ độ/i), { target: { value: '10.7769' } });
-    fireEvent.change(screen.getByLabelText(/Kinh độ/i), { target: { value: '106.6953' } });
-
-    act(() => {
-      fireEvent.click(screen.getByRole('button', { name: /Đặt vị trí/i }));
-    });
-
-    expect(screen.getAllByText(/Chế độ giả lập/i).length).toBeGreaterThanOrEqual(1);
-
-    // Applying coordinates closes settings; reopen to see the active demo control
-    act(() => {
-      fireEvent.click(screen.getByRole('button', { name: /Cài đặt/i }));
-    });
-    expect(screen.getByRole('button', { name: /Đang giả lập/i })).toBeInTheDocument();
-  });
-
-  it('rejects invalid coordinates and keeps simulation off', () => {
-    render(
-      <BrowserRouter>
-        <NearbyPage />
-      </BrowserRouter>
-    );
-
-    act(() => {
-      fireEvent.click(screen.getByRole('button', { name: /Cài đặt/i }));
-    });
-    act(() => {
-      fireEvent.click(screen.getByRole('button', { name: /Giả lập vị trí/i }));
-    });
-
-    fireEvent.change(screen.getByLabelText(/Vĩ độ/i), { target: { value: '999' } });
-    fireEvent.change(screen.getByLabelText(/Kinh độ/i), { target: { value: '106.6953' } });
-
-    act(() => {
-      fireEvent.click(screen.getByRole('button', { name: /Đặt vị trí/i }));
-    });
-
-    expect(screen.getByText(/Toạ độ không hợp lệ/i)).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /Đang giả lập/i })).toBeNull();
-  });
-
   it('shows a one-time "location found" toast on the first GPS fix, not on later updates', () => {
     let watchCb: ((pos: any) => void) | null = null;
     const mockGeolocation = {
@@ -570,29 +488,29 @@ describe('NearbyPage - Clean Multilingual & Audio Narration Integration', () => 
 
     // 1. ~2.5 km away: no narration
     act(() => {
-      result.current.applySimulatedPosition(10.8, 106.72);
+      result.current.applyPosition(10.8, 106.72);
     });
     expect(playPoi).not.toHaveBeenCalled();
 
     // 2. Just outside the 50 m radius (~100 m north): still no narration
     act(() => {
-      result.current.applySimulatedPosition(10.77785, 106.69537);
+      result.current.applyPosition(10.77785, 106.69537);
     });
     expect(playPoi).not.toHaveBeenCalled();
 
     // 3. Inside the radius (~33 m north): auto narration starts once
     act(() => {
-      result.current.applySimulatedPosition(10.77725, 106.69537);
+      result.current.applyPosition(10.77725, 106.69537);
     });
     expect(playPoi).toHaveBeenCalledTimes(1);
     expect(playPoi).toHaveBeenCalledWith('poi-1', true);
 
     // 4. Leave the radius, then re-enter: never replays an already-narrated stop
     act(() => {
-      result.current.applySimulatedPosition(10.8, 106.72);
+      result.current.applyPosition(10.8, 106.72);
     });
     act(() => {
-      result.current.applySimulatedPosition(10.77725, 106.69537);
+      result.current.applyPosition(10.77725, 106.69537);
     });
     expect(playPoi).toHaveBeenCalledTimes(1);
   });
@@ -670,7 +588,6 @@ describe('NearbyPage - Clean Multilingual & Audio Narration Integration', () => 
           'Vị trí của tôi',
           'điểm tham quan',
           'tổng hành trình',
-          'Chế độ giả lập',
         ];
         for (const token of vietnameseOnlyTokens) {
           expect(screen.queryByText(token)).not.toBeInTheDocument();

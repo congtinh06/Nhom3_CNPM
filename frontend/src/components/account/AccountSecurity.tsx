@@ -64,7 +64,8 @@ export const AccountSecurity: React.FC = () => {
 
   return (
     <AccountSection id="security" title={t.securityTitle} description={t.securityDesc}>
-      <form className="ac-form" onSubmit={handleChangePassword} noValidate>
+      <div className="ac-security-grid">
+        <form className="ac-form ac-card" onSubmit={handleChangePassword} noValidate>
         <PasswordField
           name="oldPassword"
           label={t.oldPassword}
@@ -120,17 +121,20 @@ export const AccountSecurity: React.FC = () => {
             {submitting ? t.changingPassword : t.changePassword}
           </button>
         </div>
-      </form>
+        </form>
 
-      <div className="ac-danger">
-        <button
-          type="button"
-          className="ac-btn ac-btn-ghost"
-          onClick={handleLogoutAll}
-          disabled={loggingOutAll}
-        >
-          {loggingOutAll ? t.loggingOutAll : t.logoutAll}
-        </button>
+        <aside className="ac-card ac-danger">
+          <h3>{t.securitySessionsTitle}</h3>
+          <p>{t.logoutAllNote}</p>
+          <button
+            type="button"
+            className="ac-btn ac-btn-ghost"
+            onClick={handleLogoutAll}
+            disabled={loggingOutAll}
+          >
+            {loggingOutAll ? t.loggingOutAll : t.logoutAll}
+          </button>
+        </aside>
       </div>
     </AccountSection>
   );

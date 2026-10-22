@@ -27,3 +27,7 @@ services:
   auth-service:
     ports:
       - "8086:8086"
+
+  order-service:
+    ports:
+      - "8087:8087"

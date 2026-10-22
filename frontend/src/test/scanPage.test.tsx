@@ -3,10 +3,29 @@ import { render, screen, fireEvent, act } from '@testing-library/react';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { api } from '../api/client';
 import { PoiDetail } from '../types';
+import { PremiumProvider } from '../context/PremiumContext';
 
-const { playAudioMock, stopAudioMock } = vi.hoisted(() => ({
+const { playAudioMock, stopAudioMock, authState } = vi.hoisted(() => ({
   playAudioMock: vi.fn(),
   stopAudioMock: vi.fn(),
+  authState: { premium: true },
+}));
+
+vi.mock('../context/AuthContext', () => ({
+  useAuth: () => ({
+    status: 'authenticated',
+    isAuthenticated: true,
+    user: {
+      id: 1,
+      email: 'user@example.com',
+      fullName: 'Người dùng Echora',
+      role: 'USER',
+      emailVerified: true,
+      plan: authState.premium ? 'PREMIUM' : 'FREE',
+      premiumActive: authState.premium,
+    },
+    reloadUser: vi.fn(),
+  }),
 }));
 
 vi.mock('../hooks/useAudioPlayer', () => ({
@@ -50,10 +69,12 @@ async function renderScanPage() {
   await act(async () => {
     render(
       <MemoryRouter initialEntries={['/qr/qr-dinh-doc-lap-01']}>
-        <Routes>
-          <Route path="/qr/:token" element={<ScanPage />} />
-          <Route path="/nang-cap" element={<div>Trang nâng cấp Premium</div>} />
-        </Routes>
+        <PremiumProvider>
+          <Routes>
+            <Route path="/qr/:token" element={<ScanPage />} />
+            <Route path="/nang-cap" element={<div>Trang nâng cấp Premium</div>} />
+          </Routes>
+        </PremiumProvider>
       </MemoryRouter>
     );
   });
@@ -63,7 +84,7 @@ describe('ScanPage language chips', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     localStorage.clear();
-    localStorage.setItem('echora:premium', '1');
+    authState.premium = true;
     vi.spyOn(api, 'getPoiByQr').mockResolvedValue(mockDetail);
   });
 
@@ -100,7 +121,7 @@ describe('ScanPage language chips', () => {
   });
 
   it('routes free users to Premium instead of loading a locked language', async () => {
-    localStorage.removeItem('echora:premium');
+    authState.premium = false;
     await renderScanPage();
 
     await act(async () => {

@@ -17,6 +17,8 @@ const adminUser: AuthUser = {
   fullName: 'Quản Trị Viên',
   role: 'ADMIN',
   emailVerified: true,
+  plan: 'FREE',
+  premiumActive: false,
 };
 
 describe('AdminLoginPage', () => {
@@ -61,7 +63,7 @@ describe('AdminLoginPage', () => {
     );
     const passwordInput = screen.getByLabelText(/^mật khẩu/i);
     expect(passwordInput).toHaveAttribute('type', 'password');
-    expect(passwordInput).not.toHaveAttribute('placeholder');
+    expect(passwordInput).toHaveAttribute('placeholder', 'Nhập mật khẩu quản trị');
     expect(screen.getByRole('button', { name: 'Đăng nhập' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /hiện mật khẩu|ẩn mật khẩu/i })).not.toBeInTheDocument();
     expect(screen.queryByText(/audio guide/i)).not.toBeInTheDocument();
@@ -150,6 +152,8 @@ describe('AdminLoginPage', () => {
       fullName: 'Khách Hàng',
       role: 'USER',
       emailVerified: true,
+      plan: 'FREE',
+      premiumActive: false,
     };
     mockLogin.mockResolvedValue(regularUser);
 

@@ -238,6 +238,46 @@
   line-height: 1.5 !important;
 }
 
+/* Premium activation status */
+.result-activation-status {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: -8px 0 24px;
+  padding: 11px 14px;
+  border: 1px solid #e7e5e4;
+  border-radius: 6px;
+  background-color: #fafaf9;
+  color: #57534e;
+  font-size: 13px;
+  line-height: 1.5;
+  text-align: left;
+}
+
+.result-activation-status svg {
+  flex: 0 0 auto;
+  margin-top: 2px;
+}
+
+.result-activation-status.is-timeout {
+  border-color: #fed7aa;
+  background-color: #fff7ed;
+  color: #9a3412;
+}
+
+.result-pending .result-subtitle {
+  margin-bottom: 20px !important;
+}
+
+.result-primary-btn:disabled {
+  cursor: wait;
+  opacity: 0.72;
+}
+
+.result-primary-btn:disabled:hover {
+  background-color: #c2410c !important;
+}
+
 /* Loading Box */
 .result-loading-box {
   background-color: #FFFFFF !important;

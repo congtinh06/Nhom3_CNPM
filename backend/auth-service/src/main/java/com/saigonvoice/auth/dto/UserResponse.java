@@ -21,6 +21,9 @@ public class UserResponse {
     private String email;
     private String role;
     private boolean emailVerified;
+    private String plan;
+    private boolean premiumActive;
+    private LocalDateTime premiumExpiresAt;
     private LocalDateTime createdAt;
 
     public static UserResponse from(User user) {
@@ -30,6 +33,9 @@ public class UserResponse {
                 .email(user.getEmail())
                 .role(user.getRole().name())
                 .emailVerified(user.isEmailVerified())
+                .plan(user.effectivePlan().name())
+                .premiumActive(user.hasActivePremium())
+                .premiumExpiresAt(user.getPremiumExpiresAt())
                 .createdAt(user.getCreatedAt())
                 .build();
     }

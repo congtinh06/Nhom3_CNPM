@@ -107,7 +107,7 @@
 }
 
 .food-hero-title {
-  font-family: Anton, Impact, "Times New Roman", sans-serif;
+  font-family: var(--font-display, Anton, Impact, "Times New Roman", sans-serif);
   font-size: clamp(28px, 4.5vw, 44px);
   line-height: 1.15;
   letter-spacing: 0.02em;
@@ -378,7 +378,7 @@
 }
 
 .food-sidebar-header .sidebar-title {
-  font-family: Anton, Impact, sans-serif;
+  font-family: var(--font-display, Anton, Impact, sans-serif);
   font-size: 16px;
   letter-spacing: 0.04em;
   margin: 0;
@@ -559,7 +559,7 @@
 }
 
 .catalog-heading {
-  font-family: Anton, Impact, sans-serif;
+  font-family: var(--font-display, Anton, Impact, sans-serif);
   font-size: 22px;
   letter-spacing: 0.02em;
   color: var(--fb-deep-brown);
@@ -792,7 +792,7 @@
 }
 
 .food-card-placeholder .placeholder-name {
-  font-family: Anton, sans-serif;
+  font-family: var(--font-display, Anton, sans-serif);
   font-size: 16px;
   color: #FFF;
 }
@@ -897,7 +897,7 @@
 }
 
 .food-card-title {
-  font-family: Anton, Impact, sans-serif;
+  font-family: var(--font-display, Anton, Impact, sans-serif);
   font-size: 18px;
   line-height: 1.25;
   color: var(--fb-deep-brown);
@@ -1020,7 +1020,7 @@
 }
 
 .food-empty-state-card .empty-title {
-  font-family: Anton, sans-serif;
+  font-family: var(--font-display, Anton, sans-serif);
   font-size: 20px;
   color: var(--fb-deep-brown);
   margin: 0 0 8px;
@@ -1366,7 +1366,7 @@
 }
 
 .food-modal-title {
-  font-family: Anton, Impact, sans-serif;
+  font-family: var(--font-display, Anton, Impact, sans-serif);
   font-size: 26px;
   color: var(--fb-deep-brown);
   margin: 0 0 10px;
@@ -1649,7 +1649,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  font-family: Anton, sans-serif;
+  font-family: var(--font-display, Anton, sans-serif);
   font-size: 16px;
   color: var(--fb-deep-brown);
 }

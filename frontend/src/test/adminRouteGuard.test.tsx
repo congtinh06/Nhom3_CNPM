@@ -82,6 +82,8 @@ describe('AdminRouteGuard', () => {
       fullName: 'Khách Du Lịch',
       role: 'USER',
       emailVerified: true,
+      plan: 'FREE',
+      premiumActive: false,
     };
 
     mockUseAuth.mockReturnValue({
@@ -111,6 +113,8 @@ describe('AdminRouteGuard', () => {
       fullName: 'Quản Trị Viên',
       role: 'ADMIN',
       emailVerified: true,
+      plan: 'FREE',
+      premiumActive: false,
     };
 
     mockUseAuth.mockReturnValue({

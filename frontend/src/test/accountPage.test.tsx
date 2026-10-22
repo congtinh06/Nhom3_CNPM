@@ -3,6 +3,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { AccountPage } from '../pages/AccountPage';
 import { AuthProvider } from '../context/AuthContext';
+import { PremiumProvider } from '../context/PremiumContext';
 import { ToastProvider } from '../context/ToastContext';
 import { authApi } from '../api/auth';
 import { getMyOrders } from '../services/orderService';
@@ -33,6 +34,9 @@ const MOCK_USER: AuthUser = {
   fullName: 'Nguyễn Văn A',
   role: 'USER',
   emailVerified: true,
+  plan: 'PREMIUM',
+  premiumActive: true,
+  premiumExpiresAt: '2027-01-15T08:00:00Z',
   createdAt: '2026-01-15T08:00:00Z',
 };
 
@@ -54,7 +58,9 @@ function renderAccount() {
     <MemoryRouter initialEntries={['/tai-khoan']}>
       <ToastProvider>
         <AuthProvider>
-          <AccountPage />
+          <PremiumProvider>
+            <AccountPage />
+          </PremiumProvider>
         </AuthProvider>
       </ToastProvider>
     </MemoryRouter>
@@ -66,7 +72,6 @@ describe('AccountPage', () => {
     vi.clearAllMocks();
     tokenStore.clear();
     localStorage.clear();
-    localStorage.setItem('echora:premium', '1');
     vi.mocked(authApi.refresh).mockResolvedValue({
       accessToken: 'tok',
       expiresIn: 900,
@@ -201,6 +206,17 @@ describe('AccountPage', () => {
 
     expect(await screen.findByRole('heading', { level: 2, name: 'Tùy chọn hiển thị' })).toBeInTheDocument();
     expect(screen.queryByRole('heading', { level: 2, name: 'Bảo mật tài khoản' })).not.toBeInTheDocument();
+  });
+
+  it('hiển thị quyền Premium trong tab Premium', async () => {
+    renderAccount();
+
+    const premiumTab = await screen.findByRole('tab', { name: 'Premium' });
+    fireEvent.click(premiumTab);
+
+    expect(await screen.findByRole('heading', { level: 2, name: 'Premium' })).toBeInTheDocument();
+    expect(screen.getAllByText('Premium đang hoạt động').length).toBeGreaterThan(0);
+    expect(screen.getByText(/15\/01\/2027/)).toBeInTheDocument();
   });
 
   it('đăng xuất khi bấm nút Đăng xuất', async () => {

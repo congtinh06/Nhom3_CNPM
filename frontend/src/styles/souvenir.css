@@ -189,4 +189,115 @@
   color: var(--fb-text-muted, #7d6f64);
 }
 
+.souvenir-carousel {
+  position: relative;
+}
+
+.souvenir-carousel-viewport {
+  overflow: hidden;
+  border-radius: var(--fb-radius-md, 10px);
+  cursor: grab;
+  touch-action: pan-y;
+  outline: none;
+}
+
+.souvenir-carousel-viewport:focus-visible {
+  outline: 2px solid var(--fb-orange-brown, #a15c2b);
+  outline-offset: 4px;
+}
+
+.souvenir-carousel-viewport.is-dragging {
+  cursor: grabbing;
+  user-select: none;
+}
+
+.souvenir-carousel-viewport img {
+  -webkit-user-drag: none;
+  user-select: none;
+}
+
+.souvenir-carousel-track {
+  display: flex;
+  gap: var(--souvenir-gap, 16px);
+  transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform;
+}
+
+.souvenir-carousel-item {
+  flex: 0 0
+    calc(
+      (100% - (var(--souvenir-visible, 3) - 1) * var(--souvenir-gap, 16px)) /
+        var(--souvenir-visible, 3)
+    );
+  min-width: 0;
+  display: flex;
+}
+
+.souvenir-carousel-item > * {
+  width: 100%;
+}
+
+.souvenir-carousel-arrow {
+  position: absolute;
+  top: 50%;
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 1px solid var(--fb-border, #e3d7c9);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.96);
+  color: var(--fb-deep-brown, #3b2a1f);
+  box-shadow: 0 6px 18px rgba(59, 42, 31, 0.12);
+  transform: translateY(-50%);
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease, opacity 0.2s ease;
+}
+
+.souvenir-carousel-arrow.is-prev {
+  left: 8px;
+}
+
+.souvenir-carousel-arrow.is-next {
+  right: 8px;
+}
+
+.souvenir-carousel-arrow:hover:not(:disabled) {
+  background: var(--fb-orange-brown, #a15c2b);
+  border-color: var(--fb-orange-brown, #a15c2b);
+  color: #fff;
+}
+
+.souvenir-carousel-arrow:focus-visible {
+  outline: 2px solid var(--fb-orange-brown, #a15c2b);
+  outline-offset: 3px;
+}
+
+.souvenir-carousel-arrow:disabled {
+  opacity: 0;
+  pointer-events: none;
+}
+
+@media (max-width: 640px) {
+  .souvenir-strip {
+    padding: 22px 16px;
+  }
+
+  .souvenir-carousel-arrow {
+    width: 34px;
+    height: 34px;
+  }
+
+  .souvenir-carousel-arrow.is-prev {
+    left: 4px;
+  }
+
+  .souvenir-carousel-arrow.is-next {
+    right: 4px;
+  }
+}
+
 

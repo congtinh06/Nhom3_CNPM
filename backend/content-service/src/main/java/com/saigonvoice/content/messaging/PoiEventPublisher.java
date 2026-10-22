@@ -38,7 +38,7 @@ public class PoiEventPublisher {
     public void publish(String routingKey, Object payload) {
         CorrelationData correlation = new CorrelationData(UUID.randomUUID().toString());
         try {
-            rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE_NAME, routingKey, payload, correlation);
+           rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE_NAME, routingKey, payload, correlation);
         } catch (AmqpException ex) {
             throw new EventPublishException("Cannot send to broker: " + ex.getMessage(), ex);
         }

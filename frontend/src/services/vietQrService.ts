@@ -118,7 +118,18 @@ export const getVietQrPaymentStatus = async (
   orderCode: string,
   currentUserId?: number
 ): Promise<{ status: BackendOrder['status']; paymentStatus?: BackendOrder['paymentStatus']; expiresAt: string }> => {
-  const order = getLocalOrderByCode(orderCode) ?? (await getOrderByCode(orderCode));
+  const cached = getLocalOrderByCode(orderCode);
+  let remote: BackendOrder | null = null;
+
+  if (!cached || cached.status === 'PENDING_PAYMENT') {
+    try {
+      remote = await getOrderByCode(orderCode);
+    } catch {
+      remote = null;
+    }
+  }
+
+  const order = remote ?? cached ?? (await getOrderByCode(orderCode));
   if (!order) {
     throw new VietQrError('ORDER_NOT_FOUND', 'Không tìm thấy đơn hàng.');
   }

@@ -26,10 +26,9 @@ public class AudioController {
 
     private static final long CHUNK_SIZE = 1024 * 1024L; // 1 MB chunk for range streaming
 
-    // File names embed an 8-char content hash, so an audio response is immutable and
-    // safe to cache. max-age=86400 lets mobile clients and the CDN reuse the bytes
-    // instead of re-fetching on every play.
-    private static final String AUDIO_CACHE_CONTROL = "public, max-age=86400";
+    // Audio is account-gated, so shared caches must never serve one user's
+    // authorized response to another user.
+    private static final String AUDIO_CACHE_CONTROL = "private, max-age=86400";
 
     private final AudioStorageService audioStorageService;
 

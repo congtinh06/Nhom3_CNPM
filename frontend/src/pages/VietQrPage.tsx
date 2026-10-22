@@ -153,23 +153,26 @@ export const VietQrPage = () => {
     }
   };
 
-  const handleSimulatePaid = () => {
+  const handleSimulatePaid = async () => {
     if (!orderCode || !info || isExpired) return;
     setSimulating(true);
-    const updated = markVietQrOrderPaid(orderCode);
-    if (updated) {
-      goToSuccess();
-    } else {
-      showToast('Không tìm thấy đơn hàng.');
+    try {
+      const updated = await markVietQrOrderPaid(orderCode);
+      if (updated) {
+        goToSuccess();
+      } else {
+        showToast('Không thể xác nhận thanh toán. Vui lòng thử lại.');
+      }
+    } finally {
       setSimulating(false);
     }
   };
 
-  const handleRegenerate = () => {
+  const handleRegenerate = async () => {
     if (!orderCode) return;
-    const expiry = renewVietQrOrderExpiry(orderCode);
+    const expiry = await renewVietQrOrderExpiry(orderCode);
     if (!expiry) {
-      showToast('Không tìm thấy đơn hàng.');
+      showToast('Không thể gia hạn mã QR. Vui lòng thử lại.');
       return;
     }
     showToast('Đã tạo mã QR mới.');

@@ -3,9 +3,11 @@ package com.saigonvoice.auth.service;
 import com.saigonvoice.auth.dto.AuthResponse;
 import com.saigonvoice.auth.dto.ChangePasswordRequest;
 import com.saigonvoice.auth.dto.CookieResult;
+import com.saigonvoice.auth.dto.EntitlementResponse;
 import com.saigonvoice.auth.dto.GoogleLoginRequest;
 import com.saigonvoice.auth.dto.LoginRequest;
 import com.saigonvoice.auth.dto.MessageResponse;
+import com.saigonvoice.auth.dto.PremiumActivationRequest;
 import com.saigonvoice.auth.dto.RegisterRequest;
 import com.saigonvoice.auth.dto.ResetPasswordRequest;
 import com.saigonvoice.auth.dto.UserResponse;
@@ -14,6 +16,7 @@ import com.saigonvoice.auth.entity.EmailVerificationToken;
 import com.saigonvoice.auth.entity.PasswordResetToken;
 import com.saigonvoice.auth.entity.RefreshToken;
 import com.saigonvoice.auth.entity.User;
+import com.saigonvoice.auth.entity.UserPlan;
 import com.saigonvoice.auth.entity.UserRole;
 import com.saigonvoice.auth.entity.UserStatus;
 import com.saigonvoice.auth.exception.BadRequestException;
@@ -514,6 +517,48 @@ public class AuthServiceImpl implements AuthService {
         return userRepository.findById(userId)
                 .map(UserResponse::from)
                 .orElseThrow(() -> new NotFoundException("Không tìm thấy người dùng."));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public EntitlementResponse entitlement(Long userId) {
+        return userRepository.findById(userId)
+                .map(EntitlementResponse::from)
+                .orElseThrow(() -> new NotFoundException("Không tìm thấy người dùng."));
+    }
+
+    @Override
+    @Transactional
+    public EntitlementResponse activatePremium(Long userId, PremiumActivationRequest request) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("Không tìm thấy người dùng."));
+
+        String orderCode = request.getOrderCode().trim();
+        if (orderCode.equals(user.getPremiumSourceOrderCode())) {
+            return EntitlementResponse.from(user);
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime requested = request.getExpiresAt();
+        LocalDateTime target = requested == null || !requested.isAfter(now)
+                ? now.plusYears(1)
+                : requested;
+        LocalDateTime maximum = now.plusYears(10);
+        if (target.isAfter(maximum)) {
+            target = maximum;
+        }
+        if (user.getPremiumExpiresAt() != null && user.getPremiumExpiresAt().isAfter(target)) {
+            target = user.getPremiumExpiresAt();
+        }
+
+        user.setPlan(UserPlan.PREMIUM);
+        user.setPremiumExpiresAt(target);
+        user.setPremiumSourceOrderCode(orderCode);
+        user.setUpdatedAt(now);
+        userRepository.save(user);
+
+        log.info("Da kich hoat Premium userId={} orderCode={} expiresAt={}", userId, orderCode, target);
+        return EntitlementResponse.from(user);
     }
 
     // -------------------------------------------------------------- INTERNALS

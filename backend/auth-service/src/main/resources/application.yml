@@ -19,6 +19,9 @@ spring:
     encoding: UTF-8
     locations: classpath:db/migration
 
+internal:
+  api-key: ${INTERNAL_API_KEY:}
+
 app:
   jwt:
     # Bắt buộc ở production. Rỗng -> fail-closed: ứng dụng không khởi động được.

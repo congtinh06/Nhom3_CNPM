@@ -1,131 +1,62 @@
-import React, {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-} from 'react';
-import { SupportedLanguage } from '../types';
+import React, { createContext, useCallback, useContext, useMemo } from 'react';
+import { AuthPlan, SupportedLanguage } from '../types';
+import { useAuth } from './AuthContext';
 
 export const FREE_LANGUAGES: SupportedLanguage[] = ['vi'];
 export const PREMIUM_LANGUAGES: SupportedLanguage[] = ['en', 'ja', 'ko'];
-export const PREMIUM_STORAGE_KEY = 'echora:premium';
-const PREMIUM_CHANGE_EVENT = 'echora:premium-change';
 
 export function isPremiumLanguage(language: SupportedLanguage): boolean {
   return PREMIUM_LANGUAGES.includes(language);
 }
 
-export function readStoredPremium(): boolean {
-  try {
-    return localStorage.getItem(PREMIUM_STORAGE_KEY) === '1';
-  } catch {
-    return false;
-  }
-}
-
-function persistPremium(value: boolean): void {
-  try {
-    if (value) {
-      localStorage.setItem(PREMIUM_STORAGE_KEY, '1');
-    } else {
-      localStorage.removeItem(PREMIUM_STORAGE_KEY);
-    }
-  } catch {
-    // Ignore storage errors so the in-memory state still works.
-  }
-  window.dispatchEvent(new CustomEvent(PREMIUM_CHANGE_EVENT, { detail: value }));
-}
-
 export interface PremiumContextValue {
   isPremium: boolean;
+  plan: AuthPlan;
+  premiumExpiresAt: string | null;
   canAccessLanguage: (language: SupportedLanguage) => boolean;
-  activatePremium: () => void;
-  deactivatePremium: () => void;
+  refreshEntitlement: () => Promise<void>;
 }
 
 const PremiumContext = createContext<PremiumContextValue | null>(null);
 
+const FALLBACK_PREMIUM: PremiumContextValue = {
+  isPremium: false,
+  plan: 'FREE',
+  premiumExpiresAt: null,
+  canAccessLanguage: (language) => FREE_LANGUAGES.includes(language),
+  refreshEntitlement: async () => undefined,
+};
+
 export const PremiumProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [isPremium, setIsPremium] = useState<boolean>(readStoredPremium);
-
-  useEffect(() => {
-    const syncFromStorage = () => setIsPremium(readStoredPremium());
-    const handleCustomChange = (event: Event) => {
-      const customEvent = event as CustomEvent<boolean>;
-      setIsPremium(Boolean(customEvent.detail));
-    };
-
-    window.addEventListener(PREMIUM_CHANGE_EVENT, handleCustomChange);
-    window.addEventListener('storage', syncFromStorage);
-    return () => {
-      window.removeEventListener(PREMIUM_CHANGE_EVENT, handleCustomChange);
-      window.removeEventListener('storage', syncFromStorage);
-    };
-  }, []);
-
-  const activatePremium = useCallback(() => {
-    persistPremium(true);
-    setIsPremium(true);
-  }, []);
-
-  const deactivatePremium = useCallback(() => {
-    persistPremium(false);
-    setIsPremium(false);
-  }, []);
+  const { user, reloadUser } = useAuth();
+  const isPremium = user?.plan === 'PREMIUM' && user?.premiumActive === true;
+  const plan: AuthPlan = isPremium ? 'PREMIUM' : 'FREE';
 
   const canAccessLanguage = useCallback(
     (language: SupportedLanguage) => isPremium || FREE_LANGUAGES.includes(language),
     [isPremium]
   );
 
-  const value = useMemo(
-    () => ({ isPremium, canAccessLanguage, activatePremium, deactivatePremium }),
-    [isPremium, canAccessLanguage, activatePremium, deactivatePremium]
+  const refreshEntitlement = useCallback(async () => {
+    await reloadUser();
+  }, [reloadUser]);
+
+  const value = useMemo<PremiumContextValue>(
+    () => ({
+      isPremium,
+      plan,
+      premiumExpiresAt: user?.premiumExpiresAt ?? null,
+      canAccessLanguage,
+      refreshEntitlement,
+    }),
+    [isPremium, plan, user?.premiumExpiresAt, canAccessLanguage, refreshEntitlement]
   );
 
   return <PremiumContext.Provider value={value}>{children}</PremiumContext.Provider>;
 };
 
 export function usePremium(): PremiumContextValue {
-  const context = useContext(PremiumContext);
-  const [fallbackPremium, setFallbackPremium] = useState<boolean>(readStoredPremium);
-
-  useEffect(() => {
-    if (context) return;
-    const syncFromStorage = () => setFallbackPremium(readStoredPremium());
-    const handleCustomChange = (event: Event) => {
-      const customEvent = event as CustomEvent<boolean>;
-      setFallbackPremium(Boolean(customEvent.detail));
-    };
-
-    window.addEventListener(PREMIUM_CHANGE_EVENT, handleCustomChange);
-    window.addEventListener('storage', syncFromStorage);
-    return () => {
-      window.removeEventListener(PREMIUM_CHANGE_EVENT, handleCustomChange);
-      window.removeEventListener('storage', syncFromStorage);
-    };
-  }, [context]);
-
-  const fallbackValue = useMemo<PremiumContextValue>(
-    () => ({
-      isPremium: fallbackPremium,
-      canAccessLanguage: (language) =>
-        fallbackPremium || FREE_LANGUAGES.includes(language),
-      activatePremium: () => {
-        persistPremium(true);
-        setFallbackPremium(true);
-      },
-      deactivatePremium: () => {
-        persistPremium(false);
-        setFallbackPremium(false);
-      },
-    }),
-    [fallbackPremium]
-  );
-
-  return context ?? fallbackValue;
+  return useContext(PremiumContext) ?? FALLBACK_PREMIUM;
 }
 
 export function buildPremiumPath(

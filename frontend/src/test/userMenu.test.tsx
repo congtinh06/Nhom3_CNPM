@@ -23,6 +23,8 @@ const MOCK_USER: AuthUser = {
   fullName: 'Nguyễn Văn A',
   role: 'USER',
   emailVerified: true,
+  plan: 'FREE',
+  premiumActive: false,
 };
 
 function renderUserMenu() {

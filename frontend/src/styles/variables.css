@@ -5,6 +5,7 @@
   --white: #ffffff;
   --page: #f1ece2;
   --ink: #1c1410;
+  --nav-font-size: 14px;
   box-sizing: border-box;
   padding-top: env(safe-area-inset-top, 0px);
   padding-bottom: env(safe-area-inset-bottom, 0px);

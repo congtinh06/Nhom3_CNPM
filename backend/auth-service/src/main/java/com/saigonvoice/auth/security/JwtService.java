@@ -28,6 +28,7 @@ public class JwtService {
     public static final String CLAIM_EMAIL = "email";
     public static final String CLAIM_ROLE = "role";
     public static final String CLAIM_STATUS = "status";
+    public static final String CLAIM_PLAN = "plan";
 
     private static final int MIN_SECRET_LENGTH = 32;
 
@@ -70,6 +71,7 @@ public class JwtService {
                 .claim(CLAIM_EMAIL, user.getEmail())
                 .claim(CLAIM_ROLE, user.getRole().name())
                 .claim(CLAIM_STATUS, user.getStatus().name())
+                .claim(CLAIM_PLAN, user.effectivePlan().name())
                 .issuedAt(Date.from(now.atZone(ZoneId.systemDefault()).toInstant()))
                 .expiration(Date.from(now.plus(accessTtl).atZone(ZoneId.systemDefault()).toInstant()))
                 .signWith(key, Jwts.SIG.HS256)

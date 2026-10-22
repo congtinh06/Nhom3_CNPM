@@ -92,6 +92,8 @@ describe('GoogleSignInButton', () => {
         email: 'khach@saigonvoice.local',
         role: 'USER',
         emailVerified: true,
+        plan: 'FREE',
+        premiumActive: false,
         createdAt: new Date().toISOString(),
       },
     });

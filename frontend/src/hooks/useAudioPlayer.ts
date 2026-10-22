@@ -54,6 +54,7 @@ export const useAudioPlayer = () => {
   const [playerState, setPlayerState] = useState<PlayerState>('idle');
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const objectUrlRef = useRef<string | null>(null);
   const rateLimitedUntilRef = useRef<number>(0);
   const playTokenRef = useRef<number>(0);
 
@@ -61,9 +62,18 @@ export const useAudioPlayer = () => {
     // Invalidate any pending async speech resolution (e.g. waiting for voices).
     playTokenRef.current += 1;
     if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.currentTime = 0;
+      const audio = audioRef.current;
+      audio.oncanplay = null;
+      audio.onended = null;
+      audio.onerror = null;
+      audio.pause();
+      audio.currentTime = 0;
+      audio.removeAttribute('src');
       audioRef.current = null;
+    }
+    if (objectUrlRef.current) {
+      URL.revokeObjectURL(objectUrlRef.current);
+      objectUrlRef.current = null;
     }
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
       window.speechSynthesis.cancel();
@@ -109,42 +119,58 @@ export const useAudioPlayer = () => {
         setPlayerState('loading');
         setPlayingPoiId(poiId);
 
-        const fullAudioUrl = api.getAudioUrl(audioUrl);
-        const audio = getSharedAudio();
-        audio.src = fullAudioUrl;
-        audio.playbackRate = 1;
-        audio.currentTime = 0;
-        audioRef.current = audio;
+        const token = playTokenRef.current;
+        const loadAndPlay = async () => {
+          try {
+            const blob = await api.getAudioBlob(audioUrl);
+            if (token !== playTokenRef.current) return;
 
-        audio.oncanplay = () => {
-          if (audioRef.current === audio) {
-            setPlayerState('playing');
+            const objectUrl = URL.createObjectURL(blob);
+            if (token !== playTokenRef.current) {
+              URL.revokeObjectURL(objectUrl);
+              return;
+            }
+
+            objectUrlRef.current = objectUrl;
+            const audio = getSharedAudio();
+            audio.src = objectUrl;
+            audio.playbackRate = 1;
+            audio.currentTime = 0;
+            audioRef.current = audio;
+
+            audio.oncanplay = () => {
+              if (audioRef.current === audio) {
+                setPlayerState('playing');
+              }
+            };
+
+            audio.onended = () => {
+              if (audioRef.current === audio) {
+                stopAudio();
+              }
+            };
+
+            audio.onerror = () => {
+              console.warn('[useAudioPlayer] audio element failed to load or play', audio.error);
+              if (audioRef.current === audio) {
+                stopAudio();
+                showToast('Không phát được thuyết minh.');
+              }
+            };
+
+            await audio.play();
+            if (token !== playTokenRef.current) return;
+            fireAnalytics(poiId, lang);
+          } catch (err) {
+            console.warn('[useAudioPlayer] authenticated audio load or play failed', err);
+            if (token === playTokenRef.current) {
+              stopAudio();
+              showToast('Không phát được thuyết minh.');
+            }
           }
         };
 
-        audio.onended = () => {
-          if (audioRef.current === audio) {
-            stopAudio();
-          }
-        };
-
-        audio.onerror = () => {
-          console.warn('[useAudioPlayer] audio element failed to load or play', audio.error);
-          if (audioRef.current === audio) {
-            stopAudio();
-            showToast('Không phát được thuyết minh.');
-          }
-        };
-
-        audio.play().then(() => {
-          fireAnalytics(poiId, lang);
-        }).catch((err) => {
-          console.warn('[useAudioPlayer] audio.play() rejected', err);
-          if (audioRef.current === audio) {
-            stopAudio();
-            showToast('Không phát được thuyết minh.');
-          }
-        });
+        void loadAndPlay();
         return;
       }
 

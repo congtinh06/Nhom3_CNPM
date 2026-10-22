@@ -178,6 +178,30 @@ export const api = {
     return `${BASE_URL}${cleanPath}`;
   },
 
+  getAudioBlob: async (
+    audioPathOrFileName: string,
+    signal?: AbortSignal
+  ): Promise<Blob> => {
+    if (!audioPathOrFileName) {
+      throw new Error('Missing audio path');
+    }
+    if (audioPathOrFileName.startsWith('http://') || audioPathOrFileName.startsWith('https://')) {
+      const response = await axios.get<Blob>(audioPathOrFileName, {
+        responseType: 'blob',
+        signal,
+      });
+      return response.data;
+    }
+    const cleanPath = audioPathOrFileName.startsWith('/')
+      ? audioPathOrFileName
+      : `/api/tts/audio/${audioPathOrFileName}`;
+    const response = await apiClient.get<Blob>(cleanPath, {
+      responseType: 'blob',
+      signal,
+    });
+    return response.data;
+  },
+
   recordAnalyticsEvent: async (event: CreateAnalyticsEventRequest): Promise<void> => {
     await apiClient.post<void>('/api/analytics/events', event);
   },

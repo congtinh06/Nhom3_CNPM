@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
-import { MapContainer, Marker, Popup, Circle, useMap, useMapEvents } from 'react-leaflet';
+import { MapContainer, Marker, Popup, Circle, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { SupportedLanguage } from '../../types';
@@ -329,26 +329,6 @@ const FloatingMapControls: React.FC<FloatingMapControlsProps> = ({
   );
 };
 
-// Map click listener for simulation mode
-interface MapClickHandlerProps {
-  isSimMode: boolean;
-  onSetSimulatedPosition?: (lat: number, lng: number) => void;
-}
-
-const MapClickHandler: React.FC<MapClickHandlerProps> = ({
-  isSimMode,
-  onSetSimulatedPosition,
-}) => {
-  useMapEvents({
-    click(e) {
-      if (isSimMode && onSetSimulatedPosition) {
-        onSetSimulatedPosition(e.latlng.lat, e.latlng.lng);
-      }
-    },
-  });
-  return null;
-};
-
 import {
   TileProviderConfig,
   TILE_PROVIDERS,
@@ -549,9 +529,6 @@ interface PoiMapProps {
   radius: number;
   isAutoEnabled: boolean;
   centerOnUserToken?: number;
-  isSimMode?: boolean;
-  onToggleSimMode?: () => void;
-  onSetSimulatedPosition?: (lat: number, lng: number) => void;
   listenedPoiIds?: string[];
   onSelectPoi: (poiId: string) => void;
   onHoverPoi?: (poiId: string | null) => void;
@@ -561,7 +538,6 @@ interface PoiMapProps {
   listenBtnText: string;
   pauseBtnText: string;
   resumeBtnText?: string;
-  radiusLabelText: string;
   mapCaptionText: string;
   currentLang?: SupportedLanguage;
 }
@@ -578,9 +554,6 @@ export const PoiMap: React.FC<PoiMapProps> = ({
   radius,
   isAutoEnabled: _isAutoEnabled,
   centerOnUserToken = 0,
-  isSimMode = false,
-  onToggleSimMode,
-  onSetSimulatedPosition,
   listenedPoiIds = [],
   onSelectPoi,
   onHoverPoi,
@@ -684,47 +657,12 @@ export const PoiMap: React.FC<PoiMapProps> = ({
     iconAnchor: [10, 10],
   });
 
-  const simUserIcon = L.divIcon({
-    className: 'nearby-user-dot-wrapper',
-    html: `
-      <div class="user-position-node is-sim">
-        <div class="user-pulse-ring"></div>
-        <div class="user-blue-dot"></div>
-        <span class="user-sim-tag">${t(currentLang, 'simTag')}</span>
-      </div>
-    `,
-    iconSize: [36, 36],
-    iconAnchor: [18, 18],
-  });
-
   return (
     <div
       ref={mapWrapperRef}
       className="nearby-map-wrapper"
       aria-label={t(currentLang, 'mapAriaLabel')}
     >
-      {/* Persistent "Chế độ giả lập" overlay banner */}
-      {isSimMode && (
-        <div className="nearby-sim-banner" role="status" aria-live="polite">
-          <div className="sim-banner-left">
-            <span className="sim-pulse-dot" aria-hidden="true" />
-            <span className="sim-banner-text">
-              <strong>{t(currentLang, 'simBannerLabel')}</strong>: {t(currentLang, 'simBannerDesc')}
-            </span>
-          </div>
-          {onToggleSimMode && (
-            <button
-              type="button"
-              className="sim-banner-exit-btn"
-              onClick={onToggleSimMode}
-              title={t(currentLang, 'simBannerExitTitle')}
-            >
-              {t(currentLang, 'simBannerExit')}
-            </button>
-          )}
-        </div>
-      )}
-
       {/* Slim tile error banner - Task 1a */}
       {showTileError && (
         <div
@@ -774,11 +712,6 @@ export const PoiMap: React.FC<PoiMapProps> = ({
           {/* One-shot auto-center to the user's position after a GPS request */}
           <UserAutoCenter userPos={userPos} centerOnUserToken={centerOnUserToken} />
 
-          <MapClickHandler
-            isSimMode={isSimMode}
-            onSetSimulatedPosition={onSetSimulatedPosition}
-          />
-
           <MapController
             pois={pois}
             activePoi={activePoi}
@@ -816,19 +749,7 @@ export const PoiMap: React.FC<PoiMapProps> = ({
                   }}
                 />
               ) : null}
-              <Marker
-                position={[userPos.lat, userPos.lng]}
-                icon={isSimMode ? simUserIcon : userGpsIcon}
-                draggable={Boolean(isSimMode)}
-                eventHandlers={{
-                  dragend: (e) => {
-                    const latlng = e.target.getLatLng();
-                    if (onSetSimulatedPosition) {
-                      onSetSimulatedPosition(latlng.lat, latlng.lng);
-                    }
-                  },
-                }}
-              />
+              <Marker position={[userPos.lat, userPos.lng]} icon={userGpsIcon} />
             </>
           )}
 

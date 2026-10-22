@@ -2,10 +2,12 @@ package com.saigonvoice.auth.service;
 
 import com.saigonvoice.auth.dto.ChangePasswordRequest;
 import com.saigonvoice.auth.dto.CookieResult;
+import com.saigonvoice.auth.dto.EntitlementResponse;
 import com.saigonvoice.auth.dto.GoogleLoginRequest;
 import com.saigonvoice.auth.dto.LoginRequest;
 import com.saigonvoice.auth.dto.MessageResponse;
 import com.saigonvoice.auth.dto.RegisterRequest;
+import com.saigonvoice.auth.dto.PremiumActivationRequest;
 import com.saigonvoice.auth.dto.ResetPasswordRequest;
 import com.saigonvoice.auth.dto.UserResponse;
 import com.saigonvoice.auth.dto.VerifyEmailRequest;
@@ -35,4 +37,9 @@ public interface AuthService {
     void changePassword(Long userId, ChangePasswordRequest request, String currentRawRefreshToken);
 
     UserResponse me(Long userId);
+
+    EntitlementResponse entitlement(Long userId);
+
+    EntitlementResponse activatePremium(Long userId, PremiumActivationRequest request);
 }
+

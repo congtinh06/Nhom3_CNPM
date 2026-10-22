@@ -63,76 +63,66 @@ export const AdminLoginPage: React.FC = () => {
 
   return (
     <div className="adm-login-screen">
-      <div className="adm-login-shell">
-        <section className="adm-login-brand-panel">
-          <div className="adm-login-brand-inner">
-            <span className="adm-login-brand">{BRAND_NAME}</span>
-            <p className="adm-login-brand-desc">
-              Thuyết minh tự động cho địa điểm và quà lưu niệm
-            </p>
+      <div className="adm-login-card">
+        <header className="adm-login-head">
+          <span className="adm-login-brand">{BRAND_NAME}</span>
+          <p className="adm-login-brand-desc">Thuyết minh tự động cho địa điểm và quà lưu niệm</p>
+          <h1 className="adm-login-title">Đăng nhập quản trị</h1>
+          <p className="adm-login-subtitle">Quản lý và kiểm duyệt nội dung thuyết minh</p>
+        </header>
+
+        {error && (
+          <div className="adm-auth-err" role="alert">
+            <span>{error}</span>
           </div>
-        </section>
+        )}
 
-        <section className="adm-login-form-panel">
-          <div className="adm-login-form-inner">
-            <header className="adm-login-head">
-              <h1 className="adm-login-title">Đăng nhập quản trị</h1>
-              <p className="adm-login-subtitle">Quản lý và kiểm duyệt nội dung thuyết minh</p>
-            </header>
+        <form onSubmit={handleSubmit} className="adm-login-form" noValidate>
+          <FormField label="Email quản trị" htmlFor="adm-login-email" required>
+            <input
+              ref={emailInputRef}
+              id="adm-login-email"
+              type="email"
+              name="email"
+              autoComplete="username"
+              className="adm-input"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Nhập email quản trị"
+              disabled={submitting}
+              required
+            />
+          </FormField>
 
-            <form onSubmit={handleSubmit} className="adm-login-form" noValidate>
-              <FormField label="Email quản trị" htmlFor="adm-login-email" required>
-                <input
-                  ref={emailInputRef}
-                  id="adm-login-email"
-                  type="email"
-                  name="email"
-                  autoComplete="username"
-                  className="adm-input"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Nhập email quản trị"
-                  disabled={submitting}
-                  required
-                />
-              </FormField>
-
-              <FormField label="Mật khẩu" htmlFor="adm-login-password" required>
-                <input
-                  id="adm-login-password"
-                  type="password"
-                  name="password"
+          <FormField label="Mật khẩu" htmlFor="adm-login-password" required>
+            <input
+              id="adm-login-password"
+              type="password"
+              name="password"
                   autoComplete="current-password"
                   className="adm-input"
+                  placeholder="Nhập mật khẩu quản trị"
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  disabled={submitting}
-                  required
-                />
-              </FormField>
+              onChange={(e) => setPassword(e.target.value)}
+              disabled={submitting}
+              required
+            />
+          </FormField>
 
-              <button
-                type="submit"
-                className="adm-btn adm-btn-primary adm-login-submit"
-                disabled={submitting}
-              >
-                {submitting ? 'Đang đăng nhập...' : 'Đăng nhập'}
-              </button>
-            </form>
+          <button
+            type="submit"
+            className="adm-btn adm-btn-primary adm-login-submit"
+            disabled={submitting}
+          >
+            {submitting ? 'Đang đăng nhập...' : 'Đăng nhập'}
+          </button>
+        </form>
 
-            {error && (
-              <div className="adm-auth-err" role="alert">
-                <span>{error}</span>
-              </div>
-            )}
-
-            <div className="adm-login-foot">
-              <Link to="/" className="adm-login-back-link">
-                Quay lại trang chủ du khách
-              </Link>
-            </div>
-          </div>
-        </section>
+        <div className="adm-login-foot">
+          <Link to="/" className="adm-login-back-link">
+            Quay lại trang chủ du khách
+          </Link>
+        </div>
       </div>
     </div>
   );

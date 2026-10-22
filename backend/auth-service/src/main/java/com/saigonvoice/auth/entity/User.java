@@ -60,6 +60,17 @@ public class User {
     @Column(name = "last_login_at")
     private LocalDateTime lastLoginAt;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "`plan`", nullable = false, length = 20)
+    @Builder.Default
+    private UserPlan plan = UserPlan.FREE;
+
+    @Column(name = "premium_expires_at")
+    private LocalDateTime premiumExpiresAt;
+
+    @Column(name = "premium_source_order_code", length = 64)
+    private String premiumSourceOrderCode;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
@@ -68,5 +79,14 @@ public class User {
 
     public boolean isEmailVerified() {
         return emailVerifiedAt != null;
+    }
+
+    public boolean hasActivePremium() {
+        return plan == UserPlan.PREMIUM
+                && (premiumExpiresAt == null || premiumExpiresAt.isAfter(LocalDateTime.now()));
+    }
+
+    public UserPlan effectivePlan() {
+        return hasActivePremium() ? UserPlan.PREMIUM : UserPlan.FREE;
     }
 }

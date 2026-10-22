@@ -327,7 +327,7 @@ export const Header: React.FC = () => {
             }}
           >
             <CountryFlag code={currentOption.code} width={18} height={13} />
-            <span>{currentOption.short}</span>
+            <span className="lang-trigger-label">{currentOption.label}</span>
             <ChevronDown
               size={13}
               strokeWidth={1.75}
@@ -380,7 +380,13 @@ export const Header: React.FC = () => {
           type="button"
           className={`hd-premium-btn ${isPremium ? 'is-active' : ''}`}
           aria-label={isPremium ? 'Premium đang hoạt động' : 'Nâng cấp Premium'}
-          onClick={() => openPremiumPage()}
+          onClick={() => {
+            if (isPremium) {
+              navigate('/tai-khoan#premium');
+              return;
+            }
+            openPremiumPage();
+          }}
         >
           <Crown size={15} strokeWidth={1.9} aria-hidden="true" />
         </button>

@@ -141,7 +141,7 @@ export const ADMIN_MENU: AdminMenuGroup[] = [
     id: 'ops',
     label: 'Vận hành',
     items: [
-      { id: 'orders', label: 'Đơn hàng', icon: 'orders', isUpcoming: true },
+      { id: 'orders', label: 'Đơn hàng', icon: 'orders', path: '/quan-tri/don-hang' },
       { id: 'feedback', label: 'Góp ý', icon: 'feedback', isUpcoming: true },
     ],
   },
@@ -171,6 +171,7 @@ export const ADMIN_MENU_UPCOMING_BADGE = 'Sắp có';
 // Nhãn cấp chi tiết cho các trang form/:id, theo nhóm item cha.
 const DETAIL_LEAF_LABELS: Record<string, string> = {
   users: 'Chi tiết',
+  orders: 'Chi tiết',
 };
 
 function isAdminRole(role?: UserRoleValue): boolean {

@@ -8,7 +8,7 @@ import {
   RotateCcw,
   Ban,
 } from 'lucide-react';
-import { getMyOrders, cancelBackendOrder, getOrders } from '../services/orderService';
+import { getMyOrders, cancelBackendOrder, createVnPayPayment } from '../services/orderService';
 import { useCart } from '../context/CartContext';
 import { useToast } from '../context/ToastContext';
 import { useNavbarLanguage } from '../content/languages';
@@ -36,41 +36,11 @@ export const OrdersPage: React.FC = () => {
     setLoading(true);
     try {
       const data = await getMyOrders();
-      if (Array.isArray(data) && data.length > 0) {
-        setOrders(data);
-        setSelectedCode((prev) => prev || data[0]?.orderCode || null);
-      } else {
-        // Fallback: Nếu chưa có đơn backend thì đọc từ legacy local orders nếu có
-        const legacy = getOrders();
-        if (legacy.length > 0) {
-          const converted: BackendOrder[] = legacy.map((leg, idx) => ({
-            id: idx + 1,
-            orderCode: leg.id,
-            totalAmount: leg.total,
-            status: leg.status === 'Đã hủy' ? 'CANCELLED' : 'PROCESSING',
-            receiverName: leg.name,
-            phone: leg.phone,
-            address: leg.address,
-            paymentMethod: 'COD',
-            paymentStatus: 'PENDING',
-            items: leg.items.map((it) => ({
-              productId: it.key,
-              productName: it.name,
-              unitPrice: it.price,
-              quantity: it.quantity,
-            })),
-            createdAt: leg.date,
-            updatedAt: leg.date,
-          }));
-          setOrders(converted);
-          setSelectedCode((prev) => prev || converted[0]?.orderCode || null);
-        } else {
-          setOrders([]);
-          setSelectedCode(null);
-        }
-      }
+      setOrders(data);
+      setSelectedCode((prev) => prev || data[0]?.orderCode || null);
     } catch {
       setOrders([]);
+      setSelectedCode(null);
     } finally {
       setLoading(false);
     }
@@ -123,6 +93,17 @@ export const OrdersPage: React.FC = () => {
       showToast('Không thể hủy đơn hàng vào lúc này.');
     } finally {
       setCancellingCode(null);
+    }
+  };
+
+  const handleVnPayPayment = async (orderCode: string) => {
+    try {
+      const paymentUrl = await createVnPayPayment(orderCode);
+      window.location.assign(paymentUrl);
+    } catch (err: unknown) {
+      showToast(
+        err instanceof Error ? err.message : 'Không thể tạo liên kết thanh toán VNPAY.',
+      );
     }
   };
 
@@ -264,6 +245,8 @@ export const OrdersPage: React.FC = () => {
                         <span className="order-meta-value">
                           {selectedOrder.paymentMethod === 'VIETQR'
                             ? 'Chuyển khoản VietQR'
+                            : selectedOrder.paymentMethod === 'VNPAY'
+                            ? 'Cổng thanh toán VNPAY'
                             : selectedOrder.paymentMethod === 'MOCK_GATEWAY'
                             ? 'Cổng thanh toán điện tử'
                             : 'Thanh toán tiền mặt khi nhận hàng (COD)'}
@@ -349,6 +332,17 @@ export const OrdersPage: React.FC = () => {
                           >
                             <CreditCard size={15} strokeWidth={2} aria-hidden="true" />
                             <span>Mã QR thanh toán</span>
+                          </button>
+                        ) : selectedOrder.paymentMethod === 'VNPAY' ? (
+                          <button
+                            type="button"
+                            className="order-pay-now-btn"
+                            onClick={() => {
+                              void handleVnPayPayment(selectedOrder.orderCode);
+                            }}
+                          >
+                            <CreditCard size={15} strokeWidth={2} aria-hidden="true" />
+                            <span>Thanh toán VNPAY</span>
                           </button>
                         ) : selectedOrder.paymentMethod === 'MOCK_GATEWAY' ? (
                           <button

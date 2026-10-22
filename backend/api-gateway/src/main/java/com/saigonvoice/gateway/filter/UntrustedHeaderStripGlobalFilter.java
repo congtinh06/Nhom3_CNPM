@@ -17,6 +17,7 @@ import reactor.core.publisher.Mono;
 public class UntrustedHeaderStripGlobalFilter implements GlobalFilter, Ordered {
 
     public static final String HEADER_USER_ROLE = "X-User-Role";
+    public static final String HEADER_USER_PLAN = "X-User-Plan";
     public static final String HEADER_INTERNAL_API_KEY = "X-Internal-Api-Key";
     public static final String HEADER_USER_ID = "X-User-Id";
 
@@ -25,6 +26,7 @@ public class UntrustedHeaderStripGlobalFilter implements GlobalFilter, Ordered {
         ServerHttpRequest request = exchange.getRequest().mutate()
                 .headers(headers -> {
                     headers.remove(HEADER_USER_ROLE);
+                    headers.remove(HEADER_USER_PLAN);
                     headers.remove(HEADER_INTERNAL_API_KEY);
                     headers.remove(HEADER_USER_ID);
                 })

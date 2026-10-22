@@ -57,7 +57,7 @@ import java.util.stream.Stream;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@AutoConfigureWebTestClient
+@AutoConfigureWebTestClient(timeout = "30000")
 @Import(ApiGatewayApplicationTest.TestRouteConfig.class)
 class ApiGatewayApplicationTest {
 
@@ -99,6 +99,7 @@ class ApiGatewayApplicationTest {
     private static final AtomicBoolean downstreamReceivedInternalKey = new AtomicBoolean(false);
     private static final AtomicBoolean downstreamReceivedAdminKey = new AtomicBoolean(false);
     private static final AtomicInteger downstreamRequestCount = new AtomicInteger(0);
+    private static final AtomicBoolean downstreamClientWarmedUp = new AtomicBoolean(false);
     private static final AtomicReference<String> downstreamUserRole = new AtomicReference<>();
     private static final AtomicReference<String> downstreamUserId = new AtomicReference<>();
 
@@ -247,6 +248,7 @@ class ApiGatewayApplicationTest {
         registry.add("TRANSLATION_TTS_SERVICE_URL", () -> "http://127.0.0.1:" + mockPort);
         registry.add("ANALYTICS_SERVICE_URL", () -> "http://127.0.0.1:" + mockPort);
         registry.add("AUTH_SERVICE_URL", () -> "http://127.0.0.1:" + mockPort);
+        registry.add("ORDER_SERVICE_URL", () -> "http://127.0.0.1:" + mockPort);
         registry.add("JWT_SECRET", () -> TEST_JWT_SECRET);
         registry.add("INTERNAL_API_KEY", () -> TEST_INTERNAL_KEY);
         registry.add("FRONTEND_URLS", () -> "https://demo.ngrok-free.app, https://other.example.com");
@@ -256,6 +258,7 @@ class ApiGatewayApplicationTest {
 
     @BeforeEach
     void resetState() {
+        warmUpDownstreamClient();
         downstreamReceivedInternalKey.set(false);
         downstreamReceivedAdminKey.set(false);
         downstreamRequestCount.set(0);
@@ -264,6 +267,21 @@ class ApiGatewayApplicationTest {
         adminAuthFilter.setJwtSecret(TEST_JWT_SECRET);
         adminAuthFilter.setInternalApiKey(TEST_INTERNAL_KEY);
         rateLimitFilter.clearRateLimitCache();
+    }
+
+    // The first proxied request in the JVM pays Reactor Netty client bootstrap cost, which can
+    // exceed the 2s test response-timeout. Warm the client up once so timing assertions stay stable.
+    private void warmUpDownstreamClient() {
+        if (!downstreamClientWarmedUp.compareAndSet(false, true)) {
+            return;
+        }
+        try {
+            webTestClient.get().uri("/api/content/pois")
+                    .exchange()
+                    .expectStatus().isOk();
+        } catch (Throwable ignored) {
+            // Warm-up is best effort; individual tests still assert real behaviour.
+        }
     }
 
     @Test
@@ -424,8 +442,22 @@ class ApiGatewayApplicationTest {
     }
 
     @Test
-    void ttsAudioGetPathReachesDownstream() {
-        assertGetReachesDownstream("/api/tts/audio/poi_1_vi_12345678.mp3");
+    void ttsAudioGetPathReachesDownstreamWithAuthenticatedUser() {
+        int before = downstreamRequestCount.get();
+        webTestClient.get().uri("/api/tts/audio/poi_1_vi_12345678.mp3")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + USER_TOKEN)
+                .exchange()
+                .expectStatus().isOk();
+        assertThat(downstreamRequestCount.get()).isEqualTo(before + 1);
+    }
+
+    @Test
+    void ttsAudioGetWithoutTokenIsRejected() {
+        int before = downstreamRequestCount.get();
+        webTestClient.get().uri("/api/tts/audio/poi_1_vi_12345678.mp3")
+                .exchange()
+                .expectStatus().isUnauthorized();
+        assertThat(downstreamRequestCount.get()).isEqualTo(before);
     }
 
     @Test
@@ -618,6 +650,56 @@ class ApiGatewayApplicationTest {
         assertThat(downstreamReceivedAdminKey.get())
                 .as("X-Admin-Key must NOT be forwarded downstream")
                 .isFalse();
+    }
+
+    @Test
+    void adminOrderRoutesAllowOnlyExpectedMethods() {
+        webTestClient.get().uri("http://localhost:" + port + "/api/admin/orders")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + ADMIN_TOKEN)
+                .exchange()
+                .expectStatus().isOk();
+
+        webTestClient.get().uri("http://localhost:" + port + "/api/admin/orders/SV-2026-0001")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + ADMIN_TOKEN)
+                .exchange()
+                .expectStatus().isOk();
+
+        webTestClient.patch().uri("http://localhost:" + port + "/api/admin/orders/SV-2026-0001/status")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + ADMIN_TOKEN)
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue("{\"status\":\"PROCESSING\"}")
+                .exchange()
+                .expectStatus().isOk();
+
+        webTestClient.post().uri("http://localhost:" + port + "/api/admin/orders/SV-2026-0001/confirm-payment")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + ADMIN_TOKEN)
+                .exchange()
+                .expectStatus().isOk();
+
+        webTestClient.post().uri("http://localhost:" + port + "/api/admin/orders/SV-2026-0001/reject-payment")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + ADMIN_TOKEN)
+                .exchange()
+                .expectStatus().isOk();
+
+        int before = downstreamRequestCount.get();
+        webTestClient.delete().uri("http://localhost:" + port + "/api/admin/orders")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + ADMIN_TOKEN)
+                .exchange()
+                .expectStatus().isEqualTo(405);
+
+        webTestClient.post().uri("http://localhost:" + port + "/api/admin/orders")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + ADMIN_TOKEN)
+                .exchange()
+                .expectStatus().isEqualTo(405);
+
+        webTestClient.put().uri("http://localhost:" + port + "/api/admin/orders/SV-2026-0001/confirm-payment")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + ADMIN_TOKEN)
+                .exchange()
+                .expectStatus().isEqualTo(405);
+
+        assertThat(downstreamRequestCount.get())
+                .as("Disallowed admin order methods must not reach downstream")
+                .isEqualTo(before);
     }
 
     @Test
@@ -840,7 +922,7 @@ class ApiGatewayApplicationTest {
                 .expectHeader().valueEquals("Access-Control-Allow-Origin", "http://localhost:5173")
                 .expectHeader().valueEquals("Access-Control-Allow-Credentials", "true")
                 .expectHeader().value("Access-Control-Allow-Methods",
-                        v -> assertThat(v).contains("PUT").doesNotContain("PATCH").doesNotContain("DELETE"))
+                        v -> assertThat(v).contains("PUT").contains("PATCH").doesNotContain("DELETE"))
                 .expectHeader().value("Access-Control-Allow-Headers",
                         v -> assertThat(v.toLowerCase()).contains("ngrok-skip-browser-warning"));
     }
@@ -1246,6 +1328,7 @@ class ApiGatewayApplicationTest {
     void slowAudioResponseIsNotCutByGlobalResponseTimeout() {
         long start = System.currentTimeMillis();
         byte[] body = webTestClient.get().uri("/api/tts/audio/slow-probe.mp3")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + USER_TOKEN)
                 .exchange()
                 .expectStatus().isOk()
                 .expectHeader().contentType("audio/mpeg")
@@ -1322,7 +1405,7 @@ class ApiGatewayApplicationTest {
     }
 
     @ParameterizedTest(name = "[{index}] {0}")
-    @ValueSource(strings = {"PATCH", "DELETE", "TRACE"})
+    @ValueSource(strings = {"DELETE", "TRACE"})
     void preflightForMethodOutsideAllowlistIsRejected(String method) {
         webTestClient.options().uri("http://localhost:" + port + "/api/content/pois")
                 .header("Origin", "http://localhost:5173")
@@ -1333,7 +1416,7 @@ class ApiGatewayApplicationTest {
     }
 
     @ParameterizedTest(name = "[{index}] {0}")
-    @ValueSource(strings = {"GET", "POST", "PUT"})
+    @ValueSource(strings = {"GET", "POST", "PUT", "PATCH"})
     void preflightForAllowedMethodAdvertisesOnlyTheAllowlist(String method) {
         webTestClient.options().uri("http://localhost:" + port + "/api/content/pois")
                 .header("Origin", "http://localhost:5173")
@@ -1341,8 +1424,8 @@ class ApiGatewayApplicationTest {
                 .exchange()
                 .expectStatus().isOk()
                 .expectHeader().value("Access-Control-Allow-Methods", v -> assertThat(v)
-                        .contains("GET").contains("POST").contains("PUT").contains("OPTIONS")
-                        .doesNotContain("PATCH").doesNotContain("DELETE"));
+                        .contains("GET").contains("POST").contains("PUT").contains("PATCH").contains("OPTIONS")
+                        .doesNotContain("DELETE"));
     }
 
     @Test

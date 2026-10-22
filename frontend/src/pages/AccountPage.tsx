@@ -1,15 +1,27 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import {
+  CalendarDays,
+  Crown,
+  LogOut,
+  ShieldCheck,
+  ShoppingBag,
+  SlidersHorizontal,
+  UserRound,
+} from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { usePremium } from '../context/PremiumContext';
 import { useToast } from '../context/ToastContext';
 import { AccountProfile } from '../components/account/AccountProfile';
 import { AccountOrders } from '../components/account/AccountOrders';
 import { AccountSecurity } from '../components/account/AccountSecurity';
 import { AccountPreferences } from '../components/account/AccountPreferences';
+import { AccountPremium } from '../components/account/AccountPremium';
 import { useAccountI18n } from '../components/account/accountI18n';
+import { formatAccountDate } from '../components/account/accountFormatters';
 import '../styles/account.css';
 
-const VALID_TABS = ['profile', 'orders', 'security', 'preferences'] as const;
+const VALID_TABS = ['profile', 'orders', 'security', 'preferences', 'premium'] as const;
 type TabId = (typeof VALID_TABS)[number];
 
 function isValidTab(id: string): id is TabId {
@@ -18,10 +30,11 @@ function isValidTab(id: string): id is TabId {
 
 export const AccountPage: React.FC = () => {
   const { user, status, logout } = useAuth();
+  const { isPremium } = usePremium();
   const { showToast } = useToast();
   const navigate = useNavigate();
   const location = useLocation();
-  const { t } = useAccountI18n();
+  const { lang, t } = useAccountI18n();
   const tabRefs = useRef<Record<string, HTMLButtonElement | null>>({});
 
   const tabFromHash = location.hash.replace(/^#/, '');
@@ -59,13 +72,16 @@ export const AccountPage: React.FC = () => {
 
   const navItems = useMemo(
     () => [
-      { id: 'profile' as const, label: t.navProfile },
-      { id: 'orders' as const, label: t.navOrders },
-      { id: 'security' as const, label: t.navSecurity },
-      { id: 'preferences' as const, label: t.navPreferences },
+      { id: 'profile' as const, label: t.navProfile, icon: UserRound },
+      { id: 'orders' as const, label: t.navOrders, icon: ShoppingBag },
+      { id: 'security' as const, label: t.navSecurity, icon: ShieldCheck },
+      { id: 'preferences' as const, label: t.navPreferences, icon: SlidersHorizontal },
+      { id: 'premium' as const, label: t.navPremium, icon: Crown },
     ],
     [t]
   );
+
+  const memberSince = formatAccountDate(user?.createdAt, lang);
 
   const selectTab = (id: TabId) => {
     setActive(id);
@@ -108,14 +124,29 @@ export const AccountPage: React.FC = () => {
   return (
     <section className="s ac-page">
       <header className="ac-head">
-        <p className="ac-kicker">{t.kicker}</p>
-        <h1
-          className="ac-title"
-          style={{ fontFamily: 'var(--font-display, "Playfair Display", Georgia, serif)' }}
-        >
-          {t.pageTitle}
-        </h1>
-        <p className="ac-subtitle">{t.pageSubtitle}</p>
+        <div className="ac-head-copy">
+          <p className="ac-kicker">{t.kicker}</p>
+          <h1
+            className="ac-title"
+            style={{ fontFamily: 'var(--font-display, "Playfair Display", Georgia, serif)' }}
+          >
+            {t.pageTitle}
+          </h1>
+          <p className="ac-subtitle">{t.pageSubtitle}</p>
+        </div>
+
+        {!isLoading && user && (
+          <div className="ac-head-meta">
+            <span className={`ac-head-chip${isPremium ? ' is-premium' : ''}`}>
+              <Crown size={15} strokeWidth={1.9} aria-hidden="true" />
+              {isPremium ? t.planPremium : t.planFree}
+            </span>
+            <span className="ac-head-chip">
+              <CalendarDays size={15} strokeWidth={1.9} aria-hidden="true" />
+              {t.memberSince} {memberSince}
+            </span>
+          </div>
+        )}
       </header>
 
       {isLoading || !user ? (
@@ -129,8 +160,13 @@ export const AccountPage: React.FC = () => {
               <div className="ac-avatar" aria-hidden="true">
                 {initials}
               </div>
-              <span className="ac-identity-name">{user.fullName}</span>
-              <span className="ac-identity-email">{user.email}</span>
+              <div className="ac-identity-copy">
+                <span className="ac-identity-name">{user.fullName || user.email}</span>
+                <span className="ac-identity-email">{user.email}</span>
+                <span className={`ac-plan-pill${isPremium ? ' is-premium' : ''}`}>
+                  {isPremium ? t.planPremium : t.planFree}
+                </span>
+              </div>
             </div>
 
             <nav
@@ -141,6 +177,7 @@ export const AccountPage: React.FC = () => {
             >
               {navItems.map((item, index) => {
                 const isSelected = active === item.id;
+                const Icon = item.icon;
                 return (
                   <button
                     key={item.id}
@@ -157,14 +194,16 @@ export const AccountPage: React.FC = () => {
                     onClick={() => selectTab(item.id)}
                     onKeyDown={(e) => handleKeyDown(e, index)}
                   >
-                    {item.label}
+                    <Icon size={17} strokeWidth={1.9} aria-hidden="true" />
+                    <span>{item.label}</span>
                   </button>
                 );
               })}
             </nav>
 
             <button type="button" className="ac-signout" onClick={handleLogout}>
-              {t.signOut}
+              <LogOut size={16} strokeWidth={1.9} aria-hidden="true" />
+              <span>{t.signOut}</span>
             </button>
           </aside>
 
@@ -173,6 +212,7 @@ export const AccountPage: React.FC = () => {
             {active === 'orders' && <AccountOrders />}
             {active === 'security' && <AccountSecurity />}
             {active === 'preferences' && <AccountPreferences />}
+            {active === 'premium' && <AccountPremium />}
           </div>
         </div>
       )}

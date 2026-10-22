@@ -26,6 +26,8 @@ describe('Admin Navigation & Sidebar & Breadcrumbs (S2)', () => {
         fullName: 'Quản Trị Viên',
         role: 'ADMIN',
         emailVerified: true,
+        plan: 'FREE',
+        premiumActive: false,
       },
       isAuthenticated: true,
       isAdmin: true,
@@ -209,6 +211,8 @@ describe('Admin Navigation & Sidebar & Breadcrumbs (S2)', () => {
       fullName: 'Người Dùng Bình Thường',
       role: 'USER',
       emailVerified: true,
+      plan: 'FREE',
+      premiumActive: false,
     };
 
     mockUseAuth.mockReturnValue({
