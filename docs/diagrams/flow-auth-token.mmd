@@ -1,0 +1,34 @@
+sequenceDiagram
+    autonumber
+    actor User as Nguoi dung
+    participant FE as Frontend (tokenStore)
+    participant GW as API Gateway
+    participant AuthSvc as Auth Service
+    participant Google as Google Identity
+    participant DB as saigonvoice_auth_db
+
+    alt Dang nhap Email va Mat khau
+        User->>FE: Nhap email va mat khau
+        FE->>GW: POST /api/auth/login
+        GW->>AuthSvc: Forward POST /api/auth/login
+        AuthSvc->>DB: Kiem tra nguoi dung, so khop BCrypt
+    else Dang nhap Google
+        User->>FE: Chon Dang nhap bang Google
+        FE->>Google: Nhan ID Token tu SDK
+        FE->>GW: POST /api/auth/google
+        GW->>AuthSvc: Forward POST /api/auth/google
+        AuthSvc->>Google: Xac thuc ID Token qua GoogleIdTokenVerifier
+        AuthSvc->>DB: Tim hoac tu tao tai khoan theo google_sub
+    end
+    AuthSvc->>AuthSvc: Sinh Access Token 15 phut
+    AuthSvc->>AuthSvc: Sinh Refresh Token, luu hash SHA-256 vao DB
+    AuthSvc-->>GW: Tra ve Access Token va Set-Cookie refresh_token
+    GW-->>FE: Chuyen tiep phan hoi va Cookie HttpOnly
+    FE->>FE: Luu accessToken trong bo nho RAM bien JS
+    
+    Note over FE,AuthSvc: Khi Access Token het han sau 15 phut
+    FE->>GW: POST /api/auth/refresh (Cookie refresh_token)
+    GW->>AuthSvc: Forward POST /api/auth/refresh
+    AuthSvc->>DB: Kiem tra token neu da thu hoi thi THU HOI TOAN BO PHIEN
+    AuthSvc->>DB: Thu hoi token cu, phat hanh token moi (Token Rotation)
+    AuthSvc-->>FE: Cap Access Token moi va Cookie moi

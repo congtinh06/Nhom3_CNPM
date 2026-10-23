@@ -1,0 +1,29 @@
+sequenceDiagram
+    autonumber
+    actor Tourist as Du khach
+    participant Browser as GPS Device
+    participant FE as useAutoNarration & useNearbyAudio
+    participant GW as API Gateway
+    participant TransSvc as Translation/TTS Service
+    participant SpeechSynth as Web Speech API (Fallback)
+    participant Analytics as Analytics Service
+
+    Tourist->>FE: Bat "Thuyet minh tu dong" tren ban do
+    loop Du khach di chuyen (watchPosition)
+        Browser-->>FE: Cap nhat toa do (lat, lng, accuracy)
+        FE->>FE: Tinh khoang cach Haversine toi cac POI
+        alt Khoang cach <= ban kinh kich hoat (35m - 60m) va chua phat
+            FE->>FE: Ghi nhan vao autoPlayedSetRef, bat cooldown
+            alt Co file am thanh may chu (audioStatus == READY)
+                FE->>GW: GET /api/tts/audio/poi_{id}_{lang}_{hash}.mp3 (Bearer token)
+                GW->>TransSvc: AudioEntitlementFilter kiem tra X-User-Plan
+                TransSvc-->>FE: Stream file am thanh MP3
+                FE->>Tourist: Phat qua AudioContext & cuon chu theo cau
+            else Am thanh may chu chua san sang
+                FE->>SpeechSynth: Kich hoat giong doc co san tren thiet bi
+                SpeechSynth->>Tourist: Doc to phan thuyet minh van ban
+            end
+            FE->>GW: POST /api/analytics/events (eventType=AUDIO_PLAY, triggerType=GPS)
+            GW->>Analytics: Ghi nhan luot nghe du lich bat dong bo
+        end
+    end

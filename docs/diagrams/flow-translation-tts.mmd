@@ -1,0 +1,32 @@
+sequenceDiagram
+    autonumber
+    actor Admin as Quan tri vien
+    participant FE_Admin as Admin Console
+    participant ContentSvc as Content Service
+    participant RabbitMQ as RabbitMQ Broker (saigonvoice.topic)
+    participant TransSvc as Translation/TTS Service
+    participant ExtTranslator as MyMemory API / Seed Dict
+    participant EdgeTTS as Edge-TTS Runner
+    participant Disk as Local Storage (/app/storage/audio)
+
+    Admin->>FE_Admin: Tao hoac cap nhat POI
+    FE_Admin->>ContentSvc: POST / PUT /api/content/admin/pois
+    ContentSvc->>ContentSvc: Luu POI, tao poi_publish_event (PENDING)
+    ContentSvc->>RabbitMQ: Publish PoiEventPayload (routingKey: poi.created / poi.updated)
+    RabbitMQ->>TransSvc: Giao thong diep cho PoiEventListener
+    loop Xu ly doc lap 4 ngon ngu (vi, en, ja, ko)
+        alt Tieng Viet (vi) hoac co van ban thu cong (MANUAL)
+            TransSvc->>TransSvc: Dung nguyen van ban goc, bo qua buoc dich
+        else Ngoai ngu (en, ja, ko)
+            TransSvc->>ExtTranslator: Goi dich (MyMemory chunk <= 450 bytes)
+            ExtTranslator-->>TransSvc: Tra ve tieu de, tom tat da dich
+        end
+        TransSvc->>EdgeTTS: edge-tts --voice <voice> --text <text> --write-media <path>
+        EdgeTTS->>Disk: Ghi file am thanh poi_{id}_{lang}_{hash}.mp3
+        EdgeTTS-->>TransSvc: Tra ve exitCode=0 va thoi luong
+        TransSvc->>TransSvc: Luu ban ghi vao tts_audio_cache
+        TransSvc->>RabbitMQ: Publish PoiAudioReadyEvent (routingKey: poi.audio.ready)
+    end
+    RabbitMQ->>ContentSvc: PoiAudioUpdateService tieu thu poi.audio.ready
+    ContentSvc->>ContentSvc: Cap nhat poi_translation: audio_status=READY, audio_url
+    ContentSvc-->>FE_Admin: Trạng thai POI chuyen sang READY tren CMS

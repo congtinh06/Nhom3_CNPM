@@ -50,7 +50,7 @@ Hệ thống được thiết kế theo kiến trúc Microservices phân tán, c
                             ┌──────────────────────────────────────────────┐
                             │            api-gateway (Spring Cloud)        │
                             │  CORS, JWT Filter, Rate Limiting, Logging    │
-                            │           Cổng Host: 18080 (hoặc 8080)       │
+                            │           Cổng Host: 18080                   │
                             └───────┬──────────────┬──────────────┬────────┘
                                     │              │              │
        ┌────────────────────────────┼──────────────┼──────────────┼────────────────────────┐
@@ -70,8 +70,18 @@ Hệ thống được thiết kế theo kiến trúc Microservices phân tán, c
          │                     └───────────────────────────────────────┼────────▶ RabbitMQ Broker
          ▼                                                             ▼           Port: 5672
    Microsoft SQL Server 2022                                           ▼           Dashboard: 15800
-   Host: 1433 (4 CSDL phân lập:
-   auth, content, translation, analytics)
+   Host: 1433 (5 CSDL phân lập:
+   auth, content, translation, analytics, order)
+```
+
+> Ngoài các dịch vụ trong sơ đồ, hệ thống còn có **`order-service`** (Port: `8087`) phụ trách giỏ hàng, đơn hàng và thanh toán VNPAY.
+
+```text
+Cổng host mặc định:
+- api-gateway: 18080 (điều khiển qua GATEWAY_PORT trong .env)
+- frontend:    8088  (điều khiển qua FRONTEND_HOST_PORT trong .env)
+- mssql:       1433
+- rabbitmq:    5672 | dashboard 15800
 ```
 
 ---
@@ -86,16 +96,20 @@ Nhom3_CNPM/
 │   ├── content-service/          # Quản lý điểm tham quan (POI), lộ trình, sản phẩm ẩm thực
 │   ├── location-service/         # Xử lý tính toán khoảng cách GPS (Haversine) và mã QR
 │   ├── translation-tts-service/  # Xử lý dịch thuật đa ngữ và tổng hợp âm thanh AI
-│   └── analytics-service/        # Tiếp nhận sự kiện nghe thuyết minh bất đồng bộ
+│   ├── analytics-service/        # Tiếp nhận sự kiện nghe thuyết minh bất đồng bộ
+│   └── order-service/            # Giỏ hàng, đơn hàng và thanh toán VNPAY
 ├── frontend/
 │   ├── src/                      # Mã nguồn React SPA (bản đồ, trình phát audio, giỏ hàng)
 │   ├── package.json              # Danh mục dependencies Frontend
 │   └── vite.config.ts            # Cấu hình đóng gói Vite
 ├── docker/
-│   └── init-databases.sql        # Kịch bản khởi tạo 4 CSDL phân lập trên SQL Server
+│   ├── init-databases.sql        # Khởi tạo 5 CSDL + 5 login riêng biệt trên SQL Server
+│   └── seed-46-users.sql         # (Tùy chọn) Seed thêm người dùng mẫu vào saigonvoice_auth_db
 ├── docs/
-│   ├── HUONG_DAN_CHAY_DU_AN.docx # Tài liệu hướng dẫn chạy dự án dạng Word
-│   └── report/                   # Báo cáo đồ án môn học hoàn chỉnh (Word + PDF)
+│   ├── PRD.md                    # Đặc tả yêu cầu sản phẩm (Product Requirements Document)
+│   ├── diagrams/                 # Sơ đồ Mermaid (kiến trúc, ERD, luồng nghiệp vụ)
+│   ├── images/                   # Ảnh sơ đồ đã render (PNG/SVG)
+│   └── report/                   # Báo cáo đồ án môn học (tài liệu nội bộ, không đưa lên Git)
 ├── docker-compose.yml            # Khởi chạy toàn bộ hạ tầng CSDL, Broker và Microservices
 ├── .env.example                  # Mẫu cấu hình biến môi trường
 └── README.md                     # Hướng dẫn tổng quan dự án
@@ -165,6 +179,8 @@ docker compose ps
 
 *Kết quả đạt yêu cầu:* Toàn bộ các dịch vụ hiển thị trạng thái `Up` hoặc `Up (healthy)`. File `init-databases.sql` sẽ tự động khởi tạo 5 CSDL độc lập trên SQL Server ngay trong lần chạy đầu tiên.
 
+> **Quan trọng về mật khẩu CSDL:** `MSSQL_SA_PASSWORD` chỉ được áp dụng khi volume `mssql-data` còn trống (lần chạy đầu). Nếu máy đã từng chạy với mật khẩu khác rồi mới sửa `.env`, SQL Server vẫn giữ mật khẩu cũ. Khi đó phải xoá volume và khởi tạo lại: `docker compose down -v` rồi `docker compose up -d --build` (lệnh này xoá toàn bộ dữ liệu CSDL hiện có).
+
 **Các lệnh hỗ trợ quản lý Docker:**
 ```bash
 # Xem log trực tiếp của hệ thống (nhấn Ctrl+C để thoát)
@@ -195,7 +211,7 @@ Sau khi hệ thống khởi động thành công, bạn mở trình duyệt truy
 | **Bảng quản trị RabbitMQ** | `http://localhost:15800` | User: `saigonvoice_app` / Pass: `SgVoice_Rabbit!2026` |
 | **Cơ sở dữ liệu SQL Server** | `localhost:1433` | User: `sa` / Pass: `Saigon@123` |
 
-> **Ghi chú về cổng API Gateway:** Dự án sử dụng cổng ánh xạ máy chủ `18080` (tránh xung đột với cổng `8080` mặc định vốn thường bị các tiến trình nội bộ của Windows chiếm dụng).
+> **Ghi chú về cổng API Gateway:** `docker-compose.yml` ánh xạ cổng host `${GATEWAY_PORT}` (mặc định `18080`) vào cổng `8080` bên trong container, tránh xung đột với cổng `8080` thường bị tiến trình nội bộ của Windows chiếm dụng. Muốn đổi cổng host, sửa `GATEWAY_PORT` trong `.env` rồi chạy lại `docker compose up -d`; Vite dev proxy cũng đang trỏ tới `http://localhost:18080`.
 
 ---
 
@@ -215,6 +231,12 @@ docker exec -it mssql /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "Saigo
 # 4. Mở cửa sổ dòng lệnh SQL tương tác trực tiếp (SQL Shell):
 docker exec -it mssql /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "Saigon@123" -C
 # (Trong shell: gõ lệnh SQL kết thúc bằng GO để thực thi, gõ QUIT để thoát)
+```
+
+> **Tùy chọn seed thêm người dùng mẫu:** `docker/seed-46-users.sql` thêm các tài khoản `dukhach24@echora.vn` … `dukhach46@echora.vn` vào bảng `dbo.users` của `saigonvoice_auth_db` (chạy được trên cả PowerShell):
+```bash
+docker cp docker/seed-46-users.sql mssql:/tmp/seed-46-users.sql
+docker exec -it mssql /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "Saigon@123" -C -d saigonvoice_auth_db -i /tmp/seed-46-users.sql
 ```
 
 ---
@@ -241,6 +263,8 @@ Truy cập giao diện phát triển tại: **http://localhost:5173**
 2. **Lỗi `Port ... already in use`**: Cổng `18080`, `1433` hoặc `15800` đang bị ứng dụng khác chiếm dụng. Kiểm tra tiến trình bằng lệnh: `netstat -ano | findstr :18080`.
 3. **Container thoát hoặc unhealthy**: Xem chi tiết nguyên nhân lỗi qua: `docker compose logs <tên_service>`.
 4. **Không kết nối được Docker**: Kiểm tra xem ứng dụng **Docker Desktop** đã được mở và khởi động hoàn tất hay chưa.
+5. **Sai mật khẩu CSDL dù đã sửa `.env`**: volume `mssql-data` vẫn giữ mật khẩu của lần khởi tạo đầu tiên. Chạy `docker compose down -v` rồi `docker compose up -d --build` để khởi tạo lại (mất dữ liệu cũ).
+6. **Code không đồng bộ sau khi pull**: kiểm tra đang ở nhánh `main` (`git branch --show-current`), không còn thay đổi chưa commit (`git status`) và đã pull mới nhất (`git pull origin main`). Các nhánh `feat/*`, `fix/*`, `vercel-test` có thể đang lỗi thời so với `main`.
 
 ---
 
@@ -264,6 +288,8 @@ Dưới đây là bảng tổng hợp toàn bộ tài khoản mẫu đã đượ
 | **CSDL Xác thực tài khoản** | `saigonvoice_auth_db` | `auth_user` | `Auth!Pass2026` |
 | **CSDL Đơn hàng & Thanh toán**| `saigonvoice_order_db` | `order_user` | `Order!Pass2026` |
 | **RabbitMQ Management Dashboard** | `http://localhost:15800` | `saigonvoice_app` | `SgVoice_Rabbit!2026` |
+
+> Đây là các giá trị mặc định trong `.env.example`. Nếu bạn đổi trong `.env`, hãy cập nhật lại bảng này. Riêng mật khẩu `sa` của SQL Server chỉ đổi được sau khi xoá volume (`docker compose down -v`); mật khẩu của các login microservice sẽ được `init-databases.sql` cập nhật lại mỗi lần container `mssql-db-init` chạy.
 
 ### 5.3. Cấu hình Cổng thanh toán Thử nghiệm VNPAY Sandbox
 * **Mã định danh website (TMN Code):** `SQYS1VK9`
@@ -301,6 +327,7 @@ mvn -f backend/location-service/pom.xml test
 mvn -f backend/translation-tts-service/pom.xml test
 mvn -f backend/analytics-service/pom.xml test
 mvn -f backend/auth-service/pom.xml test
+mvn -f backend/order-service/pom.xml test
 mvn -f backend/api-gateway/pom.xml test
 ```
 
@@ -311,5 +338,6 @@ mvn -f backend/api-gateway/pom.xml test
 * **Học phần**: Công nghệ Phần mềm (CNPM) — Nhóm 3
 * **Đề tài**: Nền tảng hướng dẫn viên du lịch số tự động thuyết minh di sản Sài Gòn (Echora)
 * **Kho mã nguồn (GitHub)**: [https://github.com/congtinh06/Nhom3_CNPM](https://github.com/congtinh06/Nhom3_CNPM)
-* **Tài liệu hướng dẫn Word**: [docs/HUONG_DAN_CHAY_DU_AN.docx](file:///f:/Nhom3_CNPM/docs/HUONG_DAN_CHAY_DU_AN.docx)
-* **Báo cáo đồ án chính thức**: [docs/report/BaoCao_CNPM_Echora.docx](file:///f:/Nhom3_CNPM/docs/report/BaoCao_CNPM_Echora.docx) và [docs/report/BaoCao_CNPM_Echora.pdf](file:///f:/Nhom3_CNPM/docs/report/BaoCao_CNPM_Echora.pdf)
+* **Tài liệu đặc tả sản phẩm**: [docs/PRD.md](docs/PRD.md)
+* **Sơ đồ kiến trúc, ERD, luồng nghiệp vụ**: [docs/diagrams/](docs/diagrams/) (Mermaid) và ảnh render tại [docs/images/](docs/images/)
+* **Báo cáo đồ án (Word/PDF)**: tài liệu nội bộ trong `docs/report/`, không đưa lên GitHub theo `.gitignore` (`*.docx`, `*.pdf`).

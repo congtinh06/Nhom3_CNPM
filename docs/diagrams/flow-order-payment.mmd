@@ -1,0 +1,34 @@
+sequenceDiagram
+    autonumber
+    actor User as Du khach
+    participant FE as Frontend SPA
+    participant GW as API Gateway
+    participant OrderSvc as Order Service
+    participant AuthSvc as Auth Service
+    participant ContentSvc as Content Service
+    participant VnPay as Cong VNPAY Sandbox
+
+    User->>FE: Chon Nang cap Premium hoac Mua qua luu niem
+    FE->>GW: POST /api/orders/premium (Authorization: Bearer token)
+    GW->>GW: UserAuthGlobalFilter xac thuc JWT, gan X-User-Id, X-Internal-Api-Key
+    GW->>OrderSvc: Forward POST /api/orders/premium
+    opt Don hang qua luu niem
+        OrderSvc->>ContentSvc: POST /api/content/internal/products/prices
+        ContentSvc-->>OrderSvc: Danh sach gia hop le
+    end
+    OrderSvc->>OrderSvc: Khoi tao Order (PENDING_PAYMENT, han 15 phut)
+    OrderSvc->>OrderSvc: Tao URL thanh toan kem chu ky HMAC-SHA512
+    OrderSvc-->>GW: Tra ve { orderCode, paymentUrl, expiresAt }
+    GW-->>FE: Tra ve { paymentUrl }
+    FE->>User: Chuyen huong sang cong VNPAY
+    User->>VnPay: Nhap thong tin the ATM Sandbox & Xac nhan OTP
+    VnPay-->>GW: GET /api/orders/vnpay/return (vnp_ResponseCode=00)
+    GW->>OrderSvc: Forward GET /api/orders/vnpay/return
+    OrderSvc->>OrderSvc: Xac thuc chu ky bam, cap nhat don hang sang PAID
+    opt Don hang Premium
+        OrderSvc->>AuthSvc: POST /api/auth/internal/entitlements/{userId}/premium
+        AuthSvc->>AuthSvc: Cap nhat user plan=PREMIUM (365 ngay)
+        AuthSvc-->>OrderSvc: 200 OK
+    end
+    OrderSvc-->>FE: Redirect 302 ve /thanh-toan/ket-qua?orderCode=SV-xxx&status=success
+    FE->>User: Thong bao thanh cong & Mo khoa thuyet minh ngoai ngu

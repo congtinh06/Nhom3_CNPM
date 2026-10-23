@@ -1,6 +1,0 @@
-# Override tam thoi cho e2e test: port 8080 tren host bi AgentService.exe
-# (Windows system service) chiem, nen map gateway ra 18080. Xoa file nay sau test.
-services:
-  api-gateway:
-    ports: !override
-      - "18080:8080"

@@ -1,0 +1,81 @@
+flowchart TB
+    subgraph ClientLayer [Client Layer]
+        SPA["Frontend SPA (React 18 + TypeScript + Vite)"]
+        AdminUI["Admin CMS Web Console (/quan-tri)"]
+    end
+
+    subgraph GatewayLayer [API Gateway Layer]
+        GW["Spring Cloud Gateway (:8080)\nPathGuardFilter | AdminAuth | UserAuth | RateLimiter"]
+    end
+
+    subgraph MicroservicesLayer [Microservices Layer]
+        AUTH["auth-service (:8086)\nAuth, Google OAuth2, JWT"]
+        CONTENT["content-service (:8085)\nPOI, Routes, Souvenirs, News"]
+        LOCATION["location-service (:8082)\nHaversine Distance, QR Resolve"]
+        TRANSLATION["translation-tts-service (:8083)\nMyMemory, Edge-TTS Audio"]
+        ORDER["order-service (:8087)\nOrders, Premium, VNPAY, VietQR"]
+        ANALYTICS["analytics-service (:8081)\nEvent Collector, Summary"]
+    end
+
+    subgraph BrokerLayer [Message Broker]
+        MQ_TOPIC["RabbitMQ: saigonvoice.topic\npoi.created / poi.updated / poi.audio.ready"]
+        MQ_ANALYTICS["RabbitMQ: saigonvoice.analytics\nanalytics.event.queue"]
+    end
+
+    subgraph DataLayer [SQL Server 2022 Databases]
+        DB_AUTH[("saigonvoice_auth_db")]
+        DB_CONTENT[("saigonvoice_content_db")]
+        DB_TRANS[("saigonvoice_translation_db")]
+        DB_ORDER[("saigonvoice_order_db")]
+        DB_ANALYTICS[("saigonvoice_analytics_db")]
+    end
+
+    subgraph StorageLayer [Local Storage Volumes]
+        VOL_AUDIO["audio-storage-data (/app/storage/audio)"]
+        VOL_IMG["product-uploads-data (/app/uploads/products)"]
+    end
+
+    subgraph ExternalServices [External Services]
+        EXT_VNPAY["VNPAY Sandbox"]
+        EXT_GOOGLE["Google Identity Services"]
+        EXT_MYMEMORY["MyMemory Translation API"]
+        EXT_EDGETTS["Microsoft Edge-TTS Engine"]
+        EXT_OSM["OpenStreetMap Tile Servers"]
+    end
+
+    SPA -->|HTTP / REST| GW
+    AdminUI -->|HTTP / REST| GW
+
+    GW -->|/api/auth/**| AUTH
+    GW -->|/api/content/**, /api/admin/**| CONTENT
+    GW -->|/api/location/**| LOCATION
+    GW -->|/api/tts/**| TRANSLATION
+    GW -->|/api/orders/**| ORDER
+    GW -->|/api/analytics/**| ANALYTICS
+    GW -->|/img/products/**| CONTENT
+
+    CONTENT -.->|Publish poi.created/updated| MQ_TOPIC
+    MQ_TOPIC -.->|Consume| TRANSLATION
+    TRANSLATION -.->|Publish poi.audio.ready| MQ_TOPIC
+    MQ_TOPIC -.->|Consume & Update| CONTENT
+
+    ANALYTICS -.->|Publish analytics.event| MQ_ANALYTICS
+    MQ_ANALYTICS -.->|Consume| ANALYTICS
+
+    AUTH --> DB_AUTH
+    CONTENT --> DB_CONTENT
+    TRANSLATION --> DB_TRANS
+    ORDER --> DB_ORDER
+    ANALYTICS --> DB_ANALYTICS
+
+    TRANSLATION --> VOL_AUDIO
+    CONTENT --> VOL_IMG
+
+    ORDER -->|Payment Redirect / IPN| EXT_VNPAY
+    AUTH -->|Verify Token| EXT_GOOGLE
+    TRANSLATION -->|Translate text| EXT_MYMEMORY
+    TRANSLATION -->|Synthesize audio| EXT_EDGETTS
+    SPA -->|Load Map Tiles| EXT_OSM
+    ORDER -->|REST| AUTH
+    ORDER -->|REST| CONTENT
+    LOCATION -->|REST| CONTENT

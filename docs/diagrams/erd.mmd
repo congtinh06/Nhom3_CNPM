@@ -1,0 +1,135 @@
+erDiagram
+    %% 1. saigonvoice_auth_db
+    USERS {
+        bigint id PK
+        nvarchar email UK
+        nvarchar password_hash
+        nvarchar full_name
+        nvarchar role
+        nvarchar status
+        nvarchar plan
+        datetime2 premium_expires_at
+        datetime2 created_at
+    }
+    REFRESH_TOKEN {
+        bigint id PK
+        bigint user_id FK
+        nvarchar token_hash UK
+        datetime2 expires_at
+        datetime2 revoked_at
+    }
+    USERS ||--o{ REFRESH_TOKEN : "owns"
+
+    %% 2. saigonvoice_content_db
+    ZONE {
+        bigint id PK
+        nvarchar code UK
+        nvarchar name
+        bit is_active
+    }
+    POI {
+        bigint id PK
+        bigint zone_id FK
+        nvarchar code UK
+        decimal latitude
+        decimal longitude
+        int trigger_radius_meters
+        nvarchar status
+    }
+    POI_TRANSLATION {
+        bigint id PK
+        bigint poi_id FK
+        nvarchar language_code
+        nvarchar title
+        nvarchar summary
+        nvarchar description
+        nvarchar audio_status
+        nvarchar audio_url
+    }
+    ROUTE {
+        bigint id PK
+        nvarchar code UK
+        nvarchar name
+    }
+    ROUTE_STOP {
+        bigint id PK
+        bigint route_id FK
+        bigint poi_id FK
+        int stop_order
+    }
+    PRODUCT {
+        bigint id PK
+        bigint poi_id FK
+        nvarchar code UK
+        nvarchar name
+        decimal price
+        bit is_active
+    }
+    NEWS_ARTICLE {
+        bigint id PK
+        nvarchar slug UK
+        nvarchar title
+        nvarchar category
+        bit is_active
+    }
+    ZONE ||--o{ POI : "contains"
+    POI ||--o{ POI_TRANSLATION : "has"
+    ROUTE ||--o{ ROUTE_STOP : "defines"
+    POI ||--o{ ROUTE_STOP : "visited_in"
+    POI ||--o{ PRODUCT : "sells"
+
+    %% 3. saigonvoice_order_db
+    ORDERS {
+        bigint id PK
+        bigint user_id
+        nvarchar order_code UK
+        nvarchar order_type
+        decimal total_amount
+        nvarchar status
+        nvarchar payment_status
+        datetime2 expires_at
+    }
+    ORDER_ITEM {
+        bigint id PK
+        bigint order_id FK
+        bigint product_id
+        int quantity
+        decimal unit_price
+    }
+    PAYMENT {
+        bigint id PK
+        bigint order_id FK
+        nvarchar txn_ref UK
+        nvarchar provider
+        decimal amount
+        nvarchar status
+    }
+    ORDERS ||--o{ ORDER_ITEM : "includes"
+    ORDERS ||--o{ PAYMENT : "settled_by"
+
+    %% 4. saigonvoice_translation_db
+    TRANSLATION_JOB {
+        bigint id PK
+        bigint poi_id
+        nvarchar language_code
+        nvarchar content_hash
+        nvarchar status
+    }
+    TTS_AUDIO_CACHE {
+        bigint id PK
+        nvarchar content_hash UK
+        nvarchar language_code
+        nvarchar audio_file_name
+        int duration_seconds
+    }
+
+    %% 5. saigonvoice_analytics_db
+    ANALYTICS_EVENT {
+        bigint id PK
+        nvarchar event_type
+        bigint poi_id
+        nvarchar language_code
+        nvarchar trigger_type
+        nvarchar session_id
+        datetime2 created_at
+    }
