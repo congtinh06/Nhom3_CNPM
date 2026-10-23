@@ -345,6 +345,41 @@ export interface AuthMessage {
   message: string;
 }
 
+export type QrLoginStatus =
+  | 'PENDING'
+  | 'SCANNED'
+  | 'APPROVED'
+  | 'DENIED'
+  | 'CONSUMED'
+  | 'EXPIRED'
+  | 'CANCELLED';
+
+export interface QrLoginSession {
+  sessionId: string;
+  qrToken: string;
+  exchangeToken: string;
+  status: QrLoginStatus;
+  expiresAt: string;
+  expiresInSeconds: number;
+  pollIntervalMs: number;
+}
+
+export interface QrLoginStatusResponse {
+  sessionId: string;
+  status: QrLoginStatus;
+  expiresAt: string;
+  expiresInSeconds: number;
+  message?: string;
+}
+
+export interface QrScanResponse {
+  sessionId: string;
+  status: QrLoginStatus;
+  createdAt: string;
+  expiresAt: string;
+  deviceLabel: string;
+}
+
 export interface RegisterPayload {
   fullName: string;
   email: string;

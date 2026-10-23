@@ -5,6 +5,7 @@ import { useToast } from '../../context/ToastContext';
 import { useNavbarLanguage } from '../../content/languages';
 import { GoogleSignInButton } from './GoogleSignInButton';
 import { PasswordField } from './PasswordField';
+import { QrLoginPanel } from './QrLoginPanel';
 
 interface LoginFormProps {
   onSuccess: () => void;
@@ -23,6 +24,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
   const { showToast } = useToast();
   const { t } = useNavbarLanguage();
 
+  const [mode, setMode] = useState<'password' | 'qr'>('password');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
@@ -32,10 +34,22 @@ export const LoginForm: React.FC<LoginFormProps> = ({
   const emailInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (autoFocusEmail) {
+    if (autoFocusEmail && mode === 'password') {
       emailInputRef.current?.focus();
     }
-  }, [autoFocusEmail]);
+  }, [autoFocusEmail, mode]);
+
+  const handleTabKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') {
+      return;
+    }
+    event.preventDefault();
+    const next = mode === 'password' ? 'qr' : 'password';
+    setMode(next);
+    requestAnimationFrame(() => {
+      document.getElementById(`auth-tab-${next}`)?.focus();
+    });
+  };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -58,93 +72,143 @@ export const LoginForm: React.FC<LoginFormProps> = ({
         {t.auth.loginTitle}
       </h2>
 
-      <form onSubmit={handleSubmit} noValidate className="auth-modal-form">
-        <label className="af" htmlFor="login-email">
-          <span>{t.auth.emailLabel}</span>
-          <input
-            ref={emailInputRef}
-            id="login-email"
-            type="email"
-            name="email"
-            autoComplete="email"
-            required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="ban@example.com"
-          />
-        </label>
-
-        <PasswordField
-          id="login-password"
-          name="password"
-          label={t.auth.passwordLabel}
-          value={password}
-          onChange={setPassword}
-          autoComplete="current-password"
-          required
-        />
-
-        <div className="af-row">
-          <label className="af-check" htmlFor="login-remember">
-            <input
-              id="login-remember"
-              type="checkbox"
-              checked={rememberMe}
-              onChange={(e) => setRememberMe(e.target.checked)}
-            />
-            <span>{t.auth.rememberMe}</span>
-          </label>
-          <button
-            type="button"
-            className="af-link"
-            onClick={onSwitchToForgot}
-          >
-            {t.auth.forgotPasswordLink}
-          </button>
-        </div>
-
-        {error && (
-          <p className="af-err" role="alert">
-            {error}
-          </p>
-        )}
-
-        <button
-          type="submit"
-          className="tb af-submit"
-          disabled={submitting}
-        >
-          {submitting ? t.auth.loginSubmitting : t.auth.loginSubmit}
-        </button>
-      </form>
-
-      {Boolean(import.meta.env.VITE_GOOGLE_CLIENT_ID) && (
-        <>
-          <div className="auth-divider">
-            <span>hoặc</span>
-          </div>
-
-          <GoogleSignInButton
-            onSuccess={() => {
-              showToast(t.auth.loginSuccess);
-              onSuccess();
-            }}
-            onError={setError}
-            disabled={submitting}
-          />
-        </>
-      )}
-
-      <p className="af-alt">
-        {t.auth.noAccount}{' '}
+      <div
+        className="auth-login-tabs"
+        role="tablist"
+        aria-label={t.auth.loginTitle}
+        onKeyDown={handleTabKeyDown}
+      >
         <button
           type="button"
-          className="af-link"
-          onClick={onSwitchToRegister}
+          role="tab"
+          id="auth-tab-password"
+          aria-selected={mode === 'password'}
+          aria-controls="auth-panel-password"
+          tabIndex={mode === 'password' ? 0 : -1}
+          className="auth-login-tab"
+          onClick={() => setMode('password')}
         >
-          {t.auth.createAccount}
+          {t.auth.loginTabPassword}
         </button>
-      </p>
+        <button
+          type="button"
+          role="tab"
+          id="auth-tab-qr"
+          aria-selected={mode === 'qr'}
+          aria-controls="auth-panel-qr"
+          tabIndex={mode === 'qr' ? 0 : -1}
+          className="auth-login-tab"
+          onClick={() => setMode('qr')}
+        >
+          {t.auth.loginTabQr}
+        </button>
+      </div>
+
+      {mode === 'password' ? (
+        <div
+          id="auth-panel-password"
+          role="tabpanel"
+          aria-labelledby="auth-tab-password"
+        >
+          <form onSubmit={handleSubmit} noValidate className="auth-modal-form">
+            <label className="af" htmlFor="login-email">
+              <span>{t.auth.emailLabel}</span>
+              <input
+                ref={emailInputRef}
+                id="login-email"
+                type="email"
+                name="email"
+                autoComplete="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="ban@example.com"
+              />
+            </label>
+
+            <PasswordField
+              id="login-password"
+              name="password"
+              label={t.auth.passwordLabel}
+              value={password}
+              onChange={setPassword}
+              autoComplete="current-password"
+              required
+            />
+
+            <div className="af-row">
+              <label className="af-check" htmlFor="login-remember">
+                <input
+                  id="login-remember"
+                  type="checkbox"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                />
+                <span>{t.auth.rememberMe}</span>
+              </label>
+              <button
+                type="button"
+                className="af-link"
+                onClick={onSwitchToForgot}
+              >
+                {t.auth.forgotPasswordLink}
+              </button>
+            </div>
+
+            {error && (
+              <p className="af-err" role="alert">
+                {error}
+              </p>
+            )}
+
+            <button
+              type="submit"
+              className="tb af-submit"
+              disabled={submitting}
+            >
+              {submitting ? t.auth.loginSubmitting : t.auth.loginSubmit}
+            </button>
+          </form>
+
+          {Boolean(import.meta.env.VITE_GOOGLE_CLIENT_ID) && (
+            <>
+              <div className="auth-divider">
+                <span>hoặc</span>
+              </div>
+
+              <GoogleSignInButton
+                onSuccess={() => {
+                  showToast(t.auth.loginSuccess);
+                  onSuccess();
+                }}
+                onError={setError}
+                disabled={submitting}
+              />
+            </>
+          )}
+
+          <p className="af-alt">
+            {t.auth.noAccount}{' '}
+            <button
+              type="button"
+              className="af-link"
+              onClick={onSwitchToRegister}
+            >
+              {t.auth.createAccount}
+            </button>
+          </p>
+        </div>
+      ) : (
+        <div
+          id="auth-panel-qr"
+          role="tabpanel"
+          aria-labelledby="auth-tab-qr"
+          className="auth-qr-tab-panel"
+        >
+          <p className="auth-modal-intro auth-qr-tab-intro">{t.auth.qrSubtitle}</p>
+          <QrLoginPanel onSuccess={onSuccess} compact />
+        </div>
+      )}
     </div>
   );
 };

@@ -65,6 +65,16 @@ app:
   token:
     email-verification-ttl: PT24H
     password-reset-ttl: PT20M
+  qr:
+    # Thoi gian song cua ma QR dang nhap (ISO-8601). Mac dinh 1 phut.
+    ttl: ${QR_LOGIN_TTL:PT1M}
+    # Tan suat thiet bi A hoi trang thai (ms).
+    poll-interval-ms: ${QR_LOGIN_POLL_INTERVAL_MS:1500}
+    cleanup-interval-ms: ${QR_LOGIN_CLEANUP_INTERVAL_MS:300000}
+    # Thoi gian giu phien QR de phuc vu bao cao admin (ISO-8601). Mac dinh 30 ngay.
+    retention: ${QR_LOGIN_RETENTION:P30D}
+    stats:
+      max-range-days: ${QR_LOGIN_STATS_MAX_RANGE_DAYS:30}
 
 management:
   endpoints:

@@ -47,7 +47,7 @@ class AnalyticsSummaryServiceTest {
                 // MANUAL is missing, should default to 0
         ));
 
-        when(analyticsEventRepository.countByEventType("AUDIO_PLAY")).thenReturn(80L);
+        when(analyticsEventRepository.countStartedByEventType("AUDIO_PLAY")).thenReturn(80L);
         when(analyticsEventRepository.countByEventTypeAndCompletedTrue("AUDIO_PLAY")).thenReturn(60L);
         when(analyticsEventRepository.countAudioPlaysByLanguage()).thenReturn(List.of(
                 new Object[]{"vi", 50L},
@@ -94,7 +94,7 @@ class AnalyticsSummaryServiceTest {
     void testGetSummary_feignFailureFallback_setsNameToNull() {
         when(analyticsEventRepository.countByEventType("SCAN")).thenReturn(10L);
         when(analyticsEventRepository.countScansByTriggerType()).thenReturn(List.<Object[]>of());
-        when(analyticsEventRepository.countByEventType("AUDIO_PLAY")).thenReturn(5L);
+        when(analyticsEventRepository.countStartedByEventType("AUDIO_PLAY")).thenReturn(5L);
         when(analyticsEventRepository.countByEventTypeAndCompletedTrue("AUDIO_PLAY")).thenReturn(2L);
         when(analyticsEventRepository.countAudioPlaysByLanguage()).thenReturn(List.<Object[]>of());
 

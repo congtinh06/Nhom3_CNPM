@@ -45,6 +45,15 @@ services:
   content-service:
     url: ${CONTENT_SERVICE_URL:http://localhost:8085}
 
+analytics:
+  poi-cache:
+    ttl-ms: ${ANALYTICS_POI_CACHE_TTL_MS:300000}
+  summary:
+    poi-budget-ms: ${ANALYTICS_SUMMARY_POI_BUDGET_MS:3000}
+  qr-stats:
+    max-range-days: ${ANALYTICS_QR_STATS_MAX_RANGE_DAYS:30}
+    poi-budget-ms: ${ANALYTICS_QR_STATS_POI_BUDGET_MS:3000}
+
 # Khoa noi bo de xac thuc request den tu gateway tren endpoint quan tri /api/analytics/summary.
 # Rong -> endpoint bi tu choi 403 (fail-closed).
 internal:

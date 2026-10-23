@@ -11,6 +11,7 @@ import { BackToTop } from './components/common/BackToTop';
 import { HomePage } from './pages/HomePage';
 import { OrdersPage } from './pages/OrdersPage';
 import { ScanPage } from './pages/ScanPage';
+import { QrLoginScanPage } from './pages/QrLoginScanPage';
 import { NotFoundPage } from './pages/NotFoundPage';
 import { ResetPasswordPage } from './pages/ResetPasswordPage';
 import { VerifyEmailPage } from './pages/VerifyEmailPage';
@@ -154,6 +155,14 @@ const AppContent: React.FC = () => {
             {/* QR Scan */}
             <Route path="/qr/:token" element={<ScanPage />} />
             <Route path="/quet-ma" element={<ScanPage />} />
+            <Route
+              path="/quet-qr-dang-nhap"
+              element={
+                <RequireAuth>
+                  <QrLoginScanPage />
+                </RequireAuth>
+              }
+            />
 
             {/* User & Auth */}
             <Route path="/dat-lai-mat-khau" element={<ResetPasswordPage />} />

@@ -64,6 +64,7 @@ const OrderListPage = lazy(() =>
 const OrderDetailPage = lazy(() =>
   import('./pages/OrderDetailPage').then((m) => ({ default: m.OrderDetailPage }))
 );
+const QrAnalyticsPage = lazy(() => import('./pages/QrAnalyticsPage'));
 
 const PageFallback: React.FC = () => (
   <div className="adm-screen-loader" role="status" aria-live="polite">
@@ -112,6 +113,9 @@ export const AdminRoutes: React.FC = () => {
           <Route path="nguoi-dung/:id" element={<UserDetailPage />} />
           <Route path="don-hang" element={<OrderListPage />} />
           <Route path="don-hang/:orderCode" element={<OrderDetailPage />} />
+          <Route path="qr/tai-khoan" element={<QrAnalyticsPage />} />
+          <Route path="qr/audio" element={<QrAnalyticsPage />} />
+          <Route path="qr" element={<Navigate to="/quan-tri/qr/tai-khoan" replace />} />
           <Route path="*" element={<Navigate to="/quan-tri/tong-quan" replace />} />
         </Route>
       </Routes>

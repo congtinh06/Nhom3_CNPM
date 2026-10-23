@@ -51,6 +51,7 @@ public class CorsConfig {
                 "Accept",
                 "Origin",
                 "X-Requested-With",
+                "X-QR-Exchange-Token",
                 "ngrok-skip-browser-warning"
         ));
         config.setExposedHeaders(List.of("Retry-After"));

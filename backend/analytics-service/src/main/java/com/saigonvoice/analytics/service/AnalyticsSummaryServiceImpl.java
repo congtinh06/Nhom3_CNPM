@@ -76,7 +76,7 @@ public class AnalyticsSummaryServiceImpl implements AnalyticsSummaryService {
             }
         }
 
-        long totalAudioPlays = analyticsEventRepository.countByEventType("AUDIO_PLAY");
+        long totalAudioPlays = analyticsEventRepository.countStartedByEventType("AUDIO_PLAY");
         long audioCompleted = analyticsEventRepository.countByEventTypeAndCompletedTrue("AUDIO_PLAY");
 
         Map<String, Long> playsByLanguage = new LinkedHashMap<>();

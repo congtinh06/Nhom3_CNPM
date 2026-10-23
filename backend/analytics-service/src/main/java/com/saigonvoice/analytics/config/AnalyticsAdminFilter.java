@@ -17,7 +17,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 
 /**
- * Bảo vệ endpoint quản trị /api/analytics/summary.
+ * Bảo vệ các endpoint quản trị /api/analytics/summary và /api/analytics/admin/**.
  * Gateway xác thực JWT và truyền X-User-Role = ADMIN cùng khóa nội bộ X-Internal-Api-Key.
  * Chỉ chấp nhận yêu cầu có đủ cả hai; thiếu khóa nội bộ trên service (rỗng) thì endpoint bị
  * TẮT (fail-closed, 403) để chặn truy cập trực tiếp và giả mạo header.
@@ -31,6 +31,7 @@ public class AnalyticsAdminFilter extends OncePerRequestFilter {
     public static final String HEADER_INTERNAL_API_KEY = "X-Internal-Api-Key";
     public static final String REQUIRED_ROLE = "ADMIN";
     static final String ADMIN_SUMMARY_PATH = "/api/analytics/summary";
+    static final String ADMIN_ANALYTICS_PREFIX = "/api/analytics/admin/";
     private static final String FORBIDDEN_MESSAGE = "Bạn không có quyền thực hiện thao tác này.";
 
     @Value("${internal.api-key:}")
@@ -39,14 +40,14 @@ public class AnalyticsAdminFilter extends OncePerRequestFilter {
     @PostConstruct
     void warnIfMisconfigured() {
         if (isBlank(expectedApiKey)) {
-            log.warn("internal.api-key (INTERNAL_API_KEY) is empty: {} is DISABLED (HTTP 403, fail-closed).",
-                    ADMIN_SUMMARY_PATH);
+            log.warn("internal.api-key (INTERNAL_API_KEY) is empty: analytics admin endpoints are DISABLED (HTTP 403, fail-closed).");
         }
     }
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
-        return !ADMIN_SUMMARY_PATH.equals(request.getRequestURI());
+        String path = request.getRequestURI();
+        return !ADMIN_SUMMARY_PATH.equals(path) && !path.startsWith(ADMIN_ANALYTICS_PREFIX);
     }
 
     @Override

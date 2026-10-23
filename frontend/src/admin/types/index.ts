@@ -26,3 +26,4 @@ export * from './zone';
 export * from './route';
 export * from './user';
 export * from './order';
+export * from './qr';

@@ -61,6 +61,14 @@ const ICONS: Record<string, React.ReactNode> = {
       <path d="M9 8h6M9 12h6" />
     </>
   ),
+  qr: (
+    <>
+      <rect x="3.5" y="3.5" width="6" height="6" rx="1" />
+      <rect x="14.5" y="3.5" width="6" height="6" rx="1" />
+      <rect x="3.5" y="14.5" width="6" height="6" rx="1" />
+      <path d="M14.5 14.5h2.5v2.5h-2.5zM19.5 14.5h1M14.5 19.5h1M18 18h2.5v2.5H18z" />
+    </>
+  ),
   feedback: (
     <>
       <path d="M4.5 5h15v10.5H9.5L4.5 19.5V5Z" />

@@ -1,8 +1,9 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { api } from '../api/client';
 import { getSharedAudio } from '../lib/audioUnlock';
+import { getAnalyticsSessionId } from '../lib/analytics';
 import { useToast } from '../context/ToastContext';
-import { SupportedLanguage } from '../types';
+import { SupportedLanguage, TriggerType } from '../types';
 import {
   findMatchingVoice,
   getAvailableVoices,
@@ -32,21 +33,8 @@ interface PlayParams {
   textToSpeak?: string;
   lang: string;
   speechLangs?: SupportedLanguage[];
+  triggerType?: TriggerType;
 }
-
-const getSessionId = (): string => {
-  try {
-    let sid = sessionStorage.getItem('sv:session_id');
-    if (!sid) {
-      sid = 'sid_' + Math.random().toString(36).substring(2, 12) + '_' + Date.now();
-      sessionStorage.setItem('sv:session_id', sid);
-    }
-    return sid;
-  } catch (err) {
-    console.warn('[useAudioPlayer] sessionStorage unavailable, using default session id', err);
-    return 'sid_default';
-  }
-};
 
 export const useAudioPlayer = () => {
   const { showToast } = useToast();
@@ -82,30 +70,43 @@ export const useAudioPlayer = () => {
     setPlayerState('idle');
   }, []);
 
-  const fireAnalytics = useCallback((poiId: number, lang: string) => {
-    const now = Date.now();
-    if (now < rateLimitedUntilRef.current) {
-      return;
-    }
-
-    const validLang = ['vi', 'en', 'ja', 'ko'].includes(lang) ? lang : 'vi';
-
-    api.recordAnalyticsEvent({
-      eventType: 'AUDIO_PLAY',
-      poiId,
-      languageCode: validLang,
-      triggerType: 'MANUAL',
-      sessionId: getSessionId(),
-    }).catch((err: unknown) => {
-      const status = (err as { response?: { status?: number; headers?: Record<string, string> } })?.response?.status;
-      if (status === 429) {
-        rateLimitedUntilRef.current = Date.now() + 60000;
+  const fireAnalytics = useCallback(
+    (poiId: number, lang: string, triggerType: TriggerType = 'MANUAL', completed = false) => {
+      const now = Date.now();
+      if (now < rateLimitedUntilRef.current) {
+        return;
       }
-    });
-  }, []);
+
+      const validLang = ['vi', 'en', 'ja', 'ko'].includes(lang) ? lang : 'vi';
+
+      api.recordAnalyticsEvent({
+        eventType: 'AUDIO_PLAY',
+        poiId,
+        languageCode: validLang,
+        triggerType,
+        completed,
+        sessionId: getAnalyticsSessionId(),
+      }).catch((err: unknown) => {
+        const status = (err as { response?: { status?: number; headers?: Record<string, string> } })?.response?.status;
+        if (status === 429) {
+          rateLimitedUntilRef.current = Date.now() + 60000;
+        }
+      });
+    },
+    []
+  );
 
   const playAudio = useCallback(
-    ({ poiId, audioUrl, audioStatus, title, textToSpeak, lang, speechLangs }: PlayParams) => {
+    ({
+      poiId,
+      audioUrl,
+      audioStatus,
+      title,
+      textToSpeak,
+      lang,
+      speechLangs,
+      triggerType = 'MANUAL',
+    }: PlayParams) => {
       if (playingPoiId === poiId) {
         stopAudio();
         return;
@@ -145,7 +146,8 @@ export const useAudioPlayer = () => {
             };
 
             audio.onended = () => {
-              if (audioRef.current === audio) {
+              if (audioRef.current === audio && token === playTokenRef.current) {
+                fireAnalytics(poiId, lang, triggerType, true);
                 stopAudio();
               }
             };
@@ -160,7 +162,7 @@ export const useAudioPlayer = () => {
 
             await audio.play();
             if (token !== playTokenRef.current) return;
-            fireAnalytics(poiId, lang);
+            fireAnalytics(poiId, lang, triggerType);
           } catch (err) {
             console.warn('[useAudioPlayer] authenticated audio load or play failed', err);
             if (token === playTokenRef.current) {
@@ -217,11 +219,12 @@ export const useAudioPlayer = () => {
             if (token !== playTokenRef.current) return;
             setPlayerState('playing');
             setPlayingPoiId(poiId);
-            fireAnalytics(poiId, speechLang);
+            fireAnalytics(poiId, speechLang, triggerType);
           };
 
           utterance.onend = () => {
             if (token !== playTokenRef.current) return;
+            fireAnalytics(poiId, speechLang, triggerType, true);
             stopAudio();
           };
 

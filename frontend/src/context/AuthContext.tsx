@@ -13,6 +13,7 @@ interface AuthContextValue {
   isAdmin: boolean;
   login: (payload: LoginPayload) => Promise<AuthUser>;
   loginWithGoogle: (credential: string) => Promise<AuthUser>;
+  completeQrLogin?: (sessionId: string, exchangeToken: string) => Promise<AuthUser>;
   register: (payload: RegisterPayload) => Promise<string>;
   logout: () => Promise<void>;
   reloadUser: () => Promise<void>;
@@ -85,6 +86,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return session.user;
   }, []);
 
+  const completeQrLogin = useCallback(
+    async (sessionId: string, exchangeToken: string): Promise<AuthUser> => {
+      const session = await authApi.exchangeQrSession(sessionId, exchangeToken);
+      tokenStore.set(session.accessToken);
+      setUser(session.user);
+      setStatus('authenticated');
+      return session.user;
+    },
+    []
+  );
+
   const register = useCallback(async (payload: RegisterPayload): Promise<string> => {
     const response = await authApi.register(payload);
     return response.message;
@@ -123,11 +135,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       isAdmin: user?.role === 'ADMIN',
       login,
       loginWithGoogle,
+      completeQrLogin,
       register,
       logout,
       reloadUser,
     }),
-    [user, status, login, loginWithGoogle, register, logout, reloadUser]
+    [user, status, login, loginWithGoogle, completeQrLogin, register, logout, reloadUser]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

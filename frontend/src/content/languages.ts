@@ -187,6 +187,8 @@ export interface NavTranslation {
     logout: string;
     guest: string;
     loginTitle: string;
+    loginTabPassword: string;
+    loginTabQr: string;
     registerTitle: string;
     forgotPasswordTitle: string;
     emailLabel: string;
@@ -216,6 +218,31 @@ export interface NavTranslation {
     showPassword: string;
     hidePassword: string;
     forgotNote: string;
+    qrTitle: string;
+    qrSubtitle: string;
+    qrSecureNote: string;
+    qrWaiting: string;
+    qrScanned: string;
+    qrApproved: string;
+    qrExpired: string;
+    qrDenied: string;
+    qrRefresh: string;
+    qrError: string;
+    qrScanTitle: string;
+    qrScanIntro: string;
+    qrConfirm: string;
+    qrCancel: string;
+    qrSuccessTitle: string;
+    qrSuccessNote: string;
+    qrLoginRequired: string;
+    qrManualLabel: string;
+    qrManualPlaceholder: string;
+    qrManualSubmit: string;
+    qrOpenCamera: string;
+    qrCameraError: string;
+    qrScanAgain: string;
+    qrDeviceLabel: string;
+    qrBackHome: string;
   };
   cart: string;
   openMenu: string;
@@ -260,6 +287,8 @@ export const NAV_TRANSLATIONS: Record<SupportedLanguage, NavTranslation> = {
       logout: 'Đăng xuất',
       guest: 'Tài khoản',
       loginTitle: 'Đăng nhập',
+      loginTabPassword: 'Mật khẩu',
+      loginTabQr: 'Quét mã QR',
       registerTitle: 'Tạo tài khoản',
       forgotPasswordTitle: 'Quên mật khẩu',
       emailLabel: 'Email',
@@ -289,6 +318,31 @@ export const NAV_TRANSLATIONS: Record<SupportedLanguage, NavTranslation> = {
       showPassword: 'Hiện mật khẩu',
       hidePassword: 'Ẩn mật khẩu',
       forgotNote: 'Nhập email đã đăng ký. Chúng tôi sẽ gửi liên kết đặt lại mật khẩu cho bạn.',
+      qrTitle: 'Đăng nhập bằng QR',
+      qrSubtitle: 'Mở ứng dụng trên điện thoại và quét mã để đăng nhập nhanh.',
+      qrSecureNote: 'Chỉ tài khoản đã xác thực mới có thể quét mã.',
+      qrWaiting: 'Đang chờ quét mã…',
+      qrScanned: 'Đã quét. Xác nhận trên điện thoại của bạn.',
+      qrApproved: 'Đã xác nhận. Đang đăng nhập…',
+      qrExpired: 'Mã QR đã hết hạn.',
+      qrDenied: 'Đăng nhập đã bị từ chối.',
+      qrRefresh: 'Tạo mã mới',
+      qrError: 'Không thể tạo mã QR. Vui lòng thử lại.',
+      qrScanTitle: 'Quét mã QR đăng nhập',
+      qrScanIntro: 'Dùng camera để quét mã QR trên màn hình thiết bị khác.',
+      qrConfirm: 'Xác nhận đăng nhập',
+      qrCancel: 'Từ chối',
+      qrSuccessTitle: 'Đã xác nhận đăng nhập',
+      qrSuccessNote: 'Quay lại thiết bị kia để tiếp tục. Bạn có thể đóng trang này.',
+      qrLoginRequired: 'Bạn cần đăng nhập trên thiết bị này trước khi quét mã.',
+      qrManualLabel: 'Hoặc nhập mã QR',
+      qrManualPlaceholder: 'Dán mã QR tại đây',
+      qrManualSubmit: 'Tiếp tục',
+      qrOpenCamera: 'Mở camera',
+      qrCameraError: 'Không thể mở camera. Hãy nhập mã thủ công.',
+      qrScanAgain: 'Quét lại',
+      qrDeviceLabel: 'Thiết bị yêu cầu đăng nhập',
+      qrBackHome: 'Về trang chủ',
     },
     cart: 'Giỏ hàng',
     openMenu: 'Mở menu',
@@ -471,6 +525,8 @@ export const NAV_TRANSLATIONS: Record<SupportedLanguage, NavTranslation> = {
       logout: 'Log out',
       guest: 'Account',
       loginTitle: 'Sign in',
+      loginTabPassword: 'Password',
+      loginTabQr: 'Scan QR',
       registerTitle: 'Create an account',
       forgotPasswordTitle: 'Forgot password',
       emailLabel: 'Email',
@@ -500,6 +556,31 @@ export const NAV_TRANSLATIONS: Record<SupportedLanguage, NavTranslation> = {
       showPassword: 'Show password',
       hidePassword: 'Hide password',
       forgotNote: 'Enter your registered email and we will send you a reset link.',
+      qrTitle: 'Sign in with QR',
+      qrSubtitle: 'Open the app on your phone and scan to sign in faster.',
+      qrSecureNote: 'Only verified accounts can scan the code.',
+      qrWaiting: 'Waiting for scan…',
+      qrScanned: 'Scanned. Confirm on your phone.',
+      qrApproved: 'Confirmed. Signing you in…',
+      qrExpired: 'The QR code has expired.',
+      qrDenied: 'Sign-in was declined.',
+      qrRefresh: 'Create a new code',
+      qrError: 'Could not create a QR code. Please try again.',
+      qrScanTitle: 'Scan login QR code',
+      qrScanIntro: 'Use your camera to scan the QR code on the other device.',
+      qrConfirm: 'Confirm sign-in',
+      qrCancel: 'Decline',
+      qrSuccessTitle: 'Sign-in confirmed',
+      qrSuccessNote: 'Return to the other device to continue. You can close this page.',
+      qrLoginRequired: 'You need to sign in on this device before scanning.',
+      qrManualLabel: 'Or enter the QR code',
+      qrManualPlaceholder: 'Paste the QR code here',
+      qrManualSubmit: 'Continue',
+      qrOpenCamera: 'Open camera',
+      qrCameraError: 'Could not open the camera. Please enter the code manually.',
+      qrScanAgain: 'Scan again',
+      qrDeviceLabel: 'Device requesting sign-in',
+      qrBackHome: 'Back to home',
     },
     cart: 'Cart',
     openMenu: 'Open menu',
@@ -682,6 +763,8 @@ export const NAV_TRANSLATIONS: Record<SupportedLanguage, NavTranslation> = {
       logout: 'ログアウト',
       guest: 'アカウント',
       loginTitle: 'ログイン',
+      loginTabPassword: 'パスワード',
+      loginTabQr: 'QR スキャン',
       registerTitle: '新規アカウント作成',
       forgotPasswordTitle: 'パスワードをお忘れの方',
       emailLabel: 'メールアドレス',
@@ -711,6 +794,31 @@ export const NAV_TRANSLATIONS: Record<SupportedLanguage, NavTranslation> = {
       showPassword: 'パスワードを表示',
       hidePassword: 'パスワードを非表示',
       forgotNote: 'ご登録のメールアドレスを入力してください。再設定リンクをお送りします。',
+      qrTitle: 'QRコードでログイン',
+      qrSubtitle: 'スマートフォンのアプリでコードを読み取り、すばやくログインできます。',
+      qrSecureNote: '認証済みのアカウントのみ読み取りできます。',
+      qrWaiting: 'コードの読み取りを待っています…',
+      qrScanned: '読み取りました。スマートフォンで確認してください。',
+      qrApproved: '確認済み。ログインしています…',
+      qrExpired: 'QRコードの有効期限が切れました。',
+      qrDenied: 'ログインが拒否されました。',
+      qrRefresh: '新しいコードを作成',
+      qrError: 'QRコードを作成できません。もう一度お試しください。',
+      qrScanTitle: 'ログインQRコードを読み取る',
+      qrScanIntro: 'カメラで他の端末のQRコードを読み取ってください。',
+      qrConfirm: 'ログインを確認',
+      qrCancel: '拒否',
+      qrSuccessTitle: 'ログインを確認しました',
+      qrSuccessNote: '他の端末に戻って続行してください。このページは閉じてもかまいません。',
+      qrLoginRequired: '読み取る前に、この端末でログインしてください。',
+      qrManualLabel: 'またはQRコードを入力',
+      qrManualPlaceholder: 'QRコードを貼り付け',
+      qrManualSubmit: '続行',
+      qrOpenCamera: 'カメラを開く',
+      qrCameraError: 'カメラを開けませんでした。手動で入力してください。',
+      qrScanAgain: '再読み取り',
+      qrDeviceLabel: 'ログインを要求している端末',
+      qrBackHome: 'ホームへ戻る',
     },
     cart: 'カート',
     openMenu: 'メニューを開く',
@@ -893,6 +1001,8 @@ export const NAV_TRANSLATIONS: Record<SupportedLanguage, NavTranslation> = {
       logout: '로그아웃',
       guest: '계정',
       loginTitle: '로그인',
+      loginTabPassword: '비밀번호',
+      loginTabQr: 'QR 스캔',
       registerTitle: '회원가입',
       forgotPasswordTitle: '비밀번호 찾기',
       emailLabel: '이메일',
@@ -922,6 +1032,31 @@ export const NAV_TRANSLATIONS: Record<SupportedLanguage, NavTranslation> = {
       showPassword: '비밀번호 표시',
       hidePassword: '비밀번호 숨기기',
       forgotNote: '가입하신 이메일을 입력하시면 비밀번호 재설정 링크를 보내드립니다.',
+      qrTitle: 'QR 코드로 로그인',
+      qrSubtitle: '휴대폰 앱으로 코드를 스캔하면 빠르게 로그인할 수 있습니다.',
+      qrSecureNote: '인증된 계정만 스캔할 수 있습니다.',
+      qrWaiting: '코드 스캔을 기다리는 중…',
+      qrScanned: '스캔되었습니다. 휴대폰에서 확인해 주세요.',
+      qrApproved: '확인되었습니다. 로그인 중…',
+      qrExpired: 'QR 코드가 만료되었습니다.',
+      qrDenied: '로그인이 거부되었습니다.',
+      qrRefresh: '새 코드 만들기',
+      qrError: 'QR 코드를 만들 수 없습니다. 다시 시도해 주세요.',
+      qrScanTitle: '로그인 QR 코드 스캔',
+      qrScanIntro: '카메라로 다른 기기의 QR 코드를 스캔하세요.',
+      qrConfirm: '로그인 확인',
+      qrCancel: '거부',
+      qrSuccessTitle: '로그인이 확인되었습니다',
+      qrSuccessNote: '다른 기기로 돌아가 계속하세요. 이 페이지는 닫아도 됩니다.',
+      qrLoginRequired: '스캔하기 전에 이 기기에서 로그인해야 합니다.',
+      qrManualLabel: '또는 QR 코드 입력',
+      qrManualPlaceholder: 'QR 코드를 붙여넣기',
+      qrManualSubmit: '계속',
+      qrOpenCamera: '카메라 열기',
+      qrCameraError: '카메라를 열 수 없습니다. 직접 입력해 주세요.',
+      qrScanAgain: '다시 스캔',
+      qrDeviceLabel: '로그인을 요청한 기기',
+      qrBackHome: '홈으로',
     },
     cart: '장바구니',
     openMenu: '메뉴 열기',

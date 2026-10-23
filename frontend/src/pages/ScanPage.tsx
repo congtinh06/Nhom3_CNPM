@@ -7,7 +7,8 @@ import { useAudioPlayer } from '../hooks/useAudioPlayer';
 import { useToastOptional } from '../context/ToastContext';
 import { usePremium, buildPremiumPath } from '../context/PremiumContext';
 import { unlockAudio } from '../lib/audioUnlock';
-import { PoiDetail, SupportedLanguage } from '../types';
+import { getAnalyticsSessionId } from '../lib/analytics';
+import { PoiDetail, SupportedLanguage, TriggerType } from '../types';
 import '../styles/scan.css';
 
 // Scan detail text is translated per language, so on-device speech is offered for
@@ -58,6 +59,8 @@ export const ScanPage: React.FC = () => {
   const [imgError, setImgError] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const scanTriggerRef = useRef<TriggerType>('QR');
+  const lastRecordedScanRef = useRef<string | null>(null);
 
   const { playAudio, stopAudio, isPlaying } = useAudioPlayer();
 
@@ -77,10 +80,14 @@ export const ScanPage: React.FC = () => {
   }, [canAccessLanguage, lang, poiDetail?.qrToken, stopAudio]);
 
   const handleResolveQr = useCallback(
-    (qrTokenToResolve: string, options?: { auto?: boolean }) => {
+    (
+      qrTokenToResolve: string,
+      options?: { auto?: boolean; triggerType?: TriggerType }
+    ) => {
       const trimmed = qrTokenToResolve.trim();
       if (!trimmed) return;
       const isAuto = options?.auto ?? false;
+      const triggerType = options?.triggerType ?? 'QR';
 
       setLoading(true);
       setErrorMessage(null);
@@ -91,6 +98,24 @@ export const ScanPage: React.FC = () => {
           setPoiDetail(detail);
           setExpanded(false);
           setImgError(false);
+          scanTriggerRef.current = triggerType;
+
+          const scanKey = `${triggerType}:${detail.id}`;
+          if (lastRecordedScanRef.current !== scanKey) {
+            lastRecordedScanRef.current = scanKey;
+            void api
+              .recordAnalyticsEvent({
+                eventType: 'SCAN',
+                poiId: detail.id,
+                languageCode: lang,
+                triggerType,
+                sessionId: getAnalyticsSessionId(),
+              })
+              .catch(() => {
+                // Không chặn trải nghiệm quét QR nếu analytics tạm thời lỗi.
+              });
+          }
+
           if (isAuto) {
             // Resolved after an await, so browsers block autoplay (no user gesture).
             // Prompt with an explicit button instead of playing silently.
@@ -107,6 +132,7 @@ export const ScanPage: React.FC = () => {
             textToSpeak: detail.description || detail.summary,
             lang,
             speechLangs: SCAN_SPEECH_LANGS,
+            triggerType,
           });
         })
         .catch((err: unknown) => {
@@ -126,7 +152,7 @@ export const ScanPage: React.FC = () => {
 
   useEffect(() => {
     if (token) {
-      handleResolveQr(token, { auto: true });
+      handleResolveQr(token, { auto: true, triggerType: 'QR' });
     }
   }, [token, handleResolveQr]);
 
@@ -185,7 +211,7 @@ export const ScanPage: React.FC = () => {
               const extracted = val.includes('/qr/') ? val.split('/qr/')[1]?.split('?')[0] : val;
               if (extracted) {
                 setInputToken(extracted);
-                handleResolveQr(extracted, { auto: true });
+                handleResolveQr(extracted, { auto: true, triggerType: 'QR' });
               }
             }
           } catch {
@@ -201,7 +227,7 @@ export const ScanPage: React.FC = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (inputToken.trim()) {
-      handleResolveQr(inputToken.trim());
+      handleResolveQr(inputToken.trim(), { triggerType: 'MANUAL' });
     }
   };
 
@@ -214,6 +240,7 @@ export const ScanPage: React.FC = () => {
     setInputToken('');
     setExpanded(false);
     setShowScanner(true);
+    lastRecordedScanRef.current = null;
   };
 
   const renderScanner = () => (
@@ -316,6 +343,7 @@ export const ScanPage: React.FC = () => {
                       textToSpeak: poiDetail.description || poiDetail.summary,
                       lang,
                       speechLangs: SCAN_SPEECH_LANGS,
+                      triggerType: scanTriggerRef.current,
                     });
                   }}
                 >

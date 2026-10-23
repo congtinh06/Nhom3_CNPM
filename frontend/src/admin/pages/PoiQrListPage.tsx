@@ -134,6 +134,9 @@ export const PoiQrListPage: React.FC = () => {
           </p>
         </div>
         <div className="adm-page-actions">
+          <Link to="/quan-tri/qr/audio" className="adm-btn adm-btn-secondary">
+            Xem thống kê QR
+          </Link>
           <Link to="/quan-tri/diem-thuyet-minh" className="adm-btn adm-btn-secondary">
             Danh sách điểm
           </Link>

@@ -9,6 +9,7 @@ export type AdminMenuIconId =
   | 'news'
   | 'gallery'
   | 'orders'
+  | 'qr'
   | 'feedback'
   | 'users'
   | 'logs'
@@ -142,6 +143,23 @@ export const ADMIN_MENU: AdminMenuGroup[] = [
     label: 'Vận hành',
     items: [
       { id: 'orders', label: 'Đơn hàng', icon: 'orders', path: '/quan-tri/don-hang' },
+      {
+        id: 'qr-analytics',
+        label: 'QR & Thống kê',
+        icon: 'qr',
+        children: [
+          {
+            id: 'qr-account',
+            label: 'QR tài khoản',
+            path: '/quan-tri/qr/tai-khoan',
+          },
+          {
+            id: 'qr-audio',
+            label: 'QR nghe audio',
+            path: '/quan-tri/qr/audio',
+          },
+        ],
+      },
       { id: 'feedback', label: 'Góp ý', icon: 'feedback', isUpcoming: true },
     ],
   },

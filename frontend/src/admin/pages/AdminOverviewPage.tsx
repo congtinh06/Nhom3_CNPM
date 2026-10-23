@@ -4,6 +4,7 @@ import { adminClient, normalizeAdminError } from '../api/adminClient';
 import { AnalyticsSummaryResponse } from '../../types';
 import { DataTable, Column } from '../components/DataTable';
 import { ErrorState } from '../components/ErrorState';
+import { QrAlerts } from '../components/QrAlerts';
 
 interface TopPoiItem {
   poiId: number;
@@ -213,6 +214,8 @@ export const AdminOverviewPage: React.FC = () => {
       </div>
 
       <div className="adm-overview-grid">
+        <QrAlerts />
+
         {/* Hàng thẻ số lượng nội dung quản trị */}
         <div className="adm-metrics-row">
           {COUNT_CARDS.map((card) => {
