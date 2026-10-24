@@ -516,7 +516,7 @@ describe('NearbyPage - Clean Multilingual & Audio Narration Integration', () => 
   });
 
   it('tracks journey progress and renders single-line stats and localStorage sync', () => {
-    localStorage.setItem('saigonvoice_listened_pois', JSON.stringify(['poi-1']));
+    localStorage.setItem('echora_listened_pois', JSON.stringify(['poi-1']));
 
     render(
       <BrowserRouter>
@@ -2229,7 +2229,7 @@ describe('NearbyPage - Clean Multilingual & Audio Narration Integration', () => 
 
       it('asserts list rows still show the category and listened check mark when marked listened, while hero has no chip', () => {
         // Set stop 1 as listened in localStorage
-        localStorage.setItem('saigonvoice_listened_pois', JSON.stringify(['poi-1']));
+        localStorage.setItem('echora_listened_pois', JSON.stringify(['poi-1']));
         setStoredLanguage('vi');
 
         const { container } = render(

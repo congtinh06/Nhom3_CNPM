@@ -89,7 +89,7 @@ describe('GoogleSignInButton', () => {
       user: {
         id: 1,
         fullName: 'Khách Google',
-        email: 'khach@saigonvoice.local',
+        email: 'khach@echora.local',
         role: 'USER',
         emailVerified: true,
         plan: 'FREE',

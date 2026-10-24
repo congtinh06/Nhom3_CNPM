@@ -25,7 +25,7 @@ const mockUseAuth = vi.mocked(useAuth);
 const baseUser: AdminUser = {
   id: 5,
   fullName: 'Nguyễn Văn An',
-  email: 'an@saigonvoice.local',
+  email: 'an@echora.local',
   role: 'USER',
   status: 'ACTIVE',
   provider: 'LOCAL',
@@ -39,7 +39,7 @@ function setAuth(currentUserId: number) {
     status: 'authenticated',
     user: {
       id: currentUserId,
-      email: 'admin@saigonvoice.local',
+      email: 'admin@echora.local',
       fullName: 'Quản Trị Viên',
       role: 'ADMIN',
       emailVerified: true,
@@ -89,7 +89,7 @@ describe('UserDetailPage', () => {
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: 'Nguyễn Văn An' })).toBeInTheDocument();
     });
-    expect(screen.getAllByText('an@saigonvoice.local').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('an@echora.local').length).toBeGreaterThan(0);
     expect(screen.getByText('Mật khẩu')).toBeInTheDocument();
     expect(userApi.getAdminUserDetail).toHaveBeenCalledWith(5);
   });

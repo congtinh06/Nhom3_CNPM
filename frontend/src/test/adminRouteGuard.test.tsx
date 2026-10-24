@@ -78,7 +78,7 @@ describe('AdminRouteGuard', () => {
   it('hiển thị màn hình 403 Forbidden khi người dùng không có vai trò ADMIN', () => {
     const regularUser: AuthUser = {
       id: 2,
-      email: 'user@saigonvoice.local',
+      email: 'user@echora.local',
       fullName: 'Khách Du Lịch',
       role: 'USER',
       emailVerified: true,
@@ -109,7 +109,7 @@ describe('AdminRouteGuard', () => {
   it('cho phép hiển thị nội dung khi người dùng đã đăng nhập với vai trò ADMIN', () => {
     const adminUser: AuthUser = {
       id: 1,
-      email: 'admin@saigonvoice.local',
+      email: 'admin@echora.local',
       fullName: 'Quản Trị Viên',
       role: 'ADMIN',
       emailVerified: true,

@@ -1,4 +1,4 @@
-export const LOGGED_OUT_EVENT = 'saigonvoice:logged-out';
+export const LOGGED_OUT_EVENT = 'echora:logged-out';
 
 let accessToken: string | null = null;
 

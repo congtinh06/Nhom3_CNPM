@@ -1,4 +1,4 @@
-import React, { Suspense, lazy } from 'react';
+import React, { Suspense, lazy, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, useLocation, Navigate, useParams } from 'react-router-dom';
 import { ToastProvider } from './context/ToastContext';
 import { CartProvider } from './context/CartContext';
@@ -30,6 +30,13 @@ import { AuthModal } from './components/auth/AuthModal';
 import { RequireAuth } from './components/auth/RequireAuth';
 
 import { useSmoothScroll } from './hooks/useSmoothScroll';
+import { api } from './api/client';
+import {
+  getAnalyticsSessionId,
+  getClientLanguage,
+  getVisitTrigger,
+  markVisitRecorded,
+} from './lib/analytics';
 
 const NearbyPage = lazy(() => import('./pages/NearbyPage'));
 const AdminRoutes = lazy(() => import('./admin/AdminRoutes'));
@@ -50,6 +57,25 @@ const SouvenirSlugRedirect: React.FC = () => {
 const AppContent: React.FC = () => {
   useSmoothScroll();
   const location = useLocation();
+
+  // Đếm 1 lượt truy cập website (VISIT) mỗi phiên tab — phục vụ dashboard
+  // quản trị realtime. Trang /quan-tri (admin) không được tính là lượt truy cập.
+  useEffect(() => {
+    if (location.pathname.startsWith('/quan-tri')) return;
+    if (!markVisitRecorded()) return;
+    void api
+      .recordAnalyticsEvent({
+        eventType: 'VISIT',
+        languageCode: getClientLanguage(),
+        triggerType: getVisitTrigger(location.pathname),
+        sessionId: getAnalyticsSessionId(),
+      })
+      .catch(() => {
+        // Analytics lỗi tạm thời không chặn người dùng.
+      });
+    // Chỉ chạy một lần mỗi phiên tab (markVisitRecorded tự chống lặp StrictMode).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const state = location.state as {
     backgroundLocation?: { pathname: string; search?: string; hash?: string };

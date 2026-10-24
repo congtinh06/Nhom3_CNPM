@@ -57,3 +57,4 @@ qr-output/
 # Tai lieu no bo (khong dua len GitHub)
 *.docx
 *.pdf
+_check_docx/

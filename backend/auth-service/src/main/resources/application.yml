@@ -5,7 +5,7 @@ spring:
   application:
     name: auth-service
   datasource:
-    url: ${DB_URL:jdbc:sqlserver://localhost:1433;databaseName=saigonvoice_auth_db;encrypt=true;trustServerCertificate=true}
+    url: ${DB_URL:jdbc:sqlserver://localhost:1433;databaseName=echora_auth_db;encrypt=true;trustServerCertificate=true}
     username: ${DB_USERNAME:auth_user}
     password: ${DB_PASSWORD:Auth_Pass!2026}
     driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
@@ -87,4 +87,4 @@ management:
 
 logging:
   level:
-    com.saigonvoice.auth: INFO
+    com.echora.auth: INFO

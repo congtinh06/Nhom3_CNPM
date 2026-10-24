@@ -10,7 +10,7 @@
 --   analytics_db.analytics_event ids starting with seed-qr-
 -- ==============================================================================
 
-USE saigonvoice_auth_db;
+USE echora_auth_db;
 GO
 
 SET NOCOUNT ON;
@@ -22,7 +22,7 @@ GO
 DROP TABLE IF EXISTS #SeedUsers;
 SELECT ROW_NUMBER() OVER (ORDER BY id) AS rn, id
 INTO #SeedUsers
-FROM saigonvoice_auth_db.dbo.users
+FROM echora_auth_db.dbo.users
 WHERE status = 'ACTIVE';
 
 DECLARE @userCount INT = (SELECT COUNT(*) FROM #SeedUsers);
@@ -104,7 +104,7 @@ GO
 DROP TABLE IF EXISTS #SeedUsers;
 GO
 
-USE saigonvoice_analytics_db;
+USE echora_analytics_db;
 GO
 
 SET NOCOUNT ON;
@@ -116,7 +116,7 @@ GO
 DROP TABLE IF EXISTS #SeedPoi;
 SELECT ROW_NUMBER() OVER (ORDER BY id) AS rn, id
 INTO #SeedPoi
-FROM saigonvoice_content_db.dbo.poi
+FROM echora_content_db.dbo.poi
 WHERE code IN (
     'POI_DINH_DOC_LAP_01',
     'POI_DUC_BA_01',
@@ -203,6 +203,6 @@ DROP TABLE IF EXISTS #SeedPoi;
 GO
 
 SELECT 'QR demo seed complete' AS result,
-       (SELECT COUNT(*) FROM saigonvoice_auth_db.dbo.qr_login_sessions) AS qr_sessions,
-       (SELECT COUNT(*) FROM saigonvoice_analytics_db.dbo.analytics_event WHERE event_id LIKE 'seed-qr-%') AS qr_events;
+       (SELECT COUNT(*) FROM echora_auth_db.dbo.qr_login_sessions) AS qr_sessions,
+       (SELECT COUNT(*) FROM echora_analytics_db.dbo.analytics_event WHERE event_id LIKE 'seed-qr-%') AS qr_events;
 GO

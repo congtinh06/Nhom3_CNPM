@@ -18,6 +18,19 @@ Object.defineProperty(window, 'matchMedia', {
 // Mock window.scrollTo
 window.scrollTo = () => {};
 
+// Polyfill ResizeObserver cho recharts ResponsiveContainer trong jsdom.
+class MockResizeObserver {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+}
+if (typeof window.ResizeObserver === 'undefined') {
+  Object.defineProperty(window, 'ResizeObserver', {
+    writable: true,
+    value: MockResizeObserver,
+  });
+}
+
 // Mock HTMLDialogElement methods in jsdom
 if (typeof HTMLDialogElement !== 'undefined') {
   HTMLDialogElement.prototype.showModal = function () {

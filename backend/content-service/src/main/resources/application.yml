@@ -9,7 +9,7 @@ spring:
       max-file-size: 2MB
       max-request-size: 10MB
   datasource:
-    url: ${DB_URL:jdbc:sqlserver://localhost:1433;databaseName=saigonvoice_content_db;encrypt=true;trustServerCertificate=true}
+    url: ${DB_URL:jdbc:sqlserver://localhost:1433;databaseName=echora_content_db;encrypt=true;trustServerCertificate=true}
     username: ${DB_USERNAME:content_user}
     password: ${DB_PASSWORD:Saigon@123}
     driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
@@ -25,7 +25,7 @@ spring:
   rabbitmq:
     host: ${RABBITMQ_HOST:localhost}
     port: ${RABBITMQ_PORT:5672}
-    username: ${RABBITMQ_USERNAME:saigonvoice_app}
+    username: ${RABBITMQ_USERNAME:echora_app}
     password: ${RABBITMQ_PASSWORD:SgVoice_Rabbit!2026}
     # Publisher: chờ broker ACK và nhận lại message không route được (PoiEventPublisher kiểm tra cả hai)
     publisher-confirm-type: correlated
@@ -44,7 +44,7 @@ spring:
           multiplier: 2.0
           max-interval: 5s
 
-saigonvoice:
+echora:
   messaging:
     confirm-timeout: PT5S
   publish-retry:
@@ -72,7 +72,7 @@ internal:
 
 logging:
   level:
-    com.saigonvoice.content: INFO
+    com.echora.content: INFO
 
 app:
   product:

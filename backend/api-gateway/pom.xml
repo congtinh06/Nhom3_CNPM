@@ -9,7 +9,7 @@
         <version>3.3.4</version>
         <relativePath/>
     </parent>
-    <groupId>com.saigonvoice</groupId>
+    <groupId>com.echora</groupId>
     <artifactId>api-gateway</artifactId>
     <version>1.0.0</version>
     <name>api-gateway</name>

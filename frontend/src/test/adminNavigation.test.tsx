@@ -22,7 +22,7 @@ describe('Admin Navigation & Sidebar & Breadcrumbs (S2)', () => {
       status: 'authenticated',
       user: {
         id: 1,
-        email: 'admin@saigonvoice.local',
+        email: 'admin@echora.local',
         fullName: 'Quản Trị Viên',
         role: 'ADMIN',
         emailVerified: true,
@@ -207,7 +207,7 @@ describe('Admin Navigation & Sidebar & Breadcrumbs (S2)', () => {
   it('AdminRouteGuard chặn người dùng không có vai trò ADMIN và hiển thị màn hình từ chối 403', () => {
     const regularUser: AuthUser = {
       id: 99,
-      email: 'user@saigonvoice.local',
+      email: 'user@echora.local',
       fullName: 'Người Dùng Bình Thường',
       role: 'USER',
       emailVerified: true,

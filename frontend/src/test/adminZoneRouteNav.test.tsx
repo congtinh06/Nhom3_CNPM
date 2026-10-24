@@ -18,7 +18,7 @@ describe('Admin Navigation cho Khu vực & Lộ trình (S4)', () => {
       status: 'authenticated',
       user: {
         id: 1,
-        email: 'admin@saigonvoice.local',
+        email: 'admin@echora.local',
         fullName: 'Quản Trị Viên',
         role: 'ADMIN',
         emailVerified: true,

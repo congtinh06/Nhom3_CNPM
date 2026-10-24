@@ -1,0 +1,166 @@
+
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1340 1020" width="1340" height="1020" style="background:#ffffff; font-family:'Times New Roman', Times, serif;">
+  
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#000000"/>
+    </marker>
+    <marker id="openArrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 2 L 8 5 L 0 8" fill="none" stroke="#000000" stroke-width="1.5"/>
+    </marker>
+    <marker id="genArrow" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <polygon points="0,1 10,6 0,11" fill="#ffffff" stroke="#000000" stroke-width="1.5"/>
+    </marker>
+  </defs>
+
+  <!-- Title -->
+  <text x="670" y="32" text-anchor="middle" font-size="17" font-weight="bold">HÌNH 3.12. SƠ ĐỒ TUẦN TỰ: XỬ LÝ THANH TOÁN KÉP VÀ MÃ NHẬN QUYỀN QUA REDIS</text>
+  <text x="670" y="52" text-anchor="middle" font-size="12" font-style="italic" fill="#333333">Quy trình Thanh toán Trực tuyến (VNPAY / Payoo) và Thanh toán Tiền mặt tại Quầy (Shorted Claim Code lưu Redis TTL 15 phút)</text>
+
+  <!-- Lifeline Headers -->
+  <rect x="40" y="80" width="120" height="40" fill="#ffffff" stroke="#000000" stroke-width="1.5"/>
+  <text x="100" y="105" text-anchor="middle" font-size="12" font-weight="bold">User (Du khách)</text>
+
+  <rect x="230" y="80" width="130" height="40" fill="#ffffff" stroke="#000000" stroke-width="1.5"/>
+  <text x="295" y="105" text-anchor="middle" font-size="12" font-weight="bold">Frontend (Web App)</text>
+
+  <rect x="440" y="80" width="140" height="40" fill="#ffffff" stroke="#000000" stroke-width="1.5"/>
+  <text x="510" y="105" text-anchor="middle" font-size="12" font-weight="bold">Backend (Echora API)</text>
+
+  <rect x="670" y="80" width="150" height="40" fill="#ffffff" stroke="#000000" stroke-width="1.5"/>
+  <text x="745" y="105" text-anchor="middle" font-size="12" font-weight="bold">PaymentService (VNPAY)</text>
+
+  <rect x="910" y="80" width="140" height="40" fill="#ffffff" stroke="#000000" stroke-width="1.5"/>
+  <text x="980" y="105" text-anchor="middle" font-size="12" font-weight="bold">Admin / Staff (Quầy vé)</text>
+
+  <rect x="1140" y="80" width="120" height="40" fill="#ffffff" stroke="#000000" stroke-width="1.5"/>
+  <text x="1200" y="105" text-anchor="middle" font-size="12" font-weight="bold">Redis Cache</text>
+
+  <!-- Lifeline Lines -->
+  <line x1="100" y1="120" x2="100" y2="980" stroke="#888888" stroke-dasharray="4 4"/>
+  <line x1="295" y1="120" x2="295" y2="980" stroke="#888888" stroke-dasharray="4 4"/>
+  <line x1="510" y1="120" x2="510" y2="980" stroke="#888888" stroke-dasharray="4 4"/>
+  <line x1="745" y1="120" x2="745" y2="980" stroke="#888888" stroke-dasharray="4 4"/>
+  <line x1="980" y1="120" x2="980" y2="980" stroke="#888888" stroke-dasharray="4 4"/>
+  <line x1="1200" y1="120" x2="1200" y2="980" stroke="#888888" stroke-dasharray="4 4"/>
+
+  <!-- ================= SECTION 1: ONLINE PAYMENT FLOW ================= -->
+  <rect x="30" y="130" width="1260" height="300" fill="#fafafa" stroke="#000000" stroke-width="1.5"/>
+  <rect x="30" y="130" width="300" height="25" fill="#f0f0f0" stroke="#000000" stroke-width="1"/>
+  <text x="40" y="147" font-size="11.5" font-weight="bold">=== Online Payment Flow (Thanh toán Trực tuyến) ===</text>
+
+  <!-- 1. User visits web app -->
+  <line x1="100" y1="170" x2="295" y2="170" stroke="#000000" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <text x="197" y="165" text-anchor="middle" font-size="10">1. Truy cập Web App, chọn gói tham quan</text>
+
+  <rect x="290" y="170" width="10" height="240" fill="#ffffff" stroke="#000000"/>
+  <text x="280" y="195" text-anchor="end" font-size="9.5" fill="#444444">Hiển thị "Pay to Access Features"</text>
+
+  <!-- 2. Click Pay Now Online -->
+  <line x1="100" y1="210" x2="295" y2="210" stroke="#000000" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <text x="197" y="205" text-anchor="middle" font-size="10">2. Nhấn "Thanh toán Online (VNPAY)"</text>
+
+  <!-- 3. Request payment link -->
+  <line x1="295" y1="230" x2="510" y2="230" stroke="#000000" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <text x="402" y="225" text-anchor="middle" font-size="10">3. POST /api/payment/create-url</text>
+
+  <rect x="505" y="230" width="10" height="180" fill="#ffffff" stroke="#000000"/>
+  <text x="525" y="245" font-size="9.5" fill="#444444">Sinh auth_code &amp; URL thanh toán</text>
+
+  <!-- 4. Create payment URL -->
+  <line x1="510" y1="260" x2="745" y2="260" stroke="#000000" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <text x="627" y="255" text-anchor="middle" font-size="10">4. Gửi yêu cầu khởi tạo giao dịch (kèm auth_code)</text>
+
+  <line x1="745" y1="285" x2="510" y2="285" stroke="#000000" stroke-width="1.2" stroke-dasharray="3 3" marker-end="url(#openArrow)"/>
+  <text x="627" y="280" text-anchor="middle" font-size="9.5">5. Trả về payment_url có chữ ký HMAC-SHA512</text>
+
+  <line x1="510" y1="305" x2="295" y2="305" stroke="#000000" stroke-width="1.2" stroke-dasharray="3 3" marker-end="url(#openArrow)"/>
+  <text x="402" y="300" text-anchor="middle" font-size="10">6. Chuyển hướng người dùng sang VNPAY</text>
+
+  <line x1="295" y1="325" x2="100" y2="325" stroke="#000000" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <text x="197" y="320" text-anchor="middle" font-size="10">7. Hoàn tất thanh toán trên Cổng VNPAY</text>
+
+  <!-- Webhook IPN -->
+  <line x1="745" y1="350" x2="510" y2="350" stroke="#000000" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <text x="627" y="345" text-anchor="middle" font-size="10" font-weight="bold">8. Webhook IPN: Báo thanh toán thành công (auth_code)</text>
+
+  <!-- Loop / Poll check payment -->
+  <rect x="250" y="365" width="280" height="55" fill="#f5f5f5" stroke="#666666" stroke-dasharray="2 2"/>
+  <text x="255" y="380" font-size="9" font-weight="bold">[loop / polling: Đổi auth_code lấy Token]</text>
+  <line x1="295" y1="395" x2="510" y2="395" stroke="#000000" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <text x="402" y="390" text-anchor="middle" font-size="9.5">9. POST /api/payment/exchange-token (auth_code)</text>
+  <line x1="510" y1="412" x2="295" y2="412" stroke="#000000" stroke-width="1.2" stroke-dasharray="3 3" marker-end="url(#openArrow)"/>
+  <text x="402" y="423" text-anchor="middle" font-size="9.5" font-weight="bold">10. Trả về access_token &rarr; Lưu localStorage</text>
+
+  <!-- ================= SECTION 2: CASH PAYMENT FLOW ================= -->
+  <rect x="30" y="445" width="1260" height="340" fill="#fafafa" stroke="#000000" stroke-width="1.5"/>
+  <rect x="30" y="445" width="370" height="25" fill="#f0f0f0" stroke="#000000" stroke-width="1"/>
+  <text x="40" y="462" font-size="11.5" font-weight="bold">=== Cash Payment Flow (Thanh toán Tiền mặt tại Quầy vé) ===</text>
+
+  <!-- 11. User clicks Pay with Cash -->
+  <line x1="100" y1="485" x2="295" y2="485" stroke="#000000" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <text x="197" y="480" text-anchor="middle" font-size="10">11. Nhấn "Thanh toán Tiền mặt tại Quầy"</text>
+
+  <rect x="290" y="485" width="10" height="280" fill="#ffffff" stroke="#000000"/>
+  <text x="280" y="505" text-anchor="end" font-size="9.5" fill="#444444">Hiển thị "Vui lòng trả tiền mặt" kèm session_id</text>
+
+  <!-- 12. User pays cash -->
+  <line x1="100" y1="525" x2="980" y2="525" stroke="#000000" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <text x="540" y="520" text-anchor="middle" font-size="10" font-weight="bold">12. Du khách đưa tiền mặt tại quầy vé di tích</text>
+
+  <rect x="975" y="525" width="10" height="150" fill="#ffffff" stroke="#000000"/>
+
+  <!-- 13. Admin confirms -->
+  <line x1="980" y1="550" x2="510" y2="550" stroke="#000000" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <text x="745" y="545" text-anchor="middle" font-size="10">13. Xác nhận thu tiền mặt trên Admin Dashboard (session_id)</text>
+
+  <rect x="505" y="550" width="10" height="170" fill="#ffffff" stroke="#000000"/>
+  <text x="525" y="565" font-size="9" fill="#444444">Sinh auth_code &amp; Rút ngắn thành shorted_code (6 ký tự)</text>
+
+  <!-- 14. Store to Redis -->
+  <line x1="510" y1="585" x2="1200" y2="585" stroke="#000000" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <text x="855" y="580" text-anchor="middle" font-size="10" font-weight="bold">14. SET shorted_code auth_code EX 900 (Lưu Redis TTL 15 phút)</text>
+
+  <!-- 15. Show shorted code to admin -->
+  <line x1="510" y1="615" x2="980" y2="615" stroke="#000000" stroke-width="1.2" stroke-dasharray="3 3" marker-end="url(#openArrow)"/>
+  <text x="745" y="610" text-anchor="middle" font-size="10">15. Hiển thị mã ngắn (Claim Code) trên màn hình Admin</text>
+
+  <!-- 16. Admin gives code to user -->
+  <line x1="980" y1="645" x2="100" y2="645" stroke="#000000" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <text x="540" y="640" text-anchor="middle" font-size="10">16. Giao mã nhận quyền (Claim Code, VD: "ECH892") cho du khách</text>
+
+  <!-- 17. User enters code -->
+  <line x1="100" y1="675" x2="295" y2="675" stroke="#000000" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <text x="197" y="670" text-anchor="middle" font-size="10">17. Nhập mã nhận quyền trên điện thoại</text>
+
+  <!-- 18. Exchange code -->
+  <line x1="295" y1="700" x2="510" y2="700" stroke="#000000" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <text x="402" y="695" text-anchor="middle" font-size="10">18. POST /api/auth/claim-code (shorted_code)</text>
+
+  <!-- 19. Verify with Redis -->
+  <line x1="510" y1="720" x2="1200" y2="720" stroke="#000000" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <text x="855" y="715" text-anchor="middle" font-size="10">19. GET shorted_code &amp; DEL shorted_code (Xác thực và hủy mã một lần)</text>
+
+  <line x1="510" y1="745" x2="295" y2="745" stroke="#000000" stroke-width="1.2" stroke-dasharray="3 3" marker-end="url(#openArrow)"/>
+  <text x="402" y="740" text-anchor="middle" font-size="10" font-weight="bold">20. Trả về access_token &rarr; Lưu localStorage</text>
+
+  <!-- ================= SECTION 3: SHARED FLOW ================= -->
+  <rect x="30" y="800" width="1260" height="160" fill="#fafafa" stroke="#000000" stroke-width="1.5"/>
+  <rect x="30" y="800" width="370" height="25" fill="#f0f0f0" stroke="#000000" stroke-width="1"/>
+  <text x="40" y="817" font-size="11.5" font-weight="bold">=== Use Features (Khai thác Tính năng sau khi có Token) ===</text>
+
+  <line x1="100" y1="845" x2="295" y2="845" stroke="#000000" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <text x="197" y="840" text-anchor="middle" font-size="10">21. Chạm POI / Nghe thuyết minh / Hỏi Chatbot</text>
+
+  <line x1="295" y1="875" x2="510" y2="875" stroke="#000000" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <text x="402" y="870" text-anchor="middle" font-size="10">22. Gửi Request kèm Header [Authorization: Bearer access_token]</text>
+
+  <rect x="505" y="875" width="10" height="50" fill="#ffffff" stroke="#000000"/>
+  <text x="525" y="895" font-size="9" fill="#444444">Kiểm tra chữ ký JWT &amp; Phân quyền</text>
+
+  <line x1="510" y1="915" x2="295" y2="915" stroke="#000000" stroke-width="1.2" stroke-dasharray="3 3" marker-end="url(#openArrow)"/>
+  <text x="402" y="910" text-anchor="middle" font-size="10" font-weight="bold">23. Cho phép truy cập dữ liệu POI, Stream MP3 và Chatbot AI</text>
+
+  <line x1="295" y1="940" x2="100" y2="940" stroke="#000000" stroke-width="1.2" marker-end="url(#arrow)"/>
+  <text x="197" y="935" text-anchor="middle" font-size="10">24. Trải nghiệm thuyết minh đa ngữ sống động</text>
+</svg>

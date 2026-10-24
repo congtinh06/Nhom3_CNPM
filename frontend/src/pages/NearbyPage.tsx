@@ -239,7 +239,7 @@ export const NearbyPage: React.FC = () => {
   const [listenedPoiIds, setListenedPoiIds] = useState<string[]>(() => {
     if (typeof window === 'undefined') return [];
     try {
-      const saved = localStorage.getItem('saigonvoice_listened_pois');
+      const saved = localStorage.getItem('echora_listened_pois');
       return saved ? JSON.parse(saved) : [];
     } catch {
       return [];
@@ -251,7 +251,7 @@ export const NearbyPage: React.FC = () => {
       if (prev.includes(poiId)) return prev;
       const next = [...prev, poiId];
       try {
-        localStorage.setItem('saigonvoice_listened_pois', JSON.stringify(next));
+        localStorage.setItem('echora_listened_pois', JSON.stringify(next));
       } catch {
         // Ignore
       }

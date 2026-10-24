@@ -75,7 +75,7 @@ export const getTileProviders = (customEnvOrder?: string): TileProviderConfig[] 
 
 export const TILE_PROVIDERS: TileProviderConfig[] = getTileProviders();
 
-export const STORAGE_KEY_WORKING_PROVIDER = 'saigonvoice_working_tile_provider';
+export const STORAGE_KEY_WORKING_PROVIDER = 'echora_working_tile_provider';
 
 export const getInitialProviderIndex = (providers: TileProviderConfig[]): number => {
   try {

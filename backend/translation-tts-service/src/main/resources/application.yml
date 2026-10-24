@@ -45,7 +45,7 @@ internal:
 
 app:
   rabbitmq:
-    exchange: ${RABBITMQ_EXCHANGE:saigonvoice.topic}
+    exchange: ${RABBITMQ_EXCHANGE:echora.topic}
     queues:
       poi-created: ${RABBITMQ_QUEUE_POI_CREATED:poi.created.queue}
       poi-updated: ${RABBITMQ_QUEUE_POI_UPDATED:poi.updated.queue}
@@ -85,4 +85,4 @@ management:
 
 logging:
   level:
-    com.saigonvoice.translation: INFO
+    com.echora.translation: INFO

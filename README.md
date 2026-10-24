@@ -104,7 +104,7 @@ Nhom3_CNPM/
 │   └── vite.config.ts            # Cấu hình đóng gói Vite
 ├── docker/
 │   ├── init-databases.sql        # Khởi tạo 5 CSDL + 5 login riêng biệt trên SQL Server
-│   └── seed-46-users.sql         # (Tùy chọn) Seed thêm người dùng mẫu vào saigonvoice_auth_db
+│   └── seed-46-users.sql         # (Tùy chọn) Seed thêm người dùng mẫu vào echora_auth_db
 ├── docs/
 │   ├── PRD.md                    # Đặc tả yêu cầu sản phẩm (Product Requirements Document)
 │   ├── diagrams/                 # Sơ đồ Mermaid (kiến trúc, ERD, luồng nghiệp vụ)
@@ -208,7 +208,7 @@ Sau khi hệ thống khởi động thành công, bạn mở trình duyệt truy
 | **Giao diện Dev (Hot Reload)** | `http://localhost:5173` | Chạy khi gõ `npm run dev` ở thư mục frontend |
 | **Trang Quản trị (Admin)** | `http://localhost:8088/quan-tri` | Đăng nhập bằng tài khoản Quản trị viên (xem mục 5) |
 | **Cổng API Gateway** | `http://localhost:18080/actuator/health` | Kiểm tra sức khỏe toàn bộ microservices |
-| **Bảng quản trị RabbitMQ** | `http://localhost:15800` | User: `saigonvoice_app` / Pass: `SgVoice_Rabbit!2026` |
+| **Bảng quản trị RabbitMQ** | `http://localhost:15800` | User: `echora_app` / Pass: `SgVoice_Rabbit!2026` |
 | **Cơ sở dữ liệu SQL Server** | `localhost:1433` | User: `sa` / Pass: `Saigon@123` |
 
 > **Ghi chú về cổng API Gateway:** `docker-compose.yml` ánh xạ cổng host `${GATEWAY_PORT}` (mặc định `18080`) vào cổng `8080` bên trong container, tránh xung đột với cổng `8080` thường bị tiến trình nội bộ của Windows chiếm dụng. Muốn đổi cổng host, sửa `GATEWAY_PORT` trong `.env` rồi chạy lại `docker compose up -d`; Vite dev proxy cũng đang trỏ tới `http://localhost:18080`.
@@ -222,21 +222,21 @@ CSDL SQL Server 2022 đã được đóng gói sẵn trong container `mssql` (l�
 # 1. Liệt kê danh sách các CSDL trong hệ thống:
 docker exec -it mssql /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "Saigon@123" -C -Q "SELECT name FROM sys.databases;"
 
-# 2. Xem các bảng dữ liệu trong CSDL nội dung du lịch (saigonvoice_content_db):
-docker exec -it mssql /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "Saigon@123" -C -d saigonvoice_content_db -Q "SELECT name FROM sys.tables;"
+# 2. Xem các bảng dữ liệu trong CSDL nội dung du lịch (echora_content_db):
+docker exec -it mssql /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "Saigon@123" -C -d echora_content_db -Q "SELECT name FROM sys.tables;"
 
 # 3. Xem danh sách 7 điểm du lịch kèm bán kính kích hoạt tự động (35m - 60m):
-docker exec -it mssql /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "Saigon@123" -C -d saigonvoice_content_db -Q "SELECT id, name, trigger_radius_meters FROM dbo.poi;"
+docker exec -it mssql /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "Saigon@123" -C -d echora_content_db -Q "SELECT id, name, trigger_radius_meters FROM dbo.poi;"
 
 # 4. Mở cửa sổ dòng lệnh SQL tương tác trực tiếp (SQL Shell):
 docker exec -it mssql /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "Saigon@123" -C
 # (Trong shell: gõ lệnh SQL kết thúc bằng GO để thực thi, gõ QUIT để thoát)
 ```
 
-> **Tùy chọn seed thêm người dùng mẫu:** `docker/seed-46-users.sql` thêm các tài khoản `dukhach24@echora.vn` … `dukhach46@echora.vn` vào bảng `dbo.users` của `saigonvoice_auth_db` (chạy được trên cả PowerShell):
+> **Tùy chọn seed thêm người dùng mẫu:** `docker/seed-46-users.sql` thêm các tài khoản `dukhach24@echora.vn` … `dukhach46@echora.vn` vào bảng `dbo.users` của `echora_auth_db` (chạy được trên cả PowerShell):
 ```bash
 docker cp docker/seed-46-users.sql mssql:/tmp/seed-46-users.sql
-docker exec -it mssql /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "Saigon@123" -C -d saigonvoice_auth_db -i /tmp/seed-46-users.sql
+docker exec -it mssql /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "Saigon@123" -C -d echora_auth_db -i /tmp/seed-46-users.sql
 ```
 
 ---
@@ -276,18 +276,18 @@ Dưới đây là bảng tổng hợp toàn bộ tài khoản mẫu đã đượ
 | Loại tài khoản | Email đăng nhập | Mật khẩu | Quyền hạn / Mục đích |
 |---|---|---|---|
 | **Quản trị viên (Admin)** | `quantri@echora.test` | `Admin@123456` | Quản lý POI, duyệt bài thuyết minh, quản lý sản phẩm quà lưu niệm tại `/quan-tri` |
-| **Người dùng mẫu (User)** | `user@saigonvoice.local` | `User@123456` | Trải nghiệm nghe audio tour, đặt hàng quà lưu niệm, lịch sử đơn hàng |
+| **Người dùng mẫu (User)** | `user@echora.local` | `User@123456` | Trải nghiệm nghe audio tour, đặt hàng quà lưu niệm, lịch sử đơn hàng |
 
 ### 5.2. Mật khẩu Hạ tầng & Cơ sở dữ liệu (Database & Broker)
 | Phân hệ / CSDL | Địa chỉ & Cổng | Tên đăng nhập (User) | Mật khẩu (Password) |
 |---|---|---|---|
 | **SQL Server (System Admin)** | `localhost:1433` | `sa` | `Saigon@123` |
-| **CSDL Nội dung du lịch** | `saigonvoice_content_db` | `content_user` | `Zpu0fBATzxn6nIriiirxbgNm` |
-| **CSDL Bản dịch & TTS** | `saigonvoice_translation_db` | `translation_user` | `6CWO1eUnX5NcbRkRnBCZYGGb` |
-| **CSDL Thống kê lượt nghe** | `saigonvoice_analytics_db` | `analytics_user` | `e2GHyc3TbAHyfpvlLzYCt3fG` |
-| **CSDL Xác thực tài khoản** | `saigonvoice_auth_db` | `auth_user` | `Auth!Pass2026` |
-| **CSDL Đơn hàng & Thanh toán**| `saigonvoice_order_db` | `order_user` | `Order!Pass2026` |
-| **RabbitMQ Management Dashboard** | `http://localhost:15800` | `saigonvoice_app` | `SgVoice_Rabbit!2026` |
+| **CSDL Nội dung du lịch** | `echora_content_db` | `content_user` | `Zpu0fBATzxn6nIriiirxbgNm` |
+| **CSDL Bản dịch & TTS** | `echora_translation_db` | `translation_user` | `6CWO1eUnX5NcbRkRnBCZYGGb` |
+| **CSDL Thống kê lượt nghe** | `echora_analytics_db` | `analytics_user` | `e2GHyc3TbAHyfpvlLzYCt3fG` |
+| **CSDL Xác thực tài khoản** | `echora_auth_db` | `auth_user` | `Auth!Pass2026` |
+| **CSDL Đơn hàng & Thanh toán**| `echora_order_db` | `order_user` | `Order!Pass2026` |
+| **RabbitMQ Management Dashboard** | `http://localhost:15800` | `echora_app` | `SgVoice_Rabbit!2026` |
 
 > Đây là các giá trị mặc định trong `.env.example`. Nếu bạn đổi trong `.env`, hãy cập nhật lại bảng này. Riêng mật khẩu `sa` của SQL Server chỉ đổi được sau khi xoá volume (`docker compose down -v`); mật khẩu của các login microservice sẽ được `init-databases.sql` cập nhật lại mỗi lần container `mssql-db-init` chạy.
 

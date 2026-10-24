@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { Camera, Pause, Volume2, ChevronLeft, Lock } from 'lucide-react';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { Camera, Pause, Volume2, ChevronLeft, Lock, Eye } from 'lucide-react';
 import { api } from '../api/client';
 import { normalizeApiError } from '../api/errors';
 import { useAudioPlayer } from '../hooks/useAudioPlayer';
 import { useToastOptional } from '../context/ToastContext';
+import { useAuth } from '../context/AuthContext';
 import { usePremium, buildPremiumPath } from '../context/PremiumContext';
 import { unlockAudio } from '../lib/audioUnlock';
 import { getAnalyticsSessionId } from '../lib/analytics';
@@ -18,6 +19,9 @@ const SCAN_SPEECH_LANGS: SupportedLanguage[] = ['vi', 'en', 'ja', 'ko'];
 export const ScanPage: React.FC = () => {
   const { token } = useParams<{ token?: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
+  const { status } = useAuth();
+  const isGuest = status === 'guest';
   const { isPremium, canAccessLanguage } = usePremium();
   const { showToast } = useToastOptional();
 
@@ -278,6 +282,33 @@ export const ScanPage: React.FC = () => {
 
   return (
     <section className="s sp scan-page">
+      {isGuest && (
+        <div className="scan-guest-bar" role="note">
+          <span className="scan-guest-text">
+            <Eye size={15} strokeWidth={1.75} aria-hidden="true" />
+            <span>
+              Quý khách đang tham quan với tư cách <strong>Khách</strong>. Nghe
+              thuyết minh tiếng Việt miễn phí, không cần đăng nhập.
+            </span>
+          </span>
+          <span className="scan-guest-auth">
+            <button
+              type="button"
+              className="scan-guest-link"
+              onClick={() => navigate('/dang-nhap', { state: { backgroundLocation: location } })}
+            >
+              Đăng nhập
+            </button>
+            <button
+              type="button"
+              className="scan-guest-link is-strong"
+              onClick={() => navigate('/dang-ky', { state: { backgroundLocation: location } })}
+            >
+              Đăng ký
+            </button>
+          </span>
+        </div>
+      )}
       {!poiDetail && (
         <header className="scan-header">
           <h2>Quét mã QR</h2>

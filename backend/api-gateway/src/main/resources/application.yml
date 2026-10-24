@@ -88,4 +88,4 @@ management:
 logging:
   level:
     org.springframework.cloud.gateway: INFO
-    com.saigonvoice.gateway: DEBUG
+    com.echora.gateway: DEBUG

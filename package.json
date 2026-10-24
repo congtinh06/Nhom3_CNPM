@@ -1,5 +1,5 @@
 {
-  "name": "saigonvoice-tools",
+  "name": "echora-tools",
   "description": "Repo-root tooling (scripts) for Echora; not part of the frontend bundle.",
   "private": true,
   "version": "1.0.0",

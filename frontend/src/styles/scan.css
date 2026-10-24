@@ -333,3 +333,64 @@
 .scan-home {
   margin-top: 24px;
 }
+
+/* ------------------------------------------------------------------
+ * Guests sign the QR code opens as a downward bar (not blocked, only suggests)
+ * ------------------------------------------------------------------ */
+.scan-guest-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+  padding: 10px 16px;
+  border: 1px dashed var(--brown, #6d4c2f);
+  border-radius: 12px;
+  background: rgba(109, 76, 47, 0.06);
+}
+
+.scan-guest-text {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13.5px;
+  color: var(--ink, #2b2118);
+}
+
+.scan-guest-text svg {
+  flex-shrink: 0;
+  color: var(--brown, #6d4c2f);
+}
+
+.scan-guest-auth {
+  display: inline-flex;
+  gap: 8px;
+}
+
+.scan-guest-link {
+  padding: 6px 14px;
+  border: 1.5px solid var(--brown, #6d4c2f);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--brown, #6d4c2f);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.scan-guest-link:hover {
+  background: var(--brown, #6d4c2f);
+  color: #fff;
+}
+
+.scan-guest-link.is-strong {
+  background: var(--brown, #6d4c2f);
+  color: #fff;
+}
+
+.scan-guest-link.is-strong:hover {
+  opacity: 0.88;
+}

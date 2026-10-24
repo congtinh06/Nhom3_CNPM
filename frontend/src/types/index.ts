@@ -110,13 +110,14 @@ export interface ResolvePoiResponse {
   poi: NearbyPoi | null;
 }
 
-export type AnalyticsEventType = 'SCAN' | 'AUDIO_PLAY';
+export type AnalyticsEventType = 'SCAN' | 'AUDIO_PLAY' | 'VISIT';
 export type SupportedLanguage = 'vi' | 'en' | 'ja' | 'ko';
-export type TriggerType = 'QR' | 'GPS' | 'MANUAL';
+export type TriggerType = 'QR' | 'GPS' | 'MANUAL' | 'DIRECT';
 
 export interface CreateAnalyticsEventRequest {
   eventType: AnalyticsEventType;
-  poiId: number;
+  /** Bắt buộc với SCAN/AUDIO_PLAY, bỏ trống với VISIT (truy cập website chung). */
+  poiId?: number;
   languageCode: SupportedLanguage | string;
   triggerType?: TriggerType;
   completed?: boolean;
@@ -131,12 +132,37 @@ export interface TopPoiStat {
 }
 
 export interface AnalyticsSummaryResponse {
+  totalVisits: number;
+  visitsByTrigger: Record<string, number>;
+  /** Số phiên có hoạt động trong 5 phút gần nhất (khách "đang online"). */
+  onlineVisitors: number;
   totalScans: number;
   scansByTrigger: Record<string, number>;
   totalAudioPlays: number;
   audioCompleted: number;
   playsByLanguage: Record<string, number>;
   topPois: TopPoiStat[];
+}
+
+export interface AnalyticsDailyPoint {
+  /** yyyy-MM-dd theo múi giờ Việt Nam. */
+  date: string;
+  visits: number;
+  scans: number;
+  plays: number;
+}
+
+export interface AnalyticsDailyCounts {
+  visits: number;
+  scans: number;
+  plays: number;
+}
+
+export interface AnalyticsTrendsResponse {
+  days: number;
+  series: AnalyticsDailyPoint[];
+  today: AnalyticsDailyCounts;
+  yesterday: AnalyticsDailyCounts;
 }
 
 export type ProductCategory = 'FOOD' | 'DRINK' | 'SOUVENIR';

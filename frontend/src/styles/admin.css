@@ -780,6 +780,18 @@
   font-feature-settings: "tnum";
 }
 
+.adm-metric-loading {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--fb-text-secondary, #78716C);
+  animation: admPulse 1.2s ease-in-out infinite;
+}
+
+@keyframes admPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.45; }
+}
+
 .adm-metric-link {
   text-decoration: none;
   color: inherit;
@@ -3951,5 +3963,235 @@
 
   .adm-order-payment-main .adm-order-amount {
     margin-left: 0;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Realtime dashboard (Tổng quan) — LIVE badge, card online, reset flow
+   -------------------------------------------------------------------------- */
+.adm-page-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.adm-live-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(224, 57, 57, 0.10);
+  color: #c0392b;
+  font-family: var(--font-body, inherit);
+  font-size: 0.6em;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  line-height: 1;
+}
+
+.adm-live-dot,
+.adm-online-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #e03939;
+  animation: adm-live-pulse 1.6s ease-in-out infinite;
+}
+
+.adm-online-dot {
+  display: inline-block;
+  margin-right: 8px;
+  background: #2e9e44;
+  width: 10px;
+  height: 10px;
+}
+
+@keyframes adm-live-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.35; transform: scale(0.75); }
+}
+
+.adm-live-updated {
+  color: var(--fb-muted, #8a7a6a);
+  font-size: 13px;
+}
+
+.adm-page-head-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.adm-reset-success {
+  margin: 0 0 18px;
+  padding: 12px 16px;
+  border: 1px solid #2e9e44;
+  border-radius: 10px;
+  background: rgba(46, 158, 68, 0.10);
+  color: #1d6f2f;
+  font-size: 14px;
+}
+
+.adm-reset-confirm-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 10px 0 4px;
+}
+
+.adm-reset-confirm-field label {
+  font-size: 14px;
+  color: var(--fb-ink, #2b2118);
+}
+
+.adm-reset-confirm-field input {
+  padding: 10px 14px;
+  border: 2px solid rgba(224, 57, 57, 0.6);
+  border-radius: 10px;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: var(--fb-ink, #2b2118);
+}
+
+.adm-reset-confirm-field input:focus {
+  outline: none;
+  border-color: #c0392b;
+}
+
+.adm-reset-error {
+  margin: 6px 0 0;
+  color: #c0392b;
+  font-size: 13px;
+}
+
+/* --------------------------------------------------------------------------
+   Tổng quan — biểu đồ xu hướng, donut nguồn, bar Top POI & badge so sánh
+   -------------------------------------------------------------------------- */
+.adm-card-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.adm-card-note {
+  font-size: 12px;
+  color: var(--fb-text-secondary, #78716C);
+}
+
+.adm-chart-wrap {
+  height: 280px;
+  width: 100%;
+}
+
+.adm-chart-donut {
+  height: 200px;
+  width: 100%;
+  max-width: 220px;
+  flex: 0 0 auto;
+}
+
+.adm-chart-horizontal {
+  height: 240px;
+}
+
+.adm-chart-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 160px;
+  padding: 24px 12px;
+  border: 1px dashed var(--fb-border, #E7E5E4);
+  border-radius: 4px;
+  color: var(--fb-text-secondary, #78716C);
+  font-size: 13.5px;
+  text-align: center;
+}
+
+.adm-donut-flex {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.adm-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 180px;
+  flex: 1 1 160px;
+}
+
+.adm-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--fb-text-primary, #1C1917);
+}
+
+.adm-legend-item i {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  display: inline-block;
+  flex: 0 0 auto;
+}
+
+.adm-legend-item b {
+  margin-left: auto;
+  font-feature-settings: "tnum";
+  color: var(--fb-text-secondary, #78716C);
+}
+
+.adm-metric-foot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.adm-delta {
+  font-size: 12px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-feature-settings: "tnum";
+  white-space: nowrap;
+}
+
+.adm-delta-up {
+  background-color: rgba(21, 128, 61, 0.12);
+  color: #15803D;
+}
+
+.adm-delta-down {
+  background-color: rgba(207, 20, 43, 0.1);
+  color: #CF1444;
+}
+
+@media (max-width: 720px) {
+  .adm-chart-wrap {
+    height: 220px;
+  }
+
+  .adm-chart-horizontal {
+    height: 200px;
+  }
+
+  .adm-donut-flex {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .adm-donut-flex .adm-chart-donut {
+    width: 100%;
+    max-width: none;
   }
 }

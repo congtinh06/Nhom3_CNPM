@@ -43,7 +43,7 @@ describe('UserMenu Admin Link', () => {
   it('hiển thị liên kết Quản trị hệ thống khi người dùng có vai trò ADMIN', async () => {
     const adminUser: AuthUser = {
       id: 1,
-      email: 'admin@saigonvoice.local',
+      email: 'admin@echora.local',
       fullName: 'Quản Trị Viên',
       role: 'ADMIN',
       emailVerified: true,
@@ -68,7 +68,7 @@ describe('UserMenu Admin Link', () => {
   it('KHÔNG hiển thị liên kết Quản trị hệ thống khi người dùng có vai trò USER', async () => {
     const regularUser: AuthUser = {
       id: 2,
-      email: 'khach@saigonvoice.local',
+      email: 'khach@echora.local',
       fullName: 'Khách Du Lịch',
       role: 'USER',
       emailVerified: true,

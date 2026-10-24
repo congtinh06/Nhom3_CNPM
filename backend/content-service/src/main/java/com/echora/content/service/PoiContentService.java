@@ -1,0 +1,48 @@
+package com.echora.content.service;
+
+import com.echora.content.dto.AdminPoiDetailDto;
+import com.echora.content.dto.AdminPoiListItemDto;
+import com.echora.content.dto.CreatePoiRequest;
+import com.echora.content.dto.PoiBoundingBoxDto;
+import com.echora.content.dto.PoiDetailDto;
+import com.echora.content.dto.PoiGuideDto;
+import com.echora.content.dto.PoiInternalQrDto;
+import com.echora.content.dto.PoiPublishStatusDto;
+import com.echora.content.dto.PoiSummaryDto;
+import com.echora.content.dto.UpdatePoiRequest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
+import java.math.BigDecimal;
+import java.util.List;
+
+public interface PoiContentService {
+
+    List<PoiSummaryDto> getPois(Long zoneId);
+
+    List<PoiGuideDto> getPoiGuides(Long zoneId, boolean includePremiumTranslations);
+
+    Page<AdminPoiListItemDto> getAdminPois(
+            Long zoneId, Long routeId, String status, String search, String audioStatus,
+            String overallStatus, String languageStatus, Pageable pageable);
+
+    AdminPoiDetailDto getAdminPoiDetail(Long id);
+
+    PoiDetailDto getPoiDetail(Long id, String lang);
+
+    PoiDetailDto getPoiByQrToken(String qrToken, String lang);
+
+    PoiInternalQrDto getInternalPoiByQrToken(String qrToken);
+
+    List<PoiBoundingBoxDto> getPoisInBoundingBox(Long zoneId, BigDecimal minLat, BigDecimal maxLat, BigDecimal minLng, BigDecimal maxLng);
+
+    PoiDetailDto createPoi(CreatePoiRequest request);
+
+    AdminPoiDetailDto updatePoi(Long id, UpdatePoiRequest request);
+
+    PoiPublishStatusDto getPublishStatus(Long poiId);
+
+    List<PoiPublishStatusDto> getPublishStatuses(String status);
+
+    PoiPublishStatusDto republish(Long poiId);
+}

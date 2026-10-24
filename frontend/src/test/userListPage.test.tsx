@@ -33,7 +33,7 @@ const mockRows: AdminUser[] = [
   {
     id: 1,
     fullName: 'Nguyễn Văn An',
-    email: 'an@saigonvoice.local',
+    email: 'an@echora.local',
     role: 'USER',
     status: 'ACTIVE',
     provider: 'LOCAL',
@@ -44,7 +44,7 @@ const mockRows: AdminUser[] = [
   {
     id: 2,
     fullName: 'Trần Thị Bích',
-    email: 'bich@saigonvoice.local',
+    email: 'bich@echora.local',
     role: 'ADMIN',
     status: 'BLOCKED',
     provider: 'GOOGLE',
@@ -91,7 +91,7 @@ describe('UserListPage', () => {
       expect(screen.getByText('Nguyễn Văn An')).toBeInTheDocument();
     });
 
-    expect(screen.getByText('an@saigonvoice.local')).toBeInTheDocument();
+    expect(screen.getByText('an@echora.local')).toBeInTheDocument();
     expect(screen.getByText('Trần Thị Bích')).toBeInTheDocument();
     const table = screen.getByRole('table');
     expect(within(table).getByText('Du khách')).toBeInTheDocument();

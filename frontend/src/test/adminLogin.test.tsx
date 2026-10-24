@@ -148,7 +148,7 @@ describe('AdminLoginPage', () => {
   it('đăng xuất ngay lập tức và báo lỗi nếu tài khoản đăng nhập không phải ADMIN', async () => {
     const regularUser: AuthUser = {
       id: 5,
-      email: 'khach@saigonvoice.local',
+      email: 'khach@echora.local',
       fullName: 'Khách Hàng',
       role: 'USER',
       emailVerified: true,
@@ -160,14 +160,14 @@ describe('AdminLoginPage', () => {
     renderLoginPage();
 
     fireEvent.change(screen.getByLabelText(/email quản trị/i), {
-      target: { value: 'khach@saigonvoice.local' },
+      target: { value: 'khach@echora.local' },
     });
     fireEvent.change(screen.getByLabelText(/^mật khẩu/i), { target: { value: 'Password123' } });
     fireEvent.click(screen.getByRole('button', { name: 'Đăng nhập' }));
 
     await waitFor(() => {
       expect(mockLogin).toHaveBeenCalledWith({
-        email: 'khach@saigonvoice.local',
+        email: 'khach@echora.local',
         password: 'Password123',
       });
       expect(mockLogout).toHaveBeenCalledTimes(1);
