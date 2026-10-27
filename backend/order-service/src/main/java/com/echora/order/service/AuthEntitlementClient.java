@@ -98,6 +98,27 @@ public class AuthEntitlementClient {
         }
     }
 
+    public boolean isEligibleForSouvenirDiscount(Long userId) {
+        if (userId == null) {
+            return false;
+        }
+        if (internalApiKey == null || internalApiKey.isBlank()) {
+            return false;
+        }
+        try {
+            @SuppressWarnings("unchecked")
+            Map<String, Object> resp = restClient.get()
+                    .uri("/api/auth/internal/entitlements/{userId}/discount-eligible", userId)
+                    .header(HEADER_INTERNAL_API_KEY, internalApiKey)
+                    .retrieve()
+                    .body(Map.class);
+            return resp != null && Boolean.TRUE.equals(resp.get("eligible"));
+        } catch (Exception ex) {
+            log.warn("Could not check discount eligibility for userId={}: {}", userId, ex.getMessage());
+            return isPremiumActive(userId);
+        }
+    }
+
     /** Cấp quyền ngoại ngữ cho một POI mua lẻ (idempotent theo mã đơn hàng). */
     public void grantPoiAccess(Order order) {
         if (order.getPoiId() == null) {
@@ -110,6 +131,8 @@ public class AuthEntitlementClient {
         LocalDateTime base = entitlementBaseTime(order);
         Map<String, Object> body = new LinkedHashMap<>();
         body.put("orderCode", order.getOrderCode());
+        body.put("orderId", order.getId());
+        body.put("paidAt", base);
         body.put("expiresAt", base.plusDays(accessDays));
 
         try {

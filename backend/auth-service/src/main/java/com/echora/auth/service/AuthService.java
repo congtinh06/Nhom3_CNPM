@@ -1,5 +1,6 @@
 package com.echora.auth.service;
 
+import com.echora.auth.dto.AccessResponse;
 import com.echora.auth.dto.ChangePasswordRequest;
 import com.echora.auth.dto.CookieResult;
 import com.echora.auth.dto.EntitlementResponse;
@@ -52,6 +53,12 @@ public interface AuthService {
     List<UserPoiEntitlementResponse> poiEntitlements(Long userId);
 
     boolean hasPoiEntitlement(Long userId, Long poiId);
+
+    boolean hasAccess(Long userId, Long poiId, String language);
+
+    AccessResponse access(Long userId, Long poiId, String language);
+
+    boolean isEligibleForSouvenirDiscount(Long userId);
 
     UserPoiEntitlementResponse grantPoiEntitlement(Long userId, Long poiId, PoiGrantRequest request);
 

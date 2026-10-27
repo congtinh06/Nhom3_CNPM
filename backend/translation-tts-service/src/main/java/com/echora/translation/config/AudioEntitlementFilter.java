@@ -67,6 +67,14 @@ public class AudioEntitlementFilter extends OncePerRequestFilter {
             filterChain.doFilter(request, response);
             return;
         }
+        String fileName = request.getRequestURI().substring(AUDIO_PREFIX.length());
+        Matcher matcher = AUDIO_FILE.matcher(fileName);
+        String language = matcher.matches() ? matcher.group(2) : "vi";
+        if ("vi".equalsIgnoreCase(language)) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         if (isBlank(expectedApiKey)) {
             reject(response, HttpServletResponse.SC_SERVICE_UNAVAILABLE,
                     "Dịch vụ âm thanh chưa được cấu hình.");
@@ -79,11 +87,8 @@ public class AudioEntitlementFilter extends OncePerRequestFilter {
             return;
         }
 
-        String fileName = request.getRequestURI().substring(AUDIO_PREFIX.length());
-        Matcher matcher = AUDIO_FILE.matcher(fileName);
-        String language = matcher.matches() ? matcher.group(2) : "vi";
         boolean premium = "PREMIUM".equalsIgnoreCase(request.getHeader(HEADER_USER_PLAN));
-        if (!"vi".equals(language) && !premium) {
+        if (!premium) {
             // Không Premium: cho phép nếu POI này đã được mua lẻ (chap hoặc narration chính).
             Long poiId = matcher.matches() ? Long.valueOf(matcher.group(1)) : null;
             Long userId;

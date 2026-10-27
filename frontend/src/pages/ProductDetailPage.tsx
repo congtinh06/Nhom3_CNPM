@@ -34,7 +34,8 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ category: 
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
   const { addToCart } = useCart();
-  const { isPremium } = usePremium();
+  const { isPremium, hasAnyPurchase } = usePremium();
+  const isDiscountEligible = isPremium || hasAnyPurchase;
   const { showToast } = useToast();
   const { isFavorite, toggleFavorite } = useFavorites();
   const { t } = useNavbarLanguage();
@@ -115,7 +116,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ category: 
   const unitPrice = (product?.price || 0) + sizeSurcharge;
   const discountedUnitPrice = applySouvenirDiscount(
     unitPrice,
-    isPremium,
+    isDiscountEligible,
     product?.category
   );
   const totalPrice = discountedUnitPrice * quantity;
@@ -179,7 +180,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ category: 
   const reviewsCount = product.reviewsCount || 100;
   const isFavorited = isFavorite(product.id);
   const isSouvenir = product.category === 'SOUVENIR';
-  const hasPremiumDiscount = isPremium && isSouvenir;
+  const hasPremiumDiscount = isDiscountEligible && isSouvenir;
 
   return (
     <div className="food-beverage-page-container" style={{ paddingTop: 90 }}>
@@ -484,7 +485,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ category: 
                   {relItem.name}
                 </h4>
                 <b style={{ color: 'var(--fb-saigon-red)', fontSize: 14 }}>
-                  {formatPrice(applySouvenirDiscount(relItem.price, isPremium, relItem.category))}
+                  {formatPrice(applySouvenirDiscount(relItem.price, isDiscountEligible, relItem.category))}
                 </b>
               </div>
             ))}

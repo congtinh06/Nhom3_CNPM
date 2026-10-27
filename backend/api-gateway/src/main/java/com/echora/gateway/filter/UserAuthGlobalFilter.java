@@ -166,7 +166,14 @@ public class UserAuthGlobalFilter implements GlobalFilter, Ordered {
     }
 
     private boolean isAudioPath(String path) {
-        return path != null && path.startsWith(AUDIO_PREFIX);
+        if (path == null || !path.startsWith(AUDIO_PREFIX)) {
+            return false;
+        }
+        // Audio tiếng Việt là tài nguyên công cộng miễn phí, không bắt buộc đăng nhập
+        if (path.contains("_vi_") || path.endsWith("_vi.mp3") || path.contains("-vi-")) {
+            return false;
+        }
+        return true;
     }
 
     private boolean isContentEntitlementPath(String path) {

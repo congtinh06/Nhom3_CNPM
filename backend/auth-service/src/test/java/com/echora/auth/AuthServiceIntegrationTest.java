@@ -151,11 +151,11 @@ class AuthServiceIntegrationTest {
     private String extractRefreshCookie(ResponseEntity<String> response) {
         String setCookie = response.getHeaders().getFirst(HttpHeaders.SET_COOKIE);
         assertThat(setCookie).isNotNull();
-        assertThat(setCookie).contains("refresh_token=");
+        assertThat(setCookie).contains("echora_user_token=");
         assertThat(setCookie).contains("HttpOnly");
         assertThat(setCookie).contains("SameSite=Strict");
         assertThat(setCookie).contains("Path=/api/auth");
-        return setCookie.split("refresh_token=", 2)[1].split(";", 2)[0];
+        return setCookie.split("echora_user_token=", 2)[1].split(";", 2)[0];
     }
 
     /** Đăng ký + xác thực email, trả về email đã dùng. */
@@ -239,7 +239,7 @@ class AuthServiceIntegrationTest {
         String oldCookie = extractRefreshCookie(loginResponse);
 
         HttpHeaders withCookie = new HttpHeaders();
-        withCookie.set(HttpHeaders.COOKIE, "refresh_token=" + oldCookie);
+        withCookie.set(HttpHeaders.COOKIE, "echora_user_token=" + oldCookie);
 
         ResponseEntity<String> refreshed = post("/api/auth/refresh", null, withCookie);
         assertThat(refreshed.getStatusCode()).isEqualTo(HttpStatus.OK);
@@ -264,7 +264,7 @@ class AuthServiceIntegrationTest {
 
         HttpHeaders withA = new HttpHeaders();
         withA.setBearerAuth(bearerA);
-        withA.set(HttpHeaders.COOKIE, "refresh_token=" + cookieA);
+        withA.set(HttpHeaders.COOKIE, "echora_user_token=" + cookieA);
 
         ResponseEntity<String> changed = post("/api/auth/change-password",
                 "{\"oldPassword\":\"%s\",\"newPassword\":\"N0vaPass!\",\"confirmPassword\":\"N0vaPass!\"}"
@@ -273,13 +273,13 @@ class AuthServiceIntegrationTest {
 
         // Phiên đang thao tác vẫn hoạt động
         HttpHeaders cookieOnlyA = new HttpHeaders();
-        cookieOnlyA.set(HttpHeaders.COOKIE, "refresh_token=" + cookieA);
+        cookieOnlyA.set(HttpHeaders.COOKIE, "echora_user_token=" + cookieA);
         ResponseEntity<String> refreshA = post("/api/auth/refresh", null, cookieOnlyA);
         assertThat(refreshA.getStatusCode()).isEqualTo(HttpStatus.OK);
 
         // Phiên khác bị thu hồi
         HttpHeaders cookieOnlyB = new HttpHeaders();
-        cookieOnlyB.set(HttpHeaders.COOKIE, "refresh_token=" + cookieB);
+        cookieOnlyB.set(HttpHeaders.COOKIE, "echora_user_token=" + cookieB);
         ResponseEntity<String> refreshB = post("/api/auth/refresh", null, cookieOnlyB);
         assertThat(refreshB.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
 

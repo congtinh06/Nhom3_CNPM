@@ -1,23 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import {
-  ArrowLeft,
-  BadgePercent,
-  BookOpen,
-  Check,
-  CreditCard,
-  Crown,
-  Headphones,
-  Languages,
-  Loader2,
-  Lock,
-  QrCode,
-  Search,
-  ShieldCheck,
-  Sparkles,
-  X,
-  Youtube,
-} from 'lucide-react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { ArrowLeft, Check, Loader2, Search, X } from 'lucide-react';
 import { PREMIUM_COPY, formatPremiumText } from '../content/premiumI18n';
 import { useNavbarLanguage } from '../content/languages';
 import { useAuth } from '../context/AuthContext';
@@ -50,123 +33,80 @@ export function poiPremiumPrice(premiumPrice?: number | null): number {
   return premiumPrice != null && premiumPrice > 0 ? premiumPrice : DEFAULT_POI_PRICE;
 }
 
-/** Cut copy riêng cho khối mua lẻ theo điểm (không đưa vào premiumI18n để gọn). */
-const POI_SECTION_COPY: Record<
-  SupportedLanguage,
-  {
-    title: string;
-    subtitle: string;
-    columnStop: string;
-    columnPrice: string;
-    columnAction: string;
-    buyCta: string;
-    buyVnPay: string;
-    buyQr: string;
-    processing: string;
-    purchased: string;
-    requestedNote: string;
-    validityNote: string;
-    priceLabel: string;
-    videoLabel: string;
-    detailsLabel: string;
-    discountLabel: string;
-    searchPlaceholder: string;
-    noResults: string;
-    tapHint: string;
-    listenCta: string;
-  }
-> = {
+interface PoiSectionCopy {
+  title: string;
+  subtitle: string;
+  listNote: string;
+  requestedNote: string;
+  unlockCta: string;
+  processing: string;
+  purchased: string;
+  priceLabel: string;
+  validityNote: string;
+  searchPlaceholder: string;
+  noResults: string;
+}
+
+const POI_SECTION_COPY: Record<SupportedLanguage, PoiSectionCopy> = {
   vi: {
     title: 'Mua lẻ theo điểm thuyết minh',
     subtitle:
-      'Chỉ cần mở khóa điểm bạn quan tâm. Mỗi điểm gồm thuyết minh tiếng Anh, Nhật, Hàn, nội dung chi tiết và video giới thiệu.',
-    columnStop: 'Điểm dừng',
-    columnPrice: 'Giá',
-    columnAction: 'Mở khóa',
-    buyCta: 'Mua gói điểm này',
-    buyVnPay: 'VNPAY',
-    buyQr: 'VietQR',
+      'Chọn đúng điểm bạn muốn nghe. Mỗi điểm mở khóa thuyết minh tiếng Anh, Nhật và Hàn trong 365 ngày.',
+    listNote:
+      'Mỗi điểm gồm thuyết minh chi tiết, video giới thiệu, giảm 10% quà lưu niệm. Giá áp dụng 365 ngày.',
+    requestedNote: 'Gói ngoại ngữ bạn đang mở khóa:',
+    unlockCta: 'Mở khóa',
     processing: 'Đang tạo thanh toán…',
     purchased: 'Đã mở khóa',
-    requestedNote: 'Gói ngoại ngữ bạn đang mở khóa:',
-    validityNote: 'Giá cho 365 ngày, áp dụng cho thuyết minh ngoại ngữ của điểm này.',
     priceLabel: 'Mở khóa lẻ',
-    videoLabel: 'Video giới thiệu',
-    detailsLabel: 'Nội dung thuyết minh chi tiết',
-    discountLabel: 'Giảm 10% quà lưu niệm',
+    validityNote: 'Giá cho 365 ngày, áp dụng cho thuyết minh ngoại ngữ của điểm này.',
     searchPlaceholder: 'Tìm điểm đến muốn mở khóa...',
     noResults: 'Không tìm thấy điểm đến phù hợp.',
-    tapHint: 'Nhấn vào một điểm bất kỳ để mở khóa ngay.',
-    listenCta: 'Nghe thuyết minh',
   },
   en: {
     title: 'Buy narration stops one by one',
     subtitle:
-      "Only unlock the stops you care about. Each stop includes English, Japanese and Korean narration, detailed stories and an intro video.",
-    columnStop: 'Stop',
-    columnPrice: 'Price',
-    columnAction: 'Unlock',
-    buyCta: 'Buy this stop',
-    buyVnPay: 'VNPAY',
-    buyQr: 'VietQR',
+      'Unlock only the stops you care about. Each stop includes English, Japanese and Korean narration for 365 days.',
+    listNote:
+      'Each stop includes detailed narration, an intro video and 10% off souvenirs. The price is valid for 365 days.',
+    requestedNote: 'The narration package you are unlocking:',
+    unlockCta: 'Unlock',
     processing: 'Creating payment…',
     purchased: 'Unlocked',
-    requestedNote: 'The narration package you are unlocking:',
-    validityNote: 'Price for 365 days, covering this stop in foreign languages.',
     priceLabel: 'Single unlock',
-    videoLabel: 'Intro video',
-    detailsLabel: 'Detailed narration content',
-    discountLabel: '10% off souvenirs',
+    validityNote: 'Price for 365 days, covering foreign-language narration for this stop.',
     searchPlaceholder: 'Find a stop to unlock...',
     noResults: 'No matching stops found.',
-    tapHint: 'Tap any stop to unlock it instantly.',
-    listenCta: 'Listen to narration',
   },
   ja: {
     title: 'スポット単位での購入',
     subtitle:
-      '必要なスポットだけを解除できます。各スポットには英語・日本語・韓国語のナレーション、詳細な解説、紹介動画が含まれます。',
-    columnStop: 'スポット',
-    columnPrice: '価格',
-    columnAction: '解除',
-    buyCta: 'このスポットを購入',
-    buyVnPay: 'VNPAY',
-    buyQr: 'VietQR',
+      '必要なスポットだけを解除できます。各スポットは英語・日本語・韓国語のナレーションを365日間利用できます。',
+    listNote:
+      '各スポットには詳細なナレーション、紹介動画、お土産10%オフが含まれます。価格は365日間有効です。',
+    requestedNote: '解除中のナレーションパッケージ:',
+    unlockCta: '解除',
     processing: '決済を作成中…',
     purchased: '解除済み',
-    requestedNote: '解除中のナレーションパッケージ:',
-    validityNote: '365日間の価格（このスポットの外国語ナレーション対象）。',
     priceLabel: '個別解除',
-    videoLabel: '紹介動画',
-    detailsLabel: '詳細なナレーション内容',
-    discountLabel: 'お土産10%オフ',
+    validityNote: '365日間の価格（このスポットの外国語ナレーション対象）。',
     searchPlaceholder: '解除したいスポットを検索...',
     noResults: '該当するスポットが見つかりません。',
-    tapHint: '任意のスポットをタップするとすぐに解除できます。',
-    listenCta: 'ナレーションを聞く',
   },
   ko: {
     title: '명소별 개별 구매',
     subtitle:
-      '필요한 명소만 해제하세요. 각 명소에는 영어, 일본어, 한국어 해설, 상세 콘텐츠, 소개 영상이 포함됩니다.',
-    columnStop: '명소',
-    columnPrice: '가격',
-    columnAction: '해제',
-    buyCta: '이 명소 구매',
-    buyVnPay: 'VNPAY',
-    buyQr: 'VietQR',
+      '필요한 명소만 해제하세요. 각 명소는 영어, 일본어, 한국어 해설을 365일 동안 이용할 수 있습니다.',
+    listNote:
+      '각 명소에는 상세 해설, 소개 영상, 기념품 10% 할인이 포함됩니다. 가격은 365일 동안 유효합니다.',
+    requestedNote: '해제 중인 해설 패키지:',
+    unlockCta: '해제',
     processing: '결제 생성 중…',
     purchased: '해제됨',
-    requestedNote: '해제 중인 해설 패키지:',
-    validityNote: '365일 가격(이 명소의 외국어 해설 대상)。',
     priceLabel: '개별 해제',
-    videoLabel: '소개 영상',
-    detailsLabel: '상세 해설 콘텐츠',
-    discountLabel: '기념품 10% 할인',
+    validityNote: '365일 가격(이 명소의 외국어 해설 대상).',
     searchPlaceholder: '해제할 명소 검색...',
     noResults: '일치하는 명소가 없습니다.',
-    tapHint: '명소를 누르면 바로 해제됩니다.',
-    listenCta: '해설 듣기',
   },
 };
 
@@ -176,14 +116,6 @@ const LANGUAGE_NAMES: Record<SupportedLanguage, string> = {
   ja: '日本語',
   ko: '한국어',
 };
-
-const FEATURE_ICONS = [Languages, Headphones, Youtube, BadgePercent];
-
-function poiVideoSearchUrl(name: string): string {
-  return `https://www.youtube.com/results?search_query=${encodeURIComponent(
-    `${name} Sài Gòn giới thiệu`
-  )}`;
-}
 
 function safeReturnTo(value: string | null): string | null {
   if (!value || !value.startsWith('/') || value.startsWith('//')) return null;
@@ -259,6 +191,7 @@ export const PremiumPage: React.FC = () => {
   const [poiGuides, setPoiGuides] = useState<PoiGuide[] | null>(null);
   const [poiGuidesError, setPoiGuidesError] = useState(false);
   const [poiCheckout, setPoiCheckout] = useState<number | null>(null);
+  const [poiMenuOpen, setPoiMenuOpen] = useState<number | null>(null);
 
   const copy = PREMIUM_COPY[lang] ?? PREMIUM_COPY.vi;
   const poiCopy = POI_SECTION_COPY[lang] ?? POI_SECTION_COPY.vi;
@@ -286,7 +219,6 @@ export const PremiumPage: React.FC = () => {
     );
   }, [poiGuides, poiSearch]);
 
-  // Kiem tra ket qua thanh toan tra ve tu VNPAY hoac session dang cho
   useEffect(() => {
     if (isPremium) {
       clearPendingPremiumOrder();
@@ -338,8 +270,6 @@ export const PremiumPage: React.FC = () => {
         const order = await getOrderByCode(returnOrderCode);
         if (cancelled) return;
         if (order && (order.status === 'PAID' || order.paymentStatus === 'SUCCESS')) {
-          // Don hang da thanh toan nhung quyen co the duoc cap bat dong bo
-          // qua outbox, nen tiep tuc lam moi entitlement thay vi mo khoa sai.
           await refreshEntitlement();
           if (cancelled) return;
         } else if (order && (order.status === 'CANCELLED' || order.paymentStatus === 'FAILED')) {
@@ -352,7 +282,7 @@ export const PremiumPage: React.FC = () => {
           return;
         }
       } catch {
-        // Tiep tuc poll neu loi mang
+        // Tiếp tục poll nếu lỗi mạng.
       }
 
       if (attempts < maxAttempts) {
@@ -378,7 +308,6 @@ export const PremiumPage: React.FC = () => {
     copy.pendingTimedOut,
   ]);
 
-  // Danh sách điểm thuyết minh + giá mua lẻ (nguồn chung với trang du khách).
   const loadPoiGuides = useCallback(async () => {
     if (typeof api.getPoiGuides !== 'function') {
       setPoiGuides([]);
@@ -408,25 +337,33 @@ export const PremiumPage: React.FC = () => {
     return () => window.cancelAnimationFrame(frame);
   }, [requestedPoiId, poiGuides]);
 
+  useEffect(() => {
+    if (poiMenuOpen == null) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setPoiMenuOpen(null);
+    };
+    const onPointerDown = (event: PointerEvent) => {
+      const target = event.target as HTMLElement | null;
+      if (!target?.closest('.premium-poi-unlock-wrap')) setPoiMenuOpen(null);
+    };
+    document.addEventListener('keydown', onKeyDown);
+    document.addEventListener('pointerdown', onPointerDown);
+    return () => {
+      document.removeEventListener('keydown', onKeyDown);
+      document.removeEventListener('pointerdown', onPointerDown);
+    };
+  }, [poiMenuOpen]);
+
   const hasGuideData = Boolean(poiGuides && poiGuides.length > 0);
 
-  const dynamicNarrationCount = useMemo(() => {
+  const narrationCount = useMemo(() => {
     if (!poiGuides || poiGuides.length === 0) return 0;
-    return poiGuides.reduce((total, guide) => {
-      const count = PREMIUM_LANGUAGES.filter((language) => {
-        const tr = guide.translations?.[language];
-        return Boolean(
-          tr && (tr.audioUrl || tr.description || (tr.chapters && tr.chapters.length > 0))
-        );
-      }).length;
-      return total + count;
-    }, 0);
+    return poiGuides.length * PREMIUM_LANGUAGES.length;
   }, [poiGuides]);
 
   const values = {
-    count: hasGuideData ? dynamicNarrationCount : '…',
+    count: hasGuideData ? narrationCount : '…',
     poiCount: hasGuideData ? poiGuides?.length ?? 0 : '…',
-    languageCount: hasGuideData ? PREMIUM_LANGUAGES.length : '…',
   };
 
   const isPremiumPending = !isPremium && Boolean(pendingOrderCode);
@@ -485,6 +422,7 @@ export const PremiumPage: React.FC = () => {
   };
 
   const handlePoiCheckout = async (poiId: number, method: PoiPaymentMethod) => {
+    setPoiMenuOpen(null);
     if (canAccessPoi(poiId)) {
       navigate(returnTo || '/diem-du-lich');
       return;
@@ -517,20 +455,17 @@ export const PremiumPage: React.FC = () => {
     }
   };
 
-  // Nhấn vào cả hàng: điểm đã mở thì mở nội dung, chưa mở thì bắt đầu thanh toán
-  // VNPAY cho đúng điểm đó (hai nút bên cạnh vẫn cho chọn VietQR riêng).
-  const handlePoiRowActivate = (poi: PoiGuide) => {
-    if (canAccessPoi(poi.id)) {
-      const slug = poi.slug || String(poi.id);
-      navigate(`/diem-du-lich?stop=${encodeURIComponent(slug)}`);
-      return;
-    }
-    void handlePoiCheckout(poi.id, 'VNPAY');
-  };
-
   const handleBackToTour = () => {
     navigate(returnTo || '/diem-du-lich');
   };
+
+  const planStatusLabel = isPremium
+    ? copy.activeBadge
+    : isPremiumPending
+      ? copy.pendingBadge
+      : isEntitlementError
+        ? copy.entitlementErrorTitle
+        : copy.offerBadge;
 
   return (
     <div className="premium-page">
@@ -548,38 +483,28 @@ export const PremiumPage: React.FC = () => {
         <div className="premium-hero-inner">
           <div className="premium-hero-top">
             <button type="button" className="premium-back-link" onClick={handleBackToTour}>
-              <ArrowLeft size={16} strokeWidth={2} aria-hidden="true" />
+              <ArrowLeft size={15} strokeWidth={1.8} aria-hidden="true" />
               <span>{copy.backToTour}</span>
             </button>
           </div>
 
           <div className="premium-hero-copy">
-            <p className="premium-eyebrow">{copy.eyebrow}</p>
             <h1 id="premium-page-title">{copy.title}</h1>
             <p className="premium-hero-subtitle">{copy.subtitle}</p>
           </div>
         </div>
-
-        <span className="premium-hero-credit">{HERO_CONFIG.diemDuLich.credit}</span>
       </section>
 
       <main className="premium-shell">
         {requestedLanguage && (
-          <div className="premium-request-note" role="status">
-            <Lock size={18} strokeWidth={1.8} aria-hidden="true" />
-            <p>
-              {copy.requestedLanguageNote}{' '}
-              <strong>{LANGUAGE_NAMES[requestedLanguage]}</strong>
-            </p>
-          </div>
+          <p className="premium-request-note" role="status">
+            {copy.requestedLanguageNote} <strong>{LANGUAGE_NAMES[requestedLanguage]}</strong>
+          </p>
         )}
 
         {spotlightPoi && !canAccessPoi(spotlightPoi.id) && (
-          <section className="premium-spotlight-card" aria-label="Mở khóa nhanh điểm thuyết minh">
-            <div className="spotlight-badge">
-              <Sparkles size={14} strokeWidth={2} aria-hidden="true" />
-              <span>{poiCopy.requestedNote}</span>
-            </div>
+          <section className="premium-spotlight-card" aria-label={poiCopy.requestedNote}>
+            <p className="premium-spotlight-label">{poiCopy.requestedNote}</p>
             <div className="spotlight-main">
               <div className="spotlight-media">
                 <img
@@ -593,46 +518,39 @@ export const PremiumPage: React.FC = () => {
               <div className="spotlight-content">
                 <div className="spotlight-header">
                   <h2 className="spotlight-title">{spotlightPoi.name}</h2>
-                  <div className="spotlight-languages">
-                    <span className="lang-tag is-free">VI (Miễn phí)</span>
-                    <span className="lang-tag is-premium">EN</span>
-                    <span className="lang-tag is-premium">JA</span>
-                    <span className="lang-tag is-premium">KO</span>
+                  <div className="premium-language-badges spotlight-languages">
+                    <span className="is-free">VI</span>
+                    {PREMIUM_LANGUAGES.map((language) => (
+                      <span key={language} className="is-locked" title={LANGUAGE_NAMES[language]}>
+                        {language.toUpperCase()}
+                      </span>
+                    ))}
                   </div>
                 </div>
-                <p className="spotlight-desc">
-                  Mở khóa toàn bộ thuyết minh ngoại ngữ Tiếng Anh, Tiếng Nhật và Tiếng Hàn cho riêng điểm này trong 365 ngày với chất lượng âm thanh HD.
-                </p>
+                <p className="spotlight-desc">{poiCopy.validityNote}</p>
                 <div className="spotlight-footer">
-                  <div className="spotlight-price-wrap">
-                    <span className="spotlight-price-label">Giá mở khóa lẻ:</span>
-                    <span className="spotlight-price-val">{formatPrice(poiPremiumPrice(spotlightPoi.premiumPrice))}</span>
-                    <span className="spotlight-price-term">/ 365 ngày</span>
-                  </div>
+                  <p className="spotlight-price">
+                    {formatPrice(poiPremiumPrice(spotlightPoi.premiumPrice))}
+                    <span>{poiCopy.priceLabel}</span>
+                  </p>
                   <div className="spotlight-actions">
                     <button
                       type="button"
-                      className="spotlight-vnpay-btn"
+                      className="premium-btn premium-btn-primary"
                       onClick={() => handlePoiCheckout(spotlightPoi.id, 'VNPAY')}
                       disabled={poiCheckout === spotlightPoi.id}
-                      title="Thanh toán an toàn qua cổng VNPay"
                     >
-                      <CreditCard size={17} strokeWidth={2} aria-hidden="true" />
-                      <span>
-                        {poiCheckout === spotlightPoi.id
-                          ? poiCopy.processing
-                          : `Thanh toán ${formatPrice(poiPremiumPrice(spotlightPoi.premiumPrice))} qua VNPAY`}
-                      </span>
+                      {poiCheckout === spotlightPoi.id
+                        ? poiCopy.processing
+                        : `Thanh toán ${formatPrice(poiPremiumPrice(spotlightPoi.premiumPrice))} qua VNPAY`}
                     </button>
                     <button
                       type="button"
-                      className="spotlight-qr-btn"
+                      className="premium-btn premium-btn-outline"
                       onClick={() => handlePoiCheckout(spotlightPoi.id, 'VIETQR')}
                       disabled={poiCheckout === spotlightPoi.id}
-                      title="Quét mã VietQR"
                     >
-                      <QrCode size={16} strokeWidth={2} aria-hidden="true" />
-                      <span>VietQR</span>
+                      VietQR
                     </button>
                   </div>
                 </div>
@@ -642,23 +560,172 @@ export const PremiumPage: React.FC = () => {
         )}
 
         {requestedPoiId && !spotlightPoi && (
-          <div className="premium-request-note" role="status">
-            <Lock size={18} strokeWidth={1.8} aria-hidden="true" />
-            <p>
-              {poiCopy.requestedNote}{' '}
-              <strong>
-                {poiGuides?.find((g) => g.id === requestedPoiId)?.name ??
-                  `POI #${requestedPoiId}`}
-              </strong>
-            </p>
-          </div>
+          <p className="premium-request-note" role="status">
+            {poiCopy.requestedNote}{' '}
+            <strong>
+              {poiGuides?.find((g) => g.id === requestedPoiId)?.name ??
+                `POI #${requestedPoiId}`}
+            </strong>
+          </p>
         )}
 
-        {notice && (
+        {notice && !isPremiumPending && (
           <p className="premium-notice" role="alert">
             {notice}
           </p>
         )}
+
+        <section className="premium-plan" aria-labelledby="premium-plan-title">
+          <div className="premium-section-head">
+            <h2 id="premium-plan-title">{copy.benefitsTitle}</h2>
+            <p className="premium-lead">{copy.benefitsSubtitle}</p>
+          </div>
+
+          <div className={`premium-offer premium-plan-card${isPremium ? ' is-active' : ''}${isPremiumPending ? ' is-pending' : ''}`}>
+            <div className="premium-plan-left">
+              <p className="premium-plan-label">{planStatusLabel}</p>
+              <h3 className="premium-plan-name">{copy.purchaseTitle}</h3>
+
+              <ul className="premium-plan-benefits">
+                {copy.benefits.map((benefit) => (
+                  <li key={benefit.title}>
+                    <strong>{formatPremiumText(benefit.title, values)}</strong>
+                    <span>{formatPremiumText(benefit.description, values)}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div className="premium-plan-right">
+              {isPremium ? (
+                <>
+                  <p className="premium-plan-price is-state">{copy.activeCta}</p>
+                  {premiumExpiresAt && (
+                    <p className="premium-expiry">
+                      {copy.expiryLabel}: <strong>{formatDateTime(premiumExpiresAt)}</strong>
+                    </p>
+                  )}
+                </>
+              ) : isPremiumPending ? (
+                <>
+                  <p className={`premium-plan-price is-state${pollingStatus === 'timeout' ? ' is-warning' : ''}`}>
+                    {pollingStatus === 'timeout' ? copy.pendingTimedOut : copy.pendingValue}
+                  </p>
+                  <p className="premium-plan-desc">{copy.pendingDescription}</p>
+                </>
+              ) : isEntitlementError ? (
+                <>
+                  <p className="premium-plan-price is-state is-warning">{copy.entitlementErrorTitle}</p>
+                  <p className="premium-plan-desc" title={entitlementError ?? undefined}>
+                    {copy.entitlementErrorDescription}
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p className="premium-plan-price">
+                    {formatPrice(PREMIUM_PRICE)}
+                    <span>{copy.priceUnit}</span>
+                  </p>
+                  <p className="premium-plan-desc">
+                    {formatPremiumText(copy.purchaseDescription, values)}
+                  </p>
+                </>
+              )}
+
+              <h4 className="premium-plan-subtitle">
+                {formatPremiumText(copy.languagesTitle, values)}
+              </h4>
+              <div className="premium-language-badges" aria-label={copy.languagesTitle}>
+                <span className="is-free">VI</span>
+                {PREMIUM_LANGUAGES.map((language) => (
+                  <span
+                    key={language}
+                    className={isPremium ? 'is-open' : 'is-locked'}
+                    title={LANGUAGE_NAMES[language]}
+                  >
+                    {language.toUpperCase()}
+                  </span>
+                ))}
+              </div>
+
+              {notice && (
+                <div className="premium-notice-wrap" role="alert">
+                  <p className="premium-notice-text">{notice}</p>
+                  <button
+                    type="button"
+                    className="premium-notice-retry-btn"
+                    onClick={handleCheckout}
+                    disabled={isSubmitting}
+                  >
+                    {copy.retry}
+                  </button>
+                </div>
+              )}
+
+              {isPremium ? (
+                <button
+                  type="button"
+                  className="premium-btn premium-btn-primary premium-pay-btn"
+                  onClick={handleBackToTour}
+                >
+                  {copy.continueCta}
+                </button>
+              ) : isPremiumPending ? (
+                <div className="premium-pending-actions">
+                  <button
+                    type="button"
+                    className="premium-btn premium-btn-primary premium-pay-btn"
+                    onClick={handleCheckAgain}
+                  >
+                    {pollingStatus === 'polling' && (
+                      <Loader2 size={16} strokeWidth={2} className="premium-spin" aria-hidden="true" />
+                    )}
+                    <span>{copy.pendingCheckAgain}</span>
+                  </button>
+                  {pollingStatus === 'timeout' && (
+                    <button
+                      type="button"
+                      className="premium-btn premium-btn-outline premium-pay-btn"
+                      onClick={handleRetryCheckout}
+                      disabled={isSubmitting}
+                    >
+                      {copy.retryCheckout}
+                    </button>
+                  )}
+                </div>
+              ) : isEntitlementError ? (
+                <button
+                  type="button"
+                  className="premium-btn premium-btn-primary premium-pay-btn"
+                  onClick={() => void refreshEntitlement()}
+                >
+                  {copy.retry}
+                </button>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    className="premium-btn premium-btn-primary premium-pay-btn"
+                    onClick={handleCheckout}
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 size={16} strokeWidth={2} className="premium-spin" aria-hidden="true" />
+                        <span>{copy.checkoutPending}</span>
+                      </>
+                    ) : (
+                      <span>{copy.checkoutCta}</span>
+                    )}
+                  </button>
+                  {!isAuthenticated && <p className="premium-login-note">{copy.loginNote}</p>}
+                </>
+              )}
+
+              <p className="premium-secure-note">{copy.secureNote}</p>
+            </div>
+          </div>
+        </section>
 
         {!hasGuideData && (
           <div className={`premium-data-state ${poiGuidesError ? 'is-error' : ''}`} role="status">
@@ -711,36 +778,25 @@ export const PremiumPage: React.FC = () => {
               )}
             </div>
 
-            <p className="premium-poi-tap-hint">{poiCopy.tapHint}</p>
+            <p className="premium-poi-note">{poiCopy.listNote}</p>
 
             {filteredPois.length === 0 ? (
               <p className="premium-poi-empty">{poiCopy.noResults}</p>
             ) : (
               <div className="premium-poi-list">
-                {filteredPois.map((poi, index) => {
+                {filteredPois.map((poi) => {
                   const isRequested = poi.id === requestedPoiId;
                   const unlocked = canAccessPoi(poi.id);
                   const price = poiPremiumPrice(poi.premiumPrice);
                   const imageSrc = resolveImagePath(poi.thumbnailUrl ?? undefined, poi.slug ?? undefined);
                   const category = poi.categoryNameVi || poi.categoryCode || copy.stopsTitle;
+                  const menuOpen = poiMenuOpen === poi.id;
 
                   return (
                     <article
-                      className={`premium-poi-card premium-poi-row ${
-                        isRequested ? 'is-requested' : ''
-                      } ${unlocked ? 'is-unlocked' : ''}`}
+                      className={`premium-poi-card premium-poi-row${isRequested ? ' is-requested' : ''}${unlocked ? ' is-unlocked' : ''}`}
                       ref={isRequested ? (el) => { requestPoiCardRef.current = el; } : undefined}
                       key={poi.id}
-                      role="button"
-                      tabIndex={0}
-                      aria-label={`${unlocked ? poiCopy.listenCta : poiCopy.buyCta}: ${poi.name}`}
-                      onClick={() => handlePoiRowActivate(poi)}
-                      onKeyDown={(event) => {
-                        if (event.key === 'Enter' || event.key === ' ') {
-                          event.preventDefault();
-                          handlePoiRowActivate(poi);
-                        }
-                      }}
                     >
                       <div className="premium-poi-media">
                         <img
@@ -751,31 +807,17 @@ export const PremiumPage: React.FC = () => {
                             (e.target as HTMLImageElement).src = '/images/pois/buu-dien-trung-tam.jpg';
                           }}
                         />
-                        {unlocked && (
-                          <span className="premium-poi-owned">
-                            <Check size={13} strokeWidth={2.4} aria-hidden="true" />
-                            {poiCopy.purchased}
-                          </span>
-                        )}
                       </div>
 
                       <div className="premium-poi-body">
-                        <div className="premium-poi-title-row">
-                          <span className="premium-poi-number">
-                            {String(index + 1).padStart(2, '0')}
-                          </span>
-                          <div>
-                            <h3>{poi.name}</h3>
-                            <p className="premium-poi-category">{category}</p>
-                          </div>
-                        </div>
-
+                        <h3>{poi.name}</h3>
+                        <p className="premium-poi-category">{category}</p>
                         <div className="premium-poi-languages">
                           <span className="is-free" title={copy.freeLabel}>VI</span>
                           {PREMIUM_LANGUAGES.map((language) => (
                             <span
                               key={language}
-                              className={unlocked ? 'is-free' : 'is-locked'}
+                              className={unlocked ? 'is-open' : 'is-locked'}
                               title={
                                 unlocked
                                   ? LANGUAGE_NAMES[language]
@@ -783,81 +825,54 @@ export const PremiumPage: React.FC = () => {
                               }
                             >
                               {language.toUpperCase()}
-                              {unlocked ? null : (
-                                <Lock size={11} strokeWidth={2} aria-hidden="true" />
-                              )}
                             </span>
                           ))}
                         </div>
-
-                        <ul className="premium-poi-perks">
-                          <li>
-                            <BookOpen size={15} strokeWidth={1.9} aria-hidden="true" />
-                            <span>{poiCopy.detailsLabel}</span>
-                          </li>
-                          <li>
-                            <a
-                              href={poiVideoSearchUrl(poi.name)}
-                              target="_blank"
-                              rel="noreferrer"
-                              title={`${poiCopy.videoLabel}: ${poi.name}`}
-                              onClick={(event) => event.stopPropagation()}
-                            >
-                              <Youtube size={15} strokeWidth={1.9} aria-hidden="true" />
-                              <span>{poiCopy.videoLabel}</span>
-                            </a>
-                          </li>
-                          <li>
-                            <BadgePercent size={15} strokeWidth={1.9} aria-hidden="true" />
-                            <span>{poiCopy.discountLabel}</span>
-                          </li>
-                        </ul>
                       </div>
 
                       <div className="premium-poi-side">
-                        <div className="premium-poi-price">
-                          <span>{formatPrice(price)}</span>
+                        <p className="premium-poi-price">
+                          {formatPrice(price)}
                           <small>{poiCopy.priceLabel}</small>
-                        </div>
+                        </p>
 
-                        <div className="premium-poi-actions">
-                          {unlocked ? (
-                            <span className="premium-poi-status is-open">
-                              <Check size={14} strokeWidth={2.3} aria-hidden="true" />
-                              {poiCopy.listenCta}
-                            </span>
-                          ) : (
-                            <div className="premium-poi-buy-actions">
-                              <button
-                                type="button"
-                                className="premium-poi-vnpay-btn"
-                                onClick={(event) => {
-                                  event.stopPropagation();
-                                  void handlePoiCheckout(poi.id, 'VNPAY');
-                                }}
-                                disabled={poiCheckout === poi.id}
-                                title="Thanh toán an toàn qua cổng VNPay"
-                              >
-                                <CreditCard size={14} strokeWidth={2} aria-hidden="true" />
-                                <span>VNPAY</span>
-                              </button>
-                              <button
-                                type="button"
-                                className="premium-btn premium-btn-primary premium-poi-buy-btn"
-                                onClick={(event) => {
-                                  event.stopPropagation();
-                                  void handlePoiCheckout(poi.id, 'VIETQR');
-                                }}
-                                disabled={poiCheckout === poi.id}
-                                title="Quét mã VietQR"
-                              >
-                                <QrCode size={14} strokeWidth={2} aria-hidden="true" />
-                                <span>VietQR</span>
-                              </button>
-                            </div>
-                          )}
-                        </div>
-                        <p className="premium-poi-term">{poiCopy.validityNote}</p>
+                        {unlocked ? (
+                          <span className="premium-poi-status is-open">
+                            <Check size={14} strokeWidth={2.3} aria-hidden="true" />
+                            {poiCopy.purchased}
+                          </span>
+                        ) : (
+                          <div className="premium-poi-unlock-wrap">
+                            <button
+                              type="button"
+                              className="premium-btn premium-btn-primary premium-poi-unlock"
+                              onClick={() => setPoiMenuOpen(menuOpen ? null : poi.id)}
+                              disabled={poiCheckout === poi.id}
+                              aria-haspopup="menu"
+                              aria-expanded={menuOpen}
+                            >
+                              {poiCheckout === poi.id ? poiCopy.processing : poiCopy.unlockCta}
+                            </button>
+                            {menuOpen && (
+                              <div className="premium-poi-popover" role="menu" aria-label={poiCopy.unlockCta}>
+                                <button
+                                  type="button"
+                                  role="menuitem"
+                                  onClick={() => void handlePoiCheckout(poi.id, 'VNPAY')}
+                                >
+                                  VNPAY
+                                </button>
+                                <button
+                                  type="button"
+                                  role="menuitem"
+                                  onClick={() => void handlePoiCheckout(poi.id, 'VIETQR')}
+                                >
+                                  VietQR
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </div>
                     </article>
                   );
@@ -866,352 +881,6 @@ export const PremiumPage: React.FC = () => {
             )}
           </section>
         )}
-
-        <section
-          className={`premium-discount-banner ${isPremium ? 'is-active' : ''}`}
-          aria-labelledby="premium-discount-title"
-        >
-          <span className="premium-discount-icon" aria-hidden="true">
-            <BadgePercent size={26} strokeWidth={1.8} />
-          </span>
-          <div>
-            <span className="premium-discount-kicker">{copy.packageBadge}</span>
-            <h2 id="premium-discount-title">{copy.discountTitle}</h2>
-            <p>{copy.discountDescription}</p>
-          </div>
-          <Link to="/am-thuc" className="premium-discount-cta">
-            {copy.discountCta}
-          </Link>
-        </section>
-
-        <section className="premium-overview" aria-labelledby="premium-benefits-title">
-          <div className="premium-benefits">
-            <div className="premium-section-head">
-              <h2 id="premium-benefits-title">{copy.benefitsTitle}</h2>
-              <p className="premium-lead">{copy.benefitsSubtitle}</p>
-            </div>
-
-            <div className="premium-benefit-grid">
-              {copy.benefits.map((benefit, index) => {
-                const Icon = FEATURE_ICONS[index] ?? Languages;
-                return (
-                  <article className="premium-benefit-card" key={benefit.title}>
-                    <span className="premium-benefit-icon" aria-hidden="true">
-                      <Icon size={19} strokeWidth={1.75} />
-                    </span>
-                    <h3>{formatPremiumText(benefit.title, values)}</h3>
-                    <p>{formatPremiumText(benefit.description, values)}</p>
-                  </article>
-                );
-              })}
-            </div>
-          </div>
-
-          <aside
-            className={`premium-offer ${
-              isPremium ? 'is-active' : isPremiumPending ? 'is-pending' : ''
-            }`}
-          >
-            {isPremium ? (
-              <>
-                <div className="premium-offer-head">
-                  <span className="premium-offer-icon" aria-hidden="true">
-                    <Crown size={22} strokeWidth={1.75} />
-                  </span>
-                  <span className="premium-offer-label">{copy.activeBadge}</span>
-                </div>
-
-                <h2>{copy.purchaseTitle}</h2>
-                <p className="premium-offer-value is-active-value">{copy.activeCta}</p>
-                {premiumExpiresAt && (
-                  <p className="premium-expiry">
-                    {copy.expiryLabel}: <strong>{formatDateTime(premiumExpiresAt)}</strong>
-                  </p>
-                )}
-                <p className="premium-offer-description">
-                  {formatPremiumText(copy.purchaseDescription, values)}
-                </p>
-
-                <div className="premium-language-badges" aria-label={copy.languagesTitle}>
-                  <span className="is-free">VI</span>
-                  {PREMIUM_LANGUAGES.map((language) => (
-                    <span key={language} className="is-open" title={LANGUAGE_NAMES[language]}>
-                      {language.toUpperCase()}
-                      <Check size={11} strokeWidth={2.5} aria-hidden="true" />
-                    </span>
-                  ))}
-                </div>
-
-                <button
-                  type="button"
-                  className="premium-btn premium-btn-primary premium-continue-btn"
-                  onClick={handleBackToTour}
-                >
-                  {copy.continueCta}
-                </button>
-
-                <p className="premium-secure-note">
-                  <ShieldCheck size={14} strokeWidth={1.9} aria-hidden="true" />
-                  <span>{copy.secureNote}</span>
-                </p>
-              </>
-            ) : isPremiumPending ? (
-              <>
-                <div className="premium-offer-head">
-                  <span className="premium-offer-icon" aria-hidden="true">
-                    {pollingStatus === 'timeout' ? (
-                      <X size={22} strokeWidth={1.75} />
-                    ) : (
-                      <Loader2 size={22} strokeWidth={1.75} className="premium-spin" />
-                    )}
-                  </span>
-                  <span className="premium-offer-label">{copy.pendingBadge}</span>
-                </div>
-
-                <h2>{copy.purchaseTitle}</h2>
-                <p className="premium-offer-value is-pending-value">
-                  {pollingStatus === 'timeout' ? copy.pendingTimedOut : copy.pendingValue}
-                </p>
-                <p className="premium-offer-description">{copy.pendingDescription}</p>
-
-                <div className="premium-language-badges" aria-label={copy.languagesTitle}>
-                  <span className="is-free">VI</span>
-                  {PREMIUM_LANGUAGES.map((language) => (
-                    <span key={language} className="is-locked" title={LANGUAGE_NAMES[language]}>
-                      {language.toUpperCase()}
-                      <Lock size={11} strokeWidth={2} aria-hidden="true" />
-                    </span>
-                  ))}
-                </div>
-
-                <div className="premium-pending-actions">
-                  <button
-                    type="button"
-                    className="premium-btn premium-btn-primary premium-pay-btn"
-                    onClick={handleCheckAgain}
-                  >
-                    <Loader2
-                      size={17}
-                      strokeWidth={2}
-                      className={pollingStatus === 'polling' ? 'premium-spin' : undefined}
-                      aria-hidden="true"
-                    />
-                    <span>{copy.pendingCheckAgain}</span>
-                  </button>
-                  {pollingStatus === 'timeout' && (
-                    <button
-                      type="button"
-                      className="premium-btn premium-btn-outline premium-pay-btn"
-                      onClick={handleRetryCheckout}
-                      disabled={isSubmitting}
-                    >
-                      <CreditCard size={17} strokeWidth={2} aria-hidden="true" />
-                      <span>{copy.retryCheckout}</span>
-                    </button>
-                  )}
-                </div>
-
-                <p className="premium-secure-note">
-                  <ShieldCheck size={14} strokeWidth={1.9} aria-hidden="true" />
-                  <span>{copy.secureNote}</span>
-                </p>
-              </>
-            ) : isEntitlementError ? (
-              <>
-                <div className="premium-offer-head">
-                  <span className="premium-offer-icon" aria-hidden="true">
-                    <Lock size={22} strokeWidth={1.75} />
-                  </span>
-                  <span className="premium-offer-label">{copy.entitlementErrorTitle}</span>
-                </div>
-
-                <h2>{copy.purchaseTitle}</h2>
-                <p
-                  className="premium-offer-value is-pending-value"
-                  title={entitlementError ?? undefined}
-                >
-                  {copy.entitlementErrorDescription}
-                </p>
-                <p className="premium-offer-description">
-                  {formatPremiumText(copy.purchaseDescription, values)}
-                </p>
-
-                <div className="premium-language-badges" aria-label={copy.languagesTitle}>
-                  <span className="is-free">VI</span>
-                  {PREMIUM_LANGUAGES.map((language) => (
-                    <span key={language} className="is-locked" title={LANGUAGE_NAMES[language]}>
-                      {language.toUpperCase()}
-                      <Lock size={11} strokeWidth={2} aria-hidden="true" />
-                    </span>
-                  ))}
-                </div>
-
-                <button
-                  type="button"
-                  className="premium-btn premium-btn-primary premium-pay-btn"
-                  onClick={() => void refreshEntitlement()}
-                >
-                  <ShieldCheck size={17} strokeWidth={2} aria-hidden="true" />
-                  <span>{copy.retry}</span>
-                </button>
-
-                <p className="premium-secure-note">
-                  <ShieldCheck size={14} strokeWidth={1.9} aria-hidden="true" />
-                  <span>{copy.secureNote}</span>
-                </p>
-              </>
-            ) : (
-              <>
-                <div className="premium-offer-head">
-                  <span className="premium-offer-icon" aria-hidden="true">
-                    <Crown size={22} strokeWidth={1.75} />
-                  </span>
-                  <span className="premium-offer-label">{copy.offerBadge}</span>
-                </div>
-
-                <h2>{copy.purchaseTitle}</h2>
-                <p className="premium-offer-value">
-                  {formatPrice(PREMIUM_PRICE)}
-                  <span>{copy.priceUnit}</span>
-                </p>
-                <p className="premium-offer-description">
-                  {formatPremiumText(copy.purchaseDescription, values)}
-                </p>
-
-                <div className="premium-language-badges" aria-label={copy.languagesTitle}>
-                  <span className="is-free">VI</span>
-                  {PREMIUM_LANGUAGES.map((language) => (
-                    <span key={language} className="is-locked" title={LANGUAGE_NAMES[language]}>
-                      {language.toUpperCase()}
-                      <Lock size={11} strokeWidth={2} aria-hidden="true" />
-                    </span>
-                  ))}
-                </div>
-
-                {notice && (
-                  <div className="premium-notice-wrap" role="alert">
-                    <p className="premium-notice-text">{notice}</p>
-                    <button
-                      type="button"
-                      className="premium-notice-retry-btn"
-                      onClick={handleCheckout}
-                      disabled={isSubmitting}
-                    >
-                      Thử lại
-                    </button>
-                  </div>
-                )}
-
-                <button
-                  type="button"
-                  className="premium-btn premium-btn-primary premium-pay-btn"
-                  onClick={handleCheckout}
-                  disabled={isSubmitting}
-                >
-                  {isSubmitting ? (
-                    <>
-                      <Loader2
-                        size={17}
-                        strokeWidth={2}
-                        className="premium-spin"
-                        aria-hidden="true"
-                      />
-                      <span>{copy.checkoutPending}</span>
-                    </>
-                  ) : (
-                    <>
-                      <CreditCard size={17} strokeWidth={2} aria-hidden="true" />
-                      <span>{copy.checkoutCta}</span>
-                    </>
-                  )}
-                </button>
-                {!isAuthenticated && <p className="premium-login-note">{copy.loginNote}</p>}
-
-                <p className="premium-secure-note">
-                  <ShieldCheck size={14} strokeWidth={1.9} aria-hidden="true" />
-                  <span>{copy.secureNote}</span>
-                </p>
-              </>
-            )}
-          </aside>
-        </section>
-
-        <section className="premium-languages" aria-labelledby="premium-packages-title">
-          <div className="premium-section-head">
-            <h2 id="premium-packages-title">
-              {formatPremiumText(copy.languagesTitle, values)}
-            </h2>
-            <p className="premium-lead">{copy.languagesSubtitle}</p>
-          </div>
-
-          <article className="premium-package-card premium-package-single">
-            <div className="premium-package-media">
-              <img
-                src="/images/pois/buu-dien-trung-tam.jpg"
-                alt={copy.packageTitle}
-                loading="lazy"
-                decoding="async"
-              />
-              <span className="premium-package-code">ALL</span>
-              <div className="premium-package-language-overlay" aria-hidden="true">
-                <span className="is-free">VI</span>
-                {PREMIUM_LANGUAGES.map((language) => (
-                  <span key={language}>{language.toUpperCase()}</span>
-                ))}
-              </div>
-            </div>
-
-            <div className="premium-package-body">
-              <span className="premium-package-kicker">{copy.packageBadge}</span>
-              <h3>{copy.offerBadge}</h3>
-              <p>{copy.packageDescription}</p>
-
-              <div className="premium-package-language-list">
-                <div className="premium-package-language is-free">
-                  <span className="premium-package-language-code">VI</span>
-                  <div>
-                    <strong>{LANGUAGE_NAMES.vi}</strong>
-                    <small>{copy.freeLabel}</small>
-                  </div>
-                  <Check size={16} strokeWidth={2.3} aria-hidden="true" />
-                </div>
-                {PREMIUM_LANGUAGES.map((language) => (
-                  <div
-                    className={`premium-package-language ${
-                      isPremium ? 'is-open' : 'is-locked'
-                    }`}
-                    key={language}
-                  >
-                    <span className="premium-package-language-code">
-                      {language.toUpperCase()}
-                    </span>
-                    <div>
-                      <strong>{LANGUAGE_NAMES[language]}</strong>
-                      <small>{isPremium ? copy.openLabel : copy.lockedLabel}</small>
-                    </div>
-                    {isPremium ? (
-                      <Check size={16} strokeWidth={2.3} aria-hidden="true" />
-                    ) : (
-                      <Lock size={16} strokeWidth={2.1} aria-hidden="true" />
-                    )}
-                  </div>
-                ))}
-              </div>
-
-              <div className="premium-package-includes">
-                <span>{copy.packageIncludesLabel}</span>
-                <ul>
-                  {copy.benefits.map((benefit) => (
-                    <li key={benefit.title}>
-                      <Check size={14} strokeWidth={2.3} aria-hidden="true" />
-                      {formatPremiumText(benefit.title, values)}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-          </article>
-        </section>
 
         <section className="premium-steps-section" aria-labelledby="premium-steps-title">
           <div className="premium-section-head">
@@ -1232,46 +901,34 @@ export const PremiumPage: React.FC = () => {
         </section>
 
         <section className="premium-closing">
-          <div>
-            <h2>{copy.closingTitle}</h2>
-            <p>{copy.closingDescription}</p>
-          </div>
-          <div className="premium-closing-actions">
-            {isPremium ? (
-              <button
-                type="button"
-                className="premium-btn premium-btn-light"
-                onClick={handleBackToTour}
-              >
-                {copy.continueCta}
-              </button>
-            ) : isPremiumPending ? (
-              <button
-                type="button"
-                className="premium-btn premium-btn-light"
-                onClick={pollingStatus === 'timeout' ? handleRetryCheckout : handleCheckAgain}
-                disabled={isSubmitting}
-              >
-                {pollingStatus === 'timeout' ? copy.retryCheckout : copy.pendingCheckAgain}
-              </button>
-            ) : (
-              <button
-                type="button"
-                className="premium-btn premium-btn-light"
-                onClick={handleCheckout}
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? copy.checkoutPending : copy.checkoutCta}
-              </button>
-            )}
+          <p className="premium-closing-text">{copy.closingTitle}</p>
+          {isPremium ? (
             <button
               type="button"
-              className="premium-btn premium-btn-outline-light"
+              className="premium-btn premium-btn-primary"
               onClick={handleBackToTour}
             >
-              {copy.backToTour}
+              {copy.continueCta}
             </button>
-          </div>
+          ) : isPremiumPending ? (
+            <button
+              type="button"
+              className="premium-btn premium-btn-primary"
+              onClick={pollingStatus === 'timeout' ? handleRetryCheckout : handleCheckAgain}
+              disabled={isSubmitting}
+            >
+              {pollingStatus === 'timeout' ? copy.retryCheckout : copy.pendingCheckAgain}
+            </button>
+          ) : (
+            <button
+              type="button"
+              className="premium-btn premium-btn-primary"
+              onClick={handleCheckout}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? copy.checkoutPending : copy.checkoutCta}
+            </button>
+          )}
         </section>
       </main>
     </div>

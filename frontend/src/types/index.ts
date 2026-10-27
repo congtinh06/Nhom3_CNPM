@@ -109,6 +109,9 @@ export interface MeEntitlement {
   premiumActive: boolean;
   premiumExpiresAt?: string | null;
   purchasedPois: PurchasedPoi[];
+  premium?: boolean;
+  unlockedPoiIds?: number[];
+  hasAnyPurchase?: boolean;
 }
 
 export interface Route {

@@ -22,4 +22,8 @@ public class PoiGrantRequest {
     private String orderCode;
 
     private LocalDateTime expiresAt;
+
+    private Long orderId;
+
+    private LocalDateTime paidAt;
 }

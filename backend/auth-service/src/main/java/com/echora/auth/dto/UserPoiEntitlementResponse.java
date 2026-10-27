@@ -16,11 +16,17 @@ public class UserPoiEntitlementResponse {
 
     private Long poiId;
     private LocalDateTime expiresAt;
+    private Long orderId;
+    private LocalDateTime paidAt;
+    private LocalDateTime grantedAt;
 
     public static UserPoiEntitlementResponse from(UserPoiEntitlement entitlement) {
         return UserPoiEntitlementResponse.builder()
                 .poiId(entitlement.getPoiId())
                 .expiresAt(entitlement.getExpiresAt())
+                .orderId(entitlement.getOrderId())
+                .paidAt(entitlement.getPaidAt())
+                .grantedAt(entitlement.getGrantedAt())
                 .build();
     }
 }

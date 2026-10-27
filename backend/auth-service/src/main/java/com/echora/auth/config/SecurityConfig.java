@@ -65,6 +65,7 @@ public class SecurityConfig {
                                 "/api/auth/qr/sessions/*/cancel").permitAll()
                         // Thiet bi A (chua dang nhap) poll trang thai phien QR.
                         .requestMatchers(HttpMethod.GET, "/api/auth/qr/sessions/*").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/auth/me/entitlements", "/me/entitlements", "/api/me/entitlements").permitAll()
                         .requestMatchers("/api/auth/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/auth/internal/**").permitAll()
                         .requestMatchers("/api/auth/**").authenticated()

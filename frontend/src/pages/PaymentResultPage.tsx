@@ -142,7 +142,9 @@ export const PaymentResultPage: React.FC = () => {
           if (api.getMeEntitlements) {
             const ent = await api.getMeEntitlements();
             if (cancelled) return;
-            const hasPoi = ent.purchasedPois?.some((p) => p.poiId === order.poiId);
+            const hasPoi =
+              ent.unlockedPoiIds?.includes(order.poiId) ||
+              ent.purchasedPois?.some((p) => p.poiId === order.poiId);
             if (hasPoi) {
               setEntitlementState('ready');
               try {

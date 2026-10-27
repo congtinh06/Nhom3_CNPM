@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { Lock } from 'lucide-react';
 import { GeoPoi, getHeroIntroText } from '../../pages/NearbyPage';
 import { SupportedLanguage } from '../../types';
 import { resolveImagePath } from './PoiCard';
 import { t } from '../../content/nearbyI18n';
+import { SUPPORTED_LANGUAGES } from '../../content/languages';
 import { PlaybackStatus } from '../../hooks/useNearbyAudio';
 import { buildGoogleMapsDirectionsUrl } from '../../utils/directions';
 
@@ -23,6 +25,12 @@ interface PoiHeroProps {
   getPoiName: (poi: GeoPoi) => string;
   userPos?: { lat: number; lng: number } | null;
   heroRef?: React.RefObject<HTMLDivElement>;
+  onChangeLanguage?: (language: SupportedLanguage) => void;
+  onUnlockLanguage?: (poi: GeoPoi, language: SupportedLanguage) => void;
+  canAccessPoiLanguage?: (
+    poiId: number | string | null | undefined,
+    language: SupportedLanguage
+  ) => boolean;
 }
 
 export const PoiHero: React.FC<PoiHeroProps> = ({
@@ -42,6 +50,9 @@ export const PoiHero: React.FC<PoiHeroProps> = ({
   getPoiName,
   userPos,
   heroRef,
+  onChangeLanguage,
+  onUnlockLanguage,
+  canAccessPoiLanguage,
 }) => {
   const [imageError, setImageError] = useState(false);
 
@@ -133,6 +144,37 @@ export const PoiHero: React.FC<PoiHeroProps> = ({
               <span className="local-name-value">{poi.name.vi}</span>
             </p>
           )}
+
+          {/* Bộ chọn ngôn ngữ của riêng điểm này */}
+          <div className="hero-lang-chips" role="group" aria-label="Bản dịch thuyết minh của điểm">
+            {SUPPORTED_LANGUAGES.map((opt) => {
+              const isLocked = canAccessPoiLanguage
+                ? !canAccessPoiLanguage(poi.numericId ?? poi.id, opt.code)
+                : opt.code !== 'vi';
+              const isActive = currentLang === opt.code;
+              return (
+                <button
+                  key={opt.code}
+                  type="button"
+                  className={`hero-lang-chip${isActive ? ' is-active' : ''}${isLocked ? ' is-locked' : ''}`}
+                  aria-pressed={isActive}
+                  title={isLocked ? `${opt.label} (Cần mở khóa)` : opt.label}
+                  onClick={() => {
+                    if (isLocked) {
+                      onUnlockLanguage?.(poi, opt.code);
+                    } else {
+                      onChangeLanguage?.(opt.code);
+                    }
+                  }}
+                >
+                  <span className="hero-lang-code">{opt.short}</span>
+                  {isLocked && (
+                    <Lock size={12} strokeWidth={2.2} className="hero-lang-lock-icon" aria-hidden="true" />
+                  )}
+                </button>
+              );
+            })}
+          </div>
 
           {/* 2-line clamped intro */}
           {introText && (

@@ -37,7 +37,25 @@ function bootstrapSession(scope: AuthScope): Promise<AuthSession | null> {
 
   const promise = authApi
     .refresh(scope)
-    .catch(() => null)
+    .catch(async () => {
+      const token = tokenStore.get(scope);
+      if (!token) return null;
+      try {
+        const me = await authApi.me(scope);
+        if (scope === 'user' && me.role === 'ADMIN') {
+          tokenStore.clear('user');
+          return null;
+        }
+        return {
+          accessToken: token,
+          tokenType: 'Bearer',
+          expiresIn: 900,
+          user: me,
+        };
+      } catch {
+        return null;
+      }
+    })
     .finally(() => {
       bootstrapPromises.delete(scope);
     });
@@ -105,6 +123,12 @@ const AuthProviderInner: React.FC<{ children: React.ReactNode; scope: AuthScope 
         scope === 'admin'
           ? await authApi.login(payload, scope)
           : await authApi.login(payload);
+      if (scope === 'user' && session.user?.role === 'ADMIN') {
+        tokenStore.clear('user');
+        setUser(null);
+        setStatus('guest');
+        throw new Error('Tài khoản quản trị không thể đăng nhập ở giao diện người dùng.');
+      }
       tokenStore.set(session.accessToken, scope);
       setUser(session.user);
       setStatus('authenticated');
@@ -119,6 +143,12 @@ const AuthProviderInner: React.FC<{ children: React.ReactNode; scope: AuthScope 
         scope === 'admin'
           ? await authApi.loginWithGoogle(credential, scope)
           : await authApi.loginWithGoogle(credential);
+      if (scope === 'user' && session.user?.role === 'ADMIN') {
+        tokenStore.clear('user');
+        setUser(null);
+        setStatus('guest');
+        throw new Error('Tài khoản quản trị không thể đăng nhập ở giao diện người dùng.');
+      }
       tokenStore.set(session.accessToken, scope);
       setUser(session.user);
       setStatus('authenticated');
@@ -130,6 +160,12 @@ const AuthProviderInner: React.FC<{ children: React.ReactNode; scope: AuthScope 
   const completeQrLogin = useCallback(
     async (sessionId: string, exchangeToken: string): Promise<AuthUser> => {
       const session = await authApi.exchangeQrSession(sessionId, exchangeToken);
+      if (scope === 'user' && session.user?.role === 'ADMIN') {
+        tokenStore.clear('user');
+        setUser(null);
+        setStatus('guest');
+        throw new Error('Tài khoản quản trị không thể đăng nhập ở giao diện người dùng.');
+      }
       tokenStore.set(session.accessToken, scope);
       setUser(session.user);
       setStatus('authenticated');
@@ -165,6 +201,12 @@ const AuthProviderInner: React.FC<{ children: React.ReactNode; scope: AuthScope 
     try {
       const currentUser =
         scope === 'admin' ? await authApi.me(scope) : await authApi.me();
+      if (scope === 'user' && currentUser?.role === 'ADMIN') {
+        tokenStore.clear('user');
+        setUser(null);
+        setStatus('guest');
+        return;
+      }
       setUser(currentUser);
       setStatus('authenticated');
     } catch {

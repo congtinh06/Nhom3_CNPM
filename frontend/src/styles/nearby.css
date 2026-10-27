@@ -3388,5 +3388,59 @@ body:has(.nearby-sv-root:has(.nearby-sticky-player-bar)) #up {
   }
 }
 
+/* Bộ chọn ngôn ngữ của riêng điểm đến */
+.nearby-sv-root .hero-lang-chips {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 10px 0 14px;
+  flex-wrap: wrap;
+}
 
+.nearby-sv-root .hero-lang-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 30px;
+  padding: 0 12px;
+  border-radius: var(--radius-pill, 9999px);
+  border: 1px solid var(--border-light, #E7E5E4);
+  background-color: var(--surface-white, #FFFFFF);
+  color: var(--ink-muted, #57534E);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+  line-height: 1;
+  box-sizing: border-box;
+}
 
+.nearby-sv-root .hero-lang-chip:hover {
+  border-color: var(--accent-orange, #C2410C);
+  color: var(--ink-text, #1C1917);
+}
+
+.nearby-sv-root .hero-lang-chip.is-active {
+  background-color: var(--accent-orange, #C2410C);
+  border-color: var(--accent-orange, #C2410C);
+  color: #FFFFFF;
+  box-shadow: 0 1px 2px rgba(194, 65, 12, 0.2);
+}
+
+.nearby-sv-root .hero-lang-chip.is-locked {
+  background-color: #F5F2EC;
+  border-color: #EAE5DC;
+  color: #8C7E74;
+}
+
+.nearby-sv-root .hero-lang-chip.is-locked:hover {
+  background-color: #EFEBE3;
+  border-color: #D6CEC3;
+  color: #57534E;
+}
+
+.nearby-sv-root .hero-lang-lock-icon {
+  flex-shrink: 0;
+  opacity: 0.85;
+}

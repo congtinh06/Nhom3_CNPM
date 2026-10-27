@@ -30,8 +30,8 @@ app:
   refresh:
     ttl-days: ${REFRESH_TOKEN_TTL_DAYS:7}
     remember-ttl-days: ${REFRESH_REMEMBER_TTL_DAYS:30}
-    cookie-name: ${REFRESH_COOKIE_NAME:refresh_token}
-    admin-cookie-name: ${REFRESH_COOKIE_ADMIN_NAME:refresh_token_admin}
+    cookie-name: ${REFRESH_COOKIE_NAME:echora_user_token}
+    admin-cookie-name: ${REFRESH_COOKIE_ADMIN_NAME:echora_admin_token}
     cookie-path: /api/auth
     cookie-secure: ${REFRESH_COOKIE_SECURE:true}
     cookie-samesite: ${REFRESH_COOKIE_SAMESITE:Strict}

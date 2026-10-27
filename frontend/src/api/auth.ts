@@ -1,6 +1,6 @@
 import { apiClient } from './client';
 import { refreshSession } from './refresh';
-import { AuthScope } from './tokenStore';
+import { AuthScope, tokenStore } from './tokenStore';
 import {
   AuthMessage,
   AuthSession,
@@ -14,8 +14,8 @@ import {
   ResetPasswordPayload,
 } from '../types';
 
-function scopeConfig(scope: AuthScope) {
-  return scope === 'admin' ? { headers: { 'X-Auth-Scope': 'admin' } } : undefined;
+function scopeConfig(scope: AuthScope = 'user') {
+  return { headers: { 'X-Auth-Scope': scope } };
 }
 
 async function post<T>(url: string, body?: unknown, scope: AuthScope = 'user'): Promise<T> {
@@ -62,6 +62,10 @@ export const authApi = {
 
   me: async (scope: AuthScope = 'user'): Promise<AuthUser> => {
     const response = await apiClient.get<AuthUser>('/api/auth/me', scopeConfig(scope));
+    if (scope === 'user' && response.data?.role === 'ADMIN') {
+      tokenStore.clear('user');
+      throw new Error('Tài khoản ADMIN không được phép truy cập trên app người dùng.');
+    }
     return response.data;
   },
 

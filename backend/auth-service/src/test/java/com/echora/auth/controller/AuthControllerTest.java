@@ -41,8 +41,8 @@ class AuthControllerTest {
     @BeforeEach
     void setUp() {
         AuthController controller = new AuthController(authService);
-        ReflectionTestUtils.setField(controller, "refreshCookieName", "refresh_token");
-        ReflectionTestUtils.setField(controller, "adminRefreshCookieName", "refresh_token_admin");
+        ReflectionTestUtils.setField(controller, "refreshCookieName", "echora_user_token");
+        ReflectionTestUtils.setField(controller, "adminRefreshCookieName", "echora_admin_token");
         ReflectionTestUtils.setField(controller, "refreshCookiePath", "/api/auth");
         ReflectionTestUtils.setField(controller, "refreshCookieSecure", true);
         ReflectionTestUtils.setField(controller, "refreshCookieSameSite", "Strict");
@@ -112,11 +112,11 @@ class AuthControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.accessToken").value("jwt"))
                 .andExpect(jsonPath("$.expiresIn").value(900))
-                .andExpect(cookie().httpOnly("refresh_token", true))
-                .andExpect(cookie().secure("refresh_token", true))
-                .andExpect(cookie().path("refresh_token", "/api/auth"))
-                .andExpect(cookie().sameSite("refresh_token", "Strict"))
-                .andExpect(cookie().value("refresh_token", "raw-refresh"));
+                .andExpect(cookie().httpOnly("echora_user_token", true))
+                .andExpect(cookie().secure("echora_user_token", true))
+                .andExpect(cookie().path("echora_user_token", "/api/auth"))
+                .andExpect(cookie().sameSite("echora_user_token", "Strict"))
+                .andExpect(cookie().value("echora_user_token", "raw-refresh"));
     }
 
     @Test
@@ -135,9 +135,9 @@ class AuthControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"email\":\"admin@echora.local\",\"password\":\"Secret123\"}"))
                 .andExpect(status().isOk())
-                .andExpect(cookie().httpOnly("refresh_token_admin", true))
-                .andExpect(cookie().value("refresh_token_admin", "raw-admin"))
-                .andExpect(cookie().doesNotExist("refresh_token"));
+                .andExpect(cookie().httpOnly("echora_admin_token", true))
+                .andExpect(cookie().value("echora_admin_token", "raw-admin"))
+                .andExpect(cookie().doesNotExist("echora_user_token"));
     }
 
     @Test
@@ -169,8 +169,8 @@ class AuthControllerTest {
                         .content("{\"credential\":\"fake-google-id-token\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.accessToken").value("jwt-google"))
-                .andExpect(cookie().httpOnly("refresh_token", true))
-                .andExpect(cookie().value("refresh_token", "raw-google"));
+                .andExpect(cookie().httpOnly("echora_user_token", true))
+                .andExpect(cookie().value("echora_user_token", "raw-google"));
     }
 
     @Test
@@ -203,7 +203,7 @@ class AuthControllerTest {
         mockMvc.perform(post("/api/auth/logout"))
                 .andExpect(status().isNoContent())
                 .andExpect(header().string("Set-Cookie", org.hamcrest.Matchers.containsString("Max-Age=0")))
-                .andExpect(cookie().value("refresh_token", ""));
+                .andExpect(cookie().value("echora_user_token", ""));
 
         verify(authService).logout(null);
     }

@@ -36,4 +36,10 @@ public class UserPoiEntitlement {
     @Column(name = "granted_at", nullable = false)
     @Builder.Default
     private LocalDateTime grantedAt = LocalDateTime.now();
+
+    @Column(name = "order_id")
+    private Long orderId;
+
+    @Column(name = "paid_at")
+    private LocalDateTime paidAt;
 }

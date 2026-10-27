@@ -23,13 +23,25 @@ public class MeEntitlementResponse {
     private boolean premiumActive;
     private LocalDateTime premiumExpiresAt;
     private List<UserPoiEntitlementResponse> purchasedPois;
+    private boolean premium;
+    private List<Long> unlockedPoiIds;
+    private boolean hasAnyPurchase;
 
     public static MeEntitlementResponse from(User user, List<UserPoiEntitlementResponse> purchasedPois) {
+        List<UserPoiEntitlementResponse> activePois = purchasedPois == null ? List.of() : purchasedPois;
+        List<Long> unlockedPoiIds = activePois.stream()
+                .map(UserPoiEntitlementResponse::getPoiId)
+                .filter(java.util.Objects::nonNull)
+                .toList();
+        boolean premiumActive = user != null && user.hasActivePremium();
         return MeEntitlementResponse.builder()
-                .plan(user.effectivePlan().name())
-                .premiumActive(user.hasActivePremium())
-                .premiumExpiresAt(user.getPremiumExpiresAt())
-                .purchasedPois(purchasedPois)
+                .plan(user != null ? user.effectivePlan().name() : "FREE")
+                .premiumActive(premiumActive)
+                .premiumExpiresAt(user != null ? user.getPremiumExpiresAt() : null)
+                .purchasedPois(activePois)
+                .premium(premiumActive)
+                .unlockedPoiIds(unlockedPoiIds)
+                .hasAnyPurchase(premiumActive || !unlockedPoiIds.isEmpty())
                 .build();
     }
 }

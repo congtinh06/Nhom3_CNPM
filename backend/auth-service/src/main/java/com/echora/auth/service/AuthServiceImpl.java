@@ -1,5 +1,6 @@
 package com.echora.auth.service;
 
+import com.echora.auth.dto.AccessResponse;
 import com.echora.auth.dto.AuthResponse;
 import com.echora.auth.dto.ChangePasswordRequest;
 import com.echora.auth.dto.CookieResult;
@@ -587,6 +588,78 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public boolean hasAccess(Long userId, Long poiId, String language) {
+        if (language == null || language.isBlank() || "vi".equalsIgnoreCase(language.trim())) {
+            return true;
+        }
+        if (userId == null) {
+            return false;
+        }
+        User user = userRepository.findById(userId).orElse(null);
+        if (user != null && user.hasActivePremium()) {
+            return true;
+        }
+        if (poiId != null && hasPoiEntitlement(userId, poiId)) {
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public AccessResponse access(Long userId, Long poiId, String language) {
+        String lang = language == null || language.isBlank() ? "vi" : language.trim().toLowerCase(Locale.ROOT);
+        boolean isVi = "vi".equals(lang);
+        if (isVi) {
+            return AccessResponse.builder()
+                    .userId(userId)
+                    .poiId(poiId)
+                    .language(lang)
+                    .allowed(true)
+                    .premium(false)
+                    .poiUnlocked(false)
+                    .build();
+        }
+        if (userId == null) {
+            return AccessResponse.builder()
+                    .userId(null)
+                    .poiId(poiId)
+                    .language(lang)
+                    .allowed(false)
+                    .premium(false)
+                    .poiUnlocked(false)
+                    .build();
+        }
+        User user = userRepository.findById(userId).orElse(null);
+        boolean premium = user != null && user.hasActivePremium();
+        boolean poiUnlocked = poiId != null && hasPoiEntitlement(userId, poiId);
+        boolean allowed = premium || poiUnlocked;
+        return AccessResponse.builder()
+                .userId(userId)
+                .poiId(poiId)
+                .language(lang)
+                .allowed(allowed)
+                .premium(premium)
+                .poiUnlocked(poiUnlocked)
+                .expiresAt(premium ? user.getPremiumExpiresAt() : null)
+                .build();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public boolean isEligibleForSouvenirDiscount(Long userId) {
+        if (userId == null) {
+            return false;
+        }
+        User user = userRepository.findById(userId).orElse(null);
+        if (user != null && user.hasActivePremium()) {
+            return true;
+        }
+        return userPoiEntitlementRepository.existsByUserIdAndExpiresAtAfter(userId, LocalDateTime.now());
+    }
+
+    @Override
     @Transactional
     public UserPoiEntitlementResponse grantPoiEntitlement(Long userId, Long poiId, PoiGrantRequest request) {
         if (!userRepository.existsById(userId)) {
@@ -606,9 +679,10 @@ public class AuthServiceImpl implements AuthService {
         }
 
         LocalDateTime now = LocalDateTime.now();
+        LocalDateTime paidAt = request.getPaidAt() != null ? request.getPaidAt() : now;
         LocalDateTime requested = request.getExpiresAt();
-        LocalDateTime target = requested == null || !requested.isAfter(now)
-                ? now.plusYears(1)
+        LocalDateTime target = requested == null || !requested.isAfter(paidAt)
+                ? paidAt.plusDays(365)
                 : requested;
         if (target.isAfter(now.plusYears(10))) {
             target = now.plusYears(10);
@@ -624,10 +698,14 @@ public class AuthServiceImpl implements AuthService {
                 .build());
         entitlement.setSourceOrderCode(orderCode);
         entitlement.setExpiresAt(target);
+        if (request.getOrderId() != null) {
+            entitlement.setOrderId(request.getOrderId());
+        }
+        entitlement.setPaidAt(paidAt);
         userPoiEntitlementRepository.save(entitlement);
 
-        log.info("Da cap quyen POI userId={} poiId={} orderCode={} expiresAt={}",
-                userId, poiId, orderCode, target);
+        log.info("Da cap quyen POI userId={} poiId={} orderCode={} orderId={} paidAt={} expiresAt={}",
+                userId, poiId, orderCode, entitlement.getOrderId(), entitlement.getPaidAt(), target);
         return UserPoiEntitlementResponse.from(entitlement);
     }
 

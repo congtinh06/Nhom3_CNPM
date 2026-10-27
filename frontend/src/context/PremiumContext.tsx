@@ -42,6 +42,10 @@ export interface PremiumContextValue {
   entitlementError: string | null;
   /** Danh sách POI user đã mua lẻ (id DB), rỗng khi chưa đăng nhập. */
   purchasedPoiIds: number[];
+  /** Danh sách POI user đã mở khóa từ backend. */
+  unlockedPoiIds: number[];
+  /** User đã mua Premium hoặc bất kỳ POI nào còn hạn */
+  hasAnyPurchase: boolean;
   /** Chi tiết gói mua lẻ: id POI + hạn mở khóa (ISO). */
   purchasedPois: PurchasedPoi[];
   canAccessLanguage: (language: SupportedLanguage) => boolean;
@@ -64,6 +68,8 @@ const FALLBACK_PREMIUM: PremiumContextValue = {
   entitlementStatus: 'idle',
   entitlementError: null,
   purchasedPoiIds: [],
+  unlockedPoiIds: [],
+  hasAnyPurchase: false,
   purchasedPois: [],
   canAccessLanguage: (language) => FREE_LANGUAGES.includes(language),
   canAccessPoi: () => false,
@@ -71,17 +77,36 @@ const FALLBACK_PREMIUM: PremiumContextValue = {
   refreshEntitlement: async () => undefined,
 };
 
-function normalizePoiId(poiId: number | string | null | undefined): number | null {
+const KNOWN_POI_NUMERIC_IDS: Record<string, number> = {
+  'buu-dien-trung-tam': 1,
+  'poi-3': 1,
+  'nha-tho-duc-ba': 2,
+  'poi-2': 2,
+  'cho-ben-thanh': 3,
+  'poi-4': 3,
+  'chua-ba-thien-hau': 4,
+  'cau-ba-son': 5,
+  'bao-tang-chung-tich-chien-tranh': 30002,
+  'poi-5': 30002,
+  'dinh-doc-lap': 30003,
+  'poi-1': 30003,
+};
+
+export function normalizePoiId(poiId: number | string | null | undefined): number | null {
   if (poiId === null || poiId === undefined) return null;
   if (typeof poiId === 'number') {
     return Number.isFinite(poiId) && poiId > 0 ? Math.trunc(poiId) : null;
   }
   const str = String(poiId).trim();
-  // Chỉ chấp nhận id DB thuần số. Các id tĩnh kiểu "poi-3" không cùng không gian
-  // id với DB nên tuyệt đối không được suy ra số 3 (dễ mở khóa nhầm POI).
-  if (!/^\d+$/.test(str)) return null;
-  const value = Number(str);
-  return Number.isFinite(value) && value > 0 ? Math.trunc(value) : null;
+  if (/^\d+$/.test(str)) {
+    const value = Number(str);
+    return Number.isFinite(value) && value > 0 ? Math.trunc(value) : null;
+  }
+  const lower = str.toLowerCase();
+  if (KNOWN_POI_NUMERIC_IDS[lower]) {
+    return KNOWN_POI_NUMERIC_IDS[lower];
+  }
+  return null;
 }
 
 export const PremiumProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -93,6 +118,8 @@ export const PremiumProvider: React.FC<{ children: React.ReactNode }> = ({ child
     useState<PremiumEntitlementStatus>('idle');
   const [entitlementError, setEntitlementError] = useState<string | null>(null);
   const [purchasedPois, setPurchasedPois] = useState<PurchasedPoi[]>([]);
+  const [unlockedPoiIds, setUnlockedPoiIds] = useState<number[]>([]);
+  const [hasAnyPurchase, setHasAnyPurchase] = useState<boolean>(false);
   const isLoggedIn = Boolean(user);
 
   const isPremium =
@@ -104,10 +131,16 @@ export const PremiumProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const premiumExpiresAt =
     entitlementExpiresAt !== null ? entitlementExpiresAt : (user?.premiumExpiresAt ?? null);
 
-  const purchasedPoiIds = useMemo(
-    () => purchasedPois.map((poi) => poi.poiId),
-    [purchasedPois]
-  );
+  const purchasedPoiIds = useMemo(() => {
+    const set = new Set<number>();
+    purchasedPois.forEach((poi) => set.add(poi.poiId));
+    unlockedPoiIds.forEach((id) => set.add(id));
+    return Array.from(set);
+  }, [purchasedPois, unlockedPoiIds]);
+
+  const hasAnyPurchaseComputed = useMemo(() => {
+    return hasAnyPurchase || isPremium || purchasedPoiIds.length > 0;
+  }, [hasAnyPurchase, isPremium, purchasedPoiIds]);
 
   const refreshEntitlement = useCallback(async () => {
     if (!api.getMeEntitlements) {
@@ -135,11 +168,27 @@ export const PremiumProvider: React.FC<{ children: React.ReactNode }> = ({ child
       }
 
       const entitlement = await api.getMeEntitlements();
-      setPurchasedPois(entitlement.purchasedPois ?? []);
+      const pois = entitlement.purchasedPois ?? [];
+      setPurchasedPois(pois);
+
+      if (Array.isArray(entitlement.unlockedPoiIds)) {
+        setUnlockedPoiIds(entitlement.unlockedPoiIds);
+      } else {
+        setUnlockedPoiIds(pois.map((p) => p.poiId));
+      }
+
+      if (typeof entitlement.hasAnyPurchase === 'boolean') {
+        setHasAnyPurchase(entitlement.hasAnyPurchase);
+      } else {
+        setHasAnyPurchase(Boolean(entitlement.premiumActive || entitlement.premium || pois.length > 0));
+      }
+
       if (entitlement.plan) {
         setEntitlementPlan(entitlement.plan);
       }
-      if (typeof entitlement.premiumActive === 'boolean') {
+      if (typeof entitlement.premium === 'boolean') {
+        setEntitlementActive(entitlement.premium);
+      } else if (typeof entitlement.premiumActive === 'boolean') {
         setEntitlementActive(entitlement.premiumActive);
       }
       if (entitlement.premiumExpiresAt !== undefined) {
@@ -160,6 +209,8 @@ export const PremiumProvider: React.FC<{ children: React.ReactNode }> = ({ child
     if (import.meta.env.MODE === 'test') return;
     if (!isLoggedIn) {
       setPurchasedPois([]);
+      setUnlockedPoiIds([]);
+      setHasAnyPurchase(false);
       setEntitlementPlan(null);
       setEntitlementActive(null);
       setEntitlementExpiresAt(null);
@@ -180,9 +231,19 @@ export const PremiumProvider: React.FC<{ children: React.ReactNode }> = ({ child
       if (isPremium) return true;
       const id = normalizePoiId(poiId);
       if (id === null) return false;
-      return purchasedPoiIds.includes(id);
+      if (unlockedPoiIds.includes(id) || purchasedPoiIds.includes(id)) {
+        const detail = purchasedPois.find((p) => p.poiId === id);
+        if (detail && detail.expiresAt) {
+          const expires = new Date(detail.expiresAt).getTime();
+          if (Date.now() > expires) {
+            return false;
+          }
+        }
+        return true;
+      }
+      return false;
     },
-    [isPremium, purchasedPoiIds]
+    [isPremium, unlockedPoiIds, purchasedPoiIds, purchasedPois]
   );
 
   const canAccessPoiLanguage = useCallback(
@@ -201,6 +262,8 @@ export const PremiumProvider: React.FC<{ children: React.ReactNode }> = ({ child
       entitlementStatus,
       entitlementError,
       purchasedPoiIds,
+      unlockedPoiIds,
+      hasAnyPurchase: hasAnyPurchaseComputed,
       purchasedPois,
       canAccessLanguage,
       canAccessPoi,
@@ -214,6 +277,8 @@ export const PremiumProvider: React.FC<{ children: React.ReactNode }> = ({ child
       entitlementStatus,
       entitlementError,
       purchasedPoiIds,
+      unlockedPoiIds,
+      hasAnyPurchaseComputed,
       purchasedPois,
       canAccessLanguage,
       canAccessPoi,

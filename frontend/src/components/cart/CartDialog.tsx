@@ -34,7 +34,8 @@ export const CartDialog: React.FC = () => {
     isCartOpen,
     closeCart,
   } = useCart();
-  const { isPremium } = usePremium();
+  const { isPremium, hasAnyPurchase } = usePremium();
+  const isDiscountEligible = isPremium || hasAnyPurchase;
 
   const navigate = useNavigate();
   const { t, lang } = useNavbarLanguage();
@@ -206,10 +207,10 @@ export const CartDialog: React.FC = () => {
                   <div className="cd-group-title">{group.label ?? otherLabel}</div>
                 )}
                 {group.items.map((item) => {
-                  const hasDiscount = isSouvenirDiscountEligible(isPremium, item.category);
+                  const hasDiscount = isSouvenirDiscountEligible(isDiscountEligible, item.category);
                   const itemUnitPrice = applySouvenirDiscount(
                     item.price,
-                    isPremium,
+                    isDiscountEligible,
                     item.category
                   );
                   return (

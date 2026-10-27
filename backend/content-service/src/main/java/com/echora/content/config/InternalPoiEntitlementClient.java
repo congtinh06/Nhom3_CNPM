@@ -26,7 +26,7 @@ public class InternalPoiEntitlementClient {
     private final String internalApiKey;
     private final Map<Long, CachedPois> purchasedCache = new ConcurrentHashMap<>();
 
-    InternalPoiEntitlementClient(@Value("${app.auth-service.url:http://localhost:8086}") String baseUrl,
+    InternalPoiEntitlementClient(@Value("${app.auth-service.url:${AUTH_SERVICE_URL:http://localhost:8086}}") String baseUrl,
                                  @Value("${internal.api-key:}") String internalApiKey) {
         this.restClient = RestClient.builder().baseUrl(baseUrl).build();
         this.internalApiKey = internalApiKey;

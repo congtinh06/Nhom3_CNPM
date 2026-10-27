@@ -149,14 +149,14 @@ describe('PremiumPage', () => {
     expect(
       screen.getByRole('heading', { name: 'Một gói Premium, bốn ngôn ngữ' })
     ).toBeInTheDocument();
-    expect(
-      screen.getByRole('heading', { name: 'Giảm 10% mỗi sản phẩm lưu niệm' })
-    ).toBeInTheDocument();
+    expect(screen.getAllByText(/Giảm 10% quà lưu niệm/).length).toBeGreaterThan(0);
     await waitFor(() => {
       expect(container.querySelectorAll('.premium-poi-card')).toHaveLength(7);
     });
-    expect(container.querySelectorAll('.premium-package-card')).toHaveLength(1);
-    expect(container.querySelectorAll('.premium-package-language')).toHaveLength(4);
+    expect(container.querySelectorAll('.premium-plan-card')).toHaveLength(1);
+    expect(
+      container.querySelectorAll('.premium-plan-card .premium-language-badges span')
+    ).toHaveLength(4);
     expect(screen.getAllByText(/21 bản thuyết minh/).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/7 điểm đến/).length).toBeGreaterThan(0);
     expect(screen.getByText('Dinh Độc Lập')).toBeInTheDocument();

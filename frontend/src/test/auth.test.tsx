@@ -70,6 +70,22 @@ describe('tokenStore', () => {
     tokenStore.clear();
     expect(tokenStore.get()).toBeNull();
   });
+
+  it('tách biệt key echora_user_token và echora_admin_token trong localStorage', () => {
+    tokenStore.set('user-tok', 'user');
+    tokenStore.set('admin-tok', 'admin');
+
+    expect(tokenStore.get('user')).toBe('user-tok');
+    expect(tokenStore.get('admin')).toBe('admin-tok');
+    expect(localStorage.getItem('echora_user_token')).toBe('user-tok');
+    expect(localStorage.getItem('echora_admin_token')).toBe('admin-tok');
+
+    tokenStore.clear('user');
+    expect(tokenStore.get('user')).toBeNull();
+    expect(localStorage.getItem('echora_user_token')).toBeNull();
+    expect(tokenStore.get('admin')).toBe('admin-tok');
+    expect(localStorage.getItem('echora_admin_token')).toBe('admin-tok');
+  });
 });
 
 describe('normalizeApiError details', () => {
@@ -134,6 +150,27 @@ describe('AuthProvider', () => {
 
     await waitFor(() => expect(screen.getByTestId('probe')).toHaveTextContent('authenticated/a@example.com'));
     expect(tokenStore.get()).toBe('restored.token');
+  });
+
+  it('xóa token và chuyển về guest nếu thông tin /me trả về role ADMIN ở app người dùng', async () => {
+    tokenStore.set('existing-admin-token', 'user');
+    vi.mocked(authApi.refresh).mockRejectedValue(new Error('no-refresh-cookie'));
+    vi.mocked(authApi.me).mockResolvedValue({ ...USER, role: 'ADMIN' });
+
+    function Probe() {
+      const { status, isAuthenticated, user } = useAuth();
+      return (
+        <span data-testid="probe">
+          {status}/{String(isAuthenticated)}/{user?.role ?? 'none'}
+        </span>
+      );
+    }
+
+    renderWithAuth(<Probe />);
+
+    await waitFor(() => expect(screen.getByTestId('probe')).toHaveTextContent('guest/false/none'));
+    expect(tokenStore.get('user')).toBeNull();
+    expect(localStorage.getItem('echora_user_token')).toBeNull();
   });
 });
 

@@ -25,7 +25,7 @@ export function refreshSession(scope: AuthScope = 'user'): Promise<AuthSession> 
         timeout: 15000,
         headers: {
           'Content-Type': 'application/json',
-          ...(scope === 'admin' ? { 'X-Auth-Scope': 'admin' } : {}),
+          'X-Auth-Scope': scope,
         },
       }
     )

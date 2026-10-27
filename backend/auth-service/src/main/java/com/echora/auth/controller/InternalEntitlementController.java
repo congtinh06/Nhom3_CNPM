@@ -54,6 +54,19 @@ public class InternalEntitlementController {
         return authService.grantPoiEntitlement(userId, poiId, request);
     }
 
+    @GetMapping("/has-access")
+    public com.echora.auth.dto.AccessResponse hasAccess(
+            @org.springframework.web.bind.annotation.RequestParam(required = false) Long userId,
+            @org.springframework.web.bind.annotation.RequestParam(required = false) Long poiId,
+            @org.springframework.web.bind.annotation.RequestParam(defaultValue = "vi") String lang) {
+        return authService.access(userId, poiId, lang);
+    }
+
+    @GetMapping("/{userId}/discount-eligible")
+    public java.util.Map<String, Boolean> isDiscountEligible(@PathVariable Long userId) {
+        return java.util.Map.of("eligible", authService.isEligibleForSouvenirDiscount(userId));
+    }
+
     @PostMapping("/{userId}/premium")
     public EntitlementResponse activatePremium(@PathVariable Long userId,
                                                @Valid @RequestBody PremiumActivationRequest request) {

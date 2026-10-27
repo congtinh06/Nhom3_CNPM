@@ -77,4 +77,6 @@ logging:
 app:
   product:
     upload-dir: ${PRODUCT_UPLOAD_DIR:uploads/products}
+  auth-service:
+    url: ${AUTH_SERVICE_URL:http://localhost:8086}
 

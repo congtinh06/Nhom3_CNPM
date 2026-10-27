@@ -122,7 +122,7 @@ public class EntitlementFilter extends OncePerRequestFilter {
                 // Trả lời bình thường, controller chỉ include bản dịch của POI đã mua,
                 // nhưng nếu ngược lại KHÔNG có POI nào được mua thì vẫn chặn ngay.
                 request.setAttribute(ATTRIBUTE_PREMIUM, false);
-                request.setAttribute(ATTRIBUTE_PURCHASED_POIS, purchasedPois);
+                request.setAttribute(ATTRIBUTE_PURCHASED_POIS, Set.copyOf(purchasedPois));
                 filterChain.doFilter(request, response);
                 return;
             }
@@ -136,7 +136,7 @@ public class EntitlementFilter extends OncePerRequestFilter {
 
         request.setAttribute(ATTRIBUTE_PREMIUM, premium);
         if (!purchasedPois.isEmpty()) {
-            request.setAttribute(ATTRIBUTE_PURCHASED_POIS, purchasedPois);
+            request.setAttribute(ATTRIBUTE_PURCHASED_POIS, Set.copyOf(purchasedPois));
         }
         filterChain.doFilter(request, response);
     }

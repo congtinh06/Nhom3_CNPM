@@ -43,7 +43,8 @@ export function OrderSummary({
   children,
 }: OrderSummaryProps) {
   const { lang, t } = useNavbarLanguage();
-  const { isPremium } = usePremium();
+  const { isPremium, hasAnyPurchase } = usePremium();
+  const isDiscountEligible = isPremium || hasAnyPurchase;
   const c = t.shop.checkoutPage;
   const [isOpen, setIsOpen] = useState(false);
   const isFreeShipping = shippingFee === 0;
@@ -115,7 +116,7 @@ export function OrderSummary({
                       <span className="co-item-name">{item.name}</span>
                       <span className="co-item-price">
                         {formatPrice(
-                          applySouvenirDiscount(item.price, isPremium, item.category) *
+                          applySouvenirDiscount(item.price, isDiscountEligible, item.category) *
                             item.quantity
                         )}
                       </span>

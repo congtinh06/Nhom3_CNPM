@@ -26,7 +26,7 @@ import { api } from '../api/client';
 import { mapGuidesToGeoPois } from '../content/poiGuideAdapter';
 import { useNavbarLanguage, SUPPORTED_LANGUAGES } from '../content/languages';
 import { useToastOptional } from '../context/ToastContext';
-import { usePremium, buildPremiumPath, buildPoiPremiumPath, isPremiumLanguage } from '../context/PremiumContext';
+import { usePremium, buildPremiumPath, buildPoiPremiumPath, isPremiumLanguage, normalizePoiId } from '../context/PremiumContext';
 import { useAuthOptional } from '../context/AuthContext';
 import { SupportedLanguage } from '../types';
 import { useAutoNarration, haversine } from '../hooks/useAutoNarration';
@@ -193,7 +193,7 @@ export const NearbyPage: React.FC = () => {
     (window as any).__nearbyPerf.rendersNearbyPage++;
   }
 
-  const { lang } = useNavbarLanguage();
+  const { lang, changeLanguage } = useNavbarLanguage();
   const navigate = useNavigate();
   const { canAccessLanguage, canAccessPoi, canAccessPoiLanguage, refreshEntitlement } =
     usePremium();
@@ -211,21 +211,20 @@ export const NearbyPage: React.FC = () => {
   // Cảnh báo khóa ngoại ngữ: nếu POI chưa được mở (hoặc mở riêng) thì dẫn tới gói
   // mua lẻ cho chính điểm đó, ngược lại về trang nâng cấp Premium toàn cục.
   const warnAndOpenPremium = useCallback(
-    (poi?: GeoPoi | null) => {
-      showToast(PREMIUM_GATE_COPY[currentLang].warning);
+    (poi?: GeoPoi | null, targetLang?: SupportedLanguage) => {
+      const langToCheck = targetLang || currentLang;
+      showToast(PREMIUM_GATE_COPY[langToCheck]?.warning || PREMIUM_GATE_COPY[currentLang].warning);
       const returnTo = `${window.location.pathname}${window.location.search}`;
-      // Chỉ dùng numericId do adapter API gắn vào. Id tĩnh kiểu "poi-3" không
-      // cùng không gian id với DB nên không được suy ra số để tránh mở nhầm điểm.
-      const targetNumericId = poi?.numericId ?? null;
+      const targetNumericId = poi?.numericId ?? (poi?.id ? normalizePoiId(poi.id) : null);
       if (
         targetNumericId &&
-        isPremiumLanguage(currentLang) &&
+        isPremiumLanguage(langToCheck) &&
         !canAccessPoi(targetNumericId)
       ) {
         navigate(buildPoiPremiumPath(targetNumericId, returnTo));
         return;
       }
-      navigate(buildPremiumPath(currentLang, returnTo));
+      navigate(buildPremiumPath(langToCheck, returnTo));
     },
     [currentLang, canAccessPoi, navigate, showToast]
   );
@@ -243,6 +242,19 @@ export const NearbyPage: React.FC = () => {
     if (!isAuthenticated) return;
     void refreshEntitlement();
   }, [isAuthenticated, refreshEntitlement]);
+
+  // Khi quay lại từ cổng thanh toán VNPAY: invalidate và cập nhật quyền ngay lập tức
+  useEffect(() => {
+    if (import.meta.env.MODE === 'test') return;
+    const searchParams = new URLSearchParams(window.location.search);
+    if (
+      searchParams.has('vnp_ResponseCode') ||
+      searchParams.has('orderCode') ||
+      searchParams.has('vnp_TxnRef')
+    ) {
+      void refreshEntitlement();
+    }
+  }, [refreshEntitlement]);
 
   const rootRef = useRef<HTMLDivElement>(null);
   const heroRef = useRef<HTMLDivElement>(null);
@@ -825,6 +837,9 @@ export const NearbyPage: React.FC = () => {
             getPoiName={getPoiName}
             userPos={userPos}
             heroRef={heroRef}
+            onChangeLanguage={changeLanguage}
+            onUnlockLanguage={warnAndOpenPremium}
+            canAccessPoiLanguage={canAccessPoiLanguage}
           />
         )}
 

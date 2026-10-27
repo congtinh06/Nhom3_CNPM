@@ -115,7 +115,7 @@ public class OrderService {
 
         boolean hasSouvenir = prices.values().stream()
                 .anyMatch(product -> product != null && isSouvenir(product));
-        boolean premiumDiscountEligible = hasSouvenir && authEntitlementClient.isPremiumActive(userId);
+        boolean premiumDiscountEligible = hasSouvenir && authEntitlementClient.isEligibleForSouvenirDiscount(userId);
 
         BigDecimal subtotal = BigDecimal.ZERO;
         BigDecimal discountAmount = BigDecimal.ZERO;
@@ -644,6 +644,7 @@ public class OrderService {
 
         if (order.getStatus() == OrderStatus.PAID || order.getPaymentStatus() == PaymentStatus.SUCCESS) {
             orderEntitlementService.enqueue(order);
+            orderEntitlementService.grantNow(order);
             return vnPayService.buildFrontendResultUrl(order.getOrderCode(), "success");
         }
 
@@ -677,6 +678,7 @@ public class OrderService {
         if (order.getStatus() == OrderStatus.PAID || order.getPaymentStatus() == PaymentStatus.SUCCESS
                 || payment.getStatus() == PaymentStatus.SUCCESS) {
             orderEntitlementService.enqueue(order);
+            orderEntitlementService.grantNow(order);
             return ipnResponse("02", "Order already confirmed");
         }
 
@@ -739,6 +741,7 @@ public class OrderService {
         order.setPaidAt(LocalDateTime.now());
         orderRepository.save(order);
         orderEntitlementService.enqueue(order);
+        orderEntitlementService.grantNow(order);
     }
 
     private static boolean isSuccessfulPayment(VnPayService.VnPayCallback callback) {

@@ -14,5 +14,7 @@ public interface UserPoiEntitlementRepository extends JpaRepository<UserPoiEntit
 
     boolean existsByUserIdAndPoiIdAndExpiresAtAfter(Long userId, Long poiId, LocalDateTime now);
 
+    boolean existsByUserIdAndExpiresAtAfter(Long userId, LocalDateTime now);
+
     List<UserPoiEntitlement> findByUserIdAndExpiresAtAfter(Long userId, LocalDateTime now);
 }

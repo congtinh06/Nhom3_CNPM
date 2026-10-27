@@ -24,12 +24,13 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   showRating = true,
   neutralPlaceholder = false,
 }) => {
-  const { isPremium } = usePremium();
+  const { isPremium, hasAnyPurchase } = usePremium();
+  const isEligible = isPremium || hasAnyPurchase;
   const [imageError, setImageError] = useState(false);
   const [justAdded, setJustAdded] = useState(false);
 
-  const hasDiscount = isSouvenirDiscountEligible(isPremium, product.category);
-  const effectivePrice = applySouvenirDiscount(product.price, isPremium, product.category);
+  const hasDiscount = isSouvenirDiscountEligible(isEligible, product.category);
+  const effectivePrice = applySouvenirDiscount(product.price, isEligible, product.category);
 
   const handleFavoriteClick = (e: React.MouseEvent) => {
     e.stopPropagation();

@@ -35,7 +35,7 @@ public class QrLoginController {
 
     private final QrLoginService qrLoginService;
 
-    @Value("${app.refresh.cookie-name:refresh_token}")
+    @Value("${app.refresh.cookie-name:echora_user_token}")
     private String refreshCookieName;
 
     @Value("${app.refresh.cookie-path:/api/auth}")

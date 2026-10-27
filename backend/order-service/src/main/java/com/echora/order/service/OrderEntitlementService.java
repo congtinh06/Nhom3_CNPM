@@ -43,6 +43,31 @@ public class OrderEntitlementService {
                 now);
     }
 
+    /** Cố gắng cấp quyền ngay lập tức, nếu lỗi thì outbox scheduler sẽ thử lại. */
+    public void grantNow(Order order) {
+        if (!isDigitalOrder(order) || order.getId() == null) {
+            return;
+        }
+        try {
+            if (OrderService.ORDER_TYPE_POI.equals(order.getOrderType())) {
+                authEntitlementClient.grantPoiAccess(order);
+            } else {
+                authEntitlementClient.activatePremium(order);
+            }
+            grantRepository.findByOrderId(order.getId()).ifPresent(grant -> {
+                grant.setStatus(OrderEntitlementGrantStatus.GRANTED);
+                grant.setGrantedAt(LocalDateTime.now());
+                grant.setLastError(null);
+                grant.setNextAttemptAt(null);
+                grantRepository.save(grant);
+            });
+            log.info("Cấp quyền ngay lập tức thành công cho orderCode={}", order.getOrderCode());
+        } catch (Exception ex) {
+            log.warn("Không thể cấp quyền ngay lập tức cho orderCode={} (sẽ thử lại qua outbox): {}",
+                    order.getOrderCode(), ex.getMessage());
+        }
+    }
+
     @Transactional(readOnly = true)
     public List<OrderEntitlementGrant> findDueGrants() {
         return grantRepository

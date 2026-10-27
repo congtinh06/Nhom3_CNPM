@@ -102,7 +102,8 @@ const loadSavedMeta = (): Record<number, CartItemMeta> => {
 };
 
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { isPremium } = usePremium();
+  const { isPremium, hasAnyPurchase } = usePremium();
+  const isSouvenirDiscountEligibleUser = isPremium || hasAnyPurchase;
   const [cart, setCart] = useState<Record<number, number>>(loadSavedCart);
   const [itemMeta, setItemMeta] = useState<Record<number, CartItemMeta>>(loadSavedMeta);
   const [isCartOpen, setIsCartOpen] = useState(false);
@@ -213,13 +214,13 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [cartItems]);
 
   const discountAmount = useMemo(() => {
-    if (!isPremium) return 0;
+    if (!isSouvenirDiscountEligibleUser) return 0;
     return cartItems.reduce((sum, item) => {
-      if (!isSouvenirDiscountEligible(isPremium, item.category)) return sum;
-      const discounted = applySouvenirDiscount(item.price, isPremium, item.category);
+      if (!isSouvenirDiscountEligible(isSouvenirDiscountEligibleUser, item.category)) return sum;
+      const discounted = applySouvenirDiscount(item.price, isSouvenirDiscountEligibleUser, item.category);
       return sum + (item.price - discounted) * item.quantity;
     }, 0);
-  }, [cartItems, isPremium]);
+  }, [cartItems, isSouvenirDiscountEligibleUser]);
 
   const totalAmount = subtotalAmount - discountAmount;
 

@@ -32,6 +32,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.Duration;
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -43,10 +44,10 @@ public class AuthController {
     private static final String HEADER_AUTH_SCOPE = "X-Auth-Scope";
     private static final String AUTH_SCOPE_ADMIN = "admin";
 
-    @Value("${app.refresh.cookie-name:refresh_token}")
+    @Value("${app.refresh.cookie-name:echora_user_token}")
     private String refreshCookieName;
 
-    @Value("${app.refresh.admin-cookie-name:refresh_token_admin}")
+    @Value("${app.refresh.admin-cookie-name:echora_admin_token}")
     private String adminRefreshCookieName;
 
     @Value("${app.refresh.cookie-path:/api/auth}")
@@ -156,9 +157,20 @@ public class AuthController {
     }
 
     // Gói Premium toàn tài khoản + các POI đã mua lẻ (dùng cho trang tài khoản & khóa chap).
-    @GetMapping("/api/auth/me/entitlements")
+    @GetMapping({"/api/auth/me/entitlements", "/me/entitlements", "/api/me/entitlements"})
     public ResponseEntity<MeEntitlementResponse> meEntitlements() {
-        return ResponseEntity.ok(authService.meEntitlement(currentUserId()));
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !(authentication.getPrincipal() instanceof UserPrincipal principal)) {
+            return ResponseEntity.ok(MeEntitlementResponse.builder()
+                    .plan("FREE")
+                    .premiumActive(false)
+                    .premium(false)
+                    .unlockedPoiIds(List.of())
+                    .purchasedPois(List.of())
+                    .hasAnyPurchase(false)
+                    .build());
+        }
+        return ResponseEntity.ok(authService.meEntitlement(principal.id()));
     }
 
     // -------------------------------------------------------------- INTERNAL
