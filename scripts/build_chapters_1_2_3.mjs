@@ -63,7 +63,6 @@ doc += bullet('**Phân hệ Bài viết văn hóa & Tin tức**: Xuất bản c�
 doc += h3('1.3.3. Các nội dung nằm ngoài phạm vi đề tài hiện tại');
 doc += bullet('Hệ thống không thu tiền thật từ tài khoản ngân hàng thực tế, toàn bộ giao dịch thanh toán được thực thi trên môi trường thử nghiệm VNPAY Sandbox.');
 doc += bullet('Hệ thống không cung cấp chức năng chỉ đường chi tiết từng ngã rẽ (Turn-by-turn navigation) như các ứng dụng bản đồ giao thông chuyên dụng (Google Maps), mà tập trung vào nhận diện vùng không gian Geofence bao quanh di tích.');
-doc += bullet('Hệ thống hiện tại chưa tích hợp Chatbot AI / RAG (mặc dù có ý tưởng ban đầu trong tài liệu đề xuất nhưng mã nguồn chưa triển khai mô hình LLM nào).');
 
 doc += h2('1.4. Đối tượng sử dụng hệ thống');
 doc += p('Căn cứ vào mã nguồn phân quyền và giao diện người dùng thực tế, hệ thống phục vụ 3 nhóm tác nhân chính:');
@@ -208,7 +207,7 @@ doc += bullet('**Danh sách tính năng sản phẩm theo mô hình ưu tiên Mo
 doc += bullet('• **Must-have (Bắt buộc phải có)**: Bản đồ Leaflet GPS thời gian thực; Tự động kích hoạt thuyết minh Geofence; Quét mã QR di sản; Pipeline dịch thuật và tổng hợp Edge-TTS đa ngữ; Xác thực kép JWT và Refresh Token Rotation; Quản lý CMS POI, Lộ trình, Quà lưu niệm.', 2);
 doc += bullet('• **Should-have (Nên có)**: Chế độ giả lập tọa độ GPS Simulation Mode; Thanh toán trực tuyến VNPAY sandbox và mã VietQR; Mô hình gói thuê bao Premium mở khóa ngoại ngữ; Phân tích thống kê sự kiện du lịch bất đồng bộ qua RabbitMQ.', 2);
 doc += bullet('• **Could-have (Có thể bổ sung)**: Hỗ trợ nạp trước dữ liệu ngoại tuyến toàn diện; Tích hợp bình luận đánh giá điểm đến.', 2);
-doc += bullet('• **Won\\\'t-have (Chưa triển khai trong phiên bản này)**: Chatbot AI tương tác đàm thoại tự do (RAG); Thanh toán thẻ quốc tế thực tế; Dẫn đường giao thông turn-by-turn.', 2);
+doc += bullet('• **Won\\\'t-have (Chưa triển khai trong phiên bản này)**: Thanh toán thẻ quốc tế thực tế; Dẫn đường giao thông turn-by-turn.', 2);
 doc += bullet('**Tiêu chí thành công**: Thời gian bắt đầu phát âm thanh dưới 1.5 giây; 100% các route quản trị được bảo vệ bởi JWT và API key nội bộ; Vượt qua 520 automated tests trong bộ kiểm thử.');
 
 doc += h2('3.3. Tác nhân và các bên liên quan');

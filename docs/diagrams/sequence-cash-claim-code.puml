@@ -1,0 +1,64 @@
+@startuml
+!theme plain
+skinparam defaultFontName "Times New Roman"
+skinparam defaultFontSize 11
+skinparam monochrome true
+skinparam shadowing false
+skinparam roundCorner 0
+skinparam packageStyle rectangle
+skinparam handwritten false
+skinparam ArrowColor #000000
+skinparam ActorBorderColor #000000
+skinparam ComponentBorderColor #000000
+skinparam DatabaseBorderColor #000000
+skinparam InterfaceBorderColor #000000
+skinparam ParticipantBorderColor #000000
+skinparam SequenceLifeLineBorderColor #000000
+skinparam UsecaseBorderColor #000000
+skinparam StateBorderColor #000000
+skinparam ClassBorderColor #000000
+
+title HÌNH 3.13. SƠ ĐỒ TUẦN TỰ: THANH TOÁN TIỀN MẶT VÀ MÃ NHẬN QUYỀN QUA REDIS
+
+autonumber
+actor "Du khách" as Tourist
+actor "Nhân viên quầy" as Staff
+participant "Frontend Web App\n(Mobile Browser)" as Mobile
+participant "CMS Quầy vé\n(Admin Frontend)" as CMS
+participant "API Gateway" as Gateway
+participant "auth-service" as Auth
+participant "order-service" as Order
+database "Redis In-Memory\nCache" as Redis
+
+Tourist -> Mobile : 1. Chọn "Thanh toán tiền mặt tại quầy"
+Mobile -> Order : 2. POST /api/orders/cash-session
+Order --> Mobile : 3. Trả về session_id (VD: "SES-9821")
+Mobile -> Tourist : 4. Hiển thị session_id trên màn hình
+
+Tourist -> Staff : 5. Đến quầy đọc session_id và trả tiền mặt
+Staff -> CMS : 6. Nhập session_id, kiểm tra số tiền và bấm "Xác nhận thu tiền"
+CMS -> Gateway : 7. POST /api/admin/cash-orders/confirm
+Gateway -> Order : 8. Xác thực quyền TICKET_STAFF / ADMIN
+Order -> Order : 9. Cập nhật đơn hàng sang PAID
+Order -> Auth : 10. Yêu cầu sinh mã Claim Code cho đơn hàng
+Auth -> Auth : 11. Sinh mã ngắn ngẫu nhiên 6 ký tự (VD: "ECH892")
+Auth -> Redis : 12. SET claim:ECH892 <auth_payload> EX 900 (TTL 15 phút)
+Redis --> Auth : 13. OK
+Auth --> Order : 14. Claim Code: "ECH892"
+Order --> CMS : 15. Trả về mã "ECH892" thành công
+CMS -> Staff : 16. Hiển thị mã Claim Code "ECH892" trên màn hình
+Staff -> Tourist : 17. Giao mã nhận quyền cho du khách
+
+Tourist -> Mobile : 18. Nhập mã "ECH892" và bấm Kích hoạt
+Mobile -> Gateway : 19. POST /api/auth/claim-code
+Gateway -> Auth : 20. Chuyển tiếp yêu cầu
+Auth -> Redis : 21. GET claim:ECH892
+Redis --> Auth : 22. Trả về auth_payload hợp lệ
+Auth -> Redis : 23. DEL claim:ECH892 (Xóa mã một lần, chống dùng lại)
+Redis --> Auth : 24. OK (1 key deleted)
+Auth -> Auth : 25. Cấp Access Token (RAM) và Refresh Token (Cookie)
+Auth --> Gateway : 26. HTTP 200 OK {accessToken}
+Gateway --> Mobile : 27. Kích hoạt thành công
+Mobile -> Mobile : 28. Lưu Access Token vào RAM (tokenStore.ts)
+Mobile -> Tourist : 29. Mở khóa toàn bộ thuyết minh ngoại ngữ
+@enduml

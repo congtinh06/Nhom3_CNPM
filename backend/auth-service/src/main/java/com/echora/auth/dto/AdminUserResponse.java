@@ -10,10 +10,20 @@ import lombok.Setter;
 import java.time.LocalDateTime;
 
 /**
- * Thông tin người dùng trả về cho khu vực quản trị.
- *
- * <p>Không bao giờ chứa {@code passwordHash}, {@code googleSub} hay bất kỳ bí mật nào.
- * "Nhà cung cấp đăng nhập" được suy ra an toàn từ sự hiện diện của các trường nội bộ.</p>
+ * ============================================================================
+ * DTO: DỮ LIỆU NGƯỜI DÙNG DÀNH CHO TRANG QUẢN TRỊ (Admin User Response DTO)
+ * ============================================================================
+ * 
+ * Mục đích:
+ * - Đại diện cho thông tin an toàn của người dùng hiển thị trên giao diện Admin.
+ * - Tuyệt đối không để lộ thông tin nhạy cảm (passwordHash, googleSub...).
+ * 
+ * Các trường bổ sung mới để kiểm tra trạng thái Premium:
+ * - `plan`: Gói tài khoản hiện tại (FREE / PREMIUM).
+ * - `premiumActive`: Trạng thái hiệu lực của gói Premium (true/false).
+ * - `premiumExpiresAt`: Thời điểm hết hạn gói Premium (null nếu vĩnh viễn).
+ * - `premiumSourceOrderCode`: Mã đơn hàng kích hoạt gói Premium (nếu mua qua cổng thanh toán).
+ * ============================================================================
  */
 @Getter
 @Setter
@@ -33,6 +43,10 @@ public class AdminUserResponse {
     private String status;
     private String provider;
     private boolean emailVerified;
+    private String plan;
+    private boolean premiumActive;
+    private LocalDateTime premiumExpiresAt;
+    private String premiumSourceOrderCode;
     private LocalDateTime lastLoginAt;
     private LocalDateTime createdAt;
 
@@ -57,6 +71,10 @@ public class AdminUserResponse {
                 .status(user.getStatus().name())
                 .provider(provider)
                 .emailVerified(user.isEmailVerified())
+                .plan(user.effectivePlan().name())
+                .premiumActive(user.hasActivePremium())
+                .premiumExpiresAt(user.getPremiumExpiresAt())
+                .premiumSourceOrderCode(user.getPremiumSourceOrderCode())
                 .lastLoginAt(user.getLastLoginAt())
                 .createdAt(user.getCreatedAt())
                 .build();

@@ -1,0 +1,65 @@
+@startuml
+!theme plain
+skinparam defaultFontName "Times New Roman"
+skinparam defaultFontSize 11
+skinparam monochrome true
+skinparam shadowing false
+skinparam roundCorner 0
+skinparam packageStyle rectangle
+skinparam handwritten false
+skinparam ArrowColor #000000
+skinparam ActorBorderColor #000000
+skinparam ComponentBorderColor #000000
+skinparam DatabaseBorderColor #000000
+skinparam InterfaceBorderColor #000000
+skinparam ParticipantBorderColor #000000
+skinparam SequenceLifeLineBorderColor #000000
+skinparam UsecaseBorderColor #000000
+skinparam StateBorderColor #000000
+skinparam ClassBorderColor #000000
+
+title HÌNH 3.14. SƠ ĐỒ TUẦN TỰ: QUY TRÌNH DỊCH THUẬT VÀ TỔNG HỢP GIỌNG ĐỌC AI
+
+autonumber
+actor "Quản trị viên" as Admin
+participant "CMS Frontend" as CMS
+participant "content-service" as Content
+database "content_db" as DBContent
+queue "RabbitMQ Topic\n(echora.exchange)" as Rabbit
+participant "translation-tts-service\n(PoiPipelineService)" as Worker
+database "translation_db" as DBTrans
+participant "MyMemory API" as MyMem
+participant "Microsoft Edge-TTS\n(Python CLI Engine)" as EdgeTTS
+folder "Volume Lưu trữ\n(/app/storage/audio)" as Storage
+
+Admin -> CMS : Chỉnh sửa nội dung tiếng Việt POI và bấm "Lưu"
+CMS -> Content : PUT /api/admin/pois/{id} (Kèm trường version)
+Content -> DBContent : UPDATE pois SET ... WHERE id = ? AND version = ?
+DBContent --> Content : Cập nhật thành công (version tăng)
+Content -> Rabbit : Bắn sự kiện AMQP: routingKey = "poi.updated"
+Rabbit --> Content : ACK
+Content --> CMS : HTTP 200 OK (Cập nhật thành công)
+
+== Tiến trình Dịch thuật Bất đồng bộ ==
+Rabbit -> Worker : Tiêu thụ sự kiện "poi.updated"
+Worker -> DBTrans : Kiểm tra bản dịch hiện có của poiId
+loop Cho từng ngôn ngữ đích [en, ja, ko]
+  alt Bản dịch có cờ translation_source == "MANUAL"
+    Worker -> Worker : Bỏ qua dịch tự động để bảo tồn nội dung con người
+  else translation_source == "AUTO" hoặc chưa có
+    Worker -> MyMem : GET /get?q=<text>&langpair=vi|<target_lang>
+    MyMem --> Worker : JSON phản hồi bản dịch
+    Worker -> DBTrans : UPSERT bản dịch vào poi_translations
+  end
+end
+
+== Tiến trình Tổng hợp Giọng đọc Edge-TTS ==
+loop Cho từng ngôn ngữ [vi, en, ja, ko]
+  Worker -> Worker : Tạo tên tệp chuẩn: {poi_slug}_{lang}_{hash}.mp3
+  Worker -> EdgeTTS : Thực thi lệnh CLI edge-tts
+  EdgeTTS -> Storage : Ghi tệp MP3 nhị phân vào volume chia sẻ
+  EdgeTTS --> Worker : Mã thoát thành công (exit code 0)
+  Worker -> DBTrans : UPDATE poi_translations SET audio_status = 'READY'
+end
+Worker -> Rabbit : Bắn sự kiện hoàn tất: "poi.audio.ready"
+@enduml

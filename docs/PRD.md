@@ -224,13 +224,11 @@
 
 ### Open Questions (Các Điểm Chưa Rõ hoặc Mâu Thuẫn Kỹ Thuật Cần Giải Quyết)
 
-1. **Sự hiện diện của Chatbot AI / RAG trong hệ thống**:
-   - *Thực trạng trong code*: Trong tài liệu PDF mẫu và một số ý tưởng ban đầu có đề cập đến chatbot RAG ("Built-in RAG chatbot system to answer visitor questions"). Tuy nhiên, khi rà soát toàn bộ source code backend và frontend, **hoàn toàn không có** service, controller, prompt hay model LLM nào được cài đặt. Toàn bộ tính năng AI của hệ thống hiện tại chỉ bao gồm dịch máy (MyMemory/Seed) và tổng hợp giọng nói Edge-TTS. Cần xác nhận với ban dự án xem Chatbot AI là tính năng trong tương lai hay đã bị loại bỏ khỏi phạm vi đồ án.
-2. **Kế hoạch triển khai CI/CD cho `order-service`**:
+1. **Kế hoạch triển khai CI/CD cho `order-service`**:
    - *Thực trạng trong code*: Thư mục `.github/workflows` chứa các workflow tự động chạy test cho `analytics-service`, `api-gateway`, `auth-service`, `content-service`, `location-service` và `frontend-ci`. Riêng `order-service` chưa có workflow file. Cần làm rõ khi nào bổ sung pipeline tự động cho service này.
-3. **Cấu hình Máy chủ Gửi thư SMTP thật ở Môi trường Thực tế**:
+2. **Cấu hình Máy chủ Gửi thư SMTP thật ở Môi trường Thực tế**:
    - *Thực trạng trong code*: Biến môi trường `MAIL_HOST`, `MAIL_USERNAME` hiện đang để trống theo mặc định; khi chạy dev hệ thống chỉ in link xác thực tài khoản ra console log (nguồn: [backend/auth-service/src/main/resources/application.yml:45](file:///f:/Nhom3_CNPM/backend/auth-service/src/main/resources/application.yml#L45)). Cần xác định cấu hình máy chủ SMTP thật khi triển khai sản phẩm ra môi trường công cộng.
-4. **Kế hoạch triển khai HTTPS cho GPS ngoài thực địa**:
+3. **Kế hoạch triển khai HTTPS cho GPS ngoài thực địa**:
    - *Thực trạng trong code*: Trình duyệt di động sẽ chặn lệnh gọi Geolocation API nếu trang web không chạy dưới giao thức bảo mật `https://` (chỉ cho phép ngoại lệ trên `localhost`). Dự án cần có kế hoạch thiết lập Ingress / Nginx reverse proxy với chứng chỉ SSL/TLS công khai khi chạy thử nghiệm ngoài trời.
 
 ---

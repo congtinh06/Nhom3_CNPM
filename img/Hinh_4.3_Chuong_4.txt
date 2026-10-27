@@ -1,0 +1,21 @@
+================================================================================
+THÔNG TIN CHÚ THÍCH HÌNH ẢNH: Hinh_4.3_Chuong_4
+================================================================================
+1. KÝ HIỆU HÌNH         : Hinh 4.3 Chuong 4
+2. TIÊU ĐỀ SƠ ĐỒ        : Sơ đồ Thực thể Mối quan hệ Cơ sở Dữ liệu Chuẩn Crow's Foot (ERD)
+3. THUỘC BÁO CÁO        : Chương 4: Thiết kế Hệ thống
+4. VỊ TRÍ TRONG CHƯƠNG  : Mục 4.5 – Thiết kế Cơ sở Dữ liệu Quan hệ Chuẩn hóa 3NF (ERD)
+5. TÁC NHÂN / THÀNH PHẦN: Users, Pois, PoiTranslations, AudioFiles, Orders, OrderItems, Souvenirs, ListeningHistory
+6. TIÊU CHUẨN MÔ HÌNH HÓA: Crow's Foot Entity-Relationship Diagram, 3NF Normalization, Monochrome Black & White.
+--------------------------------------------------------------------------------
+7. MỤC ĐÍCH VÀ Ý NGHĨA NGHIỆP VỤ:
+   Mô hình dữ liệu quan hệ đạt chuẩn chuẩn hóa bậc 3 (Third Normal Form - 3NF): Loại bỏ hoàn toàn dị thường thêm, xóa, sửa (Insert, Delete, Update Anomalies); Thể hiện đầy đủ 7 thực thể dữ liệu cốt lõi, thuộc tính, kiểu dữ liệu, ràng buộc khóa chính (PK), khóa ngoại (FK) và bản số quan hệ Crow's Foot (Một - Một, Một - Nhiều, Một - Tùy chọn).
+--------------------------------------------------------------------------------
+8. QUY CÁCH TỆP HÌNH ẢNH:
+   • Tệp hình ảnh Raster : Hinh_4.3_Chuong_4.png (Độ phân giải cao, phục vụ chèn văn bản Word/PDF)
+   • Tệp đồ họa Vector   : Hinh_4.3_Chuong_4.svg (Mã nguồn vector gốc, có thể phóng to vô hạn)
+   • Phong cách thể hiện  : Pure Monochrome Black & White (Nền trắng, nét đen, chữ đen chuẩn học thuật)
+================================================================================
+Đồ án Học phần Công nghệ Phần mềm – Đề tài: Hệ thống Thuyết minh Tự động Đa ngôn ngữ Echora
+Nhóm Sinh viên Thực hiện: Nhóm 03 – Khoa CNTT, Đại học Khoa học Tự nhiên / ĐHQG-HCM
+================================================================================

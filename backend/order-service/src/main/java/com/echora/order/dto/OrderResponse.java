@@ -19,8 +19,10 @@ public class OrderResponse {
     private Long userId;
     private String orderType;
     private String premiumPackage;
+    private Long poiId;
     private BigDecimal subtotal;
     private BigDecimal shippingFee;
+    private BigDecimal discountAmount;
     private BigDecimal totalAmount;
     private String status;
     private String paymentMethod;

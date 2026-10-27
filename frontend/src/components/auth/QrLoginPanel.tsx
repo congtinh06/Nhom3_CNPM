@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { AlertCircle, CheckCircle2, Loader2, RefreshCw, ShieldCheck } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Eye, Loader2, RefreshCw, ShieldCheck } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import { authApi } from '../../api/auth';
 import { normalizeApiError } from '../../api/errors';
@@ -9,12 +9,14 @@ import { QrLoginSession, QrLoginStatus } from '../../types';
 
 interface QrLoginPanelProps {
   onSuccess: () => void;
+  /** Được gọi khi thiết bị di động quét mã ở chế độ Khách (không đăng nhập thật). */
+  onGuestSuccess?: () => void;
   compact?: boolean;
 }
 
 const LIVE_STATUSES: QrLoginStatus[] = ['PENDING', 'SCANNED'];
 
-export const QrLoginPanel: React.FC<QrLoginPanelProps> = ({ onSuccess, compact = false }) => {
+export const QrLoginPanel: React.FC<QrLoginPanelProps> = ({ onSuccess, onGuestSuccess, compact = false }) => {
   const { t } = useNavbarLanguage();
   const { completeQrLogin } = useAuth();
 
@@ -28,6 +30,7 @@ export const QrLoginPanel: React.FC<QrLoginPanelProps> = ({ onSuccess, compact =
   const statusRef = useRef<QrLoginStatus | null>(null);
   const deadlineRef = useRef(0);
   const exchangeStarted = useRef(false);
+  const guestHandled = useRef(false);
 
   const createSession = useCallback(async () => {
     if (typeof authApi.createQrSession !== 'function') {
@@ -42,6 +45,7 @@ export const QrLoginPanel: React.FC<QrLoginPanelProps> = ({ onSuccess, compact =
     statusRef.current = null;
     deadlineRef.current = 0;
     exchangeStarted.current = false;
+    guestHandled.current = false;
     try {
       const created = await authApi.createQrSession();
       sessionRef.current = created;
@@ -88,8 +92,21 @@ export const QrLoginPanel: React.FC<QrLoginPanelProps> = ({ onSuccess, compact =
 
         statusRef.current = result.status;
         setStatus(result.status);
-        if (!LIVE_STATUSES.includes(result.status)) {
+        if (!LIVE_STATUSES.includes(result.status) && result.status !== 'GUEST_APPROVED') {
           setSecondsLeft(0);
+        }
+
+        if (result.status === 'GUEST_APPROVED' && !guestHandled.current) {
+          // Thiet bi di dong chua co tai khoan: may tinh chuyen sang che do Khach,
+          // KHONG doi lay token, KHONG danh dau la "dang nhap thanh cong".
+          guestHandled.current = true;
+          window.clearInterval(timer);
+          window.setTimeout(() => {
+            if (onGuestSuccess) {
+              onGuestSuccess();
+            }
+          }, 400);
+          return;
         }
 
         if (result.status === 'APPROVED' && !exchangeStarted.current) {
@@ -118,7 +135,7 @@ export const QrLoginPanel: React.FC<QrLoginPanelProps> = ({ onSuccess, compact =
       cancelled = true;
       window.clearInterval(timer);
     };
-  }, [session, status, completeQrLogin, onSuccess, t.auth.qrError]);
+  }, [session, status, completeQrLogin, onSuccess, onGuestSuccess, t.auth.qrError]);
 
   useEffect(() => {
     if (!session || !status || !LIVE_STATUSES.includes(status)) {
@@ -143,6 +160,7 @@ export const QrLoginPanel: React.FC<QrLoginPanelProps> = ({ onSuccess, compact =
   const isExpired = status === 'EXPIRED';
   const isDenied = status === 'DENIED';
   const isCancelled = status === 'CANCELLED';
+  const isGuestApproved = status === 'GUEST_APPROVED';
 
   return (
     <aside
@@ -197,6 +215,13 @@ export const QrLoginPanel: React.FC<QrLoginPanelProps> = ({ onSuccess, compact =
           <div className="auth-qr-state" role="status">
             <Loader2 size={30} className="auth-qr-spin" aria-hidden="true" />
             <p>{t.auth.qrApproved}</p>
+          </div>
+        )}
+
+        {isGuestApproved && !error && (
+          <div className="auth-qr-state" role="status">
+            <Eye size={30} strokeWidth={1.7} aria-hidden="true" />
+            <p>{t.auth.qrGuestPanelWaiting}</p>
           </div>
         )}
 

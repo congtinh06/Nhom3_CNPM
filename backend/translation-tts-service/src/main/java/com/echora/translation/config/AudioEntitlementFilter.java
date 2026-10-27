@@ -11,10 +11,14 @@ import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
+import org.springframework.web.client.RestClient;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
+import java.time.Instant;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -28,11 +32,20 @@ public class AudioEntitlementFilter extends OncePerRequestFilter {
     public static final String HEADER_INTERNAL_API_KEY = "X-Internal-Api-Key";
 
     private static final String AUDIO_PREFIX = "/api/tts/audio/";
+    // Narration chính: poi_101_en_<hash8>.mp3; chap: poi_101_c2_en_<hash8>.mp3
     private static final Pattern AUDIO_FILE =
-            Pattern.compile("^poi_[0-9]+_([a-z]{2,3})_[0-9a-f]{8}\\.mp3$");
+            Pattern.compile("^poi_([0-9]+)(?:_c[0-9]+)?_([a-z]{2,3})_[0-9a-f]{8}\\.mp3$");
+    private static final long POI_ENTITLEMENT_TTL_SECONDS = 60;
 
-    @Value("${internal.api-key:}")
-    private String expectedApiKey;
+    private final RestClient restClient;
+    private final String expectedApiKey;
+    private final Map<String, CachedGrant> poiGrantCache = new ConcurrentHashMap<>();
+
+    public AudioEntitlementFilter(@Value("${app.auth-service.url:http://localhost:8086}") String authBaseUrl,
+                                  @Value("${internal.api-key:}") String expectedApiKey) {
+        this.restClient = RestClient.builder().baseUrl(authBaseUrl).build();
+        this.expectedApiKey = expectedApiKey;
+    }
 
     @PostConstruct
     void warnIfMissing() {
@@ -68,15 +81,57 @@ public class AudioEntitlementFilter extends OncePerRequestFilter {
 
         String fileName = request.getRequestURI().substring(AUDIO_PREFIX.length());
         Matcher matcher = AUDIO_FILE.matcher(fileName);
-        String language = matcher.matches() ? matcher.group(1) : "vi";
+        String language = matcher.matches() ? matcher.group(2) : "vi";
         boolean premium = "PREMIUM".equalsIgnoreCase(request.getHeader(HEADER_USER_PLAN));
         if (!"vi".equals(language) && !premium) {
-            reject(response, HttpServletResponse.SC_FORBIDDEN,
-                    "Ngôn ngữ này yêu cầu gói Premium đang hoạt động.");
-            return;
+            // Không Premium: cho phép nếu POI này đã được mua lẻ (chap hoặc narration chính).
+            Long poiId = matcher.matches() ? Long.valueOf(matcher.group(1)) : null;
+            Long userId;
+            try {
+                userId = Long.valueOf(request.getHeader(HEADER_USER_ID).trim());
+            } catch (NumberFormatException ex) {
+                userId = null;
+            }
+            if (poiId == null || userId == null || !hasPurchasedPoi(userId, poiId)) {
+                reject(response, HttpServletResponse.SC_FORBIDDEN,
+                        "Ngôn ngữ này yêu cầu gói Premium đang hoạt động.");
+                return;
+            }
         }
 
         filterChain.doFilter(request, response);
+    }
+
+    private boolean hasPurchasedPoi(Long userId, Long poiId) {
+        String cacheKey = userId + ":" + poiId;
+        CachedGrant cached = poiGrantCache.get(cacheKey);
+        Instant now = Instant.now();
+        if (cached != null && now.isBefore(cached.expiresAt())) {
+            return cached.active();
+        }
+        boolean active;
+        try {
+            EntitlementSnapshot snapshot = restClient.get()
+                    .uri("/api/auth/internal/entitlements/{userId}/pois/{poiId}", userId, poiId)
+                    .header(HEADER_INTERNAL_API_KEY, expectedApiKey)
+                    .retrieve()
+                    .body(EntitlementSnapshot.class);
+            active = snapshot != null && snapshot.premiumActive;
+        } catch (Exception ex) {
+            log.warn("Không thể kiểm tra quyền mua lẻ POI (userId={}, poiId={}): {}", userId, poiId, ex.getMessage());
+            active = false;
+        }
+        poiGrantCache.put(cacheKey, new CachedGrant(active, now.plusSeconds(POI_ENTITLEMENT_TTL_SECONDS)));
+        return active;
+    }
+
+    private record CachedGrant(boolean active, Instant expiresAt) {
+    }
+
+    private static class EntitlementSnapshot {
+        public Long userId;
+        public String plan;
+        public boolean premiumActive;
     }
 
     private static boolean constantTimeEquals(String incoming, String expected) {

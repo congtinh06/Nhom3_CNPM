@@ -238,6 +238,12 @@ export const OrderDetailPage: React.FC = () => {
                 <dt>Phí giao hàng</dt>
                 <dd>{formatCurrency(order.shippingFee)}</dd>
               </div>
+              {order.discountAmount ? (
+                <div className="adm-detail-row">
+                  <dt>Giảm giá Premium</dt>
+                  <dd>-{formatCurrency(order.discountAmount)}</dd>
+                </div>
+              ) : null}
               <div className="adm-detail-row adm-detail-row-strong">
                 <dt>Tổng cộng</dt>
                 <dd>{formatCurrency(order.totalAmount)}</dd>

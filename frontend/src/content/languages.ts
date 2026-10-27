@@ -243,11 +243,28 @@ export interface NavTranslation {
     qrScanAgain: string;
     qrDeviceLabel: string;
     qrBackHome: string;
+    qrScanDeviceButton: string;
+    qrGuestIntro: string;
+    qrGuestSuccessTitle: string;
+    qrGuestSuccessNote: string;
+    qrGuestPanelWaiting: string;
+    qrGuestTransferred: string;
+    guestBadgeNote: string;
+    guestBannerTitle: string;
+    guestBannerNote: string;
+    guestContinue: string;
+    qrRealAccountHint: string;
+    qrEmailVerifiedLabel: string;
+    qrEmailVerifiedOk: string;
+    qrEmailNotVerified: string;
+    qrResendVerify: string;
+    guestTitle: string;
+    exitGuestMode: string;
   };
   cart: string;
   openMenu: string;
   closeMenu: string;
-  shop: ShopTranslation;
+  scanQrDesktop: string;  shop: ShopTranslation;
 }
 
 export const NAV_TRANSLATIONS: Record<SupportedLanguage, NavTranslation> = {
@@ -285,7 +302,7 @@ export const NAV_TRANSLATIONS: Record<SupportedLanguage, NavTranslation> = {
       myOrders: 'Đơn hàng của tôi',
       account: 'Tài khoản',
       logout: 'Đăng xuất',
-      guest: 'Tài khoản',
+      guest: 'Khách',
       loginTitle: 'Đăng nhập',
       loginTabPassword: 'Mật khẩu',
       loginTabQr: 'Quét mã QR',
@@ -343,10 +360,32 @@ export const NAV_TRANSLATIONS: Record<SupportedLanguage, NavTranslation> = {
       qrScanAgain: 'Quét lại',
       qrDeviceLabel: 'Thiết bị yêu cầu đăng nhập',
       qrBackHome: 'Về trang chủ',
+      qrScanDeviceButton: 'Quét mã bằng camera',
+      qrGuestIntro:
+        'Bạn chưa có tài khoản. Quét mã để dùng thử Echora với tư cách Khách trên thiết bị kia: nghe thuyết minh tiếng Việt miễn phí.',
+      qrGuestSuccessTitle: 'Đã chuyển sang chế độ Khách',
+      qrGuestSuccessNote:
+        'Thiết bị kia giờ đang ở chế độ Khách: nghe thuyết minh tiếng Việt miễn phí, không cần đăng nhập. Nâng cấp Premium, mua quà lưu niệm và dịch vụ khác cần tài khoản thật.',
+      qrGuestPanelWaiting: 'Đang chuyển sang chế độ Khách…',
+      qrGuestTransferred: 'Đang dùng thử Echora ở chế độ Khách trên thiết bị này',
+      guestBadgeNote: 'Bạn đang dùng thử Echora với tư cách Khách: nghe thuyết minh tiếng Việt miễn phí.',
+      guestBannerTitle: 'Bạn đang ở chế độ Khách',
+      guestBannerNote:
+        'Nghe thuyết minh tiếng Việt miễn phí, không cần đăng nhập. Đăng nhập hoặc tạo tài khoản để mua quà lưu niệm và mở khóa Premium.',
+      guestContinue: 'Tiếp tục với tư cách Khách',
+      qrRealAccountHint: 'Tài khoản thật của bạn:',
+      qrEmailVerifiedLabel: 'Xác thực email',
+      qrEmailVerifiedOk: 'Đã xác thực',
+      qrEmailNotVerified:
+        'Tài khoản chưa xác thực email. Hãy xác thực trước khi chuyển sang tài khoản thật.',
+      qrResendVerify: 'Gửi lại email xác thực',
+      guestTitle: 'Khách tham quan',
+      exitGuestMode: 'Thoát chế độ Khách',
     },
     cart: 'Giỏ hàng',
     openMenu: 'Mở menu',
     closeMenu: 'Đóng menu',
+    scanQrDesktop: 'Quét mã QR trên máy tính',
     shop: {
       foodTitle: 'Ẩm thực Sài Gòn',
       foodSubtitle: 'Hương vị đường phố và các món ngon đặc trưng Sài thành',
@@ -523,7 +562,7 @@ export const NAV_TRANSLATIONS: Record<SupportedLanguage, NavTranslation> = {
       myOrders: 'My orders',
       account: 'Account',
       logout: 'Log out',
-      guest: 'Account',
+      guest: 'Guest',
       loginTitle: 'Sign in',
       loginTabPassword: 'Password',
       loginTabQr: 'Scan QR',
@@ -581,10 +620,33 @@ export const NAV_TRANSLATIONS: Record<SupportedLanguage, NavTranslation> = {
       qrScanAgain: 'Scan again',
       qrDeviceLabel: 'Device requesting sign-in',
       qrBackHome: 'Back to home',
+      qrScanDeviceButton: 'Scan code with camera',
+      qrGuestIntro:
+        "You don't have an account yet. Scan the code to try Echora as a Guest on the other device: free Vietnamese narration.",
+      qrGuestSuccessTitle: 'Switched to Guest mode',
+      qrGuestSuccessNote:
+        'The other device is now in Guest mode: free narration in Vietnamese, no sign-in needed. Premium upgrades, souvenirs and other services require a real account.',
+      qrGuestPanelWaiting: 'Switching to Guest mode…',
+      qrGuestTransferred: 'Now browsing Echora as a Guest on this device',
+      guestBadgeNote:
+        'You are trying Echora as a Guest: free Vietnamese narration, no account needed.',
+      guestBannerTitle: 'You are in Guest mode',
+      guestBannerNote:
+        'Free Vietnamese narration without signing in. Sign in or create an account to buy souvenirs and unlock Premium.',
+      guestContinue: 'Continue as Guest',
+      qrRealAccountHint: 'Your real account:',
+      qrEmailVerifiedLabel: 'Email verification',
+      qrEmailVerifiedOk: 'Verified',
+      qrEmailNotVerified:
+        'The account has not verified its email yet. Verify it before transferring the real account.',
+      qrResendVerify: 'Resend verification email',
+      guestTitle: 'Guest visitor',
+      exitGuestMode: 'Exit guest mode',
     },
     cart: 'Cart',
     openMenu: 'Open menu',
     closeMenu: 'Close menu',
+    scanQrDesktop: 'Scan QR on the computer',
     shop: {
       foodTitle: 'Saigon Cuisine',
       foodSubtitle: 'Street flavors and signature delicacies of Saigon',
@@ -761,7 +823,7 @@ export const NAV_TRANSLATIONS: Record<SupportedLanguage, NavTranslation> = {
       myOrders: '注文履歴',
       account: 'アカウント',
       logout: 'ログアウト',
-      guest: 'アカウント',
+      guest: 'ゲスト',
       loginTitle: 'ログイン',
       loginTabPassword: 'パスワード',
       loginTabQr: 'QR スキャン',
@@ -819,10 +881,33 @@ export const NAV_TRANSLATIONS: Record<SupportedLanguage, NavTranslation> = {
       qrScanAgain: '再読み取り',
       qrDeviceLabel: 'ログインを要求している端末',
       qrBackHome: 'ホームへ戻る',
+      qrScanDeviceButton: 'カメラでコードを読み取る',
+      qrGuestIntro:
+        'アカウントをお持ちでない場合は、コードを読み取って他の端末でゲストとしてEchoraをお試しいただけます。ベトナム語の解説は無料です。',
+      qrGuestSuccessTitle: 'ゲストモードに切り替えました',
+      qrGuestSuccessNote:
+        '相手の端末はゲストモードになりました。ベトナム語の解説は無料で聴けます。Premiumやお土産の購入などには本アカウントが必要です。',
+      qrGuestPanelWaiting: 'ゲストモードに切り替えています…',
+      qrGuestTransferred: 'この端末ではゲストとしてEchoraを利用中です',
+      guestBadgeNote:
+        'ゲストとしてEchoraをお試し中です。ベトナム語の解説は無料です。',
+      guestBannerTitle: 'ゲストモード利用中',
+      guestBannerNote:
+        'ログインなしでベトナム語の解説を無料で聴けます。お土産の購入やPremiumの解除にはログイン・新規登録が必要です。',
+      guestContinue: 'ゲストとして続ける',
+      qrRealAccountHint: 'あなたの本アカウント:',
+      qrEmailVerifiedLabel: 'メール認証',
+      qrEmailVerifiedOk: '認証済み',
+      qrEmailNotVerified:
+        'アカウントのメール認証が未完了です。本アカウントへ切り替える前に認証してください。',
+      qrResendVerify: '認証メールを再送する',
+      guestTitle: 'ゲスト観光客',
+      exitGuestMode: 'ゲストモードを終了',
     },
     cart: 'カート',
     openMenu: 'メニューを開く',
     closeMenu: 'メニューを閉じる',
+    scanQrDesktop: 'パソコンのQRをスキャン',
     shop: {
       foodTitle: 'サイゴングルメ',
       foodSubtitle: '街角の屋台料理と伝統の味わい',
@@ -999,7 +1084,7 @@ export const NAV_TRANSLATIONS: Record<SupportedLanguage, NavTranslation> = {
       myOrders: '내 주문',
       account: '계정',
       logout: '로그아웃',
-      guest: '계정',
+      guest: '게스트',
       loginTitle: '로그인',
       loginTabPassword: '비밀번호',
       loginTabQr: 'QR 스캔',
@@ -1057,10 +1142,32 @@ export const NAV_TRANSLATIONS: Record<SupportedLanguage, NavTranslation> = {
       qrScanAgain: '다시 스캔',
       qrDeviceLabel: '로그인을 요청한 기기',
       qrBackHome: '홈으로',
+      qrScanDeviceButton: '카메라로 코드 스캔',
+      qrGuestIntro:
+        '아직 계정이 없다면 코드를 스캔하여 다른 기기에서 게스트로 Echora를 체험해 보세요. 베트남어 해설은 무료입니다.',
+      qrGuestSuccessTitle: '게스트 모드로 전환되었습니다',
+      qrGuestSuccessNote:
+        '상대 기기는 이제 게스트 모드입니다. 베트남어 해설은 무료로 들을 수 있으며, 프리미엄이나 기념품 구매 등은 실제 계정이 필요합니다.',
+      qrGuestPanelWaiting: '게스트 모드로 전환하는 중…',
+      qrGuestTransferred: '이 기기에서 게스트로 Echora를 이용 중입니다',
+      guestBadgeNote: '게스트로 Echora를 이용 중입니다. 베트남어 해설은 무료입니다.',
+      guestBannerTitle: '게스트 모드 이용 중',
+      guestBannerNote:
+        '로그인 없이 베트남어 해설을 무료로 들을 수 있습니다. 기념품 구매나 프리미엄 해제는 로그인 또는 회원가입이 필요합니다.',
+      guestContinue: '게스트로 계속하기',
+      qrRealAccountHint: '실제 계정:',
+      qrEmailVerifiedLabel: '이메일 인증',
+      qrEmailVerifiedOk: '인증 완료',
+      qrEmailNotVerified:
+        '계정의 이메일 인증이 아직 완료되지 않았습니다. 실제 계정으로 전환하기 전에 인증해 주세요.',
+      qrResendVerify: '인증 이메일 다시 보내기',
+      guestTitle: '게스트 방문자',
+      exitGuestMode: '게스트 모드 종료',
     },
     cart: '장바구니',
     openMenu: '메뉴 열기',
     closeMenu: '메뉴 닫기',
+    scanQrDesktop: 'PC의 QR 스캔',
     shop: {
       foodTitle: '사이공 미식',
       foodSubtitle: '거리의 풍미와 사이공 대표 맛집 요리',

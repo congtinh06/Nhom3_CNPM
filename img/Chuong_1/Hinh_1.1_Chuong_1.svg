@@ -1,0 +1,109 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 750" width="1200" height="750" style="background:#ffffff; font-family:'Times New Roman', Times, serif;">
+  
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#000000"/>
+    </marker>
+    <marker id="openArrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 2 L 8 5 L 0 8" fill="none" stroke="#000000" stroke-width="1.5"/>
+    </marker>
+    <marker id="genArrow" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <polygon points="0,1 10,6 0,11" fill="#ffffff" stroke="#000000" stroke-width="1.5"/>
+    </marker>
+  </defs>
+
+  <text x="600" y="35" text-anchor="middle" font-size="18" font-weight="bold" fill="#000000">HÌNH 1.1. SƠ ĐỒ RANH GIỚI BỐI CẢNH HỆ THỐNG ECHORA (SYSTEM CONTEXT DIAGRAM)</text>
+  <text x="600" y="58" text-anchor="middle" font-size="12" font-style="italic" fill="#333333">Biểu diễn Ranh giới Hệ thống, Tác nhân Người dùng và các Hệ thống Bên ngoài Tương tác</text>
+
+  <!-- Central System Box -->
+  <rect x="420" y="240" width="360" height="260" fill="#ffffff" stroke="#000000" stroke-width="2.5"/>
+  <rect x="420" y="240" width="360" height="45" fill="#f0f0f0" stroke="#000000" stroke-width="1.5"/>
+  <text x="600" y="268" text-anchor="middle" font-size="14" font-weight="bold" fill="#000000">HỆ THỐNG ECHORA</text>
+  <text x="600" y="295" text-anchor="middle" font-size="11" font-style="italic" fill="#444444">(Nền tảng Thuyết minh Tự động &amp; Du lịch Di sản)</text>
+  
+  <text x="440" y="330" font-size="11" fill="#000000">• Định vị Geofence &amp; Tự động phát thuyết minh</text>
+  <text x="440" y="355" font-size="11" fill="#000000">• Quét mã QR tại điểm dừng di tích</text>
+  <text x="440" y="380" font-size="11" fill="#000000">• Đa ngôn ngữ (Tiếng Việt, Anh, Nhật, Hàn)</text>
+  <text x="440" y="405" font-size="11" fill="#000000">• Mở khóa gói Premium &amp; Giỏ hàng lưu niệm</text>
+  <text x="440" y="430" font-size="11" fill="#000000">• Quản lý nội dung di sản &amp; Pipeline Dịch/TTS</text>
+  <text x="440" y="455" font-size="11" fill="#000000">• Thu thập thống kê tương tác thời gian thực</text>
+  <text x="440" y="480" font-size="11" fill="#000000">• Xác thực phân quyền &amp; Bảo mật API Gateway</text>
+
+  <!-- Left: Tourist Actor -->
+  
+    <g transform="translate(80, 280)">
+      <circle cx="20" cy="15" r="12" fill="#ffffff" stroke="#000000" stroke-width="1.8"/>
+      <line x1="20" y1="27" x2="20" y2="58" stroke="#000000" stroke-width="1.8"/>
+      <line x1="0" y1="38" x2="40" y2="38" stroke="#000000" stroke-width="1.8"/>
+      <line x1="20" y1="58" x2="5" y2="85" stroke="#000000" stroke-width="1.8"/>
+      <line x1="20" y1="58" x2="35" y2="85" stroke="#000000" stroke-width="1.8"/>
+      <text x="20" y="105" text-anchor="middle" font-size="12" font-weight="bold" fill="#000000" font-family="'Times New Roman', serif">Du khách (Tourist)</text>
+      <text x="20" y="120" text-anchor="middle" font-size="10" fill="#444444" font-family="'Times New Roman', serif">Khách nội địa &amp; quốc tế</text>
+    </g>
+  
+  <line x1="140" y1="350" x2="420" y2="350" stroke="#000000" stroke-width="1.8" marker-end="url(#arrow)"/>
+  <line x1="420" y1="375" x2="140" y2="375" stroke="#000000" stroke-width="1.8" stroke-dasharray="4 3" marker-end="url(#openArrow)"/>
+  <text x="280" y="340" text-anchor="middle" font-size="11" font-weight="bold">Tọa độ GPS, Quét QR, Mua gói</text>
+  <text x="280" y="395" text-anchor="middle" font-size="10.5" fill="#444444">Audio thuyết minh, Bản đồ, Phụ đề</text>
+
+  <!-- Right: Admin Actor -->
+  
+    <g transform="translate(1020, 280)">
+      <circle cx="20" cy="15" r="12" fill="#ffffff" stroke="#000000" stroke-width="1.8"/>
+      <line x1="20" y1="27" x2="20" y2="58" stroke="#000000" stroke-width="1.8"/>
+      <line x1="0" y1="38" x2="40" y2="38" stroke="#000000" stroke-width="1.8"/>
+      <line x1="20" y1="58" x2="5" y2="85" stroke="#000000" stroke-width="1.8"/>
+      <line x1="20" y1="58" x2="35" y2="85" stroke="#000000" stroke-width="1.8"/>
+      <text x="20" y="105" text-anchor="middle" font-size="12" font-weight="bold" fill="#000000" font-family="'Times New Roman', serif">Quản trị viên (Admin)</text>
+      <text x="20" y="120" text-anchor="middle" font-size="10" fill="#444444" font-family="'Times New Roman', serif">Cán bộ di tích &amp; Vận hành</text>
+    </g>
+  
+  <line x1="1000" y1="350" x2="780" y2="350" stroke="#000000" stroke-width="1.8" marker-end="url(#arrow)"/>
+  <line x1="780" y1="375" x2="1000" y2="375" stroke="#000000" stroke-width="1.8" stroke-dasharray="4 3" marker-end="url(#openArrow)"/>
+  <text x="890" y="340" text-anchor="middle" font-size="11" font-weight="bold">Biên tập POI, Duyệt đơn, Quản lý gói</text>
+  <text x="890" y="395" text-anchor="middle" font-size="10.5" fill="#444444">Báo cáo thống kê, Cảnh báo hệ thống</text>
+
+  <!-- Top Left External: GPS Satellite System -->
+  <rect x="80" y="90" width="220" height="70" fill="#ffffff" stroke="#000000" stroke-width="1.5"/>
+  <text x="190" y="115" text-anchor="middle" font-size="11" font-style="italic" fill="#555555">&lt;&lt;External System&gt;&gt;</text>
+  <text x="190" y="135" text-anchor="middle" font-size="12" font-weight="bold">Hệ thống Định vị GPS / Web API</text>
+  <line x1="260" y1="160" x2="440" y2="240" stroke="#000000" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="325" y="195" font-size="10" font-weight="bold">Tọa độ WGS84</text>
+
+  <!-- Top Middle External: VNPAY &amp; VietQR -->
+  <rect x="490" y="90" width="220" height="70" fill="#ffffff" stroke="#000000" stroke-width="1.5"/>
+  <text x="600" y="115" text-anchor="middle" font-size="11" font-style="italic" fill="#555555">&lt;&lt;External Payment&gt;&gt;</text>
+  <text x="600" y="135" text-anchor="middle" font-size="12" font-weight="bold">Cổng VNPAY &amp; Napas VietQR</text>
+  <line x1="600" y1="160" x2="600" y2="240" stroke="#000000" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <line x1="615" y1="240" x2="615" y2="160" stroke="#000000" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#openArrow)"/>
+  <text x="640" y="195" font-size="10" font-weight="bold">IPN Webhook</text>
+
+  <!-- Top Right External: OpenStreetMap / Nominatim -->
+  <rect x="900" y="90" width="220" height="70" fill="#ffffff" stroke="#000000" stroke-width="1.5"/>
+  <text x="1010" y="115" text-anchor="middle" font-size="11" font-style="italic" fill="#555555">&lt;&lt;External Map&gt;&gt;</text>
+  <text x="1010" y="135" text-anchor="middle" font-size="12" font-weight="bold">OpenStreetMap &amp; Leaflet Tiles</text>
+  <line x1="940" y1="160" x2="760" y2="240" stroke="#000000" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="870" y="195" font-size="10" font-weight="bold">Bản đồ nền (Map Tiles)</text>
+
+  <!-- Bottom Left External: Google OAuth2 -->
+  <rect x="80" y="580" width="220" height="70" fill="#ffffff" stroke="#000000" stroke-width="1.5"/>
+  <text x="190" y="605" text-anchor="middle" font-size="11" font-style="italic" fill="#555555">&lt;&lt;External Auth&gt;&gt;</text>
+  <text x="190" y="625" text-anchor="middle" font-size="12" font-weight="bold">Google Identity OAuth2.0</text>
+  <line x1="260" y1="580" x2="440" y2="500" stroke="#000000" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="325" y="555" font-size="10" font-weight="bold">Xác thực ID Token</text>
+
+  <!-- Bottom Middle External: Edge-TTS &amp; MyMemory AI -->
+  <rect x="490" y="580" width="220" height="70" fill="#ffffff" stroke="#000000" stroke-width="1.5"/>
+  <text x="600" y="605" text-anchor="middle" font-size="11" font-style="italic" fill="#555555">&lt;&lt;External AI Service&gt;&gt;</text>
+  <text x="600" y="625" text-anchor="middle" font-size="12" font-weight="bold">Microsoft Edge-TTS &amp; MyMemory</text>
+  <line x1="600" y1="500" x2="600" y2="580" stroke="#000000" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <line x1="615" y1="580" x2="615" y2="500" stroke="#000000" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#openArrow)"/>
+  <text x="640" y="545" font-size="10" font-weight="bold">Dịch thuật &amp; File MP3</text>
+
+  <!-- Bottom Right External: SMTP Mail Notification -->
+  <rect x="900" y="580" width="220" height="70" fill="#ffffff" stroke="#000000" stroke-width="1.5"/>
+  <text x="1010" y="605" text-anchor="middle" font-size="11" font-style="italic" fill="#555555">&lt;&lt;External Mail&gt;&gt;</text>
+  <text x="1010" y="625" text-anchor="middle" font-size="12" font-weight="bold">Hệ thống Thư điện tử SMTP</text>
+  <line x1="760" y1="500" x2="940" y2="580" stroke="#000000" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="870" y="555" font-size="10" font-weight="bold">Email xác thực &amp; Đơn hàng</text>
+</svg>

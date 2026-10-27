@@ -290,8 +290,10 @@ class ProductServiceImplTest {
         assertThat(prices).hasSize(2);
         assertThat(prices.get(0).getId()).isEqualTo(1L);
         assertThat(prices.get(0).getPrice()).isEqualByComparingTo(new BigDecimal("55000"));
+        assertThat(prices.get(0).getCategory()).isEqualTo("FOOD");
         assertThat(prices.get(1).getId()).isEqualTo(3L);
         assertThat(prices.get(1).getPrice()).isEqualByComparingTo(new BigDecimal("25000"));
+        assertThat(prices.get(1).getCategory()).isEqualTo("DRINK");
     }
 
     // --- S2.1 Image Upload & Slug Tests ---

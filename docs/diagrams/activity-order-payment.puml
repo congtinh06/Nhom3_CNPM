@@ -1,0 +1,84 @@
+@startuml
+!theme plain
+skinparam defaultFontName "Times New Roman"
+skinparam defaultFontSize 11
+skinparam monochrome true
+skinparam shadowing false
+skinparam roundCorner 0
+skinparam packageStyle rectangle
+skinparam handwritten false
+skinparam ArrowColor #000000
+skinparam ActorBorderColor #000000
+skinparam ComponentBorderColor #000000
+skinparam DatabaseBorderColor #000000
+skinparam InterfaceBorderColor #000000
+skinparam ParticipantBorderColor #000000
+skinparam SequenceLifeLineBorderColor #000000
+skinparam UsecaseBorderColor #000000
+skinparam StateBorderColor #000000
+skinparam ClassBorderColor #000000
+
+title HÌNH 3.10. SƠ ĐỒ HOẠT ĐỘNG: QUY TRÌNH ĐẶT HÀNG QUÀ LƯU NIỆM VÀ THANH TOÁN
+
+|Người dùng|
+start
+:Duyệt danh mục quà lưu niệm (/am-thuc);
+:Chọn sản phẩm, số lượng và bấm "Thêm vào giỏ";
+|Frontend Giỏ hàng|
+:Cập nhật giỏ hàng trong LocalStorage;
+:Tính tạm tính subtotal;
+if (subtotal >= 50,000 VND?) then (Đạt ngưỡng)
+  :Miễn phí vận chuyển (shipping_fee = 0 VND);
+else (Dưới 50,000 VND)
+  :Áp dụng phí vận chuyển 20,000 VND;
+endif
+|Người dùng|
+:Mở trang Thanh toán (/thanh-toan);
+:Nhập thông tin giao hàng (Tên, SĐT, Địa chỉ);
+:Bấm nút "Đặt hàng";
+|Order Service|
+:Kiểm tra Header Idempotency-Key;
+if (Đã tồn tại đơn hàng với Idempotency-Key này?) then (Trùng lặp)
+  :Trả về đơn hàng đã tạo trước đó;
+else (Đơn mới)
+  :Tạo đơn hàng trạng thái PENDING_PAYMENT;
+  :Thiết lập thời hạn thanh toán 15 phút (expires_at = now + 15m);
+endif
+
+|Người dùng|
+if (Chọn phương thức thanh toán?) then (VNPAY)
+  |Order Service|
+  :Tạo URL chuyển hướng VNPAY kèm chữ ký HMAC-SHA512;
+  |Cổng VNPAY Sandbox|
+  :Chuyển hướng sang cổng VNPAY;
+  |Người dùng|
+  :Nhập thông tin thẻ ngân hàng kiểm thử;
+  |Cổng VNPAY Sandbox|
+  :Xử lý trừ tiền và gửi IPN Callback tới Order Service;
+  |Order Service|
+  :Đối soát chữ ký số vnp_SecureHash;
+  if (Chữ ký hợp lệ và vnp_ResponseCode == "00"?) then (Thành công)
+    :Cập nhật trạng thái đơn hàng sang PAID;
+  else (Thất bại / Hủy mã 24)
+    :Cập nhật trạng thái đơn hàng sang CANCELLED;
+  endif
+else (VietQR)
+  |Order Service|
+  :Sinh chuỗi mã VietQR chuẩn NAPAS 24/7;
+  |Frontend Giỏ hàng|
+  :Hiển thị mã QR ngân hàng kèm đồng hồ đếm ngược 15 phút;
+  |Người dùng|
+  :Mở App ngân hàng quét mã và chuyển khoản;
+  |Quản trị viên|
+  :Kiểm tra biến động số dư và bấm "Xác nhận thanh toán" trên CMS;
+  |Order Service|
+  :Cập nhật trạng thái đơn hàng sang PAID;
+endif
+
+|Quản trị viên|
+:Kho tiếp nhận xử lý đơn hàng (Chuyển PROCESSING);
+:Đóng gói và giao cho đơn vị vận chuyển (Chuyển COMPLETED);
+|Người dùng|
+:Nhận quà lưu niệm tại địa chỉ đăng ký;
+stop
+@enduml

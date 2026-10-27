@@ -1,0 +1,21 @@
+================================================================================
+THÔNG TIN CHÚ THÍCH HÌNH ẢNH: Hinh_3.9_Chuong_3
+================================================================================
+1. KÝ HIỆU HÌNH         : Hinh 3.9 Chuong 3
+2. TIÊU ĐỀ SƠ ĐỒ        : Sơ đồ Tuần tự Pipeline Tự động Dịch thuật và Tổng hợp Giọng nói AI Edge-TTS
+3. THUỘC BÁO CÁO        : Chương 3: Phân tích Nghiệp vụ và Mô hình hóa Hệ thống
+4. VỊ TRÍ TRONG CHƯƠNG  : Mục 3.7.3 – Sơ đồ Tuần tự Pipeline Dịch thuật và Edge-TTS
+5. TÁC NHÂN / THÀNH PHẦN: Admin/Editor, ContentService, RabbitMQ Exchange, Translation Worker, Edge-TTS Engine, Static Storage
+6. TIÊU CHUẨN MÔ HÌNH HÓA: UML 2.5 Sequence Diagram, Asynchronous Event Handling, Message Broker Coordination.
+--------------------------------------------------------------------------------
+7. MỤC ĐÍCH VÀ Ý NGHĨA NGHIỆP VỤ:
+   Sequence Diagram mô tả sự phối hợp bất đồng bộ giữa các thành phần phân tán: Admin gửi yêu cầu biên tập POI -> ContentService lưu DB và đẩy thông điệp vào RabbitMQ -> Translation Worker tiêu thụ thông điệp, dịch đa ngữ -> TTS Worker kết nối Microsoft Edge-TTS engine sinh âm thanh MP3 truyền cảm -> Lưu tệp tĩnh phục vụ phân đoạn Byte-Range HTTP 206 -> Báo cáo hoàn tất tới Admin Dashboard.
+--------------------------------------------------------------------------------
+8. QUY CÁCH TỆP HÌNH ẢNH:
+   • Tệp hình ảnh Raster : Hinh_3.9_Chuong_3.png (Độ phân giải cao, phục vụ chèn văn bản Word/PDF)
+   • Tệp đồ họa Vector   : Hinh_3.9_Chuong_3.svg (Mã nguồn vector gốc, có thể phóng to vô hạn)
+   • Phong cách thể hiện  : Pure Monochrome Black & White (Nền trắng, nét đen, chữ đen chuẩn học thuật)
+================================================================================
+Đồ án Học phần Công nghệ Phần mềm – Đề tài: Hệ thống Thuyết minh Tự động Đa ngôn ngữ Echora
+Nhóm Sinh viên Thực hiện: Nhóm 03 – Khoa CNTT, Đại học Khoa học Tự nhiên / ĐHQG-HCM
+================================================================================

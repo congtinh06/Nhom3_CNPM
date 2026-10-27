@@ -314,10 +314,6 @@
 <hr>
 <h3>Open Questions (Các Điểm Chưa Rõ hoặc Mâu Thuẫn Kỹ Thuật Cần Giải Quyết)</h3>
 <ol>
-<li><strong>Sự hiện diện của Chatbot AI / RAG trong hệ thống</strong>:<ul>
-<li><em>Thực trạng trong code</em>: Trong tài liệu PDF mẫu và một số ý tưởng ban đầu có đề cập đến chatbot RAG (&quot;Built-in RAG chatbot system to answer visitor questions&quot;). Tuy nhiên, khi rà soát toàn bộ source code backend và frontend, <strong>hoàn toàn không có</strong> service, controller, prompt hay model LLM nào được cài đặt. Toàn bộ tính năng AI của hệ thống hiện tại chỉ bao gồm dịch máy (MyMemory/Seed) và tổng hợp giọng nói Edge-TTS. Cần xác nhận với ban dự án xem Chatbot AI là tính năng trong tương lai hay đã bị loại bỏ khỏi phạm vi đồ án.</li>
-</ul>
-</li>
 <li><strong>Kế hoạch triển khai CI/CD cho <code>order-service</code></strong>:<ul>
 <li><em>Thực trạng trong code</em>: Thư mục <code>.github/workflows</code> chứa các workflow tự động chạy test cho <code>analytics-service</code>, <code>api-gateway</code>, <code>auth-service</code>, <code>content-service</code>, <code>location-service</code> và <code>frontend-ci</code>. Riêng <code>order-service</code> chưa có workflow file. Cần làm rõ khi nào bổ sung pipeline tự động cho service này.</li>
 </ul>

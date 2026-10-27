@@ -1,6 +1,6 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 import { tokenStore, notifyLoggedOut } from '../../api/tokenStore';
-import { AuthSession } from '../../types';
+import { refreshSession } from '../../api/refresh';
 import { AdminApiError } from '../types';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
@@ -16,30 +16,9 @@ export const adminClient = axios.create({
 
 type RetriableConfig = InternalAxiosRequestConfig & { _retried?: boolean };
 
-let refreshPromise: Promise<string> | null = null;
-
-async function refreshAccessToken(): Promise<string> {
-  if (!refreshPromise) {
-    refreshPromise = axios
-      .post<AuthSession>(
-        `${BASE_URL}/api/auth/refresh`,
-        {},
-        { withCredentials: true }
-      )
-      .then((response) => {
-        const newToken = response.data.accessToken;
-        tokenStore.set(newToken);
-        return newToken;
-      })
-      .finally(() => {
-        refreshPromise = null;
-      });
-  }
-  return refreshPromise;
-}
-
 adminClient.interceptors.request.use((config) => {
-  const token = tokenStore.get();
+  const token = tokenStore.get('admin');
+  config.headers.set('X-Auth-Scope', 'admin');
   if (token && !config.headers.has?.('Authorization')) {
     config.headers.set('Authorization', `Bearer ${token}`);
   }
@@ -55,23 +34,24 @@ adminClient.interceptors.response.use(
 
     // Nếu endpoint refresh tự nó bị 401 thì không retry
     if (url.includes('/api/auth/refresh')) {
-      notifyLoggedOut();
+      notifyLoggedOut('admin');
       return Promise.reject(normalizeAdminError(error));
     }
 
-    if (status === 401 && config && !config._retried && tokenStore.get()) {
+    if (status === 401 && config && !config._retried && tokenStore.get('admin')) {
       config._retried = true;
+      config.headers.set('X-Auth-Scope', 'admin');
       try {
-        const newToken = await refreshAccessToken();
+        const session = await refreshSession('admin');
         const headers = config.headers as unknown as {
           set?: (key: string, value: string) => void;
         };
         if (typeof headers?.set === 'function') {
-          headers.set('Authorization', `Bearer ${newToken}`);
+          headers.set('Authorization', `Bearer ${session.accessToken}`);
         }
         return adminClient.request(config);
       } catch (refreshErr) {
-        notifyLoggedOut();
+        notifyLoggedOut('admin');
         return Promise.reject(normalizeAdminError(refreshErr));
       }
     }

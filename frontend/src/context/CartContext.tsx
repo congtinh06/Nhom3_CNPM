@@ -2,6 +2,8 @@ import React, { createContext, useContext, useState, useEffect, useCallback, use
 import { drinksList } from '../content/staticSections';
 import { defaultProducts } from '../content/defaultProducts';
 import { CartItem, Drink, Product, ProductCategory } from '../types';
+import { usePremium } from './PremiumContext';
+import { applySouvenirDiscount, isSouvenirDiscountEligible } from '../utils/pricing';
 
 export interface CartItemMeta {
   name: string;
@@ -15,6 +17,8 @@ export interface CartItemMeta {
 interface CartContextValue {
   cart: Record<number, number>;
   totalCount: number;
+  subtotalAmount: number;
+  discountAmount: number;
   totalAmount: number;
   cartItems: CartItem[];
   addToCart: (item: number | Product, quantity?: number) => void;
@@ -98,6 +102,7 @@ const loadSavedMeta = (): Record<number, CartItemMeta> => {
 };
 
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { isPremium } = usePremium();
   const [cart, setCart] = useState<Record<number, number>>(loadSavedCart);
   const [itemMeta, setItemMeta] = useState<Record<number, CartItemMeta>>(loadSavedMeta);
   const [isCartOpen, setIsCartOpen] = useState(false);
@@ -203,9 +208,20 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
   }, [cart, itemMeta, drinksMap]);
 
-  const totalAmount = useMemo(() => {
+  const subtotalAmount = useMemo(() => {
     return cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
   }, [cartItems]);
+
+  const discountAmount = useMemo(() => {
+    if (!isPremium) return 0;
+    return cartItems.reduce((sum, item) => {
+      if (!isSouvenirDiscountEligible(isPremium, item.category)) return sum;
+      const discounted = applySouvenirDiscount(item.price, isPremium, item.category);
+      return sum + (item.price - discounted) * item.quantity;
+    }, 0);
+  }, [cartItems, isPremium]);
+
+  const totalAmount = subtotalAmount - discountAmount;
 
   const addToCart = useCallback((item: number | Product, quantity: number = 1) => {
     const addQty = Math.max(1, Math.floor(quantity));
@@ -332,6 +348,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       value={{
         cart,
         totalCount,
+        subtotalAmount,
+        discountAmount,
         totalAmount,
         cartItems,
         addToCart,

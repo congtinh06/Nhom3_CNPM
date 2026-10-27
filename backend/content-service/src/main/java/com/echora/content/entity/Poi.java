@@ -66,6 +66,10 @@ public class Poi {
     @Column(name = "thumbnail_url", length = 500)
     private String thumbnailUrl;
 
+    // Giá mua lẻ gói ngoại ngữ của POI (VND). NULL = dùng giá mặc định order-service.
+    @Column(name = "premium_price", precision = 12, scale = 0)
+    private BigDecimal premiumPrice;
+
     @Column(nullable = false, length = 30)
     @Builder.Default
     private String status = "ACTIVE"; // ACTIVE, INACTIVE, MAINTENANCE

@@ -42,6 +42,7 @@ class AuthControllerTest {
     void setUp() {
         AuthController controller = new AuthController(authService);
         ReflectionTestUtils.setField(controller, "refreshCookieName", "refresh_token");
+        ReflectionTestUtils.setField(controller, "adminRefreshCookieName", "refresh_token_admin");
         ReflectionTestUtils.setField(controller, "refreshCookiePath", "/api/auth");
         ReflectionTestUtils.setField(controller, "refreshCookieSecure", true);
         ReflectionTestUtils.setField(controller, "refreshCookieSameSite", "Strict");
@@ -116,6 +117,27 @@ class AuthControllerTest {
                 .andExpect(cookie().path("refresh_token", "/api/auth"))
                 .andExpect(cookie().sameSite("refresh_token", "Strict"))
                 .andExpect(cookie().value("refresh_token", "raw-refresh"));
+    }
+
+    @Test
+    @DisplayName("POST /api/auth/login với X-Auth-Scope=admin gắn cookie refresh admin riêng")
+    void adminLoginSetsSeparateRefreshCookie() throws Exception {
+        UserResponse user = UserResponse.builder()
+                .id(9L).fullName("Quản trị").email("admin@echora.local")
+                .role("ADMIN").emailVerified(true).build();
+        when(authService.login(any(LoginRequest.class), anyString(), any()))
+                .thenReturn(new CookieResult("raw-admin", Duration.ofDays(7),
+                        AuthResponse.builder().accessToken("jwt-admin").expiresIn(900L)
+                                .tokenType("Bearer").user(user).build()));
+
+        mockMvc.perform(post("/api/auth/login")
+                        .header("X-Auth-Scope", "admin")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"admin@echora.local\",\"password\":\"Secret123\"}"))
+                .andExpect(status().isOk())
+                .andExpect(cookie().httpOnly("refresh_token_admin", true))
+                .andExpect(cookie().value("refresh_token_admin", "raw-admin"))
+                .andExpect(cookie().doesNotExist("refresh_token"));
     }
 
     @Test

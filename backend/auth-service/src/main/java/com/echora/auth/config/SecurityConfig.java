@@ -60,6 +60,7 @@ public class SecurityConfig {
                                 "/api/auth/forgot-password",
                                 "/api/auth/reset-password",
                                 "/api/auth/qr/sessions",
+                                "/api/auth/qr/sessions/guest-scan",
                                 "/api/auth/qr/sessions/*/exchange",
                                 "/api/auth/qr/sessions/*/cancel").permitAll()
                         // Thiet bi A (chua dang nhap) poll trang thai phien QR.

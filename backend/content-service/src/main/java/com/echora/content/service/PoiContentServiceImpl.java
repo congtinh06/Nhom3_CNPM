@@ -10,13 +10,17 @@ import com.echora.content.dto.CreatePoiRequest;
 import com.echora.content.dto.PoiBoundingBoxDto;
 import com.echora.content.dto.PoiDetailDto;
 import com.echora.content.dto.PoiGuideDto;
+import com.echora.content.dto.PoiGuideChapterDto;
 import com.echora.content.dto.PoiGuideTranslationDto;
 import com.echora.content.dto.PoiInternalQrDto;
+import com.echora.content.dto.PoiPremiumPriceDto;
 import com.echora.content.dto.PoiPublishStatusDto;
 import com.echora.content.dto.PoiSummaryDto;
 import com.echora.content.dto.UpdatePoiRequest;
 import com.echora.content.entity.Category;
 import com.echora.content.entity.Poi;
+import com.echora.content.entity.PoiChapter;
+import com.echora.content.entity.PoiChapterTranslation;
 import com.echora.content.entity.PoiTranslation;
 import com.echora.content.entity.PublishEventType;
 import com.echora.content.entity.PublishStatus;
@@ -27,6 +31,8 @@ import com.echora.content.exception.ConflictException;
 import com.echora.content.exception.ResourceNotFoundException;
 import com.echora.content.messaging.PoiPublishRequestedEvent;
 import com.echora.content.repository.CategoryRepository;
+import com.echora.content.repository.PoiChapterRepository;
+import com.echora.content.repository.PoiChapterTranslationRepository;
 import com.echora.content.repository.PoiRepository;
 import com.echora.content.repository.PoiTranslationRepository;
 import com.echora.content.repository.RouteRepository;
@@ -44,6 +50,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -52,6 +59,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.TreeMap;
 
 @Service
 @RequiredArgsConstructor
@@ -73,6 +81,8 @@ public class PoiContentServiceImpl implements PoiContentService {
 
     private final PoiRepository poiRepository;
     private final PoiTranslationRepository translationRepository;
+    private final PoiChapterRepository chapterRepository;
+    private final PoiChapterTranslationRepository chapterTranslationRepository;
     private final ZoneRepository zoneRepository;
     private final CategoryRepository categoryRepository;
     private final RouteRepository routeRepository;
@@ -93,7 +103,7 @@ public class PoiContentServiceImpl implements PoiContentService {
     }
 
     @Override
-    public List<PoiGuideDto> getPoiGuides(Long zoneId, boolean includePremiumTranslations) {
+    public List<PoiGuideDto> getPoiGuides(Long zoneId, boolean includePremiumTranslations, Collection<Long> purchasedPoiIds) {
         List<Poi> pois = zoneId != null
                 ? poiRepository.findByZoneIdAndStatus(zoneId, "ACTIVE")
                 : poiRepository.findByStatus("ACTIVE");
@@ -102,22 +112,91 @@ public class PoiContentServiceImpl implements PoiContentService {
         }
 
         List<Long> ids = pois.stream().map(Poi::getId).toList();
+        Set<Long> purchased = purchasedPoiIds == null ? Set.of() : Set.copyOf(purchasedPoiIds);
+
         Map<Long, Map<String, PoiGuideTranslationDto>> translationsByPoi = new HashMap<>();
         for (PoiTranslation t : translationRepository.findByPoiIdIn(ids)) {
-            if (!includePremiumTranslations && !"vi".equalsIgnoreCase(t.getLanguageCode())) {
-                continue;
+            boolean vi = "vi".equalsIgnoreCase(t.getLanguageCode());
+            if (!includePremiumTranslations && !vi) {
+                // Chưa Premium: chỉ trả ngoại ngữ của POI user đã mua lẻ, tiếng Việt luôn trả.
+                if (!purchased.contains(t.getPoi().getId())) {
+                    continue;
+                }
             }
             translationsByPoi
                     .computeIfAbsent(t.getPoi().getId(), k -> new LinkedHashMap<>())
                     .put(t.getLanguageCode(), toGuideTranslation(t));
         }
 
+        Map<Long, Map<String, List<PoiGuideChapterDto>>> chaptersByPoi = loadGuideChapters(ids, includePremiumTranslations, purchased);
+
         return pois.stream()
-                .map(poi -> toGuideDto(poi, translationsByPoi.getOrDefault(poi.getId(), Map.of())))
+                .map(poi -> toGuideDto(poi,
+                        translationsByPoi.getOrDefault(poi.getId(), Map.of()),
+                        chaptersByPoi.getOrDefault(poi.getId(), Map.of())))
                 .toList();
     }
 
-    private PoiGuideDto toGuideDto(Poi poi, Map<String, PoiGuideTranslationDto> translations) {
+    /**
+     * Nạp chap + bản dịch chap cho nhiều POI trong 2 query (chap, rồi translation).
+     * Chap ngoại ngữ chỉ nạp khi được phép (premium hoặc POI đã mua lẻ).
+     */
+    private Map<Long, Map<String, List<PoiGuideChapterDto>>> loadGuideChapters(
+            List<Long> poiIds, boolean includePremiumTranslations, Set<Long> purchasedPoiIds) {
+        List<PoiChapter> chapters = chapterRepository.findByPoiIdInAndIsActiveTrueOrderByPoiIdAscChapterOrderAsc(poiIds);
+        if (chapters.isEmpty()) {
+            return Map.of();
+        }
+        List<Long> chapterIds = chapters.stream().map(PoiChapter::getId).toList();
+        Map<Long, List<PoiChapterTranslation>> translationsByChapter = new HashMap<>();
+        for (PoiChapterTranslation ct : chapterTranslationRepository.findByChapterIdIn(chapterIds)) {
+            translationsByChapter.computeIfAbsent(ct.getChapter().getId(), k -> new ArrayList<>()).add(ct);
+        }
+
+        // Map chapterId -> poiId để xử lý khóa theo POI/lacock ngôn ngữ.
+        Map<Long, Long> poiIdByChapterId = new HashMap<>();
+        Map<Long, List<PoiChapter>> chaptersByPoi = new LinkedHashMap<>();
+        for (PoiChapter chapter : chapters) {
+            poiIdByChapterId.put(chapter.getId(), chapter.getPoi().getId());
+            chaptersByPoi.computeIfAbsent(chapter.getPoi().getId(), k -> new ArrayList<>()).add(chapter);
+        }
+
+        Map<Long, Map<String, List<PoiGuideChapterDto>>> result = new HashMap<>();
+        for (PoiChapter chapter : chapters) {
+            Long poiId = chapter.getPoi().getId();
+            for (PoiChapterTranslation ct : translationsByChapter.getOrDefault(chapter.getId(), List.of())) {
+                boolean isVi = "vi".equalsIgnoreCase(ct.getLanguageCode());
+                boolean allowed = isVi || includePremiumTranslations || purchasedPoiIds.contains(poiId);
+                if (!allowed) {
+                    continue;
+                }
+                result.computeIfAbsent(poiId, k -> new LinkedHashMap<>())
+                        .computeIfAbsent(ct.getLanguageCode(), k -> new ArrayList<>())
+                        .add(PoiGuideChapterDto.builder()
+                                .order(chapter.getChapterOrder())
+                                .title(ct.getTitle())
+                                .narrationText(ct.getNarrationText())
+                                .audioUrl(ct.getAudioUrl())
+                                .audioDurationSeconds(ct.getAudioDurationSeconds())
+                                .audioStatus(ct.getAudioStatus())
+                                .build());
+            }
+        }
+        // Đã load theo chapterOrder tăng dần nên list giữ đúng thứ tự; sort lại cho an toàn.
+        for (Map<String, List<PoiGuideChapterDto>> byLang : result.values()) {
+            for (List<PoiGuideChapterDto> list : byLang.values()) {
+                list.sort(java.util.Comparator.comparing(PoiGuideChapterDto::getOrder,
+                        java.util.Comparator.nullsLast(java.util.Comparator.naturalOrder())));
+            }
+        }
+        return result;
+    }
+
+    private PoiGuideDto toGuideDto(
+            Poi poi,
+            Map<String, PoiGuideTranslationDto> translations,
+            Map<String, List<PoiGuideChapterDto>> chaptersByLanguage) {
+        translations.forEach((lang, dto) -> dto.setChapters(chaptersByLanguage.getOrDefault(lang, List.of())));
         return PoiGuideDto.builder()
                 .id(poi.getId())
                 .code(poi.getCode())
@@ -135,6 +214,7 @@ public class PoiContentServiceImpl implements PoiContentService {
                 .categoryNameVi(poi.getCategory() != null ? poi.getCategory().getNameVi() : null)
                 .routeId(poi.getRoute() != null ? poi.getRoute().getId() : null)
                 .stopOrder(poi.getStopOrder())
+                .premiumPrice(poi.getPremiumPrice())
                 .translations(translations)
                 .build();
     }
@@ -253,6 +333,18 @@ public class PoiContentServiceImpl implements PoiContentService {
                 .toList();
     }
 
+    @Override
+    public PoiPremiumPriceDto getInternalPoiPremiumPrice(Long poiId) {
+        Poi poi = poiRepository.findById(poiId)
+                .orElseThrow(() -> new ResourceNotFoundException("POI not found with id: " + poiId));
+        return PoiPremiumPriceDto.builder()
+                .poiId(poi.getId())
+                .poiCode(poi.getCode())
+                .poiName(poi.getName())
+                .premiumPrice(poi.getPremiumPrice())
+                .build();
+    }
+
     /**
      * Toàn bộ method chạy trong 1 transaction. KHÔNG gọi RabbitMQ ở đây:
      * chỉ phát PoiPublishRequestedEvent (Spring event nội bộ); PoiPublishRelay gửi poi.created SAU KHI commit.
@@ -290,6 +382,7 @@ public class PoiContentServiceImpl implements PoiContentService {
                 .triggerRadiusMeters(request.getTriggerRadiusMeters() != null ? request.getTriggerRadiusMeters() : 50)
                 .address(request.getAddress())
                 .thumbnailUrl(request.getThumbnailUrl())
+                .premiumPrice(request.getPremiumPrice())
                 .status("ACTIVE")
                 .publishStatus(PublishStatus.PENDING)
                 .publishEventType(PublishEventType.POI_CREATED)
@@ -342,6 +435,7 @@ public class PoiContentServiceImpl implements PoiContentService {
         }
         poi.setAddress(request.getAddress());
         poi.setThumbnailUrl(request.getThumbnailUrl());
+        poi.setPremiumPrice(request.getPremiumPrice());
 
         PoiTranslation viTranslation = translationRepository.findByPoiIdAndLanguageCode(poi.getId(), DEFAULT_LANG)
                 .orElse(null);
@@ -621,6 +715,7 @@ public class PoiContentServiceImpl implements PoiContentService {
                 .triggerRadiusMeters(poi.getTriggerRadiusMeters())
                 .address(poi.getAddress())
                 .thumbnailUrl(poi.getThumbnailUrl())
+                .premiumPrice(poi.getPremiumPrice())
                 .zoneId(poi.getZone() != null ? poi.getZone().getId() : null)
                 .zoneCode(poi.getZone() != null ? poi.getZone().getCode() : null)
                 .categoryId(poi.getCategory() != null ? poi.getCategory().getId() : null)
@@ -752,7 +847,9 @@ public class PoiContentServiceImpl implements PoiContentService {
                 .categoryCode(poi.getCategory().getCode())
                 .routeId(poi.getRoute() != null ? poi.getRoute().getId() : null)
                 .stopOrder(poi.getStopOrder())
-                .isFallbackLanguage(isFallback);
+                .premiumPrice(poi.getPremiumPrice())
+                .isFallbackLanguage(isFallback)
+                .chapters(loadDetailChapters(poi, translation));
 
         if (translation != null) {
             builder.languageCode(translation.getLanguageCode())
@@ -772,5 +869,52 @@ public class PoiContentServiceImpl implements PoiContentService {
         }
 
         return builder.build();
+    }
+
+    /** Chap của ngôn ngữ đang truy vấn; thiếu thì fallback tiếng Việt (đồng bộ fallback narration). */
+    private List<PoiGuideChapterDto> loadDetailChapters(Poi poi, PoiTranslation translation) {
+        String lang = (translation != null && translation.getLanguageCode() != null)
+                ? translation.getLanguageCode() : DEFAULT_LANG;
+        Set<String> langs = new java.util.LinkedHashSet<>();
+        if (lang != null) {
+            langs.add(lang);
+        }
+        if (!DEFAULT_LANG.equalsIgnoreCase(lang)) {
+            // Fallback tiếng Việt để UI luôn có nội dung khi bản dịch chap chưa có.
+            langs.add(DEFAULT_LANG);
+        }
+
+        List<PoiChapter> chapters = chapterRepository.findByPoiIdAndIsActiveTrueOrderByChapterOrderAsc(poi.getId());
+        if (chapters.isEmpty()) {
+            return List.of();
+        }
+        List<Long> chapterIds = chapters.stream().map(PoiChapter::getId).toList();
+        Map<Long, Map<String, PoiChapterTranslation>> byChapter = new HashMap<>();
+        for (PoiChapterTranslation ct : chapterTranslationRepository.findByChapterIdIn(chapterIds)) {
+            byChapter.computeIfAbsent(ct.getChapter().getId(), k -> new LinkedHashMap<>())
+                    .putIfAbsent(ct.getLanguageCode(), ct);
+        }
+
+        List<PoiGuideChapterDto> result = new ArrayList<>();
+        for (PoiChapter chapter : chapters) {
+            for (String code : langs) {
+                PoiChapterTranslation ct = byChapter
+                        .getOrDefault(chapter.getId(), Map.of())
+                        .get(code);
+                if (ct == null) {
+                    continue;
+                }
+                result.add(PoiGuideChapterDto.builder()
+                        .order(chapter.getChapterOrder())
+                        .title(ct.getTitle())
+                        .narrationText(ct.getNarrationText())
+                        .audioUrl(ct.getAudioUrl())
+                        .audioDurationSeconds(ct.getAudioDurationSeconds())
+                        .audioStatus(ct.getAudioStatus())
+                        .build());
+                break; // ngôn ngữ ưu tiên đầu tiên có chap là dừng
+            }
+        }
+        return result;
     }
 }

@@ -198,6 +198,55 @@ describe('Header Navigation Redesign', () => {
     });
   });
 
+  describe('Menu chế độ Khách', () => {
+    it('người chưa đăng nhập thường (chưa chọn Khách): hiển thị Đăng nhập/Đăng ký, KHÔNG có GuestMenu', async () => {
+      renderHeader('/');
+
+      await screen.findByRole('button', { name: 'Đăng nhập' });
+      expect(screen.getByRole('button', { name: 'Đăng ký' })).toBeInTheDocument();
+      expect(screen.queryByTestId('header-guest-menu')).not.toBeInTheDocument();
+    });
+
+    it('đã chọn chế độ Khách: GuestMenu thay thế hoàn toàn cụm Đăng nhập/Đăng ký ở thanh điều hướng', async () => {
+      sessionStorage.setItem('echora_guest_mode', '1');
+      renderHeader('/');
+
+      const guestMenu = await screen.findByTestId('header-guest-menu');
+      expect(guestMenu).toBeInTheDocument();
+      expect(guestMenu).toHaveTextContent('Khách');
+
+      // Nút Đăng nhập/Đăng ký ở thanh ngoài bị thay thế hoàn toàn
+      expect(screen.queryByRole('button', { name: 'Đăng nhập' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Đăng ký' })).not.toBeInTheDocument();
+
+      // Bấm vào GuestMenu sẽ mở dropdown chứa Đăng nhập, Đăng ký và Thoát chế độ Khách
+      act(() => {
+        fireEvent.click(guestMenu);
+      });
+      expect(await screen.findByRole('menuitem', { name: /Đăng nhập/i })).toBeInTheDocument();
+      expect(screen.getByRole('menuitem', { name: /Đăng ký/i })).toBeInTheDocument();
+      expect(screen.getByRole('menuitem', { name: /Thoát chế độ Khách/i })).toBeInTheDocument();
+    });
+
+    it('gỡ chế độ Khách liền tay khi cờ bị xóa (event echora-guest-mode-changed)', async () => {
+      sessionStorage.setItem('echora_guest_mode', '1');
+      renderHeader('/');
+
+      const guestMenu = await screen.findByTestId('header-guest-menu');
+      expect(guestMenu).toBeInTheDocument();
+
+      act(() => {
+        sessionStorage.clear();
+        localStorage.clear();
+        window.dispatchEvent(new Event('echora-guest-mode-changed'));
+      });
+
+      expect(screen.queryByTestId('header-guest-menu')).not.toBeInTheDocument();
+      expect(await screen.findByRole('button', { name: 'Đăng nhập' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Đăng ký' })).toBeInTheDocument();
+    });
+  });
+
   describe('Mobile Menu (< 900px)', () => {
     it('nút menu hamburger mở/đóng mobile panel chứa các mục điều hướng', async () => {
       renderHeader('/');

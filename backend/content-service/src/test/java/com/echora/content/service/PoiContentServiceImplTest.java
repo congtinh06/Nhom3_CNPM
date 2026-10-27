@@ -21,6 +21,8 @@ import com.echora.content.exception.ConflictException;
 import com.echora.content.exception.ResourceNotFoundException;
 import com.echora.content.messaging.PoiPublishRequestedEvent;
 import com.echora.content.repository.CategoryRepository;
+import com.echora.content.repository.PoiChapterRepository;
+import com.echora.content.repository.PoiChapterTranslationRepository;
 import com.echora.content.repository.PoiRepository;
 import com.echora.content.repository.PoiTranslationRepository;
 import com.echora.content.repository.RouteRepository;
@@ -56,6 +58,8 @@ class PoiContentServiceImplTest {
 
     @Mock private PoiRepository poiRepository;
     @Mock private PoiTranslationRepository translationRepository;
+    @Mock private PoiChapterRepository chapterRepository;
+    @Mock private PoiChapterTranslationRepository chapterTranslationRepository;
     @Mock private ZoneRepository zoneRepository;
     @Mock private CategoryRepository categoryRepository;
     @Mock private RouteRepository routeRepository;

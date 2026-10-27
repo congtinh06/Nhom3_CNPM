@@ -1,0 +1,20 @@
+================================================================================
+THÔNG TIN CHÚ THÍCH HÌNH ẢNH: Hinh_2.3_Chuong_2
+================================================================================
+1. KÝ HIỆU HÌNH         : Hinh 2.3 Chuong 2
+2. TIÊU ĐỀ SƠ ĐỒ        : Sơ đồ Luồng Vận hành Định vị Geofence GPS và Thuyết minh Tự động
+3. THUỘC BÁO CÁO        : Chương 2: PRD và Phân tích Yêu cầu Sản phẩm
+4. VỊ TRÍ TRONG CHƯƠNG  : Mục 2.10.1 – FLOW-01: Định vị GPS và Thuyết minh Tự động Ngoài trời
+5. TÁC NHÂN / THÀNH PHẦN: Du khách (Tourist), Cảm biến GPS, PWA Client Engine, Content Server
+6. TIÊU CHUẨN MÔ HÌNH HÓA: Operational Flowchart, Monochrome Black & White, các nút quyết định logic chuẩn ISO.
+--------------------------------------------------------------------------------
+7. MỤC ĐÍCH VÀ Ý NGHĨA NGHIỆP VỤ:
+   Mô tả quy trình lấy tọa độ không gian WGS84 mỗi 3 giây, áp dụng công thức Haversine tính khoảng cách tới các POI, so sánh với ngưỡng bán kính Geofence (35m - 60m). Khi thỏa điều kiện sau 10 giây trễ chống rung chấn, hệ thống tự động kích hoạt Floating Audio Player phát âm thanh MP3 kèm phụ đề chạy chữ đa ngữ đồng bộ.
+--------------------------------------------------------------------------------
+8. QUY CÁCH TỆP HÌNH ẢNH:
+   • Tệp hình ảnh Raster : Hinh_2.3_Chuong_2.png (Độ phân giải cao, phục vụ chèn văn bản Word/PDF)
+   • Phong cách thể hiện  : Pure Monochrome Black & White (Nền trắng, nét đen, chữ đen chuẩn học thuật)
+================================================================================
+Đồ án Học phần Công nghệ Phần mềm – Đề tài: Hệ thống Thuyết minh Tự động Đa ngôn ngữ Echora
+Nhóm Sinh viên Thực hiện: Nhóm 03 – Khoa CNTT, Đại học Khoa học Tự nhiên / ĐHQG-HCM
+================================================================================

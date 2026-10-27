@@ -1,0 +1,103 @@
+@startuml
+!theme plain
+skinparam defaultFontName "Times New Roman"
+skinparam defaultFontSize 11
+skinparam monochrome true
+skinparam shadowing false
+skinparam roundCorner 0
+skinparam packageStyle rectangle
+skinparam handwritten false
+skinparam ArrowColor #000000
+skinparam ActorBorderColor #000000
+skinparam ComponentBorderColor #000000
+skinparam DatabaseBorderColor #000000
+skinparam InterfaceBorderColor #000000
+skinparam ParticipantBorderColor #000000
+skinparam SequenceLifeLineBorderColor #000000
+skinparam UsecaseBorderColor #000000
+skinparam StateBorderColor #000000
+skinparam ClassBorderColor #000000
+
+title HÌNH 3.3. SƠ ĐỒ USE CASE TỔNG THỂ HỆ THỐNG ECHORA (45 USE CASES)
+
+left to right direction
+
+actor "Khách vãng lai\n(Visitor)" as Visitor
+actor "Người dùng đã đăng ký\n(Registered User)" as RegUser
+actor "Nhân viên quầy vé\n(Ticket Staff)" as TicketStaff
+actor "Quản trị viên\n(Administrator)" as Admin
+
+actor "Thiết bị GPS" as GPS
+actor "Cổng VNPAY / VietQR" as PaymentExt
+actor "RabbitMQ / AI Pipeline" as AIPipeline
+
+RegUser -up-|> Visitor
+
+rectangle "Hệ thống Du lịch Di sản Số Echora" {
+  package "Phân hệ Du khách & Trải nghiệm Di sản" {
+    usecase "UC-01: Bản đồ di tích tương tác" as UC01
+    usecase "UC-02: Nghe thuyết minh đa ngữ" as UC02
+    usecase "UC-03: Thuyết minh GPS tự động" as UC03
+    usecase "UC-04: Quét mã QR di sản" as UC04
+    usecase "UC-05: Chế độ giả lập GPS" as UC05
+    usecase "UC-06..07: Duyệt & xem quà lưu niệm" as UC06_07
+    usecase "UC-08..09: Xem tin tức văn hóa di sản" as UC08_09
+  }
+
+  package "Phân hệ Người dùng, Giỏ hàng & Thanh toán" {
+    usecase "UC-10..17: Đăng ký, Đăng nhập, Hồ sơ, Đăng xuất" as UC10_17
+    usecase "UC-18..19: Giỏ hàng & Đặt hàng quà lưu niệm" as UC18_19
+    usecase "UC-20: Mua gói nâng cấp Premium" as UC20
+    usecase "UC-21..22: Thanh toán VNPAY / VietQR" as UC21_22
+    usecase "UC-23..24: Hủy đơn & Xem lịch sử đơn" as UC23_24
+    usecase "UC-46: Kích hoạt quyền qua Claim Code" as UC46
+  }
+
+  package "Phân hệ Quản trị CMS & Quầy vé" {
+    usecase "UC-25..26: Đăng nhập Admin & Dashboard" as UC25_26
+    usecase "UC-27..32: Quản trị POI, Bản dịch, Mã QR, Lỗi" as UC27_32
+    usecase "UC-33..35: Quản trị Khu vực, Tour, Trạm dừng" as UC33_35
+    usecase "UC-36..38: Quản trị Quà, Tin tức, Người dùng" as UC36_38
+    usecase "UC-39: Quản lý đơn hàng và xử lý giao hàng" as UC39
+    usecase "UC-40: Xem báo cáo thống kê QR & Audio" as UC40
+    usecase "UC-45: Xác nhận thu tiền mặt & Sinh Claim Code" as UC45
+  }
+
+  package "Phân hệ Dịch vụ nền & AI Pipeline" {
+    usecase "UC-41: Tự động dịch thuật nội dung POI" as UC41
+    usecase "UC-42: Tự động tổng hợp giọng đọc Edge-TTS" as UC42
+    usecase "UC-43: Thu thập & tổng hợp sự kiện phân tích" as UC43
+  }
+}
+
+Visitor --> UC01
+Visitor --> UC02
+Visitor --> UC03
+Visitor --> UC04
+Visitor --> UC05
+Visitor --> UC06_07
+Visitor --> UC08_09
+Visitor --> UC46
+
+RegUser --> UC10_17
+RegUser --> UC18_19
+RegUser --> UC20
+RegUser --> UC21_22
+RegUser --> UC23_24
+
+TicketStaff --> UC45
+
+Admin --> UC25_26
+Admin --> UC27_32
+Admin --> UC33_35
+Admin --> UC36_38
+Admin --> UC39
+Admin --> UC40
+
+UC03 ..> GPS : <<tương tác>>
+UC21_22 ..> PaymentExt : <<tích hợp>>
+UC41 ..> AIPipeline : <<bất đồng bộ>>
+UC42 ..> AIPipeline : <<bất đồng bộ>>
+UC43 ..> AIPipeline : <<bất đồng bộ>>
+
+@enduml

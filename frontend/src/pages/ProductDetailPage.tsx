@@ -17,9 +17,11 @@ import {
 } from 'lucide-react';
 import { api } from '../api/client';
 import { useCart } from '../context/CartContext';
+import { usePremium } from '../context/PremiumContext';
 import { useToast } from '../context/ToastContext';
 import { useFavorites } from '../hooks/useFavorites';
 import { formatPrice } from '../utils/formatters';
+import { applySouvenirDiscount } from '../utils/pricing';
 import { defaultProducts } from '../content/defaultProducts';
 import { useNavbarLanguage } from '../content/languages';
 import { Product, ProductCategory } from '../types';
@@ -32,6 +34,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ category: 
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
   const { addToCart } = useCart();
+  const { isPremium } = usePremium();
   const { showToast } = useToast();
   const { isFavorite, toggleFavorite } = useFavorites();
   const { t } = useNavbarLanguage();
@@ -110,7 +113,12 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ category: 
 
   const sizeSurcharge = product?.hasDrinkOptions && size === 'L' ? 5000 : 0;
   const unitPrice = (product?.price || 0) + sizeSurcharge;
-  const totalPrice = unitPrice * quantity;
+  const discountedUnitPrice = applySouvenirDiscount(
+    unitPrice,
+    isPremium,
+    product?.category
+  );
+  const totalPrice = discountedUnitPrice * quantity;
 
 
   const handleAddToCart = () => {
@@ -171,6 +179,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ category: 
   const reviewsCount = product.reviewsCount || 100;
   const isFavorited = isFavorite(product.id);
   const isSouvenir = product.category === 'SOUVENIR';
+  const hasPremiumDiscount = isPremium && isSouvenir;
 
   return (
     <div className="food-beverage-page-container" style={{ paddingTop: 90 }}>
@@ -258,12 +267,21 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ category: 
 
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, marginBottom: 16, paddingBottom: 16, borderBottom: '1px solid var(--fb-border-light)' }}>
                 <span style={{ fontSize: 24, fontWeight: 800, color: 'var(--fb-saigon-red)' }}>
-                  {formatPrice(unitPrice)}
+                  {formatPrice(discountedUnitPrice)}
                 </span>
-                {product.oldPrice && (
-                  <span style={{ fontSize: 15, color: '#9C8E84', textDecoration: 'line-through' }}>
-                    {formatPrice(product.oldPrice)}
-                  </span>
+                {hasPremiumDiscount ? (
+                  <>
+                    <span style={{ fontSize: 15, color: '#9C8E84', textDecoration: 'line-through' }}>
+                      {formatPrice(unitPrice)}
+                    </span>
+                    <span className="detail-premium-discount">Premium -10%</span>
+                  </>
+                ) : (
+                  product.oldPrice && (
+                    <span style={{ fontSize: 15, color: '#9C8E84', textDecoration: 'line-through' }}>
+                      {formatPrice(product.oldPrice)}
+                    </span>
+                  )
                 )}
                 {sizeSurcharge > 0 && (
                   <span style={{ fontSize: 12, color: 'var(--fb-orange-brown)', fontWeight: 600 }}>
@@ -466,7 +484,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ category: 
                   {relItem.name}
                 </h4>
                 <b style={{ color: 'var(--fb-saigon-red)', fontSize: 14 }}>
-                  {formatPrice(relItem.price)}
+                  {formatPrice(applySouvenirDiscount(relItem.price, isPremium, relItem.category))}
                 </b>
               </div>
             ))}

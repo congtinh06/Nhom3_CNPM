@@ -64,6 +64,7 @@ class AuthServiceImplGoogleTest {
     void setUp() {
         service = new AuthServiceImpl(
                 userRepository,
+                mock(com.echora.auth.repository.UserPoiEntitlementRepository.class),
                 emailVerificationTokenRepository,
                 passwordResetTokenRepository,
                 passwordEncoder,

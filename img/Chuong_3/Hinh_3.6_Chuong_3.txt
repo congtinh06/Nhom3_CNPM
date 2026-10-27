@@ -1,0 +1,21 @@
+================================================================================
+THÔNG TIN CHÚ THÍCH HÌNH ẢNH: Hinh_3.6_Chuong_3
+================================================================================
+1. KÝ HIỆU HÌNH         : Hinh 3.6 Chuong 3
+2. TIÊU ĐỀ SƠ ĐỒ        : Sơ đồ Hoạt động Nghiệp vụ Nâng cấp Gói Premium và Thanh toán VNPAY (Activity Diagram)
+3. THUỘC BÁO CÁO        : Chương 3: Phân tích Nghiệp vụ và Mô hình hóa Hệ thống
+4. VỊ TRÍ TRONG CHƯƠNG  : Mục 3.6.2 – Sơ đồ Hoạt động Nâng cấp Premium và Thanh toán VNPAY
+5. TÁC NHÂN / THÀNH PHẦN: Người dùng thành viên, Trình duyệt Web Client, Backend API Gateway, Cổng VNPAY Sandbox
+6. TIÊU CHUẨN MÔ HÌNH HÓA: UML 2.5 Activity Diagram với 4 Swimlanes, Xử lý giao dịch tài chính an toàn.
+--------------------------------------------------------------------------------
+7. MỤC ĐÍCH VÀ Ý NGHĨA NGHIỆP VỤ:
+   Activity Diagram phân làn 4 Swimlanes thể hiện toàn bộ quy trình giao dịch thanh toán: Người dùng chọn gói -> Client gửi request -> Backend tạo đơn PENDING và ký số HMAC-SHA512 -> VNPAY hiển thị giao diện nhập thẻ NCBS -> Người dùng xác nhận OTP -> VNPAY gửi IPN Webhook về Backend -> Backend kiểm tra chữ ký số, cập nhật trạng thái PAID, nâng quyền tài khoản và mở khóa ngôn ngữ quốc tế.
+--------------------------------------------------------------------------------
+8. QUY CÁCH TỆP HÌNH ẢNH:
+   • Tệp hình ảnh Raster : Hinh_3.6_Chuong_3.png (Độ phân giải cao, phục vụ chèn văn bản Word/PDF)
+   • Tệp đồ họa Vector   : Hinh_3.6_Chuong_3.svg (Mã nguồn vector gốc, có thể phóng to vô hạn)
+   • Phong cách thể hiện  : Pure Monochrome Black & White (Nền trắng, nét đen, chữ đen chuẩn học thuật)
+================================================================================
+Đồ án Học phần Công nghệ Phần mềm – Đề tài: Hệ thống Thuyết minh Tự động Đa ngôn ngữ Echora
+Nhóm Sinh viên Thực hiện: Nhóm 03 – Khoa CNTT, Đại học Khoa học Tự nhiên / ĐHQG-HCM
+================================================================================

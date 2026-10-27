@@ -21,6 +21,7 @@ export interface PoiSummary {
   categoryNameVi?: string | null;
   routeId?: number | null;
   stopOrder?: number | null;
+  premiumPrice?: number | null;
 }
 
 export interface PoiDetail extends PoiSummary {
@@ -77,6 +78,7 @@ export interface CreatePoiInput {
   triggerRadiusMeters?: number;
   address?: string;
   thumbnailUrl?: string;
+  premiumPrice?: number | null;
   routeId?: number;
   stopOrder?: number;
   title: string;
@@ -94,6 +96,7 @@ export interface UpdatePoiInput {
   triggerRadiusMeters?: number;
   address?: string;
   thumbnailUrl?: string;
+  premiumPrice?: number | null;
   routeId?: number;
   stopOrder?: number;
   title: string;
@@ -142,6 +145,7 @@ export interface AdminPoiListItem {
   routeId?: number | null;
   routeName?: string | null;
   stopOrder?: number | null;
+  premiumPrice?: number | null;
   status: string;
   version: number;
   publishStatus: PublishStatusValue | string;
@@ -163,6 +167,7 @@ export interface AdminPoiDetail {
   triggerRadiusMeters: number;
   address?: string | null;
   thumbnailUrl?: string | null;
+  premiumPrice?: number | null;
   zoneId: number;
   zoneCode: string;
   categoryId: number;

@@ -1,11 +1,30 @@
+/**
+ * ============================================================================
+ * QUẢN TRỊ VIÊN: CHI TIẾT NGƯỜI DÙNG & QUẢN LÝ GÓI PREMIUM (User Detail & Plan)
+ * ============================================================================
+ * 
+ * Mục đích module:
+ * - Xem thông tin chi tiết một người dùng cụ thể.
+ * - Cho phép Quản trị viên kiểm tra xem tài khoản này đã được nâng cấp lên Premium chưa.
+ * - Trực tiếp nâng cấp lên Premium (chọn số ngày 30, 90, 365 hoặc vĩnh viễn) hoặc hạ về Free.
+ * 
+ * Các thay đổi cốt lõi (Core Changes):
+ * 1. [Thông tin tài khoản]: Bổ sung hiển thị Plan (Premium/Free), hạn dùng Premium và mã đơn hàng đã thanh toán.
+ * 2. [Quản trị gói Premium]: Bổ sung card "Gói dịch vụ & Quyền lợi Premium" với dropdown chọn gói và thời hạn.
+ * 3. [Xác nhận an toàn]: Tích hợp ConfirmDialog trước khi thực hiện cập nhật gói để tránh thao tác nhầm.
+ * 4. [Gọi API updateUserPlan]: Gửi request PATCH /{id}/plan đến auth-service để lưu thay đổi và ghi audit log.
+ * ============================================================================
+ */
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { ChevronLeft } from 'lucide-react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { userApi } from '../api/userApi';
 import { normalizeAdminError } from '../api/adminClient';
 import { useAuth } from '../../context/AuthContext';
 import {
   AdminUser,
+  UserPlanValue,
   UserRoleValue,
   UserStatusValue,
   USER_PROVIDER_LABELS,
@@ -20,7 +39,8 @@ import { AdminAlert } from '../components/AdminAlert';
 
 type PendingAction =
   | { kind: 'role'; value: UserRoleValue }
-  | { kind: 'status'; value: UserStatusValue };
+  | { kind: 'status'; value: UserStatusValue }
+  | { kind: 'plan'; value: UserPlanValue; durationDays?: number };
 
 function formatDateTime(value?: string | null): string {
   if (!value) return '-';
@@ -52,6 +72,8 @@ export const UserDetailPage: React.FC = () => {
 
   const [roleDraft, setRoleDraft] = useState<UserRoleValue>('USER');
   const [statusDraft, setStatusDraft] = useState<UserStatusValue>('ACTIVE');
+  const [planDraft, setPlanDraft] = useState<UserPlanValue>('FREE');
+  const [durationDaysDraft, setDurationDaysDraft] = useState<number>(365);
 
   const [pendingAction, setPendingAction] = useState<PendingAction | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -71,6 +93,7 @@ export const UserDetailPage: React.FC = () => {
       setUser(detail);
       setRoleDraft(detail.role);
       setStatusDraft(detail.status);
+      setPlanDraft(detail.plan || 'FREE');
     } catch (err) {
       setLoadError(normalizeAdminError(err).message);
     } finally {
@@ -90,17 +113,24 @@ export const UserDetailPage: React.FC = () => {
     setNotice(null);
     setActionError(null);
     try {
-      const updated =
-        pendingAction.kind === 'role'
-          ? await userApi.updateUserRole(user.id, pendingAction.value)
-          : await userApi.updateUserStatus(user.id, pendingAction.value);
+      let updated: AdminUser;
+      if (pendingAction.kind === 'role') {
+        updated = await userApi.updateUserRole(user.id, pendingAction.value);
+      } else if (pendingAction.kind === 'status') {
+        updated = await userApi.updateUserStatus(user.id, pendingAction.value);
+      } else {
+        updated = await userApi.updateUserPlan(user.id, pendingAction.value, pendingAction.durationDays);
+      }
       setUser(updated);
       setRoleDraft(updated.role);
       setStatusDraft(updated.status);
+      setPlanDraft(updated.plan || 'FREE');
       setNotice(
         pendingAction.kind === 'role'
           ? `Đã cập nhật vai trò của "${updated.fullName}".`
-          : `Đã cập nhật trạng thái của "${updated.fullName}".`
+          : pendingAction.kind === 'status'
+          ? `Đã cập nhật trạng thái của "${updated.fullName}".`
+          : `Đã cập nhật gói dịch vụ của "${updated.fullName}".`
       );
       setPendingAction(null);
     } catch (err) {
@@ -136,11 +166,15 @@ export const UserDetailPage: React.FC = () => {
 
   const roleDirty = roleDraft !== user.role;
   const statusDirty = statusDraft !== user.status;
+  const currentPlan = user.plan || 'FREE';
+  const planDirty = planDraft !== currentPlan;
 
   const dialogVariant: 'danger' | 'primary' =
     pendingAction?.kind === 'status' && pendingAction.value === 'BLOCKED'
       ? 'danger'
       : pendingAction?.kind === 'role' && pendingAction.value === 'USER'
+      ? 'danger'
+      : pendingAction?.kind === 'plan' && pendingAction.value === 'FREE'
       ? 'danger'
       : 'primary';
 
@@ -149,9 +183,13 @@ export const UserDetailPage: React.FC = () => {
       ? pendingAction.value === 'ADMIN'
         ? 'Xác nhận cấp quyền quản trị'
         : 'Xác nhận hạ cấp quyền quản trị'
-      : pendingAction?.value === 'BLOCKED'
-      ? 'Xác nhận khóa tài khoản'
-      : 'Xác nhận đổi trạng thái tài khoản';
+      : pendingAction?.kind === 'status'
+      ? pendingAction?.value === 'BLOCKED'
+        ? 'Xác nhận khóa tài khoản'
+        : 'Xác nhận đổi trạng thái tài khoản'
+      : pendingAction?.value === 'PREMIUM'
+      ? 'Xác nhận nâng cấp gói Premium'
+      : 'Xác nhận hạ cấp gói tài khoản';
 
   const dialogMessage = (() => {
     if (!pendingAction) return '';
@@ -160,6 +198,11 @@ export const UserDetailPage: React.FC = () => {
       return pendingAction.value === 'ADMIN'
         ? `Tài khoản "${name}" sẽ được cấp toàn quyền quản trị hệ thống. Bạn có chắc chắn muốn tiếp tục?`
         : `Tài khoản "${name}" sẽ mất quyền quản trị và mọi phiên đăng nhập sẽ bị thu hồi. Bạn có chắc chắn muốn tiếp tục?`;
+    }
+    if (pendingAction.kind === 'plan') {
+      return pendingAction.value === 'PREMIUM'
+        ? `Nâng cấp tài khoản "${name}" lên gói Premium (${pendingAction.durationDays ?? 365} ngày)? Người dùng sẽ được mở khóa ngay toàn bộ tính năng và bài thuyết minh đa ngôn ngữ.`
+        : `Chuyển tài khoản "${name}" về gói Miễn phí (Free)?`;
     }
     switch (pendingAction.value) {
       case 'BLOCKED':
@@ -234,15 +277,104 @@ export const UserDetailPage: React.FC = () => {
               <dd>{formatDateTime(user.createdAt)}</dd>
             </div>
             <div className="adm-detail-row">
-              <dt>Trạng thái hiện tại</dt>
+              <dt>Trạng thái tài khoản</dt>
               <dd>
                 <StatusBadge status={user.status} />
               </dd>
             </div>
+            <div className="adm-detail-row">
+              <dt>Gói dịch vụ (Plan)</dt>
+              <dd>
+                <StatusBadge variant={user.plan === 'PREMIUM' && user.premiumActive !== false ? 'neutral' : 'muted'}>
+                  {user.plan === 'PREMIUM' && user.premiumActive !== false ? 'Premium' : 'Free'}
+                </StatusBadge>
+              </dd>
+            </div>
+            {user.plan === 'PREMIUM' && (
+              <>
+                <div className="adm-detail-row">
+                  <dt>Thời hạn Premium</dt>
+                  <dd>
+                    {user.premiumExpiresAt
+                      ? formatDateTime(user.premiumExpiresAt)
+                      : 'Vĩnh viễn (Không thời hạn)'}
+                  </dd>
+                </div>
+                {user.premiumSourceOrderCode && (
+                  <div className="adm-detail-row">
+                    <dt>Mã đơn kích hoạt</dt>
+                    <dd>
+                      <Link
+                        to={`/quan-tri/don-hang?search=${encodeURIComponent(user.premiumSourceOrderCode)}`}
+                        style={{ color: '#0F766E', textDecoration: 'underline', fontWeight: 600 }}
+                      >
+                        {user.premiumSourceOrderCode}
+                      </Link>
+                    </dd>
+                  </div>
+                )}
+              </>
+            )}
           </dl>
         </FormSection>
 
         <div className="adm-form-side">
+          <FormSection title="Gói dịch vụ & Quyền lợi Premium">
+            <p className="adm-field-helper" style={{ marginBottom: '12px' }}>
+              Gói hiện tại:{' '}
+              <strong>
+                {user.plan === 'PREMIUM' && user.premiumActive !== false
+                  ? 'Nâng cao (Premium)'
+                  : 'Miễn phí (Free)'}
+              </strong>
+            </p>
+            <div className="adm-action-row" style={{ flexWrap: 'wrap', gap: '8px' }}>
+              <select
+                className="adm-select"
+                value={planDraft}
+                onChange={(e) => setPlanDraft(e.target.value as UserPlanValue)}
+                disabled={submitting}
+                aria-label="Chọn gói dịch vụ"
+              >
+                <option value="FREE">Miễn phí (Free)</option>
+                <option value="PREMIUM">Nâng cao (Premium)</option>
+              </select>
+              {planDraft === 'PREMIUM' && (
+                <select
+                  className="adm-select"
+                  value={durationDaysDraft}
+                  onChange={(e) => setDurationDaysDraft(Number(e.target.value))}
+                  disabled={submitting}
+                  aria-label="Thời hạn gói Premium"
+                  style={{ width: '140px' }}
+                >
+                  <option value={30}>30 ngày</option>
+                  <option value={90}>90 ngày</option>
+                  <option value={365}>1 năm (365 ngày)</option>
+                  <option value={3650}>10 năm</option>
+                </select>
+              )}
+              <button
+                type="button"
+                className="adm-btn adm-btn-primary"
+                onClick={() =>
+                  setPendingAction({
+                    kind: 'plan',
+                    value: planDraft,
+                    durationDays: durationDaysDraft,
+                  })
+                }
+                disabled={submitting || (!planDirty && planDraft === 'FREE')}
+              >
+                Cập nhật gói
+              </button>
+            </div>
+            <p className="adm-field-helper" style={{ marginTop: '12px' }}>
+              Tài khoản Premium được mở khóa toàn bộ tính năng: nghe audio thuyết minh đa ngôn
+              ngữ (Anh, Nhật, Hàn), mở khóa chi tiết các phân đoạn và giảm giá quà lưu niệm.
+            </p>
+          </FormSection>
+
           <FormSection title="Vai trò">
             <p className="adm-field-helper" style={{ marginBottom: '12px' }}>
               Vai trò hiện tại: <strong>{USER_ROLE_LABELS[user.role]}</strong>

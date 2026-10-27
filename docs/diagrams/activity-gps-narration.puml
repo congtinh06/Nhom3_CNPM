@@ -1,0 +1,69 @@
+@startuml
+!theme plain
+skinparam defaultFontName "Times New Roman"
+skinparam defaultFontSize 11
+skinparam monochrome true
+skinparam shadowing false
+skinparam roundCorner 0
+skinparam packageStyle rectangle
+skinparam handwritten false
+skinparam ArrowColor #000000
+skinparam ActorBorderColor #000000
+skinparam ComponentBorderColor #000000
+skinparam DatabaseBorderColor #000000
+skinparam InterfaceBorderColor #000000
+skinparam ParticipantBorderColor #000000
+skinparam SequenceLifeLineBorderColor #000000
+skinparam UsecaseBorderColor #000000
+skinparam StateBorderColor #000000
+skinparam ClassBorderColor #000000
+
+title HÌNH 3.9. SƠ ĐỒ HOẠT ĐỘNG: QUY TRÌNH ĐỊNH VỊ GPS VÀ TỰ ĐỘNG THUYẾT MINH
+
+|Du khách|
+start
+:Mở trang Bản đồ di tích (/diem-du-lich);
+:Bật công tắc "Thuyết minh tự động";
+|Frontend Web App|
+:Yêu cầu quyền truy cập Geolocation;
+|Du khách|
+:Nhấn "Cho phép" chia sẻ vị trí;
+|Frontend Web App|
+:navigator.geolocation.watchPosition();
+:Tải danh sách 7 POI qua /api/content/pois/guide (Single-Shot);
+while (Du khách tiếp tục di chuyển?) is (Đang di chuyển)
+  :Tiếp nhận tọa độ mới (Lat, Lng);
+  :Vẽ chấm xanh định vị trên bản đồ Leaflet;
+  :Lọc nhanh qua Bounding Box dLat/dLng;
+  :Tính khoảng cách Haversine tới từng POI;
+  if (d <= bán kính Geofence r?) then (Trong vùng)
+    if (POI đã tự động phát trong phiên (autoPlayedSetRef)?) then (Đã phát rồi)
+      :Bỏ qua, không phát lặp lại;
+    else (Chưa phát)
+      if (Đang trong cửa sổ dừng thủ công (manualStopGuardUntilRef)?) then (Còn trong 5 giây)
+        :Bỏ qua bảo vệ;
+      else (Hết bảo vệ)
+        :Thêm POI vào autoPlayedSetRef;
+        |API Gateway & Audio Service|
+        :Gửi GET /api/tts/audio/{poi_id}_{lang}.mp3 (Range: bytes=0-);
+        if (File MP3 sẵn sàng trên máy chủ?) then (Sẵn sàng)
+          :Truyền luồng phân đoạn HTTP 206 Partial Content;
+          |Frontend Web App|
+          :Bật thanh NearbyPlayerBar, phát âm thanh;
+          :Cuộn highlight phụ đề văn bản đồng bộ;
+        else (Lỗi tải / Offline)
+          :Rơi về tầng 2: Kích hoạt Web Speech API của trình duyệt;
+        endif
+      endif
+    endif
+  else (Ngoài vùng)
+    :Tiếp tục lắng nghe GPS;
+  endif
+endwhile (Kết thúc tham quan)
+
+if (Du khách bấm nút Tạm dừng trên audio bar?) then (Có)
+  :Dừng phát âm thanh ngay lập tức;
+  :Thiết lập manualStopGuardUntilRef = now + 5000ms;
+endif
+stop
+@enduml

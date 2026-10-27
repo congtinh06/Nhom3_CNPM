@@ -49,6 +49,18 @@ export interface PoiDetail extends PoiSummary {
   audioDurationSeconds?: number | null;
   audioStatus: AudioStatus | string;
   fallbackLanguage: boolean;
+  /** Giá mua lẻ gói ngoại ngữ cho POI này (null = dùng giá mặc định order-service). */
+  premiumPrice?: number | null;
+}
+
+/** Một phân đoạn (chap) bài thuyết minh của POI theo từng ngôn ngữ. */
+export interface PoiGuideChapter {
+  order: number;
+  title: string;
+  narrationText: string;
+  audioUrl?: string | null;
+  audioDurationSeconds?: number | null;
+  audioStatus?: string | null;
 }
 
 export interface PoiGuideTranslation {
@@ -61,6 +73,7 @@ export interface PoiGuideTranslation {
   audioDurationSeconds?: number | null;
   audioStatus?: string | null;
   source?: string | null;
+  chapters?: PoiGuideChapter[] | null;
 }
 
 export interface PoiGuide {
@@ -80,7 +93,22 @@ export interface PoiGuide {
   categoryNameVi?: string | null;
   routeId?: number | null;
   stopOrder?: number | null;
+  /** Giá mua lẻ gói ngoại ngữ cho POI này (null = dùng giá mặc định order-service). */
+  premiumPrice?: number | null;
   translations: Record<string, PoiGuideTranslation>;
+}
+
+/** Trạng thái gói của du khách: gói Premium toàn tài khoản + POI đã mua lẻ. */
+export interface PurchasedPoi {
+  poiId: number;
+  expiresAt: string;
+}
+
+export interface MeEntitlement {
+  plan: AuthPlan;
+  premiumActive: boolean;
+  premiumExpiresAt?: string | null;
+  purchasedPois: PurchasedPoi[];
 }
 
 export interface Route {
@@ -264,8 +292,9 @@ export interface BackendOrder {
   id: number;
   orderCode: string;
   userId?: number;
-  orderType?: 'PRODUCT' | 'PREMIUM';
+  orderType?: 'PRODUCT' | 'PREMIUM' | 'POI';
   premiumPackage?: string;
+  poiId?: number | null;
   totalAmount: number;
   status: BackendOrderStatus;
   receiverName: string;
@@ -375,6 +404,7 @@ export type QrLoginStatus =
   | 'PENDING'
   | 'SCANNED'
   | 'APPROVED'
+  | 'GUEST_APPROVED'
   | 'DENIED'
   | 'CONSUMED'
   | 'EXPIRED'

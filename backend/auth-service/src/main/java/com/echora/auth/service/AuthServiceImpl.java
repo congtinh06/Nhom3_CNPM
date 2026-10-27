@@ -6,16 +6,20 @@ import com.echora.auth.dto.CookieResult;
 import com.echora.auth.dto.EntitlementResponse;
 import com.echora.auth.dto.GoogleLoginRequest;
 import com.echora.auth.dto.LoginRequest;
+import com.echora.auth.dto.MeEntitlementResponse;
 import com.echora.auth.dto.MessageResponse;
+import com.echora.auth.dto.PoiGrantRequest;
 import com.echora.auth.dto.PremiumActivationRequest;
 import com.echora.auth.dto.RegisterRequest;
 import com.echora.auth.dto.ResetPasswordRequest;
 import com.echora.auth.dto.UserResponse;
+import com.echora.auth.dto.UserPoiEntitlementResponse;
 import com.echora.auth.dto.VerifyEmailRequest;
 import com.echora.auth.entity.EmailVerificationToken;
 import com.echora.auth.entity.PasswordResetToken;
 import com.echora.auth.entity.RefreshToken;
 import com.echora.auth.entity.User;
+import com.echora.auth.entity.UserPoiEntitlement;
 import com.echora.auth.entity.UserPlan;
 import com.echora.auth.entity.UserRole;
 import com.echora.auth.entity.UserStatus;
@@ -27,6 +31,7 @@ import com.echora.auth.exception.NotFoundException;
 import com.echora.auth.exception.UnauthorizedException;
 import com.echora.auth.repository.EmailVerificationTokenRepository;
 import com.echora.auth.repository.PasswordResetTokenRepository;
+import com.echora.auth.repository.UserPoiEntitlementRepository;
 import com.echora.auth.repository.UserRepository;
 import com.echora.auth.security.JwtService;
 import com.echora.auth.security.GoogleIdentity;
@@ -70,6 +75,7 @@ public class AuthServiceImpl implements AuthService {
             "Tài khoản đã bị khóa. Vui lòng liên hệ quản trị viên.";
 
     private final UserRepository userRepository;
+    private final UserPoiEntitlementRepository userPoiEntitlementRepository;
     private final EmailVerificationTokenRepository emailVerificationTokenRepository;
     private final PasswordResetTokenRepository passwordResetTokenRepository;
     private final PasswordEncoder passwordEncoder;
@@ -559,6 +565,78 @@ public class AuthServiceImpl implements AuthService {
 
         log.info("Da kich hoat Premium userId={} orderCode={} expiresAt={}", userId, orderCode, target);
         return EntitlementResponse.from(user);
+    }
+
+    // ------------------------------------------------------ POI ENTITLEMENT (MUA LẺ)
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<UserPoiEntitlementResponse> poiEntitlements(Long userId) {
+        return userPoiEntitlementRepository
+                .findByUserIdAndExpiresAtAfter(userId, LocalDateTime.now())
+                .stream()
+                .map(UserPoiEntitlementResponse::from)
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public boolean hasPoiEntitlement(Long userId, Long poiId) {
+        return userPoiEntitlementRepository
+                .existsByUserIdAndPoiIdAndExpiresAtAfter(userId, poiId, LocalDateTime.now());
+    }
+
+    @Override
+    @Transactional
+    public UserPoiEntitlementResponse grantPoiEntitlement(Long userId, Long poiId, PoiGrantRequest request) {
+        if (!userRepository.existsById(userId)) {
+            throw new NotFoundException("Không tìm thấy người dùng.");
+        }
+        if (poiId == null || poiId <= 0) {
+            throw new BadRequestException("POI không hợp lệ.");
+        }
+
+        String orderCode = request.getOrderCode().trim();
+        Optional<UserPoiEntitlement> existing =
+                userPoiEntitlementRepository.findByUserIdAndPoiId(userId, poiId);
+        if (existing.isPresent()
+                && orderCode.equals(existing.get().getSourceOrderCode())) {
+            // Idempotent: cùng đơn hàng gọi lại nhiều lần không phát sinh thêm quyền.
+            return UserPoiEntitlementResponse.from(existing.get());
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime requested = request.getExpiresAt();
+        LocalDateTime target = requested == null || !requested.isAfter(now)
+                ? now.plusYears(1)
+                : requested;
+        if (target.isAfter(now.plusYears(10))) {
+            target = now.plusYears(10);
+        }
+        if (existing.isPresent() && existing.get().getExpiresAt() != null
+                && existing.get().getExpiresAt().isAfter(target)) {
+            target = existing.get().getExpiresAt();
+        }
+
+        UserPoiEntitlement entitlement = existing.orElseGet(() -> UserPoiEntitlement.builder()
+                .userId(userId)
+                .poiId(poiId)
+                .build());
+        entitlement.setSourceOrderCode(orderCode);
+        entitlement.setExpiresAt(target);
+        userPoiEntitlementRepository.save(entitlement);
+
+        log.info("Da cap quyen POI userId={} poiId={} orderCode={} expiresAt={}",
+                userId, poiId, orderCode, target);
+        return UserPoiEntitlementResponse.from(entitlement);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public MeEntitlementResponse meEntitlement(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("Không tìm thấy người dùng."));
+        return MeEntitlementResponse.from(user, poiEntitlements(userId));
     }
 
     // -------------------------------------------------------------- INTERNALS

@@ -3,12 +3,16 @@ import { Trash2, Plus, Minus, ChevronDown, ChevronUp, Utensils } from 'lucide-re
 import { formatPrice } from '../../utils/formatters';
 import { useNavbarLanguage } from '../../content/languages';
 import { getSpotName } from '../../content/souvenirSpots';
+import { usePremium } from '../../context/PremiumContext';
+import { applySouvenirDiscount } from '../../utils/pricing';
+import { ProductCategory } from '../../types';
 
 export interface OrderSummaryItem {
   id: number;
   name: string;
   quantity: number;
   price: number;
+  category?: ProductCategory;
   imageUrl?: string;
   poiSlug?: string | null;
 }
@@ -16,6 +20,7 @@ export interface OrderSummaryItem {
 export interface OrderSummaryProps {
   items: OrderSummaryItem[];
   subtotal: number;
+  discountAmount?: number;
   shippingFee: number;
   total: number;
   totalCount: number;
@@ -29,6 +34,7 @@ const OTHER_GROUP = '__other__';
 export function OrderSummary({
   items,
   subtotal,
+  discountAmount = 0,
   shippingFee,
   total,
   totalCount,
@@ -37,9 +43,11 @@ export function OrderSummary({
   children,
 }: OrderSummaryProps) {
   const { lang, t } = useNavbarLanguage();
+  const { isPremium } = usePremium();
   const c = t.shop.checkoutPage;
   const [isOpen, setIsOpen] = useState(false);
   const isFreeShipping = shippingFee === 0;
+  const originalSubtotal = subtotal + discountAmount;
 
   const groups = useMemo(() => {
     const map = new Map<string, OrderSummaryItem[]>();
@@ -106,7 +114,10 @@ export function OrderSummary({
                     <div className="co-item-info">
                       <span className="co-item-name">{item.name}</span>
                       <span className="co-item-price">
-                        {formatPrice(item.price * item.quantity)}
+                        {formatPrice(
+                          applySouvenirDiscount(item.price, isPremium, item.category) *
+                            item.quantity
+                        )}
                       </span>
                     </div>
                   </div>
@@ -157,8 +168,14 @@ export function OrderSummary({
           </div>
           <div className="co-cost-line">
             <span>{c.subtotalLabel}</span>
-            <span>{formatPrice(subtotal)}</span>
+            <span>{formatPrice(originalSubtotal)}</span>
           </div>
+          {discountAmount > 0 && (
+            <div className="co-cost-line co-discount-line">
+              <span>Premium -10%</span>
+              <span>-{formatPrice(discountAmount)}</span>
+            </div>
+          )}
           <div className="co-cost-line">
             <span>{c.shippingFeeLabel}</span>
             {isFreeShipping ? (

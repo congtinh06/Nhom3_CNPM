@@ -5,12 +5,17 @@ import com.echora.auth.dto.CookieResult;
 import com.echora.auth.dto.EntitlementResponse;
 import com.echora.auth.dto.GoogleLoginRequest;
 import com.echora.auth.dto.LoginRequest;
+import com.echora.auth.dto.MeEntitlementResponse;
 import com.echora.auth.dto.MessageResponse;
 import com.echora.auth.dto.RegisterRequest;
 import com.echora.auth.dto.PremiumActivationRequest;
+import com.echora.auth.dto.PoiGrantRequest;
 import com.echora.auth.dto.ResetPasswordRequest;
 import com.echora.auth.dto.UserResponse;
+import com.echora.auth.dto.UserPoiEntitlementResponse;
 import com.echora.auth.dto.VerifyEmailRequest;
+
+import java.util.List;
 
 public interface AuthService {
 
@@ -41,5 +46,15 @@ public interface AuthService {
     EntitlementResponse entitlement(Long userId);
 
     EntitlementResponse activatePremium(Long userId, PremiumActivationRequest request);
+
+    // ------------------------------------------------------------------ POI MUA LẺ
+
+    List<UserPoiEntitlementResponse> poiEntitlements(Long userId);
+
+    boolean hasPoiEntitlement(Long userId, Long poiId);
+
+    UserPoiEntitlementResponse grantPoiEntitlement(Long userId, Long poiId, PoiGrantRequest request);
+
+    MeEntitlementResponse meEntitlement(Long userId);
 }
 

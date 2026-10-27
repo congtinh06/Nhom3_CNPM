@@ -148,6 +148,28 @@ export const createPremiumOrder = async (): Promise<BackendOrder> => {
   }
 };
 
+/**
+ * Mua gói ngoại ngữ Premium cho riêng một điểm thuyết minh (POI).
+ * paymentMethod: 'VNPAY' | 'VIETQR' (mặc định VIETQR).
+ */
+export const createPoiPremiumOrder = async (
+  poiId: number,
+  paymentMethod: 'VNPAY' | 'VIETQR' = 'VIETQR',
+): Promise<BackendOrder> => {
+  const idempotencyKey = `premium-poi-${poiId}-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+  try {
+    const response = await apiClient.post<BackendOrder>(
+      '/api/orders/poi',
+      { poiId, paymentMethod },
+      { headers: { 'Idempotency-Key': idempotencyKey } },
+    );
+    cacheOrder(response.data);
+    return response.data;
+  } catch (error) {
+    throw toOrderError(error, 'Không thể tạo thanh toán cho điểm thuyết minh. Vui lòng thử lại.');
+  }
+};
+
 export const getMyOrders = async (): Promise<BackendOrder[]> => {
   try {
     const response = await apiClient.get<BackendOrder[]>('/api/orders/my');

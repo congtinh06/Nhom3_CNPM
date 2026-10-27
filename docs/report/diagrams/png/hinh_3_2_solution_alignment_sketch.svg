@@ -15,7 +15,7 @@
 
   <!-- Title -->
   <text x="660" y="32" text-anchor="middle" font-size="17" font-weight="bold">HÌNH 3.2. SƠ ĐỒ PHÁC THẢO KIẾN TRÚC GIẢI PHÁP HỆ THỐNG (SOLUTION ALIGNMENT DIAGRAM)</text>
-  <text x="660" y="52" text-anchor="middle" font-size="12" font-style="italic" fill="#333333">Phác thảo Mô hình Giải pháp Tổng thể Kế thừa từ PRD: Web App, Xử lý Thanh toán Kép, Backend Microservices, AI RAG và Quản trị</text>
+  <text x="660" y="52" text-anchor="middle" font-size="12" font-style="italic" fill="#333333">Phác thảo Mô hình Giải pháp Tổng thể Kế thừa từ PRD: Web App, Xử lý Thanh toán Kép, Backend Microservices và Quản trị</text>
 
   <!-- 1. Left Box: Mobile Web App -->
   <rect x="40" y="240" width="300" height="420" fill="#ffffff" stroke="#000000" stroke-width="2"/>
@@ -29,7 +29,7 @@
   <text x="75" y="405" font-size="11">• Tự động phát thuyết minh qua GPS</text>
   <text x="75" y="435" font-size="11">• Bản đồ tương tác &amp; Chỉ đường tham quan</text>
   <text x="75" y="465" font-size="11">• Gợi ý lộ trình (Route recommendation)</text>
-  <text x="75" y="495" font-size="11">• Trợ lý ảo AI Chatbot giải đáp di sản (RAG)</text>
+  <text x="75" y="495" font-size="11">• Tự động dịch thuật và tổng hợp giọng đọc di sản</text>
   <text x="75" y="525" font-size="11">• Đa ngôn ngữ (15+ ngôn ngữ độc lập)</text>
   <text x="75" y="555" font-size="11">• Tải cache POI 1 lần (Client-side caching)</text>
   <text x="75" y="585" font-size="11">• Giỏ hàng quà lưu niệm &amp; Đặt hàng</text>
@@ -70,8 +70,8 @@
   <text x="530" y="413" text-anchor="middle" font-size="9.5">Quản lý POI, Tour, Giỏ hàng &amp; VNPAY</text>
 
   <rect x="680" y="380" width="220" height="42" fill="#fafafa" stroke="#000000" stroke-width="1"/>
-  <text x="790" y="398" text-anchor="middle" font-size="11" font-weight="bold">Chatbot &amp; Translation Service</text>
-  <text x="790" y="413" text-anchor="middle" font-size="9.5">Azure OpenAI RAG &amp; Edge-TTS Worker</text>
+  <text x="790" y="398" text-anchor="middle" font-size="11" font-weight="bold">Translation &amp; TTS Service</text>
+  <text x="790" y="413" text-anchor="middle" font-size="9.5">MyMemory Translation &amp; Edge-TTS Worker</text>
 
   <rect x="420" y="435" width="480" height="55" fill="#f5f5f5" stroke="#000000" stroke-width="1"/>
   <text x="660" y="455" text-anchor="middle" font-size="11" font-weight="bold">Điều phối Hàng đợi &amp; Xử lý Bất đồng bộ (RabbitMQ Broker)</text>
@@ -95,8 +95,8 @@
   <text x="530" y="686" text-anchor="middle" font-size="9.5">Mã ngắn Claim Code (TTL 15p), Session</text>
 
   <rect x="680" y="648" width="220" height="50" fill="#fcfcfc" stroke="#000000" stroke-width="1"/>
-  <text x="790" y="668" text-anchor="middle" font-size="10.5" font-weight="bold">Vector Store &amp; Audio Volume</text>
-  <text x="790" y="686" text-anchor="middle" font-size="9.5">Vector Embeddings RAG, File MP3</text>
+  <text x="790" y="668" text-anchor="middle" font-size="10.5" font-weight="bold">Audio Storage &amp; Shared Volume</text>
+  <text x="790" y="686" text-anchor="middle" font-size="9.5">Tệp MP3, Bản dịch đa ngữ</text>
 
   <!-- 5. Right Box: Admin Dashboard & Monitoring -->
   <rect x="980" y="240" width="300" height="420" fill="#ffffff" stroke="#000000" stroke-width="2"/>
@@ -142,6 +142,6 @@
   <!-- Future considerations banner -->
   <rect x="40" y="740" width="1240" height="90" fill="#f8f8f8" stroke="#000000" stroke-width="1.2"/>
   <text x="60" y="765" font-size="12" font-weight="bold">Định hướng Tối ưu hóa và Mở rộng Kỹ thuật (Future Technical Considerations từ PRD):</text>
-  <text x="60" y="790" font-size="11">1. Bộ nhớ đệm câu hỏi và phản hồi AI (Cache Q&amp;A): Lưu đệm các câu hỏi thường gặp về lịch sử di tích vào Redis để tăng tốc độ phản hồi Chatbot dưới 300ms.</text>
+  <text x="60" y="790" font-size="11">1. Bộ nhớ đệm Claim Code và phiên đăng nhập: Lưu mã nhận quyền ngắn hạn (TTL 15 phút) trong Redis để đổi quyền truy cập nhanh và chống dùng lại.</text>
   <text x="60" y="812" font-size="11">2. Giám sát thời gian thực (Real-time User Activity Tracking): Tích hợp nhật ký phân tích sự kiện du lịch (SCAN, PLAY) để theo dõi mật độ du khách và hỗ trợ điều phối thực địa.</text>
 </svg>

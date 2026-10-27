@@ -73,7 +73,7 @@ class AdminUserControllerTest {
     @Test
     @DisplayName("GET /api/auth/admin/users trả trang JSON")
     void listReturnsPage() throws Exception {
-        when(adminUserService.listUsers(eq("a@"), eq("USER"), eq("ACTIVE"), any()))
+        when(adminUserService.listUsers(eq("a@"), eq("USER"), eq("ACTIVE"), any(), any()))
                 .thenReturn(new PageImpl<>(List.of(sample(2L, "a@echora.local", "USER", "ACTIVE")),
                         PageRequest.of(0, 20), 1));
 

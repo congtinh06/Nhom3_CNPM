@@ -1,4 +1,5 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
+import { refreshSession } from './refresh';
 import {
   Category,
   Zone,
@@ -9,12 +10,12 @@ import {
   NearbyPoi,
   ResolvePoiResponse,
   CreateAnalyticsEventRequest,
-  AuthSession,
+  MeEntitlement,
   Product,
   ProductCategory,
   PageResponse,
 } from '../types';
-import { tokenStore, notifyLoggedOut } from './tokenStore';
+import { AuthScope, tokenStore, notifyLoggedOut } from './tokenStore';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 
@@ -38,25 +39,16 @@ const NO_REFRESH_PATHS = [
   '/api/auth/logout-all',
 ];
 
-let refreshPromise: Promise<string> | null = null;
-
-function refreshAccessToken(): Promise<string> {
-  if (!refreshPromise) {
-    refreshPromise = apiClient
-      .post<AuthSession>('/api/auth/refresh', {})
-      .then((response) => {
-        tokenStore.set(response.data.accessToken);
-        return response.data.accessToken;
-      })
-      .finally(() => {
-        refreshPromise = null;
-      });
-  }
-  return refreshPromise;
+function scopeFromConfig(config?: InternalAxiosRequestConfig): AuthScope {
+  if (!config) return 'user';
+  const header =
+    config.headers.get?.('X-Auth-Scope') ?? config.headers['X-Auth-Scope'];
+  return String(header ?? '').toLowerCase() === 'admin' ? 'admin' : 'user';
 }
 
 apiClient.interceptors.request.use((config) => {
-  const token = tokenStore.get();
+  const scope = scopeFromConfig(config);
+  const token = tokenStore.get(scope);
   if (token && !config.headers.has?.('Authorization')) {
     config.headers.set('Authorization', `Bearer ${token}`);
   }
@@ -70,24 +62,31 @@ apiClient.interceptors.response.use(
     const status = error.response?.status;
     const url = config?.url ?? '';
     const isSelfRefreshing = NO_REFRESH_PATHS.some((path) => url.includes(path));
+    const scope = scopeFromConfig(config);
 
-    if (status !== 401 || !config || config._retried || isSelfRefreshing || !tokenStore.get()) {
+    if (
+      status !== 401 ||
+      !config ||
+      config._retried ||
+      isSelfRefreshing ||
+      !tokenStore.get(scope)
+    ) {
       return Promise.reject(error);
     }
 
     config._retried = true;
 
     try {
-      const newToken = await refreshAccessToken();
+      const session = await refreshSession(scope);
       const headers = config.headers as unknown as {
         set?: (key: string, value: string) => void;
       };
       if (typeof headers?.set === 'function') {
-        headers.set('Authorization', `Bearer ${newToken}`);
+        headers.set('Authorization', `Bearer ${session.accessToken}`);
       }
       return apiClient.request(config);
     } catch {
-      notifyLoggedOut();
+      notifyLoggedOut(scope);
       return Promise.reject(error);
     }
   }
@@ -204,6 +203,11 @@ export const api = {
 
   recordAnalyticsEvent: async (event: CreateAnalyticsEventRequest): Promise<void> => {
     await apiClient.post<void>('/api/analytics/events', event);
+  },
+
+  getMeEntitlements: async (signal?: AbortSignal): Promise<MeEntitlement> => {
+    const response = await apiClient.get<MeEntitlement>('/api/auth/me/entitlements', { signal });
+    return response.data;
   },
 
   getProducts: async (

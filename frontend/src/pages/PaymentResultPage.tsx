@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { getOrderByCode, confirmMockPayment } from '../services/orderService';
 import { authApi } from '../api/auth';
+import { api } from '../api/client';
 import { usePremium } from '../context/PremiumContext';
 import { useNavbarLanguage } from '../content/languages';
 import { formatPrice } from '../utils/formatters';
@@ -83,7 +84,8 @@ export const PaymentResultPage: React.FC = () => {
     void loadOrder();
   }, [loadOrder]);
 
-  const isPremiumOrder = order?.orderType === 'PREMIUM';
+  const isPoiOrder = order?.orderType === 'POI';
+  const isPremiumOrder = order?.orderType === 'PREMIUM' || isPoiOrder;
 
   useEffect(() => {
     if (!isPremiumOrder || outcome !== 'pending' || orderPollExpired) return;
@@ -136,16 +138,33 @@ export const PaymentResultPage: React.FC = () => {
     const pollEntitlement = async () => {
       attempts += 1;
       try {
-        const me = await authApi.me();
-        if (cancelled) return;
-        if (me.plan === 'PREMIUM' && me.premiumActive) {
-          setEntitlementState('ready');
-          try {
-            await refreshEntitlement();
-          } catch {
-            // The account is already Premium; the token will refresh on the next request.
+        if (isPoiOrder && order?.poiId) {
+          if (api.getMeEntitlements) {
+            const ent = await api.getMeEntitlements();
+            if (cancelled) return;
+            const hasPoi = ent.purchasedPois?.some((p) => p.poiId === order.poiId);
+            if (hasPoi) {
+              setEntitlementState('ready');
+              try {
+                await refreshEntitlement();
+              } catch {
+                // Ignore
+              }
+              return;
+            }
           }
-          return;
+        } else {
+          const me = await authApi.me();
+          if (cancelled) return;
+          if (me.plan === 'PREMIUM' && me.premiumActive) {
+            setEntitlementState('ready');
+            try {
+              await refreshEntitlement();
+            } catch {
+              // The account is already Premium; the token will refresh on the next request.
+            }
+            return;
+          }
         }
       } catch {
         // The transaction may still be propagating through the entitlement API.
@@ -164,7 +183,7 @@ export const PaymentResultPage: React.FC = () => {
       cancelled = true;
       if (timer) window.clearTimeout(timer);
     };
-  }, [isPremiumOrder, outcome, refreshEntitlement]);
+  }, [isPremiumOrder, isPoiOrder, order?.poiId, outcome, refreshEntitlement]);
 
   const handleSimulatePayment = async (nextOutcome: 'SUCCESS' | 'FAILED') => {
     if (!orderCode) return;
@@ -208,12 +227,22 @@ export const PaymentResultPage: React.FC = () => {
                 <CheckCircle size={32} strokeWidth={2.2} />
               </div>
               <h1 className="result-title">
-                {entitlementReady
+                {isPoiOrder
+                  ? entitlementReady
+                    ? 'Mở khóa điểm thuyết minh thành công!'
+                    : 'Đã nhận thanh toán gói điểm'
+                  : entitlementReady
                   ? 'Nâng cấp Premium thành công!'
                   : 'Đã nhận thanh toán Premium'}
               </h1>
               <p className="result-subtitle">
-                {entitlementReady
+                {isPoiOrder
+                  ? entitlementReady
+                    ? `Tài khoản của bạn đã mở khóa thuyết minh tiếng Anh, Nhật và Hàn cho điểm: ${order?.note?.replace('Mo khoa thuyet minh ngoai ngu: ', '') || 'Điểm du lịch'}.`
+                    : entitlementTimedOut
+                    ? 'Giao dịch đã hoàn tất. Hệ thống đang cập nhật quyền cho điểm thuyết minh của bạn.'
+                    : 'Giao dịch đã thành công. Đang xác nhận quyền mở khóa điểm thuyết minh...'
+                  : entitlementReady
                   ? 'Tài khoản của bạn đã mở khóa thuyết minh tiếng Anh, Nhật và Hàn trên toàn bộ hành trình.'
                   : entitlementTimedOut
                   ? 'Giao dịch đã hoàn tất. Hệ thống đang cập nhật quyền Premium cho tài khoản của bạn.'
@@ -234,7 +263,9 @@ export const PaymentResultPage: React.FC = () => {
                   />
                   <span>
                     {entitlementTimedOut
-                      ? 'Quyền Premium chưa được cập nhật. Vui lòng tải lại trạng thái.'
+                      ? isPoiOrder
+                        ? 'Quyền nghe thuyết minh điểm chưa được cập nhật. Vui lòng tải lại trạng thái.'
+                        : 'Quyền Premium chưa được cập nhật. Vui lòng tải lại trạng thái.'
                       : 'Thường mất vài giây. Vui lòng không đóng trang.'}
                   </span>
                 </div>
@@ -257,7 +288,11 @@ export const PaymentResultPage: React.FC = () => {
                     </div>
                     <div className="info-row">
                       <span>Gói đã mua:</span>
-                      <span>Premium 3 ngôn ngữ (EN / JA / KO)</span>
+                      <span>
+                        {isPoiOrder
+                          ? (order.note?.replace('Mo khoa thuyet minh ngoai ngu: ', '') || `Gói điểm thuyết minh #${order.poiId}`)
+                          : 'Premium 3 ngôn ngữ (EN / JA / KO)'}
+                      </span>
                     </div>
                   </>
                 )}
@@ -268,9 +303,15 @@ export const PaymentResultPage: React.FC = () => {
                   <button
                     type="button"
                     className="result-primary-btn"
-                    onClick={() => navigate('/diem-du-lich')}
+                    onClick={() => {
+                      if (isPoiOrder && order?.poiId) {
+                        navigate(`/diem-du-lich?poi=${order.poiId}`);
+                      } else {
+                        navigate('/diem-du-lich');
+                      }
+                    }}
                   >
-                    <span>Khám phá nội dung Premium</span>
+                    <span>{isPoiOrder ? 'Nghe thuyết minh điểm này ngay' : 'Khám phá nội dung Premium'}</span>
                     <ArrowRight size={15} strokeWidth={2} aria-hidden="true" />
                   </button>
                 ) : entitlementTimedOut ? (
@@ -285,7 +326,7 @@ export const PaymentResultPage: React.FC = () => {
                 ) : (
                   <button type="button" className="result-primary-btn" disabled>
                     <RefreshCw size={15} strokeWidth={2} className="spin-icon" aria-hidden="true" />
-                    <span>Đang cập nhật Premium...</span>
+                    <span>{isPoiOrder ? 'Đang cập nhật quyền điểm...' : 'Đang cập nhật Premium...'}</span>
                   </button>
                 )}
 
@@ -313,6 +354,8 @@ export const PaymentResultPage: React.FC = () => {
               <p className="result-subtitle">
                 {outcome === 'cancelled'
                   ? 'Giao dịch VNPAY đã bị hủy. Bạn chưa bị trừ phí và tài khoản vẫn giữ gói hiện tại.'
+                  : isPoiOrder
+                  ? 'Giao dịch VNPAY chưa hoàn tất. Bạn có thể thử thanh toán lại để mở khóa điểm thuyết minh.'
                   : 'Giao dịch VNPAY chưa hoàn tất. Bạn có thể thử thanh toán lại để mở khóa Premium.'}
               </p>
 

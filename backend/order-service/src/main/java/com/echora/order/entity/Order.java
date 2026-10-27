@@ -37,11 +37,19 @@ public class Order {
     @Column(name = "premium_package", length = 40)
     private String premiumPackage;
 
+    // POI mua lẻ (order_type = 'POI'): mở khóa thuyết minh ngoại ngữ cho một điểm.
+    @Column(name = "poi_id")
+    private Long poiId;
+
     @Column(name = "subtotal", nullable = false, precision = 12, scale = 0)
     private BigDecimal subtotal;
 
     @Column(name = "shipping_fee", nullable = false, precision = 12, scale = 0)
     private BigDecimal shippingFee;
+
+    @Column(name = "discount_amount", nullable = false, precision = 12, scale = 0)
+    @Builder.Default
+    private BigDecimal discountAmount = BigDecimal.ZERO;
 
     @Column(name = "total_amount", nullable = false, precision = 12, scale = 0)
     private BigDecimal totalAmount;

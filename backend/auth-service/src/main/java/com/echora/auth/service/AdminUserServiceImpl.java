@@ -5,6 +5,7 @@ import com.echora.auth.entity.RefreshToken;
 import com.echora.auth.entity.User;
 import com.echora.auth.entity.UserRole;
 import com.echora.auth.entity.UserStatus;
+import com.echora.auth.entity.UserPlan;
 import com.echora.auth.exception.BadRequestException;
 import com.echora.auth.exception.ForbiddenException;
 import com.echora.auth.exception.NotFoundException;
@@ -23,6 +24,23 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
+/**
+ * ============================================================================
+ * TRIỂN KHAI DỊCH VỤ QUẢN TRỊ NGƯỜI DÙNG (Admin User Service Implementation)
+ * ============================================================================
+ * 
+ * Mục đích:
+ * - Thực thi các nghiệp vụ quản lý người dùng: tra cứu phân trang, đổi vai trò, đổi trạng thái và nâng cấp gói.
+ * - Cưỡng chế các ràng buộc an toàn nghiệp vụ (không tự khóa chính mình, không khóa admin cuối cùng).
+ * 
+ * Các thay đổi cốt lõi (Core Changes):
+ * 1. [listUsers]: Bổ sung vị từ `cb.equal(root.get("plan"), planFilter)` để lọc người dùng theo gói FREE / PREMIUM.
+ * 2. [changePlan]: Xử lý cập nhật gói người dùng trực tiếp bởi Admin:
+ *    - Gói PREMIUM: Tính thời điểm hết hạn `now.plusDays(durationDays)` (mặc định 365 ngày), đánh dấu nguồn `ADMIN_MANUAL_{actorId}`.
+ *    - Gói FREE: Xóa thời hạn hết hạn và mã đơn nguồn.
+ *    - Ghi nhận lịch sử thay đổi vào bảng audit log qua `adminAuditService.record(...)`.
+ * ============================================================================
+ */
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -37,15 +55,19 @@ public class AdminUserServiceImpl implements AdminUserService {
     static final String INVALID_STATUS_MESSAGE =
             "Trạng thái không hợp lệ. Chỉ chấp nhận PENDING, ACTIVE hoặc BLOCKED.";
 
+    static final String INVALID_PLAN_MESSAGE =
+            "Gói tài khoản không hợp lệ. Chỉ chấp nhận FREE hoặc PREMIUM.";
+
     private final UserRepository userRepository;
     private final RefreshTokenService refreshTokenService;
     private final AdminAuditService adminAuditService;
 
     @Override
     @Transactional(readOnly = true)
-    public Page<AdminUserResponse> listUsers(String search, String role, String status, Pageable pageable) {
+    public Page<AdminUserResponse> listUsers(String search, String role, String status, String plan, Pageable pageable) {
         UserRole roleFilter = parseRole(role, true);
         UserStatus statusFilter = parseStatus(status, true);
+        UserPlan planFilter = parsePlan(plan, true);
         String normalizedSearch = search == null || search.isBlank() ? null : search.trim().toLowerCase(Locale.ROOT);
 
         Specification<User> spec = (root, query, cb) -> {
@@ -61,6 +83,9 @@ public class AdminUserServiceImpl implements AdminUserService {
             }
             if (statusFilter != null) {
                 predicates.add(cb.equal(root.get("status"), statusFilter));
+            }
+            if (planFilter != null) {
+                predicates.add(cb.equal(root.get("plan"), planFilter));
             }
             return cb.and(predicates.toArray(new Predicate[0]));
         };
@@ -143,6 +168,33 @@ public class AdminUserServiceImpl implements AdminUserService {
         return AdminUserResponse.from(target);
     }
 
+    @Override
+    @Transactional
+    public AdminUserResponse changePlan(Long actorId, Long targetId, String plan, Integer durationDays) {
+        UserPlan newPlan = parsePlan(plan, false);
+        User target = findUser(targetId);
+        UserPlan oldPlan = target.getPlan();
+
+        LocalDateTime now = LocalDateTime.now();
+        if (newPlan == UserPlan.PREMIUM) {
+            int days = durationDays != null && durationDays > 0 ? durationDays : 365;
+            LocalDateTime expiresAt = now.plusDays(days);
+            target.setPlan(UserPlan.PREMIUM);
+            target.setPremiumExpiresAt(expiresAt);
+            target.setPremiumSourceOrderCode("ADMIN_MANUAL_" + (actorId != null ? actorId : "SYSTEM"));
+        } else {
+            target.setPlan(UserPlan.FREE);
+            target.setPremiumExpiresAt(null);
+            target.setPremiumSourceOrderCode(null);
+        }
+        target.setUpdatedAt(now);
+        userRepository.save(target);
+        adminAuditService.record(actorId, targetId, "plan", oldPlan.name(), newPlan.name());
+
+        log.info("ADMIN actorId={} đổi gói userId={} từ {} sang {}", actorId, targetId, oldPlan, newPlan);
+        return AdminUserResponse.from(target);
+    }
+
     private User findUser(Long id) {
         if (id == null) {
             throw new NotFoundException("Không tìm thấy người dùng.");
@@ -187,6 +239,20 @@ public class AdminUserServiceImpl implements AdminUserService {
             return UserStatus.valueOf(raw.trim().toUpperCase(Locale.ROOT));
         } catch (IllegalArgumentException ex) {
             throw new BadRequestException(INVALID_STATUS_MESSAGE);
+        }
+    }
+
+    private UserPlan parsePlan(String raw, boolean blankAsNull) {
+        if (raw == null || raw.isBlank()) {
+            if (blankAsNull) {
+                return null;
+            }
+            throw new BadRequestException(INVALID_PLAN_MESSAGE);
+        }
+        try {
+            return UserPlan.valueOf(raw.trim().toUpperCase(Locale.ROOT));
+        } catch (IllegalArgumentException ex) {
+            throw new BadRequestException(INVALID_PLAN_MESSAGE);
         }
     }
 }

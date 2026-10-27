@@ -1,8 +1,25 @@
+/**
+ * ============================================================================
+ * QUẢN TRỊ VIÊN: QUẢN LÝ DANH SÁCH NGƯỜI DÙNG (Admin User Management)
+ * ============================================================================
+ * 
+ * Mục đích module:
+ * - Quản lý, tra cứu và hiển thị toàn bộ người dùng trong hệ thống Echora.
+ * - Cho phép kiểm tra nhanh tài khoản nào đã được nâng cấp lên gói Premium.
+ * 
+ * Các thay đổi cốt lõi (Core Changes):
+ * 1. [planFilter]: Bổ sung bộ lọc gói tài khoản (Tất cả / Premium / Free) trên thanh công cụ.
+ * 2. [Cột Gói tài khoản]: Bổ sung cột hiển thị huy hiệu Premium/Free kèm ngày hết hạn gói.
+ * 3. [userApi.listUsers]: Truyền tham số `plan` xuống backend `auth-service` để lọc chính xác.
+ * 4. [Điều hướng]: Hỗ trợ click vào người dùng để mở trang chi tiết và nâng cấp trực tiếp gói.
+ * ============================================================================
+ */
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { userApi } from '../api/userApi';
 import { normalizeAdminError } from '../api/adminClient';
-import { AdminUser, USER_ROLE_LABELS, UserRoleValue, UserStatusValue } from '../types/user';
+import { AdminUser, USER_ROLE_LABELS, UserPlanValue, UserRoleValue, UserStatusValue } from '../types/user';
 import { DataTable, Column } from '../components/DataTable';
 import { StatusBadge } from '../components/StatusBadge';
 import { EmptyState } from '../components/EmptyState';
@@ -32,6 +49,7 @@ export const UserListPage: React.FC = () => {
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState<'' | UserRoleValue>('');
   const [statusFilter, setStatusFilter] = useState<'' | UserStatusValue>('');
+  const [planFilter, setPlanFilter] = useState<'' | UserPlanValue>('');
   const [page, setPage] = useState(0);
 
   useEffect(() => {
@@ -52,6 +70,7 @@ export const UserListPage: React.FC = () => {
         search: search || undefined,
         role: roleFilter || undefined,
         status: statusFilter || undefined,
+        plan: planFilter || undefined,
       });
       setRows(result?.content || []);
       setTotalElements(result?.totalElements ?? 0);
@@ -61,19 +80,20 @@ export const UserListPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [page, search, roleFilter, statusFilter]);
+  }, [page, search, roleFilter, statusFilter, planFilter]);
 
   useEffect(() => {
     fetchList();
   }, [fetchList]);
 
-  const hasActiveFilters = Boolean(searchInput.trim() || roleFilter || statusFilter);
+  const hasActiveFilters = Boolean(searchInput.trim() || roleFilter || statusFilter || planFilter);
 
   const handleClearFilters = () => {
     setSearchInput('');
     setSearch('');
     setRoleFilter('');
     setStatusFilter('');
+    setPlanFilter('');
     setPage(0);
   };
 
@@ -91,9 +111,32 @@ export const UserListPage: React.FC = () => {
       ),
     },
     {
+      key: 'plan',
+      title: 'Gói tài khoản',
+      width: '145px',
+      render: (user) => {
+        const isPremium = user.plan === 'PREMIUM' && user.premiumActive !== false;
+        return (
+          <div className="adm-plan-cell">
+            <StatusBadge variant={isPremium ? 'neutral' : 'muted'}>
+              {isPremium ? 'Premium' : 'Free'}
+            </StatusBadge>
+            {user.premiumExpiresAt && (
+              <span
+                className="adm-date-text"
+                style={{ display: 'block', fontSize: '11px', color: '#6b7280', marginTop: '2px' }}
+              >
+                Hạn: {formatDate(user.premiumExpiresAt)}
+              </span>
+            )}
+          </div>
+        );
+      },
+    },
+    {
       key: 'role',
       title: 'Vai trò',
-      width: '140px',
+      width: '130px',
       render: (user) => (
         <StatusBadge variant={user.role === 'ADMIN' ? 'neutral' : 'muted'}>
           {USER_ROLE_LABELS[user.role]}
@@ -206,6 +249,20 @@ export const UserListPage: React.FC = () => {
           <option value="ACTIVE">Hoạt động</option>
           <option value="PENDING">Chờ xác thực</option>
           <option value="BLOCKED">Đã khóa</option>
+        </select>
+
+        <select
+          className="adm-select"
+          value={planFilter}
+          onChange={(e) => {
+            setPlanFilter(e.target.value as '' | UserPlanValue);
+            setPage(0);
+          }}
+          aria-label="Lọc theo gói tài khoản"
+        >
+          <option value="">Tất cả gói</option>
+          <option value="PREMIUM">Gói Premium</option>
+          <option value="FREE">Gói Miễn phí (Free)</option>
         </select>
 
         {hasActiveFilters && (

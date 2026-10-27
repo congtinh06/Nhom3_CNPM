@@ -1,14 +1,19 @@
 import React, { FormEvent, useEffect, useRef, useState } from 'react';
+import { Eye, ScanLine } from 'lucide-react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { normalizeApiError } from '../../api/errors';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { useNavbarLanguage } from '../../content/languages';
+import { useGuestMode } from '../../lib/guestMode';
 import { GoogleSignInButton } from './GoogleSignInButton';
 import { PasswordField } from './PasswordField';
 import { QrLoginPanel } from './QrLoginPanel';
 
 interface LoginFormProps {
   onSuccess: () => void;
+  /** Được gọi khi điện thoại quét mã ở chế độ Khách (đóng modal, giữ guest). */
+  onGuestSuccess?: () => void;
   onSwitchToRegister: () => void;
   onSwitchToForgot: () => void;
   autoFocusEmail?: boolean;
@@ -16,6 +21,7 @@ interface LoginFormProps {
 
 export const LoginForm: React.FC<LoginFormProps> = ({
   onSuccess,
+  onGuestSuccess,
   onSwitchToRegister,
   onSwitchToForgot,
   autoFocusEmail = true,
@@ -23,6 +29,9 @@ export const LoginForm: React.FC<LoginFormProps> = ({
   const { login } = useAuth();
   const { showToast } = useToast();
   const { t } = useNavbarLanguage();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const guestMode = useGuestMode();
 
   const [mode, setMode] = useState<'password' | 'qr'>('password');
   const [email, setEmail] = useState('');
@@ -197,6 +206,19 @@ export const LoginForm: React.FC<LoginFormProps> = ({
               {t.auth.createAccount}
             </button>
           </p>
+
+          {onGuestSuccess && !guestMode && (
+            <div className="auth-guest-alt">
+              <button
+                type="button"
+                className="af-guest-link"
+                onClick={onGuestSuccess}
+              >
+                <Eye size={14} strokeWidth={1.8} aria-hidden="true" />
+                <span>{t.auth.guestContinue}</span>
+              </button>
+            </div>
+          )}
         </div>
       ) : (
         <div
@@ -206,7 +228,31 @@ export const LoginForm: React.FC<LoginFormProps> = ({
           className="auth-qr-tab-panel"
         >
           <p className="auth-modal-intro auth-qr-tab-intro">{t.auth.qrSubtitle}</p>
-          <QrLoginPanel onSuccess={onSuccess} compact />
+          <button
+            type="button"
+            className="tb auth-qr-mobile-scan"
+            onClick={() => {
+              // Trên điện thoại: quét mã QR hiển thị trên máy tính để đăng nhập.
+              const state = location.state as { backgroundLocation?: { pathname: string } } | null;
+              navigate('/quet-qr-dang-nhap', {
+                state: { backgroundLocation: state?.backgroundLocation ?? { pathname: '/' } },
+              });
+            }}
+          >
+            <ScanLine size={15} strokeWidth={1.75} aria-hidden="true" />
+            {t.auth.qrScanDeviceButton}
+          </button>
+          <QrLoginPanel onSuccess={onSuccess} onGuestSuccess={onGuestSuccess} compact />
+          {onGuestSuccess && !guestMode && (
+            <button
+              type="button"
+              className="tb auth-guest-quick-btn"
+              onClick={onGuestSuccess}
+            >
+              <Eye size={15} strokeWidth={1.8} aria-hidden="true" />
+              <span>{t.auth.guestContinue}</span>
+            </button>
+          )}
         </div>
       )}
     </div>

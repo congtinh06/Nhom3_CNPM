@@ -1,3 +1,19 @@
+/**
+ * ============================================================================
+ * QUẢN TRỊ VIÊN: QUẢN LÝ DANH SÁCH ĐƠN HÀNG (Admin Order Management)
+ * ============================================================================
+ * 
+ * Mục đích module:
+ * - Theo dõi, lọc và tra cứu toàn bộ đơn hàng trong hệ thống (gói Premium, mua lẻ POI, mua quà lưu niệm).
+ * - Kiểm tra trạng thái thanh toán (PAID, PENDING, FAILED) và trạng thái đơn hàng (COMPLETED, PROCESSING...).
+ * 
+ * Các thay đổi cốt lõi (Core Changes):
+ * 1. [Phân loại đơn hàng]: Hỗ trợ loại đơn `POI` (Mở khóa điểm lẻ) bên cạnh `PREMIUM` (Nâng cấp tài khoản) và `SOUVENIR`.
+ * 2. [Bộ lọc loại đơn]: Bổ sung tùy chọn lọc đơn hàng `Mở khóa điểm (POI)` trong dropdown lọc.
+ * 3. [Liên kết người dùng & đơn hàng]: Cho phép Admin đối soát nhanh đơn hàng kích hoạt Premium của người dùng.
+ * ============================================================================
+ */
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { orderAdminApi } from '../api/orderApi';
@@ -238,6 +254,7 @@ export const OrderListPage: React.FC = () => {
           <option value="">Tất cả loại đơn</option>
           <option value="PRODUCT">Quà lưu niệm</option>
           <option value="PREMIUM">Gói Premium</option>
+          <option value="POI">Mở khóa điểm (POI)</option>
         </select>
 
         <select

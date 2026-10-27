@@ -1,7 +1,9 @@
 import React, { useEffect, useRef, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { X } from 'lucide-react';
+import { Eye, X } from 'lucide-react';
 import { useNavbarLanguage } from '../../content/languages';
+import { useToast } from '../../context/ToastContext';
+import { enterGuestMode, useGuestMode } from '../../lib/guestMode';
 import { LoginForm } from './LoginForm';
 import { RegisterForm } from './RegisterForm';
 import { ForgotPasswordForm } from './ForgotPasswordForm';
@@ -20,6 +22,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const location = useLocation();
   const navigate = useNavigate();
   const { t } = useNavbarLanguage();
+  const { showToast } = useToast();
+  const guestMode = useGuestMode();
 
   const overlayRef = useRef<HTMLDivElement>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -75,6 +79,21 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       navigate('/', { replace: true });
     }
   }, [returnTarget, hasBackground, isStandalone, navigate]);
+
+  // Guest QR handler: điện thoại quét ở chế độ khách -> đánh dấu đang dùng thử
+  // với tư cách Khách, đóng modal, giữ guest (KHÔNG set token nào).
+  const handleGuestSuccess = useCallback(() => {
+    enterGuestMode();
+    showToast(t.auth.qrGuestTransferred);
+    handleLoginSuccess();
+  }, [showToast, t.auth.qrGuestTransferred, handleLoginSuccess]);
+
+  // "Tiếp tục với tư cách Khách": chọn chế độ Khách từ modal đăng nhập.
+  const handleContinueAsGuest = useCallback(() => {
+    enterGuestMode();
+    showToast(t.auth.qrGuestTransferred);
+    handleClose();
+  }, [showToast, t.auth.qrGuestTransferred, handleClose]);
 
   // Switch views
   const handleSwitchToLogin = useCallback(() => {
@@ -189,27 +208,49 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           <X size={18} strokeWidth={1.75} aria-hidden="true" />
         </button>
 
-        {currentView === 'login' && (
-          <LoginForm
-            onSuccess={handleLoginSuccess}
-            onSwitchToRegister={handleSwitchToRegister}
-            onSwitchToForgot={handleSwitchToForgot}
-          />
-        )}
+        <div className="auth-modal-body">
+          {guestMode && (
+            <aside className="auth-guest-banner" role="note" aria-label={t.auth.guestBannerTitle}>
+              <span className="auth-guest-banner-icon" aria-hidden="true">
+                <Eye size={18} strokeWidth={1.8} />
+              </span>
+              <div className="auth-guest-banner-copy">
+                <strong>{t.auth.guestBannerTitle}</strong>
+                <p>{t.auth.guestBannerNote}</p>
+              </div>
+              <button
+                type="button"
+                className="auth-guest-banner-continue"
+                onClick={handleContinueAsGuest}
+              >
+                {t.auth.guestContinue}
+              </button>
+            </aside>
+          )}
 
-        {currentView === 'register' && (
-          <RegisterForm
-            onClose={handleClose}
-            onSwitchToLogin={handleSwitchToLogin}
-          />
-        )}
+          {currentView === 'login' && (
+            <LoginForm
+              onSuccess={handleLoginSuccess}
+              onGuestSuccess={handleGuestSuccess}
+              onSwitchToRegister={handleSwitchToRegister}
+              onSwitchToForgot={handleSwitchToForgot}
+            />
+          )}
 
-        {currentView === 'forgot' && (
-          <ForgotPasswordForm
-            onClose={handleClose}
-            onSwitchToLogin={handleSwitchToLogin}
-          />
-        )}
+          {currentView === 'register' && (
+            <RegisterForm
+              onClose={handleClose}
+              onSwitchToLogin={handleSwitchToLogin}
+            />
+          )}
+
+          {currentView === 'forgot' && (
+            <ForgotPasswordForm
+              onClose={handleClose}
+              onSwitchToLogin={handleSwitchToLogin}
+            />
+          )}
+        </div>
       </div>
     </div>
   );

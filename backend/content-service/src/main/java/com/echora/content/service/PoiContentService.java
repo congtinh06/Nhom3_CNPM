@@ -7,6 +7,7 @@ import com.echora.content.dto.PoiBoundingBoxDto;
 import com.echora.content.dto.PoiDetailDto;
 import com.echora.content.dto.PoiGuideDto;
 import com.echora.content.dto.PoiInternalQrDto;
+import com.echora.content.dto.PoiPremiumPriceDto;
 import com.echora.content.dto.PoiPublishStatusDto;
 import com.echora.content.dto.PoiSummaryDto;
 import com.echora.content.dto.UpdatePoiRequest;
@@ -14,13 +15,19 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 import java.math.BigDecimal;
+import java.util.Collection;
 import java.util.List;
 
 public interface PoiContentService {
 
     List<PoiSummaryDto> getPois(Long zoneId);
 
-    List<PoiGuideDto> getPoiGuides(Long zoneId, boolean includePremiumTranslations);
+    /**
+     * @param purchasedPoiIds các POI user đã mua lẻ (null/rỗng = không có mua lẻ).
+     *                        Khi includePremiumTranslations = false, chỉ thêm bản dịch
+     *                        ngoại ngữ của các POI trong danh sách này.
+     */
+    List<PoiGuideDto> getPoiGuides(Long zoneId, boolean includePremiumTranslations, Collection<Long> purchasedPoiIds);
 
     Page<AdminPoiListItemDto> getAdminPois(
             Long zoneId, Long routeId, String status, String search, String audioStatus,
@@ -45,4 +52,9 @@ public interface PoiContentService {
     List<PoiPublishStatusDto> getPublishStatuses(String status);
 
     PoiPublishStatusDto republish(Long poiId);
+
+    /**
+     * Endpoint nội bộ cho order-service: giá mua lẻ Premium của 1 POI.
+     */
+    PoiPremiumPriceDto getInternalPoiPremiumPrice(Long poiId);
 }

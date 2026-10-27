@@ -61,7 +61,7 @@ const diagram3_2_solution_alignment_svg = `
   ${commonDefs}
   <!-- Title -->
   <text x="660" y="32" text-anchor="middle" font-size="17" font-weight="bold">HÌNH 3.2. SƠ ĐỒ PHÁC THẢO KIẾN TRÚC GIẢI PHÁP HỆ THỐNG (SOLUTION ALIGNMENT DIAGRAM)</text>
-  <text x="660" y="52" text-anchor="middle" font-size="12" font-style="italic" fill="#333333">Phác thảo Mô hình Giải pháp Tổng thể Kế thừa từ PRD: Web App, Xử lý Thanh toán Kép, Backend Microservices, AI RAG và Quản trị</text>
+  <text x="660" y="52" text-anchor="middle" font-size="12" font-style="italic" fill="#333333">Phác thảo Mô hình Giải pháp Tổng thể Kế thừa từ PRD: Web App, Xử lý Thanh toán Kép, Backend Microservices và Quản trị</text>
 
   <!-- 1. Left Box: Mobile Web App -->
   <rect x="40" y="240" width="300" height="420" fill="#ffffff" stroke="#000000" stroke-width="2"/>
@@ -75,7 +75,7 @@ const diagram3_2_solution_alignment_svg = `
   <text x="75" y="405" font-size="11">• Tự động phát thuyết minh qua GPS</text>
   <text x="75" y="435" font-size="11">• Bản đồ tương tác &amp; Chỉ đường tham quan</text>
   <text x="75" y="465" font-size="11">• Gợi ý lộ trình (Route recommendation)</text>
-  <text x="75" y="495" font-size="11">• Trợ lý ảo AI Chatbot giải đáp di sản (RAG)</text>
+  <text x="75" y="495" font-size="11">• Tự động dịch thuật và tổng hợp giọng đọc di sản</text>
   <text x="75" y="525" font-size="11">• Đa ngôn ngữ (15+ ngôn ngữ độc lập)</text>
   <text x="75" y="555" font-size="11">• Tải cache POI 1 lần (Client-side caching)</text>
   <text x="75" y="585" font-size="11">• Giỏ hàng quà lưu niệm &amp; Đặt hàng</text>
@@ -116,8 +116,8 @@ const diagram3_2_solution_alignment_svg = `
   <text x="530" y="413" text-anchor="middle" font-size="9.5">Quản lý POI, Tour, Giỏ hàng &amp; VNPAY</text>
 
   <rect x="680" y="380" width="220" height="42" fill="#fafafa" stroke="#000000" stroke-width="1"/>
-  <text x="790" y="398" text-anchor="middle" font-size="11" font-weight="bold">Chatbot &amp; Translation Service</text>
-  <text x="790" y="413" text-anchor="middle" font-size="9.5">Azure OpenAI RAG &amp; Edge-TTS Worker</text>
+  <text x="790" y="398" text-anchor="middle" font-size="11" font-weight="bold">Translation &amp; TTS Service</text>
+  <text x="790" y="413" text-anchor="middle" font-size="9.5">MyMemory Translation &amp; Edge-TTS Worker</text>
 
   <rect x="420" y="435" width="480" height="55" fill="#f5f5f5" stroke="#000000" stroke-width="1"/>
   <text x="660" y="455" text-anchor="middle" font-size="11" font-weight="bold">Điều phối Hàng đợi &amp; Xử lý Bất đồng bộ (RabbitMQ Broker)</text>
@@ -141,8 +141,8 @@ const diagram3_2_solution_alignment_svg = `
   <text x="530" y="686" text-anchor="middle" font-size="9.5">Mã ngắn Claim Code (TTL 15p), Session</text>
 
   <rect x="680" y="648" width="220" height="50" fill="#fcfcfc" stroke="#000000" stroke-width="1"/>
-  <text x="790" y="668" text-anchor="middle" font-size="10.5" font-weight="bold">Vector Store &amp; Audio Volume</text>
-  <text x="790" y="686" text-anchor="middle" font-size="9.5">Vector Embeddings RAG, File MP3</text>
+  <text x="790" y="668" text-anchor="middle" font-size="10.5" font-weight="bold">Audio Storage &amp; Shared Volume</text>
+  <text x="790" y="686" text-anchor="middle" font-size="9.5">Tệp MP3, Bản dịch đa ngữ</text>
 
   <!-- 5. Right Box: Admin Dashboard & Monitoring -->
   <rect x="980" y="240" width="300" height="420" fill="#ffffff" stroke="#000000" stroke-width="2"/>
@@ -188,7 +188,7 @@ const diagram3_2_solution_alignment_svg = `
   <!-- Future considerations banner -->
   <rect x="40" y="740" width="1240" height="90" fill="#f8f8f8" stroke="#000000" stroke-width="1.2"/>
   <text x="60" y="765" font-size="12" font-weight="bold">Định hướng Tối ưu hóa và Mở rộng Kỹ thuật (Future Technical Considerations từ PRD):</text>
-  <text x="60" y="790" font-size="11">1. Bộ nhớ đệm câu hỏi và phản hồi AI (Cache Q&amp;A): Lưu đệm các câu hỏi thường gặp về lịch sử di tích vào Redis để tăng tốc độ phản hồi Chatbot dưới 300ms.</text>
+  <text x="60" y="790" font-size="11">1. Bộ nhớ đệm Claim Code và phiên đăng nhập: Lưu mã nhận quyền ngắn hạn (TTL 15 phút) trong Redis để đổi quyền truy cập nhanh và chống dùng lại.</text>
   <text x="60" y="812" font-size="11">2. Giám sát thời gian thực (Real-time User Activity Tracking): Tích hợp nhật ký phân tích sự kiện du lịch (SCAN, PLAY) để theo dõi mật độ du khách và hỗ trợ điều phối thực địa.</text>
 </svg>
 `;
@@ -280,10 +280,10 @@ const diagram3_8_operational_flow_svg = `
   <text x="180" y="542" text-anchor="middle" font-size="9" fill="#444444">(Client NEVER refetches)</text>
 
   <rect x="90" y="620" width="180" height="120" fill="#ffffff" stroke="#000000" stroke-width="1"/>
-  <text x="180" y="645" text-anchor="middle" font-size="11" font-weight="bold">Đặt câu hỏi Trợ lý AI</text>
-  <text x="180" y="665" text-anchor="middle" font-size="9.5">Hỏi thắc mắc lịch sử, di tích</text>
-  <text x="180" y="695" text-anchor="middle" font-size="10" font-weight="bold" fill="#000000">&larr; Nhận câu trả lời &amp; ảnh</text>
-  <text x="180" y="715" text-anchor="middle" font-size="9" fill="#444444">Giải đáp thông minh tức thì</text>
+  <text x="180" y="645" text-anchor="middle" font-size="11" font-weight="bold">Yêu cầu thuyết minh đa ngữ</text>
+  <text x="180" y="665" text-anchor="middle" font-size="9.5">Chọn ngôn ngữ en, ja, ko</text>
+  <text x="180" y="695" text-anchor="middle" font-size="10" font-weight="bold" fill="#000000">&larr; Nhận bản dịch &amp; audio</text>
+  <text x="180" y="715" text-anchor="middle" font-size="9" fill="#444444">Phục vụ tức thì</text>
 
   <!-- Column 2: Backend -->
   <rect x="370" y="410" width="250" height="410" fill="#fafafa" stroke="#000000" stroke-width="1.5"/>
@@ -296,28 +296,28 @@ const diagram3_8_operational_flow_svg = `
   <text x="495" y="542" text-anchor="middle" font-size="9.5">Tuyến đường &amp; Lộ trình tham quan</text>
 
   <rect x="390" y="620" width="210" height="120" fill="#ffffff" stroke="#000000" stroke-width="1"/>
-  <text x="495" y="645" text-anchor="middle" font-size="11" font-weight="bold">Chatbot Service</text>
-  <text x="495" y="665" text-anchor="middle" font-size="9.5">Xử lý ngôn ngữ tự nhiên</text>
-  <text x="495" y="685" text-anchor="middle" font-size="9.5">Điều phối truy vấn RAG</text>
-  <text x="495" y="715" text-anchor="middle" font-size="9" fill="#444444">Tổng hợp ngữ cảnh &amp; Sinh câu trả lời</text>
+  <text x="495" y="645" text-anchor="middle" font-size="11" font-weight="bold">Translation &amp; TTS Service</text>
+  <text x="495" y="665" text-anchor="middle" font-size="9.5">Dịch thuật qua MyMemory</text>
+  <text x="495" y="685" text-anchor="middle" font-size="9.5">Tổng hợp giọng Edge-TTS</text>
+  <text x="495" y="715" text-anchor="middle" font-size="9" fill="#444444">Lưu MP3 &amp; phát HTTP 206</text>
 
-  <!-- Column 3: Azure OpenAI / AI Model -->
+  <!-- Column 3: Translation / TTS Services -->
   <rect x="700" y="410" width="260" height="410" fill="#fafafa" stroke="#000000" stroke-width="1.5"/>
-  <text x="830" y="435" text-anchor="middle" font-size="13" font-weight="bold">3. Trí tuệ Nhân tạo (Azure OpenAI)</text>
-  <text x="830" y="455" text-anchor="middle" font-size="10.5" fill="#444444">Mô hình Ngôn ngữ Lớn &amp; Embedding</text>
+  <text x="830" y="435" text-anchor="middle" font-size="13" font-weight="bold">3. Dịch vụ Ngoại vi (Translation/TTS)</text>
+  <text x="830" y="455" text-anchor="middle" font-size="10.5" fill="#444444">MyMemory API &amp; Edge-TTS Engine</text>
 
   <rect x="720" y="620" width="220" height="55" fill="#ffffff" stroke="#000000" stroke-width="1"/>
-  <text x="830" y="645" text-anchor="middle" font-size="11" font-weight="bold">gpt-4o-mini / LLM</text>
-  <text x="830" y="662" text-anchor="middle" font-size="9.5">Sinh câu trả lời hội thoại tự nhiên</text>
+  <text x="830" y="645" text-anchor="middle" font-size="11" font-weight="bold">MyMemory API</text>
+  <text x="830" y="662" text-anchor="middle" font-size="9.5">Dịch văn bản vi -&gt; en, ja, ko</text>
 
   <rect x="720" y="690" width="220" height="55" fill="#ffffff" stroke="#000000" stroke-width="1"/>
-  <text x="830" y="715" text-anchor="middle" font-size="11" font-weight="bold">Embedding Model</text>
-  <text x="830" y="732" text-anchor="middle" font-size="9.5">Chuyển đổi câu hỏi thành Vector</text>
+  <text x="830" y="715" text-anchor="middle" font-size="11" font-weight="bold">Edge-TTS Engine</text>
+  <text x="830" y="732" text-anchor="middle" font-size="9.5">Tổng hợp giọng đọc MP3</text>
 
   <!-- Column 4: Database -->
   <rect x="1030" y="410" width="220" height="410" fill="#fafafa" stroke="#000000" stroke-width="1.5"/>
-  <text x="1140" y="435" text-anchor="middle" font-size="13" font-weight="bold">4. Cơ sở Dữ liệu (Database)</text>
-  <text x="1140" y="455" text-anchor="middle" font-size="10.5" fill="#444444">Lưu trữ Dữ liệu &amp; Tìm kiếm Vector</text>
+  <text x="1140" y="435" text-anchor="middle" font-size="13" font-weight="bold">4. Lưu trữ &amp; Phân phối</text>
+  <text x="1140" y="455" text-anchor="middle" font-size="10.5" fill="#444444">Lưu trữ Dữ liệu &amp; Tệp Âm thanh</text>
 
   <rect x="1050" y="480" width="180" height="80" fill="#ffffff" stroke="#000000" stroke-width="1"/>
   <text x="1140" y="508" text-anchor="middle" font-size="11" font-weight="bold">Dữ liệu POI / Tour</text>
@@ -325,10 +325,10 @@ const diagram3_8_operational_flow_svg = `
   <text x="1140" y="545" text-anchor="middle" font-size="9" fill="#444444">Audio URL, Hình ảnh</text>
 
   <rect x="1050" y="620" width="180" height="120" fill="#ffffff" stroke="#000000" stroke-width="1"/>
-  <text x="1140" y="650" text-anchor="middle" font-size="11" font-weight="bold">Vector Embeddings</text>
-  <text x="1140" y="675" text-anchor="middle" font-size="9.5">Lưu trữ vector tri thức di tích</text>
-  <text x="1140" y="700" text-anchor="middle" font-size="9.5">Tìm kiếm tương đồng (KNN / Cosine)</text>
-  <text x="1140" y="720" text-anchor="middle" font-size="9" fill="#444444">&rarr; Trả kết quả ngữ cảnh (Search Results)</text>
+  <text x="1140" y="650" text-anchor="middle" font-size="11" font-weight="bold">Audio Storage</text>
+  <text x="1140" y="675" text-anchor="middle" font-size="9.5">Lưu tệp MP3 trên volume chia sẻ</text>
+  <text x="1140" y="700" text-anchor="middle" font-size="9.5">Phân phối qua HTTP 206</text>
+  <text x="1140" y="720" text-anchor="middle" font-size="9" fill="#444444">&rarr; Trả luồng âm thanh (Audio Stream)</text>
 
   <!-- Flow Arrows -->
   <!-- 1. POI Fetch Flow -->
@@ -341,24 +341,24 @@ const diagram3_8_operational_flow_svg = `
   <line x1="600" y1="520" x2="1050" y2="520" stroke="#000000" stroke-width="1.8" marker-end="url(#arrow)"/>
   <text x="825" y="512" text-anchor="middle" font-size="10" font-weight="bold">Fetch POI / Tour Data</text>
 
-  <!-- 2. Chatbot Flow -->
+  <!-- 2. Translation/TTS Flow -->
   <line x1="270" y1="650" x2="390" y2="650" stroke="#000000" stroke-width="1.8" marker-end="url(#arrow)"/>
-  <text x="330" y="642" text-anchor="middle" font-size="10" font-weight="bold">3. User's Question</text>
+  <text x="330" y="642" text-anchor="middle" font-size="10" font-weight="bold">3. Language Request</text>
 
   <line x1="390" y1="710" x2="270" y2="710" stroke="#000000" stroke-width="1.8" stroke-dasharray="4 3" marker-end="url(#openArrow)"/>
-  <text x="330" y="725" text-anchor="middle" font-size="10">6. Answer / Images</text>
+  <text x="330" y="725" text-anchor="middle" font-size="10">6. Translated Audio</text>
 
   <line x1="600" y1="650" x2="720" y2="650" stroke="#000000" stroke-width="1.8" marker-end="url(#arrow)"/>
-  <text x="660" y="642" text-anchor="middle" font-size="10">User Query</text>
+  <text x="660" y="642" text-anchor="middle" font-size="10">POI Text</text>
 
   <line x1="720" y1="670" x2="600" y2="670" stroke="#000000" stroke-width="1.8" stroke-dasharray="4 3" marker-end="url(#openArrow)"/>
-  <text x="660" y="685" text-anchor="middle" font-size="9.5">Assistant Response</text>
+  <text x="660" y="685" text-anchor="middle" font-size="9.5">Translated Text</text>
 
   <line x1="940" y1="715" x2="1050" y2="675" stroke="#000000" stroke-width="1.8" marker-end="url(#arrow)"/>
-  <text x="995" y="685" text-anchor="middle" font-size="9.5">Vector Embeddings</text>
+  <text x="995" y="685" text-anchor="middle" font-size="9.5">Audio Storage</text>
 
   <line x1="1050" y1="705" x2="830" y2="745" stroke="#000000" stroke-width="1.8" stroke-dasharray="4 3" marker-end="url(#openArrow)"/>
-  <text x="960" y="740" text-anchor="middle" font-size="9.5">Search Results</text>
+  <text x="960" y="740" text-anchor="middle" font-size="9.5">MP3 File</text>
 </svg>
 `;
 
@@ -505,7 +505,7 @@ const diagram3_12_sequence_dual_payment_svg = `
   <text x="40" y="817" font-size="11.5" font-weight="bold">=== Use Features (Khai thác Tính năng sau khi có Token) ===</text>
 
   <line x1="100" y1="845" x2="295" y2="845" stroke="#000000" stroke-width="1.2" marker-end="url(#arrow)"/>
-  <text x="197" y="840" text-anchor="middle" font-size="10">21. Chạm POI / Nghe thuyết minh / Hỏi Chatbot</text>
+  <text x="197" y="840" text-anchor="middle" font-size="10">21. Chạm POI / Nghe thuyết minh</text>
 
   <line x1="295" y1="875" x2="510" y2="875" stroke="#000000" stroke-width="1.2" marker-end="url(#arrow)"/>
   <text x="402" y="870" text-anchor="middle" font-size="10">22. Gửi Request kèm Header [Authorization: Bearer access_token]</text>
@@ -514,7 +514,7 @@ const diagram3_12_sequence_dual_payment_svg = `
   <text x="525" y="895" font-size="9" fill="#444444">Kiểm tra chữ ký JWT &amp; Phân quyền</text>
 
   <line x1="510" y1="915" x2="295" y2="915" stroke="#000000" stroke-width="1.2" stroke-dasharray="3 3" marker-end="url(#openArrow)"/>
-  <text x="402" y="910" text-anchor="middle" font-size="10" font-weight="bold">23. Cho phép truy cập dữ liệu POI, Stream MP3 và Chatbot AI</text>
+  <text x="402" y="910" text-anchor="middle" font-size="10" font-weight="bold">23. Cho phép truy cập dữ liệu POI và Stream MP3</text>
 
   <line x1="295" y1="940" x2="100" y2="940" stroke="#000000" stroke-width="1.2" marker-end="url(#arrow)"/>
   <text x="197" y="935" text-anchor="middle" font-size="10">24. Trải nghiệm thuyết minh đa ngữ sống động</text>

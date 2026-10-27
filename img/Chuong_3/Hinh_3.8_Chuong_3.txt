@@ -1,0 +1,21 @@
+================================================================================
+THÔNG TIN CHÚ THÍCH HÌNH ẢNH: Hinh_3.8_Chuong_3
+================================================================================
+1. KÝ HIỆU HÌNH         : Hinh 3.8 Chuong 3
+2. TIÊU ĐỀ SƠ ĐỒ        : Sơ đồ Tuần tự Luồng Xác thực và Luân chuyển Refresh Token (Sequence Diagram)
+3. THUỘC BÁO CÁO        : Chương 3: Phân tích Nghiệp vụ và Mô hình hóa Hệ thống
+4. VỊ TRÍ TRONG CHƯƠNG  : Mục 3.7.2 – Sơ đồ Tuần tự Xác thực JWT và Silent Token Refresh
+5. TÁC NHÂN / THÀNH PHẦN: User, PWA App Client, API Gateway, AuthService, Token Database
+6. TIÊU CHUẨN MÔ HÌNH HÓA: UML 2.5 Sequence Diagram, Lifeline, Synchronous & Asynchronous Messages, Reply Return.
+--------------------------------------------------------------------------------
+7. MỤC ĐÍCH VÀ Ý NGHĨA NGHIỆP VỤ:
+   Sequence Diagram diễn giải luồng xác thực bảo mật hiện đại: Đăng nhập thành công cấp Access Token (hạn 15 phút, lưu trong RAM) và Refresh Token (hạn 7 ngày, lưu trong Cookie HttpOnly có cờ Secure và SameSite=Strict). Khi Access Token hết hạn, Axios Interceptor tự động gửi yêu cầu '/auth/refresh' ngầm để nhận Access Token mới mà không làm gián đoạn trải nghiệm nghe thuyết minh của du khách.
+--------------------------------------------------------------------------------
+8. QUY CÁCH TỆP HÌNH ẢNH:
+   • Tệp hình ảnh Raster : Hinh_3.8_Chuong_3.png (Độ phân giải cao, phục vụ chèn văn bản Word/PDF)
+   • Tệp đồ họa Vector   : Hinh_3.8_Chuong_3.svg (Mã nguồn vector gốc, có thể phóng to vô hạn)
+   • Phong cách thể hiện  : Pure Monochrome Black & White (Nền trắng, nét đen, chữ đen chuẩn học thuật)
+================================================================================
+Đồ án Học phần Công nghệ Phần mềm – Đề tài: Hệ thống Thuyết minh Tự động Đa ngôn ngữ Echora
+Nhóm Sinh viên Thực hiện: Nhóm 03 – Khoa CNTT, Đại học Khoa học Tự nhiên / ĐHQG-HCM
+================================================================================

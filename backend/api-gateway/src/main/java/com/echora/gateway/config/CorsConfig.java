@@ -51,6 +51,7 @@ public class CorsConfig {
                 "Accept",
                 "Origin",
                 "X-Requested-With",
+                "X-Auth-Scope",
                 "X-QR-Exchange-Token",
                 "ngrok-skip-browser-warning"
         ));

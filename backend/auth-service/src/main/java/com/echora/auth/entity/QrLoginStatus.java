@@ -4,6 +4,7 @@ public enum QrLoginStatus {
     PENDING,
     SCANNED,
     APPROVED,
+    GUEST_APPROVED,
     DENIED,
     CONSUMED,
     EXPIRED,

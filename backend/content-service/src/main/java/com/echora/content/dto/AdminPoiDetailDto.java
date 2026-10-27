@@ -26,6 +26,7 @@ public class AdminPoiDetailDto {
     private Integer triggerRadiusMeters;
     private String address;
     private String thumbnailUrl;
+    private BigDecimal premiumPrice;
 
     private Long zoneId;
     private String zoneCode;

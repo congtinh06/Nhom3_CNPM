@@ -56,5 +56,9 @@ qr-output/
 
 # Tai lieu no bo (khong dua len GitHub)
 *.docx
+*.doc
 *.pdf
+*.py
+*.pyc
+__pycache__/
 _check_docx/

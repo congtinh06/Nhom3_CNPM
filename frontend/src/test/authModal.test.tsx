@@ -27,12 +27,15 @@ function LocationProbe() {
 function TestModalHarness({
   initialPath = '/dang-nhap',
   initialState,
+  historyEntries,
 }: {
   initialPath?: string;
   initialState?: Record<string, unknown>;
+  historyEntries?: Array<string | { pathname: string; state?: unknown }>;
 }) {
+  const entries = historyEntries ?? [{ pathname: initialPath, state: initialState }];
   return (
-    <MemoryRouter initialEntries={[{ pathname: initialPath, state: initialState }]}>
+    <MemoryRouter initialEntries={entries}>
       <AuthProvider>
         <ToastProvider>
           <CartProvider>
@@ -54,6 +57,47 @@ function TestModalHarness({
 describe('AuthModal', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    sessionStorage.clear();
+  });
+
+  describe('Banner chế độ Khách', () => {
+    it('không ở chế độ Khách: modal KHÔNG hiển thị banner', async () => {
+      render(<TestModalHarness initialPath="/dang-nhap" />);
+      await screen.findByRole('dialog');
+      expect(screen.queryByRole('note', { name: 'Bạn đang ở chế độ Khách' })).not.toBeInTheDocument();
+    });
+
+    it('đã chọn chế độ Khách: banner hiện trên form và nút "Tiếp tục với tư cách Khách" đóng modal', async () => {
+      sessionStorage.setItem('echora_guest_mode', '1');
+      render(
+        <TestModalHarness
+          historyEntries={[
+            '/am-thuc',
+            { pathname: '/dang-nhap', state: { backgroundLocation: { pathname: '/am-thuc' } } },
+          ]}
+        />
+      );
+      const banner = await screen.findByRole('note', { name: 'Bạn đang ở chế độ Khách' });
+      expect(banner).toHaveTextContent('Bạn đang ở chế độ Khách');
+
+      // Form đăng nhập vẫn hiện bên dưới banner
+      expect(screen.getByRole('button', { name: 'Đăng nhập' })).toBeInTheDocument();
+
+      fireEvent.click(screen.getByRole('button', { name: 'Tiếp tục với tư cách Khách' }));
+
+      // Modal đóng -> về lại nền
+      expect(await screen.findByText('Trang ẩm thực nền')).toBeInTheDocument();
+    });
+
+    it('banner cũng hiển thị ở view Đăng ký', async () => {
+      sessionStorage.setItem('echora_guest_mode', '1');
+      render(<TestModalHarness initialPath="/dang-ky" />);
+
+      expect(
+        await screen.findByRole('note', { name: 'Bạn đang ở chế độ Khách' })
+      ).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: 'Tạo tài khoản' })).toBeInTheDocument();
+    });
   });
 
   it('renders login modal with dialog role and aria attributes', async () => {

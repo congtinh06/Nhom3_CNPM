@@ -4,6 +4,7 @@ import {
   ShoppingBag,
   ChevronDown,
   Crown,
+  Eye,
   Lock,
   Menu,
   X,
@@ -12,6 +13,7 @@ import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
 import { useToastOptional } from '../../context/ToastContext';
 import { usePremium, buildPremiumPath } from '../../context/PremiumContext';
+import { exitGuestMode, useGuestMode } from '../../lib/guestMode';
 import {
   useNavbarLanguage,
   SUPPORTED_LANGUAGES,
@@ -19,6 +21,7 @@ import {
 } from '../../content/languages';
 import { CountryFlag } from '../common/CountryFlag';
 import { UserMenu } from './UserMenu';
+import { GuestMenu } from './GuestMenu';
 import { footerContent } from '../../content/staticSections';
 
 export const Header: React.FC = () => {
@@ -27,6 +30,7 @@ export const Header: React.FC = () => {
   const { user, isAuthenticated, logout } = useAuth();
   const { isPremium, canAccessLanguage } = usePremium();
   const { showToast } = useToastOptional();
+  const guestMode = useGuestMode();
   const displayName = user?.fullName || (user?.email ? user.email.split('@')[0] : '');
 
   const location = useLocation();
@@ -408,35 +412,39 @@ export const Header: React.FC = () => {
 
         {/* Cụm Auth / User */}
         {!isAuthenticated ? (
-          <>
-            {location.pathname !== '/dang-nhap' && (
-              <button
-                type="button"
-                className="nav-link hd-login-btn"
-                aria-label={t.auth.login}
-                onClick={() => {
-                  closeAllMenus();
-                  navigate('/dang-nhap', { state: { backgroundLocation: location } });
-                }}
-              >
-                {t.auth.login}
-              </button>
-            )}
+          guestMode ? (
+            <GuestMenu />
+          ) : (
+            <>
+              {location.pathname !== '/dang-nhap' && (
+                <button
+                  type="button"
+                  className="nav-link hd-login-btn"
+                  aria-label={t.auth.login}
+                  onClick={() => {
+                    closeAllMenus();
+                    navigate('/dang-nhap', { state: { backgroundLocation: location } });
+                  }}
+                >
+                  {t.auth.login}
+                </button>
+              )}
 
-            {location.pathname !== '/dang-ky' && (
-              <button
-                type="button"
-                className="hd-register-btn"
-                aria-label={t.auth.register}
-                onClick={() => {
-                  closeAllMenus();
-                  navigate('/dang-ky', { state: { backgroundLocation: location } });
-                }}
-              >
-                {t.auth.register}
-              </button>
-            )}
-          </>
+              {location.pathname !== '/dang-ky' && (
+                <button
+                  type="button"
+                  className="hd-register-btn"
+                  aria-label={t.auth.register}
+                  onClick={() => {
+                    closeAllMenus();
+                    navigate('/dang-ky', { state: { backgroundLocation: location } });
+                  }}
+                >
+                  {t.auth.register}
+                </button>
+              )}
+            </>
+          )
         ) : (
           <UserMenu />
         )}
@@ -532,37 +540,101 @@ export const Header: React.FC = () => {
             <span>{t.contact}</span>
           </a>
 
+          {/* Quét mã QR hiển thị trên máy tính (đăng nhập nhanh / chế độ khách) */}
+          <a
+            href="/quet-qr-dang-nhap"
+            className="mobile-nav-item"
+            onClick={(e) => {
+              e.preventDefault();
+              closeAllMenus();
+              navigate('/quet-qr-dang-nhap', {
+                state: { backgroundLocation: { pathname: location.pathname + location.search } },
+              });
+            }}
+          >
+            <span>{t.scanQrDesktop}</span>
+          </a>
+
           {/* Auth khu vực mobile */}
           <div className="mobile-account-section">
             {!isAuthenticated ? (
-              <div className="mobile-auth-actions">
-                {location.pathname !== '/dang-nhap' && (
-                  <button
-                    type="button"
-                    className="mobile-btn-outline"
-                    aria-label={t.auth.login}
-                    onClick={() => {
-                      closeAllMenus();
-                      navigate('/dang-nhap', { state: { backgroundLocation: location } });
-                    }}
-                  >
-                    <span>{t.auth.login}</span>
-                  </button>
-                )}
-                {location.pathname !== '/dang-ky' && (
-                  <button
-                    type="button"
-                    className="mobile-btn-primary"
-                    aria-label={t.auth.register}
-                    onClick={() => {
-                      closeAllMenus();
-                      navigate('/dang-ky', { state: { backgroundLocation: location } });
-                    }}
-                  >
-                    <span>{t.auth.register}</span>
-                  </button>
-                )}
-              </div>
+              guestMode ? (
+                <div className="mobile-guest-profile" data-testid="mobile-guest-profile">
+                  <div className="mobile-guest-badge">
+                    <span className="mobile-guest-avatar" aria-hidden="true">
+                      <Eye size={18} strokeWidth={1.8} />
+                    </span>
+                    <div className="mobile-guest-info">
+                      <strong>{t.auth.guestTitle}</strong>
+                      <p>{t.auth.guestBannerNote}</p>
+                    </div>
+                  </div>
+                  <div className="mobile-guest-actions">
+                    <button
+                      type="button"
+                      className="mobile-btn-outline"
+                      aria-label={t.auth.login}
+                      onClick={() => {
+                        closeAllMenus();
+                        navigate('/dang-nhap', { state: { backgroundLocation: location } });
+                      }}
+                    >
+                      <span>{t.auth.login}</span>
+                    </button>
+                    <button
+                      type="button"
+                      className="mobile-btn-primary"
+                      aria-label={t.auth.register}
+                      onClick={() => {
+                        closeAllMenus();
+                        navigate('/dang-ky', { state: { backgroundLocation: location } });
+                      }}
+                    >
+                      <span>{t.auth.register}</span>
+                    </button>
+                    <button
+                      type="button"
+                      className="mobile-guest-exit-btn"
+                      onClick={() => {
+                        closeAllMenus();
+                        exitGuestMode();
+                        navigate('/');
+                      }}
+                    >
+                      <span>{t.auth.exitGuestMode}</span>
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="mobile-auth-actions">
+                  {location.pathname !== '/dang-nhap' && (
+                    <button
+                      type="button"
+                      className="mobile-btn-outline"
+                      aria-label={t.auth.login}
+                      onClick={() => {
+                        closeAllMenus();
+                        navigate('/dang-nhap', { state: { backgroundLocation: location } });
+                      }}
+                    >
+                      <span>{t.auth.login}</span>
+                    </button>
+                  )}
+                  {location.pathname !== '/dang-ky' && (
+                    <button
+                      type="button"
+                      className="mobile-btn-primary"
+                      aria-label={t.auth.register}
+                      onClick={() => {
+                        closeAllMenus();
+                        navigate('/dang-ky', { state: { backgroundLocation: location } });
+                      }}
+                    >
+                      <span>{t.auth.register}</span>
+                    </button>
+                  )}
+                </div>
+              )
             ) : (
               <div className="mobile-user-box">
                 <div className="mobile-user-header">

@@ -2,6 +2,7 @@ package com.echora.order.controller;
 
 import com.echora.order.config.InternalAuthFilter;
 import com.echora.order.dto.CreateOrderRequest;
+import com.echora.order.dto.CreatePoiOrderRequest;
 import com.echora.order.dto.CreatePremiumOrderRequest;
 import com.echora.order.dto.OrderResponse;
 import com.echora.order.dto.PaymentStatusResponse;
@@ -42,6 +43,18 @@ public class OrderController {
             @Valid @RequestBody(required = false) CreatePremiumOrderRequest request,
             HttpServletRequest httpRequest) {
         OrderResponse response = orderService.createPremiumOrder(
+                userId, idempotencyKey, request, clientIp(httpRequest));
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    // Mua gói ngoại ngữ Premium cho riêng một điểm thuyết minh (POI).
+    @PostMapping("/poi")
+    public ResponseEntity<OrderResponse> createPoiOrder(
+            @RequestAttribute(InternalAuthFilter.ATTRIBUTE_USER_ID) Long userId,
+            @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey,
+            @Valid @RequestBody CreatePoiOrderRequest request,
+            HttpServletRequest httpRequest) {
+        OrderResponse response = orderService.createPoiOrder(
                 userId, idempotencyKey, request, clientIp(httpRequest));
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }

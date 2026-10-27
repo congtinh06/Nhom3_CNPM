@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { Plus, Heart, Check, Star } from 'lucide-react';
 import { Product } from '../../types';
 import { formatPrice } from '../../utils/formatters';
+import { usePremium } from '../../context/PremiumContext';
+import { applySouvenirDiscount, isSouvenirDiscountEligible } from '../../utils/pricing';
 
 interface ProductCardProps {
   product: Product;
@@ -22,8 +24,12 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   showRating = true,
   neutralPlaceholder = false,
 }) => {
+  const { isPremium } = usePremium();
   const [imageError, setImageError] = useState(false);
   const [justAdded, setJustAdded] = useState(false);
+
+  const hasDiscount = isSouvenirDiscountEligible(isPremium, product.category);
+  const effectivePrice = applySouvenirDiscount(product.price, isPremium, product.category);
 
   const handleFavoriteClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -47,7 +53,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
       onClick={() => onSelect(product)}
       tabIndex={0}
       role="button"
-      aria-label={`${product.name} - ${formatPrice(product.price)}`}
+      aria-label={`${product.name} - ${formatPrice(effectivePrice)}`}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();
@@ -122,9 +128,17 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         {/* Chân card: price bên trái (Space Grotesk tabular-nums), Thêm vào giỏ bên phải outlined pill có icon plus */}
         <div className="editorial-card-bottom-row">
           <div className="editorial-price-box">
-            <span className="editorial-price-amount">{formatPrice(product.price)}</span>
-            {product.oldPrice && product.oldPrice > product.price && (
-              <span className="editorial-old-price">{formatPrice(product.oldPrice)}</span>
+            <span className="editorial-price-amount">{formatPrice(effectivePrice)}</span>
+            {hasDiscount ? (
+              <>
+                <span className="editorial-old-price">{formatPrice(product.price)}</span>
+                <span className="editorial-premium-discount">Premium -10%</span>
+              </>
+            ) : (
+              product.oldPrice &&
+              product.oldPrice > product.price && (
+                <span className="editorial-old-price">{formatPrice(product.oldPrice)}</span>
+              )
             )}
           </div>
 

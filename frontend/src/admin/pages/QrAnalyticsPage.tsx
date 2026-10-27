@@ -39,6 +39,7 @@ const LOGIN_STATUS_LABELS: Record<string, string> = {
   PENDING: 'Chờ quét',
   SCANNED: 'Đã quét',
   APPROVED: 'Đã xác nhận',
+  GUEST_APPROVED: 'Chế độ khách',
   CONSUMED: 'Đăng nhập thành công',
   DENIED: 'Bị từ chối',
   EXPIRED: 'Hết hạn',
@@ -49,6 +50,7 @@ const LOGIN_STATUS_COLORS: Record<string, string> = {
   PENDING: '#94A3B8',
   SCANNED: '#38BDF8',
   APPROVED: '#818CF8',
+  GUEST_APPROVED: '#F97316',
   CONSUMED: '#22C55E',
   DENIED: '#EF4444',
   EXPIRED: '#F59E0B',
@@ -241,6 +243,8 @@ const QrAnalyticsPage: React.FC = () => {
       render: (session) =>
         session.user ? (
           <span className="adm-table-strong">{session.user.fullName || session.user.email}</span>
+        ) : session.status?.toLowerCase().startsWith('guest') ? (
+          <span className="adm-cell-sub">Khách (chưa có tài khoản)</span>
         ) : (
           <span className="adm-cell-sub">Chưa xác định</span>
         ),

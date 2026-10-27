@@ -46,6 +46,7 @@ export function CheckoutPage() {
   const isDesktop = useIsDesktop();
   const {
     cartItems,
+    discountAmount,
     totalAmount,
     totalCount,
     updateQuantity,
@@ -226,6 +227,7 @@ export function CheckoutPage() {
     name: it.name,
     quantity: it.quantity,
     price: it.price,
+    category: it.category,
     imageUrl: it.imagePath,
     poiSlug: it.poiSlug,
   }));
@@ -303,6 +305,7 @@ export function CheckoutPage() {
                 <OrderSummary
                   items={summaryItems}
                   subtotal={subtotal}
+                  discountAmount={discountAmount}
                   shippingFee={shippingFee}
                   total={total}
                   totalCount={totalCount}

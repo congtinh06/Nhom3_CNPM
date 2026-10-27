@@ -1,0 +1,90 @@
+@startuml
+!theme plain
+skinparam defaultFontName "Times New Roman"
+skinparam defaultFontSize 11
+skinparam monochrome true
+skinparam shadowing false
+skinparam roundCorner 0
+skinparam packageStyle rectangle
+skinparam handwritten false
+skinparam ArrowColor #000000
+skinparam ActorBorderColor #000000
+skinparam ComponentBorderColor #000000
+skinparam DatabaseBorderColor #000000
+skinparam InterfaceBorderColor #000000
+skinparam ParticipantBorderColor #000000
+skinparam SequenceLifeLineBorderColor #000000
+skinparam UsecaseBorderColor #000000
+skinparam StateBorderColor #000000
+skinparam ClassBorderColor #000000
+
+title HÌNH 3.2. SƠ ĐỒ KIẾN TRÚC GIẢI PHÁP HỆ THỐNG ECHORA
+
+package "Client Layer (Tầng Trình diễn)" {
+  [Web App Du khách\n(React + TypeScript + Leaflet + Mobile PWA)] as ClientApp
+  [CMS Quản trị & Quầy vé\n(React + TypeScript + Vite + Tailwind/Vanilla CSS)] as AdminApp
+}
+
+package "API Gateway Layer (Tầng Cổng Giao tiếp)" {
+  [Spring Cloud Gateway (Port 18080/8080)\n- PathGuardFilter (Chặn ../, ;)\n- UntrustedHeaderStripFilter (Loại bỏ X-User-*)\n- AnalyticsRateLimitFilter (Giới hạn 60 req/min)\n- AdminAuthGlobalFilter / JwtFilter] as Gateway
+}
+
+package "Microservices Layer (Tầng Dịch vụ Nghiệp vụ)" {
+  [content-service (Port 8085)\nQuản lý POI, Zone, Route, Quà, Tin tức] as ContentSvc
+  [location-service (Port 8082)\nGiải mã QR, Haversine, Geofence] as LocationSvc
+  [translation-tts-service (Port 8083)\nDịch đa ngữ, Edge-TTS CLI, Stream MP3] as TransSvc
+  [analytics-service (Port 8081)\nGhi nhận SCAN/PLAY, Báo cáo tương tác] as AnalyticsSvc
+  [auth-service (Port 8086)\nXác thực JWT RAM, Cookie 7d, Google OAuth, Claim Code] as AuthSvc
+  [order-service (Port 8087)\nGiỏ hàng, Đơn hàng, VNPAY Sandbox, VietQR] as OrderSvc
+}
+
+package "Message Broker & Storage Layer (Tầng Hạ tầng Dữ liệu)" {
+  queue "RabbitMQ 3 Message Broker (Port 5672/15800)\nTopic Exchange: echora.exchange" as RabbitMQ
+  database "MS SQL Server 2022 (Port 1433)\n5 CSDL: content, translation, analytics, auth, order" as MSSQL
+  folder "Shared Volumes\n- audio-storage-data\n- product-uploads-data" as Volumes
+  database "Redis In-Memory Cache\nLưu Claim Code (TTL 15m), Session" as Redis
+}
+
+package "External Services (Dịch vụ Ngoại vi)" {
+  cloud "OpenStreetMap Tile Server" as ExtOSM
+  cloud "Google OAuth 2.0" as ExtGoogle
+  cloud "Cổng VNPAY Sandbox" as ExtVNPAY
+  cloud "Ngân hàng VietQR NAPAS" as ExtVietQR
+  cloud "MyMemory Translation API" as ExtMyMem
+}
+
+ClientApp --> Gateway : HTTPS REST API
+AdminApp --> Gateway : HTTPS REST API
+
+Gateway --> ContentSvc
+Gateway --> LocationSvc
+Gateway --> TransSvc
+Gateway --> AnalyticsSvc
+Gateway --> AuthSvc
+Gateway --> OrderSvc
+
+ContentSvc --> MSSQL : JPA Hibernate
+ContentSvc --> RabbitMQ : AMQP Event (poi.updated)
+ContentSvc --> Volumes : Lưu ảnh quà lưu niệm
+
+LocationSvc --> ContentSvc : REST Tra cứu POI
+
+TransSvc --> RabbitMQ : Nhận poi.updated / Gửi poi.audio.ready
+TransSvc --> MSSQL : Lưu bản dịch
+TransSvc --> Volumes : Lưu tệp audio MP3
+TransSvc --> ExtMyMem : REST API Dịch thuật
+
+AnalyticsSvc --> RabbitMQ : Nhận SCAN/PLAY
+AnalyticsSvc --> MSSQL : Lưu sự kiện phân tích
+
+AuthSvc --> MSSQL : Lưu tài khoản, refresh_tokens
+AuthSvc --> Redis : Lưu Claim Code (SET EX 900)
+AuthSvc --> ExtGoogle : Xác thực ID Token
+
+OrderSvc --> MSSQL : Lưu đơn hàng, payments
+OrderSvc --> ContentSvc : Xác thực tồn kho & giá
+OrderSvc --> ExtVNPAY : URL Chữ ký HMAC-SHA512
+OrderSvc --> ExtVietQR : Chuỗi QR NAPAS 24/7
+
+ClientApp --> ExtOSM : Tải bản đồ Leaflet
+@enduml

@@ -1,4 +1,3 @@
-
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1300 860" width="1300" height="860" style="background:#ffffff; font-family:'Times New Roman', Times, serif;">
   
   <defs>
@@ -10,6 +9,12 @@
     </marker>
     <marker id="genArrow" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
       <polygon points="0,1 10,6 0,11" fill="#ffffff" stroke="#000000" stroke-width="1.5"/>
+    </marker>
+    <marker id="diamond" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <polygon points="0,6 5,2 10,6 5,10" fill="#000000" stroke="#000000" stroke-width="1"/>
+    </marker>
+    <marker id="openDiamond" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <polygon points="0,6 5,2 10,6 5,10" fill="#ffffff" stroke="#000000" stroke-width="1"/>
     </marker>
   </defs>
 
@@ -74,8 +79,8 @@
       <line x1="0" y1="38" x2="40" y2="38" stroke="#000000" stroke-width="1.8"/>
       <line x1="20" y1="58" x2="5" y2="85" stroke="#000000" stroke-width="1.8"/>
       <line x1="20" y1="58" x2="35" y2="85" stroke="#000000" stroke-width="1.8"/>
-      <text x="20" y="105" text-anchor="middle" font-size="12" font-weight="bold" fill="#000000">Khách vãng lai</text>
-      <text x="20" y="120" text-anchor="middle" font-size="10" fill="#444444">(Guest / Visitor)</text>
+      <text x="20" y="105" text-anchor="middle" font-size="12" font-weight="bold" fill="#000000" font-family="'Times New Roman', serif">Khách vãng lai</text>
+      <text x="20" y="120" text-anchor="middle" font-size="10" fill="#444444" font-family="'Times New Roman', serif">(Guest / Visitor)</text>
     </g>
   
   
@@ -85,8 +90,8 @@
       <line x1="0" y1="38" x2="40" y2="38" stroke="#000000" stroke-width="1.8"/>
       <line x1="20" y1="58" x2="5" y2="85" stroke="#000000" stroke-width="1.8"/>
       <line x1="20" y1="58" x2="35" y2="85" stroke="#000000" stroke-width="1.8"/>
-      <text x="20" y="105" text-anchor="middle" font-size="12" font-weight="bold" fill="#000000">Người dùng đăng ký</text>
-      <text x="20" y="120" text-anchor="middle" font-size="10" fill="#444444">(Registered User)</text>
+      <text x="20" y="105" text-anchor="middle" font-size="12" font-weight="bold" fill="#000000" font-family="'Times New Roman', serif">Người dùng đăng ký</text>
+      <text x="20" y="120" text-anchor="middle" font-size="10" fill="#444444" font-family="'Times New Roman', serif">(Registered User)</text>
     </g>
   
   
@@ -96,8 +101,8 @@
       <line x1="0" y1="38" x2="40" y2="38" stroke="#000000" stroke-width="1.8"/>
       <line x1="20" y1="58" x2="5" y2="85" stroke="#000000" stroke-width="1.8"/>
       <line x1="20" y1="58" x2="35" y2="85" stroke="#000000" stroke-width="1.8"/>
-      <text x="20" y="105" text-anchor="middle" font-size="12" font-weight="bold" fill="#000000">Quản trị viên</text>
-      <text x="20" y="120" text-anchor="middle" font-size="10" fill="#444444">(Administrator)</text>
+      <text x="20" y="105" text-anchor="middle" font-size="12" font-weight="bold" fill="#000000" font-family="'Times New Roman', serif">Quản trị viên</text>
+      <text x="20" y="120" text-anchor="middle" font-size="10" fill="#444444" font-family="'Times New Roman', serif">(Administrator)</text>
     </g>
   
 
@@ -121,8 +126,8 @@
   
     <g transform="translate(1030, 110)">
       <rect x="0" y="0" width="220" height="55" fill="#fcfcfc" stroke="#000000" stroke-width="1.5"/>
-      <text x="110" y="18" text-anchor="middle" font-size="10" fill="#444444">&lt;&lt;External Hardware&gt;&gt;</text>
-      <text x="110" y="34" text-anchor="middle" font-size="11" font-weight="bold" fill="#000000">Vệ tinh GPS (Geolocation API)</text>
+      <text x="110" y="18" text-anchor="middle" font-size="10" fill="#444444" font-family="'Times New Roman', serif">&lt;&lt;External Hardware&gt;&gt;</text>
+      <text x="110" y="34" text-anchor="middle" font-size="11" font-weight="bold" fill="#000000" font-family="'Times New Roman', serif">Vệ tinh GPS (Geolocation API)</text>
     </g>
   
   <line x1="1030" y1="137" x2="940" y2="180" stroke="#000000" stroke-width="1.2" stroke-dasharray="4 3" marker-end="url(#arrow)"/>
@@ -131,8 +136,8 @@
   
     <g transform="translate(1030, 200)">
       <rect x="0" y="0" width="220" height="55" fill="#fcfcfc" stroke="#000000" stroke-width="1.5"/>
-      <text x="110" y="18" text-anchor="middle" font-size="10" fill="#444444">&lt;&lt;External Map Tile&gt;&gt;</text>
-      <text x="110" y="34" text-anchor="middle" font-size="11" font-weight="bold" fill="#000000">OpenStreetMap (OSM Tile Server)</text>
+      <text x="110" y="18" text-anchor="middle" font-size="10" fill="#444444" font-family="'Times New Roman', serif">&lt;&lt;External Map Tile&gt;&gt;</text>
+      <text x="110" y="34" text-anchor="middle" font-size="11" font-weight="bold" fill="#000000" font-family="'Times New Roman', serif">OpenStreetMap (OSM Tile Server)</text>
     </g>
   
   <line x1="1030" y1="227" x2="940" y2="200" stroke="#000000" stroke-width="1.2" stroke-dasharray="4 3" marker-end="url(#arrow)"/>
@@ -141,8 +146,8 @@
   
     <g transform="translate(1030, 290)">
       <rect x="0" y="0" width="220" height="55" fill="#fcfcfc" stroke="#000000" stroke-width="1.5"/>
-      <text x="110" y="18" text-anchor="middle" font-size="10" fill="#444444">&lt;&lt;External Identity Provider&gt;&gt;</text>
-      <text x="110" y="34" text-anchor="middle" font-size="11" font-weight="bold" fill="#000000">Google Identity (OAuth2)</text>
+      <text x="110" y="18" text-anchor="middle" font-size="10" fill="#444444" font-family="'Times New Roman', serif">&lt;&lt;External Identity Provider&gt;&gt;</text>
+      <text x="110" y="34" text-anchor="middle" font-size="11" font-weight="bold" fill="#000000" font-family="'Times New Roman', serif">Google Identity (OAuth2)</text>
     </g>
   
   <line x1="940" y1="350" x2="1030" y2="317" stroke="#000000" stroke-width="1.2" stroke-dasharray="4 3" marker-end="url(#arrow)"/>
@@ -151,8 +156,8 @@
   
     <g transform="translate(1030, 380)">
       <rect x="0" y="0" width="220" height="55" fill="#fcfcfc" stroke="#000000" stroke-width="1.5"/>
-      <text x="110" y="18" text-anchor="middle" font-size="10" fill="#444444">&lt;&lt;External Payment Gateway&gt;&gt;</text>
-      <text x="110" y="34" text-anchor="middle" font-size="11" font-weight="bold" fill="#000000">Cổng VNPAY Sandbox</text>
+      <text x="110" y="18" text-anchor="middle" font-size="10" fill="#444444" font-family="'Times New Roman', serif">&lt;&lt;External Payment Gateway&gt;&gt;</text>
+      <text x="110" y="34" text-anchor="middle" font-size="11" font-weight="bold" fill="#000000" font-family="'Times New Roman', serif">Cổng VNPAY Sandbox</text>
     </g>
   
   <line x1="940" y1="400" x2="1030" y2="407" stroke="#000000" stroke-width="1.2" stroke-dasharray="4 3" marker-end="url(#arrow)"/>
@@ -161,8 +166,8 @@
   
     <g transform="translate(1030, 470)">
       <rect x="0" y="0" width="220" height="55" fill="#fcfcfc" stroke="#000000" stroke-width="1.5"/>
-      <text x="110" y="18" text-anchor="middle" font-size="10" fill="#444444">&lt;&lt;External Banking Network&gt;&gt;</text>
-      <text x="110" y="34" text-anchor="middle" font-size="11" font-weight="bold" fill="#000000">Hệ thống NAPAS VietQR</text>
+      <text x="110" y="18" text-anchor="middle" font-size="10" fill="#444444" font-family="'Times New Roman', serif">&lt;&lt;External Banking Network&gt;&gt;</text>
+      <text x="110" y="34" text-anchor="middle" font-size="11" font-weight="bold" fill="#000000" font-family="'Times New Roman', serif">Hệ thống NAPAS VietQR</text>
     </g>
   
   <line x1="940" y1="420" x2="1030" y2="497" stroke="#000000" stroke-width="1.2" stroke-dasharray="4 3" marker-end="url(#arrow)"/>
@@ -171,8 +176,8 @@
   
     <g transform="translate(1030, 560)">
       <rect x="0" y="0" width="220" height="55" fill="#fcfcfc" stroke="#000000" stroke-width="1.5"/>
-      <text x="110" y="18" text-anchor="middle" font-size="10" fill="#444444">&lt;&lt;External Translation API&gt;&gt;</text>
-      <text x="110" y="34" text-anchor="middle" font-size="11" font-weight="bold" fill="#000000">MyMemory Translation API</text>
+      <text x="110" y="18" text-anchor="middle" font-size="10" fill="#444444" font-family="'Times New Roman', serif">&lt;&lt;External Translation API&gt;&gt;</text>
+      <text x="110" y="34" text-anchor="middle" font-size="11" font-weight="bold" fill="#000000" font-family="'Times New Roman', serif">MyMemory Translation API</text>
     </g>
   
   <line x1="940" y1="460" x2="1030" y2="587" stroke="#000000" stroke-width="1.2" stroke-dasharray="4 3" marker-end="url(#arrow)"/>
@@ -181,8 +186,8 @@
   
     <g transform="translate(1030, 650)">
       <rect x="0" y="0" width="220" height="55" fill="#fcfcfc" stroke="#000000" stroke-width="1.5"/>
-      <text x="110" y="18" text-anchor="middle" font-size="10" fill="#444444">&lt;&lt;External AI TTS Engine&gt;&gt;</text>
-      <text x="110" y="34" text-anchor="middle" font-size="11" font-weight="bold" fill="#000000">Microsoft Edge-TTS (Python CLI)</text>
+      <text x="110" y="18" text-anchor="middle" font-size="10" fill="#444444" font-family="'Times New Roman', serif">&lt;&lt;External AI TTS Engine&gt;&gt;</text>
+      <text x="110" y="34" text-anchor="middle" font-size="11" font-weight="bold" fill="#000000" font-family="'Times New Roman', serif">Microsoft Edge-TTS (Python CLI)</text>
     </g>
   
   <line x1="940" y1="475" x2="1030" y2="677" stroke="#000000" stroke-width="1.2" stroke-dasharray="4 3" marker-end="url(#arrow)"/>

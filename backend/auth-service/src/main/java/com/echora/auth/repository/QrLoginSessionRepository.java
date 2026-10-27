@@ -61,16 +61,16 @@ public interface QrLoginSessionRepository
                    COALESCE(SUM(CASE WHEN t.effective_status = 'EXPIRED' THEN 1 ELSE 0 END), 0) AS expired,
                    COALESCE(SUM(CASE WHEN t.effective_status = 'CANCELLED' THEN 1 ELSE 0 END), 0) AS cancelled,
                    COALESCE(SUM(CASE WHEN t.effective_status = 'PENDING' THEN 1 ELSE 0 END), 0) AS pending,
-                   COALESCE(SUM(CASE WHEN t.effective_status IN ('PENDING', 'SCANNED', 'APPROVED') THEN 1 ELSE 0 END), 0) AS active,
+                   COALESCE(SUM(CASE WHEN t.effective_status IN ('PENDING', 'SCANNED', 'APPROVED', 'GUEST_APPROVED') THEN 1 ELSE 0 END), 0) AS active,
                    COUNT(DISTINCT t.user_id) AS distinct_users
             FROM (
                 SELECT CASE
-                           WHEN s.status IN ('PENDING', 'SCANNED', 'APPROVED') AND s.expires_at <= :now THEN 'EXPIRED'
-                           ELSE s.status
-                       END AS effective_status,
-                       s.scanned_at,
-                       s.approved_at,
-                       s.user_id
+                            WHEN s.status IN ('PENDING', 'SCANNED', 'APPROVED', 'GUEST_APPROVED') AND s.expires_at <= :now THEN 'EXPIRED'
+                            ELSE s.status
+                        END AS effective_status,
+                        s.scanned_at,
+                        s.approved_at,
+                        s.user_id
                 FROM qr_login_sessions s
                 WHERE s.created_at >= :from AND s.created_at < :to
             ) t
@@ -83,9 +83,9 @@ public interface QrLoginSessionRepository
             SELECT t.effective_status, COUNT(*) AS total
             FROM (
                 SELECT CASE
-                           WHEN s.status IN ('PENDING', 'SCANNED', 'APPROVED') AND s.expires_at <= :now THEN 'EXPIRED'
-                           ELSE s.status
-                       END AS effective_status
+                            WHEN s.status IN ('PENDING', 'SCANNED', 'APPROVED', 'GUEST_APPROVED') AND s.expires_at <= :now THEN 'EXPIRED'
+                            ELSE s.status
+                        END AS effective_status
                 FROM qr_login_sessions s
                 WHERE s.created_at >= :from AND s.created_at < :to
             ) t

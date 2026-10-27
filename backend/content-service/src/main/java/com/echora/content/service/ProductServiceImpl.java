@@ -471,6 +471,7 @@ public class ProductServiceImpl implements ProductService {
                         .name(p.getName())
                         .price(p.getPrice())
                         .isActive(p.getIsActive())
+                        .category(p.getCategory() != null ? p.getCategory().name() : null)
                         .build())
                 .collect(Collectors.toList());
     }

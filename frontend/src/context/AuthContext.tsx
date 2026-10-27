@@ -1,7 +1,14 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { useInRouterContext, useLocation } from 'react-router-dom';
 import { authApi } from '../api/auth';
 import { clearLocalOrderCache } from '../services/orderCache';
-import { LOGGED_OUT_EVENT, tokenStore } from '../api/tokenStore';
+import { exitGuestMode } from '../lib/guestMode';
+import {
+  AuthScope,
+  LOGGED_OUT_EVENT,
+  LoggedOutEventDetail,
+  tokenStore,
+} from '../api/tokenStore';
 import { AuthSession, AuthUser, LoginPayload, RegisterPayload } from '../types';
 
 export type AuthStatus = 'loading' | 'authenticated' | 'guest';
@@ -22,35 +29,47 @@ interface AuthContextValue {
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 // Chạy tối đa một lần trong một chuỗi trang (React StrictMode mount/umount/ mount lại).
-let bootstrapPromise: Promise<AuthSession | null> | null = null;
+const bootstrapPromises = new Map<AuthScope, Promise<AuthSession | null>>();
 
-function bootstrapSession(): Promise<AuthSession | null> {
-  if (!bootstrapPromise) {
-    bootstrapPromise = authApi
-      .refresh()
-      .catch(() => null)
-      .finally(() => {
-        bootstrapPromise = null;
-      });
-  }
-  return bootstrapPromise;
+function bootstrapSession(scope: AuthScope): Promise<AuthSession | null> {
+  const existing = bootstrapPromises.get(scope);
+  if (existing) return existing;
+
+  const promise = authApi
+    .refresh(scope)
+    .catch(() => null)
+    .finally(() => {
+      bootstrapPromises.delete(scope);
+    });
+
+  bootstrapPromises.set(scope, promise);
+  return promise;
 }
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export function authScopeForPath(pathname: string): AuthScope {
+  return pathname.startsWith('/quan-tri') ? 'admin' : 'user';
+}
+
+const AuthProviderInner: React.FC<{ children: React.ReactNode; scope: AuthScope }> = ({
+  children,
+  scope,
+}) => {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [status, setStatus] = useState<AuthStatus>('loading');
 
   useEffect(() => {
     let cancelled = false;
+    setStatus('loading');
+    setUser(null);
 
-    void bootstrapSession().then((session) => {
+    void bootstrapSession(scope).then((session) => {
       if (cancelled) return;
       if (session) {
-        tokenStore.set(session.accessToken);
+        tokenStore.set(session.accessToken, scope);
         setUser(session.user);
         setStatus('authenticated');
       } else {
-        tokenStore.clear();
+        tokenStore.clear(scope);
         setUser(null);
         setStatus('guest');
       }
@@ -59,42 +78,64 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [scope]);
 
   useEffect(() => {
-    const handleLoggedOut = () => {
+    const handleLoggedOut = (event: Event) => {
+      const detail = (event as CustomEvent<LoggedOutEventDetail>).detail;
+      if ((detail?.scope ?? 'user') !== scope) return;
       setUser(null);
       setStatus('guest');
     };
     window.addEventListener(LOGGED_OUT_EVENT, handleLoggedOut);
     return () => window.removeEventListener(LOGGED_OUT_EVENT, handleLoggedOut);
-  }, []);
+  }, [scope]);
 
-  const login = useCallback(async (payload: LoginPayload): Promise<AuthUser> => {
-    const session = await authApi.login(payload);
-    tokenStore.set(session.accessToken);
-    setUser(session.user);
-    setStatus('authenticated');
-    return session.user;
-  }, []);
+  // Đăng nhập/đăng ký thật (mật khẩu, Google, QR thật, phiên cũ còn hạn)
+  // đều kết thúc ở status 'authenticated' -> gở chế độ Khách một điểm duy nhất.
+  useEffect(() => {
+    if (scope === 'user' && status === 'authenticated') {
+      exitGuestMode();
+    }
+  }, [scope, status]);
 
-  const loginWithGoogle = useCallback(async (credential: string): Promise<AuthUser> => {
-    const session = await authApi.loginWithGoogle(credential);
-    tokenStore.set(session.accessToken);
-    setUser(session.user);
-    setStatus('authenticated');
-    return session.user;
-  }, []);
-
-  const completeQrLogin = useCallback(
-    async (sessionId: string, exchangeToken: string): Promise<AuthUser> => {
-      const session = await authApi.exchangeQrSession(sessionId, exchangeToken);
-      tokenStore.set(session.accessToken);
+  const login = useCallback(
+    async (payload: LoginPayload): Promise<AuthUser> => {
+      const session =
+        scope === 'admin'
+          ? await authApi.login(payload, scope)
+          : await authApi.login(payload);
+      tokenStore.set(session.accessToken, scope);
       setUser(session.user);
       setStatus('authenticated');
       return session.user;
     },
-    []
+    [scope]
+  );
+
+  const loginWithGoogle = useCallback(
+    async (credential: string): Promise<AuthUser> => {
+      const session =
+        scope === 'admin'
+          ? await authApi.loginWithGoogle(credential, scope)
+          : await authApi.loginWithGoogle(credential);
+      tokenStore.set(session.accessToken, scope);
+      setUser(session.user);
+      setStatus('authenticated');
+      return session.user;
+    },
+    [scope]
+  );
+
+  const completeQrLogin = useCallback(
+    async (sessionId: string, exchangeToken: string): Promise<AuthUser> => {
+      const session = await authApi.exchangeQrSession(sessionId, exchangeToken);
+      tokenStore.set(session.accessToken, scope);
+      setUser(session.user);
+      setStatus('authenticated');
+      return session.user;
+    },
+    [scope]
   );
 
   const register = useCallback(async (payload: RegisterPayload): Promise<string> => {
@@ -104,28 +145,34 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const logout = useCallback(async (): Promise<void> => {
     try {
-      await authApi.logout();
+      if (scope === 'admin') {
+        await authApi.logout(scope);
+      } else {
+        await authApi.logout();
+      }
     } catch {
       // Cookie có thể đã bị xóa sẵn - vẫn đăng xuất phía client.
     }
-    tokenStore.clear();
-    clearLocalOrderCache();
+    tokenStore.clear(scope);
+    if (scope === 'user') {
+      clearLocalOrderCache();
+    }
     setUser(null);
     setStatus('guest');
-  }, []);
+  }, [scope]);
 
   const reloadUser = useCallback(async (): Promise<void> => {
     try {
-      const session = await authApi.refresh();
-      tokenStore.set(session.accessToken);
-      setUser(session.user);
+      const currentUser =
+        scope === 'admin' ? await authApi.me(scope) : await authApi.me();
+      setUser(currentUser);
       setStatus('authenticated');
     } catch {
-      tokenStore.clear();
+      tokenStore.clear(scope);
       setUser(null);
       setStatus('guest');
     }
-  }, []);
+  }, [scope]);
 
   const value = useMemo<AuthContextValue>(
     () => ({
@@ -146,10 +193,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
+const AuthProviderWithLocation: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const location = useLocation();
+  return (
+    <AuthProviderInner scope={authScopeForPath(location.pathname)}>
+      {children}
+    </AuthProviderInner>
+  );
+};
+
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const inRouter = useInRouterContext();
+  if (!inRouter) {
+    return <AuthProviderInner scope="user">{children}</AuthProviderInner>;
+  }
+  return <AuthProviderWithLocation>{children}</AuthProviderWithLocation>;
+};
+
 export function useAuth(): AuthContextValue {
   const ctx = useContext(AuthContext);
   if (!ctx) {
     throw new Error('useAuth must be used within AuthProvider');
   }
   return ctx;
+}
+
+// Dùng cho các trang có thể render độc lập (test/standalone) mà vẫn muốn biết
+// trạng thái đăng nhập khi có AuthProvider ở phía trên.
+export function useAuthOptional(): AuthContextValue | null {
+  return useContext(AuthContext);
 }

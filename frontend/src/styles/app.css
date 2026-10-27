@@ -505,6 +505,23 @@ select:focus-visible {
 }
 
 /* Auth Buttons */
+.hd-guest-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 12px;
+  border: 1px solid rgba(59, 36, 22, 0.35);
+  border-radius: 999px;
+  background: rgba(214, 203, 180, 0.35);
+  color: var(--nav-text-default, #3b2416);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: default;
+}
+
 .hd-login-btn {
   padding: 8px 0;
   font-size: var(--nav-font-size, 14px);
@@ -536,6 +553,16 @@ select:focus-visible {
   background: #9f3615;
   border-color: #9f3615;
   color: #ffffff;
+}
+
+/* Mobile: chip Khách nằm trong hàng cập nhật auth */
+.mobile-auth-actions .hd-guest-chip {
+  height: 38px;
+  flex: 0 0 auto;
+  justify-content: center;
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.55);
+  background: rgba(255, 255, 255, 0.16);
 }
 
 /* Account Dropdown */
@@ -1869,6 +1896,7 @@ dialog p {
   background: rgba(245, 240, 230, 0.65);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
+  overflow-y: auto;
   animation: authOverlayFadeIn 0.18s ease-out;
 }
 
@@ -1890,16 +1918,39 @@ dialog p {
 .auth-modal-dialog {
   position: relative;
   width: 100%;
-  max-width: 400px;
+  max-width: 420px;
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
   background: #fdfaf3;
-  border-radius: 6px;
+  border-radius: 8px;
   border: 1px solid rgba(138, 47, 18, 0.22);
   box-shadow:
     0 12px 32px rgba(28, 20, 16, 0.12),
     0 2px 6px rgba(28, 20, 16, 0.06);
-  padding: 26px 28px;
+  padding: 22px 24px;
+  margin: auto;
   color: var(--ink);
+  scrollbar-width: thin;
+  scrollbar-color: rgba(138, 47, 18, 0.25) transparent;
   animation: authModalFadeIn 0.18s ease-out;
+}
+
+.auth-modal-dialog::-webkit-scrollbar {
+  width: 6px;
+}
+
+.auth-modal-dialog::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.auth-modal-dialog::-webkit-scrollbar-thumb {
+  background: rgba(138, 47, 18, 0.25);
+  border-radius: 3px;
+}
+
+.auth-modal-dialog::-webkit-scrollbar-thumb:hover {
+  background: rgba(138, 47, 18, 0.4);
 }
 
 @keyframes authModalFadeIn {
@@ -1913,11 +1964,85 @@ dialog p {
   }
 }
 
+/* Banner "chế độ Khách" trong AuthModal */
+.auth-guest-banner {
+  display: grid;
+  grid-template-columns: 20px 1fr;
+  row-gap: 8px;
+  column-gap: 10px;
+  align-items: start;
+  margin: 0 0 14px;
+  padding: 10px 12px;
+  border: 1px solid rgba(138, 47, 18, 0.22);
+  border-radius: 6px;
+  background: rgba(214, 203, 180, 0.22);
+}
+
+.auth-guest-banner-icon {
+  grid-column: 1;
+  grid-row: 1;
+  display: inline-flex;
+  margin-top: 2px;
+  color: var(--brown, #8a2f12);
+}
+
+.auth-guest-banner-copy {
+  grid-column: 2;
+  grid-row: 1;
+  min-width: 0;
+}
+
+.auth-guest-banner-copy strong {
+  display: block;
+  font-size: 13.5px;
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--ink, #3b2416);
+}
+
+.auth-guest-banner-copy p {
+  margin: 3px 0 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: rgba(59, 36, 22, 0.8);
+}
+
+.auth-guest-banner-continue {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--brown, #8a2f12);
+  border-radius: 4px;
+  background: #ffffff;
+  color: var(--brown, #8a2f12);
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.auth-guest-banner-continue:hover {
+  background: var(--brown, #8a2f12);
+  color: #ffffff;
+  box-shadow: 0 2px 6px rgba(138, 47, 18, 0.2);
+}
+
+.auth-guest-banner-continue:focus-visible {
+  outline: 2px solid var(--brown);
+  outline-offset: 2px;
+}
+
 .auth-modal-close {
   position: absolute;
   top: 12px;
-  right: 12px;
-  display: inline-flex;
+  right: 12px;  display: inline-flex;
   align-items: center;
   justify-content: center;
   width: 30px;
@@ -2367,6 +2492,112 @@ dialog p {
   align-items: center;
   justify-content: center;
   gap: 6px;
+  margin: 0 0 14px;
+}
+
+/* Nhãn chế độ trên trang quét: khách hay tài khoản thật */
+.auth-scan-role {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 0 0 14px;
+  padding: 10px 14px;
+  border: 1px solid #e6dccc;
+  border-radius: 8px;
+  background: rgba(255, 200, 87, 0.18);
+  color: #5b4a22;
+  font-size: 13px;
+  line-height: 1.5;
+  text-align: left;
+}
+
+.auth-scan-role svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.auth-scan-role.is-account {
+  border-color: #cfe3cf;
+  background: rgba(31, 122, 51, 0.09);
+  color: #1f5c2d;
+}
+
+/* Cảnh báo tài khoản chưa xác thực email */
+.auth-scan-warn {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 0 0 14px;
+  padding: 10px 14px;
+  border: 1px solid #f3cbb2;
+  border-radius: 8px;
+  background: rgba(180, 83, 31, 0.08);
+  color: #b4531f;
+  font-size: 13px;
+  line-height: 1.5;
+  text-align: left;
+}
+
+.auth-scan-warn svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.auth-scan-warn button {
+  margin-left: 4px;
+  border: 1px solid #b4531f;
+  border-radius: 4px;
+  background: transparent;
+  color: #b4531f;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 700;
+  padding: 2px 10px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.auth-scan-warn button:hover {
+  background: rgba(180, 83, 31, 0.1);
+}
+
+.auth-scan-meta dd.is-ok {
+  color: #1f7a33;
+}
+
+.auth-scan-meta dd.is-warn {
+  color: #b4531f;
+}
+
+.auth-scan-retry {
+  margin: 0 auto 12px;
+}
+
+.auth-scan-login-hint {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 14px 0 0;
+  color: #7a6a5c;
+  font-size: 13px;
+}
+
+.auth-scan-login-hint a {
+  color: var(--brown, #8a2f12);
+  font-weight: 700;
+  text-decoration: underline;
+}
+
+/* Nút quét QR hiển thị trên điện thoại trong tab QR của modal đăng nhập */
+.auth-qr-mobile-scan {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 40px;
   margin: 0 0 14px;
 }
 
@@ -4800,5 +5031,129 @@ dialog p {
   }
   .cart-clear-btn {
     width: 100%;
+  }
+}
+
+/* Mobile Guest Profile & Quick Guest Button */
+.mobile-guest-profile {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 8px 0;
+}
+
+.mobile-guest-badge {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+}
+
+.mobile-guest-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.22);
+  flex-shrink: 0;
+}
+
+.mobile-guest-info strong {
+  display: block;
+  font-size: 14.5px;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.mobile-guest-info p {
+  margin: 3px 0 0;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.82);
+  line-height: 1.35;
+}
+
+.mobile-guest-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.mobile-guest-exit-btn {
+  width: 100%;
+  height: 38px;
+  background: transparent;
+  border: 1px dashed rgba(255, 255, 255, 0.45);
+  color: #ffffff;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.mobile-guest-exit-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: #ffffff;
+}
+
+.auth-guest-quick-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  height: 40px;
+  margin-top: 14px;
+  background: rgba(194, 65, 12, 0.08);
+  color: var(--fb-accent, #c2410c);
+  border: 1px solid rgba(194, 65, 12, 0.35);
+  border-radius: 4px;
+  font-weight: 600;
+  font-size: 13.5px;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.auth-guest-quick-btn:hover {
+  background: rgba(194, 65, 12, 0.16);
+  border-color: var(--fb-accent, #c2410c);
+}
+
+.auth-guest-alt {
+  margin-top: 10px;
+  text-align: center;
+}
+
+.af-guest-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: none;
+  border: none;
+  color: var(--fb-accent, #c2410c);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.af-guest-link:hover {
+  color: #9a3412;
+}
+
+@media (max-width: 480px) {
+  .auth-modal-overlay {
+    padding: 12px 10px;
+  }
+  .auth-modal-dialog {
+    padding: 20px 16px;
+    max-height: calc(100vh - 24px);
   }
 }

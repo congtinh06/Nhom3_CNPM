@@ -1,0 +1,61 @@
+@startuml
+!theme plain
+skinparam defaultFontName "Times New Roman"
+skinparam defaultFontSize 11
+skinparam monochrome true
+skinparam shadowing false
+skinparam roundCorner 0
+skinparam packageStyle rectangle
+skinparam handwritten false
+skinparam ArrowColor #000000
+skinparam ActorBorderColor #000000
+skinparam ComponentBorderColor #000000
+skinparam DatabaseBorderColor #000000
+skinparam InterfaceBorderColor #000000
+skinparam ParticipantBorderColor #000000
+skinparam SequenceLifeLineBorderColor #000000
+skinparam UsecaseBorderColor #000000
+skinparam StateBorderColor #000000
+skinparam ClassBorderColor #000000
+
+title HÌNH 3.16. SƠ ĐỒ TRẠNG THÁI VÒNG ĐỜI ĐƠN HÀNG (ORDER STATE MACHINE)
+
+[*] --> PENDING_PAYMENT : Du khách đặt hàng (POST /api/orders)\n[expires_at = now + 15m]
+
+state PENDING_PAYMENT {
+  PENDING_PAYMENT : Đơn hàng mới tạo
+  PENDING_PAYMENT : Đang chờ thanh toán trực tuyến hoặc tiền mặt
+}
+
+PENDING_PAYMENT --> PAID : [VNPAY webhook IPN thành công\nhoặc Admin xác nhận VietQR / Thu tiền mặt quầy]
+PENDING_PAYMENT --> CANCELLED : [Người dùng bấm "Hủy đơn"\nhoặc Hủy trên cổng VNPAY (code == '24')]
+PENDING_PAYMENT --> EXPIRED : [Quá thời hạn 15 phút (now > expires_at)]
+
+state EXPIRED {
+  EXPIRED : Đơn hàng hết hạn thanh toán
+}
+EXPIRED --> CANCELLED : [Tự động đóng đơn quá hạn]
+
+state PAID {
+  PAID : Đã thanh toán thành công
+  PAID : Không thể hủy tự động
+}
+
+PAID --> PROCESSING : [Quản trị viên tiếp nhận và đóng gói hàng]
+
+state PROCESSING {
+  PROCESSING : Đơn hàng đang được xử lý đóng gói
+}
+
+PROCESSING --> COMPLETED : [Giao hàng thành công đến tay khách]
+PAID --> COMPLETED : [Gói Premium hoặc nhận tại quầy hoàn tất tức thì]
+
+state COMPLETED {
+  COMPLETED : Đơn hàng hoàn tất thành công (DELIVERED)
+  COMPLETED : Trạng thái kết thúc bất biến
+}
+
+COMPLETED --> [*]
+CANCELLED --> [*]
+
+@enduml

@@ -1,0 +1,72 @@
+@startuml
+!theme plain
+skinparam defaultFontName "Times New Roman"
+skinparam defaultFontSize 11
+skinparam monochrome true
+skinparam shadowing false
+skinparam roundCorner 0
+skinparam packageStyle rectangle
+skinparam handwritten false
+skinparam ArrowColor #000000
+skinparam ActorBorderColor #000000
+skinparam ComponentBorderColor #000000
+skinparam DatabaseBorderColor #000000
+skinparam InterfaceBorderColor #000000
+skinparam ParticipantBorderColor #000000
+skinparam SequenceLifeLineBorderColor #000000
+skinparam UsecaseBorderColor #000000
+skinparam StateBorderColor #000000
+skinparam ClassBorderColor #000000
+
+title HÌNH 3.12. SƠ ĐỒ TUẦN TỰ: XÁC THỰC VÀ XOAY VÒNG REFRESH TOKEN (TOKEN ROTATION)
+
+autonumber
+actor "Du khách" as User
+participant "Frontend SPA\n(tokenStore.ts)" as Client
+participant "API Gateway\n(JwtFilter)" as Gateway
+participant "auth-service\n(RefreshTokenService)" as Auth
+database "CSDL auth_db\n(SQL Server)" as DB
+
+== Giai đoạn 1: Đăng nhập cấp cặp Token ==
+User -> Client : Nhập email & mật khẩu, bấm Đăng nhập
+Client -> Gateway : POST /api/auth/login
+Gateway -> Auth : Chuyển tiếp yêu cầu
+Auth -> DB : SELECT * FROM users WHERE email = ?
+DB --> Auth : Thông tin người dùng
+Auth -> Auth : Kiểm tra mật khẩu (BCrypt)
+Auth -> Auth : Tạo Access Token (RAM, 15m) & Refresh Token (7d)
+Auth -> DB : INSERT INTO refresh_tokens
+Auth --> Gateway : HTTP 200 OK (AccessToken + Set-Cookie RT_1)
+Gateway --> Client : Phản hồi đăng nhập thành công
+Client -> Client : Lưu Access Token vào RAM (tokenStore.ts)
+
+== Giai đoạn 2: Gọi API bảo vệ bằng Access Token ==
+User -> Client : Yêu cầu xem nội dung bảo vệ
+Client -> Gateway : GET /api/protected (Authorization: Bearer AT)
+Gateway -> Gateway : Xác thực chữ ký JWT với JWT_SECRET
+Gateway -> Auth : Chuyển tiếp request
+Auth --> Gateway : Trả về dữ liệu nghiệp vụ
+Gateway --> Client : HTTP 200 OK kèm dữ liệu
+
+== Giai đoạn 3: Silent Refresh Token (Xoay vòng Token đơn kỳ) ==
+Note over Client : Access Token hết hạn sau 15 phút
+Client -> Gateway : POST /api/auth/refresh (Cookie chứa RT_1)
+Gateway -> Auth : Chuyển tiếp tới RefreshTokenService
+Auth -> DB : SELECT * FROM refresh_tokens WHERE token = RT_1
+DB --> Auth : Bản ghi RT_1 (revoked = false)
+Auth -> DB : UPDATE refresh_tokens SET revoked = true WHERE token = RT_1
+Auth -> Auth : Sinh cặp token mới (AccessToken mới + RT_2 mới)
+Auth -> DB : INSERT INTO refresh_tokens (token=RT_2, revoked=false)
+Auth --> Gateway : HTTP 200 OK (AccessToken mới + Cookie RT_2)
+Gateway --> Client : Nhận token mới, lưu vào RAM
+
+== Giai đoạn 4: Phát hiện tấn công đánh cắp Refresh Token ==
+Note over Auth : Kẻ tấn công gửi lại RT_1 đã bị thu hồi
+Gateway -> Auth : POST /api/auth/refresh (Cookie chứa RT_1)
+Auth -> DB : SELECT * FROM refresh_tokens WHERE token = RT_1
+DB --> Auth : Bản ghi RT_1 có revoked == true!
+Auth -> Auth : CẢNH BÁO AN NINH: Token Reuse Detected!
+Auth -> DB : UPDATE refresh_tokens SET revoked = true (Thu hồi toàn bộ)
+Auth --> Gateway : HTTP 401 Unauthorized (TOKEN_COMPROMISED)
+Gateway --> Client : Buộc đăng xuất (Force Logout trên mọi thiết bị)
+@enduml

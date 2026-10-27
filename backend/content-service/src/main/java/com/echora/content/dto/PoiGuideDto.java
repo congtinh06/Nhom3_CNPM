@@ -33,5 +33,8 @@ public class PoiGuideDto {
     private Long routeId;
     private Integer stopOrder;
 
+    // Giá mua lẻ gói ngoại ngữ cho POI này (null = dùng giá mặc định phía order-service).
+    private BigDecimal premiumPrice;
+
     private Map<String, PoiGuideTranslationDto> translations;
 }

@@ -31,6 +31,19 @@ export interface PremiumCopy {
   activeCta: string;
   continueCta: string;
   expiryLabel: string;
+  packageBadge: string;
+  packageTitle: string;
+  packageDescription: string;
+  packageIncludesLabel: string;
+  discountTitle: string;
+  discountDescription: string;
+  discountCta: string;
+  videoLabel: string;
+  detailsLabel: string;
+  souvenirDiscountLabel: string;
+  poiSearchPlaceholder: string;
+  poiNoResults: string;
+  clearSearch: string;
   languagesTitle: string;
   languagesSubtitle: string;
   languageDescriptions: Record<'en' | 'ja' | 'ko', string>;
@@ -50,6 +63,19 @@ export interface PremiumCopy {
   closingDescription: string;
   backToTour: string;
   paymentError: string;
+  paymentCancelled: string;
+  paymentFailed: string;
+  pendingBadge: string;
+  pendingValue: string;
+  pendingDescription: string;
+  pendingCheckAgain: string;
+  pendingTimedOut: string;
+  retryCheckout: string;
+  entitlementErrorTitle: string;
+  entitlementErrorDescription: string;
+  retry: string;
+  dataLoading: string;
+  dataError: string;
 }
 
 export const PREMIUM_COPY: Record<SupportedLanguage, PremiumCopy> = {
@@ -68,25 +94,29 @@ export const PREMIUM_COPY: Record<SupportedLanguage, PremiumCopy> = {
       'Mọi quyền lợi đều gắn với tài khoản của bạn và dựa trên nội dung thuyết minh hiện có.',
     benefits: [
       {
-        title: '{languageCount} ngôn ngữ quốc tế',
-        description: 'Nghe thuyết minh tiếng Anh, Nhật và Hàn với đúng giọng đọc của từng ngôn ngữ.',
+        title: 'Một gói, bốn ngôn ngữ',
+        description:
+          'Tiếng Việt miễn phí cho mọi du khách. Một lần mua Premium mở khóa trọn bộ tiếng Anh, Nhật và Hàn.',
       },
       {
-        title: '{count} bản thuyết minh',
-        description: 'Mở khóa toàn bộ nội dung ngoại ngữ của {poiCount} điểm đến trong hành trình.',
+        title: '{count} bản thuyết minh chi tiết',
+        description:
+          'Nội dung biên tập đầy đủ cho từng điểm đến, gồm câu chuyện, kiến trúc và bối cảnh lịch sử.',
       },
       {
-        title: 'Quét QR cho khách quốc tế',
-        description: 'Khách quét mã tại điểm đến có thể nghe ngay bằng ngôn ngữ mình chọn.',
+        title: 'Video giới thiệu từng điểm',
+        description:
+          'Xem trước không gian, kiến trúc và nhịp sống của mỗi điểm đến trước khi bắt đầu tham quan.',
       },
       {
-        title: 'Tự động thuyết minh theo GPS',
-        description: 'Bật tự động thuyết minh và nghe đúng điểm đến khi bước vào bán kính kích hoạt.',
+        title: 'Giảm 10% quà lưu niệm',
+        description:
+          'Ưu đãi 10% cho từng sản phẩm lưu niệm khi mua sắm trong hành trình Echora.',
       },
     ],
     purchaseTitle: 'Premium trọn bộ',
     purchaseDescription:
-      'Mở khóa {count} bản thuyết minh ngoại ngữ của {poiCount} điểm đến trên tài khoản của bạn.',
+      'Một lần thanh toán mở khóa {count} bản thuyết minh tiếng Anh, Nhật, Hàn cho {poiCount} điểm đến, kèm video giới thiệu và ưu đãi 10% quà lưu niệm.',
     priceUnit: 'thanh toán một lần',
     checkoutCta: 'Thanh toán 500.000đ qua VNPAY',
     checkoutPending: 'Đang chuyển sang VNPAY...',
@@ -96,9 +126,24 @@ export const PREMIUM_COPY: Record<SupportedLanguage, PremiumCopy> = {
     activeCta: 'Premium đã kích hoạt',
     continueCta: 'Tiếp tục trải nghiệm',
     expiryLabel: 'Có hiệu lực đến',
-    languagesTitle: '3 gói ngôn ngữ trong Premium',
+    packageBadge: 'Một gói duy nhất',
+    packageTitle: 'Một gói Premium, bốn ngôn ngữ',
+    packageDescription:
+      'Không còn mua riêng từng ngôn ngữ. Tiếng Việt luôn miễn phí; Premium mở khóa đồng thời tiếng Anh, Nhật và Hàn cho toàn bộ hành trình.',
+    packageIncludesLabel: 'Bao gồm trong gói',
+    discountTitle: 'Giảm 10% mỗi sản phẩm lưu niệm',
+    discountDescription:
+      'Chủ tài khoản Premium được giảm 10% trên từng sản phẩm lưu niệm tại cửa hàng Echora. Ưu đãi áp dụng tự động khi thanh toán.',
+    discountCta: 'Khám phá quà lưu niệm',
+    videoLabel: 'Video giới thiệu',
+    detailsLabel: 'Nội dung thuyết minh chi tiết',
+    souvenirDiscountLabel: 'Giảm 10% quà lưu niệm',
+    poiSearchPlaceholder: 'Tìm điểm đến muốn mở khóa...',
+    poiNoResults: 'Không tìm thấy điểm đến phù hợp.',
+    clearSearch: 'Xóa tìm kiếm',
+    languagesTitle: 'Một gói Premium, bốn ngôn ngữ',
     languagesSubtitle:
-      'Ba ngôn ngữ quốc tế dùng chung một quyền Premium, không cần mua riêng từng gói.',
+      'Tiếng Việt miễn phí. Một lần mua Premium mở khóa tiếng Anh, Nhật và Hàn, không bán riêng từng gói.',
     languageDescriptions: {
       en: 'Thuyết minh tiếng Anh cho toàn bộ điểm đến trong hành trình.',
       ja: 'Thuyết minh tiếng Nhật với nội dung được biên tập cho du khách Nhật Bản.',
@@ -135,6 +180,21 @@ export const PREMIUM_COPY: Record<SupportedLanguage, PremiumCopy> = {
       'Kích hoạt Premium để mỗi điểm đến có thể được nghe bằng ngôn ngữ phù hợp với từng người.',
     backToTour: 'Về trang điểm đến',
     paymentError: 'Không thể tạo thanh toán VNPAY. Vui lòng thử lại.',
+    paymentCancelled: 'Giao dịch đã bị hủy. Bạn có thể thử lại khi sẵn sàng.',
+    paymentFailed: 'Thanh toán chưa thành công hoặc bị gián đoạn. Vui lòng thử lại.',
+    pendingBadge: 'Đang chờ xác nhận',
+    pendingValue: 'Đang kiểm tra giao dịch...',
+    pendingDescription:
+      'Hệ thống đang đồng bộ kết quả thanh toán từ VNPAY. Bạn không cần thanh toán lại.',
+    pendingCheckAgain: 'Kiểm tra lại',
+    pendingTimedOut: 'Chưa nhận được xác nhận. Bạn có thể kiểm tra lại hoặc thử thanh toán mới.',
+    retryCheckout: 'Thanh toán lại',
+    entitlementErrorTitle: 'Chưa tải được trạng thái Premium',
+    entitlementErrorDescription:
+      'Kết nối tới máy chủ đang gián đoạn. Trạng thái gói của bạn vẫn được giữ nguyên.',
+    retry: 'Thử lại',
+    dataLoading: 'Đang tải nội dung Premium...',
+    dataError: 'Chưa tải được danh sách điểm đến. Vui lòng thử lại.',
   },
   en: {
     eyebrow: 'ECHORA PREMIUM',
@@ -151,25 +211,29 @@ export const PREMIUM_COPY: Record<SupportedLanguage, PremiumCopy> = {
       'Every benefit is tied to your account and based on the narration already available.',
     benefits: [
       {
-        title: '{languageCount} international languages',
-        description: 'Hear English, Japanese and Korean narration with a matching voice.',
+        title: 'One plan, four languages',
+        description:
+          'Vietnamese is free for every visitor. One Premium purchase unlocks English, Japanese and Korean together.',
       },
       {
-        title: '{count} narration scripts',
-        description: 'Unlock every foreign-language script across the {poiCount} stops.',
+        title: '{count} detailed narration scripts',
+        description:
+          'Full edited stories for every stop, covering architecture, local life and historical context.',
       },
       {
-        title: 'QR access for international guests',
-        description: 'Guests can scan the code at a stop and listen in the language they choose.',
+        title: 'Intro videos for every stop',
+        description:
+          'Preview the space, architecture and rhythm of each destination before you arrive.',
       },
       {
-        title: 'GPS auto narration',
-        description: 'Turn on auto narration and hear the right stop when you enter its radius.',
+        title: '10% off souvenirs',
+        description:
+          'Save 10% on every souvenir product when you shop during your Echora journey.',
       },
     ],
     purchaseTitle: 'Premium access',
     purchaseDescription:
-      'Unlock {count} foreign-language narration scripts across {poiCount} stops on your account.',
+      'One payment unlocks {count} English, Japanese and Korean narration scripts for {poiCount} stops, plus intro videos and 10% off souvenirs.',
     priceUnit: 'one-time payment',
     checkoutCta: 'Pay 500,000₫ with VNPAY',
     checkoutPending: 'Redirecting to VNPAY...',
@@ -179,9 +243,24 @@ export const PREMIUM_COPY: Record<SupportedLanguage, PremiumCopy> = {
     activeCta: 'Premium is active',
     continueCta: 'Continue exploring',
     expiryLabel: 'Valid until',
-    languagesTitle: '3 language packages in Premium',
+    packageBadge: 'One plan only',
+    packageTitle: 'One Premium plan, four languages',
+    packageDescription:
+      'No more buying each language separately. Vietnamese stays free; Premium unlocks English, Japanese and Korean across the whole journey.',
+    packageIncludesLabel: 'Included in the plan',
+    discountTitle: '10% off every souvenir',
+    discountDescription:
+      'Premium account holders get 10% off each souvenir product at the Echora shop. The discount is applied automatically at checkout.',
+    discountCta: 'Explore souvenirs',
+    videoLabel: 'Intro video',
+    detailsLabel: 'Detailed narration content',
+    souvenirDiscountLabel: '10% off souvenirs',
+    poiSearchPlaceholder: 'Find a stop to unlock...',
+    poiNoResults: 'No matching stops found.',
+    clearSearch: 'Clear search',
+    languagesTitle: 'One Premium plan, four languages',
     languagesSubtitle:
-      'All three international languages share one Premium entitlement, with no separate purchase.',
+      'Vietnamese is free. One Premium purchase unlocks English, Japanese and Korean together, never sold separately.',
     languageDescriptions: {
       en: 'English narration for every stop in the journey.',
       ja: 'Japanese narration written for visitors from Japan.',
@@ -218,6 +297,21 @@ export const PREMIUM_COPY: Record<SupportedLanguage, PremiumCopy> = {
       'Activate Premium so every stop can be heard in the language that suits each guest.',
     backToTour: 'Back to attractions',
     paymentError: 'Could not create the VNPAY payment. Please try again.',
+    paymentCancelled: 'The transaction was cancelled. You can try again when ready.',
+    paymentFailed: 'The payment did not complete. Please try again.',
+    pendingBadge: 'Awaiting confirmation',
+    pendingValue: 'Checking the transaction...',
+    pendingDescription:
+      'We are syncing the VNPAY result. You do not need to pay again.',
+    pendingCheckAgain: 'Check again',
+    pendingTimedOut: 'No confirmation yet. Check again or start a new payment.',
+    retryCheckout: 'Pay again',
+    entitlementErrorTitle: 'Could not load Premium status',
+    entitlementErrorDescription:
+      'The server connection was interrupted. Your current plan is unchanged.',
+    retry: 'Try again',
+    dataLoading: 'Loading Premium content...',
+    dataError: 'Could not load the stop list. Please try again.',
   },
   ja: {
     eyebrow: 'ECHORA PREMIUM',
@@ -234,25 +328,29 @@ export const PREMIUM_COPY: Record<SupportedLanguage, PremiumCopy> = {
       '特典はすべてアカウントに紐づき、現在提供している音声ガイド内容に基づきます。',
     benefits: [
       {
-        title: '{languageCount}つの国際言語',
-        description: '英語、日本語、韓国語の音声ガイドを、それぞれの言語の声で聞けます。',
+        title: '1つのプランで4言語',
+        description:
+          'ベトナム語はすべての訪問者に無料。Premium を1回購入すると、英語・日本語・韓国語をまとめて利用できます。',
       },
       {
-        title: '音声ガイド{count}本',
-        description: '{poiCount}スポットの外国語コンテンツをすべて利用できます。',
+        title: '詳細な音声ガイド{count}本',
+        description:
+          '各スポットの建築、歴史、現地の暮らしを詳しく紹介する編集済みの内容です。',
       },
       {
-        title: '海外からのお客様向け QR',
-        description: 'スポットで QR コードを読み取り、選んだ言語ですぐに聞けます。',
+        title: '各スポットの紹介動画',
+        description:
+          '訪問前に、それぞれの場所の空間や建築、雰囲気を動画で確認できます。',
       },
       {
-        title: 'GPS 自動ガイド',
-        description: '自動ガイドをオンにすると、対象範囲に入ったスポットを自動で再生します。',
+        title: 'お土産10%オフ',
+        description:
+          'Echora の旅でお土産を購入すると、商品ごとに10%割引が適用されます。',
       },
     ],
     purchaseTitle: 'Premium アクセス',
     purchaseDescription:
-      '{poiCount}スポットの外国語音声ガイド{count}本を、アカウントで利用できます。',
+      '1回の決済で、{poiCount}スポットの英語・日本語・韓国語の音声ガイド{count}本、紹介動画、お土産10%オフを利用できます。',
     priceUnit: '一括払い',
     checkoutCta: 'VNPAYで500,000đを支払う',
     checkoutPending: 'VNPAYへ移動中...',
@@ -262,9 +360,24 @@ export const PREMIUM_COPY: Record<SupportedLanguage, PremiumCopy> = {
     activeCta: 'Premium は有効です',
     continueCta: '体験を続ける',
     expiryLabel: '有効期限',
-    languagesTitle: 'Premiumに含まれる3つの言語パッケージ',
+    packageBadge: '1つのプランだけ',
+    packageTitle: '1つの Premium プランで4言語',
+    packageDescription:
+      '言語ごとに購入する必要はありません。ベトナム語は無料のまま、Premium で英語・日本語・韓国語を旅全体にわたって利用できます。',
+    packageIncludesLabel: 'プランに含まれるもの',
+    discountTitle: 'お土産すべて10%オフ',
+    discountDescription:
+      'Premium アカウントの方は、Echora ショップのお土産1点ごとに10%割引。決済時に自動で適用されます。',
+    discountCta: 'お土産を見る',
+    videoLabel: '紹介動画',
+    detailsLabel: '詳細な音声ガイド',
+    souvenirDiscountLabel: 'お土産10%オフ',
+    poiSearchPlaceholder: '解除したいスポットを検索...',
+    poiNoResults: '該当するスポットが見つかりません。',
+    clearSearch: '検索をクリア',
+    languagesTitle: '1つの Premium プランで4言語',
     languagesSubtitle:
-      '3つの国際言語は1つの Premium 権利に含まれ、個別購入は不要です。',
+      'ベトナム語は無料。Premium を1回購入すると英語・日本語・韓国語がまとめて利用でき、個別販売はありません。',
     languageDescriptions: {
       en: '旅のすべてのスポットの英語音声ガイドです。',
       ja: '日本人旅行者向けに編集された日本語音声ガイドです。',
@@ -301,6 +414,21 @@ export const PREMIUM_COPY: Record<SupportedLanguage, PremiumCopy> = {
       'Premium を有効にすると、各スポットを相手に合った言語で聞いてもらえます。',
     backToTour: '観光スポットへ戻る',
     paymentError: 'VNPAY決済を作成できませんでした。もう一度お試しください。',
+    paymentCancelled: '取引はキャンセルされました。準備ができたら再試行できます。',
+    paymentFailed: '決済が完了しませんでした。もう一度お試しください。',
+    pendingBadge: '確認待ち',
+    pendingValue: '取引を確認しています...',
+    pendingDescription:
+      'VNPAY の決済結果を同期しています。再度お支払いいただく必要はありません。',
+    pendingCheckAgain: '再確認',
+    pendingTimedOut: 'まだ確認できません。再確認するか、新しい決済を開始してください。',
+    retryCheckout: '再決済',
+    entitlementErrorTitle: 'Premium の状態を読み込めません',
+    entitlementErrorDescription:
+      'サーバーとの接続が中断されました。現在のプランは変更されません。',
+    retry: '再試行',
+    dataLoading: 'Premium コンテンツを読み込み中...',
+    dataError: 'スポット一覧を読み込めませんでした。もう一度お試しください。',
   },
   ko: {
     eyebrow: 'ECHORA PREMIUM',
@@ -317,25 +445,29 @@ export const PREMIUM_COPY: Record<SupportedLanguage, PremiumCopy> = {
       '모든 혜택은 계정에 연결되며 현재 제공되는 해설 콘텐츠를 기준으로 합니다.',
     benefits: [
       {
-        title: '{languageCount}개 국제 언어',
-        description: '영어, 일본어, 한국어 해설을 각 언어에 맞는 음성으로 들을 수 있습니다.',
+        title: '하나의 플랜, 네 개 언어',
+        description:
+          '베트남어는 모든 방문객에게 무료입니다. Premium을 한 번 구매하면 영어, 일본어, 한국어를 함께 이용할 수 있습니다.',
       },
       {
-        title: '해설 {count}개',
-        description: '{poiCount}개 명소의 모든 외국어 콘텐츠를 이용할 수 있습니다.',
+        title: '상세 해설 {count}개',
+        description:
+          '각 명소의 건축, 역사, 현지 생활을 담은 편집된 이야기를 제공합니다.',
       },
       {
-        title: '외국인 방문객을 위한 QR',
-        description: '명소에서 QR 코드를 스캔하고 원하는 언어로 바로 들을 수 있습니다.',
+        title: '명소별 소개 영상',
+        description:
+          '방문 전에 각 장소의 공간과 건축, 분위기를 영상으로 미리 확인하세요.',
       },
       {
-        title: 'GPS 자동 해설',
-        description: '자동 해설을 켜면 반경에 들어선 명소의 해설이 자동으로 재생됩니다.',
+        title: '기념품 10% 할인',
+        description:
+          'Echora 여행 중 기념품을 구매하면 상품마다 10% 할인이 적용됩니다.',
       },
     ],
     purchaseTitle: 'Premium 이용권',
     purchaseDescription:
-      '{poiCount}개 명소의 외국어 해설 {count}개를 계정에서 이용할 수 있습니다.',
+      '한 번의 결제로 {poiCount}개 명소의 영어, 일본어, 한국어 해설 {count}개와 소개 영상, 기념품 10% 할인을 이용할 수 있습니다.',
     priceUnit: '1회 결제',
     checkoutCta: 'VNPAY로 500,000đ 결제',
     checkoutPending: 'VNPAY로 이동 중...',
@@ -345,9 +477,24 @@ export const PREMIUM_COPY: Record<SupportedLanguage, PremiumCopy> = {
     activeCta: 'Premium이 활성화되었습니다',
     continueCta: '계속 둘러보기',
     expiryLabel: '유효 기간',
-    languagesTitle: '프리미엄에 포함된 3개 언어 패키지',
+    packageBadge: '하나의 플랜',
+    packageTitle: '하나의 Premium 플랜, 네 개 언어',
+    packageDescription:
+      '언어별로 따로 구매할 필요가 없습니다. 베트남어는 무료이며, Premium으로 영어, 일본어, 한국어를 여행 전체에서 이용하세요.',
+    packageIncludesLabel: '플랜에 포함된 항목',
+    discountTitle: '모든 기념품 10% 할인',
+    discountDescription:
+      'Premium 계정은 Echora 상점의 기념품마다 10% 할인을 받습니다. 결제 시 자동으로 적용됩니다.',
+    discountCta: '기념품 둘러보기',
+    videoLabel: '소개 영상',
+    detailsLabel: '상세 해설 콘텐츠',
+    souvenirDiscountLabel: '기념품 10% 할인',
+    poiSearchPlaceholder: '해제할 명소 검색...',
+    poiNoResults: '일치하는 명소가 없습니다.',
+    clearSearch: '검색 지우기',
+    languagesTitle: '하나의 Premium 플랜, 네 개 언어',
     languagesSubtitle:
-      '3개 국제 언어는 하나의 Premium 이용권에 포함되며 별도 구매가 필요하지 않습니다.',
+      '베트남어는 무료입니다. Premium을 한 번 구매하면 영어, 일본어, 한국어가 함께 열리며 개별 판매는 없습니다.',
     languageDescriptions: {
       en: '여행의 모든 명소를 위한 영어 해설입니다.',
       ja: '일본인 여행자를 위해 편집된 일본어 해설입니다.',
@@ -384,6 +531,21 @@ export const PREMIUM_COPY: Record<SupportedLanguage, PremiumCopy> = {
       'Premium을 활성화하면 각 명소를 방문객에게 맞는 언어로 들려줄 수 있습니다.',
     backToTour: '명소 페이지로',
     paymentError: 'VNPAY 결제를 생성할 수 없습니다. 다시 시도해 주세요.',
+    paymentCancelled: '거래가 취소되었습니다. 준비되면 다시 시도할 수 있습니다.',
+    paymentFailed: '결제가 완료되지 않았습니다. 다시 시도해 주세요.',
+    pendingBadge: '확인 대기 중',
+    pendingValue: '거래를 확인하는 중...',
+    pendingDescription:
+      'VNPAY 결제 결과를 동기화하고 있습니다. 다시 결제할 필요가 없습니다.',
+    pendingCheckAgain: '다시 확인',
+    pendingTimedOut: '아직 확인되지 않았습니다. 다시 확인하거나 새 결제를 시작하세요.',
+    retryCheckout: '다시 결제',
+    entitlementErrorTitle: 'Premium 상태를 불러오지 못했습니다',
+    entitlementErrorDescription:
+      '서버 연결이 중단되었습니다. 현재 요금제는 그대로 유지됩니다.',
+    retry: '다시 시도',
+    dataLoading: 'Premium 콘텐츠를 불러오는 중...',
+    dataError: '명소 목록을 불러오지 못했습니다. 다시 시도해 주세요.',
   },
 };
 

@@ -53,6 +53,9 @@ public class UpdatePoiRequest {
     @Size(max = 500, message = "thumbnailUrl must be at most 500 characters")
     private String thumbnailUrl;
 
+    @DecimalMin(value = "0.0", message = "premiumPrice must be >= 0")
+    private BigDecimal premiumPrice;
+
     // Vietnamese content fields
     @NotBlank(message = "title is required")
     @Size(max = 255, message = "title must be at most 255 characters")

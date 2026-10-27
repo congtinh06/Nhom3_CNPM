@@ -1,0 +1,21 @@
+================================================================================
+THÔNG TIN CHÚ THÍCH HÌNH ẢNH: Hinh_2.6_Chuong_2
+================================================================================
+1. KÝ HIỆU HÌNH         : Hinh 2.6 Chuong 2
+2. TIÊU ĐỀ SƠ ĐỒ        : Sơ đồ Phân rã Phả hệ Product Backlog (Epic - Feature - User Story - AC)
+3. THUỘC BÁO CÁO        : Chương 2: PRD và Phân tích Yêu cầu Sản phẩm
+4. VỊ TRÍ TRONG CHƯƠNG  : Mục 2.14 – Product Backlog và User Stories
+5. TÁC NHÂN / THÀNH PHẦN: Product Owner, Scrum Master, Development Team Nhóm 03
+6. TIÊU CHUẨN MÔ HÌNH HÓA: Agile Backlog Hierarchy Diagram, Monochrome Black & White, nét nối cha con chuẩn mực.
+--------------------------------------------------------------------------------
+7. MỤC ĐÍCH VÀ Ý NGHĨA NGHIỆP VỤ:
+   Trực quan hóa cấu trúc phân rã phả hệ Product Backlog theo phương pháp luận Agile/Scrum: Từ 6 Epic nghiệp vụ lớn -> Phân rã thành 16 Feature chức năng -> Phân rã thành 30 User Stories được viết theo chuẩn quốc tế (As a... I want to... So that...) đi kèm Tiêu chí chấp nhận (AC) định dạng Given-When-Then.
+--------------------------------------------------------------------------------
+8. QUY CÁCH TỆP HÌNH ẢNH:
+   • Tệp hình ảnh Raster : Hinh_2.6_Chuong_2.png (Độ phân giải cao, phục vụ chèn văn bản Word/PDF)
+   • Tệp đồ họa Vector   : Hinh_2.6_Chuong_2.svg (Mã nguồn vector gốc, có thể phóng to vô hạn)
+   • Phong cách thể hiện  : Pure Monochrome Black & White (Nền trắng, nét đen, chữ đen chuẩn học thuật)
+================================================================================
+Đồ án Học phần Công nghệ Phần mềm – Đề tài: Hệ thống Thuyết minh Tự động Đa ngôn ngữ Echora
+Nhóm Sinh viên Thực hiện: Nhóm 03 – Khoa CNTT, Đại học Khoa học Tự nhiên / ĐHQG-HCM
+================================================================================

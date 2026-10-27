@@ -1,0 +1,21 @@
+================================================================================
+THÔNG TIN CHÚ THÍCH HÌNH ẢNH: Hinh_1.2_Chuong_1
+================================================================================
+1. KÝ HIỆU HÌNH         : Hinh 1.2 Chuong 1
+2. TIÊU ĐỀ SƠ ĐỒ        : Quy trình Vòng đời Kỹ nghệ Phần mềm Đề tài Echora (SE Lifecycle)
+3. THUỘC BÁO CÁO        : Chương 1: Tổng quan Đề tài
+4. VỊ TRÍ TRONG CHƯƠNG  : Mục 1.6.2 – Quy trình Vòng đời Kỹ nghệ Phần mềm
+5. TÁC NHÂN / THÀNH PHẦN: Nhóm Kỹ sư Phần mềm (Nhóm 03), Giảng viên Hướng dẫn, Chuyên viên Di sản Bảo tàng
+6. TIÊU CHUẨN MÔ HÌNH HÓA: Quy trình Waterfall lặp linh hoạt (Agile-Waterfall Hybrid), biểu đồ luồng quy trình kỹ nghệ chuẩn.
+--------------------------------------------------------------------------------
+7. MỤC ĐÍCH VÀ Ý NGHĨA NGHIỆP VỤ:
+   Minh họa trực quan chu trình khép kín của quy trình kỹ nghệ phần mềm áp dụng cho toàn bộ đồ án: Khảo sát thực địa di tích TP.HCM -> Xây dựng PRD & Product Backlog (Chương 2) -> Phân tích Nghiệp vụ & Mô hình hóa Use Case (Chương 3) -> Thiết kế Kiến trúc & Cơ sở dữ liệu 3NF (Chương 4) -> Lập trình nguyên mẫu thử nghiệm (React/Node.js/Spring Boot) -> Kiểm thử nghiệm thu (UAT) -> Đóng gói Docker và Báo cáo tổng kết.
+--------------------------------------------------------------------------------
+8. QUY CÁCH TỆP HÌNH ẢNH:
+   • Tệp hình ảnh Raster : Hinh_1.2_Chuong_1.png (Độ phân giải cao, phục vụ chèn văn bản Word/PDF)
+   • Tệp đồ họa Vector   : Hinh_1.2_Chuong_1.svg (Mã nguồn vector gốc, có thể phóng to vô hạn)
+   • Phong cách thể hiện  : Pure Monochrome Black & White (Nền trắng, nét đen, chữ đen chuẩn học thuật)
+================================================================================
+Đồ án Học phần Công nghệ Phần mềm – Đề tài: Hệ thống Thuyết minh Tự động Đa ngôn ngữ Echora
+Nhóm Sinh viên Thực hiện: Nhóm 03 – Khoa CNTT, Đại học Khoa học Tự nhiên / ĐHQG-HCM
+================================================================================

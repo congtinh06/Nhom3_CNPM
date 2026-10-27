@@ -1,0 +1,67 @@
+@startuml
+!theme plain
+skinparam defaultFontName "Times New Roman"
+skinparam defaultFontSize 11
+skinparam monochrome true
+skinparam shadowing false
+skinparam roundCorner 0
+skinparam packageStyle rectangle
+skinparam handwritten false
+skinparam ArrowColor #000000
+skinparam ActorBorderColor #000000
+skinparam ComponentBorderColor #000000
+skinparam DatabaseBorderColor #000000
+skinparam InterfaceBorderColor #000000
+skinparam ParticipantBorderColor #000000
+skinparam SequenceLifeLineBorderColor #000000
+skinparam UsecaseBorderColor #000000
+skinparam StateBorderColor #000000
+skinparam ClassBorderColor #000000
+
+title HÌNH 3.4. SƠ ĐỒ USE CASE PHÂN HỆ DU KHÁCH & TRẢI NGHIỆM DI SẢN
+
+left to right direction
+
+actor "Khách vãng lai\n(Anonymous Visitor)" as Visitor
+actor "Người dùng đã đăng ký\n(Registered User)" as RegUser
+actor "Cảm biến GPS" as GPS
+
+RegUser -up-|> Visitor
+
+rectangle "Phân hệ Du khách: Trải nghiệm Di sản Số" {
+  usecase "UC-01: Khám phá bản đồ di tích trung tâm" as UC01
+  usecase "UC-02: Nghe thuyết minh di tích đa ngôn ngữ" as UC02
+  usecase "UC-03: Nhận thuyết minh di tích tự động theo GPS" as UC03
+  usecase "UC-04: Quét mã QR di sản giải mã điểm dừng" as UC04
+  usecase "UC-05: Khám phá bản đồ qua chế độ giả lập GPS" as UC05
+  usecase "UC-06: Xem danh mục quà lưu niệm đặc trưng" as UC06
+  usecase "UC-07: Xem chi tiết sản phẩm quà lưu niệm" as UC07
+  usecase "UC-08: Xem danh sách tin tức văn hóa di sản" as UC08
+  usecase "UC-09: Đọc bài viết tin tức văn hóa di sản" as UC09
+
+  usecase "Tải dữ liệu POI một lần\n(Single-Shot Fetch)" as FetchPOI
+  usecase "Phát âm thanh luồng phân đoạn\n(HTTP 206 Byte-Range)" as StreamAudio
+  usecase "Đồng bộ phụ đề văn bản" as SyncSub
+}
+
+Visitor --> UC01
+Visitor --> UC02
+Visitor --> UC03
+Visitor --> UC04
+Visitor --> UC05
+Visitor --> UC06
+Visitor --> UC07
+Visitor --> UC08
+Visitor --> UC09
+
+UC03 ..> GPS : <<sử dụng>>
+
+UC01 ..> FetchPOI : <<include>>
+UC03 ..> UC02 : <<include>>
+UC04 ..> UC02 : <<include>>
+UC02 ..> StreamAudio : <<include>>
+UC02 ..> SyncSub : <<extend>>
+UC06 ..> UC07 : <<extend>>
+UC08 ..> UC09 : <<extend>>
+
+@enduml

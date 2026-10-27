@@ -1,0 +1,130 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 680" width="1200" height="680" style="background:#ffffff; font-family:'Times New Roman', Times, serif;">
+  
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#000000"/>
+    </marker>
+    <marker id="openArrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 2 L 8 5 L 0 8" fill="none" stroke="#000000" stroke-width="1.5"/>
+    </marker>
+    <marker id="genArrow" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <polygon points="0,1 10,6 0,11" fill="#ffffff" stroke="#000000" stroke-width="1.5"/>
+    </marker>
+  </defs>
+
+  <text x="600" y="35" text-anchor="middle" font-size="18" font-weight="bold" fill="#000000">HÌNH 1.2. SƠ ĐỒ QUY TRÌNH KỸ NGHỆ PHẦN MỀM ÁP DỤNG TRONG DỰ ÁN ECHORA</text>
+  <text x="600" y="58" text-anchor="middle" font-size="12" font-style="italic" fill="#333333">Quy trình Công nghệ Phần mềm Lặp theo Mô hình Lai Agile/Scrum kết hợp Đặc tả Chuẩn IEEE 830</text>
+
+  <!-- Stage 1 -->
+  <rect x="60" y="110" width="190" height="180" fill="#ffffff" stroke="#000000" stroke-width="1.8"/>
+  <rect x="60" y="110" width="190" height="35" fill="#f0f0f0" stroke="#000000" stroke-width="1.2"/>
+  <text x="155" y="133" text-anchor="middle" font-size="12" font-weight="bold">GIAI ĐOẠN 1</text>
+  <text x="155" y="165" text-anchor="middle" font-size="12" font-weight="bold">Khảo sát &amp; Thu thập</text>
+  <text x="155" y="185" text-anchor="middle" font-size="12" font-weight="bold">Yêu cầu Thực tế</text>
+  <text x="75" y="215" font-size="10.5">• Nghiên cứu 7 di tích trung tâm</text>
+  <text x="75" y="235" font-size="10.5">• Khảo sát trải nghiệm du khách</text>
+  <text x="75" y="255" font-size="10.5">• Xác định rào cản GPS &amp; Ngôn ngữ</text>
+  <text x="75" y="275" font-size="10.5">• Đầu ra: Báo cáo khảo sát vấn đề</text>
+
+  <!-- Arrow 1->2 -->
+  <line x1="250" y1="200" x2="280" y2="200" stroke="#000000" stroke-width="1.8" marker-end="url(#arrow)"/>
+
+  <!-- Stage 2 -->
+  <rect x="280" y="110" width="190" height="180" fill="#ffffff" stroke="#000000" stroke-width="1.8"/>
+  <rect x="280" y="110" width="190" height="35" fill="#f0f0f0" stroke="#000000" stroke-width="1.2"/>
+  <text x="375" y="133" text-anchor="middle" font-size="12" font-weight="bold">GIAI ĐOẠN 2</text>
+  <text x="375" y="165" text-anchor="middle" font-size="12" font-weight="bold">Đặc tả Yêu cầu</text>
+  <text x="375" y="185" text-anchor="middle" font-size="12" font-weight="bold">Sản phẩm (PRD)</text>
+  <text x="295" y="215" font-size="10.5">• Xác định Problem Alignment</text>
+  <text x="295" y="235" font-size="10.5">• Thiết lập Product Goals (KPI)</text>
+  <text x="295" y="255" font-size="10.5">• Định nghĩa Scope (In/Out Scope)</text>
+  <text x="295" y="275" font-size="10.5">• Đầu ra: Tài liệu PRD chuẩn</text>
+
+  <!-- Arrow 2->3 -->
+  <line x1="470" y1="200" x2="500" y2="200" stroke="#000000" stroke-width="1.8" marker-end="url(#arrow)"/>
+
+  <!-- Stage 3 -->
+  <rect x="500" y="110" width="190" height="180" fill="#ffffff" stroke="#000000" stroke-width="1.8"/>
+  <rect x="500" y="110" width="190" height="35" fill="#f0f0f0" stroke="#000000" stroke-width="1.2"/>
+  <text x="595" y="133" text-anchor="middle" font-size="12" font-weight="bold">GIAI ĐOẠN 3</text>
+  <text x="595" y="165" text-anchor="middle" font-size="12" font-weight="bold">Phân rã Backlog</text>
+  <text x="595" y="185" text-anchor="middle" font-size="12" font-weight="bold">&amp; Quy tắc Nghiệp vụ</text>
+  <text x="515" y="215" font-size="10.5">• Phân rã Epic - Feature - Story</text>
+  <text x="515" y="235" font-size="10.5">• Viết Acceptance Criteria (G-W-T)</text>
+  <text x="515" y="255" font-size="10.5">• Xây dựng quy tắc nghiệp vụ BR</text>
+  <text x="515" y="275" font-size="10.5">• Đầu ra: Product Backlog &amp; MoSCoW</text>
+
+  <!-- Arrow 3->4 -->
+  <line x1="690" y1="200" x2="720" y2="200" stroke="#000000" stroke-width="1.8" marker-end="url(#arrow)"/>
+
+  <!-- Stage 4 -->
+  <rect x="720" y="110" width="190" height="180" fill="#ffffff" stroke="#000000" stroke-width="1.8"/>
+  <rect x="720" y="110" width="190" height="35" fill="#f0f0f0" stroke="#000000" stroke-width="1.2"/>
+  <text x="815" y="133" text-anchor="middle" font-size="12" font-weight="bold">GIAI ĐOẠN 4</text>
+  <text x="815" y="165" text-anchor="middle" font-size="12" font-weight="bold">Mô hình hóa Nghiệp vụ</text>
+  <text x="815" y="185" text-anchor="middle" font-size="12" font-weight="bold">&amp; Phân tích Hệ thống</text>
+  <text x="735" y="215" font-size="10.5">• Xây dựng Sơ đồ Use Case tổng thể</text>
+  <text x="735" y="235" font-size="10.5">• Đặc tả chi tiết các Use Case chính</text>
+  <text x="735" y="255" font-size="10.5">• Vẽ Sơ đồ Hoạt động &amp; Tuần tự</text>
+  <text x="735" y="275" font-size="10.5">• Đầu ra: Đặc tả Phân tích Ch.3</text>
+
+  <!-- Arrow 4->5 -->
+  <line x1="910" y1="200" x2="940" y2="200" stroke="#000000" stroke-width="1.8" marker-end="url(#arrow)"/>
+
+  <!-- Stage 5 -->
+  <rect x="940" y="110" width="200" height="180" fill="#ffffff" stroke="#000000" stroke-width="1.8"/>
+  <rect x="940" y="110" width="200" height="35" fill="#f0f0f0" stroke="#000000" stroke-width="1.2"/>
+  <text x="1040" y="133" text-anchor="middle" font-size="12" font-weight="bold">GIAI ĐOẠN 5</text>
+  <text x="1040" y="165" text-anchor="middle" font-size="12" font-weight="bold">Thiết kế Kiến trúc</text>
+  <text x="1040" y="185" text-anchor="middle" font-size="12" font-weight="bold">&amp; Mô hình Dữ liệu</text>
+  <text x="955" y="215" font-size="10.5">• Thiết kế Microservices &amp; Gateway</text>
+  <text x="955" y="235" font-size="10.5">• Thiết kế 5 Schemas CSDL cô lập</text>
+  <text x="955" y="255" font-size="10.5">• Thiết kế bảo mật Token Rotation</text>
+  <text x="955" y="275" font-size="10.5">• Đầu ra: ERD &amp; Kiến trúc phân tán</text>
+
+  <!-- Feedback Loop Arrow from Stage 5 to Stage 2/3 -->
+  <path d="M 1040 290 L 1040 340 L 375 340 L 375 290" fill="none" stroke="#000000" stroke-width="1.5" stroke-dasharray="4 4" marker-end="url(#openArrow)"/>
+  <text x="700" y="330" text-anchor="middle" font-size="11" font-style="italic" fill="#555555">Vòng lặp Phản hồi Tinh chỉnh Yêu cầu &amp; Backlog (Agile Feedback Loop)</text>
+
+  <!-- Bottom Row: Implementation, Verification, Delivery -->
+  <!-- Stage 6 -->
+  <rect x="180" y="390" width="240" height="170" fill="#ffffff" stroke="#000000" stroke-width="1.8"/>
+  <rect x="180" y="390" width="240" height="35" fill="#f0f0f0" stroke="#000000" stroke-width="1.2"/>
+  <text x="300" y="413" text-anchor="middle" font-size="12" font-weight="bold">GIAI ĐOẠN 6: Hiện thực Mã nguồn</text>
+  <text x="195" y="445" font-size="10.5">• Frontend SPA: React 18, Leaflet, Vite</text>
+  <text x="195" y="468" font-size="10.5">• Backend: 6 Microservices Spring Boot</text>
+  <text x="195" y="491" font-size="10.5">• Tích hợp VNPAY, RabbitMQ, Edge-TTS</text>
+  <text x="195" y="514" font-size="10.5">• Đóng gói 9 Docker Containers</text>
+  <text x="195" y="537" font-size="10.5">• Đầu ra: Hệ thống phần mềm hoàn chỉnh</text>
+
+  <!-- Arrow 6->7 -->
+  <line x1="420" y1="475" x2="480" y2="475" stroke="#000000" stroke-width="1.8" marker-end="url(#arrow)"/>
+
+  <!-- Stage 7 -->
+  <rect x="480" y="390" width="240" height="170" fill="#ffffff" stroke="#000000" stroke-width="1.8"/>
+  <rect x="480" y="390" width="240" height="35" fill="#f0f0f0" stroke="#000000" stroke-width="1.2"/>
+  <text x="600" y="413" text-anchor="middle" font-size="12" font-weight="bold">GIAI ĐOẠN 7: Kiểm thử &amp; Đánh giá</text>
+  <text x="495" y="445" font-size="10.5">• Unit Tests &amp; Integration Tests (62+ test cases)</text>
+  <text x="495" y="468" font-size="10.5">• Kiểm thử an ninh Gateway &amp; RateLimit</text>
+  <text x="495" y="491" font-size="10.5">• Kiểm thử giao diện di động &amp; A11y</text>
+  <text x="495" y="514" font-size="10.5">• Đo đạc hiệu năng &amp; bộ nhớ</text>
+  <text x="495" y="537" font-size="10.5">• Đầu ra: Test Report &amp; CI/CD Green</text>
+
+  <!-- Arrow 7->8 -->
+  <line x1="720" y1="475" x2="780" y2="475" stroke="#000000" stroke-width="1.8" marker-end="url(#arrow)"/>
+
+  <!-- Stage 8 -->
+  <rect x="780" y="390" width="240" height="170" fill="#ffffff" stroke="#000000" stroke-width="1.8"/>
+  <rect x="780" y="390" width="240" height="35" fill="#f0f0f0" stroke="#000000" stroke-width="1.2"/>
+  <text x="900" y="413" text-anchor="middle" font-size="12" font-weight="bold">GIAI ĐOẠN 8: Bàn giao &amp; Đánh giá</text>
+  <text x="795" y="445" font-size="10.5">• Xây dựng Ma trận Truy vết (RTM)</text>
+  <text x="795" y="468" font-size="10.5">• Đối chiếu tiêu chí chấp nhận (AC)</text>
+  <text x="795" y="491" font-size="10.5">• Soạn thảo Báo cáo Học thuật hoàn chỉnh</text>
+  <text x="795" y="514" font-size="10.5">• Hướng dẫn vận hành &amp; Triển khai</text>
+  <text x="795" y="537" font-size="10.5">• Đầu ra: Báo cáo Ch.1-3 &amp; Bộ tài liệu</text>
+
+  <!-- Bottom Quality Assurance Banner -->
+  <rect x="60" y="590" width="1080" height="60" fill="#fcfcfc" stroke="#000000" stroke-width="1.2"/>
+  <text x="600" y="615" text-anchor="middle" font-size="11.5" font-weight="bold">Nguyên tắc Đảm bảo Chất lượng Kỹ nghệ (Quality Assurance &amp; Governance):</text>
+  <text x="600" y="635" text-anchor="middle" font-size="10.5" fill="#333333">100% Yêu cầu được định danh duy nhất (Goal, Feature, FR, NFR, Epic, US, BR, Risk) và kiểm chứng qua Ma trận Truy vết hai chiều.</text>
+</svg>

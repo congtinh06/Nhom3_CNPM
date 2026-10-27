@@ -47,6 +47,9 @@ public class CreatePoiRequest {
     private String address;
     private String thumbnailUrl;
 
+    @DecimalMin(value = "0.0", message = "premiumPrice must be >= 0")
+    private BigDecimal premiumPrice;
+
     // Tùy chọn: gán POI vào tuyến. routeId và stopOrder phải cùng có hoặc cùng bỏ trống
     private Long routeId;
 

@@ -1,0 +1,65 @@
+@startuml
+!theme plain
+skinparam defaultFontName "Times New Roman"
+skinparam defaultFontSize 11
+skinparam monochrome true
+skinparam shadowing false
+skinparam roundCorner 0
+skinparam packageStyle rectangle
+skinparam handwritten false
+skinparam ArrowColor #000000
+skinparam ActorBorderColor #000000
+skinparam ComponentBorderColor #000000
+skinparam DatabaseBorderColor #000000
+skinparam InterfaceBorderColor #000000
+skinparam ParticipantBorderColor #000000
+skinparam SequenceLifeLineBorderColor #000000
+skinparam UsecaseBorderColor #000000
+skinparam StateBorderColor #000000
+skinparam ClassBorderColor #000000
+
+title HÌNH 3.11. SƠ ĐỒ HOẠT ĐỘNG: QUY TRÌNH THANH TOÁN TIỀN MẶT VÀ MÃ CLAIM CODE
+
+|Du khách|
+start
+:Mở ứng dụng Echora trên điện thoại;
+:Chọn hình thức "Thanh toán tiền mặt tại quầy vé";
+|Frontend Web App|
+:Tạo phiên thanh toán session_id;
+:Hiển thị màn hình mã session_id hướng dẫn tới quầy vé;
+|Du khách|
+:Đến quầy vé di tích, đọc session_id và đưa tiền mặt;
+|Nhân viên quầy vé|
+:Nhận tiền mặt từ du khách;
+:Mở giao diện Quầy vé CMS (/quan-tri/quay-ve);
+:Nhập session_id của du khách và bấm "Xác nhận thu tiền";
+|Backend Auth/Order Service|
+:Xác thực đơn hàng tiền mặt;
+:Sinh chuỗi mã nhận quyền ngắn 6 ký tự (Claim Code, VD: 'ECH892');
+|Redis Cache|
+:SET claim_code auth_token EX 900 (TTL 15 phút);
+|Nhân viên quầy vé|
+:Màn hình CMS hiển thị Claim Code 6 ký tự;
+:In phiếu hoặc đọc mã Claim Code cho du khách;
+|Du khách|
+:Mở điện thoại, nhập mã Claim Code vào ô kích hoạt;
+:Bấm nút "Kích hoạt quyền truy cập";
+|Backend Auth/Order Service|
+:Nhận yêu cầu POST /api/auth/claim-code;
+|Redis Cache|
+:GET claim_code;
+if (Mã tồn tại trong Redis và chưa hết hạn?) then (Hợp lệ)
+  :Xóa mã khỏi Redis: DEL claim_code (Chống dùng lại);
+  |Backend Auth/Order Service|
+  :Cấp Access Token (TTL 15m) và Refresh Token (Cookie 7d);
+  |Frontend Web App|
+  :Lưu Access Token vào biến bộ nhớ RAM (tokenStore.ts);
+  :Mở khóa toàn bộ quyền nghe thuyết minh đa ngữ;
+  |Du khách|
+  :Bắt đầu trải nghiệm tham quan di tích hoàn chỉnh;
+else (Mã sai hoặc hết hạn 15m)
+  |Frontend Web App|
+  :Hiển thị thông báo "Mã không hợp lệ hoặc đã hết hạn";
+endif
+stop
+@enduml

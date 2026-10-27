@@ -1,4 +1,5 @@
 import React, { useRef, useEffect, useMemo } from 'react';
+import { Lock } from 'lucide-react';
 import { GeoPoi, getNarration } from '../../pages/NearbyPage';
 import { SupportedLanguage } from '../../types';
 import { SortedPoiItem } from './PoiList';
@@ -11,6 +12,9 @@ import { PlaybackStatus } from '../../hooks/useNearbyAudio';
 interface PoiReadingSectionProps {
   activeItem: SortedPoiItem;
   currentLang: SupportedLanguage;
+  /** POI này chưa mở gói ngoại ngữ: thay nội dung bài thuyết minh bằng khối CTA. */
+  isContentLocked?: boolean;
+  onUnlockContent?: () => void;
   isPlaying: boolean;
   isCurrent: boolean;
   playbackStatus?: PlaybackStatus;
@@ -31,9 +35,40 @@ interface PoiReadingSectionProps {
   resumeBtnText?: string;
 }
 
+const CONTENT_LOCK_COPY: Record<
+  SupportedLanguage,
+  { title: string; description: string; cta: string }
+> = {
+  vi: {
+    title: 'Nội dung ngoại ngữ đang khóa',
+    description:
+      'Mở khóa gói ngoại ngữ của điểm thuyết minh này (hoặc gói Premium) để đọc bài thuyết minh.',
+    cta: 'Mở khóa điểm này',
+  },
+  en: {
+    title: 'Foreign-language content is locked',
+    description:
+      "Unlock this stop's narration package (or get Premium) to read the guided story.",
+    cta: 'Unlock this stop',
+  },
+  ja: {
+    title: '外国語コンテンツはロック中です',
+    description:
+      'この場所のナレーションパッケージ（または Premium）を解除すると読めます。',
+    cta: 'この場所を解除',
+  },
+  ko: {
+    title: '외국어 콘텐츠가 잠겨 있습니다',
+    description: '이 명소의 해설 패키지(또는 Premium)를 해제하면 읽을 수 있습니다.',
+    cta: '이 명소 해제',
+  },
+};
+
 export const PoiReadingSection: React.FC<PoiReadingSectionProps> = ({
   activeItem,
   currentLang,
+  isContentLocked = false,
+  onUnlockContent,
   isPlaying,
   isCurrent,
   playbackStatus,
@@ -72,6 +107,24 @@ export const PoiReadingSection: React.FC<PoiReadingSectionProps> = ({
     () => buildPoiSections(poi, currentLang, showReadingBody ? (fullParagraphs as string[]) : []),
     [poi, currentLang, fullParagraphs, showReadingBody]
   );
+
+  // Tiêu đề chap hiển thị ở đoạn đầu tiên của từng phân đoạn bài thuyết minh.
+  // sections được dựng từ narration.full (merge các chap) nên đếm phẳng khớp 1:1.
+  const chapterTitleBySection = useMemo(() => {
+    const chapterBlocks = poi.narration?.chapters?.[currentLang];
+    if (!chapterBlocks || chapterBlocks.length === 0) return null;
+    const map = new Map<number, string>();
+    let sectionIndex = 0;
+    for (const block of chapterBlocks) {
+      for (let i = 0; i < block.paras.length; i++) {
+        if (sectionIndex >= sections.length) break;
+        if (block.title && !map.has(sectionIndex)) map.set(sectionIndex, block.title);
+        sectionIndex++;
+      }
+      if (sectionIndex >= sections.length) break;
+    }
+    return map.size > 0 ? map : null;
+  }, [poi, currentLang, sections]);
 
   // Track user manual scrolling with 3-second lockout window
   useEffect(() => {
@@ -375,19 +428,35 @@ export const PoiReadingSection: React.FC<PoiReadingSectionProps> = ({
               </div>
             )}
 
-            {!showReadingBody && (
+            {!showReadingBody && !isContentLocked && (
               <p className="reading-body-fallback" lang={currentLang}>
                 {t(currentLang, 'noTranscript')}
               </p>
             )}
 
+            {isContentLocked && (
+              <div className="poi-content-lock" role="region" aria-live="polite">
+                <span className="poi-content-lock-icon" aria-hidden="true">
+                  <Lock size={22} strokeWidth={1.8} />
+                </span>
+                <strong>{CONTENT_LOCK_COPY[currentLang].title}</strong>
+                <p lang={currentLang}>{CONTENT_LOCK_COPY[currentLang].description}</p>
+                {onUnlockContent && (
+                  <button type="button" onClick={onUnlockContent}>
+                    {CONTENT_LOCK_COPY[currentLang].cta}
+                  </button>
+                )}
+              </div>
+            )}
+
             {/* Reading body: rendered only when the full narration layer exists for the current language */}
-            {showReadingBody && (
+            {showReadingBody && !isContentLocked && (
               <div className="reading-body-flow" lang={currentLang} data-sync={syncMode}>
                 {sections.map((_section, pIdx) => {
                   const pRange = paragraphRanges[pIdx];
                   if (!pRange) return null;
                   const isActiveSection = pIdx === activeSectionIndex;
+                  const chapterTitle = chapterTitleBySection?.get(pIdx);
 
                   return (
                     <div
@@ -397,6 +466,11 @@ export const PoiReadingSection: React.FC<PoiReadingSectionProps> = ({
                       }}
                       className={`narration-section${isActiveSection ? ' is-active' : ''}`}
                     >
+                      {chapterTitle && (
+                        <h4 className="reading-chapter-title" lang={currentLang}>
+                          {chapterTitle}
+                        </h4>
+                      )}
                       {renderParagraphText(pRange)}
                     </div>
                   );

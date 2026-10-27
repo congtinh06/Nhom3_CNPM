@@ -181,14 +181,9 @@ const AppContent: React.FC = () => {
             {/* QR Scan */}
             <Route path="/qr/:token" element={<ScanPage />} />
             <Route path="/quet-ma" element={<ScanPage />} />
-            <Route
-              path="/quet-qr-dang-nhap"
-              element={
-                <RequireAuth>
-                  <QrLoginScanPage />
-                </RequireAuth>
-              }
-            />
+            {/* Trang quét QR đăng nhập mở cho cả khách: khách quét sẽ chuyển
+                máy tính sang chế độ Khách, tài khoản thật quét để chuyển phiên. */}
+            <Route path="/quet-qr-dang-nhap" element={<QrLoginScanPage />} />
 
             {/* User & Auth */}
             <Route path="/dat-lai-mat-khau" element={<ResetPasswordPage />} />

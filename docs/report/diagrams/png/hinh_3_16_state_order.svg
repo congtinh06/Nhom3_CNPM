@@ -1,0 +1,117 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 680" width="1200" height="680" style="background:#ffffff; font-family:'Times New Roman', Times, serif;">
+  
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#000000"/>
+    </marker>
+    <marker id="openArrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 2 L 8 5 L 0 8" fill="none" stroke="#000000" stroke-width="1.5"/>
+    </marker>
+    <marker id="genArrow" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <polygon points="0,1 10,6 0,11" fill="#ffffff" stroke="#000000" stroke-width="1.5"/>
+    </marker>
+    <marker id="diamond" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <polygon points="0,6 5,2 10,6 5,10" fill="#000000" stroke="#000000" stroke-width="1"/>
+    </marker>
+    <marker id="openDiamond" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <polygon points="0,6 5,2 10,6 5,10" fill="#ffffff" stroke="#000000" stroke-width="1"/>
+    </marker>
+  </defs>
+
+  <text x="600" y="32" text-anchor="middle" font-size="17" font-weight="bold">HÌNH 3.16. SƠ ĐỒ TRẠNG THÁI VÒNG ĐỜI ĐƠN HÀNG (ORDER STATE MACHINE)</text>
+  <text x="600" y="52" text-anchor="middle" font-size="12" font-style="italic" fill="#333333">Mô hình hóa Trạng thái Đơn hàng và Điều kiện Chuyển đổi Bám sát Mã nguồn OrderService.java</text>
+
+  <!-- Initial State -->
+  <circle cx="90" cy="220" r="12" fill="#000000"/>
+  <line x1="102" y1="220" x2="185" y2="220" stroke="#000000" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="143" y="210" text-anchor="middle" font-size="10">Tạo đơn hàng</text>
+  <text x="143" y="240" text-anchor="middle" font-size="9" fill="#555555">POST /orders</text>
+
+  <!-- State: PENDING_PAYMENT -->
+  <rect x="185" y="175" width="220" height="90" fill="#fcfcfc" stroke="#000000" stroke-width="1.5" rx="8"/>
+  <line x1="185" y1="205" x2="405" y2="205" stroke="#000000" stroke-width="1"/>
+  <text x="295" y="196" text-anchor="middle" font-size="12" font-weight="bold">PENDING_PAYMENT</text>
+  <text x="295" y="225" text-anchor="middle" font-size="10" fill="#333333">entry / expires_at = now() + 15m</text>
+  <text x="295" y="242" text-anchor="middle" font-size="9.5" fill="#555555">Đang chờ thanh toán VNPAY /</text>
+  <text x="295" y="256" text-anchor="middle" font-size="9.5" fill="#555555">VietQR / Tiền mặt quầy vé</text>
+
+  <!-- PENDING -> PAID -->
+  <line x1="405" y1="220" x2="520" y2="220" stroke="#000000" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="462" y="205" text-anchor="middle" font-size="9.5" font-weight="bold">Thanh toán thành công</text>
+  <text x="462" y="238" text-anchor="middle" font-size="8.5" fill="#555555">[VNPAY code=='00' /</text>
+  <text x="462" y="250" text-anchor="middle" font-size="8.5" fill="#555555">VietQR / Quầy vé]</text>
+
+  <!-- State: PAID -->
+  <rect x="520" y="175" width="200" height="90" fill="#fcfcfc" stroke="#000000" stroke-width="1.5" rx="8"/>
+  <line x1="520" y1="205" x2="720" y2="205" stroke="#000000" stroke-width="1"/>
+  <text x="620" y="196" text-anchor="middle" font-size="12" font-weight="bold">PAID</text>
+  <text x="620" y="225" text-anchor="middle" font-size="10" fill="#333333">entry / paid_at = now()</text>
+  <text x="620" y="242" text-anchor="middle" font-size="9.5" fill="#555555">Đã xác nhận tiền vào tài khoản</text>
+  <text x="620" y="256" text-anchor="middle" font-size="9" fill="#666666">(Không cho phép tự hủy)</text>
+
+  <!-- PAID -> PROCESSING -->
+  <line x1="720" y1="220" x2="815" y2="220" stroke="#000000" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="767" y="205" text-anchor="middle" font-size="9.5" font-weight="bold">Kho tiếp nhận</text>
+  <text x="767" y="238" text-anchor="middle" font-size="8.5" fill="#555555">[Admin cập nhật</text>
+  <text x="767" y="250" text-anchor="middle" font-size="8.5" fill="#555555">PROCESSING]</text>
+
+  <!-- State: PROCESSING -->
+  <rect x="815" y="175" width="180" height="90" fill="#fcfcfc" stroke="#000000" stroke-width="1.5" rx="8"/>
+  <line x1="815" y1="205" x2="995" y2="205" stroke="#000000" stroke-width="1"/>
+  <text x="905" y="196" text-anchor="middle" font-size="12" font-weight="bold">PROCESSING</text>
+  <text x="905" y="225" text-anchor="middle" font-size="9.5" fill="#333333">Đang đóng gói quà lưu niệm</text>
+  <text x="905" y="242" text-anchor="middle" font-size="9.5" fill="#555555">và bàn giao vận chuyển</text>
+
+  <!-- PROCESSING -> COMPLETED -->
+  <line x1="995" y1="220" x2="1055" y2="220" stroke="#000000" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- State: COMPLETED -->
+  <rect x="1055" y="175" width="115" height="90" fill="#fcfcfc" stroke="#000000" stroke-width="1.5" rx="8"/>
+  <line x1="1055" y1="205" x2="1170" y2="205" stroke="#000000" stroke-width="1"/>
+  <text x="1112" y="196" text-anchor="middle" font-size="11" font-weight="bold">COMPLETED</text>
+  <text x="1112" y="225" text-anchor="middle" font-size="9.5" fill="#333333">Đã giao hàng</text>
+  <text x="1112" y="242" text-anchor="middle" font-size="9.5" fill="#555555">(DELIVERED)</text>
+  <text x="1112" y="256" text-anchor="middle" font-size="9" fill="#000000">Kết thúc</text>
+
+  <!-- End node from COMPLETED -->
+  <line x1="1112" y1="265" x2="1112" y2="330" stroke="#000000" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <circle cx="1112" cy="345" r="12" fill="none" stroke="#000000" stroke-width="1.5"/>
+  <circle cx="1112" cy="345" r="7" fill="#000000"/>
+
+  <!-- PENDING -> EXPIRED -->
+  <line x1="295" y1="265" x2="295" y2="380" stroke="#000000" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="350" y="325" text-anchor="middle" font-size="9.5" font-weight="bold">[now() &gt; expires_at]</text>
+  <text x="350" y="340" text-anchor="middle" font-size="8.5" fill="#555555">(Quá thời hạn 15 phút)</text>
+
+  <!-- State: EXPIRED -->
+  <rect x="205" y="380" width="180" height="70" fill="#fcfcfc" stroke="#000000" stroke-width="1.5" rx="8"/>
+  <line x1="205" y1="405" x2="385" y2="405" stroke="#000000" stroke-width="1"/>
+  <text x="295" y="398" text-anchor="middle" font-size="12" font-weight="bold">EXPIRED</text>
+  <text x="295" y="425" text-anchor="middle" font-size="9.5" fill="#333333">Hết hạn giao dịch 15m</text>
+  <text x="295" y="440" text-anchor="middle" font-size="8.5" fill="#666666">Khóa thanh toán cổng</text>
+
+  <!-- EXPIRED -> CANCELLED -->
+  <line x1="385" y1="415" x2="520" y2="415" stroke="#000000" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="452" y="405" text-anchor="middle" font-size="9">Đóng đơn tự động</text>
+
+  <!-- PENDING -> CANCELLED (User Cancel or Gateway code 24) -->
+  <line x1="370" y1="265" x2="540" y2="380" stroke="#000000" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="430" y="305" text-anchor="middle" font-size="9" font-weight="bold">Người dùng hủy đơn</text>
+  <text x="430" y="318" text-anchor="middle" font-size="8" fill="#555555">[VNPAY code=='24' / Hủy]</text>
+
+  <!-- State: CANCELLED -->
+  <rect x="520" y="380" width="200" height="70" fill="#fcfcfc" stroke="#000000" stroke-width="1.5" rx="8"/>
+  <line x1="520" y1="405" x2="720" y2="405" stroke="#000000" stroke-width="1"/>
+  <text x="620" y="398" text-anchor="middle" font-size="12" font-weight="bold">CANCELLED</text>
+  <text x="620" y="425" text-anchor="middle" font-size="9.5" fill="#333333">Đơn hàng bị hủy bỏ</text>
+  <text x="620" y="440" text-anchor="middle" font-size="8.5" fill="#666666">Giải phóng giữ chỗ tồn kho</text>
+
+  <!-- End node from CANCELLED -->
+  <line x1="720" y1="415" x2="810" y2="415" stroke="#000000" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <circle cx="825" cy="415" r="12" fill="none" stroke="#000000" stroke-width="1.5"/>
+  <circle cx="825" cy="415" r="7" fill="#000000"/>
+
+  <!-- PAID direct to COMPLETED (for Premium / Digital) -->
+  <path d="M 620 175 Q 620 120, 840 120 T 1112 175" fill="none" stroke="#000000" stroke-width="1.2" stroke-dasharray="4 3" marker-end="url(#arrow)"/>
+  <text x="860" y="112" text-anchor="middle" font-size="9">[Đơn gói Premium: Kích hoạt quyền ngoại ngữ tức thì]</text>
+</svg>

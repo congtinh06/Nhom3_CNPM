@@ -1,0 +1,100 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 850" width="1100" height="850" style="background:#ffffff; font-family:'Times New Roman', Times, serif;">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#000000"/>
+    </marker>
+  </defs>
+
+  <!-- Title -->
+  <text x="550" y="35" text-anchor="middle" font-size="20" font-weight="bold" fill="#000000">Sơ đồ Hoạt động (Activity Diagram): Đăng nhập và Quản lý Phiên Người dùng</text>
+
+  <!-- Swimlane / Subsystem headers -->
+  <rect x="50" y="55" width="480" height="770" fill="none" stroke="#000000" stroke-width="1.5"/>
+  <rect x="530" y="55" width="520" height="770" fill="none" stroke="#000000" stroke-width="1.5"/>
+  <text x="290" y="80" text-anchor="middle" font-size="16" font-weight="bold">Phía Người dùng (Client / Browser)</text>
+  <text x="790" y="80" text-anchor="middle" font-size="16" font-weight="bold">Phía Máy chủ Echora (Auth Service &amp; Redis)</text>
+  <line x1="50" y1="95" x2="1050" y2="95" stroke="#000000" stroke-width="1"/>
+
+  <!-- Initial Node -->
+  <circle cx="290" cy="125" r="12" fill="#000000"/>
+  <line x1="290" y1="137" x2="290" y2="165" stroke="#000000" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- Action: Mo form dang nhap -->
+  <rect x="180" y="165" width="220" height="45" rx="8" ry="8" fill="#ffffff" stroke="#000000" stroke-width="1.5"/>
+  <text x="290" y="192" text-anchor="middle" font-size="14">Mở biểu mẫu Đăng nhập</text>
+
+  <line x1="290" y1="210" x2="290" y2="240" stroke="#000000" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- Action: Nhap email & pass -->
+  <rect x="170" y="240" width="240" height="50" rx="8" ry="8" fill="#ffffff" stroke="#000000" stroke-width="1.5"/>
+  <text x="290" y="262" text-anchor="middle" font-size="14">Nhập thông tin Email &amp; Mật khẩu</text>
+  <text x="290" y="280" text-anchor="middle" font-size="13" font-style="italic">(Hoặc bấm Đăng nhập bằng Google)</text>
+
+  <!-- Flow across swimlanes -->
+  <line x1="410" y1="265" x2="670" y2="265" stroke="#000000" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- Action: Nhan payload & validate cu phap -->
+  <rect x="670" y="240" width="240" height="50" rx="8" ry="8" fill="#ffffff" stroke="#000000" stroke-width="1.5"/>
+  <text x="790" y="262" text-anchor="middle" font-size="14">Tiếp nhận yêu cầu xác thực</text>
+  <text x="790" y="280" text-anchor="middle" font-size="13">Kiểm tra cú pháp &amp; Rate Limit</text>
+
+  <line x1="790" y1="290" x2="790" y2="325" stroke="#000000" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- Decision: Cu phap hop le? -->
+  <polygon points="790,325 845,355 790,385 735,355" fill="#ffffff" stroke="#000000" stroke-width="1.5"/>
+  <text x="790" y="359" text-anchor="middle" font-size="12">Cú pháp hợp lệ?</text>
+
+  <!-- False branch: Cu phap loi -> Tra ve loi 400 -->
+  <line x1="735" y1="355" x2="620" y2="355" stroke="#000000" stroke-width="1.5"/>
+  <line x1="620" y1="355" x2="620" y2="200" stroke="#000000" stroke-width="1.5"/>
+  <line x1="620" y1="200" x2="400" y2="200" stroke="#000000" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="645" y="345" font-size="12">[Không hợp lệ - 400]</text>
+
+  <!-- True branch: Kiem tra credentials trong DB -->
+  <line x1="790" y1="385" x2="790" y2="420" stroke="#000000" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="800" y="405" font-size="12">[Hợp lệ]</text>
+
+  <rect x="670" y="420" width="240" height="50" rx="8" ry="8" fill="#ffffff" stroke="#000000" stroke-width="1.5"/>
+  <text x="790" y="442" text-anchor="middle" font-size="14">Truy vấn người dùng &amp; Đối chiếu</text>
+  <text x="790" y="460" text-anchor="middle" font-size="13">Băm mật khẩu BCrypt / Google Token</text>
+
+  <line x1="790" y1="470" x2="790" y2="505" stroke="#000000" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- Decision: Thong tin chinh xac? -->
+  <polygon points="790,505 845,535 790,565 735,535" fill="#ffffff" stroke="#000000" stroke-width="1.5"/>
+  <text x="790" y="539" text-anchor="middle" font-size="12">Khớp mật khẩu?</text>
+
+  <!-- False branch: Sai pass -> Tang bo dem that bai, tra ve 401 -->
+  <line x1="845" y1="535" x2="970" y2="535" stroke="#000000" stroke-width="1.5"/>
+  <line x1="970" y1="535" x2="970" y2="265" stroke="#000000" stroke-width="1.5"/>
+  <line x1="970" y1="265" x2="910" y2="265" stroke="#000000" stroke-width="1.5"/>
+  <text x="860" y="525" font-size="12">[Sai - Tăng đếm lỗi]</text>
+
+  <!-- True branch: Khoi tao phien va ky JWT -->
+  <line x1="790" y1="565" x2="790" y2="600" stroke="#000000" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="800" y="585" font-size="12">[Khớp thông tin]</text>
+
+  <rect x="660" y="600" width="260" height="55" rx="8" ry="8" fill="#ffffff" stroke="#000000" stroke-width="1.5"/>
+  <text x="790" y="622" text-anchor="middle" font-size="14">Khởi tạo Token: Access Token (JWT 1h)</text>
+  <text x="790" y="642" text-anchor="middle" font-size="13">&amp; Refresh Token (Redis TTL 7 ngày)</text>
+
+  <line x1="790" y1="655" x2="790" y2="690" stroke="#000000" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- Action: Tra ve phan hoi JSON -->
+  <rect x="670" y="690" width="240" height="45" rx="8" ry="8" fill="#ffffff" stroke="#000000" stroke-width="1.5"/>
+  <text x="790" y="718" text-anchor="middle" font-size="14">Trả về HTTP 200 OK &amp; User Info</text>
+
+  <!-- Flow back to Client -->
+  <line x1="670" y1="712" x2="410" y2="712" stroke="#000000" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- Action: Luu session vao LocalStorage & redirect -->
+  <rect x="170" y="690" width="240" height="50" rx="8" ry="8" fill="#ffffff" stroke="#000000" stroke-width="1.5"/>
+  <text x="290" y="712" text-anchor="middle" font-size="14">Lưu JWT vào Storage &amp; Cookie</text>
+  <text x="290" y="730" text-anchor="middle" font-size="13">Cập nhật trạng thái người dùng</text>
+
+  <line x1="290" y1="740" x2="290" y2="775" stroke="#000000" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- Final Node -->
+  <circle cx="290" cy="790" r="14" fill="#ffffff" stroke="#000000" stroke-width="1.5"/>
+  <circle cx="290" cy="790" r="8" fill="#000000"/>
+</svg>

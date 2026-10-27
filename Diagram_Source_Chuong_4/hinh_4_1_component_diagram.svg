@@ -1,0 +1,296 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1350 980" width="1350" height="980" style="background:#ffffff; font-family:'Times New Roman', Times, serif;">
+  
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#000000"/>
+    </marker>
+    <marker id="openArrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 2 L 8 5 L 0 8" fill="none" stroke="#000000" stroke-width="1.5"/>
+    </marker>
+    <marker id="crowFoot" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 6 L 0 11 M 10 1 L 10 11" fill="none" stroke="#000000" stroke-width="1.5"/>
+    </marker>
+  </defs>
+
+  <text x="675" y="32" text-anchor="middle" font-size="18" font-weight="bold" fill="#000000">HÌNH 4.1. SƠ ĐỒ THÀNH PHẦN PHẦN MỀM HỆ THỐNG ECHORA (COMPONENT DIAGRAM)</text>
+  <text x="675" y="52" text-anchor="middle" font-size="12" font-style="italic" fill="#333333">Mô hình hóa Kiến trúc Hướng Dịch vụ Đa tầng, Quan hệ Phụ thuộc và Giao diện Cung cấp / Yêu cầu</text>
+
+  <!-- Package 1: Presentation Layer (PWA / Client SPA) -->
+  <rect x="40" y="80" width="1270" height="175" fill="#ffffff" stroke="#000000" stroke-width="2" stroke-dasharray="5 3"/>
+  <rect x="40" y="80" width="300" height="26" fill="#f0f0f0" stroke="#000000" stroke-width="1.2"/>
+  <text x="190" y="98" text-anchor="middle" font-size="12" font-weight="bold">TẦNG TRÌNH DIỄN CLIENT (REACT 18 PWA SPA)</text>
+
+  
+    <g transform="translate(60, 120)">
+      <rect x="0" y="0" width="185" height="75" fill="#ffffff" stroke="#000000" stroke-width="1.8"/>
+      <!-- UML Component Icon (top right or top left) -->
+      <rect x="163" y="4" width="16" height="12" fill="#ffffff" stroke="#000000" stroke-width="1"/>
+      <rect x="159" y="6" width="6" height="3" fill="#ffffff" stroke="#000000" stroke-width="1"/>
+      <rect x="159" y="11" width="6" height="3" fill="#ffffff" stroke="#000000" stroke-width="1"/>
+      
+      <text x="92.5" y="20" text-anchor="middle" font-size="10" font-style="italic" fill="#555555" font-family="'Times New Roman', serif">&lt;&lt;component&gt;&gt;</text>
+      <text x="92.5" y="36" text-anchor="middle" font-size="12" font-weight="bold" fill="#000000" font-family="'Times New Roman', serif">NearbyMapModule</text>
+      <text x="92.5" y="52" text-anchor="middle" font-size="10" fill="#444444" font-family="'Times New Roman', serif">Bản đồ Leaflet & Markers</text>
+    </g>
+  
+  
+    <g transform="translate(265, 120)">
+      <rect x="0" y="0" width="185" height="75" fill="#ffffff" stroke="#000000" stroke-width="1.8"/>
+      <!-- UML Component Icon (top right or top left) -->
+      <rect x="163" y="4" width="16" height="12" fill="#ffffff" stroke="#000000" stroke-width="1"/>
+      <rect x="159" y="6" width="6" height="3" fill="#ffffff" stroke="#000000" stroke-width="1"/>
+      <rect x="159" y="11" width="6" height="3" fill="#ffffff" stroke="#000000" stroke-width="1"/>
+      
+      <text x="92.5" y="20" text-anchor="middle" font-size="10" font-style="italic" fill="#555555" font-family="'Times New Roman', serif">&lt;&lt;component&gt;&gt;</text>
+      <text x="92.5" y="36" text-anchor="middle" font-size="12" font-weight="bold" fill="#000000" font-family="'Times New Roman', serif">AudioPlayerModule</text>
+      <text x="92.5" y="52" text-anchor="middle" font-size="10" fill="#444444" font-family="'Times New Roman', serif">Floating Player & Fallback</text>
+    </g>
+  
+  
+    <g transform="translate(470, 120)">
+      <rect x="0" y="0" width="185" height="75" fill="#ffffff" stroke="#000000" stroke-width="1.8"/>
+      <!-- UML Component Icon (top right or top left) -->
+      <rect x="163" y="4" width="16" height="12" fill="#ffffff" stroke="#000000" stroke-width="1"/>
+      <rect x="159" y="6" width="6" height="3" fill="#ffffff" stroke="#000000" stroke-width="1"/>
+      <rect x="159" y="11" width="6" height="3" fill="#ffffff" stroke="#000000" stroke-width="1"/>
+      
+      <text x="92.5" y="20" text-anchor="middle" font-size="10" font-style="italic" fill="#555555" font-family="'Times New Roman', serif">&lt;&lt;component&gt;&gt;</text>
+      <text x="92.5" y="36" text-anchor="middle" font-size="12" font-weight="bold" fill="#000000" font-family="'Times New Roman', serif">QrScannerModule</text>
+      <text x="92.5" y="52" text-anchor="middle" font-size="10" fill="#444444" font-family="'Times New Roman', serif">Camera WebRTC & Decoder</text>
+    </g>
+  
+  
+    <g transform="translate(675, 120)">
+      <rect x="0" y="0" width="185" height="75" fill="#ffffff" stroke="#000000" stroke-width="1.8"/>
+      <!-- UML Component Icon (top right or top left) -->
+      <rect x="163" y="4" width="16" height="12" fill="#ffffff" stroke="#000000" stroke-width="1"/>
+      <rect x="159" y="6" width="6" height="3" fill="#ffffff" stroke="#000000" stroke-width="1"/>
+      <rect x="159" y="11" width="6" height="3" fill="#ffffff" stroke="#000000" stroke-width="1"/>
+      
+      <text x="92.5" y="20" text-anchor="middle" font-size="10" font-style="italic" fill="#555555" font-family="'Times New Roman', serif">&lt;&lt;component&gt;&gt;</text>
+      <text x="92.5" y="36" text-anchor="middle" font-size="12" font-weight="bold" fill="#000000" font-family="'Times New Roman', serif">SouvenirCartModule</text>
+      <text x="92.5" y="52" text-anchor="middle" font-size="10" fill="#444444" font-family="'Times New Roman', serif">Catalog, Cart & Checkout</text>
+    </g>
+  
+  
+    <g transform="translate(880, 120)">
+      <rect x="0" y="0" width="185" height="75" fill="#ffffff" stroke="#000000" stroke-width="1.8"/>
+      <!-- UML Component Icon (top right or top left) -->
+      <rect x="163" y="4" width="16" height="12" fill="#ffffff" stroke="#000000" stroke-width="1"/>
+      <rect x="159" y="6" width="6" height="3" fill="#ffffff" stroke="#000000" stroke-width="1"/>
+      <rect x="159" y="11" width="6" height="3" fill="#ffffff" stroke="#000000" stroke-width="1"/>
+      
+      <text x="92.5" y="20" text-anchor="middle" font-size="10" font-style="italic" fill="#555555" font-family="'Times New Roman', serif">&lt;&lt;component&gt;&gt;</text>
+      <text x="92.5" y="36" text-anchor="middle" font-size="12" font-weight="bold" fill="#000000" font-family="'Times New Roman', serif">PremiumPayModule</text>
+      <text x="92.5" y="52" text-anchor="middle" font-size="10" fill="#444444" font-family="'Times New Roman', serif">Gói cước & VNPAY/VietQR</text>
+    </g>
+  
+  
+    <g transform="translate(1085, 120)">
+      <rect x="0" y="0" width="205" height="75" fill="#ffffff" stroke="#000000" stroke-width="1.8"/>
+      <!-- UML Component Icon (top right or top left) -->
+      <rect x="183" y="4" width="16" height="12" fill="#ffffff" stroke="#000000" stroke-width="1"/>
+      <rect x="179" y="6" width="6" height="3" fill="#ffffff" stroke="#000000" stroke-width="1"/>
+      <rect x="179" y="11" width="6" height="3" fill="#ffffff" stroke="#000000" stroke-width="1"/>
+      
+      <text x="102.5" y="20" text-anchor="middle" font-size="10" font-style="italic" fill="#555555" font-family="'Times New Roman', serif">&lt;&lt;component&gt;&gt;</text>
+      <text x="102.5" y="36" text-anchor="middle" font-size="12" font-weight="bold" fill="#000000" font-family="'Times New Roman', serif">AdminCmsConsole</text>
+      <text x="102.5" y="52" text-anchor="middle" font-size="10" fill="#444444" font-family="'Times New Roman', serif">Quản trị POI, User & TTS</text>
+    </g>
+  
+
+  <!-- Shared Client ApiClient -->
+  <rect x="520" y="210" width="310" height="35" fill="#f9f9f9" stroke="#000000" stroke-width="1.5"/>
+  <text x="675" y="232" text-anchor="middle" font-size="11" font-weight="bold">ApiClient (Axios Interceptor, JWT Bearer in RAM, Error Boundary)</text>
+
+  <!-- Connectors from components to ApiClient -->
+  <line x1="152" y1="195" x2="520" y2="225" stroke="#000000" stroke-width="1.2" stroke-dasharray="3 2" marker-end="url(#arrow)"/>
+  <line x1="357" y1="195" x2="520" y2="225" stroke="#000000" stroke-width="1.2" stroke-dasharray="3 2" marker-end="url(#arrow)"/>
+  <line x1="562" y1="195" x2="600" y2="210" stroke="#000000" stroke-width="1.2" stroke-dasharray="3 2" marker-end="url(#arrow)"/>
+  <line x1="767" y1="195" x2="750" y2="210" stroke="#000000" stroke-width="1.2" stroke-dasharray="3 2" marker-end="url(#arrow)"/>
+  <line x1="972" y1="195" x2="830" y2="225" stroke="#000000" stroke-width="1.2" stroke-dasharray="3 2" marker-end="url(#arrow)"/>
+  <line x1="1187" y1="195" x2="830" y2="225" stroke="#000000" stroke-width="1.2" stroke-dasharray="3 2" marker-end="url(#arrow)"/>
+
+  <!-- Package 2: API Gateway & Security Layer -->
+  <rect x="360" y="295" width="630" height="100" fill="#ffffff" stroke="#000000" stroke-width="2"/>
+  <rect x="360" y="295" width="630" height="25" fill="#f0f0f0" stroke="#000000" stroke-width="1.2"/>
+  <text x="675" y="312" text-anchor="middle" font-size="12" font-weight="bold">TẦNG CỔNG GIAO TIẾP &amp; BẢO MẬT (SPRING CLOUD API GATEWAY)</text>
+  
+  
+    <g transform="translate(380, 330)">
+      <rect x="0" y="0" width="280" height="55" fill="#ffffff" stroke="#000000" stroke-width="1.8"/>
+      <!-- UML Component Icon (top right or top left) -->
+      <rect x="258" y="4" width="16" height="12" fill="#ffffff" stroke="#000000" stroke-width="1"/>
+      <rect x="254" y="6" width="6" height="3" fill="#ffffff" stroke="#000000" stroke-width="1"/>
+      <rect x="254" y="11" width="6" height="3" fill="#ffffff" stroke="#000000" stroke-width="1"/>
+      
+      <text x="140" y="20" text-anchor="middle" font-size="10" font-style="italic" fill="#555555" font-family="'Times New Roman', serif">&lt;&lt;component&gt;&gt;</text>
+      <text x="140" y="36" text-anchor="middle" font-size="12" font-weight="bold" fill="#000000" font-family="'Times New Roman', serif">SecurityAuthFilter</text>
+      <text x="140" y="52" text-anchor="middle" font-size="10" fill="#444444" font-family="'Times New Roman', serif">JWT HMAC-SHA256, RBAC Guard</text>
+    </g>
+  
+  
+    <g transform="translate(690, 330)">
+      <rect x="0" y="0" width="280" height="55" fill="#ffffff" stroke="#000000" stroke-width="1.8"/>
+      <!-- UML Component Icon (top right or top left) -->
+      <rect x="258" y="4" width="16" height="12" fill="#ffffff" stroke="#000000" stroke-width="1"/>
+      <rect x="254" y="6" width="6" height="3" fill="#ffffff" stroke="#000000" stroke-width="1"/>
+      <rect x="254" y="11" width="6" height="3" fill="#ffffff" stroke="#000000" stroke-width="1"/>
+      
+      <text x="140" y="20" text-anchor="middle" font-size="10" font-style="italic" fill="#555555" font-family="'Times New Roman', serif">&lt;&lt;component&gt;&gt;</text>
+      <text x="140" y="36" text-anchor="middle" font-size="12" font-weight="bold" fill="#000000" font-family="'Times New Roman', serif">TrafficRoutingFilter</text>
+      <text x="140" y="52" text-anchor="middle" font-size="10" fill="#444444" font-family="'Times New Roman', serif">RateLimit 60r/m, PathGuard, CORS</text>
+    </g>
+  
+
+  <!-- Line from Client ApiClient to Gateway -->
+  <line x1="675" y1="245" x2="675" y2="295" stroke="#000000" stroke-width="1.8" marker-end="url(#arrow)"/>
+  <text x="760" y="275" font-size="11" font-weight="bold">HTTPS / REST JSON</text>
+
+  <!-- Package 3: Business Microservices Tier -->
+  <rect x="40" y="440" width="1270" height="235" fill="#ffffff" stroke="#000000" stroke-width="2" stroke-dasharray="5 3"/>
+  <rect x="40" y="440" width="340" height="26" fill="#f0f0f0" stroke="#000000" stroke-width="1.2"/>
+  <text x="210" y="458" text-anchor="middle" font-size="12" font-weight="bold">TẦNG DỊCH VỤ VI MÔ NGHIỆP VỤ (SPRING BOOT 3 SERVICES)</text>
+
+  
+    <g transform="translate(60, 485)">
+      <rect x="0" y="0" width="220" height="85" fill="#ffffff" stroke="#000000" stroke-width="1.8"/>
+      <!-- UML Component Icon (top right or top left) -->
+      <rect x="198" y="4" width="16" height="12" fill="#ffffff" stroke="#000000" stroke-width="1"/>
+      <rect x="194" y="6" width="6" height="3" fill="#ffffff" stroke="#000000" stroke-width="1"/>
+      <rect x="194" y="11" width="6" height="3" fill="#ffffff" stroke="#000000" stroke-width="1"/>
+      
+      <text x="110" y="20" text-anchor="middle" font-size="10" font-style="italic" fill="#555555" font-family="'Times New Roman', serif">&lt;&lt;component&gt;&gt;</text>
+      <text x="110" y="36" text-anchor="middle" font-size="12" font-weight="bold" fill="#000000" font-family="'Times New Roman', serif">AuthServiceComponent</text>
+      <text x="110" y="52" text-anchor="middle" font-size="10" fill="#444444" font-family="'Times New Roman', serif">User CRUD, Bcrypt, TokenRotation
+(Port 8081)</text>
+    </g>
+  
+  
+    <g transform="translate(305, 485)">
+      <rect x="0" y="0" width="230" height="85" fill="#ffffff" stroke="#000000" stroke-width="1.8"/>
+      <!-- UML Component Icon (top right or top left) -->
+      <rect x="208" y="4" width="16" height="12" fill="#ffffff" stroke="#000000" stroke-width="1"/>
+      <rect x="204" y="6" width="6" height="3" fill="#ffffff" stroke="#000000" stroke-width="1"/>
+      <rect x="204" y="11" width="6" height="3" fill="#ffffff" stroke="#000000" stroke-width="1"/>
+      
+      <text x="115" y="20" text-anchor="middle" font-size="10" font-style="italic" fill="#555555" font-family="'Times New Roman', serif">&lt;&lt;component&gt;&gt;</text>
+      <text x="115" y="36" text-anchor="middle" font-size="12" font-weight="bold" fill="#000000" font-family="'Times New Roman', serif">ContentServiceComponent</text>
+      <text x="115" y="52" text-anchor="middle" font-size="10" fill="#444444" font-family="'Times New Roman', serif">POI, Zone, Route, Translation
+(Port 8082)</text>
+    </g>
+  
+  
+    <g transform="translate(560, 485)">
+      <rect x="0" y="0" width="230" height="85" fill="#ffffff" stroke="#000000" stroke-width="1.8"/>
+      <!-- UML Component Icon (top right or top left) -->
+      <rect x="208" y="4" width="16" height="12" fill="#ffffff" stroke="#000000" stroke-width="1"/>
+      <rect x="204" y="6" width="6" height="3" fill="#ffffff" stroke="#000000" stroke-width="1"/>
+      <rect x="204" y="11" width="6" height="3" fill="#ffffff" stroke="#000000" stroke-width="1"/>
+      
+      <text x="115" y="20" text-anchor="middle" font-size="10" font-style="italic" fill="#555555" font-family="'Times New Roman', serif">&lt;&lt;component&gt;&gt;</text>
+      <text x="115" y="36" text-anchor="middle" font-size="12" font-weight="bold" fill="#000000" font-family="'Times New Roman', serif">LocationServiceComponent</text>
+      <text x="115" y="52" text-anchor="middle" font-size="10" fill="#444444" font-family="'Times New Roman', serif">Haversine Distance, Geofence
+(Port 8082 / Lib)</text>
+    </g>
+  
+  
+    <g transform="translate(815, 485)">
+      <rect x="0" y="0" width="235" height="85" fill="#ffffff" stroke="#000000" stroke-width="1.8"/>
+      <!-- UML Component Icon (top right or top left) -->
+      <rect x="213" y="4" width="16" height="12" fill="#ffffff" stroke="#000000" stroke-width="1"/>
+      <rect x="209" y="6" width="6" height="3" fill="#ffffff" stroke="#000000" stroke-width="1"/>
+      <rect x="209" y="11" width="6" height="3" fill="#ffffff" stroke="#000000" stroke-width="1"/>
+      
+      <text x="117.5" y="20" text-anchor="middle" font-size="10" font-style="italic" fill="#555555" font-family="'Times New Roman', serif">&lt;&lt;component&gt;&gt;</text>
+      <text x="117.5" y="36" text-anchor="middle" font-size="12" font-weight="bold" fill="#000000" font-family="'Times New Roman', serif">OrderPaymentService</text>
+      <text x="117.5" y="52" text-anchor="middle" font-size="10" fill="#444444" font-family="'Times New Roman', serif">Orders, VNPAY HMAC, VietQR
+(Port 8083)</text>
+    </g>
+  
+  
+    <g transform="translate(1075, 485)">
+      <rect x="0" y="0" width="215" height="85" fill="#ffffff" stroke="#000000" stroke-width="1.8"/>
+      <!-- UML Component Icon (top right or top left) -->
+      <rect x="193" y="4" width="16" height="12" fill="#ffffff" stroke="#000000" stroke-width="1"/>
+      <rect x="189" y="6" width="6" height="3" fill="#ffffff" stroke="#000000" stroke-width="1"/>
+      <rect x="189" y="11" width="6" height="3" fill="#ffffff" stroke="#000000" stroke-width="1"/>
+      
+      <text x="107.5" y="20" text-anchor="middle" font-size="10" font-style="italic" fill="#555555" font-family="'Times New Roman', serif">&lt;&lt;component&gt;&gt;</text>
+      <text x="107.5" y="36" text-anchor="middle" font-size="12" font-weight="bold" fill="#000000" font-family="'Times New Roman', serif">AnalyticsService</text>
+      <text x="107.5" y="52" text-anchor="middle" font-size="10" fill="#444444" font-family="'Times New Roman', serif">Event Collection, Stats CMS
+(Port 8085)</text>
+    </g>
+  
+
+  
+    <g transform="translate(440, 585)">
+      <rect x="0" y="0" width="470" height="75" fill="#ffffff" stroke="#000000" stroke-width="1.8"/>
+      <!-- UML Component Icon (top right or top left) -->
+      <rect x="448" y="4" width="16" height="12" fill="#ffffff" stroke="#000000" stroke-width="1"/>
+      <rect x="444" y="6" width="6" height="3" fill="#ffffff" stroke="#000000" stroke-width="1"/>
+      <rect x="444" y="11" width="6" height="3" fill="#ffffff" stroke="#000000" stroke-width="1"/>
+      
+      <text x="235" y="20" text-anchor="middle" font-size="10" font-style="italic" fill="#555555" font-family="'Times New Roman', serif">&lt;&lt;component&gt;&gt;</text>
+      <text x="235" y="36" text-anchor="middle" font-size="12" font-weight="bold" fill="#000000" font-family="'Times New Roman', serif">TranslationTtsPipelineComponent</text>
+      <text x="235" y="52" text-anchor="middle" font-size="10" fill="#444444" font-family="'Times New Roman', serif">RabbitMQ Consumer, MyMemory API, Edge-TTS CLI, MP3 Stream
+(Port 8084)</text>
+    </g>
+  
+
+  <!-- Gateway to Microservices dispatch lines -->
+  <line x1="500" y1="395" x2="170" y2="485" stroke="#000000" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <line x1="600" y1="395" x2="420" y2="485" stroke="#000000" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <line x1="675" y1="395" x2="675" y2="485" stroke="#000000" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <line x1="750" y1="395" x2="930" y2="485" stroke="#000000" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <line x1="850" y1="395" x2="1180" y2="485" stroke="#000000" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- ContentService to Pipeline via RabbitMQ event -->
+  <line x1="420" y1="570" x2="520" y2="585" stroke="#000000" stroke-width="1.5" stroke-dasharray="4 2" marker-end="url(#arrow)"/>
+  <text x="410" y="582" font-size="10" font-weight="bold">AMQP: poi.created</text>
+
+  <!-- Package 4: Persistence, Broker & External Integration Tier -->
+  <rect x="40" y="720" width="1270" height="220" fill="#ffffff" stroke="#000000" stroke-width="2"/>
+  <rect x="40" y="720" width="370" height="26" fill="#f0f0f0" stroke="#000000" stroke-width="1.2"/>
+  <text x="225" y="738" text-anchor="middle" font-size="12" font-weight="bold">TẦNG DỮ LIỆU &amp; TÍCH HỢP HỆ THỐNG NGOÀI</text>
+
+  <!-- RabbitMQ Broker -->
+  <rect x="60" y="765" width="230" height="80" fill="#ffffff" stroke="#000000" stroke-width="1.8"/>
+  <text x="175" y="788" text-anchor="middle" font-size="11" font-style="italic" fill="#555555">&lt;&lt;message broker&gt;&gt;</text>
+  <text x="175" y="808" text-anchor="middle" font-size="12" font-weight="bold">RabbitMQ AMQP 3.12</text>
+  <text x="175" y="828" text-anchor="middle" font-size="10" fill="#444444">Exchange: poi.events (Durable)</text>
+
+  <!-- Microsoft SQL Server 2022 -->
+  <rect x="320" y="765" width="380" height="150" fill="#ffffff" stroke="#000000" stroke-width="2"/>
+  <rect x="320" y="765" width="380" height="26" fill="#f0f0f0" stroke="#000000" stroke-width="1.2"/>
+  <text x="510" y="783" text-anchor="middle" font-size="12" font-weight="bold">Microsoft SQL Server 2022 (5 Cô lập DB)</text>
+  <text x="340" y="810" font-size="10.5">• auth_db: users, refresh_tokens, qr_login_sessions</text>
+  <text x="340" y="830" font-size="10.5">• content_db: pois, zones, poi_translations, chapters, products</text>
+  <text x="340" y="850" font-size="10.5">• order_db: orders, order_items, payments, entitlements</text>
+  <text x="340" y="870" font-size="10.5">• translation_db: translation_jobs, translation_cache</text>
+  <text x="340" y="890" font-size="10.5">• analytics_db: analytics_events, qr_scan_stats</text>
+
+  <!-- Local Media Storage -->
+  <rect x="730" y="765" width="180" height="80" fill="#ffffff" stroke="#000000" stroke-width="1.5"/>
+  <text x="820" y="788" text-anchor="middle" font-size="11" font-style="italic" fill="#555555">&lt;&lt;file storage&gt;&gt;</text>
+  <text x="820" y="808" text-anchor="middle" font-size="12" font-weight="bold">Local Volume Storage</text>
+  <text x="820" y="828" text-anchor="middle" font-size="10" fill="#444444">MP3 Files (HTTP 206)</text>
+
+  <!-- External Cloud APIs -->
+  <rect x="940" y="765" width="350" height="150" fill="#ffffff" stroke="#000000" stroke-width="1.8"/>
+  <rect x="940" y="765" width="350" height="26" fill="#f0f0f0" stroke="#000000" stroke-width="1.2"/>
+  <text x="1115" y="783" text-anchor="middle" font-size="12" font-weight="bold">Hệ thống &amp; Dịch vụ Ngoại vi (External APIs)</text>
+  <text x="960" y="815" font-size="11" font-weight="bold">• Cổng thanh toán VNPAY Sandbox (HMAC-SHA512)</text>
+  <text x="960" y="840" font-size="11" font-weight="bold">• Bản đồ nền OpenStreetMap / Leaflet CDN</text>
+  <text x="960" y="865" font-size="11" font-weight="bold">• Microsoft Edge-TTS Engine (Voice Synthesis)</text>
+  <text x="960" y="890" font-size="11" font-weight="bold">• MyMemory Translation API &amp; Seed Dictionary</text>
+
+  <!-- Microservices to DB lines -->
+  <line x1="170" y1="570" x2="350" y2="765" stroke="#000000" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <line x1="420" y1="570" x2="450" y2="765" stroke="#000000" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <line x1="930" y1="570" x2="600" y2="765" stroke="#000000" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <line x1="1180" y1="570" x2="650" y2="765" stroke="#000000" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <line x1="675" y1="660" x2="820" y2="765" stroke="#000000" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <line x1="675" y1="660" x2="1050" y2="765" stroke="#000000" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+</svg>

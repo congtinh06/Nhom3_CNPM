@@ -81,7 +81,7 @@ class AdminUserSecurityTest {
     @Test
     @DisplayName("ADMIN được truy cập danh sách người dùng (200)")
     void adminCanList() throws Exception {
-        when(adminUserService.listUsers(any(), any(), any(), any()))
+        when(adminUserService.listUsers(any(), any(), any(), any(), any()))
                 .thenReturn(new PageImpl<>(List.of(sample())));
 
         mockMvc.perform(get("/api/auth/admin/users").with(authentication(auth(1L, UserRole.ADMIN))))

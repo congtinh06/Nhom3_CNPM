@@ -1,3 +1,22 @@
+/**
+ * ============================================================================
+ * TRANG QUÉT MÃ QR & TRÌNH PHÁT THUYẾT MINH ĐỊA ĐIỂM (QR Scan & Detail Page)
+ * ============================================================================
+ * 
+ * Mục đích module:
+ * - Tiếp nhận mã QR từ camera du khách hoặc nhập thủ công token QR.
+ * - Tải thông tin chi tiết địa điểm (PoiDetail) và phát audio thuyết minh đa ngôn ngữ.
+ * 
+ * Các thay đổi cốt lõi (Core Changes):
+ * 1. [Quyền truy cập ngoại ngữ]: Sử dụng kết hợp `isPremium` và `canAccessPoiLanguage(poiDetail.id, lang)`
+ *    để kiểm tra quyền nghe/đọc tiếng Anh (EN), Nhật (JA), Hàn (KO).
+ * 2. [Hỗ trợ mua lẻ từng điểm]: Nếu du khách đã mua lẻ gói POI này, giao diện lập tức mở khóa
+ *    thuyết minh ngoại ngữ tương tự như tài khoản Premium.
+ * 3. [Điều hướng mở khóa]: Nút CTA mở khóa ngoại ngữ chuyển hướng thông minh đến `buildPoiPremiumPath`
+ *    để người dùng có thể chọn mua lẻ điểm hiện tại hoặc nâng cấp toàn diện Premium.
+ * ============================================================================
+ */
+
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { Camera, Pause, Volume2, ChevronLeft, Lock, Eye } from 'lucide-react';
@@ -6,7 +25,7 @@ import { normalizeApiError } from '../api/errors';
 import { useAudioPlayer } from '../hooks/useAudioPlayer';
 import { useToastOptional } from '../context/ToastContext';
 import { useAuth } from '../context/AuthContext';
-import { usePremium, buildPremiumPath } from '../context/PremiumContext';
+import { usePremium, buildPremiumPath, buildPoiPremiumPath } from '../context/PremiumContext';
 import { unlockAudio } from '../lib/audioUnlock';
 import { getAnalyticsSessionId } from '../lib/analytics';
 import { PoiDetail, SupportedLanguage, TriggerType } from '../types';
@@ -22,20 +41,24 @@ export const ScanPage: React.FC = () => {
   const location = useLocation();
   const { status } = useAuth();
   const isGuest = status === 'guest';
-  const { isPremium, canAccessLanguage } = usePremium();
+  const { isPremium, canAccessLanguage, canAccessPoi, canAccessPoiLanguage } = usePremium();
   const { showToast } = useToastOptional();
+
+  const [inputToken, setInputToken] = useState(token || '');
+  const [poiDetail, setPoiDetail] = useState<PoiDetail | null>(null);
 
   const premiumReturnTo = token ? `/qr/${token}` : '/quet-ma';
   const openPremiumPage = useCallback(
     (requestedLanguage: SupportedLanguage) => {
       showToast('Cần nâng cấp Premium để nghe thuyết minh bằng ngôn ngữ này.');
+      if (poiDetail?.id) {
+        navigate(buildPoiPremiumPath(poiDetail.id, premiumReturnTo));
+        return;
+      }
       navigate(buildPremiumPath(requestedLanguage, premiumReturnTo));
     },
-    [navigate, premiumReturnTo, showToast]
+    [navigate, poiDetail?.id, premiumReturnTo, showToast]
   );
-
-  const [inputToken, setInputToken] = useState(token || '');
-  const [poiDetail, setPoiDetail] = useState<PoiDetail | null>(null);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -69,7 +92,7 @@ export const ScanPage: React.FC = () => {
   const { playAudio, stopAudio, isPlaying } = useAudioPlayer();
 
   useEffect(() => {
-    if (canAccessLanguage(lang)) return;
+    if (canAccessPoiLanguage(poiDetail?.id, lang)) return;
     stopAudio();
     setPendingPlay(false);
     setLang('vi');
@@ -81,7 +104,7 @@ export const ScanPage: React.FC = () => {
           // Keep the current detail if the Vietnamese fallback cannot be reloaded.
         });
     }
-  }, [canAccessLanguage, lang, poiDetail?.qrToken, stopAudio]);
+  }, [canAccessPoiLanguage, lang, poiDetail?.id, poiDetail?.qrToken, stopAudio]);
 
   const handleResolveQr = useCallback(
     (
@@ -393,7 +416,7 @@ export const ScanPage: React.FC = () => {
 
                 <div className="scan-lang-chips" role="group" aria-label="Chọn ngôn ngữ">
                   {SCAN_SPEECH_LANGS.map((l) => {
-                    const locked = !canAccessLanguage(l);
+                    const locked = !canAccessPoiLanguage(poiDetail?.id, l);
                     return (
                       <button
                         key={l}
@@ -426,7 +449,7 @@ export const ScanPage: React.FC = () => {
                 </div>
               </div>
 
-              {!isPremium && (
+              {!isPremium && !canAccessPoi(poiDetail?.id) && (
                 <p className="scan-premium-note">
                   <Lock size={14} strokeWidth={2} aria-hidden="true" />
                   <span>Tiếng Anh, Nhật và Hàn cần Premium.</span>

@@ -1,0 +1,21 @@
+================================================================================
+THÔNG TIN CHÚ THÍCH HÌNH ẢNH: Hinh_3.7_Chuong_3
+================================================================================
+1. KÝ HIỆU HÌNH         : Hinh 3.7 Chuong 3
+2. TIÊU ĐỀ SƠ ĐỒ        : Sơ đồ Luồng Nghiệp vụ Vận hành Tổng thể Hệ thống (End-to-End Operational Workflow)
+3. THUỘC BÁO CÁO        : Chương 3: Phân tích Nghiệp vụ và Mô hình hóa Hệ thống
+4. VỊ TRÍ TRONG CHƯƠNG  : Mục 3.7.1 – Luồng Nghiệp vụ Vận hành Toàn diện Hệ thống
+5. TÁC NHÂN / THÀNH PHẦN: Du khách, Người dùng thành viên, Ban quản lý di tích, Dịch vụ hạ tầng
+6. TIÊU CHUẨN MÔ HÌNH HÓA: End-to-End Operational Workflow Diagram, Nền trắng chữ đen, phân vùng rành mạch.
+--------------------------------------------------------------------------------
+7. MỤC ĐÍCH VÀ Ý NGHĨA NGHIỆP VỤ:
+   Sơ đồ dòng chảy nghiệp vụ vận hành toàn diện kết nối 3 luồng hoạt động chính của hệ sinh thái Echora: (1) Luồng Tham quan Du khách Ngoài thực địa (Bản đồ số, GPS Geofence, Quét mã QR, Đổi ngôn ngữ); (2) Luồng Thương mại & Giao dịch Số (Nâng cấp Premium qua VNPAY/VietQR, Giỏ hàng lưu niệm); (3) Luồng Quản trị Di sản & Phân tích (CMS nhập liệu di tích, Pipeline RabbitMQ TTS, Dashboard thống kê).
+--------------------------------------------------------------------------------
+8. QUY CÁCH TỆP HÌNH ẢNH:
+   • Tệp hình ảnh Raster : Hinh_3.7_Chuong_3.png (Độ phân giải cao, phục vụ chèn văn bản Word/PDF)
+   • Tệp đồ họa Vector   : Hinh_3.7_Chuong_3.svg (Mã nguồn vector gốc, có thể phóng to vô hạn)
+   • Phong cách thể hiện  : Pure Monochrome Black & White (Nền trắng, nét đen, chữ đen chuẩn học thuật)
+================================================================================
+Đồ án Học phần Công nghệ Phần mềm – Đề tài: Hệ thống Thuyết minh Tự động Đa ngôn ngữ Echora
+Nhóm Sinh viên Thực hiện: Nhóm 03 – Khoa CNTT, Đại học Khoa học Tự nhiên / ĐHQG-HCM
+================================================================================

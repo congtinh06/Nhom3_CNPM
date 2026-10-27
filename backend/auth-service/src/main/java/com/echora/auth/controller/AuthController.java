@@ -6,6 +6,7 @@ import com.echora.auth.dto.CookieResult;
 import com.echora.auth.dto.EmailOnlyRequest;
 import com.echora.auth.dto.GoogleLoginRequest;
 import com.echora.auth.dto.LoginRequest;
+import com.echora.auth.dto.MeEntitlementResponse;
 import com.echora.auth.dto.MessageResponse;
 import com.echora.auth.dto.RegisterRequest;
 import com.echora.auth.dto.ResetPasswordRequest;
@@ -39,8 +40,14 @@ public class AuthController {
 
     private final AuthService authService;
 
+    private static final String HEADER_AUTH_SCOPE = "X-Auth-Scope";
+    private static final String AUTH_SCOPE_ADMIN = "admin";
+
     @Value("${app.refresh.cookie-name:refresh_token}")
     private String refreshCookieName;
+
+    @Value("${app.refresh.admin-cookie-name:refresh_token_admin}")
+    private String adminRefreshCookieName;
 
     @Value("${app.refresh.cookie-path:/api/auth}")
     private String refreshCookiePath;
@@ -67,7 +74,7 @@ public class AuthController {
                                               HttpServletRequest httpRequest) {
         CookieResult result = authService.login(request, clientIp(httpRequest), userAgent(httpRequest));
         return ResponseEntity.ok()
-                .header(HttpHeaders.SET_COOKIE, refreshCookie(result).toString())
+                .header(HttpHeaders.SET_COOKIE, refreshCookie(result, httpRequest).toString())
                 .body(result.getBody());
     }
 
@@ -76,7 +83,7 @@ public class AuthController {
                                                         HttpServletRequest httpRequest) {
         CookieResult result = authService.loginWithGoogle(request, clientIp(httpRequest), userAgent(httpRequest));
         return ResponseEntity.ok()
-                .header(HttpHeaders.SET_COOKIE, refreshCookie(result).toString())
+                .header(HttpHeaders.SET_COOKIE, refreshCookie(result, httpRequest).toString())
                 .body(result.getBody());
     }
 
@@ -85,7 +92,7 @@ public class AuthController {
         String rawToken = readRefreshCookie(httpRequest);
         CookieResult result = authService.refresh(rawToken, clientIp(httpRequest), userAgent(httpRequest));
         return ResponseEntity.ok()
-                .header(HttpHeaders.SET_COOKIE, refreshCookie(result).toString())
+                .header(HttpHeaders.SET_COOKIE, refreshCookie(result, httpRequest).toString())
                 .body(result.getBody());
     }
 
@@ -95,15 +102,15 @@ public class AuthController {
     public ResponseEntity<Void> logout(HttpServletRequest httpRequest) {
         authService.logout(readRefreshCookie(httpRequest));
         return ResponseEntity.noContent()
-                .header(HttpHeaders.SET_COOKIE, clearRefreshCookie().toString())
+                .header(HttpHeaders.SET_COOKIE, clearRefreshCookie(httpRequest).toString())
                 .build();
     }
 
     @PostMapping("/api/auth/logout-all")
-    public ResponseEntity<Void> logoutAll() {
+    public ResponseEntity<Void> logoutAll(HttpServletRequest httpRequest) {
         authService.logoutAll(currentUserId());
         return ResponseEntity.noContent()
-                .header(HttpHeaders.SET_COOKIE, clearRefreshCookie().toString())
+                .header(HttpHeaders.SET_COOKIE, clearRefreshCookie(httpRequest).toString())
                 .build();
     }
 
@@ -148,6 +155,12 @@ public class AuthController {
         return ResponseEntity.ok(authService.me(currentUserId()));
     }
 
+    // Gói Premium toàn tài khoản + các POI đã mua lẻ (dùng cho trang tài khoản & khóa chap).
+    @GetMapping("/api/auth/me/entitlements")
+    public ResponseEntity<MeEntitlementResponse> meEntitlements() {
+        return ResponseEntity.ok(authService.meEntitlement(currentUserId()));
+    }
+
     // -------------------------------------------------------------- INTERNAL
 
     private Long currentUserId() {
@@ -158,21 +171,38 @@ public class AuthController {
         return principal.id();
     }
 
+    /**
+     * Trình duyệt gửi kèm X-Auth-Scope khi gọi từ khu vực quản trị. Nhờ đó phiên
+     * admin dùng cookie refresh riêng và không đăng nhập chéo sang trang du khách.
+     */
+    private String resolveRefreshCookieName(HttpServletRequest request) {
+        String scope = request.getHeader(HEADER_AUTH_SCOPE);
+        if (AUTH_SCOPE_ADMIN.equalsIgnoreCase(scope)) {
+            return adminRefreshCookieName == null || adminRefreshCookieName.isBlank()
+                    ? refreshCookieName
+                    : adminRefreshCookieName;
+        }
+        return refreshCookieName;
+    }
+
     private String readRefreshCookie(HttpServletRequest request) {
         Cookie[] cookies = request.getCookies();
         if (cookies == null) {
             return null;
         }
+        String cookieName = resolveRefreshCookieName(request);
         for (Cookie cookie : cookies) {
-            if (refreshCookieName.equals(cookie.getName())) {
+            if (cookieName.equals(cookie.getName())) {
                 return cookie.getValue();
             }
         }
         return null;
     }
 
-    private org.springframework.http.ResponseCookie refreshCookie(CookieResult result) {
-        return org.springframework.http.ResponseCookie.from(refreshCookieName, result.getRawRefreshToken())
+    private org.springframework.http.ResponseCookie refreshCookie(CookieResult result,
+                                                                 HttpServletRequest request) {
+        return org.springframework.http.ResponseCookie.from(resolveRefreshCookieName(request),
+                        result.getRawRefreshToken())
                 .httpOnly(true)
                 .secure(refreshCookieSecure)
                 .path(refreshCookiePath)
@@ -181,8 +211,8 @@ public class AuthController {
                 .build();
     }
 
-    private org.springframework.http.ResponseCookie clearRefreshCookie() {
-        return org.springframework.http.ResponseCookie.from(refreshCookieName, "")
+    private org.springframework.http.ResponseCookie clearRefreshCookie(HttpServletRequest request) {
+        return org.springframework.http.ResponseCookie.from(resolveRefreshCookieName(request), "")
                 .httpOnly(true)
                 .secure(refreshCookieSecure)
                 .path(refreshCookiePath)

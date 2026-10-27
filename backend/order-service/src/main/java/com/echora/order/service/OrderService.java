@@ -4,11 +4,13 @@ import com.echora.order.dto.AdminOrderResponse;
 import com.echora.order.dto.AdminPaymentResponse;
 import com.echora.order.dto.CreateOrderItemRequest;
 import com.echora.order.dto.CreateOrderRequest;
+import com.echora.order.dto.CreatePoiOrderRequest;
 import com.echora.order.dto.CreatePremiumOrderRequest;
 import com.echora.order.dto.OrderItemResponse;
 import com.echora.order.dto.OrderResponse;
 import com.echora.order.dto.PaymentStatusResponse;
 import com.echora.order.dto.PaymentUrlResponse;
+import com.echora.order.dto.PoiPremiumPrice;
 import com.echora.order.dto.ProductPrice;
 import com.echora.order.entity.Order;
 import com.echora.order.entity.OrderItem;
@@ -37,6 +39,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
@@ -50,11 +53,17 @@ public class OrderService {
     private static final Set<OrderStatus> CANCELLABLE = EnumSet.of(OrderStatus.PENDING_PAYMENT, OrderStatus.PROCESSING);
     public static final String ORDER_TYPE_PRODUCT = "PRODUCT";
     public static final String ORDER_TYPE_PREMIUM = "PREMIUM";
+    public static final String ORDER_TYPE_POI = "POI";
     public static final String PREMIUM_PACKAGE_LANGUAGES = "PREMIUM_LANGUAGES";
+    private static final String SOUVENIR_CATEGORY = "SOUVENIR";
+    private static final BigDecimal PREMIUM_DISCOUNT_PERCENT = BigDecimal.valueOf(10);
+    private static final BigDecimal ONE_HUNDRED = BigDecimal.valueOf(100);
 
     private final OrderRepository orderRepository;
     private final PaymentRepository paymentRepository;
     private final ProductPriceClient productPriceClient;
+    private final PoiPriceClient poiPriceClient;
+    private final OrderEntitlementService orderEntitlementService;
     private final AuthEntitlementClient authEntitlementClient;
     private final VnPayService vnPayService;
 
@@ -69,6 +78,9 @@ public class OrderService {
 
     @Value("${app.premium.price:500000}")
     private BigDecimal premiumPrice;
+
+    @Value("${app.premium.poi-price:20000}")
+    private BigDecimal poiDefaultPrice;
 
     @Transactional
     public OrderResponse createOrder(Long userId,
@@ -101,15 +113,28 @@ public class OrderService {
                 .idempotencyKey(key)
                 .build();
 
+        boolean hasSouvenir = prices.values().stream()
+                .anyMatch(product -> product != null && isSouvenir(product));
+        boolean premiumDiscountEligible = hasSouvenir && authEntitlementClient.isPremiumActive(userId);
+
         BigDecimal subtotal = BigDecimal.ZERO;
+        BigDecimal discountAmount = BigDecimal.ZERO;
+        BigDecimal discountedSubtotal = BigDecimal.ZERO;
         for (Map.Entry<Long, Integer> entry : quantities.entrySet()) {
             ProductPrice product = prices.get(entry.getKey());
             if (product == null || !Boolean.TRUE.equals(product.getIsActive()) || product.getPrice() == null) {
                 throw new BadRequestException("Sản phẩm #" + entry.getKey() + " không tồn tại hoặc đã ngừng bán.");
             }
             BigDecimal unitPrice = product.getPrice();
+            BigDecimal chargedUnitPrice = unitPrice;
+            if (premiumDiscountEligible && isSouvenir(product)) {
+                chargedUnitPrice = premiumDiscountedPrice(unitPrice);
+                discountAmount = discountAmount.add(
+                        unitPrice.subtract(chargedUnitPrice).multiply(BigDecimal.valueOf(entry.getValue())));
+            }
             int quantity = entry.getValue();
             subtotal = subtotal.add(unitPrice.multiply(BigDecimal.valueOf(quantity)));
+            discountedSubtotal = discountedSubtotal.add(chargedUnitPrice.multiply(BigDecimal.valueOf(quantity)));
 
             order.addItem(OrderItem.builder()
                     .productId(product.getId())
@@ -119,10 +144,13 @@ public class OrderService {
                     .build());
         }
 
-        BigDecimal shipping = subtotal.compareTo(freeShippingThreshold) >= 0 ? BigDecimal.ZERO : shippingFee;
+        BigDecimal shipping = discountedSubtotal.compareTo(freeShippingThreshold) >= 0
+                ? BigDecimal.ZERO
+                : shippingFee;
         order.setSubtotal(subtotal);
+        order.setDiscountAmount(discountAmount);
         order.setShippingFee(shipping);
-        order.setTotalAmount(subtotal.add(shipping));
+        order.setTotalAmount(discountedSubtotal.add(shipping));
 
         boolean waitingForPayment = request.getPaymentMethod() != PaymentMethod.COD;
         order.setStatus(waitingForPayment ? OrderStatus.PENDING_PAYMENT : OrderStatus.PROCESSING);
@@ -214,10 +242,99 @@ public class OrderService {
         return toResponse(order, paymentUrl);
     }
 
+    /**
+     * Mua gói ngoại ngữ Premium cho riêng một điểm thuyết minh.
+     * Giá lấy từ content-service (poi.premium_price, null -> giá mặc định).
+     */
+    @Transactional
+    public OrderResponse createPoiOrder(Long userId,
+                                        String idempotencyKey,
+                                        CreatePoiOrderRequest request,
+                                        String ipAddress) {
+        if (request == null || request.getPoiId() == null) {
+            throw new BadRequestException("Điểm thuyết minh không hợp lệ.");
+        }
+
+        PaymentMethod method = null;
+        if (request.getPaymentMethod() != null && !request.getPaymentMethod().isBlank()) {
+            try {
+                method = PaymentMethod.valueOf(request.getPaymentMethod().trim().toUpperCase(Locale.ROOT));
+            } catch (RuntimeException ex) {
+                throw new BadRequestException("Phương thức thanh toán không hợp lệ.");
+            }
+        }
+        if (method == null) {
+            method = PaymentMethod.VIETQR;
+        }
+        if (method != PaymentMethod.VNPAY && method != PaymentMethod.VIETQR) {
+            throw new BadRequestException("Gói điểm thuyết minh chỉ hỗ trợ VNPAY hoặc VietQR.");
+        }
+        if (method == PaymentMethod.VNPAY && !vnPayService.isConfigured()) {
+            throw new ServiceUnavailableException("Cổng thanh toán VNPAY chưa được cấu hình.");
+        }
+
+        PoiPremiumPrice poi = poiPriceClient.fetchPoiPrice(request.getPoiId());
+        BigDecimal price = poi.getPremiumPrice() != null ? poi.getPremiumPrice() : poiDefaultPrice;
+        if (price == null || price.signum() <= 0) {
+            throw new BadRequestException("Điểm thuyết minh này chưa mở bán gói ngoại ngữ.");
+        }
+
+        String key = normalizeKey(idempotencyKey);
+        if (key != null) {
+            Optional<Order> existing = orderRepository.findByUserIdAndIdempotencyKey(userId, key);
+            if (existing.isPresent()) {
+                Order order = existing.get();
+                String existingUrl = order.getStatus() == OrderStatus.PENDING_PAYMENT
+                        && method == PaymentMethod.VNPAY
+                        ? createVnPayPayment(order, ipAddress).getPaymentUrl()
+                        : null;
+                return toResponse(order, existingUrl);
+            }
+        }
+
+        Order order = Order.builder()
+                .userId(userId)
+                .receiverName("Echora Premium POI")
+                .phone("0000000000")
+                .address("Goi ky thuat so - khong giao hang")
+                .note("Mo khoa thuyet minh ngoai ngu: " + poi.getPoiName())
+                .orderType(ORDER_TYPE_POI)
+                .poiId(poi.getPoiId())
+                .paymentMethod(method)
+                .paymentStatus(PaymentStatus.PENDING)
+                .idempotencyKey(key)
+                .subtotal(price)
+                .shippingFee(BigDecimal.ZERO)
+                .totalAmount(price)
+                .status(OrderStatus.PENDING_PAYMENT)
+                .expiresAt(LocalDateTime.now().plusMinutes(PAYMENT_EXPIRE_MINUTES))
+                .orderCode(generateUniqueOrderCode())
+                .build();
+
+        try {
+            order = orderRepository.save(order);
+        } catch (DataIntegrityViolationException ex) {
+            if (key != null) {
+                Optional<Order> existing = orderRepository.findByUserIdAndIdempotencyKey(userId, key);
+                if (existing.isPresent()) {
+                    return toResponse(existing.get(), null);
+                }
+            }
+            throw ex;
+        }
+
+        String paymentUrl = null;
+        if (method == PaymentMethod.VNPAY) {
+            paymentUrl = createVnPayPayment(order, ipAddress).getPaymentUrl();
+        }
+        return toResponse(order, paymentUrl);
+    }
+
     @Transactional(readOnly = true)
     public List<OrderResponse> getMyOrders(Long userId) {
         return orderRepository.findByUserIdOrderByCreatedAtDesc(userId).stream()
-                .filter(order -> !ORDER_TYPE_PREMIUM.equals(order.getOrderType()))
+                .filter(order -> !ORDER_TYPE_PREMIUM.equals(order.getOrderType())
+                        && !ORDER_TYPE_POI.equals(order.getOrderType()))
                 .map(order -> toResponse(order, null))
                 .toList();
     }
@@ -280,7 +397,11 @@ public class OrderService {
         } else {
             order.setPaymentStatus(PaymentStatus.FAILED);
         }
-        return toResponse(orderRepository.save(order), null);
+        Order saved = orderRepository.save(order);
+        if ("SUCCESS".equalsIgnoreCase(outcome)) {
+            orderEntitlementService.enqueue(saved);
+        }
+        return toResponse(saved, null);
     }
 
     @Transactional
@@ -343,6 +464,7 @@ public class OrderService {
     public AdminOrderResponse confirmPayment(String orderCode) {
         Order order = requireOrder(orderCode);
         if (order.getPaymentStatus() == PaymentStatus.SUCCESS) {
+            orderEntitlementService.enqueue(order);
             return toAdminResponse(order, true);
         }
         if (order.getStatus() == OrderStatus.CANCELLED) {
@@ -357,10 +479,21 @@ public class OrderService {
             order.setStatus(OrderStatus.PAID);
         }
         orderRepository.save(order);
+        orderEntitlementService.enqueue(order);
+        return toAdminResponse(order, true);
+    }
 
-        if (ORDER_TYPE_PREMIUM.equals(order.getOrderType())) {
-            authEntitlementClient.activatePremium(order);
+    @Transactional
+    public AdminOrderResponse retryEntitlement(String orderCode) {
+        Order order = requireOrder(orderCode);
+        if (!ORDER_TYPE_POI.equals(order.getOrderType())
+                && !ORDER_TYPE_PREMIUM.equals(order.getOrderType())) {
+            throw new BadRequestException("Đơn hàng này không cần cấp quyền số.");
         }
+        if (order.getPaymentStatus() != PaymentStatus.SUCCESS) {
+            throw new BadRequestException("Đơn hàng chưa thanh toán thành công.");
+        }
+        orderEntitlementService.retryNow(order);
         return toAdminResponse(order, true);
     }
 
@@ -430,7 +563,11 @@ public class OrderService {
         }
 
         order.setStatus(target);
-        return toAdminResponse(orderRepository.save(order), true);
+        Order saved = orderRepository.save(order);
+        if (target == OrderStatus.COMPLETED && saved.getPaymentStatus() == PaymentStatus.SUCCESS) {
+            orderEntitlementService.enqueue(saved);
+        }
+        return toAdminResponse(saved, true);
     }
 
     private void markPaymentsReceived(Order order, LocalDateTime paidAt) {
@@ -462,7 +599,8 @@ public class OrderService {
 
     private static String parseEnumName(String value, String label) {
         String normalized = value.trim().toUpperCase(Locale.ROOT);
-        if (!normalized.equals(ORDER_TYPE_PRODUCT) && !normalized.equals(ORDER_TYPE_PREMIUM)) {
+        if (!normalized.equals(ORDER_TYPE_PRODUCT) && !normalized.equals(ORDER_TYPE_PREMIUM)
+                && !normalized.equals(ORDER_TYPE_POI)) {
             throw new BadRequestException(label + " không hợp lệ.");
         }
         return normalized;
@@ -504,7 +642,8 @@ public class OrderService {
         boolean amountMatches = payment.getAmount().compareTo(callback.amount()) == 0;
         boolean success = isSuccessfulPayment(callback) && amountMatches;
 
-        if (order.getPaymentStatus() == PaymentStatus.SUCCESS) {
+        if (order.getStatus() == OrderStatus.PAID || order.getPaymentStatus() == PaymentStatus.SUCCESS) {
+            orderEntitlementService.enqueue(order);
             return vnPayService.buildFrontendResultUrl(order.getOrderCode(), "success");
         }
 
@@ -533,11 +672,14 @@ public class OrderService {
         if (payment.getAmount().compareTo(callback.amount()) != 0) {
             return ipnResponse("04", "Invalid amount");
         }
-        if (payment.getStatus() == PaymentStatus.SUCCESS) {
+
+        Order order = payment.getOrder();
+        if (order.getStatus() == OrderStatus.PAID || order.getPaymentStatus() == PaymentStatus.SUCCESS
+                || payment.getStatus() == PaymentStatus.SUCCESS) {
+            orderEntitlementService.enqueue(order);
             return ipnResponse("02", "Order already confirmed");
         }
 
-        Order order = payment.getOrder();
         if (isSuccessfulPayment(callback)) {
             markPaid(order, payment, callback);
         } else {
@@ -581,6 +723,10 @@ public class OrderService {
     }
 
     private void markPaid(Order order, Payment payment, VnPayService.VnPayCallback callback) {
+        if (order.getStatus() == OrderStatus.PAID && order.getPaymentStatus() == PaymentStatus.SUCCESS
+                && payment.getStatus() == PaymentStatus.SUCCESS) {
+            return;
+        }
         payment.setStatus(PaymentStatus.SUCCESS);
         payment.setResponseCode(callback.responseCode());
         payment.setTransactionNo(callback.transactionNo());
@@ -592,10 +738,7 @@ public class OrderService {
         order.setPaymentStatus(PaymentStatus.SUCCESS);
         order.setPaidAt(LocalDateTime.now());
         orderRepository.save(order);
-
-        if (ORDER_TYPE_PREMIUM.equals(order.getOrderType())) {
-            authEntitlementClient.activatePremium(order);
-        }
+        orderEntitlementService.enqueue(order);
     }
 
     private static boolean isSuccessfulPayment(VnPayService.VnPayCallback callback) {
@@ -653,6 +796,16 @@ public class OrderService {
         throw new ServiceUnavailableException("Không thể tạo mã đơn hàng. Vui lòng thử lại.");
     }
 
+    private static boolean isSouvenir(ProductPrice product) {
+        return SOUVENIR_CATEGORY.equalsIgnoreCase(product.getCategory());
+    }
+
+    private static BigDecimal premiumDiscountedPrice(BigDecimal price) {
+        BigDecimal multiplier = ONE_HUNDRED.subtract(PREMIUM_DISCOUNT_PERCENT);
+        return price.multiply(multiplier)
+                .divide(ONE_HUNDRED, 0, RoundingMode.HALF_UP);
+    }
+
     private OrderResponse toResponse(Order order, String paymentUrl) {
         List<OrderItemResponse> items = order.getItems().stream()
                 .map(item -> OrderItemResponse.builder()
@@ -669,8 +822,10 @@ public class OrderService {
                 .userId(order.getUserId())
                 .orderType(order.getOrderType() == null ? ORDER_TYPE_PRODUCT : order.getOrderType())
                 .premiumPackage(order.getPremiumPackage())
+                .poiId(order.getPoiId())
                 .subtotal(order.getSubtotal())
                 .shippingFee(order.getShippingFee())
+                .discountAmount(order.getDiscountAmount())
                 .totalAmount(order.getTotalAmount())
                 .status(order.getStatus().name())
                 .paymentMethod(order.getPaymentMethod().name())
@@ -720,8 +875,10 @@ public class OrderService {
                 .userId(order.getUserId())
                 .orderType(order.getOrderType() == null ? ORDER_TYPE_PRODUCT : order.getOrderType())
                 .premiumPackage(order.getPremiumPackage())
+                .poiId(order.getPoiId())
                 .subtotal(order.getSubtotal())
                 .shippingFee(order.getShippingFee())
+                .discountAmount(order.getDiscountAmount())
                 .totalAmount(order.getTotalAmount())
                 .status(order.getStatus().name())
                 .paymentMethod(order.getPaymentMethod().name())

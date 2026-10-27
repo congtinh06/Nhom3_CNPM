@@ -3,6 +3,7 @@ package com.echora.content.dto;
 import lombok.*;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @Getter
 @Setter
@@ -36,4 +37,10 @@ public class PoiDetailDto {
     private Integer audioDurationSeconds;
     private String audioStatus; // PENDING, PROCESSING, READY, FAILED_TTS
     private boolean isFallbackLanguage;
+
+    // Phân đoạn bài thuyết minh (chap) của ngôn ngữ đang truy vấn.
+    private List<PoiGuideChapterDto> chapters;
+
+    // Giá mua lẻ gói ngoại ngữ cho POI này (null = dùng giá mặc định phía order-service).
+    private BigDecimal premiumPrice;
 }

@@ -7,6 +7,7 @@ import com.echora.content.dto.PoiBoundingBoxDto;
 import com.echora.content.dto.PoiDetailDto;
 import com.echora.content.dto.PoiGuideDto;
 import com.echora.content.dto.PoiInternalQrDto;
+import com.echora.content.dto.PoiPremiumPriceDto;
 import com.echora.content.dto.PoiPublishStatusDto;
 import com.echora.content.dto.PoiSummaryDto;
 import com.echora.content.dto.UpdatePoiRequest;
@@ -23,6 +24,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Set;
 
 @RestController
 @RequiredArgsConstructor
@@ -39,8 +41,10 @@ public class PoiController {
     @GetMapping("/api/content/pois/guide")
     public ResponseEntity<List<PoiGuideDto>> getPoiGuides(
             @RequestParam(required = false) Long zoneId,
-            @RequestAttribute(value = "premiumEntitlement", required = false) Boolean premium) {
-        return ResponseEntity.ok(poiContentService.getPoiGuides(zoneId, Boolean.TRUE.equals(premium)));
+            @RequestAttribute(value = "premiumEntitlement", required = false) Boolean premium,
+            @RequestAttribute(value = "purchasedPoiIds", required = false) Set<Long> purchasedPoiIds) {
+        return ResponseEntity.ok(poiContentService.getPoiGuides(
+                zoneId, Boolean.TRUE.equals(premium), purchasedPoiIds));
     }
 
     @GetMapping("/api/content/pois/{id}")
@@ -69,6 +73,12 @@ public class PoiController {
     @GetMapping("/api/content/internal/pois/qr/{qrToken}")
     public ResponseEntity<PoiInternalQrDto> getInternalPoiByQrToken(@PathVariable String qrToken) {
         return ResponseEntity.ok(poiContentService.getInternalPoiByQrToken(qrToken));
+    }
+
+    // Nội bộ cho order-service: giá mua lẻ Premium của một POI.
+    @GetMapping("/api/content/internal/pois/{id}/premium-price")
+    public ResponseEntity<PoiPremiumPriceDto> getInternalPoiPremiumPrice(@PathVariable Long id) {
+        return ResponseEntity.ok(poiContentService.getInternalPoiPremiumPrice(id));
     }
 
     @GetMapping("/api/content/admin/pois")

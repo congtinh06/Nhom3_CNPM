@@ -1,0 +1,20 @@
+================================================================================
+THÔNG TIN CHÚ THÍCH HÌNH ẢNH: Hinh_2.2_Chuong_2
+================================================================================
+1. KÝ HIỆU HÌNH         : Hinh 2.2 Chuong 2
+2. TIÊU ĐỀ SƠ ĐỒ        : Sơ đồ Cây Phân cấp Tính năng Sản phẩm Echora (PRD Feature Tree)
+3. THUỘC BÁO CÁO        : Chương 2: PRD và Phân tích Yêu cầu Sản phẩm
+4. VỊ TRÍ TRONG CHƯƠNG  : Mục 2.9 – Danh mục Tính năng Sản phẩm (Key Features)
+5. TÁC NHÂN / THÀNH PHẦN: Khách vãng lai, Người dùng đăng ký, Cán bộ biên tập, Quản trị viên hệ thống
+6. TIÊU CHUẨN MÔ HÌNH HÓA: Feature Breakdown Structure (FBS) Tree, Monochrome Black & White, phân cấp trực quan.
+--------------------------------------------------------------------------------
+7. MỤC ĐÍCH VÀ Ý NGHĨA NGHIỆP VỤ:
+   Biểu diễn cấu trúc phân cấp cây tính năng toàn diện của hệ sinh thái Echora, phân rã 16 tính năng nghiệp vụ (FEAT-01 đến FEAT-16) thành 4 nhánh chức năng chính: (1) Nhóm Trải nghiệm Tham quan Du khách; (2) Nhóm Thương mại & Thanh toán Số; (3) Nhóm Quản trị Nội dung Di sản; (4) Nhóm Quản trị Nền tảng & Hệ thống.
+--------------------------------------------------------------------------------
+8. QUY CÁCH TỆP HÌNH ẢNH:
+   • Tệp hình ảnh Raster : Hinh_2.2_Chuong_2.png (Độ phân giải cao, phục vụ chèn văn bản Word/PDF)
+   • Phong cách thể hiện  : Pure Monochrome Black & White (Nền trắng, nét đen, chữ đen chuẩn học thuật)
+================================================================================
+Đồ án Học phần Công nghệ Phần mềm – Đề tài: Hệ thống Thuyết minh Tự động Đa ngôn ngữ Echora
+Nhóm Sinh viên Thực hiện: Nhóm 03 – Khoa CNTT, Đại học Khoa học Tự nhiên / ĐHQG-HCM
+================================================================================

@@ -1,0 +1,58 @@
+@startuml
+!theme plain
+skinparam defaultFontName "Times New Roman"
+skinparam defaultFontSize 11
+skinparam monochrome true
+skinparam shadowing false
+skinparam roundCorner 0
+skinparam packageStyle rectangle
+skinparam handwritten false
+skinparam ArrowColor #000000
+skinparam ActorBorderColor #000000
+skinparam ComponentBorderColor #000000
+skinparam DatabaseBorderColor #000000
+skinparam InterfaceBorderColor #000000
+skinparam ParticipantBorderColor #000000
+skinparam SequenceLifeLineBorderColor #000000
+skinparam UsecaseBorderColor #000000
+skinparam StateBorderColor #000000
+skinparam ClassBorderColor #000000
+
+title HÌNH 3.1. SƠ ĐỒ NGỮ CẢNH HỆ THỐNG DU LỊCH DI SẢN SỐ ECHORA
+
+actor "Khách vãng lai\n(Anonymous Visitor)" as Visitor
+actor "Người dùng đã đăng ký\n(Registered User)" as RegUser
+actor "Nhân viên quầy vé\n(Ticket Staff)" as TicketStaff
+actor "Quản trị viên\n(Administrator)" as Admin
+
+rectangle "HỆ THỐNG DU LỊCH DI SẢN SỐ ECHORA\n(Echora Heritage Platform)" as System
+
+node "Thiết bị GPS & Trình duyệt" as GPS
+node "OpenStreetMap Server" as OSM
+node "Google OAuth 2.0" as Google
+node "Cổng VNPAY Sandbox" as VNPAY
+node "Ngân hàng VietQR (NAPAS)" as VietQR
+node "MyMemory Translation API" as MyMemory
+
+Visitor --> System : 1. Quét mã QR, mở web, nhận thuyết minh tiếng Việt
+System --> Visitor : 2. Luồng âm thanh MP3 (HTTP 206), phụ đề, bản đồ
+
+RegUser --> System : 3. Đăng nhập, nghe đa ngữ, đặt quà lưu niệm
+System --> RegUser : 4. Trạng thái đơn hàng, giỏ hàng, thông tin cá nhân
+
+TicketStaff --> System : 5. Xác nhận thu tiền mặt, sinh Claim Code
+System --> TicketStaff : 6. Mã nhận quyền (Claim Code 6 ký tự, TTL 15m)
+
+Admin --> System : 7. Quản trị POI, dịch thuật, duyệt đơn, xuất QR
+System --> Admin : 8. Báo cáo thống kê quét QR & nghe audio
+
+GPS --> System : Tọa độ GPS thời gian thực (watchPosition)
+OSM --> System : Bản đồ nền dạng gạch (Map Tiles OSM)
+Google --> System : Xác thực danh tính ID Token
+System --> VNPAY : Yêu cầu thanh toán URL ký HMAC-SHA512
+VNPAY --> System : Kết quả giao dịch (IPN / Return Webhook)
+VietQR --> System : Chuỗi dữ liệu mã chuyển khoản chuẩn NAPAS
+System --> MyMemory : Yêu cầu dịch thuật văn bản di tích
+MyMemory --> System : Bản dịch đa ngữ (en, ja, ko)
+
+@enduml

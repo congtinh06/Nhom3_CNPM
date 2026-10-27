@@ -33,6 +33,7 @@ interface FormValues {
   latitude: string;
   longitude: string;
   triggerRadiusMeters: string;
+  premiumPrice: string;
   address: string;
   thumbnailUrl: string;
   title: string;
@@ -52,6 +53,7 @@ const DEFAULT_VALUES: FormValues = {
   latitude: '',
   longitude: '',
   triggerRadiusMeters: '50',
+  premiumPrice: '',
   address: '',
   thumbnailUrl: '',
   title: '',
@@ -71,6 +73,7 @@ const FIELD_LABELS: Record<string, string> = {
   latitude: 'Vĩ độ',
   longitude: 'Kinh độ',
   triggerRadiusMeters: 'Bán kính kích hoạt',
+  premiumPrice: 'Giá mở khóa lẻ (VNĐ)',
   address: 'Địa chỉ',
   thumbnailUrl: 'Đường dẫn ảnh',
   routeId: 'Tuyến',
@@ -168,6 +171,7 @@ function detailToFormValues(detail: AdminPoiDetail, categoryList: PoiCategoryOpt
     longitude:
       detail.longitude !== undefined && detail.longitude !== null ? String(detail.longitude) : '',
     triggerRadiusMeters: String(detail.triggerRadiusMeters ?? 50),
+    premiumPrice: detail.premiumPrice != null ? String(detail.premiumPrice) : '',
     address: detail.address || '',
     thumbnailUrl: detail.thumbnailUrl || '',
     title: vi?.title || '',
@@ -407,6 +411,13 @@ export const PoiFormPage: React.FC = () => {
       }
     }
 
+    if (formValues.premiumPrice.trim()) {
+      const price = parseFloat(formValues.premiumPrice);
+      if (isNaN(price) || price < 0) {
+        newErrors.premiumPrice = 'Giá mở khóa phải là số không âm';
+      }
+    }
+
     if (formValues.address.length > 500) {
       newErrors.address = 'Địa chỉ tối đa 500 ký tự';
     }
@@ -467,6 +478,9 @@ export const PoiFormPage: React.FC = () => {
       triggerRadiusMeters: formValues.triggerRadiusMeters.trim()
         ? parseInt(formValues.triggerRadiusMeters, 10)
         : undefined,
+      premiumPrice: formValues.premiumPrice.trim()
+        ? parseFloat(formValues.premiumPrice)
+        : null,
       address: formValues.address.trim() || undefined,
       thumbnailUrl: formValues.thumbnailUrl.trim() || undefined,
       routeId: formValues.routeId ? Number(formValues.routeId) : undefined,
@@ -730,25 +744,45 @@ export const PoiFormPage: React.FC = () => {
         </div>
         <div className="adm-form-col">
           <FormField
-            label="Địa chỉ"
-            htmlFor="address"
-            error={errors.address}
-            helperText={counterHint(formValues.address, 500)}
+            label="Giá mở khóa lẻ (VNĐ)"
+            htmlFor="premiumPrice"
+            error={errors.premiumPrice}
+            helperText="Để trống = áp dụng giá mặc định (20.000đ)"
           >
             <input
-              id="address"
-              name="address"
-              type="text"
+              id="premiumPrice"
+              name="premiumPrice"
+              type="number"
+              min={0}
+              step={1000}
               className="adm-input"
-              value={formValues.address}
+              value={formValues.premiumPrice}
               onChange={handleInputChange}
-              placeholder="Địa chỉ điểm đến"
-              maxLength={500}
-              aria-invalid={Boolean(errors.address)}
+              placeholder="VD: 25000 (mặc định: 20.000đ)"
+              aria-invalid={Boolean(errors.premiumPrice)}
             />
           </FormField>
         </div>
       </div>
+
+      <FormField
+        label="Địa chỉ"
+        htmlFor="address"
+        error={errors.address}
+        helperText={counterHint(formValues.address, 500)}
+      >
+        <input
+          id="address"
+          name="address"
+          type="text"
+          className="adm-input"
+          value={formValues.address}
+          onChange={handleInputChange}
+          placeholder="Địa chỉ điểm đến"
+          maxLength={500}
+          aria-invalid={Boolean(errors.address)}
+        />
+      </FormField>
 
       <FormField
         label="Ảnh đại diện"

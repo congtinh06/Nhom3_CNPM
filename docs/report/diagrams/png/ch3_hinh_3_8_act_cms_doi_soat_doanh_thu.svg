@@ -1,0 +1,100 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 850" width="1100" height="850" style="background:#ffffff; font-family:'Times New Roman', Times, serif;">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#000000"/>
+    </marker>
+  </defs>
+
+  <!-- Title -->
+  <text x="550" y="35" text-anchor="middle" font-size="20" font-weight="bold" fill="#000000">Sơ đồ Hoạt động (Activity Diagram): Quản trị Đơn hàng Lưu niệm và Đối soát Doanh thu (CMS)</text>
+
+  <!-- Swimlane / Subsystem headers -->
+  <rect x="50" y="55" width="480" height="770" fill="none" stroke="#000000" stroke-width="1.5"/>
+  <rect x="530" y="55" width="520" height="770" fill="none" stroke="#000000" stroke-width="1.5"/>
+  <text x="290" y="80" text-anchor="middle" font-size="16" font-weight="bold">Quản trị viên Tài chính / Quản lý Đơn hàng</text>
+  <text x="790" y="80" text-anchor="middle" font-size="16" font-weight="bold">Hệ thống Echora Backend &amp; Dịch vụ Báo cáo</text>
+  <line x1="50" y1="95" x2="1050" y2="95" stroke="#000000" stroke-width="1"/>
+
+  <!-- Initial Node -->
+  <circle cx="290" cy="125" r="12" fill="#000000"/>
+  <line x1="290" y1="137" x2="290" y2="165" stroke="#000000" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- Action: Truy cap quan ly don hang -->
+  <rect x="180" y="165" width="220" height="45" rx="8" ry="8" fill="#ffffff" stroke="#000000" stroke-width="1.5"/>
+  <text x="290" y="192" text-anchor="middle" font-size="14">Mở bảng Quản lý Đơn hàng</text>
+
+  <!-- Fetch orders -->
+  <line x1="400" y1="187" x2="680" y2="187" stroke="#000000" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- Action: Truy van danh sach don hang -->
+  <rect x="680" y="165" width="240" height="45" rx="8" ry="8" fill="#ffffff" stroke="#000000" stroke-width="1.5"/>
+  <text x="800" y="192" text-anchor="middle" font-size="14">Truy vấn cơ sở dữ liệu đơn hàng</text>
+
+  <!-- Return list -->
+  <line x1="680" y1="210" x2="410" y2="265" stroke="#000000" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- Action: Xem danh sach & Chon bo loc -->
+  <rect x="160" y="245" width="260" height="55" rx="8" ry="8" fill="#ffffff" stroke="#000000" stroke-width="1.5"/>
+  <text x="290" y="267" text-anchor="middle" font-size="14">Thiết lập bộ lọc tìm kiếm đơn hàng</text>
+  <text x="290" y="287" text-anchor="middle" font-size="13">(Theo ngày, Trạng thái: PAID, PENDING, SHIPPED)</text>
+
+  <line x1="290" y1="300" x2="290" y2="340" stroke="#000000" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- Decision: Chon nghiep vu nao? -->
+  <polygon points="290,340 350,370 290,400 230,370" fill="#ffffff" stroke="#000000" stroke-width="1.5"/>
+  <text x="290" y="374" text-anchor="middle" font-size="12">Nghiệp vụ?</text>
+
+  <!-- Branch 1: Cap nhat trang thai van chuyen don hang luu niem -->
+  <line x1="230" y1="370" x2="110" y2="370" stroke="#000000" stroke-width="1.5"/>
+  <line x1="110" y1="370" x2="110" y2="440" stroke="#000000" stroke-width="1.5"/>
+  <line x1="110" y1="440" x2="160" y2="440" stroke="#000000" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="130" y="360" font-size="12">[Xử lý giao hàng]</text>
+
+  <rect x="160" y="420" width="260" height="50" rx="8" ry="8" fill="#ffffff" stroke="#000000" stroke-width="1.5"/>
+  <text x="290" y="442" text-anchor="middle" font-size="14">Cập nhật mã vận đơn &amp; chuyển trạng thái</text>
+  <text x="290" y="460" text-anchor="middle" font-size="13">PAID -> PROCESSING -> SHIPPED</text>
+
+  <line x1="420" y1="445" x2="680" y2="445" stroke="#000000" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <rect x="680" y="420" width="240" height="50" rx="8" ry="8" fill="#ffffff" stroke="#000000" stroke-width="1.5"/>
+  <text x="800" y="442" text-anchor="middle" font-size="14">Ghi nhận log cập nhật trạng thái</text>
+  <text x="800" y="460" text-anchor="middle" font-size="13">&amp; Bắn thông báo Email / SMS cho khách</text>
+
+  <!-- Branch 2: Doi soat va Xuat bao cao tai chinh -->
+  <line x1="350" y1="370" x2="450" y2="370" stroke="#000000" stroke-width="1.5"/>
+  <line x1="450" y1="370" x2="450" y2="520" stroke="#000000" stroke-width="1.5"/>
+  <line x1="450" y1="520" x2="420" y2="520" stroke="#000000" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="360" y="360" font-size="12">[Đối soát doanh thu]</text>
+
+  <rect x="160" y="500" width="260" height="50" rx="8" ry="8" fill="#ffffff" stroke="#000000" stroke-width="1.5"/>
+  <text x="290" y="522" text-anchor="middle" font-size="14">Yêu cầu Kết xuất Báo cáo Doanh thu</text>
+  <text x="290" y="540" text-anchor="middle" font-size="13">(Theo VNPAY, VietQR và Tiền mặt quầy vé)</text>
+
+  <line x1="420" y1="525" x2="680" y2="525" stroke="#000000" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- Aggregate revenue & cross-check -->
+  <rect x="680" y="500" width="240" height="55" rx="8" ry="8" fill="#ffffff" stroke="#000000" stroke-width="1.5"/>
+  <text x="800" y="522" text-anchor="middle" font-size="14">Tổng hợp dữ liệu giao dịch</text>
+  <text x="800" y="542" text-anchor="middle" font-size="13">Đối soát mã tham chiếu cổng VNPAY</text>
+
+  <line x1="800" y1="555" x2="800" y2="590" stroke="#000000" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- Action: Xuat bao cao Excel / PDF -->
+  <rect x="680" y="590" width="240" height="45" rx="8" ry="8" fill="#ffffff" stroke="#000000" stroke-width="1.5"/>
+  <text x="800" y="618" text-anchor="middle" font-size="14">Kết xuất tệp Báo cáo Excel / PDF</text>
+
+  <!-- Flow back to client download -->
+  <line x1="680" y1="612" x2="420" y2="612" stroke="#000000" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <rect x="170" y="590" width="250" height="45" rx="8" ry="8" fill="#ffffff" stroke="#000000" stroke-width="1.5"/>
+  <text x="295" y="618" text-anchor="middle" font-size="14">Tải về tệp bảng kê &amp; Lưu trữ kế toán</text>
+
+  <line x1="295" y1="635" x2="295" y2="700" stroke="#000000" stroke-width="1.5"/>
+  <line x1="800" y1="470" x2="800" y2="700" stroke="#000000" stroke-width="1.5"/>
+  <line x1="800" y1="700" x2="295" y2="700" stroke="#000000" stroke-width="1.5"/>
+  <line x1="295" y1="700" x2="295" y2="745" stroke="#000000" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- Final Node -->
+  <circle cx="295" cy="760" r="14" fill="#ffffff" stroke="#000000" stroke-width="1.5"/>
+  <circle cx="295" cy="760" r="8" fill="#000000"/>
+</svg>

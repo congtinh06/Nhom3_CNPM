@@ -1,4 +1,21 @@
-import type { GeoPoi } from '../pages/NearbyPage';
+/**
+ * ============================================================================
+ * ADAPTER CHUYỂN ĐỔI DỮ LIỆU ĐỊA ĐIỂM (POI Guide Adapter)
+ * ============================================================================
+ * 
+ * Mục đích module:
+ * - Chuyển đổi dữ liệu POI từ DB/API (PoiGuide) thành GeoPoi phục vụ giao diện du khách.
+ * - Hợp nhất dữ liệu động từ backend với dữ liệu tĩnh mẫu (fallback từ nearbyPois.json).
+ * 
+ * Các thay đổi cốt lõi (Core Changes):
+ * 1. [Audio Fallback]: Đảm bảo nếu API chưa có URL âm thanh riêng cho ngoại ngữ thì tự động
+ *    lấy fallback từ dữ liệu chuẩn (`fallback.audio[lang]`), không để link âm thanh rỗng.
+ * 2. [Cấu trúc phân đoạn]: Xử lý trích xuất `chapters` và `narration.full` cho 4 ngôn ngữ, phục vụ
+ *    việc đồng bộ đoạn đọc và tiêu đề từng phần trên giao diện.
+ * ============================================================================
+ */
+
+import type { GeoPoi, NarrationChapterBlock } from '../pages/NearbyPage';
 import { PoiGuide, SupportedLanguage } from '../types';
 import nearbyPoisData from './nearbyPois.json';
 
@@ -51,6 +68,9 @@ function emptyNarration() {
   return {
     short: emptyByLang(),
     full: { vi: [], en: [], ja: [], ko: [] } as Partial<Record<SupportedLanguage, string[]>>,
+    chapters: { vi: [], en: [], ja: [], ko: [] } as Partial<
+      Record<SupportedLanguage, NarrationChapterBlock[]>
+    >,
   };
 }
 
@@ -114,8 +134,28 @@ export function mapGuideToGeoPoi(guide: PoiGuide): GeoPoi {
     const shortText = trSummary || fallback?.narration?.short?.[lang] || text;
     if (shortText) narration.short[lang] = shortText;
 
-    audio[lang] = tr?.audioUrl ?? '';
+    audio[lang] = tr?.audioUrl || fallback?.audio?.[lang] || '';
     audioStatusByLanguage[lang] = tr?.audioStatus ?? null;
+
+    const dbChapters = tr?.chapters ?? [];
+    if (dbChapters.length > 0) {
+      // DB trả về phân đoạn (chap): nguồn chính của bài thuyết minh theo ngôn ngữ.
+      const chapterBlocks: NarrationChapterBlock[] = dbChapters
+        .map((chapter) => ({
+          title: (chapter.title || '').trim(),
+          paras: splitParagraphs(chapter.narrationText),
+        }))
+        .filter((chapter) => chapter.title || chapter.paras.length > 0);
+      if (chapterBlocks.length > 0) {
+        narration.chapters[lang] = chapterBlocks;
+        narration.full[lang] = chapterBlocks.flatMap((chapter) => chapter.paras);
+        if (!narration.short[lang]) {
+          const firstPara = chapterBlocks[0]?.paras[0] ?? '';
+          if (firstPara) narration.short[lang] = firstPara;
+        }
+        continue;
+      }
+    }
 
     const fullParas = splitParagraphs(trDescription);
     if (fullParas.length > 0) {
@@ -133,6 +173,8 @@ export function mapGuideToGeoPoi(guide: PoiGuide): GeoPoi {
 
   return {
     id: String(guide.id),
+    numericId: guide.id,
+    premiumPrice: guide.premiumPrice ?? null,
     qrToken: guide.qrToken,
     name,
     lat: Number(guide.latitude),

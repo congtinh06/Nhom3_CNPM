@@ -1,4 +1,6 @@
 import { apiClient } from './client';
+import { refreshSession } from './refresh';
+import { AuthScope } from './tokenStore';
 import {
   AuthMessage,
   AuthSession,
@@ -12,8 +14,12 @@ import {
   ResetPasswordPayload,
 } from '../types';
 
-async function post<T>(url: string, body?: unknown): Promise<T> {
-  const response = await apiClient.post<T>(url, body ?? {});
+function scopeConfig(scope: AuthScope) {
+  return scope === 'admin' ? { headers: { 'X-Auth-Scope': 'admin' } } : undefined;
+}
+
+async function post<T>(url: string, body?: unknown, scope: AuthScope = 'user'): Promise<T> {
+  const response = await apiClient.post<T>(url, body ?? {}, scopeConfig(scope));
   return response.data;
 }
 
@@ -23,20 +29,20 @@ export const authApi = {
   register: (payload: RegisterPayload): Promise<AuthMessage> =>
     post<AuthMessage>('/api/auth/register', payload),
 
-  login: (payload: LoginPayload): Promise<AuthSession> =>
-    post<AuthSession>('/api/auth/login', payload),
+  login: (payload: LoginPayload, scope: AuthScope = 'user'): Promise<AuthSession> =>
+    post<AuthSession>('/api/auth/login', payload, scope),
 
-  loginWithGoogle: (credential: string): Promise<AuthSession> =>
-    post<AuthSession>('/api/auth/google', { credential }),
+  loginWithGoogle: (credential: string, scope: AuthScope = 'user'): Promise<AuthSession> =>
+    post<AuthSession>('/api/auth/google', { credential }, scope),
 
-  refresh: (): Promise<AuthSession> => post<AuthSession>('/api/auth/refresh', {}),
+  refresh: (scope: AuthScope = 'user'): Promise<AuthSession> => refreshSession(scope),
 
-  logout: async (): Promise<void> => {
-    await apiClient.post<void>('/api/auth/logout');
+  logout: async (scope: AuthScope = 'user'): Promise<void> => {
+    await apiClient.post<void>('/api/auth/logout', undefined, scopeConfig(scope));
   },
 
-  logoutAll: async (): Promise<void> => {
-    await apiClient.post<void>('/api/auth/logout-all');
+  logoutAll: async (scope: AuthScope = 'user'): Promise<void> => {
+    await apiClient.post<void>('/api/auth/logout-all', undefined, scopeConfig(scope));
   },
 
   verifyEmail: (token: string): Promise<AuthMessage> =>
@@ -51,11 +57,11 @@ export const authApi = {
   resetPassword: (payload: ResetPasswordPayload): Promise<AuthMessage> =>
     post<AuthMessage>('/api/auth/reset-password', payload),
 
-  changePassword: (payload: ChangePasswordPayload): Promise<AuthMessage> =>
-    post<AuthMessage>('/api/auth/change-password', payload),
+  changePassword: (payload: ChangePasswordPayload, scope: AuthScope = 'user'): Promise<AuthMessage> =>
+    post<AuthMessage>('/api/auth/change-password', payload, scope),
 
-  me: async (): Promise<AuthUser> => {
-    const response = await apiClient.get<AuthUser>('/api/auth/me');
+  me: async (scope: AuthScope = 'user'): Promise<AuthUser> => {
+    const response = await apiClient.get<AuthUser>('/api/auth/me', scopeConfig(scope));
     return response.data;
   },
 
@@ -75,6 +81,9 @@ export const authApi = {
 
   scanQrLogin: (qrToken: string): Promise<QrScanResponse> =>
     post<QrScanResponse>('/api/auth/qr/sessions/scan', { qrToken }),
+
+  guestScanQrLogin: (qrToken: string): Promise<QrScanResponse> =>
+    post<QrScanResponse>('/api/auth/qr/sessions/guest-scan', { qrToken }),
 
   approveQrLogin: (qrToken: string): Promise<QrScanResponse> =>
     post<QrScanResponse>('/api/auth/qr/sessions/approve', { qrToken }),

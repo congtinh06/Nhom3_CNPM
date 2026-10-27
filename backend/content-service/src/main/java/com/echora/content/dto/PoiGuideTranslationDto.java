@@ -2,6 +2,8 @@ package com.echora.content.dto;
 
 import lombok.*;
 
+import java.util.List;
+
 @Getter
 @Setter
 @NoArgsConstructor
@@ -18,4 +20,7 @@ public class PoiGuideTranslationDto {
     private Integer audioDurationSeconds;
     private String audioStatus;
     private String source;
+
+    // Phân đoạn bài thuyết minh (chap) theo ngôn ngữ, đã sắp theo chapterOrder.
+    private List<PoiGuideChapterDto> chapters;
 }

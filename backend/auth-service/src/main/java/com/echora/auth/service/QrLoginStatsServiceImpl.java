@@ -38,7 +38,8 @@ public class QrLoginStatsServiceImpl implements QrLoginStatsService {
 
     private static final ZoneId APP_ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
     private static final Set<QrLoginStatus> LIVE_STATUSES =
-            EnumSet.of(QrLoginStatus.PENDING, QrLoginStatus.SCANNED, QrLoginStatus.APPROVED);
+            EnumSet.of(QrLoginStatus.PENDING, QrLoginStatus.SCANNED,
+                    QrLoginStatus.APPROVED, QrLoginStatus.GUEST_APPROVED);
     private static final int DEFAULT_RANGE_DAYS = 7;
     private static final int MAX_PAGE_SIZE = 100;
 

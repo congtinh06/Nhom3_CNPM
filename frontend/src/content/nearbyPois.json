@@ -91,7 +91,7 @@
     "audio": {
       "vi": "https://actions.google.com/sounds/v1/ambiences/church_bells_distant.ogg",
       "en": "https://actions.google.com/sounds/v1/ambiences/church_bells_distant.ogg",
-      "ko": "",
+      "ko": "https://actions.google.com/sounds/v1/ambiences/church_bells_distant.ogg",
       "ja": "https://actions.google.com/sounds/v1/ambiences/church_bells_distant.ogg"
     },
     "transcript": {
@@ -160,7 +160,7 @@
       "vi": "https://actions.google.com/sounds/v1/ambiences/office_ambience.ogg",
       "en": "https://actions.google.com/sounds/v1/ambiences/office_ambience.ogg",
       "ko": "https://actions.google.com/sounds/v1/ambiences/office_ambience.ogg",
-      "ja": ""
+      "ja": "https://actions.google.com/sounds/v1/ambiences/office_ambience.ogg"
     },
     "transcript": {
       "vi": "Bưu điện Trung tâm Sài Gòn nổi bật với mái vòm cong cổ điển, sàn gạch hoa văn tinh tế và các bức bản đồ địa lý lịch sử vẽ tay trên tường.",
@@ -287,7 +287,7 @@
     "audio": {
       "vi": "https://actions.google.com/sounds/v1/ambiences/hallway_ambient.ogg",
       "en": "https://actions.google.com/sounds/v1/ambiences/hallway_ambient.ogg",
-      "ko": "",
+      "ko": "https://actions.google.com/sounds/v1/ambiences/hallway_ambient.ogg",
       "ja": "https://actions.google.com/sounds/v1/ambiences/hallway_ambient.ogg"
     },
     "transcript": {

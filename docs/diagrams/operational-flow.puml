@@ -1,0 +1,53 @@
+@startuml
+!theme plain
+skinparam defaultFontName "Times New Roman"
+skinparam defaultFontSize 11
+skinparam monochrome true
+skinparam shadowing false
+skinparam roundCorner 0
+skinparam packageStyle rectangle
+skinparam handwritten false
+skinparam ArrowColor #000000
+skinparam ActorBorderColor #000000
+skinparam ComponentBorderColor #000000
+skinparam DatabaseBorderColor #000000
+skinparam InterfaceBorderColor #000000
+skinparam ParticipantBorderColor #000000
+skinparam SequenceLifeLineBorderColor #000000
+skinparam UsecaseBorderColor #000000
+skinparam StateBorderColor #000000
+skinparam ClassBorderColor #000000
+
+title HÌNH 3.8. SƠ ĐỒ PHÁC THẢO LUỒNG VẬN HÀNH TỔNG QUAN HỆ THỐNG
+
+|Quản trị & Bán vé|
+start
+:Admin tạo/sửa thông tin POI di tích;
+:Đẩy sự kiện qua RabbitMQ Topic Exchange;
+|Dịch vụ Nền & AI|
+:Worker dịch thuật 4 ngôn ngữ (vi, en, ja, ko);
+:Edge-TTS tổng hợp tệp âm thanh MP3;
+:Lưu CSDL và Volume chia sẻ;
+|Quản trị & Bán vé|
+if (Du khách chọn trả tiền mặt tại quầy?) then (Có)
+  :Nhân viên quầy vé nhận tiền mặt;
+  :Xác nhận đơn trên CMS;
+  :Sinh Claim Code 6 ký tự (TTL 15m lưu Redis);
+  :Giao Claim Code cho du khách;
+else (Không: Chọn VNPAY/VietQR)
+  :Tạo đơn online (thời hạn 15 phút);
+endif
+
+|Du khách Thực địa|
+:Du khách quét QR hoặc mở Web App;
+:Tải dữ liệu 7 POI 1 lần (Single-Shot);
+if (Có mã Claim Code?) then (Có)
+  :Nhập Claim Code đổi Access Token (xóa khỏi Redis);
+else (Khách vãng lai / Trả online)
+  :Thanh toán online VNPAY/VietQR hoặc nghe tiếng Việt miễn phí;
+endif
+:Du khách di chuyển tham quan;
+:GPS Geofence (35m-60m) phát hiện tiếp cận di tích;
+:Tự động phát thuyết minh âm thanh HTTP 206;
+stop
+@enduml

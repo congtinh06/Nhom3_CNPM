@@ -1,3 +1,23 @@
+/**
+ * ============================================================================
+ * TRANG TOUR DI SẢN QUANH ĐÂY & THUYẾT MINH ÂM THANH (Nearby Heritage Tour)
+ * ============================================================================
+ * 
+ * Mục đích module:
+ * - Trải nghiệm tour tham quan di sản Sài Gòn qua bản đồ tương tác và định vị GPS.
+ * - Tự động phát thuyết minh audio khi du khách tiến vào bán kính kích hoạt (`triggerRadius`).
+ * - Hỗ trợ đọc thuyết minh đa ngôn ngữ (VI, EN, JA, KO) với đồng bộ từ theo giọng đọc.
+ * 
+ * Các thay đổi cốt lõi (Core Changes):
+ * 1. [Khóa / Mở khóa ngoại ngữ]: Kiểm tra `canAccessPoiLanguage(poi.numericId ?? poi.id, currentLang)`
+ *    ở cả 4 vị trí: danh sách POI bị khóa, phát audio tự động, bấm nút Play thủ công, và khối nội dung đọc.
+ * 2. [Hỗ trợ mua lẻ POI]: Nếu chưa mở khóa gói Premium toàn phần, tự động dẫn đến trang thanh toán gói lẻ
+ *    của chính điểm đó (`buildPoiPremiumPath`) thay vì ép mua gói tài khoản đầy đủ.
+ * 3. [Tích hợp âm thanh]: Kết nối với `poiGuideAdapter` và `nearbyPois.json` để bảo đảm luôn có
+ *    file âm thanh thuyết minh chất lượng cao cho cả 4 ngôn ngữ.
+ * ============================================================================
+ */
+
 import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Lock } from 'lucide-react';
@@ -6,7 +26,8 @@ import { api } from '../api/client';
 import { mapGuidesToGeoPois } from '../content/poiGuideAdapter';
 import { useNavbarLanguage, SUPPORTED_LANGUAGES } from '../content/languages';
 import { useToastOptional } from '../context/ToastContext';
-import { usePremium, buildPremiumPath } from '../context/PremiumContext';
+import { usePremium, buildPremiumPath, buildPoiPremiumPath, isPremiumLanguage } from '../context/PremiumContext';
+import { useAuthOptional } from '../context/AuthContext';
 import { SupportedLanguage } from '../types';
 import { useAutoNarration, haversine } from '../hooks/useAutoNarration';
 import { useNearbyAudio, splitTranscriptIntoSentences } from '../hooks/useNearbyAudio';
@@ -31,13 +52,23 @@ import { PageHero } from '../components/common/PageHero';
 import { HERO_CONFIG } from '../config/heroImages';
 import '../styles/nearby.css';
 
+export interface NarrationChapterBlock {
+  title: string;
+  paras: string[];
+}
+
 export interface NarrationData {
   short: Partial<Record<SupportedLanguage, string>>;
   full: Partial<Record<SupportedLanguage, string[]>>;
+  chapters?: Partial<Record<SupportedLanguage, NarrationChapterBlock[]>>;
 }
 
 export interface GeoPoi {
   id: string;
+  /** Id DB của POI (để kiểm tra gói mua lẻ theo điểm). */
+  numericId?: number | null;
+  /** Giá mua lẻ gói ngoại ngữ của POI này (null = dùng giá mặc định). */
+  premiumPrice?: number | null;
   qrToken?: string | null;
   name: Record<SupportedLanguage, string>;
   lat: number;
@@ -164,7 +195,10 @@ export const NearbyPage: React.FC = () => {
 
   const { lang } = useNavbarLanguage();
   const navigate = useNavigate();
-  const { canAccessLanguage } = usePremium();
+  const { canAccessLanguage, canAccessPoi, canAccessPoiLanguage, refreshEntitlement } =
+    usePremium();
+  const auth = useAuthOptional();
+  const isAuthenticated = auth?.isAuthenticated ?? false;
   const { showToast } = useToastOptional();
   const currentLang = (lang as SupportedLanguage) || 'vi';
   const isLanguageLocked = !canAccessLanguage(currentLang);
@@ -174,16 +208,41 @@ export const NearbyPage: React.FC = () => {
     navigate(buildPremiumPath(currentLang, returnTo));
   }, [currentLang, navigate]);
 
-  const warnAndOpenPremium = useCallback(() => {
-    showToast(PREMIUM_GATE_COPY[currentLang].warning);
-    openPremiumForLanguage();
-  }, [currentLang, openPremiumForLanguage, showToast]);
+  // Cảnh báo khóa ngoại ngữ: nếu POI chưa được mở (hoặc mở riêng) thì dẫn tới gói
+  // mua lẻ cho chính điểm đó, ngược lại về trang nâng cấp Premium toàn cục.
+  const warnAndOpenPremium = useCallback(
+    (poi?: GeoPoi | null) => {
+      showToast(PREMIUM_GATE_COPY[currentLang].warning);
+      const returnTo = `${window.location.pathname}${window.location.search}`;
+      // Chỉ dùng numericId do adapter API gắn vào. Id tĩnh kiểu "poi-3" không
+      // cùng không gian id với DB nên không được suy ra số để tránh mở nhầm điểm.
+      const targetNumericId = poi?.numericId ?? null;
+      if (
+        targetNumericId &&
+        isPremiumLanguage(currentLang) &&
+        !canAccessPoi(targetNumericId)
+      ) {
+        navigate(buildPoiPremiumPath(targetNumericId, returnTo));
+        return;
+      }
+      navigate(buildPremiumPath(currentLang, returnTo));
+    },
+    [currentLang, canAccessPoi, navigate, showToast]
+  );
 
   // Synchronize document language and title with the single source of truth
   useEffect(() => {
     document.documentElement.lang = currentLang;
     document.title = t(currentLang, 'pageTitle');
   }, [currentLang]);
+
+  // Quyền mua lẻ/Premium có thể được cấp bất đồng bộ sau khi thanh toán xong.
+  // Làm mới entitlement mỗi lần vào trang để không hiển thị khóa sai.
+  useEffect(() => {
+    if (import.meta.env.MODE === 'test') return;
+    if (!isAuthenticated) return;
+    void refreshEntitlement();
+  }, [isAuthenticated, refreshEntitlement]);
 
   const rootRef = useRef<HTMLDivElement>(null);
   const heroRef = useRef<HTMLDivElement>(null);
@@ -224,6 +283,11 @@ export const NearbyPage: React.FC = () => {
       };
     });
   }, [apiPois]);
+
+  const getPoiByPlaybackId = useCallback(
+    (poiId: string | null | undefined) => pois.find((p) => p.id === poiId) ?? null,
+    [pois]
+  );
 
   // Toolbar & map states
   const radius = 50;
@@ -306,6 +370,13 @@ export const NearbyPage: React.FC = () => {
     [currentLang]
   );
 
+  const lockedPoiIds = useMemo(() => {
+    if (!isPremiumLanguage(currentLang)) return [];
+    return pois
+      .filter((poi) => !canAccessPoiLanguage(poi.numericId ?? poi.id, currentLang))
+      .map((poi) => poi.id);
+  }, [pois, currentLang, canAccessPoiLanguage]);
+
   const distFormatText = useCallback(
     (d: string) => t(currentLang, 'distFormat', { dist: d }),
     [currentLang]
@@ -381,7 +452,14 @@ export const NearbyPage: React.FC = () => {
     lastManualStoppedId,
     lastManualStopTime,
     playPoi: (poiId, isAuto) => {
-      if (isLanguageLocked) return;
+      const playedPoi = getPoiByPlaybackId(poiId);
+      if (
+        isPremiumLanguage(currentLang) &&
+        !canAccessPoiLanguage(playedPoi?.numericId ?? playedPoi?.id, currentLang)
+      ) {
+        showToast(PREMIUM_GATE_COPY[currentLang].warning);
+        return;
+      }
       setSelectedId(poiId);
       setActiveId(poiId);
       playPoi(poiId, isAuto);
@@ -572,23 +650,33 @@ export const NearbyPage: React.FC = () => {
     [handleExplicitSelectPoi]
   );
 
-  // Initial load check: if ?stop=<slug> is present, activate that stop
+  // Initial load check: ?stop=<slug> (deep link) hoặc ?poi=<id DB> (sau thanh toán).
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const stopParam = params.get('stop');
-    if (stopParam) {
-      const matched = pois.find((p) => p.slug === stopParam || p.id === stopParam);
-      if (matched) {
-        setSelectedId(matched.id);
-        setActiveId(matched.id);
-      }
+    const poiParam = params.get('poi');
+    const numericParam = poiParam && /^\d+$/.test(poiParam) ? Number(poiParam) : null;
+
+    const matched = stopParam
+      ? pois.find((p) => p.slug === stopParam || p.id === stopParam)
+      : numericParam !== null
+        ? pois.find((p) => p.numericId === numericParam)
+        : undefined;
+
+    if (matched) {
+      setSelectedId(matched.id);
+      setActiveId(matched.id);
     }
   }, [pois]);
 
   const handleTogglePlayPoi = useCallback(
     (poiId: string) => {
-      if (isLanguageLocked) {
-        warnAndOpenPremium();
+      const targetPoi = getPoiByPlaybackId(poiId);
+      if (
+        isPremiumLanguage(currentLang) &&
+        !canAccessPoiLanguage(targetPoi?.numericId ?? targetPoi?.id, currentLang)
+      ) {
+        warnAndOpenPremium(targetPoi);
         return;
       }
       // Must run synchronously inside the tap gesture, before any async work.
@@ -601,7 +689,15 @@ export const NearbyPage: React.FC = () => {
         playPoi(poiId, false);
       }
     },
-    [currentId, isLanguageLocked, warnAndOpenPremium, togglePlay, playPoi]
+    [
+      currentId,
+      currentLang,
+      canAccessPoiLanguage,
+      getPoiByPlaybackId,
+      warnAndOpenPremium,
+      togglePlay,
+      playPoi,
+    ]
   );
 
   // Auto-narration status line: always reflects the real configured radius and state.
@@ -682,8 +778,11 @@ export const NearbyPage: React.FC = () => {
         autoNarrationText={t(currentLang, 'autoNarration')}
         isAutoEnabled={isAutoEnabled}
         onToggleAuto={() => {
-          if (isLanguageLocked) {
-            warnAndOpenPremium();
+          if (
+            isPremiumLanguage(currentLang) &&
+            !canAccessPoiLanguage(activeSelectedPoi?.numericId ?? null, currentLang)
+          ) {
+            warnAndOpenPremium(activeSelectedPoi);
             return;
           }
           // Must run synchronously inside the tap gesture, before any async work.
@@ -741,6 +840,7 @@ export const NearbyPage: React.FC = () => {
               isPlaying={isPlaying}
               currentLang={currentLang}
               listenedPoiIds={listenedPoiIds}
+              lockedPoiIds={lockedPoiIds}
               statusMessage={statusMessage}
               listTitle={t(currentLang, 'listTitle')}
               sortNoteText={userPos ? t(currentLang, 'sortNearest') : t(currentLang, 'sortTour')}
@@ -793,6 +893,16 @@ export const NearbyPage: React.FC = () => {
           <PoiReadingSection
             activeItem={activeSortedItem}
             currentLang={currentLang}
+            isContentLocked={
+              isPremiumLanguage(currentLang) &&
+              !canAccessPoiLanguage(
+                activeSortedItem.poi.numericId ?? activeSortedItem.poi.id,
+                currentLang
+              )
+            }
+            onUnlockContent={() => {
+              warnAndOpenPremium(activeSortedItem.poi);
+            }}
             isPlaying={isPlaying}
             isCurrent={currentId === activeSortedItem.poi.id}
             playbackStatus={playbackStatus}
@@ -834,8 +944,12 @@ export const NearbyPage: React.FC = () => {
           notice={notice}
           noticeWarn={noticeWarn}
           onTogglePlay={() => {
-            if (isLanguageLocked) {
-              warnAndOpenPremium();
+            const playedPoi = getPoiByPlaybackId(currentId);
+            if (
+              isPremiumLanguage(currentLang) &&
+              !canAccessPoiLanguage(playedPoi?.numericId ?? null, currentLang)
+            ) {
+              warnAndOpenPremium(playedPoi);
               return;
             }
             togglePlay();

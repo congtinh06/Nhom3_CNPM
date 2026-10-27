@@ -1,4 +1,4 @@
-export type AdminOrderType = 'PRODUCT' | 'PREMIUM';
+export type AdminOrderType = 'PRODUCT' | 'PREMIUM' | 'POI';
 export type AdminOrderStatus =
   | 'PENDING_PAYMENT'
   | 'PAID'
@@ -37,6 +37,7 @@ export interface AdminOrder {
   premiumPackage?: string | null;
   subtotal: number;
   shippingFee: number;
+  discountAmount?: number | null;
   totalAmount: number;
   status: AdminOrderStatus;
   paymentMethod: AdminPaymentMethod;
@@ -76,6 +77,7 @@ export interface AdminOrderPageResponse {
 export const ORDER_TYPE_LABELS: Record<AdminOrderType, string> = {
   PRODUCT: 'Quà lưu niệm',
   PREMIUM: 'Gói Premium',
+  POI: 'Mở khóa điểm (POI)',
 };
 
 export const ORDER_STATUS_LABELS: Record<AdminOrderStatus, string> = {

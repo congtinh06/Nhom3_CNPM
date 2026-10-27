@@ -41,6 +41,10 @@ import java.util.UUID;
  * </ul>
  *
  * <p>Chi tai khoan ACTIVE va da xac thuc email moi duoc quet/xac nhan.</p>
+ *
+ * <p>Mo rong che do khach: thiet bi B chua co tai khoan van co the quet ma de
+ * thiet bi A tiep tuc o che do khach (GUEST_APPROVED). Phien khach khong the
+ * doi lay token vi exchange chi cham lay phien APPROVED.</p>
  */
 @Service
 @RequiredArgsConstructor
@@ -48,9 +52,11 @@ import java.util.UUID;
 public class QrLoginService {
 
     private static final Set<QrLoginStatus> LIVE_STATUSES =
-            EnumSet.of(QrLoginStatus.PENDING, QrLoginStatus.SCANNED, QrLoginStatus.APPROVED);
+            EnumSet.of(QrLoginStatus.PENDING, QrLoginStatus.SCANNED,
+                    QrLoginStatus.APPROVED, QrLoginStatus.GUEST_APPROVED);
     private static final int CREATE_PER_MINUTE = 12;
     private static final int ACTIONS_PER_MINUTE = 30;
+    private static final int GUEST_SCAN_PER_MINUTE = 12;
     private static final int EXCHANGE_PER_MINUTE = 20;
 
     private final QrLoginSessionRepository qrLoginSessionRepository;
@@ -159,7 +165,40 @@ public class QrLoginService {
                 .build();
     }
 
-    // ----------------------------------------------------------------- APPROVE
+    // ------------------------------------------------------------ GUEST SCAN
+
+    /**
+     * Thiet bi B chua co tai khoan quet ma de thiet bi A chuyen sang che do khach.
+     * Khong luong token, khong thay doi session.user (giu null) va khong bat dau
+     * luong "SCANNED -> APPROVED -> CONSUMED" cua tai khoan that.
+     */
+    @Transactional
+    public QrScanResponse guestScan(String rawQrToken, String ipAddress, String userAgent) {
+        rateLimitService.assertAllowed(
+                "qr-guest-scan|" + normalizeIp(ipAddress), GUEST_SCAN_PER_MINUTE, Duration.ofMinutes(1));
+
+        QrLoginSession session = findByQrToken(rawQrToken);
+        requireNotExpired(session);
+
+        if (session.getStatus() == QrLoginStatus.GUEST_APPROVED) {
+            // Quet lai cung ma trong mot phien khach da duoc chap nhan: idempotent.
+            return scanResponse(session);
+        }
+        if (session.getStatus() != QrLoginStatus.PENDING && session.getStatus() != QrLoginStatus.SCANNED) {
+            throw new ConflictException("Ma QR nay khong con hieu luc.");
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+        session.setStatus(QrLoginStatus.GUEST_APPROVED);
+        session.setScannedAt(now);
+        session.setApprovedIp(truncate(ipAddress, 45));
+        session.setApprovedUserAgent(truncate(userAgent, 300));
+        session.setUpdatedAt(now);
+        qrLoginSessionRepository.save(session);
+        log.info("QR login guest-scan sessionId={} ip={}", session.getId(), normalizeIp(ipAddress));
+
+        return scanResponse(session);
+    }
 
     @Transactional
     public QrScanResponse approve(String rawQrToken, Long userId, String ipAddress, String userAgent) {
@@ -238,6 +277,7 @@ public class QrLoginService {
         if (session.getStatus() != QrLoginStatus.APPROVED) {
             throw new ConflictException(switch (session.getStatus()) {
                 case PENDING, SCANNED -> "Phien dang nhap QR chua duoc xac nhan.";
+                case GUEST_APPROVED -> "Phien dang nhap QR dang o che do khach.";
                 case DENIED -> "Phien dang nhap QR da bi tu choi.";
                 case CONSUMED -> "Phien dang nhap QR da duoc su dung.";
                 case CANCELLED -> "Phien dang nhap QR da bi huy.";
@@ -366,6 +406,7 @@ public class QrLoginService {
             case PENDING -> "Dang cho quet ma QR.";
             case SCANNED -> "Da quet. Vui long xac nhan tren thiet bi di dong.";
             case APPROVED -> "Da xac nhan. Dang tao phien dang nhap.";
+            case GUEST_APPROVED -> "Thiet bi di dong da chon che do khach.";
             case DENIED -> "Thiet bi di dong da tu choi dang nhap.";
             case CONSUMED -> "Phien dang nhap da duoc su dung.";
             case EXPIRED -> "Ma QR da het han.";

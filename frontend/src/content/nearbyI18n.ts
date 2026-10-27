@@ -66,6 +66,7 @@ export type NearbyKey =
   | 'distFormat'
   | 'turnOnGpsDist'
   | 'listenedTitle'
+  | 'premiumLockedTitle'
   | 'readerBoxAria'
   | 'localNameLabel'
   | 'vietnameseContentNote'
@@ -223,6 +224,7 @@ export const NEARBY_DICTIONARY: Record<SupportedLanguage, Record<NearbyKey, stri
     distFormat: 'Cách bạn {dist}',
     turnOnGpsDist: 'Bật vị trí để xem khoảng cách',
     listenedTitle: 'Đã nghe điểm này trong tour',
+    premiumLockedTitle: 'Cần Premium để mở nội dung ngoại ngữ',
     readerBoxAria: 'Nội dung lời thuyết minh {name}',
     localNameLabel: 'Tên gọi tại địa phương',
     vietnameseContentNote: 'Nội dung tiếng Việt',
@@ -367,6 +369,7 @@ export const NEARBY_DICTIONARY: Record<SupportedLanguage, Record<NearbyKey, stri
     distFormat: '{dist} away',
     turnOnGpsDist: 'Turn on GPS to view distance',
     listenedTitle: 'Listened to this stop in the tour',
+    premiumLockedTitle: 'Premium required to unlock foreign-language content',
     readerBoxAria: 'Narration text for {name}',
     localNameLabel: 'Local name',
     vietnameseContentNote: 'Content in Vietnamese',
@@ -512,6 +515,7 @@ export const NEARBY_DICTIONARY: Record<SupportedLanguage, Record<NearbyKey, stri
     distFormat: '{dist} 거리',
     turnOnGpsDist: '거리를 확인하려면 위치를 켜세요',
     listenedTitle: '투어에서 이 명소를 청취했습니다',
+    premiumLockedTitle: '외국어 콘텐츠를 열려면 Premium이 필요합니다',
     readerBoxAria: '{name} 해설 텍스트',
     localNameLabel: '현지 명칭',
     vietnameseContentNote: '베트남어 원문',
@@ -656,6 +660,7 @@ export const NEARBY_DICTIONARY: Record<SupportedLanguage, Record<NearbyKey, stri
     distFormat: '距離 {dist}',
     turnOnGpsDist: '位置情報をオンにして距離を表示',
     listenedTitle: 'このスポットをツアーで再生済みです',
+    premiumLockedTitle: '外国語コンテンツの解除には Premium が必要です',
     readerBoxAria: '{name}のガイドテキスト',
     localNameLabel: '現地の名称',
     vietnameseContentNote: 'ベトナム語の原文',

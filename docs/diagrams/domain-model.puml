@@ -1,0 +1,140 @@
+@startuml
+!theme plain
+skinparam defaultFontName "Times New Roman"
+skinparam defaultFontSize 11
+skinparam monochrome true
+skinparam shadowing false
+skinparam roundCorner 0
+skinparam packageStyle rectangle
+skinparam handwritten false
+skinparam ArrowColor #000000
+skinparam ActorBorderColor #000000
+skinparam ComponentBorderColor #000000
+skinparam DatabaseBorderColor #000000
+skinparam InterfaceBorderColor #000000
+skinparam ParticipantBorderColor #000000
+skinparam SequenceLifeLineBorderColor #000000
+skinparam UsecaseBorderColor #000000
+skinparam StateBorderColor #000000
+skinparam ClassBorderColor #000000
+
+title HÌNH 3.17. SƠ ĐỒ LỚP MIỀN KHÁI NIỆM HỆ THỐNG ECHORA (CONCEPTUAL DOMAIN MODEL)
+
+class User {
+  + Long id
+  + String email
+  + String fullName
+  + String role
+  + String plan
+  + LocalDateTime premiumExpiresAt
+  + String status
+}
+
+class Order {
+  + Long id
+  + String orderCode
+  + Long userId
+  + BigDecimal totalAmount
+  + BigDecimal shippingFee
+  + OrderStatus status
+  + PaymentMethod paymentMethod
+  + PaymentStatus paymentStatus
+  + LocalDateTime expiresAt
+  + LocalDateTime createdAt
+}
+
+class OrderItem {
+  + Long id
+  + Long orderId
+  + Long productId
+  + String productTitle
+  + BigDecimal unitPrice
+  + Integer quantity
+  + BigDecimal totalPrice
+}
+
+class Product {
+  + Long id
+  + String slug
+  + String title
+  + String description
+  + BigDecimal price
+  + String imageUrl
+  + String category
+  + Long poiId
+  + String status
+}
+
+class Payment {
+  + Long id
+  + Long orderId
+  + String transactionId
+  + BigDecimal amount
+  + String paymentMethod
+  + String status
+  + LocalDateTime paidAt
+}
+
+class Poi {
+  + Long id
+  + String slug
+  + String name
+  + Double latitude
+  + Double longitude
+  + Integer geofenceRadius
+  + Long zoneId
+  + Long version
+}
+
+class PoiTranslation {
+  + Long id
+  + Long poiId
+  + String languageCode
+  + String title
+  + String summary
+  + String descriptionAudioText
+  + String audioUrl
+  + String audioStatus
+  + String translationSource
+}
+
+class Zone {
+  + Long id
+  + String name
+  + String description
+  + Double latitude
+  + Double longitude
+  + Long version
+}
+
+class Route {
+  + Long id
+  + String name
+  + String description
+  + Integer estimatedDuration
+  + Long zoneId
+  + Long version
+}
+
+class RouteStop {
+  + Long id
+  + Long routeId
+  + Long poiId
+  + Integer stopOrder
+  + Integer durationMinutes
+}
+
+User "1" -- "0..*" Order : đặt >
+Order "1" *-- "1..*" OrderItem : gồm >
+Product "1" -- "0..*" OrderItem : thuộc về <
+Order "1" -- "0..*" Payment : thanh toán qua >
+
+Zone "1" -- "0..*" Poi : chứa >
+Zone "1" -- "0..*" Route : có >
+Poi "1" *-- "1..*" PoiTranslation : đa ngữ >
+Poi "1" -- "0..*" Product : liên kết quà >
+
+Route "1" *-- "1..*" RouteStop : có trạm >
+Poi "1" -- "0..*" RouteStop : điểm dừng <
+
+@enduml

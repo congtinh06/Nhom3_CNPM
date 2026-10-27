@@ -6,6 +6,8 @@ import { useNavbarLanguage } from '../../content/languages';
 import { getSpotName } from '../../content/souvenirSpots';
 import { CartItem } from '../../types';
 import { formatPrice as formatPriceUtil } from '../../utils/formatters';
+import { usePremium } from '../../context/PremiumContext';
+import { applySouvenirDiscount, isSouvenirDiscountEligible } from '../../utils/pricing';
 import '../../styles/cart-drawer.css';
 
 export const formatPrice = (n: number): string => {
@@ -22,6 +24,8 @@ const OTHER_GROUP_LABEL: Record<string, string> = {
 export const CartDialog: React.FC = () => {
   const {
     cartItems,
+    subtotalAmount,
+    discountAmount,
     totalAmount,
     totalCount,
     decreaseQuantity,
@@ -30,6 +34,7 @@ export const CartDialog: React.FC = () => {
     isCartOpen,
     closeCart,
   } = useCart();
+  const { isPremium } = usePremium();
 
   const navigate = useNavigate();
   const { t, lang } = useNavbarLanguage();
@@ -200,7 +205,14 @@ export const CartDialog: React.FC = () => {
                 {showGroupHeadings && (
                   <div className="cd-group-title">{group.label ?? otherLabel}</div>
                 )}
-                {group.items.map((item) => (
+                {group.items.map((item) => {
+                  const hasDiscount = isSouvenirDiscountEligible(isPremium, item.category);
+                  const itemUnitPrice = applySouvenirDiscount(
+                    item.price,
+                    isPremium,
+                    item.category
+                  );
+                  return (
               <div key={item.id} className="cd-item-row">
                 {/* Thumbnail 72x72 */}
                 <div className="cd-thumb-wrap">
@@ -225,14 +237,20 @@ export const CartDialog: React.FC = () => {
                   <div className="cd-item-header">
                     <span className="cd-item-name">{item.name}</span>
                     <span className="cd-item-total">
-                      {formatPrice(item.price * item.quantity)}
+                      {formatPrice(itemUnitPrice * item.quantity)}
                     </span>
                   </div>
 
                   <div className="cd-item-price-line">
                     <span className="cd-item-unit-price">
-                      {formatPrice(item.price)}
+                      {formatPrice(itemUnitPrice)}
                     </span>
+                    {hasDiscount && (
+                      <>
+                        <span className="cd-item-old-price">{formatPrice(item.price)}</span>
+                        <span className="cd-item-discount-badge">Premium -10%</span>
+                      </>
+                    )}
                   </div>
 
                   <div className="cd-item-footer">
@@ -271,7 +289,8 @@ export const CartDialog: React.FC = () => {
                   </div>
                 </div>
               </div>
-                ))}
+                  );
+                })}
               </div>
             ))}
           </div>
@@ -281,6 +300,18 @@ export const CartDialog: React.FC = () => {
       {/* Sticky Footer: only when items exist */}
       {cartItems.length > 0 && (
         <div className="cd-footer" aria-live="polite">
+          {discountAmount > 0 && (
+            <>
+              <div className="cd-subtotal-row cd-discount-row">
+                <span>Premium -10%</span>
+                <span>-{formatPrice(discountAmount)}</span>
+              </div>
+              <div className="cd-subtotal-row cd-subtotal-before">
+                <span>Tạm tính</span>
+                <span>{formatPrice(subtotalAmount)}</span>
+              </div>
+            </>
+          )}
           <div className="cd-subtotal-row">
             <span className="cd-subtotal-label">{t.shop.total}</span>
             <span id="ctt" className="cd-subtotal-amount">

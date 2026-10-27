@@ -1,0 +1,98 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 850" width="1100" height="850" style="background:#ffffff; font-family:'Times New Roman', Times, serif;">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#000000"/>
+    </marker>
+  </defs>
+
+  <!-- Title -->
+  <text x="550" y="35" text-anchor="middle" font-size="20" font-weight="bold" fill="#000000">Sơ đồ Hoạt động (Activity Diagram): Quản trị Điểm Di tích và Nội dung Thuyết minh (CMS)</text>
+
+  <!-- Swimlane / Subsystem headers -->
+  <rect x="50" y="55" width="480" height="770" fill="none" stroke="#000000" stroke-width="1.5"/>
+  <rect x="530" y="55" width="520" height="770" fill="none" stroke="#000000" stroke-width="1.5"/>
+  <text x="290" y="80" text-anchor="middle" font-size="16" font-weight="bold">Quản trị viên / Biên tập viên CMS</text>
+  <text x="790" y="80" text-anchor="middle" font-size="16" font-weight="bold">Hệ thống Echora CMS &amp; Pipeline Xử lý Tự động</text>
+  <line x1="50" y1="95" x2="1050" y2="95" stroke="#000000" stroke-width="1"/>
+
+  <!-- Initial Node -->
+  <circle cx="290" cy="125" r="12" fill="#000000"/>
+  <line x1="290" y1="137" x2="290" y2="165" stroke="#000000" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- Action: Dang nhap CMS & Mo quan tri POI -->
+  <rect x="180" y="165" width="220" height="45" rx="8" ry="8" fill="#ffffff" stroke="#000000" stroke-width="1.5"/>
+  <text x="290" y="192" text-anchor="middle" font-size="14">Truy cập Quản lý Điểm Di tích</text>
+
+  <line x1="290" y1="210" x2="290" y2="245" stroke="#000000" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- Action: Nhap thong tin POI -->
+  <rect x="160" y="245" width="260" height="55" rx="8" ry="8" fill="#ffffff" stroke="#000000" stroke-width="1.5"/>
+  <text x="290" y="267" text-anchor="middle" font-size="14">Nhập Tên, Tọa độ Lat/Long, Bán kính Geofence</text>
+  <text x="290" y="287" text-anchor="middle" font-size="13">&amp; Soạn thảo văn bản thuyết minh tiếng Việt</text>
+
+  <!-- Submit to server -->
+  <line x1="420" y1="272" x2="680" y2="272" stroke="#000000" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- Action: Validate & Luu POI Master -->
+  <rect x="680" y="245" width="240" height="50" rx="8" ry="8" fill="#ffffff" stroke="#000000" stroke-width="1.5"/>
+  <text x="800" y="267" text-anchor="middle" font-size="14">Kiểm tra hợp lệ dữ liệu nhập</text>
+  <text x="800" y="287" text-anchor="middle" font-size="13">Lưu bản ghi POI gốc (trạng thái DRAFT)</text>
+
+  <line x1="800" y1="295" x2="800" y2="330" stroke="#000000" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- Decision: Co yeu cau sinh da ngu tu dong? -->
+  <polygon points="800,330 860,360 800,390 740,360" fill="#ffffff" stroke="#000000" stroke-width="1.5"/>
+  <text x="800" y="364" text-anchor="middle" font-size="12">Dịch tự động?</text>
+
+  <!-- Branch 1: Khong dich tu dong -> Nguoi dung tu upload file audio thu am thu cong -->
+  <line x1="740" y1="360" x2="610" y2="360" stroke="#000000" stroke-width="1.5"/>
+  <line x1="610" y1="360" x2="610" y2="430" stroke="#000000" stroke-width="1.5"/>
+  <line x1="610" y1="430" x2="420" y2="430" stroke="#000000" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="640" y="350" font-size="12">[Tự tải lên]</text>
+
+  <rect x="170" y="410" width="250" height="45" rx="8" ry="8" fill="#ffffff" stroke="#000000" stroke-width="1.5"/>
+  <text x="295" y="437" text-anchor="middle" font-size="14">Tải lên tệp âm thanh thu âm MP3/WAV</text>
+
+  <line x1="295" y1="455" x2="295" y2="520" stroke="#000000" stroke-width="1.5"/>
+  <line x1="295" y1="520" x2="680" y2="520" stroke="#000000" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- Branch 2: Kich hoat Pipeline tu dong: MyMemory + Edge-TTS -->
+  <line x1="800" y1="390" x2="800" y2="430" stroke="#000000" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="810" y="410" font-size="12">[Kích hoạt Pipeline]</text>
+
+  <rect x="670" y="430" width="260" height="55" rx="8" ry="8" fill="#ffffff" stroke="#000000" stroke-width="1.5"/>
+  <text x="800" y="452" text-anchor="middle" font-size="14">Đẩy Job dịch thuật vào hàng đợi</text>
+  <text x="800" y="472" text-anchor="middle" font-size="13">MyMemory: vi -> en, ja, ko</text>
+
+  <line x1="800" y1="485" x2="800" y2="515" stroke="#000000" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- Merge point and TTS synthesis -->
+  <rect x="670" y="515" width="260" height="55" rx="8" ry="8" fill="#ffffff" stroke="#000000" stroke-width="1.5"/>
+  <text x="800" y="537" text-anchor="middle" font-size="14">Gọi Edge-TTS sinh file âm thanh</text>
+  <text x="800" y="557" text-anchor="middle" font-size="13">Lưu trữ tệp âm thanh và phụ đề VTT</text>
+
+  <line x1="800" y1="570" x2="800" y2="605" stroke="#000000" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- Sinh ma QR di tich tu dong -->
+  <rect x="670" y="605" width="260" height="45" rx="8" ry="8" fill="#ffffff" stroke="#000000" stroke-width="1.5"/>
+  <text x="800" y="632" text-anchor="middle" font-size="14">Tự động sinh mã QR dự phòng cho di tích</text>
+
+  <line x1="800" y1="650" x2="800" y2="685" stroke="#000000" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- Notify client -->
+  <line x1="670" y1="710" x2="420" y2="710" stroke="#000000" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <rect x="680" y="685" width="240" height="45" rx="8" ry="8" fill="#ffffff" stroke="#000000" stroke-width="1.5"/>
+  <text x="800" y="712" text-anchor="middle" font-size="14">Cập nhật POI sang trạng thái PUBLISHED</text>
+
+  <!-- Action: QTV xem ket qua & in ma QR -->
+  <rect x="170" y="685" width="250" height="50" rx="8" ry="8" fill="#ffffff" stroke="#000000" stroke-width="1.5"/>
+  <text x="295" y="707" text-anchor="middle" font-size="14">Kiểm tra kết quả bản dịch, nghe thử audio</text>
+  <text x="295" y="725" text-anchor="middle" font-size="13">&amp; Xuất tệp mã QR để in biển vật lý</text>
+
+  <line x1="295" y1="735" x2="295" y2="775" stroke="#000000" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- Final Node -->
+  <circle cx="295" cy="790" r="14" fill="#ffffff" stroke="#000000" stroke-width="1.5"/>
+  <circle cx="295" cy="790" r="8" fill="#000000"/>
+</svg>

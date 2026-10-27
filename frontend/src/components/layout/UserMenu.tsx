@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, LogOut, ShieldCheck, ShoppingBag, User } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useNavbarLanguage } from '../../content/languages';
 import { useAccountI18n } from '../account/accountI18n';
@@ -135,7 +135,7 @@ export const UserMenu: React.FC = () => {
         <span className="um-trigger-name">{displayName}</span>
         <ChevronDown
           size={13}
-          strokeWidth={1.75}
+          strokeWidth={1.8}
           className={`um-chevron ${isOpen ? 'um-chevron-open' : ''}`}
           aria-hidden="true"
         />
@@ -159,7 +159,8 @@ export const UserMenu: React.FC = () => {
             className="um-item"
             onClick={handleAccountClick}
           >
-            {accountT.menuLabel}
+            <User size={15} strokeWidth={1.9} aria-hidden="true" className="gm-action-icon" />
+            <span>{accountT.menuLabel}</span>
           </a>
 
           <a
@@ -171,7 +172,8 @@ export const UserMenu: React.FC = () => {
             className="um-item"
             onClick={handleOrdersClick}
           >
-            {t.auth.myOrders}
+            <ShoppingBag size={15} strokeWidth={1.9} aria-hidden="true" className="gm-action-icon" />
+            <span>{t.auth.myOrders}</span>
           </a>
 
           {isAdmin && (
@@ -184,7 +186,8 @@ export const UserMenu: React.FC = () => {
               className="um-item"
               onClick={handleAdminClick}
             >
-              Quản trị hệ thống
+              <ShieldCheck size={15} strokeWidth={1.9} aria-hidden="true" className="gm-action-icon" />
+              <span>Quản trị hệ thống</span>
             </a>
           )}
 
@@ -204,7 +207,8 @@ export const UserMenu: React.FC = () => {
             className="um-item um-item-signout"
             onClick={handleSignOut}
           >
-            {t.auth.logout}
+            <LogOut size={15} strokeWidth={1.9} aria-hidden="true" className="gm-action-icon" />
+            <span>{t.auth.logout}</span>
           </button>
         </div>
       )}

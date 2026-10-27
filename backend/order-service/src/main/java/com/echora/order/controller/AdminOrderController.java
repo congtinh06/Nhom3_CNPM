@@ -56,4 +56,9 @@ public class AdminOrderController {
     public ResponseEntity<AdminOrderResponse> rejectPayment(@PathVariable String orderCode) {
         return ResponseEntity.ok(orderService.rejectPayment(orderCode));
     }
+
+    @PostMapping("/{orderCode}/retry-entitlement")
+    public ResponseEntity<AdminOrderResponse> retryEntitlement(@PathVariable String orderCode) {
+        return ResponseEntity.ok(orderService.retryEntitlement(orderCode));
+    }
 }

@@ -25,9 +25,13 @@ vi.mock('../context/PremiumContext', () => ({
     plan: 'PREMIUM',
     premiumExpiresAt: null,
     canAccessLanguage: () => true,
+    canAccessPoi: () => true,
+    canAccessPoiLanguage: () => true,
     refreshEntitlement: vi.fn(),
   }),
   buildPremiumPath: () => '/nang-cap',
+  buildPoiPremiumPath: () => '/nang-cap',
+  isPremiumLanguage: (language: string) => language !== 'vi',
 }));
 
 // Mock react-leaflet components since jsdom doesn't support canvas/WebGL

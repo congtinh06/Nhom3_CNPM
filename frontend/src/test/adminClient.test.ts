@@ -153,7 +153,7 @@ describe('adminClient & normalizeAdminError', () => {
 
       const res = await responseErrorHandler(error401);
       expect(replaySpy).toHaveBeenCalled();
-      expect(tokenStore.set).toHaveBeenCalledWith('new-valid-token');
+      expect(tokenStore.set).toHaveBeenCalledWith('new-valid-token', 'admin');
       expect(res).toEqual({ data: 'replayed' });
     });
 

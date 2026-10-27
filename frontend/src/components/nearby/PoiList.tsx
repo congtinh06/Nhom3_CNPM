@@ -1,5 +1,5 @@
 import React, { ReactNode, useCallback, useState } from 'react';
-import { Check } from 'lucide-react';
+import { Check, Lock } from 'lucide-react';
 import { GeoPoi } from '../../pages/NearbyPage';
 import { SupportedLanguage } from '../../types';
 import { resolveImagePath } from './PoiCard';
@@ -21,6 +21,7 @@ export interface PoiListProps {
   isPlaying?: boolean;
   currentLang: SupportedLanguage;
   listenedPoiIds?: string[];
+  lockedPoiIds?: string[];
   statusMessage?: ReactNode;
   listTitle: string;
   sortNoteText: string;
@@ -43,6 +44,7 @@ interface StopRowProps {
   item: SortedPoiItem;
   isActive: boolean;
   isListened: boolean;
+  isLocked: boolean;
   currentLang: SupportedLanguage;
   getPoiName: (poi: GeoPoi) => string;
   getPoiCategory: (poi: GeoPoi) => string;
@@ -54,6 +56,7 @@ const StopRow: React.FC<StopRowProps> = ({
   item,
   isActive,
   isListened,
+  isLocked,
   currentLang,
   getPoiName,
   getPoiCategory,
@@ -93,11 +96,23 @@ const StopRow: React.FC<StopRowProps> = ({
           <span className="stop-row-name">{poiName}</span>
           <span className="stop-row-category">{poiCategory}</span>
         </div>
-        {isListened && (
-          <span className="stop-row-listened" title={t(currentLang, 'listenedTitle')}>
-            <Check size={16} aria-hidden="true" />
-          </span>
-        )}
+        <span className="stop-row-status">
+          {isLocked && (
+            <span
+              className="stop-row-locked"
+              title={t(currentLang, 'premiumLockedTitle')}
+              aria-label={t(currentLang, 'premiumLockedTitle')}
+            >
+              <Lock size={13} strokeWidth={2} aria-hidden="true" />
+              <span>Premium</span>
+            </span>
+          )}
+          {isListened && (
+            <span className="stop-row-listened" title={t(currentLang, 'listenedTitle')}>
+              <Check size={16} aria-hidden="true" />
+            </span>
+          )}
+        </span>
       </button>
     </li>
   );
@@ -108,6 +123,7 @@ const PoiListComponent: React.FC<PoiListProps> = ({
   selectedPoiId,
   activePoiId,
   listenedPoiIds = [],
+  lockedPoiIds = [],
   statusMessage,
   listTitle,
   sortNoteText,
@@ -162,6 +178,7 @@ const PoiListComponent: React.FC<PoiListProps> = ({
           {sortedPois.map((item) => {
             const isItemActive = effectiveActiveId === item.poi.id;
             const isItemListened = listenedPoiIds.includes(item.poi.id);
+            const isItemLocked = lockedPoiIds.includes(item.poi.id);
 
             return (
               <StopRow
@@ -169,6 +186,7 @@ const PoiListComponent: React.FC<PoiListProps> = ({
                 item={item}
                 isActive={isItemActive}
                 isListened={isItemListened}
+                isLocked={isItemLocked}
                 currentLang={currentLang}
                 getPoiName={getPoiName}
                 getPoiCategory={getPoiCategory}
