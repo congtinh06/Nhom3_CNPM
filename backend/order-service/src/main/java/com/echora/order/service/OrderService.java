@@ -79,7 +79,7 @@ public class OrderService {
     @Value("${app.premium.price:500000}")
     private BigDecimal premiumPrice;
 
-    @Value("${app.premium.poi-price:20000}")
+    @Value("${app.premium.poi-price:100000}")
     private BigDecimal poiDefaultPrice;
 
     @Transactional

@@ -19,15 +19,15 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { Camera, Pause, Volume2, ChevronLeft, Lock, Eye } from 'lucide-react';
+import { Camera, Pause, Volume2, ChevronLeft, Eye } from 'lucide-react';
 import { api } from '../api/client';
 import { normalizeApiError } from '../api/errors';
 import { useAudioPlayer } from '../hooks/useAudioPlayer';
-import { useToastOptional } from '../context/ToastContext';
 import { useAuth } from '../context/AuthContext';
-import { usePremium, buildPremiumPath, buildPoiPremiumPath } from '../context/PremiumContext';
+import { usePremium } from '../context/PremiumContext';
 import { unlockAudio } from '../lib/audioUnlock';
 import { getAnalyticsSessionId } from '../lib/analytics';
+import { detectDeviceType } from '../lib/device';
 import { PoiDetail, SupportedLanguage, TriggerType } from '../types';
 import '../styles/scan.css';
 
@@ -41,35 +41,17 @@ export const ScanPage: React.FC = () => {
   const location = useLocation();
   const { status } = useAuth();
   const isGuest = status === 'guest';
-  const { isPremium, canAccessLanguage, canAccessPoi, canAccessPoiLanguage } = usePremium();
-  const { showToast } = useToastOptional();
+  const { isPremium, canAccessPoi } = usePremium();
 
   const [inputToken, setInputToken] = useState(token || '');
   const [poiDetail, setPoiDetail] = useState<PoiDetail | null>(null);
-
-  const premiumReturnTo = token ? `/qr/${token}` : '/quet-ma';
-  const openPremiumPage = useCallback(
-    (requestedLanguage: SupportedLanguage) => {
-      showToast('Cần nâng cấp Premium để nghe thuyết minh bằng ngôn ngữ này.');
-      if (poiDetail?.id) {
-        navigate(buildPoiPremiumPath(poiDetail.id, premiumReturnTo));
-        return;
-      }
-      navigate(buildPremiumPath(requestedLanguage, premiumReturnTo));
-    },
-    [navigate, poiDetail?.id, premiumReturnTo, showToast]
-  );
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const [lang, setLang] = useState<SupportedLanguage>(() => {
     try {
       const saved = localStorage.getItem('sv:lang');
-      if (
-        saved &&
-        ['vi', 'en', 'ja', 'ko'].includes(saved) &&
-        canAccessLanguage(saved as SupportedLanguage)
-      ) {
+      if (saved && ['vi', 'en', 'ja', 'ko'].includes(saved)) {
         return saved as SupportedLanguage;
       }
     } catch {
@@ -91,25 +73,16 @@ export const ScanPage: React.FC = () => {
 
   const { playAudio, stopAudio, isPlaying } = useAudioPlayer();
 
-  useEffect(() => {
-    if (canAccessPoiLanguage(poiDetail?.id, lang)) return;
-    stopAudio();
-    setPendingPlay(false);
-    setLang('vi');
-    if (poiDetail?.qrToken) {
-      api
-        .getPoiByQr(poiDetail.qrToken, 'vi')
-        .then(setPoiDetail)
-        .catch(() => {
-          // Keep the current detail if the Vietnamese fallback cannot be reloaded.
-        });
-    }
-  }, [canAccessPoiLanguage, lang, poiDetail?.id, poiDetail?.qrToken, stopAudio]);
+  const canPlayBackendAudio = useCallback(
+    (poiId: number | undefined, language: SupportedLanguage) =>
+      language === 'vi' || isPremium || canAccessPoi(poiId),
+    [isPremium, canAccessPoi]
+  );
 
   const handleResolveQr = useCallback(
     (
       qrTokenToResolve: string,
-      options?: { auto?: boolean; triggerType?: TriggerType }
+      options?: { auto?: boolean; autoplay?: boolean; triggerType?: TriggerType }
     ) => {
       const trimmed = qrTokenToResolve.trim();
       if (!trimmed) return;
@@ -136,6 +109,7 @@ export const ScanPage: React.FC = () => {
                 poiId: detail.id,
                 languageCode: lang,
                 triggerType,
+                deviceType: detectDeviceType(),
                 sessionId: getAnalyticsSessionId(),
               })
               .catch(() => {
@@ -143,9 +117,9 @@ export const ScanPage: React.FC = () => {
               });
           }
 
-          if (isAuto) {
-            // Resolved after an await, so browsers block autoplay (no user gesture).
-            // Prompt with an explicit button instead of playing silently.
+          if (isAuto && !options?.autoplay) {
+            // Direct QR links resolve after an await with no user gesture, so
+            // browsers block autoplay. Prompt with an explicit button instead.
             setPendingPlay(true);
             return;
           }
@@ -153,7 +127,7 @@ export const ScanPage: React.FC = () => {
           setPendingPlay(false);
           playAudio({
             poiId: detail.id,
-            audioUrl: detail.audioUrl,
+            audioUrl: canPlayBackendAudio(detail.id, lang) ? detail.audioUrl : undefined,
             audioStatus: detail.audioStatus,
             title: detail.title || detail.name,
             textToSpeak: detail.description || detail.summary,
@@ -174,7 +148,7 @@ export const ScanPage: React.FC = () => {
           setLoading(false);
         });
     },
-    [lang, playAudio]
+    [canPlayBackendAudio, lang, playAudio]
   );
 
   useEffect(() => {
@@ -199,6 +173,7 @@ export const ScanPage: React.FC = () => {
   }, [stopCamera, stopAudio]);
 
   const startCamera = async () => {
+    unlockAudio();
     setCameraError(null);
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
       setCameraError('Trình duyệt không hỗ trợ truy cập máy ảnh (cần chạy trên HTTPS hoặc localhost).');
@@ -238,7 +213,7 @@ export const ScanPage: React.FC = () => {
               const extracted = val.includes('/qr/') ? val.split('/qr/')[1]?.split('?')[0] : val;
               if (extracted) {
                 setInputToken(extracted);
-                handleResolveQr(extracted, { auto: true, triggerType: 'QR' });
+                handleResolveQr(extracted, { auto: true, autoplay: true, triggerType: 'QR' });
               }
             }
           } catch {
@@ -311,7 +286,7 @@ export const ScanPage: React.FC = () => {
             <Eye size={15} strokeWidth={1.75} aria-hidden="true" />
             <span>
               Quý khách đang tham quan với tư cách <strong>Khách</strong>. Nghe
-              thuyết minh tiếng Việt miễn phí, không cần đăng nhập.
+              thuyết minh mọi ngôn ngữ miễn phí, không cần đăng nhập.
             </span>
           </span>
           <span className="scan-guest-auth">
@@ -383,15 +358,13 @@ export const ScanPage: React.FC = () => {
                   className="scan-listen-btn"
                   aria-pressed={isPlaying(poiDetail.id)}
                   onClick={() => {
-                    if (!canAccessLanguage(lang)) {
-                      openPremiumPage(lang);
-                      return;
-                    }
                     unlockAudio();
                     setPendingPlay(false);
                     playAudio({
                       poiId: poiDetail.id,
-                      audioUrl: poiDetail.audioUrl,
+                      audioUrl: canPlayBackendAudio(poiDetail.id, lang)
+                        ? poiDetail.audioUrl
+                        : undefined,
                       audioStatus: poiDetail.audioStatus,
                       title: poiDetail.title || poiDetail.name,
                       textToSpeak: poiDetail.description || poiDetail.summary,
@@ -415,49 +388,32 @@ export const ScanPage: React.FC = () => {
                 </button>
 
                 <div className="scan-lang-chips" role="group" aria-label="Chọn ngôn ngữ">
-                  {SCAN_SPEECH_LANGS.map((l) => {
-                    const locked = !canAccessPoiLanguage(poiDetail?.id, l);
-                    return (
-                      <button
-                        key={l}
-                        type="button"
-                        className={`scan-lang-btn ${lang === l ? 'is-active' : ''} ${
-                          locked ? 'is-locked' : ''
-                        }`}
-                        aria-pressed={lang === l}
-                        onClick={() => {
-                          if (l === lang) return;
-                          if (locked) {
-                            stopAudio();
-                            setPendingPlay(false);
-                            openPremiumPage(l);
-                            return;
-                          }
-                          stopAudio();
-                          setPendingPlay(false);
-                          setLang(l);
-                          if (poiDetail.qrToken) {
-                            api.getPoiByQr(poiDetail.qrToken, l).then(setPoiDetail);
-                          }
-                        }}
-                      >
-                        {l.toUpperCase()}
-                        {locked && <Lock size={11} strokeWidth={2} aria-hidden="true" />}
-                      </button>
-                    );
-                  })}
+                  {SCAN_SPEECH_LANGS.map((l) => (
+                    <button
+                      key={l}
+                      type="button"
+                      className={`scan-lang-btn ${lang === l ? 'is-active' : ''}`}
+                      aria-pressed={lang === l}
+                      onClick={() => {
+                        if (l === lang) return;
+                        stopAudio();
+                        setPendingPlay(false);
+                        setLang(l);
+                        if (poiDetail.qrToken) {
+                          api
+                            .getPoiByQr(poiDetail.qrToken, l)
+                            .then(setPoiDetail)
+                            .catch((err: unknown) => {
+                              setErrorMessage(normalizeApiError(err).message);
+                            });
+                        }
+                      }}
+                    >
+                      {l.toUpperCase()}
+                    </button>
+                  ))}
                 </div>
               </div>
-
-              {!isPremium && !canAccessPoi(poiDetail?.id) && (
-                <p className="scan-premium-note">
-                  <Lock size={14} strokeWidth={2} aria-hidden="true" />
-                  <span>Tiếng Anh, Nhật và Hàn cần Premium.</span>
-                  <button type="button" onClick={() => openPremiumPage('en')}>
-                    Nâng cấp
-                  </button>
-                </p>
-              )}
 
               {poiDetail.address && (
                 <p className="scan-address">

@@ -20,11 +20,23 @@ function makeSouvenir(overrides: Partial<Product> = {}): Product {
     portion: '1 phần đầy đủ',
     hasDrinkOptions: false,
     imagePath: '/img/placeholder.jpg',
+    poiId: 30001,
     poiSlug: 'cho-ben-thanh',
     isActive: true,
     sortOrder: 1,
     ...overrides,
   };
+}
+
+function makeRelatedSouvenir(overrides: Partial<Product> = {}): Product {
+  return makeSouvenir({
+    id: 4,
+    slug: 'tranh-ben-thanh',
+    name: 'Tranh Chợ Bến Thành',
+    price: 120000,
+    sortOrder: 2,
+    ...overrides,
+  });
 }
 
 function renderPage() {
@@ -45,6 +57,16 @@ describe('ProductDetailPage - trang chi tiết quà lưu niệm', () => {
   beforeEach(() => {
     localStorage.clear();
     vi.spyOn(api, 'getProductBySlug').mockResolvedValue(makeSouvenir());
+    vi.spyOn(api, 'getProducts').mockResolvedValue({
+      content: [makeSouvenir(), makeRelatedSouvenir()],
+      totalElements: 2,
+      totalPages: 1,
+      number: 0,
+      size: 200,
+      first: true,
+      last: true,
+      empty: false,
+    });
     window.HTMLElement.prototype.scrollIntoView = vi.fn();
     window.scrollTo = vi.fn();
   });
@@ -73,5 +95,17 @@ describe('ProductDetailPage - trang chi tiết quà lưu niệm', () => {
     expect(screen.queryByText(/Khẩu phần:/)).not.toBeInTheDocument();
     expect(screen.queryByText('Ghi chú khẩu vị:')).not.toBeInTheDocument();
     expect(screen.queryByText('Kích cỡ ly:')).not.toBeInTheDocument();
+  });
+
+  it('hiển thị sản phẩm liên quan lấy từ API', async () => {
+    renderPage();
+
+    await screen.findByRole('heading', { name: 'Nam châm Chợ Bến Thành' });
+
+    expect(
+      await screen.findByRole('heading', { name: /Gợi ý sản phẩm cùng danh mục/i })
+    ).toBeInTheDocument();
+    expect(screen.getByText('Tranh Chợ Bến Thành')).toBeInTheDocument();
+    expect(screen.queryByText('Nam châm Chợ Bến Thành', { selector: 'h4' })).not.toBeInTheDocument();
   });
 });

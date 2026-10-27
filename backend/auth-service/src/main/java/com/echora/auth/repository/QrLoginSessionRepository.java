@@ -2,8 +2,10 @@ package com.echora.auth.repository;
 
 import com.echora.auth.entity.QrLoginSession;
 import com.echora.auth.entity.QrLoginStatus;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -18,6 +20,7 @@ import java.util.UUID;
 public interface QrLoginSessionRepository
         extends JpaRepository<QrLoginSession, UUID>, JpaSpecificationExecutor<QrLoginSession> {
 
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
     Optional<QrLoginSession> findByQrTokenHash(String qrTokenHash);
 
     Optional<QrLoginSession> findByIdAndExchangeTokenHash(UUID id, String exchangeTokenHash);
@@ -62,7 +65,9 @@ public interface QrLoginSessionRepository
                    COALESCE(SUM(CASE WHEN t.effective_status = 'CANCELLED' THEN 1 ELSE 0 END), 0) AS cancelled,
                    COALESCE(SUM(CASE WHEN t.effective_status = 'PENDING' THEN 1 ELSE 0 END), 0) AS pending,
                    COALESCE(SUM(CASE WHEN t.effective_status IN ('PENDING', 'SCANNED', 'APPROVED', 'GUEST_APPROVED') THEN 1 ELSE 0 END), 0) AS active,
-                   COUNT(DISTINCT t.user_id) AS distinct_users
+                   COUNT(DISTINCT t.user_id) AS distinct_users,
+                   COALESCE(SUM(CASE WHEN t.effective_status = 'EXPIRED' AND t.scanned_at IS NULL THEN 1 ELSE 0 END), 0) AS expired_unscanned,
+                   COALESCE(SUM(CASE WHEN t.effective_status = 'EXPIRED' AND t.scanned_at IS NOT NULL THEN 1 ELSE 0 END), 0) AS expired_scanned
             FROM (
                 SELECT CASE
                             WHEN s.status IN ('PENDING', 'SCANNED', 'APPROVED', 'GUEST_APPROVED') AND s.expires_at <= :now THEN 'EXPIRED'
@@ -148,6 +153,7 @@ public interface QrLoginSessionRepository
             JOIN users u ON u.id = s.user_id
             WHERE s.created_at >= :from AND s.created_at < :to
               AND s.user_id IS NOT NULL
+              AND s.status = 'CONSUMED'
             GROUP BY s.user_id, u.full_name, u.email
             ORDER BY COUNT(*) DESC
             """, nativeQuery = true)

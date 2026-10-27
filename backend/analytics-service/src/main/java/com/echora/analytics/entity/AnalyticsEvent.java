@@ -37,6 +37,9 @@ public class AnalyticsEvent {
     @Column(name = "completed")
     private Boolean completed;
 
+    @Column(name = "device_type", length = 20)
+    private String deviceType;
+
     @Column(name = "session_id", length = 64)
     private String sessionId;
 

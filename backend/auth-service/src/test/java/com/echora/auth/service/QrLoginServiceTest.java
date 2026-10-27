@@ -128,7 +128,8 @@ class QrLoginServiceTest {
     @DisplayName("guestScan từ chối phiên đã bị chiếm bởi luồng tài khoản thật")
     void guestScanRejectsNonLiveSession() {
         for (QrLoginStatus status : new QrLoginStatus[] {
-                QrLoginStatus.APPROVED, QrLoginStatus.DENIED, QrLoginStatus.CONSUMED, QrLoginStatus.CANCELLED }) {
+                QrLoginStatus.SCANNED, QrLoginStatus.APPROVED, QrLoginStatus.DENIED,
+                QrLoginStatus.CONSUMED, QrLoginStatus.CANCELLED }) {
             QrLoginSession session = liveSession(status);
             stubFindSession(session);
             assertThatThrownBy(() -> service.guestScan(RAW_QR_TOKEN, IP, USER_AGENT))
@@ -182,7 +183,45 @@ class QrLoginServiceTest {
     }
 
     @Test
-    @DisplayName("deny từ chối phiên GUEST_APPROVED")
+    @DisplayName("deny t? ch?i phi�n chua du?c qu�t")
+    void denyRejectsUnscannedSession() {
+        QrLoginSession session = liveSession(QrLoginStatus.PENDING);
+        stubFindSession(session);
+        when(userRepository.findById(42L)).thenReturn(Optional.of(eligibleUser()));
+
+        assertThatThrownBy(() -> service.deny(RAW_QR_TOKEN, 42L))
+                .isInstanceOf(ConflictException.class)
+                .hasMessageContaining("quet ma QR truoc khi tu choi");
+    }
+
+    @Test
+    @DisplayName("deny t? ch?i phi�n d� h?t h?n")
+    void denyRejectsExpiredSession() {
+        QrLoginSession session = liveSession(QrLoginStatus.SCANNED);
+        session.setUser(eligibleUser());
+        session.setExpiresAt(LocalDateTime.now().minusSeconds(1));
+        stubFindSession(session);
+
+        assertThatThrownBy(() -> service.deny(RAW_QR_TOKEN, 42L))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessageContaining("het han");
+    }
+
+    @Test
+    @DisplayName("deny idempotent khi cung t�i kho?n d� t? ch?i")
+    void denyIdempotentForSameUser() {
+        QrLoginSession session = liveSession(QrLoginStatus.DENIED);
+        session.setUser(eligibleUser());
+        stubFindSession(session);
+
+        QrScanResponse response = service.deny(RAW_QR_TOKEN, 42L);
+
+        assertThat(response.getStatus()).isEqualTo(QrLoginStatus.DENIED);
+        verify(qrLoginSessionRepository, never()).save(any(QrLoginSession.class));
+    }
+
+    @Test
+    @DisplayName("deny t? ch?i phi�n GUEST_APPROVED")
     void denyRejectsGuestSession() {
         QrLoginSession session = liveSession(QrLoginStatus.GUEST_APPROVED);
         session.setUser(null);

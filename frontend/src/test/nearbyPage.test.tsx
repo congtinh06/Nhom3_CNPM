@@ -1,6 +1,6 @@
 import React from 'react';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { render, screen, fireEvent, act, renderHook, within } from '@testing-library/react';
+import { render, screen, fireEvent, act, renderHook, within, waitFor } from '@testing-library/react';
 import { BrowserRouter, MemoryRouter } from 'react-router-dom';
 import { NearbyPage, GeoPoi, getNarration, getHeroIntroText } from '../pages/NearbyPage';
 import nearbyPoisData from '../content/nearbyPois.json';
@@ -103,6 +103,21 @@ describe('NearbyPage - Clean Multilingual & Audio Narration Integration', () => 
     expect(screen.getByText('Bưu điện Trung tâm Sài Gòn')).toBeInTheDocument();
     expect(screen.getByText('Chợ Bến Thành')).toBeInTheDocument();
     expect(screen.getByText('Bảo tàng Chứng tích Chiến tranh')).toBeInTheDocument();
+  });
+
+  it('applies the language requested by the narration deep link', async () => {
+    window.history.replaceState(null, '', '/diem-du-lich?stop=buu-dien-trung-tam&lang=ja');
+
+    render(
+      <BrowserRouter>
+        <NearbyPage />
+      </BrowserRouter>
+    );
+
+    await waitFor(() => {
+      expect(document.documentElement.lang).toBe('ja');
+    });
+    expect(getStoredLanguage()).toBe('ja');
   });
 
   it('switches to English: updates all UI labels, POI names, and triggers English narration speech', () => {

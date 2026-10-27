@@ -66,7 +66,7 @@ public class QrLoginService {
     private final JwtService jwtService;
     private final RateLimitService rateLimitService;
 
-    @Value("${app.qr.ttl:PT1M}")
+    @Value("${app.qr.ttl:PT5M}")
     private Duration qrTtl;
 
     @Value("${app.qr.poll-interval-ms:1500}")
@@ -86,19 +86,23 @@ public class QrLoginService {
         String exchangeToken = tokenService.newToken();
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime expiresAt = now.plus(qrTtl);
+        String createdIp = truncate(ipAddress, 45);
+        String createdUserAgent = truncate(userAgent, 300);
 
         QrLoginSession session = QrLoginSession.builder()
                 .id(UUID.randomUUID())
                 .qrTokenHash(tokenService.sha256Hex(qrToken))
                 .exchangeTokenHash(tokenService.sha256Hex(exchangeToken))
                 .status(QrLoginStatus.PENDING)
-                .createdIp(truncate(ipAddress, 45))
-                .createdUserAgent(truncate(userAgent, 300))
+                .createdIp(createdIp)
+                .createdUserAgent(createdUserAgent)
                 .expiresAt(expiresAt)
                 .createdAt(now)
                 .updatedAt(now)
                 .build();
         qrLoginSessionRepository.save(session);
+        log.info("QR login created sessionId={} ip={} ttl={}s",
+                session.getId(), normalizeIp(createdIp), qrTtl.toSeconds());
 
         return QrSessionResponse.builder()
                 .sessionId(session.getId())
@@ -184,7 +188,7 @@ public class QrLoginService {
             // Quet lai cung ma trong mot phien khach da duoc chap nhan: idempotent.
             return scanResponse(session);
         }
-        if (session.getStatus() != QrLoginStatus.PENDING && session.getStatus() != QrLoginStatus.SCANNED) {
+        if (session.getStatus() != QrLoginStatus.PENDING) {
             throw new ConflictException("Ma QR nay khong con hieu luc.");
         }
 
@@ -240,21 +244,21 @@ public class QrLoginService {
                 "qr-deny|" + userId, ACTIONS_PER_MINUTE, Duration.ofMinutes(1));
 
         QrLoginSession session = findByQrToken(rawQrToken);
+        requireNotExpired(session);
         if (session.getStatus() == QrLoginStatus.DENIED) {
+            if (session.getUser() == null || !userId.equals(session.getUser().getId())) {
+                throw new ConflictException("Ma QR nay thuoc ve thiet bi khac.");
+            }
             return scanResponse(session);
         }
-        if (session.getStatus() != QrLoginStatus.SCANNED
-                && session.getStatus() != QrLoginStatus.PENDING) {
-            throw new ConflictException("Ma QR nay khong con hieu luc.");
+        if (session.getStatus() != QrLoginStatus.SCANNED) {
+            throw new ConflictException("Vui long quet ma QR truoc khi tu choi.");
         }
-        if (session.getUser() != null && !userId.equals(session.getUser().getId())) {
+        if (session.getUser() == null || !userId.equals(session.getUser().getId())) {
             throw new ConflictException("Ma QR nay thuoc ve thiet bi khac.");
         }
 
         LocalDateTime now = LocalDateTime.now();
-        if (session.getUser() == null) {
-            session.setUser(requireEligibleUser(userId));
-        }
         session.setStatus(QrLoginStatus.DENIED);
         session.setUpdatedAt(now);
         qrLoginSessionRepository.save(session);
@@ -332,6 +336,7 @@ public class QrLoginService {
         session.setStatus(QrLoginStatus.CANCELLED);
         session.setUpdatedAt(LocalDateTime.now());
         qrLoginSessionRepository.save(session);
+        log.info("QR login cancelled sessionId={} previousStatus=PENDING/SCANNED", session.getId());
     }
 
     // ---------------------------------------------------------------- CLEANUP

@@ -16,6 +16,7 @@ public class AnalyticsEventMessage {
     private String languageCode;
     private String triggerType;
     private Boolean completed;
+    private String deviceType;
     private String sessionId;
     private LocalDateTime occurredAt;
 }

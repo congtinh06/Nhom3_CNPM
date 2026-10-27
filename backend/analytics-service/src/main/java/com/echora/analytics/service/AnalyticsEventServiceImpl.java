@@ -55,6 +55,7 @@ public class AnalyticsEventServiceImpl implements AnalyticsEventService {
                 .languageCode(request.getLanguageCode())
                 .triggerType(triggerType)
                 .completed(completed)
+                .deviceType(request.getDeviceType())
                 .sessionId(request.getSessionId())
                 .occurredAt(occurredAt)
                 .build();

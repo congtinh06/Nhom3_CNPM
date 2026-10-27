@@ -15,28 +15,98 @@ interface QrLoginPanelProps {
 }
 
 const LIVE_STATUSES: QrLoginStatus[] = ['PENDING', 'SCANNED'];
+const QR_SESSION_STORAGE_KEY = 'echora_qr_login_session_v1';
+const QR_SESSION_MIN_REMAINING_MS = 1500;
+
+interface StoredQrSession {
+  session: QrLoginSession;
+  expiresAt: number;
+}
+
+const isLiveStatus = (status: QrLoginStatus | null | undefined): boolean =>
+  status !== null && status !== undefined && LIVE_STATUSES.includes(status);
+
+const clearStoredQrSession = () => {
+  try {
+    window.sessionStorage.removeItem(QR_SESSION_STORAGE_KEY);
+  } catch {
+    // Trinh duyet co the chan sessionStorage; khong anh huong luong QR.
+  }
+};
+
+const saveStoredQrSession = (session: QrLoginSession, expiresAt: number) => {
+  try {
+    window.sessionStorage.setItem(
+      QR_SESSION_STORAGE_KEY,
+      JSON.stringify({ session, expiresAt } satisfies StoredQrSession)
+    );
+  } catch {
+    // Bo qua khi khong the luu tam phien QR.
+  }
+};
+
+const readStoredQrSession = (): StoredQrSession | null => {
+  try {
+    const raw = window.sessionStorage.getItem(QR_SESSION_STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as Partial<StoredQrSession> | null;
+    const stored = parsed?.session;
+    if (
+      !stored ||
+      typeof stored.sessionId !== 'string' ||
+      typeof stored.qrToken !== 'string' ||
+      typeof stored.exchangeToken !== 'string' ||
+      typeof parsed?.expiresAt !== 'number' ||
+      !isLiveStatus(stored.status) ||
+      parsed.expiresAt <= Date.now() + QR_SESSION_MIN_REMAINING_MS
+    ) {
+      clearStoredQrSession();
+      return null;
+    }
+    return { session: stored, expiresAt: parsed.expiresAt };
+  } catch {
+    clearStoredQrSession();
+    return null;
+  }
+};
+
+let pendingQrSessionRequest: Promise<QrLoginSession> | null = null;
+
+const requestQrSession = (): Promise<QrLoginSession> => {
+  if (!pendingQrSessionRequest) {
+    pendingQrSessionRequest = authApi.createQrSession().finally(() => {
+      pendingQrSessionRequest = null;
+    });
+  }
+  return pendingQrSessionRequest;
+};
 
 export const QrLoginPanel: React.FC<QrLoginPanelProps> = ({ onSuccess, onGuestSuccess, compact = false }) => {
   const { t } = useNavbarLanguage();
   const { completeQrLogin } = useAuth();
 
-  const [session, setSession] = useState<QrLoginSession | null>(null);
-  const [status, setStatus] = useState<QrLoginStatus | null>(null);
-  const [secondsLeft, setSecondsLeft] = useState(0);
+  const [initialSession] = useState<StoredQrSession | null>(readStoredQrSession);
+  const [session, setSession] = useState<QrLoginSession | null>(initialSession?.session ?? null);
+  const [status, setStatus] = useState<QrLoginStatus | null>(initialSession?.session.status ?? null);
+  const [secondsLeft, setSecondsLeft] = useState(() =>
+    initialSession ? Math.max(0, Math.ceil((initialSession.expiresAt - Date.now()) / 1000)) : 0
+  );
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const sessionRef = useRef<QrLoginSession | null>(null);
-  const statusRef = useRef<QrLoginStatus | null>(null);
-  const deadlineRef = useRef(0);
+  const sessionRef = useRef<QrLoginSession | null>(initialSession?.session ?? null);
+  const statusRef = useRef<QrLoginStatus | null>(initialSession?.session.status ?? null);
+  const deadlineRef = useRef(initialSession?.expiresAt ?? 0);
   const exchangeStarted = useRef(false);
   const guestHandled = useRef(false);
+  const createRun = useRef(0);
 
   const createSession = useCallback(async () => {
     if (typeof authApi.createQrSession !== 'function') {
       setError(t.auth.qrError);
       return;
     }
+    const run = ++createRun.current;
     setLoading(true);
     setError(null);
     setSession(null);
@@ -46,36 +116,39 @@ export const QrLoginPanel: React.FC<QrLoginPanelProps> = ({ onSuccess, onGuestSu
     deadlineRef.current = 0;
     exchangeStarted.current = false;
     guestHandled.current = false;
+    clearStoredQrSession();
     try {
-      const created = await authApi.createQrSession();
+      const created = await requestQrSession();
+      if (run !== createRun.current) return;
+      const expiresAt = Date.now() + Math.max(0, created.expiresInSeconds) * 1000;
       sessionRef.current = created;
       statusRef.current = created.status;
+      deadlineRef.current = expiresAt;
       setSession(created);
       setStatus(created.status);
-      deadlineRef.current = Date.now() + Math.max(0, created.expiresInSeconds) * 1000;
       setSecondsLeft(Math.max(0, created.expiresInSeconds));
+      if (isLiveStatus(created.status)) {
+        saveStoredQrSession(created, expiresAt);
+      }
     } catch (err) {
+      if (run !== createRun.current) return;
       setError(normalizeApiError(err).message || t.auth.qrError);
     } finally {
-      setLoading(false);
+      if (run === createRun.current) {
+        setLoading(false);
+      }
     }
   }, [t.auth.qrError]);
 
   useEffect(() => {
+    if (
+      sessionRef.current &&
+      isLiveStatus(statusRef.current) &&
+      deadlineRef.current > Date.now() + QR_SESSION_MIN_REMAINING_MS
+    ) {
+      return;
+    }
     void createSession();
-    return () => {
-      const current = sessionRef.current;
-      const currentStatus = statusRef.current;
-      if (
-        current &&
-        currentStatus &&
-        LIVE_STATUSES.includes(currentStatus) &&
-        !exchangeStarted.current &&
-        typeof authApi.cancelQrSession === 'function'
-      ) {
-        void authApi.cancelQrSession(current.sessionId, current.exchangeToken).catch(() => {});
-      }
-    };
   }, [createSession]);
 
   useEffect(() => {
@@ -92,7 +165,13 @@ export const QrLoginPanel: React.FC<QrLoginPanelProps> = ({ onSuccess, onGuestSu
 
         statusRef.current = result.status;
         setStatus(result.status);
-        if (!LIVE_STATUSES.includes(result.status) && result.status !== 'GUEST_APPROVED') {
+        if (isLiveStatus(result.status)) {
+          const expiresAt = Date.now() + Math.max(0, result.expiresInSeconds) * 1000;
+          deadlineRef.current = expiresAt;
+          setSecondsLeft(Math.max(0, result.expiresInSeconds));
+          saveStoredQrSession({ ...session, status: result.status }, expiresAt);
+        } else {
+          clearStoredQrSession();
           setSecondsLeft(0);
         }
 

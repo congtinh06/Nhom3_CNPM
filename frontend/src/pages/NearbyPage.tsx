@@ -235,6 +235,15 @@ export const NearbyPage: React.FC = () => {
     document.title = t(currentLang, 'pageTitle');
   }, [currentLang]);
 
+  const appliedLanguageQueryRef = useRef<string | null>(null);
+  useEffect(() => {
+    const langParam = new URLSearchParams(window.location.search).get('lang');
+    if (!langParam || appliedLanguageQueryRef.current === langParam) return;
+    if (!SUPPORTED_LANGUAGES.some((option) => option.code === langParam)) return;
+    appliedLanguageQueryRef.current = langParam;
+    changeLanguage(langParam as SupportedLanguage);
+  }, [changeLanguage]);
+
   // Quyền mua lẻ/Premium có thể được cấp bất đồng bộ sau khi thanh toán xong.
   // Làm mới entitlement mỗi lần vào trang để không hiển thị khóa sai.
   useEffect(() => {

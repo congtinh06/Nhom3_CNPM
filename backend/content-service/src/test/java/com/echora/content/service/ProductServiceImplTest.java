@@ -114,6 +114,18 @@ class ProductServiceImplTest {
     }
 
     @Test
+    @DisplayName("getAdminProducts: chuẩn hóa từ khóa Unicode thành pattern lowercase")
+    void getAdminProducts_UnicodeSearch_PassesLowercasePattern() {
+        Pageable pageable = PageRequest.of(0, 10);
+        when(productRepository.findAdminProducts(isNull(), eq("%sản phẩm%"), isNull(), eq(pageable)))
+                .thenReturn(new PageImpl<>(List.of(), pageable, 0));
+
+        productService.getAdminProducts(null, "  Sản Phẩm  ", null, pageable);
+
+        verify(productRepository).findAdminProducts(isNull(), eq("%sản phẩm%"), isNull(), eq(pageable));
+    }
+
+    @Test
     @DisplayName("getActiveProductBySlug: trả sản phẩm active khi slug tồn tại")
     void getActiveProductBySlug_Found_ReturnsDto() {
         when(productRepository.findBySlugAndIsActiveTrue("com-tam-suon-bi-cha"))

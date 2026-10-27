@@ -68,6 +68,8 @@ public class QrLoginStatsServiceImpl implements QrLoginStatsService {
                 .pending(longAt(totalRow, 7))
                 .active(longAt(totalRow, 8))
                 .distinctUsers(longAt(totalRow, 9))
+                .expiredUnscanned(longAt(totalRow, 10))
+                .expiredScanned(longAt(totalRow, 11))
                 .build();
 
         QrLoginStatsResponse.Rates rates = QrLoginStatsResponse.Rates.builder()
@@ -75,6 +77,8 @@ public class QrLoginStatsServiceImpl implements QrLoginStatsService {
                 .approvalRate(percent(totals.getApproved(), totals.getScanned()))
                 .successRate(percent(totals.getConsumed(), totals.getCreated()))
                 .expiredRate(percent(totals.getExpired(), totals.getCreated()))
+                .expiredUnscannedRate(percent(totals.getExpiredUnscanned(), totals.getCreated()))
+                .expiredScannedRate(percent(totals.getExpiredScanned(), totals.getCreated()))
                 .build();
 
         List<Object[]> durationRows = qrLoginSessionRepository.findAverageDurations(range.startUtc(), range.endUtc());
@@ -222,11 +226,17 @@ public class QrLoginStatsServiceImpl implements QrLoginStatsService {
         }
         String trimmed = ip.trim();
         if (trimmed.contains(":")) {
-            int lastSeparator = trimmed.lastIndexOf(':');
-            return lastSeparator > 0 ? trimmed.substring(0, lastSeparator) + ":***" : "***";
+            String[] groups = trimmed.split(":");
+            if (groups.length >= 2) {
+                return groups[0] + ":" + groups[1] + ":xxxx:xxxx:xxxx:xxxx";
+            }
+            return "xxxx:xxxx";
         }
-        int lastDot = trimmed.lastIndexOf('.');
-        return lastDot > 0 ? trimmed.substring(0, lastDot) + ".***" : "***";
+        String[] parts = trimmed.split("\\.");
+        if (parts.length == 4) {
+            return parts[0] + "." + parts[1] + ".xxx.xxx";
+        }
+        return "xxx.xxx.xxx.xxx";
     }
 
     private static Long secondsBetween(LocalDateTime start, LocalDateTime end) {

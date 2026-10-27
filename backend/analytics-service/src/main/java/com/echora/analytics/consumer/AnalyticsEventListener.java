@@ -34,6 +34,7 @@ public class AnalyticsEventListener {
                 .languageCode(message.getLanguageCode())
                 .triggerType(message.getTriggerType())
                 .completed(message.getCompleted())
+                .deviceType(message.getDeviceType())
                 .sessionId(message.getSessionId())
                 .occurredAt(message.getOccurredAt())
                 .build();

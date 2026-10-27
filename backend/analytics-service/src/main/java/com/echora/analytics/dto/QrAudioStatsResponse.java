@@ -21,7 +21,9 @@ public class QrAudioStatsResponse {
     private List<SeriesPoint> series;
     private List<KeyCount> triggers;
     private List<KeyCount> languages;
+    private List<KeyCount> devices;
     private List<TopPoi> topPois;
+    private List<RecentScan> recentScans;
 
     @Getter
     @Setter
@@ -91,5 +93,20 @@ public class QrAudioStatsResponse {
         private long completed;
         private double scanToPlayRate;
         private double completionRate;
+    }
+
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class RecentScan {
+        private String occurredAt;
+        private Long poiId;
+        private String poiName;
+        private String languageCode;
+        private String triggerType;
+        private String deviceType;
+        private String sessionId;
     }
 }

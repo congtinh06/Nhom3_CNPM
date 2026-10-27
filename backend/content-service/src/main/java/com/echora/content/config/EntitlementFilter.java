@@ -33,20 +33,19 @@ public class EntitlementFilter extends OncePerRequestFilter {
     private static final String GUIDE_PATH = "/api/content/pois/guide";
     private static final String QR_PREFIX = "/api/content/pois/qr/";
     private static final String PREMIUM_REQUIRED_MESSAGE =
-            "Ngôn ngữ này yêu cầu gói Premium đang hoạt động.";
+            "NgA'n ng��_ nA�y yA�u c��u gA3i Premium �`ang ho���t �`��Tng.";
     private static final String POI_LOCKED_MESSAGE =
-            "Điểm thuyết minh này yêu cầu gói Premium hoặc mua lẻ gói ngoại ngữ.";
+            "�?i���m thuy���t minh nA�y yA�u c��u gA3i Premium ho���c mua l��� gA3i ngo���i ng��_.";
 
     private final InternalPoiEntitlementClient poiEntitlementClient;
-    private final PoiLookup poiLookup;
 
     @Value("${internal.api-key:}")
     private String expectedApiKey;
 
-    public EntitlementFilter(InternalPoiEntitlementClient poiEntitlementClient, PoiLookup poiLookup) {
+    public EntitlementFilter(InternalPoiEntitlementClient poiEntitlementClient) {
         this.poiEntitlementClient = poiEntitlementClient;
-        this.poiLookup = poiLookup;
     }
+
 
     /** Port nội bộ để filter map qrToken -> poiId cho luồng mua lẻ theo POI. */
     public interface PoiLookup {
@@ -66,7 +65,12 @@ public class EntitlementFilter extends OncePerRequestFilter {
         if (path == null) {
             return true;
         }
-        if (GUIDE_PATH.equals(path) || path.startsWith(QR_PREFIX)) {
+        // Ma QR tai diem den la cong khai: khach quet ma duoc doc ban dich
+        // o moi ngon ngu ma khong can goi Premium.
+        if (path.startsWith(QR_PREFIX)) {
+            return true;
+        }
+        if (GUIDE_PATH.equals(path)) {
             return false;
         }
         if (!path.startsWith(POIS_PREFIX)) {
@@ -143,16 +147,6 @@ public class EntitlementFilter extends OncePerRequestFilter {
 
     private Long resolvePoiId(HttpServletRequest request) {
         String path = request.getRequestURI();
-        if (path.startsWith(QR_PREFIX)) {
-            String qrToken = path.substring(QR_PREFIX.length());
-            if (qrToken.contains("?")) {
-                qrToken = qrToken.substring(0, qrToken.indexOf('?'));
-            }
-            if (qrToken.isBlank()) {
-                return null;
-            }
-            return poiLookup.findPoiIdByQrToken(qrToken);
-        }
         String id = path.substring(POIS_PREFIX.length());
         try {
             return Long.valueOf(id.trim());

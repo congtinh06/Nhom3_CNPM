@@ -75,7 +75,7 @@ describe('ProductListPage', () => {
 
     renderComponent();
 
-    expect(screen.getByRole('heading', { level: 1, name: /quản lý sản phẩm/i })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 1, name: /quản lý quà lưu niệm/i })).toBeInTheDocument();
 
     await waitFor(() => {
       expect(screen.getByText('Cơm tấm sườn bì chả')).toBeInTheDocument();
@@ -286,6 +286,39 @@ describe('ProductListPage', () => {
       expect(productApi.updateProductSortOrder).toHaveBeenCalledWith(1, 5);
       expect(screen.getByText('Đã cập nhật thứ tự cho sản phẩm "Cơm tấm sườn bì chả".')).toBeInTheDocument();
       expect(sortInput).toHaveValue(5);
+    });
+  });
+
+  it('mặc định chỉ tải quà lưu niệm; chọn tất cả danh mục sẽ bỏ lọc danh mục', async () => {
+    vi.mocked(productApi.getProducts).mockResolvedValue({
+      content: mockProducts,
+      totalElements: 2,
+      totalPages: 1,
+      size: 10,
+      number: 0,
+      first: true,
+      last: true,
+      empty: false,
+    });
+
+    renderComponent();
+
+    await waitFor(() => {
+      expect(productApi.getProducts).toHaveBeenCalledWith(
+        expect.objectContaining({ category: 'SOUVENIR' })
+      );
+    });
+    expect(screen.getByLabelText(/lọc theo danh mục/i)).toHaveValue('SOUVENIR');
+
+    fireEvent.change(screen.getByLabelText(/lọc theo danh mục/i), {
+      target: { value: 'ALL' },
+    });
+
+    await waitFor(() => {
+      expect(productApi.getProducts).toHaveBeenCalledWith(
+        expect.objectContaining({ category: undefined })
+      );
+      expect(screen.getByRole('heading', { level: 1, name: /quản lý tất cả sản phẩm/i })).toBeInTheDocument();
     });
   });
 

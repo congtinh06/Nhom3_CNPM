@@ -19,7 +19,7 @@ import { adminClient, normalizeAdminError } from '../api/adminClient';
 import { AnalyticsSummaryResponse, AnalyticsTrendsResponse } from '../../types';
 import { DataTable, Column } from '../components/DataTable';
 import { ErrorState } from '../components/ErrorState';
-import { QrAlerts } from '../components/QrAlerts';
+import '../../styles/adminQr.css';
 
 const SUMMARY_REFRESH_INTERVAL_MS = 10_000;
 const ONLINE_WINDOW_MINUTES = 5;
@@ -400,8 +400,6 @@ export const AdminOverviewPage: React.FC = () => {
       )}
 
       <div className="adm-overview-grid">
-        <QrAlerts />
-
         {/* Hàng thẻ số lượng nội dung quản trị */}
         <div className="adm-metrics-row">
           {COUNT_CARDS.map((card) => {

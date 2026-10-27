@@ -35,6 +35,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -89,8 +90,7 @@ public class ProductServiceImpl implements ProductService {
     @Override
     @Transactional(readOnly = true)
     public Page<ProductDto> getActiveProducts(ProductCategory category, String search, Pageable pageable) {
-        String trimmedSearch = (search != null && !search.isBlank()) ? search.trim() : null;
-        return productRepository.findActiveProducts(category, trimmedSearch, pageable)
+        return productRepository.findActiveProducts(category, toSearchPattern(search), pageable)
                 .map(ProductDto::fromEntity);
     }
 
@@ -105,9 +105,14 @@ public class ProductServiceImpl implements ProductService {
     @Override
     @Transactional(readOnly = true)
     public Page<ProductDto> getAdminProducts(ProductCategory category, String search, Boolean isActive, Pageable pageable) {
-        String trimmedSearch = (search != null && !search.isBlank()) ? search.trim() : null;
-        return productRepository.findAdminProducts(category, trimmedSearch, isActive, pageable)
+        return productRepository.findAdminProducts(category, toSearchPattern(search), isActive, pageable)
                 .map(ProductDto::fromEntity);
+    }
+
+    private String toSearchPattern(String search) {
+        return (search != null && !search.isBlank())
+                ? "%" + search.trim().toLowerCase(Locale.ROOT) + "%"
+                : null;
     }
 
     @Override

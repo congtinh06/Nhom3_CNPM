@@ -94,8 +94,13 @@ public class QrAudioStatsServiceImpl implements QrAudioStatsService {
                 .languages(mapKeyCounts(
                         analyticsEventRepository.findQrAudioLanguageCounts(range.startUtc(), range.endUtc()),
                         List.of("vi", "en", "ja", "ko")))
+                .devices(mapKeyCounts(
+                        analyticsEventRepository.findQrAudioDeviceCounts(range.startUtc(), range.endUtc()),
+                        List.of("mobile", "desktop", "tablet", "unknown")))
                 .topPois(mapTopPois(
                         analyticsEventRepository.findQrAudioTopPois(range.startUtc(), range.endUtc())))
+                .recentScans(mapRecentScans(
+                        analyticsEventRepository.findRecentQrAudioScans(range.startUtc(), range.endUtc())))
                 .build();
     }
 
@@ -131,6 +136,31 @@ public class QrAudioStatsServiceImpl implements QrAudioStatsService {
                     .completed(completed)
                     .scanToPlayRate(percent(plays, scans))
                     .completionRate(percent(completed, plays))
+                    .build());
+        }
+        return result;
+    }
+
+    private List<QrAudioStatsResponse.RecentScan> mapRecentScans(List<Object[]> rows) {
+        List<QrAudioStatsResponse.RecentScan> result = new ArrayList<>();
+        if (rows == null || rows.isEmpty()) {
+            return result;
+        }
+
+        long deadline = System.currentTimeMillis() + Math.max(0L, totalBudgetMillis);
+        for (Object[] row : rows) {
+            if (row == null || row.length < 6 || row[0] == null) {
+                continue;
+            }
+            Long poiId = row[1] == null ? null : ((Number) row[1]).longValue();
+            result.add(QrAudioStatsResponse.RecentScan.builder()
+                    .occurredAt(String.valueOf(row[0]))
+                    .poiId(poiId)
+                    .poiName(poiId == null ? null : resolvePoiName(poiId, deadline))
+                    .languageCode(row[2] == null ? null : String.valueOf(row[2]))
+                    .triggerType(row[3] == null ? null : String.valueOf(row[3]))
+                    .deviceType(row[4] == null ? null : String.valueOf(row[4]))
+                    .sessionId(row[5] == null ? null : String.valueOf(row[5]))
                     .build());
         }
         return result;

@@ -51,6 +51,10 @@ public class QrLoginStatsResponse {
         private long pending;
         private long active;
         private long distinctUsers;
+        // Het han truoc khi thiet bi di dong quet ma.
+        private long expiredUnscanned;
+        // Da quet nhung khong xac nhan kip truoc khi ma het han.
+        private long expiredScanned;
     }
 
     @Getter
@@ -63,6 +67,8 @@ public class QrLoginStatsResponse {
         private double approvalRate;
         private double successRate;
         private double expiredRate;
+        private double expiredUnscannedRate;
+        private double expiredScannedRate;
     }
 
     @Getter

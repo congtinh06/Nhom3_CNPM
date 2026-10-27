@@ -41,7 +41,7 @@ app:
     free-shipping-threshold: ${ORDER_FREE_SHIPPING_THRESHOLD:50000}
   premium:
     price: ${ORDER_PREMIUM_PRICE:500000}
-    poi-price: ${ORDER_PREMIUM_POI_PRICE:20000}
+    poi-price: ${ORDER_PREMIUM_POI_PRICE:100000}
     access-days: ${ORDER_PREMIUM_ACCESS_DAYS:365}
   payments:
     mock-enabled: ${PAYMENTS_MOCK_ENABLED:true}

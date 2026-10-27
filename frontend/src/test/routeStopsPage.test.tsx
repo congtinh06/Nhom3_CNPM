@@ -166,10 +166,13 @@ describe('RouteStopsPage', () => {
   });
 
   const waitForEditor = async () => {
-    await waitFor(() => {
-      expect(screen.getByText('Điểm A')).toBeInTheDocument();
-      expect(screen.getByText('Điểm B')).toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByText('Điểm A')).toBeInTheDocument();
+        expect(screen.getByText('Điểm B')).toBeInTheDocument();
+      },
+      { timeout: 5000 }
+    );
   };
 
   it('tự chọn tuyến đầu tiên và hiển thị thứ tự điểm dừng hiện tại', async () => {

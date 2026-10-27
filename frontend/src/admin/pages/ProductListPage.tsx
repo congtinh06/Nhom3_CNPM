@@ -12,6 +12,8 @@ import { AdminToolbar } from '../components/AdminToolbar';
 import { AdminPagination } from '../components/AdminPagination';
 import { AdminAlert } from '../components/AdminAlert';
 
+type CategoryFilter = ProductCategory | 'ALL';
+
 export const ProductListPage: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -23,7 +25,9 @@ export const ProductListPage: React.FC = () => {
   // Pagination & Filters state from URL or defaults
   const page = parseInt(searchParams.get('page') || '0', 10);
   const search = searchParams.get('search') || '';
-  const categoryParam = searchParams.get('category') as ProductCategory | null;
+  const categoryParam = searchParams.get('category') as CategoryFilter | null;
+  const categoryFilter: CategoryFilter = categoryParam || 'SOUVENIR';
+  const effectiveCategory = categoryFilter === 'ALL' ? undefined : categoryFilter;
   const statusParam = searchParams.get('status'); // 'active', 'inactive', or null
   const sortParam = searchParams.get('sort') || 'sortOrder,asc';
 
@@ -56,7 +60,7 @@ export const ProductListPage: React.FC = () => {
         page,
         size: 10,
         search: search.trim() || undefined,
-        category: categoryParam || undefined,
+        category: effectiveCategory,
         isActive: isActiveFilter,
         sort: sortParam,
       });
@@ -77,7 +81,7 @@ export const ProductListPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [page, search, categoryParam, statusParam, sortParam]);
+  }, [page, search, effectiveCategory, statusParam, sortParam]);
 
   useEffect(() => {
     fetchProducts();
@@ -117,7 +121,7 @@ export const ProductListPage: React.FC = () => {
     const val = e.target.value;
     setSearchParams((prev) => {
       const next = new URLSearchParams(prev);
-      if (val) {
+      if (val && val !== 'SOUVENIR') {
         next.set('category', val);
       } else {
         next.delete('category');
@@ -398,18 +402,41 @@ export const ProductListPage: React.FC = () => {
   ];
 
   const hasActiveFilters = Boolean(
-    search || categoryParam || statusParam || (sortParam && sortParam !== 'sortOrder,asc')
+    search ||
+      (categoryParam && categoryParam !== 'SOUVENIR') ||
+      statusParam ||
+      (sortParam && sortParam !== 'sortOrder,asc')
   );
+
+  const pageTitle =
+    categoryFilter === 'ALL'
+      ? 'Quản lý tất cả sản phẩm'
+      : categoryFilter === 'FOOD'
+      ? 'Quản lý món ăn lưu trữ'
+      : categoryFilter === 'DRINK'
+      ? 'Quản lý đồ uống lưu trữ'
+      : 'Quản lý quà lưu niệm';
+
+  const pageDescription =
+    categoryFilter === 'ALL'
+      ? 'Toàn bộ bản ghi trong kho dữ liệu, gồm cả mục đã ẩn không hiển thị trên website.'
+      : categoryFilter === 'SOUVENIR'
+      ? 'Quà lưu niệm đang bán trên website. Món ăn/đồ uống cũ đã ẩn nằm trong bộ lọc danh mục.'
+      : 'Nhóm sản phẩm lưu trữ, hiện không hiển thị trên website.';
 
   return (
     <div className="adm-page">
       <div className="adm-page-head">
         <div>
-          <h1 className="adm-page-title">
-            {categoryParam === 'SOUVENIR' ? 'Quản lý quà lưu niệm' : 'Quản lý sản phẩm'}
-          </h1>
+          <h1 className="adm-page-title">{pageTitle}</h1>
           <p className="adm-page-desc">
-            Danh sách quà lưu niệm hiển thị trên website Echora.
+            {pageDescription}
+            {totalElements > 0 && (
+              <>
+                {' '}
+                <strong>{totalElements.toLocaleString('vi-VN')} sản phẩm</strong>.
+              </>
+            )}
           </p>
         </div>
         <div className="adm-page-actions">
@@ -458,12 +485,14 @@ export const ProductListPage: React.FC = () => {
 
         <select
           className="adm-select"
-          value={categoryParam || ''}
+          value={categoryFilter}
           onChange={handleCategoryChange}
           aria-label="Lọc theo danh mục"
         >
-          <option value="">Tất cả danh mục</option>
           <option value="SOUVENIR">Quà lưu niệm (SOUVENIR)</option>
+          <option value="FOOD">Món ăn (FOOD) - lưu trữ</option>
+          <option value="DRINK">Đồ uống (DRINK) - lưu trữ</option>
+          <option value="ALL">Tất cả danh mục (gồm lưu trữ)</option>
         </select>
 
         <select

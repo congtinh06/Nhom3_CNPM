@@ -23,6 +23,7 @@ import { useFavorites } from '../hooks/useFavorites';
 import { formatPrice } from '../utils/formatters';
 import { applySouvenirDiscount } from '../utils/pricing';
 import { defaultProducts } from '../content/defaultProducts';
+import { enrichProducts } from '../content/productAdapter';
 import { useNavbarLanguage } from '../content/languages';
 import { Product, ProductCategory } from '../types';
 
@@ -96,12 +97,41 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ category: 
 
   // Load related products
   useEffect(() => {
-    if (!product) return;
+    if (!product) {
+      setRelatedProducts([]);
+      return;
+    }
+
+    let cancelled = false;
     const cat = propCategory || product.category;
-    const related = defaultProducts
-      .filter((p) => p.slug !== slug && p.category === cat && p.isActive)
-      .slice(0, 4);
-    setRelatedProducts(related);
+    setRelatedProducts([]);
+
+    api
+      .getProducts({ category: cat, size: 200, sortBy: 'sortOrder' })
+      .then((page) => {
+        if (cancelled) return;
+        const candidates = enrichProducts(page?.content ?? []).filter(
+          (p) => p.slug !== slug && p.isActive
+        );
+        const samePoi =
+          product.poiId != null
+            ? candidates.filter((p) => p.poiId === product.poiId)
+            : [];
+        const samePoiIds = new Set(samePoi.map((p) => p.id));
+        const others = candidates.filter((p) => !samePoiIds.has(p.id));
+        setRelatedProducts([...samePoi, ...others].slice(0, 4));
+      })
+      .catch(() => {
+        if (cancelled) return;
+        const fallback = defaultProducts
+          .filter((p) => p.slug !== slug && p.category === cat && p.isActive)
+          .slice(0, 4);
+        setRelatedProducts(fallback);
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, [product, propCategory, slug]);
 
   const handleDecrease = () => {

@@ -152,6 +152,7 @@ export interface CreateAnalyticsEventRequest {
   languageCode: SupportedLanguage | string;
   triggerType?: TriggerType;
   completed?: boolean;
+  deviceType?: 'mobile' | 'desktop' | 'tablet' | 'unknown';
   sessionId?: string;
 }
 

@@ -19,19 +19,19 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
 
     @Query("SELECT p FROM Product p WHERE p.isActive = true " +
            "AND (:category IS NULL OR p.category = :category) " +
-           "AND (:search IS NULL OR LOWER(p.name) LIKE LOWER(CONCAT('%', :search, '%')))")
+           "AND (:searchPattern IS NULL OR LOWER(p.name) LIKE :searchPattern)")
     Page<Product> findActiveProducts(
             @Param("category") ProductCategory category,
-            @Param("search") String search,
+            @Param("searchPattern") String searchPattern,
             Pageable pageable);
 
     @Query("SELECT p FROM Product p WHERE " +
            "(:category IS NULL OR p.category = :category) " +
-           "AND (:search IS NULL OR LOWER(p.name) LIKE LOWER(CONCAT('%', :search, '%'))) " +
+           "AND (:searchPattern IS NULL OR LOWER(p.name) LIKE :searchPattern) " +
            "AND (:isActive IS NULL OR p.isActive = :isActive)")
     Page<Product> findAdminProducts(
             @Param("category") ProductCategory category,
-            @Param("search") String search,
+            @Param("searchPattern") String searchPattern,
             @Param("isActive") Boolean isActive,
             Pageable pageable);
 

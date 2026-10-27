@@ -120,7 +120,7 @@ describe('ScanPage language chips', () => {
     expect(playAudioMock).toHaveBeenCalledTimes(1);
   });
 
-  it('routes free users to Premium instead of loading a locked language', async () => {
+  it('loads QR destination translations for free users without a Premium redirect', async () => {
     authState.premium = false;
     await renderScanPage();
 
@@ -128,7 +128,26 @@ describe('ScanPage language chips', () => {
       fireEvent.click(screen.getByRole('button', { name: 'EN' }));
     });
 
-    expect(screen.getByText('Trang nâng cấp Premium')).toBeInTheDocument();
-    expect(api.getPoiByQr).not.toHaveBeenLastCalledWith('qr-dinh-doc-lap-01', 'en');
+    expect(api.getPoiByQr).toHaveBeenLastCalledWith('qr-dinh-doc-lap-01', 'en');
+    expect(screen.queryByText('Trang nâng cấp Premium')).not.toBeInTheDocument();
+  });
+
+  it('uses device speech for free users instead of premium backend audio', async () => {
+    authState.premium = false;
+    vi.spyOn(api, 'getPoiByQr').mockResolvedValue({
+      ...mockDetail,
+      audioUrl: 'poi_1_en_deadbeef.mp3',
+      audioStatus: 'READY',
+    });
+    await renderScanPage();
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'EN' }));
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Bấm để nghe' }));
+
+    expect(playAudioMock).toHaveBeenLastCalledWith(
+      expect.objectContaining({ lang: 'en', audioUrl: undefined })
+    );
   });
 });

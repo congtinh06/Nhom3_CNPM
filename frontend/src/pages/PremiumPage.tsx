@@ -1,7 +1,11 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, Check, Loader2, Search, X } from 'lucide-react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { ArrowLeft, Check, ChevronDown, ExternalLink, Headphones, Loader2, Lock, Play, Search, X } from 'lucide-react';
 import { PREMIUM_COPY, formatPremiumText } from '../content/premiumI18n';
+import {
+  getPremiumVideo,
+  youtubeEmbedUrl,
+} from '../content/premiumVideos';
 import { useNavbarLanguage } from '../content/languages';
 import { useAuth } from '../context/AuthContext';
 import {
@@ -24,7 +28,7 @@ import '../styles/premium.css';
 
 const PREMIUM_PRICE = 500000;
 /** Giá mua lẻ mặc định cho một điểm thuyết minh (365 ngày). */
-const DEFAULT_POI_PRICE = 20000;
+const DEFAULT_POI_PRICE = 100000;
 
 type PoiPaymentMethod = 'VNPAY' | 'VIETQR';
 
@@ -53,7 +57,7 @@ const POI_SECTION_COPY: Record<SupportedLanguage, PoiSectionCopy> = {
     subtitle:
       'Chọn đúng điểm bạn muốn nghe. Mỗi điểm mở khóa thuyết minh tiếng Anh, Nhật và Hàn trong 365 ngày.',
     listNote:
-      'Mỗi điểm gồm thuyết minh chi tiết, video giới thiệu, giảm 10% quà lưu niệm. Giá áp dụng 365 ngày.',
+      'Mua lẻ 100.000đ/điểm. Combo 7 điểm 500.000đ. Mỗi điểm gồm thuyết minh chi tiết, video giới thiệu, giảm 10% quà lưu niệm. Giá áp dụng 365 ngày.',
     requestedNote: 'Gói ngoại ngữ bạn đang mở khóa:',
     unlockCta: 'Mở khóa',
     processing: 'Đang tạo thanh toán…',
@@ -68,7 +72,7 @@ const POI_SECTION_COPY: Record<SupportedLanguage, PoiSectionCopy> = {
     subtitle:
       'Unlock only the stops you care about. Each stop includes English, Japanese and Korean narration for 365 days.',
     listNote:
-      'Each stop includes detailed narration, an intro video and 10% off souvenirs. The price is valid for 365 days.',
+      'Single stop: 100,000₫. 7-stop combo: 500,000₫. Each stop includes detailed narration, an intro video and 10% off souvenirs. The price is valid for 365 days.',
     requestedNote: 'The narration package you are unlocking:',
     unlockCta: 'Unlock',
     processing: 'Creating payment…',
@@ -83,7 +87,7 @@ const POI_SECTION_COPY: Record<SupportedLanguage, PoiSectionCopy> = {
     subtitle:
       '必要なスポットだけを解除できます。各スポットは英語・日本語・韓国語のナレーションを365日間利用できます。',
     listNote:
-      '各スポットには詳細なナレーション、紹介動画、お土産10%オフが含まれます。価格は365日間有効です。',
+      '単品は1スポット100,000đ、7スポットセットは500,000đ。各スポットには詳細なナレーション、紹介動画、お土産10%オフが含まれます。価格は365日間有効です。',
     requestedNote: '解除中のナレーションパッケージ:',
     unlockCta: '解除',
     processing: '決済を作成中…',
@@ -98,7 +102,7 @@ const POI_SECTION_COPY: Record<SupportedLanguage, PoiSectionCopy> = {
     subtitle:
       '필요한 명소만 해제하세요. 각 명소는 영어, 일본어, 한국어 해설을 365일 동안 이용할 수 있습니다.',
     listNote:
-      '각 명소에는 상세 해설, 소개 영상, 기념품 10% 할인이 포함됩니다. 가격은 365일 동안 유효합니다.',
+      '단품은 명소당 100,000đ, 7개 명소 콤보는 500,000đ입니다. 각 명소에는 상세 해설, 소개 영상, 기념품 10% 할인이 포함됩니다. 가격은 365일 동안 유효합니다.',
     requestedNote: '해제 중인 해설 패키지:',
     unlockCta: '해제',
     processing: '결제 생성 중…',
@@ -192,6 +196,7 @@ export const PremiumPage: React.FC = () => {
   const [poiGuidesError, setPoiGuidesError] = useState(false);
   const [poiCheckout, setPoiCheckout] = useState<number | null>(null);
   const [poiMenuOpen, setPoiMenuOpen] = useState<number | null>(null);
+  const [expandedExperienceId, setExpandedExperienceId] = useState<number | null>(null);
 
   const copy = PREMIUM_COPY[lang] ?? PREMIUM_COPY.vi;
   const poiCopy = POI_SECTION_COPY[lang] ?? POI_SECTION_COPY.vi;
@@ -338,6 +343,16 @@ export const PremiumPage: React.FC = () => {
   }, [requestedPoiId, poiGuides]);
 
   useEffect(() => {
+    if (expandedExperienceId == null) return;
+    const frame = window.requestAnimationFrame(() => {
+      document
+        .getElementById(`premium-poi-experience-${expandedExperienceId}`)
+        ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [expandedExperienceId]);
+
+  useEffect(() => {
     if (poiMenuOpen == null) return;
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') setPoiMenuOpen(null);
@@ -457,6 +472,19 @@ export const PremiumPage: React.FC = () => {
 
   const handleBackToTour = () => {
     navigate(returnTo || '/diem-du-lich');
+  };
+
+  const handleWatchVideo = () => {
+    const target = poiGuides?.find(
+      (poi) => getPremiumVideo(poi.slug) && canAccessPoi(poi.id)
+    );
+    if (target) {
+      setExpandedExperienceId(target.id);
+      return;
+    }
+    document
+      .getElementById('premium-poi-purchase')
+      ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
   const planStatusLabel = isPremium
@@ -594,6 +622,17 @@ export const PremiumPage: React.FC = () => {
                   </li>
                 ))}
               </ul>
+
+              <div className="premium-plan-perk">
+                <span className="premium-plan-perk-badge">10%</span>
+                <div className="premium-plan-perk-copy">
+                  <strong>{copy.souvenirDiscountLabel}</strong>
+                  <span>{isPremium ? copy.discountActiveNote : copy.discountInactiveNote}</span>
+                </div>
+                <Link to="/am-thuc" className="premium-plan-perk-link">
+                  {copy.discountCta}
+                </Link>
+              </div>
             </div>
 
             <div className="premium-plan-right">
@@ -663,13 +702,23 @@ export const PremiumPage: React.FC = () => {
               )}
 
               {isPremium ? (
-                <button
-                  type="button"
-                  className="premium-btn premium-btn-primary premium-pay-btn"
-                  onClick={handleBackToTour}
-                >
-                  {copy.continueCta}
-                </button>
+                <div className="premium-plan-actions">
+                  <button
+                    type="button"
+                    className="premium-btn premium-btn-primary premium-pay-btn"
+                    onClick={handleWatchVideo}
+                  >
+                    <Play size={15} strokeWidth={2.2} fill="currentColor" aria-hidden="true" />
+                    <span>{copy.mediaExperienceCta}</span>
+                  </button>
+                  <button
+                    type="button"
+                    className="premium-btn premium-btn-outline premium-pay-btn"
+                    onClick={handleBackToTour}
+                  >
+                    {copy.continueCta}
+                  </button>
+                </div>
               ) : isPremiumPending ? (
                 <div className="premium-pending-actions">
                   <button
@@ -750,7 +799,11 @@ export const PremiumPage: React.FC = () => {
         )}
 
         {hasGuideData && poiGuides && poiGuides.length > 0 && (
-          <section className="premium-stops poi-purchase-section" aria-labelledby="premium-poi-purchase-title">
+          <section
+            id="premium-poi-purchase"
+            className="premium-stops poi-purchase-section"
+            aria-labelledby="premium-poi-purchase-title"
+          >
             <div className="premium-section-head">
               <h2 id="premium-poi-purchase-title">{poiCopy.title}</h2>
               <p className="premium-lead">{poiCopy.subtitle}</p>
@@ -791,6 +844,8 @@ export const PremiumPage: React.FC = () => {
                   const imageSrc = resolveImagePath(poi.thumbnailUrl ?? undefined, poi.slug ?? undefined);
                   const category = poi.categoryNameVi || poi.categoryCode || copy.stopsTitle;
                   const menuOpen = poiMenuOpen === poi.id;
+                  const video = getPremiumVideo(poi.slug);
+                  const experienceOpen = Boolean(video && unlocked && expandedExperienceId === poi.id);
 
                   return (
                     <article
@@ -798,7 +853,7 @@ export const PremiumPage: React.FC = () => {
                       ref={isRequested ? (el) => { requestPoiCardRef.current = el; } : undefined}
                       key={poi.id}
                     >
-                      <div className="premium-poi-media">
+                      <div className={`premium-poi-media${video && unlocked ? ' has-video' : ''}`}>
                         <img
                           src={imageSrc}
                           alt={poi.name}
@@ -807,6 +862,23 @@ export const PremiumPage: React.FC = () => {
                             (e.target as HTMLImageElement).src = '/images/pois/buu-dien-trung-tam.jpg';
                           }}
                         />
+                        {video && unlocked && (
+                          <button
+                            type="button"
+                            className="premium-poi-media-play"
+                            onClick={() => setExpandedExperienceId(experienceOpen ? null : poi.id)}
+                            aria-label={`${copy.videoWatchCta}: ${poi.name}`}
+                          >
+                            <span className="premium-poi-media-play-icon" aria-hidden="true">
+                              <Play size={15} strokeWidth={2} fill="currentColor" />
+                            </span>
+                          </button>
+                        )}
+                        {video && !unlocked && (
+                          <span className="premium-poi-media-lock" aria-hidden="true">
+                            <Lock size={12} strokeWidth={2.2} />
+                          </span>
+                        )}
                       </div>
 
                       <div className="premium-poi-body">
@@ -828,6 +900,26 @@ export const PremiumPage: React.FC = () => {
                             </span>
                           ))}
                         </div>
+                        {video && unlocked && (
+                          <button
+                            type="button"
+                            className="premium-poi-experience-btn"
+                            onClick={() => setExpandedExperienceId(experienceOpen ? null : poi.id)}
+                            aria-expanded={experienceOpen}
+                            aria-controls={`premium-poi-experience-${poi.id}`}
+                            aria-label={`${copy.mediaExperienceCta}: ${poi.name}`}
+                          >
+                            <Play size={13} strokeWidth={2.2} aria-hidden="true" />
+                            <span>{copy.mediaExperienceCta}</span>
+                            <ChevronDown size={14} strokeWidth={2.2} aria-hidden="true" />
+                          </button>
+                        )}
+                        {video && !unlocked && (
+                          <p className="premium-poi-media-locked">
+                            <Lock size={12} strokeWidth={2.2} aria-hidden="true" />
+                            <span>{copy.mediaLockedNote}</span>
+                          </p>
+                        )}
                       </div>
 
                       <div className="premium-poi-side">
@@ -874,6 +966,51 @@ export const PremiumPage: React.FC = () => {
                           </div>
                         )}
                       </div>
+
+                      {experienceOpen && video && (
+                        <div className="premium-poi-experience" id={`premium-poi-experience-${poi.id}`}>
+                          <div className="premium-poi-video">
+                            <iframe
+                              className="premium-video-iframe"
+                              src={youtubeEmbedUrl(video.videoId)}
+                              title={`${copy.videoLabel}: ${poi.name}`}
+                              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                              allowFullScreen
+                              loading="lazy"
+                              referrerPolicy="strict-origin-when-cross-origin"
+                            />
+                          </div>
+
+                          <div className="premium-poi-experience-side">
+                            <p className="premium-video-label">{copy.videoLabel}</p>
+                            <h4>{poi.name}</h4>
+                            <p className="premium-video-source">
+                              {copy.videoSourceLabel}:{' '}
+                              <a href={video.sourceUrl} target="_blank" rel="noreferrer noopener">
+                                {video.channel}
+                                <ExternalLink size={12} strokeWidth={2} aria-hidden="true" />
+                              </a>
+                            </p>
+                            <div className="premium-poi-experience-actions">
+                              <Link
+                                to={`/diem-du-lich?stop=${encodeURIComponent(poi.slug ?? '')}&lang=${lang}`}
+                                className="premium-btn premium-btn-primary"
+                              >
+                                <Headphones size={15} strokeWidth={2} aria-hidden="true" />
+                                {copy.listenCta}
+                              </Link>
+                              <button
+                                type="button"
+                                className="premium-btn premium-btn-outline"
+                                onClick={() => setExpandedExperienceId(null)}
+                              >
+                                {copy.videoCloseCta}
+                              </button>
+                            </div>
+                            <p className="premium-video-note">{copy.videoSectionNote}</p>
+                          </div>
+                        </div>
+                      )}
                     </article>
                   );
                 })}

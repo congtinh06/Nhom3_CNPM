@@ -17,12 +17,16 @@ export interface QrLoginStats {
     pending: number;
     active: number;
     distinctUsers: number;
+    expiredUnscanned?: number;
+    expiredScanned?: number;
   };
   rates: {
     scanRate: number;
     approvalRate: number;
     successRate: number;
     expiredRate: number;
+    expiredUnscannedRate?: number;
+    expiredScannedRate?: number;
   };
   durations: {
     averageScanSeconds: number;
@@ -65,6 +69,16 @@ export interface QrLoginSessionPage {
   size: number;
 }
 
+export interface QrRecentScanItem {
+  occurredAt: string;
+  poiId: number | null;
+  poiName: string | null;
+  languageCode: string;
+  triggerType: string | null;
+  deviceType: string | null;
+  sessionId: string | null;
+}
+
 export interface QrAudioStats {
   range: QrStatsRangeInfo;
   totals: {
@@ -85,6 +99,8 @@ export interface QrAudioStats {
   }>;
   triggers: Array<{ key: string; count: number }>;
   languages: Array<{ key: string; count: number }>;
+  devices: Array<{ key: string; count: number }>;
+  recentScans: QrRecentScanItem[];
   topPois: Array<{
     poiId: number;
     name: string | null;

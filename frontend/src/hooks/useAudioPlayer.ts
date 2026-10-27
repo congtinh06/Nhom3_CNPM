@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { api } from '../api/client';
 import { getSharedAudio } from '../lib/audioUnlock';
 import { getAnalyticsSessionId } from '../lib/analytics';
+import { detectDeviceType } from '../lib/device';
 import { useToast } from '../context/ToastContext';
 import { SupportedLanguage, TriggerType } from '../types';
 import {
@@ -85,6 +86,7 @@ export const useAudioPlayer = () => {
         languageCode: validLang,
         triggerType,
         completed,
+        deviceType: detectDeviceType(),
         sessionId: getAnalyticsSessionId(),
       }).catch((err: unknown) => {
         const status = (err as { response?: { status?: number; headers?: Record<string, string> } })?.response?.status;

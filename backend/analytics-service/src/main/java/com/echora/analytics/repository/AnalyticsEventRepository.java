@@ -161,6 +161,27 @@ public interface AnalyticsEventRepository extends JpaRepository<AnalyticsEvent, 
                                              @Param("to") LocalDateTime to);
 
     @Query(value = """
+            SELECT COALESCE(e.device_type, 'unknown') AS device_type, COUNT(*) AS total
+            FROM analytics_event e
+            WHERE e.occurred_at >= :from AND e.occurred_at < :to
+              AND e.event_type = 'SCAN'
+            GROUP BY COALESCE(e.device_type, 'unknown')
+            """, nativeQuery = true)
+    List<Object[]> findQrAudioDeviceCounts(@Param("from") LocalDateTime from,
+                                           @Param("to") LocalDateTime to);
+
+    @Query(value = """
+            SELECT TOP 10 e.occurred_at, e.poi_id, e.language_code, e.trigger_type,
+                   COALESCE(e.device_type, 'unknown') AS device_type, e.session_id
+            FROM analytics_event e
+            WHERE e.occurred_at >= :from AND e.occurred_at < :to
+              AND e.event_type = 'SCAN'
+            ORDER BY e.occurred_at DESC
+            """, nativeQuery = true)
+    List<Object[]> findRecentQrAudioScans(@Param("from") LocalDateTime from,
+                                          @Param("to") LocalDateTime to);
+
+    @Query(value = """
             SELECT TOP 10 e.poi_id,
                    COUNT(CASE WHEN e.event_type = 'SCAN' THEN 1 END) AS scans,
                    COUNT(CASE WHEN e.event_type = 'AUDIO_PLAY' AND (e.completed IS NULL OR e.completed = 0) THEN 1 END) AS plays,

@@ -384,13 +384,7 @@ export const Header: React.FC = () => {
           type="button"
           className={`hd-premium-btn ${isPremium ? 'is-active' : ''}`}
           aria-label={isPremium ? 'Premium đang hoạt động' : 'Nâng cấp Premium'}
-          onClick={() => {
-            if (isPremium) {
-              navigate('/tai-khoan#premium');
-              return;
-            }
-            openPremiumPage();
-          }}
+          onClick={() => openPremiumPage()}
         >
           <Crown size={15} strokeWidth={1.9} aria-hidden="true" />
         </button>

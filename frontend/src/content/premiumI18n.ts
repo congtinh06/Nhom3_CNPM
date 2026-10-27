@@ -39,8 +39,19 @@ export interface PremiumCopy {
   discountDescription: string;
   discountCta: string;
   videoLabel: string;
+  videoSectionTitle: string;
+  videoSectionSubtitle: string;
+  videoWatchCta: string;
+  videoCloseCta: string;
+  videoSourceLabel: string;
+  videoSectionNote: string;
   detailsLabel: string;
+  mediaExperienceCta: string;
+  mediaLockedNote: string;
+  listenCta: string;
   souvenirDiscountLabel: string;
+  discountActiveNote: string;
+  discountInactiveNote: string;
   poiSearchPlaceholder: string;
   poiNoResults: string;
   clearSearch: string;
@@ -114,10 +125,10 @@ export const PREMIUM_COPY: Record<SupportedLanguage, PremiumCopy> = {
           'Ưu đãi 10% cho từng sản phẩm lưu niệm khi mua sắm trong hành trình Echora.',
       },
     ],
-    purchaseTitle: 'Premium trọn bộ',
+    purchaseTitle: 'Combo Premium 7 điểm',
     purchaseDescription:
-      'Một lần thanh toán mở khóa {count} bản thuyết minh tiếng Anh, Nhật, Hàn cho {poiCount} điểm đến, kèm video giới thiệu và ưu đãi 10% quà lưu niệm.',
-    priceUnit: 'thanh toán một lần',
+      'Một lần thanh toán 500.000đ mở khóa {count} bản thuyết minh tiếng Anh, Nhật, Hàn cho {poiCount} điểm đến, kèm video giới thiệu và ưu đãi 10% quà lưu niệm. Mua lẻ 100.000đ/điểm.',
+    priceUnit: 'combo 7 điểm, thanh toán một lần',
     checkoutCta: 'Thanh toán 500.000đ qua VNPAY',
     checkoutPending: 'Đang chuyển sang VNPAY...',
     loginNote: 'Bạn cần đăng nhập để tiếp tục thanh toán.',
@@ -136,8 +147,23 @@ export const PREMIUM_COPY: Record<SupportedLanguage, PremiumCopy> = {
       'Chủ tài khoản Premium được giảm 10% trên từng sản phẩm lưu niệm tại cửa hàng Echora. Ưu đãi áp dụng tự động khi thanh toán.',
     discountCta: 'Khám phá quà lưu niệm',
     videoLabel: 'Video giới thiệu',
+    videoSectionTitle: 'Video giới thiệu 7 điểm đến',
+    videoSectionSubtitle:
+      'Xem trước không gian, kiến trúc và nhịp sống của từng điểm đến trước khi bắt đầu hành trình.',
+    videoWatchCta: 'Xem video',
+    videoCloseCta: 'Đóng video',
+    videoSourceLabel: 'Nguồn',
+    videoSectionNote:
+      'Video được nhúng trực tiếp từ YouTube; nguồn và kênh phát hành hiển thị trên từng thẻ.',
     detailsLabel: 'Nội dung thuyết minh chi tiết',
+    mediaExperienceCta: 'Xem video & nghe thuyết minh',
+    mediaLockedNote: 'Mở khóa điểm này để xem video và nghe thuyết minh.',
+    listenCta: 'Nghe thuyết minh',
     souvenirDiscountLabel: 'Giảm 10% quà lưu niệm',
+    discountActiveNote:
+      'Ưu đãi đang áp dụng tự động cho tài khoản Premium của bạn khi thanh toán.',
+    discountInactiveNote:
+      'Ưu đãi được áp dụng tự động sau khi bạn kích hoạt Premium.',
     poiSearchPlaceholder: 'Tìm điểm đến muốn mở khóa...',
     poiNoResults: 'Không tìm thấy điểm đến phù hợp.',
     clearSearch: 'Xóa tìm kiếm',
@@ -231,10 +257,10 @@ export const PREMIUM_COPY: Record<SupportedLanguage, PremiumCopy> = {
           'Save 10% on every souvenir product when you shop during your Echora journey.',
       },
     ],
-    purchaseTitle: 'Premium access',
+    purchaseTitle: 'Premium combo for 7 stops',
     purchaseDescription:
-      'One payment unlocks {count} English, Japanese and Korean narration scripts for {poiCount} stops, plus intro videos and 10% off souvenirs.',
-    priceUnit: 'one-time payment',
+      'One payment of 500,000₫ unlocks {count} English, Japanese and Korean narration scripts for {poiCount} stops, plus intro videos and 10% off souvenirs. Single stops cost 100,000₫ each.',
+    priceUnit: '7-stop combo, one-time payment',
     checkoutCta: 'Pay 500,000₫ with VNPAY',
     checkoutPending: 'Redirecting to VNPAY...',
     loginNote: 'Please sign in to continue to payment.',
@@ -253,8 +279,23 @@ export const PREMIUM_COPY: Record<SupportedLanguage, PremiumCopy> = {
       'Premium account holders get 10% off each souvenir product at the Echora shop. The discount is applied automatically at checkout.',
     discountCta: 'Explore souvenirs',
     videoLabel: 'Intro video',
+    videoSectionTitle: 'Intro videos for all 7 stops',
+    videoSectionSubtitle:
+      'Preview each destination’s space, architecture and everyday rhythm before you set off.',
+    videoWatchCta: 'Watch video',
+    videoCloseCta: 'Close video',
+    videoSourceLabel: 'Source',
+    videoSectionNote:
+      'Videos are embedded directly from YouTube; the original channel is credited on every card.',
     detailsLabel: 'Detailed narration content',
+    mediaExperienceCta: 'Watch video & listen to narration',
+    mediaLockedNote: 'Unlock this stop to watch the video and listen to the narration.',
+    listenCta: 'Listen to narration',
     souvenirDiscountLabel: '10% off souvenirs',
+    discountActiveNote:
+      'The discount is applied automatically at checkout for your Premium account.',
+    discountInactiveNote:
+      'The discount applies automatically once you activate Premium.',
     poiSearchPlaceholder: 'Find a stop to unlock...',
     poiNoResults: 'No matching stops found.',
     clearSearch: 'Clear search',
@@ -348,10 +389,10 @@ export const PREMIUM_COPY: Record<SupportedLanguage, PremiumCopy> = {
           'Echora の旅でお土産を購入すると、商品ごとに10%割引が適用されます。',
       },
     ],
-    purchaseTitle: 'Premium アクセス',
+    purchaseTitle: '7スポット Premium セット',
     purchaseDescription:
-      '1回の決済で、{poiCount}スポットの英語・日本語・韓国語の音声ガイド{count}本、紹介動画、お土産10%オフを利用できます。',
-    priceUnit: '一括払い',
+      '500,000đの1回の決済で、{poiCount}スポットの英語・日本語・韓国語の音声ガイド{count}本、紹介動画、お土産10%オフを利用できます。単品は1スポット100,000đです。',
+    priceUnit: '7スポットセット・一括払い',
     checkoutCta: 'VNPAYで500,000đを支払う',
     checkoutPending: 'VNPAYへ移動中...',
     loginNote: 'お支払いにはログインが必要です。',
@@ -370,8 +411,23 @@ export const PREMIUM_COPY: Record<SupportedLanguage, PremiumCopy> = {
       'Premium アカウントの方は、Echora ショップのお土産1点ごとに10%割引。決済時に自動で適用されます。',
     discountCta: 'お土産を見る',
     videoLabel: '紹介動画',
+    videoSectionTitle: '7スポットの紹介動画',
+    videoSectionSubtitle:
+      '出発前に、各スポットの空間や建築、日常の雰囲気を動画でご覧ください。',
+    videoWatchCta: '動画を見る',
+    videoCloseCta: '動画を閉じる',
+    videoSourceLabel: '出典',
+    videoSectionNote:
+      '動画はYouTubeから直接埋め込まれています。各カードに出典チャンネルを表示しています。',
     detailsLabel: '詳細な音声ガイド',
+    mediaExperienceCta: '動画を見る・音声ガイドを聞く',
+    mediaLockedNote: 'このスポットを解除すると、動画と音声ガイドを利用できます。',
+    listenCta: '音声ガイドを聞く',
     souvenirDiscountLabel: 'お土産10%オフ',
+    discountActiveNote:
+      'Premiumアカウントの決済時に自動で適用されます。',
+    discountInactiveNote:
+      'Premiumを有効にすると自動で適用されます。',
     poiSearchPlaceholder: '解除したいスポットを検索...',
     poiNoResults: '該当するスポットが見つかりません。',
     clearSearch: '検索をクリア',
@@ -465,10 +521,10 @@ export const PREMIUM_COPY: Record<SupportedLanguage, PremiumCopy> = {
           'Echora 여행 중 기념품을 구매하면 상품마다 10% 할인이 적용됩니다.',
       },
     ],
-    purchaseTitle: 'Premium 이용권',
+    purchaseTitle: '7개 명소 Premium 콤보',
     purchaseDescription:
-      '한 번의 결제로 {poiCount}개 명소의 영어, 일본어, 한국어 해설 {count}개와 소개 영상, 기념품 10% 할인을 이용할 수 있습니다.',
-    priceUnit: '1회 결제',
+      '500,000đ을 한 번 결제하면 {poiCount}개 명소의 영어, 일본어, 한국어 해설 {count}개와 소개 영상, 기념품 10% 할인을 이용할 수 있습니다. 단품은 명소당 100,000đ입니다.',
+    priceUnit: '7개 명소 콤보, 1회 결제',
     checkoutCta: 'VNPAY로 500,000đ 결제',
     checkoutPending: 'VNPAY로 이동 중...',
     loginNote: '결제하려면 로그인이 필요합니다.',
@@ -487,8 +543,23 @@ export const PREMIUM_COPY: Record<SupportedLanguage, PremiumCopy> = {
       'Premium 계정은 Echora 상점의 기념품마다 10% 할인을 받습니다. 결제 시 자동으로 적용됩니다.',
     discountCta: '기념품 둘러보기',
     videoLabel: '소개 영상',
+    videoSectionTitle: '7개 명소 소개 영상',
+    videoSectionSubtitle:
+      '출발 전에 각 명소의 공간과 건축, 일상의 분위기를 영상으로 미리 만나보세요.',
+    videoWatchCta: '영상 보기',
+    videoCloseCta: '영상 닫기',
+    videoSourceLabel: '출처',
+    videoSectionNote:
+      '영상은 YouTube에서 직접 불러오며, 각 카드에 원본 채널을 표시합니다.',
     detailsLabel: '상세 해설 콘텐츠',
+    mediaExperienceCta: '영상 보기 & 해설 듣기',
+    mediaLockedNote: '이 명소를 해제하면 영상과 해설을 이용할 수 있습니다.',
+    listenCta: '해설 듣기',
     souvenirDiscountLabel: '기념품 10% 할인',
+    discountActiveNote:
+      'Premium 계정 결제 시 자동으로 적용됩니다.',
+    discountInactiveNote:
+      'Premium을 활성화하면 자동으로 적용됩니다.',
     poiSearchPlaceholder: '해제할 명소 검색...',
     poiNoResults: '일치하는 명소가 없습니다.',
     clearSearch: '검색 지우기',

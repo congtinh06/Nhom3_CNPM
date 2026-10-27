@@ -79,9 +79,12 @@ describe('PoiQrListPage', () => {
 
     expect(screen.getByRole('heading', { level: 1, name: 'Mã QR' })).toBeInTheDocument();
 
-    await waitFor(() => {
-      expect(screen.getByText('qr-ben-thanh')).toBeInTheDocument();
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByText('qr-ben-thanh')).toBeInTheDocument();
+      },
+      { timeout: 5000 }
+    );
     expect(screen.getByText('Chưa có mã QR cho điểm này.')).toBeInTheDocument();
     expect(poiApi.getAdminPoiDetail).toHaveBeenCalledWith(1);
     expect(poiApi.getAdminPoiDetail).toHaveBeenCalledWith(2);

@@ -8,22 +8,24 @@ import { createPremiumOrder, getOrderByCode } from '../services/orderService';
 import { BackendOrder, PoiGuide } from '../types';
 
 const apiFixtures = vi.hoisted(() => {
-  const poiNames = [
-    'Dinh Độc Lập',
-    'Bảo tàng Chứng tích Chiến tranh',
-    'Bưu điện Trung tâm',
-    'Nhà thờ Đức Bà',
-    'Chợ Bến Thành',
-    'Phố đi bộ Nguyễn Huệ',
-    'Bến Nhà Rồng',
+  const pois = [
+    { id: 1, name: 'Bưu điện Trung tâm Sài Gòn', slug: 'buu-dien-trung-tam' },
+    { id: 2, name: 'Nhà thờ Đức Bà Sài Gòn', slug: 'nha-tho-duc-ba' },
+    { id: 3, name: 'Chợ Bến Thành', slug: 'cho-ben-thanh' },
+    { id: 4, name: 'Chùa Bà Thiên Hậu (Hội quán Tuệ Thành)', slug: 'chua-ba-thien-hau' },
+    { id: 5, name: 'Cầu Ba Son', slug: 'cau-ba-son' },
+    {
+      id: 30002,
+      name: 'Bảo tàng Chứng tích Chiến tranh',
+      slug: 'bao-tang-chung-tich-chien-tranh',
+    },
+    { id: 30003, name: 'Dinh Độc Lập', slug: 'dinh-doc-lap' },
   ];
 
-  const guides = poiNames.map((name, index) => ({
-    id: index + 1,
-    code: `POI-${index + 1}`,
-    qrToken: `token-${index + 1}`,
-    name,
-    slug: `poi-${index + 1}`,
+  const guides = pois.map((poi) => ({
+    ...poi,
+    code: `POI-${poi.id}`,
+    qrToken: `token-${poi.id}`,
     latitude: 10.77,
     longitude: 106.7,
     triggerRadiusMeters: 40,
@@ -34,19 +36,19 @@ const apiFixtures = vi.hoisted(() => {
     translations: {
       en: {
         languageCode: 'en',
-        title: `${name} (EN)`,
+        title: `${poi.name} (EN)`,
         description: 'English narration',
         audioUrl: '/audio/en.mp3',
       },
       ja: {
         languageCode: 'ja',
-        title: `${name} (JA)`,
+        title: `${poi.name} (JA)`,
         description: 'Japanese narration',
         audioUrl: '/audio/ja.mp3',
       },
       ko: {
         languageCode: 'ko',
-        title: `${name} (KO)`,
+        title: `${poi.name} (KO)`,
         description: 'Korean narration',
         audioUrl: '/audio/ko.mp3',
       },
@@ -107,6 +109,7 @@ function renderPremium(initialRoute = '/nang-cap') {
         <Routes>
           <Route path="/nang-cap" element={<PremiumPage />} />
           <Route path="/diem-du-lich" element={<div>Danh sách điểm đến</div>} />
+          <Route path="/am-thuc" element={<div>Quà lưu niệm</div>} />
           <Route path="/dang-nhap" element={<div>Trang đăng nhập</div>} />
           <Route path="/tai-khoan" element={<div>Khu vực tài khoản</div>} />
         </Routes>
@@ -150,6 +153,13 @@ describe('PremiumPage', () => {
       screen.getByRole('heading', { name: 'Một gói Premium, bốn ngôn ngữ' })
     ).toBeInTheDocument();
     expect(screen.getAllByText(/Giảm 10% quà lưu niệm/).length).toBeGreaterThan(0);
+    expect(screen.getByText(/Ưu đãi được áp dụng tự động sau khi bạn kích hoạt Premium/)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Khám phá quà lưu niệm' })).toHaveAttribute(
+      'href',
+      '/am-thuc'
+    );
+    expect(container.querySelector('.premium-videos')).toBeNull();
+    expect(container.querySelector('.premium-discount')).toBeNull();
     await waitFor(() => {
       expect(container.querySelectorAll('.premium-poi-card')).toHaveLength(7);
     });
@@ -159,9 +169,52 @@ describe('PremiumPage', () => {
     ).toHaveLength(4);
     expect(screen.getAllByText(/21 bản thuyết minh/).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/7 điểm đến/).length).toBeGreaterThan(0);
-    expect(screen.getByText('Dinh Độc Lập')).toBeInTheDocument();
-    expect(screen.getByText('Bảo tàng Chứng tích Chiến tranh')).toBeInTheDocument();
+    expect(screen.getAllByText('Dinh Độc Lập').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Bảo tàng Chứng tích Chiến tranh').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Gói Premium').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('100.000đ')).toHaveLength(7);
+    expect(container.querySelectorAll('.premium-poi-media-lock')).toHaveLength(7);
+    expect(
+      screen.queryByRole('button', { name: /Xem video & nghe thuyết minh/ })
+    ).not.toBeInTheDocument();
+  });
+
+  it('opens a destination video inline and links to its narration', async () => {
+    authState.plan = 'PREMIUM';
+    authState.premiumActive = true;
+    authState.premiumExpiresAt = '2027-10-21T00:00:00';
+    renderPremium();
+
+    const experienceButton = await screen.findByRole('button', {
+      name: 'Xem video & nghe thuyết minh: Bưu điện Trung tâm Sài Gòn',
+    });
+    fireEvent.click(experienceButton);
+
+    const frame = screen.getByTitle('Video giới thiệu: Bưu điện Trung tâm Sài Gòn');
+    expect(frame).toHaveAttribute(
+      'src',
+      expect.stringContaining('youtube-nocookie.com/embed/i-85hRDWfcs')
+    );
+    expect(screen.getByRole('link', { name: 'Nghe thuyết minh' })).toHaveAttribute(
+      'href',
+      '/diem-du-lich?stop=buu-dien-trung-tam&lang=vi'
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Đóng video' }));
+    expect(
+      screen.queryByTitle('Video giới thiệu: Bưu điện Trung tâm Sài Gòn')
+    ).not.toBeInTheDocument();
+  });
+
+  it('shows the automatic discount status for Premium accounts', () => {
+    authState.plan = 'PREMIUM';
+    authState.premiumActive = true;
+    authState.premiumExpiresAt = '2027-10-21T00:00:00';
+    renderPremium();
+
+    expect(
+      screen.getByText(/Ưu đãi đang áp dụng tự động cho tài khoản Premium/)
+    ).toBeInTheDocument();
   });
 
   it('keeps the requested language and starts a VNPAY checkout', async () => {
@@ -180,7 +233,7 @@ describe('PremiumPage', () => {
     expect(localStorage.getItem('echora:premium')).toBeNull();
   });
 
-  it('renders active entitlement state on Premium card when user is premium', () => {
+  it('renders active entitlement state on Premium card when user is premium', async () => {
     authState.plan = 'PREMIUM';
     authState.premiumActive = true;
     authState.premiumExpiresAt = '2027-10-21T00:00:00';
@@ -192,6 +245,13 @@ describe('PremiumPage', () => {
     expect(screen.getByText(/Có hiệu lực đến/i)).toBeInTheDocument();
     const offerBadges = container.querySelectorAll('.premium-offer .premium-language-badges .is-open');
     expect(offerBadges.length).toBe(3);
+
+    fireEvent.click(
+      await screen.findByRole('button', { name: 'Xem video & nghe thuyết minh' })
+    );
+    expect(
+      await screen.findByTitle('Video giới thiệu: Bưu điện Trung tâm Sài Gòn')
+    ).toBeInTheDocument();
   });
 
   it('polls order status on return from payment and handles success', async () => {

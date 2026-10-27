@@ -26,6 +26,14 @@ public class CreateEventRequest {
 
     private Boolean completed;
 
+    /**
+     * Loai thiet bi do client tu nhan dien: mobile/desktop/tablet/unknown.
+     * Khong bat buoc de tuong thich voi client cu.
+     */
+    @Size(max = 20, message = "deviceType max length is 20")
+    @Pattern(regexp = "^(mobile|desktop|tablet|unknown)$", message = "deviceType must be mobile, desktop, tablet, or unknown")
+    private String deviceType;
+
     @Size(max = 64, message = "sessionId max length is 64")
     @Pattern(regexp = "^[A-Za-z0-9-_]*$", message = "sessionId must contain only alphanumeric, hyphen, or underscore characters")
     private String sessionId;
