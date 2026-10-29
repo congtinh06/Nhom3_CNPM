@@ -1,6 +1,7 @@
 import React, { useCallback, useRef } from 'react';
 import { QRCodeCanvas } from 'qrcode.react';
 import { buildPlaceQrContent } from '../../lib/placeQrContent.mjs';
+import { resolveQrBaseUrl } from '../../components/common/PlaceQR';
 
 export interface PoiQrPanelProps {
   qrToken?: string | null;
@@ -9,19 +10,6 @@ export interface PoiQrPanelProps {
 
 /** Minimum edge length (px) of the exported PNG, per the QR spec. */
 const EXPORT_SIZE = 1024;
-
-/**
- * Resolve the base URL used to build QR links. A deploy can override the domain
- * with VITE_QR_BASE_URL; otherwise we use the current site origin.
- */
-function resolveQrBaseUrl(): string {
-  const env = import.meta.env.VITE_QR_BASE_URL as string | undefined;
-  if (env && env.trim()) return env.trim();
-  if (typeof window !== 'undefined' && window.location?.origin) {
-    return window.location.origin;
-  }
-  return '';
-}
 
 function slugifyName(value: string): string {
   return (

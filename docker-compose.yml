@@ -261,6 +261,8 @@ services:
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required in .env}
       INTERNAL_API_KEY: ${INTERNAL_API_KEY:-}
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost:5173}
+      # Danh sách origin bổ sung (tunnel ngrok, Vercel...) cho kiểm tra CSRF.
+      FRONTEND_URLS: ${FRONTEND_URLS:-}
       # Google OAuth Client ID (loại Web). Để trống -> /api/auth/google trả 503; không dùng client secret.
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
       # Cookie Secure=true chỉ chạy được sau HTTPS -> mặc định false cho môi trường dev.

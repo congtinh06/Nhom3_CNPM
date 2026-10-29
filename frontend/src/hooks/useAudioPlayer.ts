@@ -46,6 +46,15 @@ export const useAudioPlayer = () => {
   const objectUrlRef = useRef<string | null>(null);
   const rateLimitedUntilRef = useRef<number>(0);
   const playTokenRef = useRef<number>(0);
+  // Phiên nghe hiện tại: dùng để bảo đảm mỗi lượt nghe chỉ ghi nhận hoàn tất 1 lần.
+  const playbackMetaRef = useRef<{
+    poiId: number;
+    lang: string;
+    triggerType: TriggerType;
+    textLength: number;
+    maxCharIndex: number;
+    completed: boolean;
+  } | null>(null);
 
   const stopAudio = useCallback(() => {
     // Invalidate any pending async speech resolution (e.g. waiting for voices).
@@ -55,6 +64,7 @@ export const useAudioPlayer = () => {
       audio.oncanplay = null;
       audio.onended = null;
       audio.onerror = null;
+      audio.ontimeupdate = null;
       audio.pause();
       audio.currentTime = 0;
       audio.removeAttribute('src');
@@ -98,6 +108,15 @@ export const useAudioPlayer = () => {
     []
   );
 
+  // Ghi nhận "nghe hoàn tất" đúng 1 lần cho mỗi lượt nghe, kể cả khi trình duyệt
+  // bắn nhiều sự kiện (ended + timeupdate) hoặc khi component unmount sau đó.
+  const markCompleted = useCallback(() => {
+    const meta = playbackMetaRef.current;
+    if (!meta || meta.completed) return;
+    meta.completed = true;
+    fireAnalytics(meta.poiId, meta.lang, meta.triggerType, true);
+  }, [fireAnalytics]);
+
   const playAudio = useCallback(
     ({
       poiId,
@@ -115,6 +134,16 @@ export const useAudioPlayer = () => {
       }
 
       stopAudio();
+
+      const spokenText = textToSpeak ? `${title}. ${textToSpeak}` : title;
+      playbackMetaRef.current = {
+        poiId,
+        lang,
+        triggerType,
+        textLength: spokenText.length,
+        maxCharIndex: 0,
+        completed: false,
+      };
 
       const hasBackendAudio = Boolean(audioUrl && audioStatus === 'READY');
 
@@ -149,8 +178,21 @@ export const useAudioPlayer = () => {
 
             audio.onended = () => {
               if (audioRef.current === audio && token === playTokenRef.current) {
-                fireAnalytics(poiId, lang, triggerType, true);
+                markCompleted();
                 stopAudio();
+              }
+            };
+
+            // Mobile browsers sometimes skip "ended" when the tab/screen is
+            // hidden. Treat "gần hết file" as hoàn tất để không mất lượt nghe.
+            audio.ontimeupdate = () => {
+              if (audioRef.current !== audio || token !== playTokenRef.current) return;
+              if (
+                Number.isFinite(audio.duration) &&
+                audio.duration > 0 &&
+                audio.currentTime / audio.duration >= 0.95
+              ) {
+                markCompleted();
               }
             };
 
@@ -224,15 +266,34 @@ export const useAudioPlayer = () => {
             fireAnalytics(poiId, speechLang, triggerType);
           };
 
+          // Theo dõi tiến độ đọc để vẫn nhận diện được "đã đọc gần hết" khi
+          // trình duyệt không bắn onend (Chrome mobile khi tắt màn hình).
+          utterance.onboundary = (event: SpeechSynthesisEvent) => {
+            const meta = playbackMetaRef.current;
+            if (!meta || meta.completed) return;
+            const index = typeof event.charIndex === 'number' ? event.charIndex : 0;
+            if (index > meta.maxCharIndex) meta.maxCharIndex = index;
+          };
+
           utterance.onend = () => {
             if (token !== playTokenRef.current) return;
-            fireAnalytics(poiId, speechLang, triggerType, true);
+            markCompleted();
             stopAudio();
           };
 
           utterance.onerror = (event) => {
             console.warn('[useAudioPlayer] speech synthesis failed', event.error);
             if (token !== playTokenRef.current) return;
+            // Một số bản Chrome báo "interrupted" ở những từ cuối dù đã đọc hết;
+            // nếu đã đọc qua 90% nội dung thì vẫn tính là hoàn tất.
+            const meta = playbackMetaRef.current;
+            if (
+              meta &&
+              meta.textLength > 0 &&
+              meta.maxCharIndex >= meta.textLength * 0.9
+            ) {
+              markCompleted();
+            }
             stopAudio();
           };
 
@@ -252,7 +313,7 @@ export const useAudioPlayer = () => {
 
       showToast('Bản dịch âm thanh cho ngôn ngữ này chưa sẵn sàng.');
     },
-    [playingPoiId, stopAudio, showToast, fireAnalytics]
+    [playingPoiId, stopAudio, showToast, fireAnalytics, markCompleted]
   );
 
   useEffect(() => {

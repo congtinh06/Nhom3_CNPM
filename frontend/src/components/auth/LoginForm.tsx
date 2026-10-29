@@ -242,7 +242,10 @@ export const LoginForm: React.FC<LoginFormProps> = ({
             <ScanLine size={15} strokeWidth={1.75} aria-hidden="true" />
             {t.auth.qrScanDeviceButton}
           </button>
-          <QrLoginPanel onSuccess={onSuccess} onGuestSuccess={onGuestSuccess} compact />
+          <div className="auth-qr-desktop-only">
+            <QrLoginPanel onSuccess={onSuccess} onGuestSuccess={onGuestSuccess} compact />
+          </div>
+          <p className="auth-qr-mobile-hint">{t.auth.qrMobileScanHint}</p>
           {onGuestSuccess && !guestMode && (
             <button
               type="button"

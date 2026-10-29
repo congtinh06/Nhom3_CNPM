@@ -79,6 +79,10 @@ function renderPage(path = '/quet-qr-dang-nhap') {
 }
 
 async function submitManualToken(token: string) {
+  const manualToggle = screen.queryByRole('button', { name: /nhập mã thủ công/i });
+  if (manualToggle) {
+    fireEvent.click(manualToggle);
+  }
   const input = await screen.findByLabelText(/hoặc nhập mã QR/i);
   fireEvent.change(input, { target: { value: token } });
   fireEvent.click(screen.getByRole('button', { name: /tiếp tục/i }));
@@ -86,8 +90,12 @@ async function submitManualToken(token: string) {
 
 describe('QrLoginScanPage', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.resetAllMocks();
     tokenStore.clear();
+    vi.mocked(authApi.createQrSession).mockImplementation(
+      () => new Promise(() => {})
+    );
+    vi.mocked(authApi.refresh).mockRejectedValue({ response: { status: 401 } });
   });
 
   it('khách quét mã sẽ ghi nhận phiên khách và hiển thị thông báo chế độ Khách', async () => {
@@ -108,6 +116,23 @@ describe('QrLoginScanPage', () => {
     expect(authApi.scanQrLogin).not.toHaveBeenCalled();
   });
 
+  it('mã quét là URL đầy đủ sẽ được tách đúng token trước khi gửi API', async () => {
+    vi.mocked(authApi.refresh).mockRejectedValue({ response: { status: 401 } });
+    vi.mocked(authApi.guestScanQrLogin).mockResolvedValue({
+      ...QR_SCAN_RESULT,
+      status: 'GUEST_APPROVED',
+    });
+
+    renderPage();
+
+    expect(await screen.findByText(/Bạn chưa có tài khoản/i)).toBeInTheDocument();
+    await submitManualToken('http://localhost:5173/quet-qr-dang-nhap?t=tok-guest-url');
+
+    await waitFor(() =>
+      expect(authApi.guestScanQrLogin).toHaveBeenCalledWith('tok-guest-url')
+    );
+  });
+
   it('tài khoản thật đã xác thực email quét mã sẽ tới màn hình xác nhận rồi duyệt', async () => {
     vi.mocked(authApi.refresh).mockResolvedValue({
       accessToken: 'access.token',
@@ -124,16 +149,19 @@ describe('QrLoginScanPage', () => {
     renderPage();
 
     // Đợi AuthContext kết thúc bootstrap (tài khoản thật) rồi mới submit.
-    expect(await screen.findByText(/Tài khoản thật của bạn:/i)).toBeInTheDocument();
+    await waitFor(() =>
+      expect(document.querySelector('[data-auth-status="authenticated"]')).toBeTruthy()
+    );
     await submitManualToken('tok-real-1');
 
     expect(
       await screen.findByRole('heading', { name: 'Xác nhận đăng nhập' })
     ).toBeInTheDocument();
     expect(screen.getByText('Chrome - Windows')).toBeInTheDocument();
-    // Email xuất hiện cả ở banner tài khoản thật và bảng thông tin xác nhận.
-    expect(screen.getAllByText('a@example.com').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('Đã xác thực').length).toBeGreaterThan(0);
+    // Không hiển thị email/tên tài khoản thật để tránh lộ thông tin cá nhân.
+    expect(screen.queryByText('a@example.com')).not.toBeInTheDocument();
+    expect(screen.queryByText('Nguyễn Văn A')).not.toBeInTheDocument();
+    expect(screen.queryByText('Tài khoản thật của bạn:')).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: /xác nhận đăng nhập/i }));
 
@@ -152,8 +180,10 @@ describe('QrLoginScanPage', () => {
 
     renderPage();
 
-    // Đợi bootstrap xong (role banner của tài khoản thật) rồi mới thấy cảnh báo.
-    expect(await screen.findByText(/Tài khoản thật của bạn:/i)).toBeInTheDocument();
+    // Đợi bootstrap xong (đã xác định là tài khoản thật) rồi mới thấy cảnh báo.
+    await waitFor(() =>
+      expect(document.querySelector('[data-auth-status="authenticated"]')).toBeTruthy()
+    );
     expect(await screen.findByText(/Tài khoản chưa xác thực email/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /gửi lại email xác thực/i })).toBeInTheDocument();
   });
@@ -161,13 +191,14 @@ describe('QrLoginScanPage', () => {
 
 describe('QrLoginPanel - chế độ khách', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.resetAllMocks();
     tokenStore.clear();
+    vi.mocked(authApi.refresh).mockRejectedValue({ response: { status: 401 } });
   });
 
   it('khi poll thấy GUEST_APPROVED sẽ gọi onGuestSuccess và không exchange token', async () => {
-    // Người dùng thật đã đăng nhập trên desktop để mở modal... nhưng phiên bị
-    // đánh dấu GUEST_APPROVED bởi thiết bị di động ở chế độ khách.
+    // Thiết bị đang hiện QR chưa đăng nhập (khách). Điện thoại khách quét mã
+    // khiến phiên chuyển GUEST_APPROVED.
     vi.mocked(authApi.createQrSession).mockResolvedValue({
       sessionId: '22222222-2222-2222-2222-222222222222',
       qrToken: 'qr-raw',
@@ -198,5 +229,50 @@ describe('QrLoginPanel - chế độ khách', () => {
 
     expect(authApi.exchangeQrSession).not.toHaveBeenCalled();
     expect(onSuccess).not.toHaveBeenCalled();
+  });
+
+  it('thiết bị đã có tài khoản thật hiển thị QR đăng nhập nhanh, không xử lý chế độ Khách', async () => {
+    vi.mocked(authApi.refresh).mockResolvedValue({
+      accessToken: 'access.token',
+      expiresIn: 900,
+      tokenType: 'Bearer',
+      user: USER,
+    });
+    vi.mocked(authApi.createQrSession).mockResolvedValue({
+      sessionId: '33333333-3333-3333-3333-333333333333',
+      qrToken: 'handoff-raw',
+      exchangeToken: 'handoff-exchange',
+      status: 'PENDING',
+      expiresAt: '2026-01-01T00:01:00Z',
+      expiresInSeconds: 60,
+      pollIntervalMs: 100,
+    });
+    vi.mocked(authApi.scanQrLogin).mockResolvedValue(QR_SCAN_RESULT);
+    vi.mocked(authApi.approveQrLogin).mockResolvedValue({
+      ...QR_SCAN_RESULT,
+      status: 'APPROVED',
+    });
+
+    const onGuestSuccess = vi.fn();
+
+    render(
+      <AuthProvider>
+        <QrLoginPanel onSuccess={vi.fn()} onGuestSuccess={onGuestSuccess} />
+      </AuthProvider>
+    );
+
+    // Máy đã đăng nhập: hiện QR tài khoản để điện thoại quét, không tạo QR đăng nhập thường.
+    expect(
+      await screen.findByRole('heading', { name: 'Đăng nhập nhanh trên điện thoại' })
+    ).toBeInTheDocument();
+    await waitFor(() => expect(authApi.approveQrLogin).toHaveBeenCalledWith('handoff-raw'));
+    expect(authApi.scanQrLogin).toHaveBeenCalledWith('handoff-raw');
+
+    // Không lộ email/tên và không bao giờ chuyển thiết bị sang chế độ Khách.
+    expect(screen.queryByText('a@example.com')).not.toBeInTheDocument();
+    expect(screen.queryByText('Nguyễn Văn A')).not.toBeInTheDocument();
+    expect(authApi.guestScanQrLogin).not.toHaveBeenCalled();
+    expect(authApi.exchangeQrSession).not.toHaveBeenCalled();
+    expect(onGuestSuccess).not.toHaveBeenCalled();
   });
 });

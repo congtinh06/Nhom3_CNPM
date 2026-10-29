@@ -817,16 +817,50 @@ select:focus-visible {
 
 @media (max-width: 480px) {
   .hd {
-    gap: 10px;
-    padding-left: 14px;
-    padding-right: 14px;
+    gap: 8px;
+    padding-left: 12px;
+    padding-right: 12px;
   }
   .hd .brand {
     font-size: 21px;
   }
+  .hd-right {
+    gap: 8px;
+  }
+  .lang-trigger-btn {
+    min-width: 0;
+    padding: 8px 4px;
+    gap: 4px;
+  }
+  .hd .lang-trigger-label {
+    display: none;
+  }
   .nav-btn {
     padding: 6px 9px;
     font-size: 12px;
+  }
+  .ftr-list a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 32px;
+  }
+}
+
+@media (max-width: 360px) {
+  .hd {
+    gap: 6px;
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+  .hd .brand {
+    font-size: 19px;
+  }
+  .hd-right {
+    gap: 5px;
+  }
+  .hd-premium-btn {
+    width: 30px;
+    height: 30px;
   }
 }
 
@@ -2388,35 +2422,45 @@ dialog p {
   color: var(--ink);
 }
 
-/* Trang quet QR dang nhap (thiet bi B) */
+/* Trang Đăng nhập bằng mã QR (Giao diện Echora: Tông nâu đất, nền tối, chữ serif) */
 .auth-scan-page {
   min-height: calc(100vh - 120px);
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 48px 16px;
-  background: var(--page);
+  padding: 32px 16px;
+  background: #140d08;
 }
 
 .auth-scan-card {
   width: 100%;
-  max-width: 520px;
-  background: #fdfaf3;
-  border: 1px solid rgba(138, 47, 18, 0.22);
-  border-radius: 10px;
+  max-width: 440px;
+  background: #201610;
+  border: 1px solid rgba(212, 175, 135, 0.16);
+  border-radius: 16px;
   box-shadow:
-    0 12px 32px rgba(28, 20, 16, 0.1),
-    0 2px 6px rgba(28, 20, 16, 0.05);
-  padding: 30px;
-  color: var(--ink);
+    0 16px 40px rgba(0, 0, 0, 0.5),
+    0 2px 8px rgba(0, 0, 0, 0.25);
+  padding: 32px 28px 24px;
+  color: #f5ece1;
   text-align: center;
 }
 
 .auth-scan-card h1 {
-  margin: 10px 0 8px;
-  color: var(--brown);
-  font-size: 23px;
+  margin: 0 0 6px;
+  color: #f7ede2;
+  font-family: var(--font-serif, "Playfair Display", Georgia, serif);
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
   line-height: 1.25;
+}
+
+.auth-scan-intro {
+  margin: 0 0 16px;
+  color: #a89484;
+  font-size: 13.5px;
+  line-height: 1.5;
 }
 
 .auth-scan-icon {
@@ -2425,16 +2469,32 @@ dialog p {
   justify-content: center;
   width: 54px;
   height: 54px;
+  margin-bottom: 12px;
   border-radius: 50%;
-  background: rgba(138, 47, 18, 0.09);
-  color: var(--brown);
+  background: rgba(184, 93, 25, 0.18);
+  color: #e4935e;
 }
 
-.auth-scan-intro {
-  margin: 0 0 18px;
-  color: #5c4e43;
-  font-size: 13.5px;
-  line-height: 1.55;
+/* Nhãn chế độ trên trang quét: khách hay tài khoản thật (không hiển thị email) */
+.auth-scan-role {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 0 0 14px;
+  padding: 10px 14px;
+  border: 1px solid rgba(212, 175, 135, 0.22);
+  border-radius: 8px;
+  background: rgba(255, 200, 87, 0.08);
+  color: #d8c3ae;
+  font-size: 13px;
+  line-height: 1.5;
+  text-align: left;
+}
+
+.auth-scan-role svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: #e4935e;
 }
 
 .auth-scan-video {
@@ -2492,34 +2552,7 @@ dialog p {
   align-items: center;
   justify-content: center;
   gap: 6px;
-  margin: 0 0 14px;
-}
-
-/* Nhãn chế độ trên trang quét: khách hay tài khoản thật */
-.auth-scan-role {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  margin: 0 0 14px;
-  padding: 10px 14px;
-  border: 1px solid #e6dccc;
-  border-radius: 8px;
-  background: rgba(255, 200, 87, 0.18);
-  color: #5b4a22;
-  font-size: 13px;
-  line-height: 1.5;
-  text-align: left;
-}
-
-.auth-scan-role svg {
-  flex-shrink: 0;
-  margin-top: 2px;
-}
-
-.auth-scan-role.is-account {
-  border-color: #cfe3cf;
-  background: rgba(31, 122, 51, 0.09);
-  color: #1f5c2d;
+  margin: 0 0 12px;
 }
 
 /* Cảnh báo tài khoản chưa xác thực email */
@@ -2599,6 +2632,41 @@ dialog p {
   width: 100%;
   min-height: 40px;
   margin: 0 0 14px;
+}
+
+/* Trên điện thoại không hiển thị mã QR (điện thoại không tự quét được màn hình
+   của chính nó); chỉ giữ nút mở camera. */
+.auth-qr-mobile-hint {
+  display: none;
+  margin: 0 0 4px;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: #5c4e43;
+  text-align: center;
+}
+
+@media (max-width: 899px) {
+  .auth-qr-desktop-only {
+    display: none;
+  }
+
+  .auth-qr-mobile-hint {
+    display: block;
+  }
+}
+
+/* Ghi chú dưới mã QR đăng nhập nhanh có kèm biểu tượng điện thoại */
+.auth-qr-handoff .auth-qr-status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  max-width: 260px;
+}
+
+.auth-handoff-card {
+  max-width: 420px;
+  margin: 0 auto;
 }
 
 .auth-scan-manual {
@@ -2963,6 +3031,18 @@ dialog p {
   flex: none;
   margin-top: 1px;
   color: #4b7d5c;
+}
+
+.auth-qr-localhost-hint {
+  margin: 10px 0 0;
+  padding: 9px 12px;
+  border: 1px solid rgba(184, 93, 25, 0.35);
+  border-radius: 8px;
+  background: rgba(184, 93, 25, 0.08);
+  color: #8a481e;
+  font-size: 12px;
+  line-height: 1.45;
+  text-align: left;
 }
 
 @media (max-width: 600px) {

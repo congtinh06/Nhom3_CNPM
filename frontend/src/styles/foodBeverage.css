@@ -2824,3 +2824,16 @@ body.header-hidden .editorial-desktop-sidebar .editorial-sidebar-card {
   transform: translateY(-1px);
 }
 
+
+@media (max-width: 600px) {
+  .editorial-chip-pill {
+    min-height: 34px;
+    padding: 6px 14px;
+    font-size: 12.5px;
+  }
+
+  .editorial-add-btn {
+    min-height: 38px;
+    padding: 8px 16px;
+  }
+}

@@ -1,6 +1,8 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { api } from '../api/client';
-import { SupportedLanguage } from '../types';
+import { SupportedLanguage, TriggerType } from '../types';
+import { detectDeviceType } from '../lib/device';
+import { getAnalyticsSessionId } from '../lib/analytics';
 import { formatNarrationNumerals } from '../lib/numerals';
 import { getSharedAudio } from '../lib/audioUnlock';
 import { GeoPoi, getNarration, NarrationLayer } from '../pages/NearbyPage';
@@ -186,6 +188,20 @@ export function findMatchingVoice(
   }
 
   return null;
+}
+
+/**
+ * Id số của POI trong DB (dùng cho analytics). Ưu tiên `numericId` do adapter
+ * lấy từ content-service; nếu thiếu thì lấy phần số của id dạng "poi-12".
+ */
+export function toNumericPoiId(poi: Pick<GeoPoi, 'id' | 'numericId'>): number | null {
+  if (typeof poi.numericId === 'number' && Number.isFinite(poi.numericId) && poi.numericId > 0) {
+    return Math.trunc(poi.numericId);
+  }
+  const match = /(\d+)/.exec(poi.id ?? '');
+  if (!match) return null;
+  const value = Number(match[1]);
+  return Number.isFinite(value) && value > 0 ? value : null;
 }
 
 export const LANG_DISPLAY_NAMES: Record<SupportedLanguage, Record<SupportedLanguage, string>> = {
@@ -512,6 +528,71 @@ export function useNearbyAudio({
   const onPoiListenedRef = useRef(onPoiListened);
   const hasBoundaryEventsRef = useRef<boolean>(false);
 
+  // ------------------------------------------------------------------
+  // Analytics: mỗi lượt nghe phải ghi nhận 2 sự kiện AUDIO_PLAY
+  //   - bắt đầu nghe (completed = false)
+  //   - nghe hoàn tất (completed = true)
+  // Trước đây trang Điểm du lịch không gửi sự kiện nào nên dashboard admin
+  // luôn hiển thị 0 lượt nghe hoàn tất.
+  // ------------------------------------------------------------------
+  const analyticsRef = useRef<{
+    poiId: number | null;
+    lang: SupportedLanguage;
+    trigger: TriggerType;
+    started: boolean;
+    completed: boolean;
+  }>({ poiId: null, lang: 'vi', trigger: 'MANUAL', started: false, completed: false });
+
+  const beginPlaybackAnalytics = useCallback(
+    (poi: GeoPoi, lang: SupportedLanguage, trigger: TriggerType) => {
+      analyticsRef.current = {
+        poiId: toNumericPoiId(poi),
+        lang,
+        trigger,
+        started: false,
+        completed: false,
+      };
+    },
+    []
+  );
+
+  const sendAudioPlayEvent = useCallback((completed: boolean) => {
+    const snapshot = analyticsRef.current;
+    if (!snapshot.poiId) return;
+    void api
+      .recordAnalyticsEvent({
+        eventType: 'AUDIO_PLAY',
+        poiId: snapshot.poiId,
+        languageCode: snapshot.lang,
+        triggerType: snapshot.trigger,
+        completed,
+        deviceType: detectDeviceType(),
+        sessionId: getAnalyticsSessionId(),
+      })
+      .catch(() => {
+        // Analytics không được chặn trải nghiệm nghe.
+      });
+  }, []);
+
+  const markPlaybackStarted = useCallback(() => {
+    if (analyticsRef.current.started || analyticsRef.current.completed) return;
+    analyticsRef.current.started = true;
+    sendAudioPlayEvent(false);
+  }, [sendAudioPlayEvent]);
+
+  const markPlaybackCompleted = useCallback(() => {
+    const snapshot = analyticsRef.current;
+    if (!snapshot.poiId || snapshot.completed) return;
+    // Nếu vì lý do nào đó chưa kịp ghi lượt bắt đầu, ghi bù để tỷ lệ hoàn tất
+    // không vượt quá 100%.
+    if (!snapshot.started) {
+      snapshot.started = true;
+      sendAudioPlayEvent(false);
+    }
+    snapshot.completed = true;
+    sendAudioPlayEvent(true);
+  }, [sendAudioPlayEvent]);
+
   useEffect(() => {
     onPoiListenedRef.current = onPoiListened;
   }, [onPoiListened]);
@@ -706,6 +787,13 @@ export function useNearbyAudio({
           utterance.voice = matchedVoice;
           utterance.rate = 1;
 
+          // Chỉ ghi nhận lượt bắt đầu khi máy thật sự đọc (tránh tính lượt
+          // nghe cho thiết bị không có giọng đọc của ngôn ngữ này).
+          utterance.onstart = () => {
+            if (token !== requestTokenRef.current) return;
+            markPlaybackStarted();
+          };
+
           utterance.onboundary = (e: SpeechSynthesisEvent) => {
             if (token !== requestTokenRef.current) return;
             if (!isFullTextReading) {
@@ -744,6 +832,7 @@ export function useNearbyAudio({
           utterance.onend = () => {
             if (token !== requestTokenRef.current) return;
             logAudioDev('STOP', { sourceType: 'speech', token, reason: 'utterance_ended' });
+            markPlaybackCompleted();
             activeSourceTypeRef.current = null;
             stopTimer();
             stopWatchdog();
@@ -808,7 +897,7 @@ export function useNearbyAudio({
         });
       }
     },
-    [currentId, resolveNoVoiceMsg]
+    [currentId, resolveNoVoiceMsg, markPlaybackStarted, markPlaybackCompleted]
   );
 
   const playPoi = useCallback(
@@ -834,6 +923,10 @@ export function useNearbyAudio({
       const layer: NarrationLayer = isAuto ? 'short' : 'full';
       const playback = resolvePlayback(targetPoi, currentLang, layer);
       const chosenText = playback.text;
+
+      // Mở phiên analytics cho lượt nghe này; sự kiện bắt đầu/hoàn tất được
+      // ghi khi máy thực sự phát và khi phát hết nội dung.
+      beginPlaybackAnalytics(targetPoi, currentLang, isAuto ? 'GPS' : 'MANUAL');
 
       const parsedSentences = splitTranscriptIntoSentences(chosenText);
       sentencesRef.current = parsedSentences;
@@ -932,11 +1025,21 @@ export function useNearbyAudio({
               setCurrentTime(audio.currentTime);
               setActiveSentenceIndex(null);
               checkListenedProgress(poiId, audio.currentTime);
+              // Một số trình duyệt mobile không bắn "ended" khi tab bị ẩn;
+              // coi như hoàn tất khi đã phát gần hết file.
+              if (
+                Number.isFinite(audio.duration) &&
+                audio.duration > 0 &&
+                audio.currentTime / audio.duration >= 0.95
+              ) {
+                markPlaybackCompleted();
+              }
             };
 
             audio.onended = () => {
               if (token !== requestTokenRef.current) return;
               logAudioDev('STOP', { sourceType: 'backend', stopId: poiId, token, reason: 'ended' });
+              markPlaybackCompleted();
               activeSourceTypeRef.current = null;
               setPlaybackStatus('idle');
               setIsPlaying(false);
@@ -970,6 +1073,7 @@ export function useNearbyAudio({
                     setAudioSourceType('backend');
                     setPlaybackStatus('playing');
                     setIsPlaying(true);
+                    markPlaybackStarted();
                   })
                   .catch((err) => {
                     if (token !== requestTokenRef.current) return;
@@ -990,6 +1094,7 @@ export function useNearbyAudio({
                 setAudioSourceType('backend');
                 setPlaybackStatus('playing');
                 setIsPlaying(true);
+                markPlaybackStarted();
               }
             } catch (err) {
               if (token !== requestTokenRef.current) return;
@@ -1036,6 +1141,7 @@ export function useNearbyAudio({
             if (next >= estDuration) {
               stopTimer();
               stopWatchdog();
+              markPlaybackCompleted();
               setPlaybackStatus('idle');
               setIsPlaying(false);
               setActiveSentenceIndex(null);
@@ -1065,6 +1171,9 @@ export function useNearbyAudio({
       checkListenedProgress,
       fallbackNoticeText,
       clickToPlayText,
+      beginPlaybackAnalytics,
+      markPlaybackStarted,
+      markPlaybackCompleted,
     ]
   );
 
@@ -1200,6 +1309,7 @@ export function useNearbyAudio({
             if (next >= duration) {
               stopTimer();
               stopWatchdog();
+              markPlaybackCompleted();
               setPlaybackStatus('idle');
               setIsPlaying(false);
               setActiveSentenceIndex(null);

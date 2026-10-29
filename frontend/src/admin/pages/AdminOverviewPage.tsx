@@ -357,10 +357,6 @@ export const AdminOverviewPage: React.FC = () => {
         <div>
           <h1 className="adm-page-title">
             Tổng quan hệ thống
-            <span className="adm-live-badge" aria-label="Chế độ cập nhật trực tiếp">
-              <span className="adm-live-dot" aria-hidden="true" />
-              TRỰC TIẾP
-            </span>
           </h1>
           <p className="adm-page-desc">
             Theo dõi lượt truy cập website, lượt quét mã QR, số lượt nghe thuyết minh realtime
@@ -452,7 +448,6 @@ export const AdminOverviewPage: React.FC = () => {
                   Đang online ({ONLINE_WINDOW_MINUTES} phút gần nhất)
                 </span>
                 <div className="adm-metric-value">
-                  <span className="adm-online-dot" aria-hidden="true" />
                   {loading
                     ? <span className="adm-metric-loading">Đang tải</span>
                     : (summary?.onlineVisitors ?? 0).toLocaleString('vi-VN')}

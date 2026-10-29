@@ -119,7 +119,7 @@ export function useAutoNarration({
         if (hit) {
           // Never start the same stop that is already playing
           if (currentPlayingId === hit.poi.id) return;
-
+          
           // Never start a stop that was just stopped manually by the user within 5000ms guard window
           if (
             lastManualStoppedId === hit.poi.id &&
@@ -128,11 +128,11 @@ export function useAutoNarration({
           ) {
             return;
           }
-
           autoPlayedSetRef.current.add(hit.poi.id);
           playPoi(hit.poi.id, true);
         }
       }
+      
     },
     [
       pois,

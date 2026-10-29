@@ -644,9 +644,9 @@ export const NearbyPage: React.FC = () => {
     }
   }, []);
 
-  // Explicit selection: updates active stop, writes ?stop=<slug> via history.replaceState, and scrolls hero into view
+  // Explicit selection: updates active stop, writes ?stop=<slug> via history.replaceState
   const handleExplicitSelectPoi = useCallback(
-    (poiId: string) => {
+    (poiId: string, shouldScroll = false) => {
       setSelectedId(poiId);
       setActiveId(poiId);
 
@@ -658,7 +658,9 @@ export const NearbyPage: React.FC = () => {
         window.history.replaceState(null, '', url.toString());
       }
 
-      scrollHeroIntoView();
+      if (shouldScroll) {
+        scrollHeroIntoView();
+      }
     },
     [pois, scrollHeroIntoView]
   );
@@ -666,7 +668,7 @@ export const NearbyPage: React.FC = () => {
   // View chapter transcript link from player bar: selects stop and scrolls into view
   const handleViewChapterTranscript = useCallback(
     (poiId: string) => {
-      handleExplicitSelectPoi(poiId);
+      handleExplicitSelectPoi(poiId, true);
     },
     [handleExplicitSelectPoi]
   );
@@ -898,7 +900,7 @@ export const NearbyPage: React.FC = () => {
               radius={activeSelectedPoi?.triggerRadius ?? 60}
               isAutoEnabled={isAutoEnabled}
               listenedPoiIds={listenedPoiIds}
-              onSelectPoi={handleExplicitSelectPoi}
+              onSelectPoi={(id) => handleExplicitSelectPoi(id, true)}
               onHoverPoi={setHoveredId}
               onTogglePlay={handleTogglePlayPoi}
               getPoiName={getPoiName}

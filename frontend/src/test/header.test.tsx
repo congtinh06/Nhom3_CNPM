@@ -82,7 +82,7 @@ describe('Header Navigation Redesign', () => {
       expect(contactLink).toBeInTheDocument();
       expect(contactLink).toHaveAttribute('href', '/lien-he');
 
-      // Danh sách thứ tự chính xác: Trang chủ, Điểm du lịch, Quà lưu niệm, Tin tức, Liên hệ
+      // Danh sách thứ tự chính xác
       const directLinks = Array.from(nav.children)
         .filter((el) => el.tagName === 'A')
         .map((el) => el.textContent?.trim());

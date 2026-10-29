@@ -38,6 +38,8 @@ app:
   security:
     # Origin được phép gọi các endpoint nhận cookie (chống CSRF)
     frontend-url: ${FRONTEND_URL:http://localhost:5173}
+    # Danh sách origin bổ sung, phân tách bằng dấu phẩy (vd: tunnel ngrok, domain Vercel).
+    frontend-urls: ${FRONTEND_URLS:}
   google:
     # Client ID của Google OAuth (loại Web). Rỗng -> /api/auth/google trả 503.
     # Không đặt client secret ở đây (luồng ID token không cần secret).

@@ -14,6 +14,7 @@ import {
 } from '../hooks/useNearbyAudio';
 import { ToastProvider } from '../context/ToastContext';
 import { AudioPlayerBar } from '../components/nearby/AudioPlayerBar';
+import { api } from '../api/client';
 import { GeoPoi } from '../pages/NearbyPage';
 import { SupportedLanguage } from '../types';
 import { TILE_PROVIDERS } from '../components/nearby/PoiMap';
@@ -169,6 +170,47 @@ describe('useAudioPlayer', () => {
       screen.getByText('Bản dịch âm thanh cho ngôn ngữ này chưa sẵn sàng.')
     ).toBeInTheDocument();
 
+    speakSpy.mockRestore();
+  });
+
+  it('ghi nhận đủ 2 sự kiện AUDIO_PLAY: bắt đầu và nghe hoàn tất', () => {
+    const speakSpy = vi.spyOn(window.speechSynthesis, 'speak').mockImplementation(() => {});
+    const analyticsSpy = vi.spyOn(api, 'recordAnalyticsEvent').mockResolvedValue();
+
+    const { result } = renderHook(() => useAudioPlayer(), { wrapper });
+
+    act(() => {
+      result.current.playAudio({
+        poiId: 1,
+        title: 'Dinh Độc Lập',
+        textToSpeak: 'Di tích lịch sử nổi tiếng.',
+        lang: 'vi',
+        triggerType: 'QR',
+      });
+    });
+
+    const utterance = speakSpy.mock.calls[0]?.[0] as SpeechSynthesisUtterance;
+    expect(utterance).toBeTruthy();
+
+    act(() => {
+      utterance.onstart?.(new Event('start') as unknown as SpeechSynthesisEvent);
+    });
+    expect(analyticsSpy).toHaveBeenCalledWith(
+      expect.objectContaining({ eventType: 'AUDIO_PLAY', poiId: 1, completed: false })
+    );
+
+    act(() => {
+      utterance.onend?.(new Event('end') as unknown as SpeechSynthesisEvent);
+    });
+    expect(analyticsSpy).toHaveBeenCalledWith(
+      expect.objectContaining({ eventType: 'AUDIO_PLAY', poiId: 1, completed: true })
+    );
+    // Chỉ ghi nhận hoàn tất đúng 1 lần cho mỗi lượt nghe.
+    expect(
+      analyticsSpy.mock.calls.filter(([payload]) => payload.completed === true)
+    ).toHaveLength(1);
+
+    analyticsSpy.mockRestore();
     speakSpy.mockRestore();
   });
 });
@@ -654,6 +696,57 @@ describe('Audio Resolution, Voice Selection & Linkage (Tasks 1 to 6)', () => {
     expect(result.current.isPlaying).toBe(false);
     expect(result.current.playbackStatus).toBe('idle');
     expect(speakSpy).not.toHaveBeenCalled();
+  });
+
+  it('(g) trang Điểm du lịch ghi nhận AUDIO_PLAY bắt đầu và hoàn tất cho lượt nghe', async () => {
+    const speakSpy = vi.fn();
+    (window.speechSynthesis as any).speak = speakSpy;
+    (window.speechSynthesis as any).cancel = vi.fn();
+    (window.speechSynthesis as any).getVoices = () => [
+      { lang: 'vi-VN', name: 'Voice VI', voiceURI: 'vi' } as SpeechSynthesisVoice,
+    ];
+    const analyticsSpy = vi.spyOn(api, 'recordAnalyticsEvent').mockResolvedValue();
+
+    const { result } = renderHook(() =>
+      useNearbyAudio({
+        pois,
+        currentLang: 'vi',
+        fallbackNoticeText: () => '',
+        autoTriggerNoticeText: () => '',
+        getPoiName: (p) => p.name.vi,
+      })
+    );
+
+    await act(async () => {
+      result.current.playPoi('poi-1');
+    });
+
+    const utterance = speakSpy.mock.calls[0]?.[0] as SpeechSynthesisUtterance;
+    expect(utterance).toBeTruthy();
+
+    await act(async () => {
+      utterance.onstart?.(new Event('start') as unknown as SpeechSynthesisEvent);
+    });
+    expect(analyticsSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        eventType: 'AUDIO_PLAY',
+        poiId: 1,
+        languageCode: 'vi',
+        completed: false,
+      })
+    );
+
+    await act(async () => {
+      utterance.onend?.(new Event('end') as unknown as SpeechSynthesisEvent);
+    });
+    expect(analyticsSpy).toHaveBeenCalledWith(
+      expect.objectContaining({ eventType: 'AUDIO_PLAY', poiId: 1, completed: true })
+    );
+    expect(
+      analyticsSpy.mock.calls.filter(([payload]) => payload.completed === true)
+    ).toHaveLength(1);
+
+    analyticsSpy.mockRestore();
   });
 });
 

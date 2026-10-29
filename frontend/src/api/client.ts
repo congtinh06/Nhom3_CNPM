@@ -205,6 +205,18 @@ export const api = {
     await apiClient.post<void>('/api/analytics/events', event);
   },
 
+  /**
+   * Heartbeat hiện diện: gửi định kỳ khi tab đang mở để dashboard admin đếm
+   * đúng số người đang online trong 5 phút gần nhất.
+   */
+  recordPresence: async (presence: {
+    sessionId: string;
+    languageCode?: string;
+    deviceType?: string;
+  }): Promise<void> => {
+    await apiClient.post<void>('/api/analytics/presence', presence);
+  },
+
   getMeEntitlements: async (signal?: AbortSignal): Promise<MeEntitlement> => {
     const response = await apiClient.get<MeEntitlement>('/api/auth/me/entitlements', { signal });
     return response.data;

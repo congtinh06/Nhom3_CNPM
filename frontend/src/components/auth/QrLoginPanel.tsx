@@ -6,6 +6,8 @@ import { normalizeApiError } from '../../api/errors';
 import { useAuth } from '../../context/AuthContext';
 import { useNavbarLanguage } from '../../content/languages';
 import { QrLoginSession, QrLoginStatus } from '../../types';
+import { resolveQrBaseUrl } from '../common/PlaceQR';
+import { AccountLoginQr } from './AccountLoginQr';
 
 interface QrLoginPanelProps {
   onSuccess: () => void;
@@ -83,7 +85,8 @@ const requestQrSession = (): Promise<QrLoginSession> => {
 
 export const QrLoginPanel: React.FC<QrLoginPanelProps> = ({ onSuccess, onGuestSuccess, compact = false }) => {
   const { t } = useNavbarLanguage();
-  const { completeQrLogin } = useAuth();
+  const { completeQrLogin, status: authStatus } = useAuth();
+  const alreadyAuthenticated = authStatus === 'authenticated';
 
   const [initialSession] = useState<StoredQrSession | null>(readStoredQrSession);
   const [session, setSession] = useState<QrLoginSession | null>(initialSession?.session ?? null);
@@ -141,6 +144,18 @@ export const QrLoginPanel: React.FC<QrLoginPanelProps> = ({ onSuccess, onGuestSu
   }, [t.auth.qrError]);
 
   useEffect(() => {
+    // Thiết bị đã có tài khoản thật thì không tạo QR đăng nhập nữa: nếu vẫn tạo,
+    // một điện thoại khách quét mã sẽ kéo thiết bị này về chế độ Khách (sai).
+    if (alreadyAuthenticated) {
+      clearStoredQrSession();
+      sessionRef.current = null;
+      statusRef.current = null;
+      deadlineRef.current = 0;
+      setSession(null);
+      setStatus(null);
+      setSecondsLeft(0);
+      return;
+    }
     if (
       sessionRef.current &&
       isLiveStatus(statusRef.current) &&
@@ -148,11 +163,16 @@ export const QrLoginPanel: React.FC<QrLoginPanelProps> = ({ onSuccess, onGuestSu
     ) {
       return;
     }
+    if (authStatus === 'loading') {
+      return;
+    }
     void createSession();
-  }, [createSession]);
+  }, [alreadyAuthenticated, authStatus, createSession]);
 
   useEffect(() => {
-    if (!session || !status || !LIVE_STATUSES.includes(status)) {
+    // Máy đã đăng nhập thật thì tuyệt đối không được xử lý GUEST_APPROVED nữa,
+    // tránh việc quét nhầm làm thiết bị đang có tài khoản bị chuyển sang Khách.
+    if (alreadyAuthenticated || !session || !status || !LIVE_STATUSES.includes(status)) {
       return;
     }
 
@@ -161,7 +181,7 @@ export const QrLoginPanel: React.FC<QrLoginPanelProps> = ({ onSuccess, onGuestSu
     const timer = window.setInterval(async () => {
       try {
         const result = await authApi.qrSessionStatus(session.sessionId, session.exchangeToken);
-        if (cancelled) return;
+        if (cancelled || alreadyAuthenticated) return;
 
         statusRef.current = result.status;
         setStatus(result.status);
@@ -214,7 +234,15 @@ export const QrLoginPanel: React.FC<QrLoginPanelProps> = ({ onSuccess, onGuestSu
       cancelled = true;
       window.clearInterval(timer);
     };
-  }, [session, status, completeQrLogin, onSuccess, onGuestSuccess, t.auth.qrError]);
+  }, [
+    alreadyAuthenticated,
+    session,
+    status,
+    completeQrLogin,
+    onSuccess,
+    onGuestSuccess,
+    t.auth.qrError,
+  ]);
 
   useEffect(() => {
     if (!session || !status || !LIVE_STATUSES.includes(status)) {
@@ -229,10 +257,10 @@ export const QrLoginPanel: React.FC<QrLoginPanelProps> = ({ onSuccess, onGuestSu
     return () => window.clearInterval(timer);
   }, [session, status]);
 
+  const baseUrl = resolveQrBaseUrl() || (typeof window !== 'undefined' ? window.location.origin : '');
   const qrUrl = session
-    ? `${window.location.origin}/quet-qr-dang-nhap?t=${encodeURIComponent(session.qrToken)}`
+    ? `${baseUrl}/quet-qr-dang-nhap?t=${encodeURIComponent(session.qrToken)}`
     : '';
-
   const showCode = Boolean(session) && status !== null && LIVE_STATUSES.includes(status);
   const isScanned = status === 'SCANNED';
   const isApproved = status === 'APPROVED';
@@ -240,6 +268,12 @@ export const QrLoginPanel: React.FC<QrLoginPanelProps> = ({ onSuccess, onGuestSu
   const isDenied = status === 'DENIED';
   const isCancelled = status === 'CANCELLED';
   const isGuestApproved = status === 'GUEST_APPROVED';
+
+  if (alreadyAuthenticated) {
+    // Thiết bị đã đăng nhập: thay mã QR đăng nhập bằng mã QR tài khoản để
+    // điện thoại quét và đăng nhập cùng tài khoản này.
+    return <AccountLoginQr compact={compact} />;
+  }
 
   return (
     <aside
@@ -326,7 +360,7 @@ export const QrLoginPanel: React.FC<QrLoginPanelProps> = ({ onSuccess, onGuestSu
           </div>
         )}
 
-        {loading && !session && (
+        {(loading || authStatus === 'loading') && !session && (
           <div className="auth-qr-state" role="status">
             <Loader2 size={30} className="auth-qr-spin" aria-hidden="true" />
             <p>{t.auth.qrWaiting}</p>

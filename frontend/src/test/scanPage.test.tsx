@@ -8,14 +8,14 @@ import { PremiumProvider } from '../context/PremiumContext';
 const { playAudioMock, stopAudioMock, authState } = vi.hoisted(() => ({
   playAudioMock: vi.fn(),
   stopAudioMock: vi.fn(),
-  authState: { premium: true },
+  authState: { premium: true, status: 'authenticated' },
 }));
 
 vi.mock('../context/AuthContext', () => ({
   useAuth: () => ({
-    status: 'authenticated',
-    isAuthenticated: true,
-    user: {
+    status: authState.status,
+    isAuthenticated: authState.status === 'authenticated',
+    user: authState.status === 'authenticated' ? {
       id: 1,
       email: 'user@example.com',
       fullName: 'Người dùng Echora',
@@ -23,7 +23,7 @@ vi.mock('../context/AuthContext', () => ({
       emailVerified: true,
       plan: authState.premium ? 'PREMIUM' : 'FREE',
       premiumActive: authState.premium,
-    },
+    } : null,
     reloadUser: vi.fn(),
   }),
 }));
@@ -85,6 +85,7 @@ describe('ScanPage language chips', () => {
     vi.clearAllMocks();
     localStorage.clear();
     authState.premium = true;
+    authState.status = 'authenticated';
     vi.spyOn(api, 'getPoiByQr').mockResolvedValue(mockDetail);
   });
 
@@ -120,34 +121,49 @@ describe('ScanPage language chips', () => {
     expect(playAudioMock).toHaveBeenCalledTimes(1);
   });
 
-  it('loads QR destination translations for free users without a Premium redirect', async () => {
+  it('chặn ngoại ngữ với tài khoản miễn phí và dẫn tới trang nâng cấp', async () => {
     authState.premium = false;
     await renderScanPage();
 
+    // Chip EN/JA/KO bị khóa, có ghi chú mở khóa Premium.
+    const enChip = screen.getByRole('button', { name: 'EN (cần Premium)' });
+    expect(enChip).toHaveClass('is-locked');
+    expect(screen.getByText(/Chỉ tiếng Việt được nghe miễn phí/i)).toBeInTheDocument();
+
     await act(async () => {
-      fireEvent.click(screen.getByRole('button', { name: 'EN' }));
+      fireEvent.click(enChip);
     });
 
-    expect(api.getPoiByQr).toHaveBeenLastCalledWith('qr-dinh-doc-lap-01', 'en');
-    expect(screen.queryByText('Trang nâng cấp Premium')).not.toBeInTheDocument();
+    // Không tải bản dịch ngoại ngữ, mà chuyển sang mua gói của điểm này.
+    expect(api.getPoiByQr).not.toHaveBeenCalledWith('qr-dinh-doc-lap-01', 'en');
+    expect(screen.getByText('Trang nâng cấp Premium')).toBeInTheDocument();
   });
 
-  it('uses device speech for free users instead of premium backend audio', async () => {
+  it('chỉ dùng giọng tiếng Việt cho tài khoản miễn phí', async () => {
     authState.premium = false;
-    vi.spyOn(api, 'getPoiByQr').mockResolvedValue({
-      ...mockDetail,
-      audioUrl: 'poi_1_en_deadbeef.mp3',
-      audioStatus: 'READY',
-    });
     await renderScanPage();
 
-    await act(async () => {
-      fireEvent.click(screen.getByRole('button', { name: 'EN' }));
-    });
     fireEvent.click(screen.getByRole('button', { name: 'Bấm để nghe' }));
 
     expect(playAudioMock).toHaveBeenLastCalledWith(
-      expect.objectContaining({ lang: 'en', audioUrl: undefined })
+      expect.objectContaining({ lang: 'vi', speechLangs: ['vi'] })
     );
+    // Bản dịch ngoại ngữ không được tải về cho tài khoản miễn phí.
+    expect(api.getPoiByQr).not.toHaveBeenCalledWith('qr-dinh-doc-lap-01', 'en');
+  });
+
+  it('khách chưa đăng nhập cũng chỉ nghe được tiếng Việt', async () => {
+    authState.premium = false;
+    authState.status = 'guest';
+    await renderScanPage();
+
+    expect(screen.getByRole('button', { name: 'EN (cần Premium)' })).toHaveClass('is-locked');
+    fireEvent.click(screen.getByRole('button', { name: 'Bấm để nghe' }));
+
+    expect(playAudioMock).toHaveBeenLastCalledWith(
+      expect.objectContaining({ lang: 'vi', speechLangs: ['vi'] })
+    );
+    expect(api.getPoiByQr).toHaveBeenCalledTimes(1);
+    expect(api.getPoiByQr).not.toHaveBeenCalledWith('qr-dinh-doc-lap-01', 'en');
   });
 });

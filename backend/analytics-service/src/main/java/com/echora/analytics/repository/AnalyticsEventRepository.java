@@ -46,13 +46,22 @@ public interface AnalyticsEventRepository extends JpaRepository<AnalyticsEvent, 
     List<Object[]> countVisitsByTriggerType();
 
     /**
-     * Số khách "đang online": các phiên (session_id) có hoạt động
-     * (VISIT/SCAN/AUDIO_PLAY) trong khoảng thời gian gần nhất.
+     * Số khách "đang online": hợp của
+     *   - các phiên có heartbeat presence trong khoảng thời gian gần nhất
+     *   - các phiên vừa phát sinh sự kiện (VISIT/SCAN/AUDIO_PLAY)
+     * để vẫn đếm được client cũ chưa gửi heartbeat.
      */
     @Query(value = """
-            SELECT COUNT(DISTINCT e.session_id)
-            FROM analytics_event e
-            WHERE e.occurred_at >= :from AND e.session_id IS NOT NULL
+            SELECT COUNT(*)
+            FROM (
+                SELECT p.session_id
+                FROM analytics_presence p
+                WHERE p.last_seen_at >= :from
+                UNION
+                SELECT e.session_id
+                FROM analytics_event e
+                WHERE e.occurred_at >= :from AND e.session_id IS NOT NULL
+            ) online_sessions
             """, nativeQuery = true)
     Long countOnlineSessions(@Param("from") LocalDateTime from);
 

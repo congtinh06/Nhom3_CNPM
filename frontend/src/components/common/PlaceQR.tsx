@@ -1,8 +1,11 @@
 import React, { useCallback, useRef, useState } from 'react';
 import { QRCodeCanvas } from 'qrcode.react';
 import { buildPlaceQrContent } from '../../lib/placeQrContent.mjs';
+import { resolveQrBaseUrl } from '../../lib/qrOrigin';
 import { t } from '../../content/nearbyI18n';
 import { SupportedLanguage } from '../../types';
+
+export { resolveQrBaseUrl } from '../../lib/qrOrigin';
 
 export interface PlaceQRPoi {
   qrToken?: string | null;
@@ -24,36 +27,6 @@ const SAMPLE_TOKEN_PREFIX = 'sample_qr_';
 
 /** Minimum edge length (px) of the exported PNG, per the QR spec. */
 const EXPORT_SIZE = 1024;
-
-const isLocalhost = (url: string): boolean => {
-  try {
-    const host = new URL(url).hostname;
-    return host === 'localhost' || host === '127.0.0.1' || host === '[::1]';
-  } catch {
-    return /localhost|127\.0\.0\.1/.test(url);
-  }
-};
-
-/**
- * Resolve the base URL used to build QR links. A build/deploy can override the
- * domain with VITE_QR_BASE_URL; otherwise we use the current site origin.
- */
-export function resolveQrBaseUrl(): string {
-  const env = import.meta.env.VITE_QR_BASE_URL as string | undefined;
-  if (env && env.trim()) return env.trim();
-  if (typeof window !== 'undefined' && window.location?.origin) {
-    return window.location.origin;
-  }
-  return '';
-}
-
-/** True only while developing against the local machine with no explicit QR domain. */
-export function shouldWarnQrLocalhost(): boolean {
-  if (!import.meta.env.DEV) return false;
-  const env = import.meta.env.VITE_QR_BASE_URL as string | undefined;
-  if (env && env.trim()) return false;
-  return isLocalhost(resolveQrBaseUrl());
-}
 
 export function isQrAvailable(poi?: PlaceQRPoi | null): boolean {
   const token = poi?.qrToken?.trim();
@@ -95,7 +68,6 @@ export const PlaceQR: React.FC<PlaceQRProps> = ({
   const [copied, setCopied] = useState(false);
 
   const content = buildPoiQrUrl(poi);
-  const warnLocalhost = showActions && shouldWarnQrLocalhost();
 
   const handleDownload = useCallback(() => {
     if (!content) return;
@@ -180,7 +152,6 @@ export const PlaceQR: React.FC<PlaceQRProps> = ({
           </button>
         </div>
       )}
-      {warnLocalhost && <p className="place-qr-warning">{t(lang, 'qrLocalhostWarning')}</p>}
       {showActions && (
         <div
           ref={exportRef}

@@ -1,8 +1,8 @@
 import { describe, it, expect, afterEach, vi } from 'vitest';
 import { render } from '@testing-library/react';
-import { PlaceQR, isQrAvailable, shouldWarnQrLocalhost } from '../components/common/PlaceQR';
+import { PlaceQR, isQrAvailable, resolveQrBaseUrl } from '../components/common/PlaceQR';
 
-describe('PlaceQR - availability, dev warning and sample mode (Hạng mục 3)', () => {
+describe('PlaceQR - availability, origin and sample mode (Hạng mục 3)', () => {
   afterEach(() => {
     vi.unstubAllEnvs();
   });
@@ -21,11 +21,19 @@ describe('PlaceQR - availability, dev warning and sample mode (Hạng mục 3)',
     expect(container.querySelector('.place-qr')).toBeNull();
   });
 
-  it('warns only when the QR base URL is localhost and no VITE_QR_BASE_URL is set', () => {
-    vi.stubEnv('VITE_QR_BASE_URL', '');
-    expect(shouldWarnQrLocalhost()).toBe(true);
+  it('dùng VITE_QR_BASE_URL (tunnel HTTPS) khi được cấu hình', () => {
+    vi.stubEnv('VITE_QR_BASE_URL', 'https://affection-smokiness-watch.ngrok-free.dev');
+    expect(resolveQrBaseUrl()).toBe('https://affection-smokiness-watch.ngrok-free.dev');
 
-    vi.stubEnv('VITE_QR_BASE_URL', 'https://nhom3-cnpm.vercel.app');
-    expect(shouldWarnQrLocalhost()).toBe(false);
+    vi.stubEnv('VITE_QR_BASE_URL', '  https://abc.ngrok-free.app/  ');
+    expect(resolveQrBaseUrl()).toBe('https://abc.ngrok-free.app');
+  });
+
+  it('quay về origin của trang hiện tại khi không cấu hình VITE_QR_BASE_URL', () => {
+    vi.stubEnv('VITE_QR_BASE_URL', '');
+    expect(resolveQrBaseUrl()).toBe(window.location.origin);
+
+    vi.stubEnv('VITE_QR_BASE_URL', '   ');
+    expect(resolveQrBaseUrl()).toBe(window.location.origin);
   });
 });

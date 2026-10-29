@@ -40,13 +40,25 @@ public class OriginCheckFilter extends OncePerRequestFilter {
 
     private final Set<String> allowedOrigins = new LinkedHashSet<>();
 
-    public OriginCheckFilter(@Value("${app.security.frontend-url:}") String frontendUrl) {
+    public OriginCheckFilter(@Value("${app.security.frontend-url:}") String frontendUrl,
+                             @Value("${app.security.frontend-urls:}") String frontendUrls) {
         allowedOrigins.add("http://localhost:5173");
         allowedOrigins.add("http://127.0.0.1:5173");
         allowedOrigins.add("http://localhost:8088");
         allowedOrigins.add("http://127.0.0.1:8088");
-        if (frontendUrl != null && !frontendUrl.isBlank()) {
-            allowedOrigins.add(frontendUrl.trim());
+        addOrigins(frontendUrl);
+        addOrigins(frontendUrls);
+    }
+
+    private void addOrigins(String configured) {
+        if (configured == null || configured.isBlank()) {
+            return;
+        }
+        for (String origin : configured.split(",")) {
+            String trimmed = origin.trim();
+            if (!trimmed.isEmpty()) {
+                allowedOrigins.add(trimmed);
+            }
         }
     }
 

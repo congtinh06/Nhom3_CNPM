@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   AlertCircle,
   ArrowLeft,
@@ -7,7 +7,6 @@ import {
   Eye,
   Loader2,
   ScanLine,
-  Smartphone,
   XCircle,
 } from 'lucide-react';
 import { authApi } from '../api/auth';
@@ -21,13 +20,55 @@ import { QrScanResponse } from '../types';
 
 type ScanPhase = 'idle' | 'confirm' | 'approving' | 'success' | 'denied' | 'guest-success';
 
+const QR_LOGIN_SCAN_PATH = '/quet-qr-dang-nhap';
+const QR_HANDOFF_PATH = '/nhan-dang-nhap';
+
+/**
+ * Mã QR "đăng nhập nhanh trên điện thoại" trỏ tới /nhan-dang-nhap. Khi người
+ * dùng quét bằng camera trong trang, chuyển sang trang nhận đăng nhập thay vì
+ * coi token đó là mã xác nhận cho máy tính.
+ */
+const extractHandoffLocation = (raw: string): string | null => {
+  const trimmed = raw.trim();
+  if (!trimmed) return null;
+  try {
+    const url = new URL(trimmed, window.location.origin);
+    const path = url.pathname.replace(/\/+$/, '');
+    if (path.endsWith(QR_HANDOFF_PATH)) {
+      return `${QR_HANDOFF_PATH}${url.search}`;
+    }
+  } catch {
+    // Không phải URL.
+  }
+  return null;
+};
+
+// Camera scanners return the full URL encoded in the QR code. The API expects
+// only the opaque `t` token, so extract it before calling the backend.
+const extractQrToken = (raw: string): string => {
+  const trimmed = raw.trim();
+  if (!trimmed) return '';
+  try {
+    const url = new URL(trimmed, window.location.origin);
+    const token = url.searchParams.get('t');
+    const path = url.pathname.replace(/\/+$/, '');
+    if (token && path.endsWith(QR_LOGIN_SCAN_PATH)) {
+      return token.trim();
+    }
+  } catch {
+    // Khong phai URL: coi nhu nguoi dung dan token thuan.
+  }
+  return trimmed;
+};
+
 export const QrLoginScanPage: React.FC = () => {
   const { t } = useNavbarLanguage();
-  // Cả là khách (guest) lẫn là đã có tài khoản đều quét được:
-  // - Khách quét -> máy tính kia chuyển sang chế độ Khách (dùng thử miễn phí).
-  // - Tài khoản thật (đã xác thực email) quét -> chuyển phiên đăng nhập thật.
+  // Trang nay la thiet bi B (thiet bi quet):
+  // - Khach quet -> thiet bi A (dang hien QR) chuyen sang che do Khach.
+  // - Tai khoan that quet -> thiet bi A dang nhap bang tai khoan nay.
   const { user, status: authStatus } = useAuth();
   const { showToast } = useToastOptional();
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const tokenFromUrl = searchParams.get('t') ?? '';
 
@@ -40,11 +81,19 @@ export const QrLoginScanPage: React.FC = () => {
   const [autoHandling, setAutoHandling] = useState(Boolean(tokenFromUrl));
   const [cameraWanted, setCameraWanted] = useState(true);
   const autoHandled = useRef(false);
+
   const hasRealAccount = authStatus === 'authenticated' && Boolean(user);
   const emailVerified = Boolean(user?.emailVerified);
+
+  // Xu ly token (khi dien thoai quet link ?t=... hoac nguoi dung nhap thu cong)
   const handleToken = useCallback(
     async (value: string) => {
-      const trimmed = value.trim();
+      const handoffLocation = extractHandoffLocation(value);
+      if (handoffLocation) {
+        navigate(handoffLocation, { replace: true });
+        return;
+      }
+      const trimmed = extractQrToken(value);
       if (!trimmed) {
         return;
       }
@@ -52,14 +101,13 @@ export const QrLoginScanPage: React.FC = () => {
       setBusy(true);
       try {
         if (authStatus === 'guest') {
-          // Khách chưa có tài khoản: đánh dấu phiên để máy tính kia vào chế độ Khách.
+          // Khach chua co tai khoan: danh dau phien de thiet bi A vao che do Khach.
           await authApi.guestScanQrLogin(trimmed);
           enterGuestMode();
           setToken(trimmed);
           setScanInfo(null);
           setPhase('guest-success');
         } else if (authStatus === 'loading') {
-          // Endpoint yêu cầu biết trạng thái đăng nhập: đợi phiên khởi động xong.
           setError(t.auth.qrLoginRequired);
           setPhase('idle');
         } else {
@@ -75,11 +123,11 @@ export const QrLoginScanPage: React.FC = () => {
         setBusy(false);
       }
     },
-    [authStatus, t.auth.qrLoginRequired]
+    [authStatus, navigate, t.auth.qrLoginRequired]
   );
 
-  // Token từ đường link (camera hệ điều hành mở URL): đợi trạng thái đăng nhập
-  // xác định xong rồi mới xử lý để tránh chọn sai nhánh khách/tài khoản.
+  // Token tu duong link (khi quet QR bang Camera dien thoai mo URL):
+  // Doi trang thai dang nhap xac dinh xong roi moi xu ly de chon dung nhanh.
   const authReady = authStatus !== 'loading';
   useEffect(() => {
     if (!tokenFromUrl || autoHandled.current || !authReady) {
@@ -89,7 +137,7 @@ export const QrLoginScanPage: React.FC = () => {
     void handleToken(tokenFromUrl).finally(() => setAutoHandling(false));
   }, [tokenFromUrl, authReady, handleToken]);
 
-  // Camera trong trang: bật khi đang idle (cả khách lẫn tài khoản thật).
+  // Camera trong trang: bat khi dang idle (ca khach lan tai khoan that).
   const cameraEnabled = cameraWanted && !autoHandling && phase === 'idle' && !busy;
   const { videoRef, active, error: cameraError } = useQrScanner({
     onScan: (value) => {
@@ -130,7 +178,7 @@ export const QrLoginScanPage: React.FC = () => {
   };
 
   const restartCamera = () => {
-    // Tắt rồi bật lại trong 1 tick để hook khởi động lại camera (handoff lỗi cũ).
+    // Tat roi bat lai trong 1 tick de hook khoi dong lai camera (handoff loi cu).
     setCameraWanted(false);
     window.setTimeout(() => setCameraWanted(true), 50);
   };
@@ -145,6 +193,7 @@ export const QrLoginScanPage: React.FC = () => {
     }
   };
 
+  // Man hinh ket qua (Thanh cong / Tu choi / Che do khach)
   if (phase === 'success' || phase === 'denied' || phase === 'guest-success') {
     const success = phase === 'success';
     const guest = phase === 'guest-success';
@@ -180,30 +229,21 @@ export const QrLoginScanPage: React.FC = () => {
     );
   }
 
+  // Man hinh xac nhan tren dien thoai (sau khi quet QR).
+  // Khong hien email/tai khoan that de tranh lo thong tin ca nhan.
   if ((phase === 'confirm' || phase === 'approving') && scanInfo) {
     return (
       <div className="auth-scan-page">
         <div className="auth-scan-card">
-          <div className="auth-scan-icon">
-            <Smartphone size={30} strokeWidth={1.7} aria-hidden="true" />
-          </div>
           <h1>{t.auth.qrConfirm}</h1>
           <p className="auth-scan-intro">{t.auth.qrScanIntro}</p>
 
+          {/* Chỉ hiển thị thiết bị đang yêu cầu đăng nhập.
+              Không hiển thị email/tên tài khoản thật để tránh lộ thông tin. */}
           <dl className="auth-scan-meta">
             <div>
               <dt>{t.auth.qrDeviceLabel}</dt>
               <dd>{scanInfo.deviceLabel}</dd>
-            </div>
-            <div>
-              <dt>{t.auth.emailLabel}</dt>
-              <dd>{user?.email}</dd>
-            </div>
-            <div>
-              <dt>{t.auth.qrEmailVerifiedLabel}</dt>
-              <dd className={emailVerified ? 'is-ok' : 'is-warn'}>
-                {emailVerified ? t.auth.qrEmailVerifiedOk : t.auth.qrEmailNotVerified}
-              </dd>
             </div>
           </dl>
 
@@ -218,7 +258,7 @@ export const QrLoginScanPage: React.FC = () => {
               type="button"
               className="tb auth-scan-confirm"
               onClick={() => void handleApprove()}
-              disabled={phase === 'approving'}
+              disabled={phase === 'approving' || !emailVerified}
             >
               {phase === 'approving' ? (
                 <Loader2 size={17} className="auth-qr-spin" aria-hidden="true" />
@@ -242,9 +282,9 @@ export const QrLoginScanPage: React.FC = () => {
     );
   }
 
-  // Màn hình quét: cả khách lẫn tài khoản thật đều dùng chung UI camera.
+  // Man hinh quet: ca khach lan tai khoan that deu dung chung UI camera.
   return (
-    <div className="auth-scan-page">
+    <div className="auth-scan-page" data-auth-status={authStatus}>
       <div className="auth-scan-card">
         <div className="auth-scan-icon">
           <ScanLine size={30} strokeWidth={1.7} aria-hidden="true" />
@@ -252,21 +292,12 @@ export const QrLoginScanPage: React.FC = () => {
         <h1>{t.auth.qrScanTitle}</h1>
         <p className="auth-scan-intro">{t.auth.qrScanIntro}</p>
 
-        <div className={`auth-scan-role${hasRealAccount ? ' is-account' : ''}`}>
-          {hasRealAccount ? (
-            <>
-              <CheckCircle2 size={15} strokeWidth={2} aria-hidden="true" />
-              <span>
-                {t.auth.qrRealAccountHint} <strong>{user?.email}</strong>
-              </span>
-            </>
-          ) : (
-            <>
-              <Eye size={15} strokeWidth={2} aria-hidden="true" />
-              <span>{t.auth.qrGuestIntro}</span>
-            </>
-          )}
-        </div>
+        {authStatus === 'guest' && (
+          <div className="auth-scan-role">
+            <Eye size={15} strokeWidth={2} aria-hidden="true" />
+            <span>{t.auth.qrGuestIntro}</span>
+          </div>
+        )}
 
         {hasRealAccount && !emailVerified && (
           <div className="auth-scan-warn" role="alert">
@@ -326,13 +357,6 @@ export const QrLoginScanPage: React.FC = () => {
             {t.auth.qrManualSubmit}
           </button>
         </form>
-
-        {!hasRealAccount && (
-          <p className="auth-scan-login-hint">
-            {t.auth.qrLoginRequired}{' '}
-            <Link to="/dang-nhap">{t.auth.login}</Link>
-          </p>
-        )}
 
         <p className="auth-scan-back">
           <Link to="/">

@@ -30,7 +30,9 @@ import { AuthModal } from './components/auth/AuthModal';
 import { RequireAuth } from './components/auth/RequireAuth';
 
 import { useSmoothScroll } from './hooks/useSmoothScroll';
+import { useScrollRestoration } from './hooks/useScrollRestoration';
 import { api } from './api/client';
+import { detectDeviceType } from './lib/device';
 import {
   getAnalyticsSessionId,
   getClientLanguage,
@@ -38,8 +40,13 @@ import {
   markVisitRecorded,
 } from './lib/analytics';
 
+/** Nhịp heartbeat hiện diện (1 phút/lần). */
+const PRESENCE_HEARTBEAT_MS = 60_000;
+
 const NearbyPage = lazy(() => import('./pages/NearbyPage'));
 const AdminRoutes = lazy(() => import('./admin/AdminRoutes'));
+const AccountLoginQrPage = lazy(() => import('./pages/AccountLoginQrPage'));
+const QrHandoffReceivePage = lazy(() => import('./pages/QrHandoffReceivePage'));
 
 const PoiRedirect: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -56,6 +63,7 @@ const SouvenirSlugRedirect: React.FC = () => {
 
 const AppContent: React.FC = () => {
   useSmoothScroll();
+  useScrollRestoration();
   const location = useLocation();
 
   // Đếm 1 lượt truy cập website (VISIT) mỗi phiên tab — phục vụ dashboard
@@ -76,6 +84,43 @@ const AppContent: React.FC = () => {
     // Chỉ chạy một lần mỗi phiên tab (markVisitRecorded tự chống lặp StrictMode).
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Heartbeat hiện diện: VISIT chỉ gửi 1 lần khi mở tab, nên nếu khách ngồi xem
+  // quá 5 phút thì dashboard admin sẽ tưởng đã offline. Gửi heartbeat mỗi phút
+  // khi tab còn mở (và ngay khi quay lại tab) để "Đang online (5 phút)" đúng.
+  useEffect(() => {
+    if (location.pathname.startsWith('/quan-tri')) return;
+
+    const sendPresence = () => {
+      if (typeof document !== 'undefined' && document.visibilityState === 'hidden') {
+        return;
+      }
+      void api
+        .recordPresence({
+          sessionId: getAnalyticsSessionId(),
+          languageCode: getClientLanguage(),
+          deviceType: detectDeviceType(),
+        })
+        .catch(() => {
+          // Presence lỗi không ảnh hưởng trải nghiệm người dùng.
+        });
+    };
+
+    sendPresence();
+    const timer = window.setInterval(sendPresence, PRESENCE_HEARTBEAT_MS);
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        sendPresence();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      window.clearInterval(timer);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [location.pathname]);
 
   const state = location.state as {
     backgroundLocation?: { pathname: string; search?: string; hash?: string };
@@ -184,6 +229,8 @@ const AppContent: React.FC = () => {
             {/* Trang quét QR đăng nhập mở cho cả khách: khách quét sẽ chuyển
                 máy tính sang chế độ Khách, tài khoản thật quét để chuyển phiên. */}
             <Route path="/quet-qr-dang-nhap" element={<QrLoginScanPage />} />
+            <Route path="/nhan-dang-nhap" element={<QrHandoffReceivePage />} />
+            <Route path="/qr-tai-khoan" element={<AccountLoginQrPage />} />
 
             {/* User & Auth */}
             <Route path="/dat-lai-mat-khau" element={<ResetPasswordPage />} />

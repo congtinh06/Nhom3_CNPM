@@ -2,11 +2,16 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Phone, Mail, MapPin, Clock, ChevronUp } from 'lucide-react';
 import { footerContent, siteContact } from '../../content/staticSections';
+import { scrollToTopInstant } from '../../hooks/useScrollRestoration';
 
 export const Footer: React.FC = () => {
   const handleTopClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
     e.preventDefault();
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    scrollToTopInstant(true);
+  };
+
+  const handleLinkClick = () => {
+    scrollToTopInstant(false);
   };
 
   return (
@@ -23,19 +28,19 @@ export const Footer: React.FC = () => {
           <h2 className="ftr-heading">Liên kết</h2>
           <ul className="ftr-list">
             <li>
-              <Link to="/">Trang chủ</Link>
+              <Link to="/" onClick={handleLinkClick}>Trang chủ</Link>
             </li>
             <li>
-              <Link to="/diem-du-lich">Điểm du lịch</Link>
+              <Link to="/diem-du-lich" onClick={handleLinkClick}>Điểm du lịch</Link>
             </li>
             <li>
-              <Link to="/am-thuc">Quà lưu niệm</Link>
+              <Link to="/am-thuc" onClick={handleLinkClick}>Quà lưu niệm</Link>
             </li>
             <li>
-              <Link to="/tin-tuc">Tin tức</Link>
+              <Link to="/tin-tuc" onClick={handleLinkClick}>Tin tức</Link>
             </li>
             <li>
-              <Link to="/lien-he">Liên hệ</Link>
+              <Link to="/lien-he" onClick={handleLinkClick}>Liên hệ</Link>
             </li>
           </ul>
         </nav>

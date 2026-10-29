@@ -534,21 +534,6 @@ export const Header: React.FC = () => {
             <span>{t.contact}</span>
           </a>
 
-          {/* Quét mã QR hiển thị trên máy tính (đăng nhập nhanh / chế độ khách) */}
-          <a
-            href="/quet-qr-dang-nhap"
-            className="mobile-nav-item"
-            onClick={(e) => {
-              e.preventDefault();
-              closeAllMenus();
-              navigate('/quet-qr-dang-nhap', {
-                state: { backgroundLocation: { pathname: location.pathname + location.search } },
-              });
-            }}
-          >
-            <span>{t.scanQrDesktop}</span>
-          </a>
-
           {/* Auth khu vực mobile */}
           <div className="mobile-account-section">
             {!isAuthenticated ? (

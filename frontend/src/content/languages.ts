@@ -235,6 +235,7 @@ export interface NavTranslation {
     qrSuccessTitle: string;
     qrSuccessNote: string;
     qrLoginRequired: string;
+    qrAccountSwitchHint: string;
     qrManualLabel: string;
     qrManualPlaceholder: string;
     qrManualSubmit: string;
@@ -254,6 +255,15 @@ export interface NavTranslation {
     guestBannerNote: string;
     guestContinue: string;
     qrRealAccountHint: string;
+    qrAlreadySignedIn: string;
+    qrHandoffTitle: string;
+    qrHandoffNote: string;
+    qrHandoffDone: string;
+    qrHandoffReceiveTitle: string;
+    qrHandoffReceiveNote: string;
+    qrHandoffReceiveAlready: string;
+    qrMobileScanHint: string;
+    qrLocalhostHint: string;
     qrEmailVerifiedLabel: string;
     qrEmailVerifiedOk: string;
     qrEmailNotVerified: string;
@@ -264,7 +274,9 @@ export interface NavTranslation {
   cart: string;
   openMenu: string;
   closeMenu: string;
-  scanQrDesktop: string;  shop: ShopTranslation;
+  scanQrDesktop: string;
+  scanPoiQr: string;
+  shop: ShopTranslation;
 }
 
 export const NAV_TRANSLATIONS: Record<SupportedLanguage, NavTranslation> = {
@@ -352,6 +364,8 @@ export const NAV_TRANSLATIONS: Record<SupportedLanguage, NavTranslation> = {
       qrSuccessTitle: 'Đã xác nhận đăng nhập',
       qrSuccessNote: 'Quay lại thiết bị kia để tiếp tục. Bạn có thể đóng trang này.',
       qrLoginRequired: 'Bạn cần đăng nhập trên thiết bị này trước khi quét mã.',
+      qrAccountSwitchHint:
+        'Muốn chuyển phiên bằng tài khoản thật? Hãy đăng nhập trên thiết bị này rồi quét lại.',
       qrManualLabel: 'Hoặc nhập mã QR',
       qrManualPlaceholder: 'Dán mã QR tại đây',
       qrManualSubmit: 'Tiếp tục',
@@ -374,6 +388,16 @@ export const NAV_TRANSLATIONS: Record<SupportedLanguage, NavTranslation> = {
         'Nghe thuyết minh tiếng Việt miễn phí, không cần đăng nhập. Đăng nhập hoặc tạo tài khoản để mua quà lưu niệm và mở khóa Premium.',
       guestContinue: 'Tiếp tục với tư cách Khách',
       qrRealAccountHint: 'Tài khoản thật của bạn:',
+      qrAlreadySignedIn: 'Thiết bị này đã đăng nhập. Không cần tạo mã QR mới.',
+      qrHandoffTitle: 'Đăng nhập nhanh trên điện thoại',
+      qrHandoffNote: 'Quét mã này bằng camera điện thoại để đăng nhập cùng tài khoản. Chỉ dùng cho thiết bị của bạn.',
+      qrHandoffDone: 'Điện thoại đã đăng nhập cùng tài khoản.',
+      qrHandoffReceiveTitle: 'Nhận đăng nhập từ máy tính',
+      qrHandoffReceiveNote: 'Mã này sẽ đăng nhập tài khoản đang dùng trên máy tính vào thiết bị này.',
+      qrHandoffReceiveAlready: 'Thiết bị này đã đăng nhập. Hãy đăng xuất trước khi nhận tài khoản khác.',
+      qrMobileScanHint: 'Mở camera để quét mã QR hiển thị trên máy tính.',
+      qrLocalhostHint:
+        'Mã QR dùng cùng địa chỉ với trang hiện tại. Điện thoại không mở được localhost, hãy mở trang bằng địa chỉ IP LAN của máy tính.',
       qrEmailVerifiedLabel: 'Xác thực email',
       qrEmailVerifiedOk: 'Đã xác thực',
       qrEmailNotVerified:
@@ -386,6 +410,7 @@ export const NAV_TRANSLATIONS: Record<SupportedLanguage, NavTranslation> = {
     openMenu: 'Mở menu',
     closeMenu: 'Đóng menu',
     scanQrDesktop: 'Quét mã QR trên máy tính',
+    scanPoiQr: 'Quét mã điểm du lịch',
     shop: {
       foodTitle: 'Ẩm thực Sài Gòn',
       foodSubtitle: 'Hương vị đường phố và các món ngon đặc trưng Sài thành',
@@ -612,6 +637,8 @@ export const NAV_TRANSLATIONS: Record<SupportedLanguage, NavTranslation> = {
       qrSuccessTitle: 'Sign-in confirmed',
       qrSuccessNote: 'Return to the other device to continue. You can close this page.',
       qrLoginRequired: 'You need to sign in on this device before scanning.',
+      qrAccountSwitchHint:
+        'Want to transfer a real account? Sign in on this device, then scan again.',
       qrManualLabel: 'Or enter the QR code',
       qrManualPlaceholder: 'Paste the QR code here',
       qrManualSubmit: 'Continue',
@@ -635,6 +662,16 @@ export const NAV_TRANSLATIONS: Record<SupportedLanguage, NavTranslation> = {
         'Free Vietnamese narration without signing in. Sign in or create an account to buy souvenirs and unlock Premium.',
       guestContinue: 'Continue as Guest',
       qrRealAccountHint: 'Your real account:',
+      qrAlreadySignedIn: 'This device is already signed in. No new QR code is needed.',
+      qrHandoffTitle: 'Sign in quickly on your phone',
+      qrHandoffNote: 'Scan this code with your phone camera to sign in with the same account. Use it only on your own devices.',
+      qrHandoffDone: 'Your phone is now signed in with the same account.',
+      qrHandoffReceiveTitle: 'Receive sign-in from computer',
+      qrHandoffReceiveNote: 'This code signs this device in to the account currently used on the computer.',
+      qrHandoffReceiveAlready: 'This device is already signed in. Sign out before receiving another account.',
+      qrMobileScanHint: 'Open the camera to scan the QR code shown on your computer.',
+      qrLocalhostHint:
+        'The QR code uses the same address as this page. Phones cannot open localhost, so open the site using your computer’s LAN IP instead.',
       qrEmailVerifiedLabel: 'Email verification',
       qrEmailVerifiedOk: 'Verified',
       qrEmailNotVerified:
@@ -646,7 +683,8 @@ export const NAV_TRANSLATIONS: Record<SupportedLanguage, NavTranslation> = {
     cart: 'Cart',
     openMenu: 'Open menu',
     closeMenu: 'Close menu',
-    scanQrDesktop: 'Scan QR on the computer',
+    scanQrDesktop: 'QR Code Login',
+    scanPoiQr: 'Scan place QR',
     shop: {
       foodTitle: 'Saigon Cuisine',
       foodSubtitle: 'Street flavors and signature delicacies of Saigon',
@@ -873,6 +911,7 @@ export const NAV_TRANSLATIONS: Record<SupportedLanguage, NavTranslation> = {
       qrSuccessTitle: 'ログインを確認しました',
       qrSuccessNote: '他の端末に戻って続行してください。このページは閉じてもかまいません。',
       qrLoginRequired: '読み取る前に、この端末でログインしてください。',
+      qrAccountSwitchHint: '本アカウントに切り替えますか？この端末でログインしてから、もう一度読み取ってください。',
       qrManualLabel: 'またはQRコードを入力',
       qrManualPlaceholder: 'QRコードを貼り付け',
       qrManualSubmit: '続行',
@@ -896,6 +935,16 @@ export const NAV_TRANSLATIONS: Record<SupportedLanguage, NavTranslation> = {
         'ログインなしでベトナム語の解説を無料で聴けます。お土産の購入やPremiumの解除にはログイン・新規登録が必要です。',
       guestContinue: 'ゲストとして続ける',
       qrRealAccountHint: 'あなたの本アカウント:',
+      qrAlreadySignedIn: 'この端末はすでにログインしています。新しいQRコードは必要ありません。',
+      qrHandoffTitle: 'スマートフォンですばやくログイン',
+      qrHandoffNote: 'スマートフォンのカメラでこのコードを読み取ると、同じアカウントでログインします。自分の端末でのみ使用してください。',
+      qrHandoffDone: 'スマートフォンが同じアカウントでログインしました。',
+      qrHandoffReceiveTitle: 'パソコンからログインを受け取る',
+      qrHandoffReceiveNote: 'このコードは、パソコンで使用中のアカウントをこの端末にログインします。',
+      qrHandoffReceiveAlready: 'この端末はすでにログインしています。別のアカウントを受け取る前にログアウトしてください。',
+      qrMobileScanHint: 'パソコンに表示されたQRコードを読み取るにはカメラを開いてください。',
+      qrLocalhostHint:
+        'QRコードはこのページと同じアドレスを使用します。スマートフォンからlocalhostは開けません。パソコンのLAN IPでページを開いてください。',
       qrEmailVerifiedLabel: 'メール認証',
       qrEmailVerifiedOk: '認証済み',
       qrEmailNotVerified:
@@ -907,7 +956,8 @@ export const NAV_TRANSLATIONS: Record<SupportedLanguage, NavTranslation> = {
     cart: 'カート',
     openMenu: 'メニューを開く',
     closeMenu: 'メニューを閉じる',
-    scanQrDesktop: 'パソコンのQRをスキャン',
+    scanQrDesktop: 'QRコードログイン',
+    scanPoiQr: '観光地QRを読み取る',
     shop: {
       foodTitle: 'サイゴングルメ',
       foodSubtitle: '街角の屋台料理と伝統の味わい',
@@ -1134,6 +1184,7 @@ export const NAV_TRANSLATIONS: Record<SupportedLanguage, NavTranslation> = {
       qrSuccessTitle: '로그인이 확인되었습니다',
       qrSuccessNote: '다른 기기로 돌아가 계속하세요. 이 페이지는 닫아도 됩니다.',
       qrLoginRequired: '스캔하기 전에 이 기기에서 로그인해야 합니다.',
+      qrAccountSwitchHint: '실제 계정으로 전환하려면 이 기기에서 로그인한 후 다시 스캔하세요.',
       qrManualLabel: '또는 QR 코드 입력',
       qrManualPlaceholder: 'QR 코드를 붙여넣기',
       qrManualSubmit: '계속',
@@ -1156,6 +1207,16 @@ export const NAV_TRANSLATIONS: Record<SupportedLanguage, NavTranslation> = {
         '로그인 없이 베트남어 해설을 무료로 들을 수 있습니다. 기념품 구매나 프리미엄 해제는 로그인 또는 회원가입이 필요합니다.',
       guestContinue: '게스트로 계속하기',
       qrRealAccountHint: '실제 계정:',
+      qrAlreadySignedIn: '이 기기는 이미 로그인되어 있습니다. 새 QR 코드가 필요하지 않습니다.',
+      qrHandoffTitle: '휴대폰에서 빠르게 로그인',
+      qrHandoffNote: '휴대폰 카메라로 이 코드를 스캔하면 같은 계정으로 로그인됩니다. 본인 기기에서만 사용하세요.',
+      qrHandoffDone: '휴대폰이 같은 계정으로 로그인되었습니다.',
+      qrHandoffReceiveTitle: '컴퓨터에서 로그인 받기',
+      qrHandoffReceiveNote: '이 코드는 컴퓨터에서 사용 중인 계정을 이 기기에 로그인합니다.',
+      qrHandoffReceiveAlready: '이 기기는 이미 로그인되어 있습니다. 다른 계정을 받기 전에 로그아웃하세요.',
+      qrMobileScanHint: '컴퓨터에 표시된 QR 코드를 스캔하려면 카메라를 여세요.',
+      qrLocalhostHint:
+        'QR 코드는 현재 페이지와 같은 주소를 사용합니다. 휴대폰에서는 localhost를 열 수 없으므로 컴퓨터의 LAN IP로 페이지를 여세요.',
       qrEmailVerifiedLabel: '이메일 인증',
       qrEmailVerifiedOk: '인증 완료',
       qrEmailNotVerified:
@@ -1167,7 +1228,8 @@ export const NAV_TRANSLATIONS: Record<SupportedLanguage, NavTranslation> = {
     cart: '장바구니',
     openMenu: '메뉴 열기',
     closeMenu: '메뉴 닫기',
-    scanQrDesktop: 'PC의 QR 스캔',
+    scanQrDesktop: 'QR 코드 로그인',
+    scanPoiQr: '관광지 QR 스캔',
     shop: {
       foodTitle: '사이공 미식',
       foodSubtitle: '거리의 풍미와 사이공 대표 맛집 요리',

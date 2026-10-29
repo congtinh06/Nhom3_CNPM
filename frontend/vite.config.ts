@@ -31,6 +31,8 @@ export default defineConfig(({ mode }) => {
     server: {
       port: 5173,
       host: true,
+      // Cho phép mở dev server qua tunnel HTTPS (ngrok) để điện thoại quét QR.
+      allowedHosts: ['.ngrok-free.dev', '.ngrok-free.app', '.ngrok.io'],
       proxy: {
         '/api': {
           target: 'http://localhost:18080',

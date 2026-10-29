@@ -1,5 +1,7 @@
 package com.echora.content.config;
 
+import com.echora.content.entity.Poi;
+import com.echora.content.repository.PoiRepository;
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -33,19 +35,21 @@ public class EntitlementFilter extends OncePerRequestFilter {
     private static final String GUIDE_PATH = "/api/content/pois/guide";
     private static final String QR_PREFIX = "/api/content/pois/qr/";
     private static final String PREMIUM_REQUIRED_MESSAGE =
-            "NgA'n ng��_ nA�y yA�u c��u gA3i Premium �`ang ho���t �`��Tng.";
+            "Ngôn ngữ này yêu cầu gói Premium đang hoạt động.";
     private static final String POI_LOCKED_MESSAGE =
-            "�?i���m thuy���t minh nA�y yA�u c��u gA3i Premium ho���c mua l��� gA3i ngo���i ng��_.";
+            "Điểm thuyết minh này yêu cầu gói Premium hoặc mua lẻ gói ngoại ngữ.";
 
     private final InternalPoiEntitlementClient poiEntitlementClient;
+    private final PoiRepository poiRepository;
 
     @Value("${internal.api-key:}")
     private String expectedApiKey;
 
-    public EntitlementFilter(InternalPoiEntitlementClient poiEntitlementClient) {
+    public EntitlementFilter(InternalPoiEntitlementClient poiEntitlementClient,
+                             PoiRepository poiRepository) {
         this.poiEntitlementClient = poiEntitlementClient;
+        this.poiRepository = poiRepository;
     }
-
 
     /** Port nội bộ để filter map qrToken -> poiId cho luồng mua lẻ theo POI. */
     public interface PoiLookup {
@@ -65,11 +69,8 @@ public class EntitlementFilter extends OncePerRequestFilter {
         if (path == null) {
             return true;
         }
-        // Ma QR tai diem den la cong khai: khach quet ma duoc doc ban dich
-        // o moi ngon ngu ma khong can goi Premium.
-        if (path.startsWith(QR_PREFIX)) {
-            return true;
-        }
+        // Mã QR tại điểm đến cũng phải tuân thủ quy tắc ngoại ngữ: chỉ tiếng Việt
+        // là miễn phí, EN/JA/KO cần Premium hoặc mua lẻ đúng điểm này.
         if (GUIDE_PATH.equals(path)) {
             return false;
         }
@@ -77,7 +78,13 @@ public class EntitlementFilter extends OncePerRequestFilter {
             return true;
         }
         String id = path.substring(POIS_PREFIX.length());
-        return id.isEmpty() || !id.chars().allMatch(Character::isDigit);
+        if (id.isEmpty()) {
+            return true;
+        }
+        if (id.equals("qr") || id.startsWith("qr/")) {
+            return false;
+        }
+        return !id.chars().allMatch(Character::isDigit);
     }
 
     @Override
@@ -147,6 +154,15 @@ public class EntitlementFilter extends OncePerRequestFilter {
 
     private Long resolvePoiId(HttpServletRequest request) {
         String path = request.getRequestURI();
+        if (path.startsWith(QR_PREFIX)) {
+            String qrToken = path.substring(QR_PREFIX.length());
+            if (isBlank(qrToken) || qrToken.contains("/")) {
+                return null;
+            }
+            return poiRepository.findByQrToken(qrToken)
+                    .map(Poi::getId)
+                    .orElse(null);
+        }
         String id = path.substring(POIS_PREFIX.length());
         try {
             return Long.valueOf(id.trim());
