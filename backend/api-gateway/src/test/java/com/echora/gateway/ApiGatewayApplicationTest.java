@@ -1312,6 +1312,19 @@ class ApiGatewayApplicationTest {
     }
 
     @Test
+    void locationRouteConnectionRefusedReturns503() {
+        webTestClient.get().uri("/api/location/refused/probe")
+                .exchange()
+                .expectStatus().isEqualTo(503)
+                .expectHeader().contentType(MediaType.APPLICATION_JSON)
+                .expectBody()
+                .jsonPath("$.status").isEqualTo(503)
+                .jsonPath("$.error").isEqualTo("Service Unavailable")
+                .jsonPath("$.message").isEqualTo("Service Unavailable")
+                .jsonPath("$.trace").doesNotExist();
+    }
+
+    @Test
     void contentRouteTimeoutReturns504() {
         webTestClient.get().uri("/api/content/pois/slow-probe")
                 .exchange()
