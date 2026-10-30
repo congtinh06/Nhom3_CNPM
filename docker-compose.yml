@@ -353,6 +353,8 @@ services:
       FRONTEND_URLS: ${FRONTEND_URLS:-}
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required in .env}
       INTERNAL_API_KEY: ${INTERNAL_API_KEY:?INTERNAL_API_KEY is required in .env}
+      GATEWAY_TRUSTED_PROXIES: ${GATEWAY_TRUSTED_PROXIES:-}
+      RATE_LIMIT_ANALYTICS_PER_MINUTE: ${RATE_LIMIT_ANALYTICS_PER_MINUTE:-120}
     depends_on:
       content-service:
         condition: service_healthy

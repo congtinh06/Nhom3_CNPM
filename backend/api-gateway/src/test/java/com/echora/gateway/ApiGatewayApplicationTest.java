@@ -266,6 +266,9 @@ class ApiGatewayApplicationTest {
         downstreamUserId.set(null);
         adminAuthFilter.setJwtSecret(TEST_JWT_SECRET);
         adminAuthFilter.setInternalApiKey(TEST_INTERNAL_KEY);
+        rateLimitFilter.setJwtSecret(TEST_JWT_SECRET);
+        rateLimitFilter.setTrustedProxiesConfig("");
+        rateLimitFilter.setMaxRequestsPerMinute(60);
         rateLimitFilter.clearRateLimitCache();
     }
 
@@ -973,6 +976,126 @@ class ApiGatewayApplicationTest {
                 .expectBody()
                 .jsonPath("$.status").isEqualTo(429)
                 .jsonPath("$.error").isEqualTo("Too Many Requests");
+    }
+
+    @Test
+    void rateLimit_TwoDistinctUsersDoNotShareBucket() {
+        rateLimitFilter.clearRateLimitCache();
+        rateLimitFilter.setMaxRequestsPerMinute(3);
+        String token1 = createToken(101L, "user1@echora.local", "USER", "ACTIVE", 900);
+        String token2 = createToken(102L, "user2@echora.local", "USER", "ACTIVE", 900);
+
+        try {
+            // User 1 uses up their limit of 3 requests
+            for (int i = 0; i < 3; i++) {
+                webTestClient.post().uri("/api/analytics/events")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token1)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .bodyValue("{\"eventType\":\"SCAN\",\"poiId\":1}")
+                        .exchange()
+                        .expectStatus().isOk();
+            }
+
+            // User 1's 4th request gets 429 with Retry-After
+            webTestClient.post().uri("/api/analytics/events")
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + token1)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue("{\"eventType\":\"SCAN\",\"poiId\":1}")
+                    .exchange()
+                    .expectStatus().isEqualTo(429)
+                    .expectHeader().exists(HttpHeaders.RETRY_AFTER);
+
+            // User 2 has a separate bucket, so their request succeeds (200 OK)
+            webTestClient.post().uri("/api/analytics/events")
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + token2)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue("{\"eventType\":\"SCAN\",\"poiId\":1}")
+                    .exchange()
+                    .expectStatus().isOk();
+        } finally {
+            rateLimitFilter.setMaxRequestsPerMinute(60);
+            rateLimitFilter.clearRateLimitCache();
+        }
+    }
+
+    @Test
+    void rateLimit_SpoofedXForwardedForFromUntrustedPeerIsIgnored() {
+        rateLimitFilter.clearRateLimitCache();
+        rateLimitFilter.setMaxRequestsPerMinute(2);
+        // Ensure trusted proxies does NOT contain the socket peer (empty list)
+        rateLimitFilter.setTrustedProxiesConfig("");
+
+        try {
+            // Request 1 with spoofed header X-Forwarded-For: 10.0.0.1
+            webTestClient.post().uri("/api/analytics/events")
+                    .header("X-Forwarded-For", "10.0.0.1")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue("{\"eventType\":\"SCAN\",\"poiId\":1}")
+                    .exchange()
+                    .expectStatus().isOk();
+
+            // Request 2 with spoofed header X-Forwarded-For: 10.0.0.2
+            webTestClient.post().uri("/api/analytics/events")
+                    .header("X-Forwarded-For", "10.0.0.2")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue("{\"eventType\":\"SCAN\",\"poiId\":1}")
+                    .exchange()
+                    .expectStatus().isOk();
+
+            // Request 3 with spoofed header X-Forwarded-For: 10.0.0.3
+            // Since peer is untrusted, all 3 requests map to the same socket IP bucket, exceeding the limit of 2
+            webTestClient.post().uri("/api/analytics/events")
+                    .header("X-Forwarded-For", "10.0.0.3")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue("{\"eventType\":\"SCAN\",\"poiId\":1}")
+                    .exchange()
+                    .expectStatus().isEqualTo(429)
+                    .expectHeader().exists(HttpHeaders.RETRY_AFTER);
+        } finally {
+            rateLimitFilter.setMaxRequestsPerMinute(60);
+            rateLimitFilter.clearRateLimitCache();
+        }
+    }
+
+    @Test
+    void rateLimit_TrustedPeerXForwardedForIsHonored() {
+        rateLimitFilter.clearRateLimitCache();
+        rateLimitFilter.setMaxRequestsPerMinute(2);
+        // Configure the peer (including loopback and mock test client) as trusted proxy
+        rateLimitFilter.setTrustedProxiesConfig("127.0.0.1,::1,0:0:0:0:0:0:0:1,unknown");
+
+        try {
+            // Client A behind trusted proxy uses up limit (2 requests)
+            for (int i = 0; i < 2; i++) {
+                webTestClient.post().uri("/api/analytics/events")
+                        .header("X-Forwarded-For", "203.0.113.1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .bodyValue("{\"eventType\":\"SCAN\",\"poiId\":1}")
+                        .exchange()
+                        .expectStatus().isOk();
+            }
+
+            // Client A gets 429
+            webTestClient.post().uri("/api/analytics/events")
+                    .header("X-Forwarded-For", "203.0.113.1")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue("{\"eventType\":\"SCAN\",\"poiId\":1}")
+                    .exchange()
+                    .expectStatus().isEqualTo(429)
+                    .expectHeader().exists(HttpHeaders.RETRY_AFTER);
+
+            // Client B with distinct X-Forwarded-For has their own bucket, passes with 200 OK
+            webTestClient.post().uri("/api/analytics/events")
+                    .header("X-Forwarded-For", "203.0.113.2")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue("{\"eventType\":\"SCAN\",\"poiId\":1}")
+                    .exchange()
+                    .expectStatus().isOk();
+        } finally {
+            rateLimitFilter.setTrustedProxiesConfig("");
+            rateLimitFilter.setMaxRequestsPerMinute(60);
+            rateLimitFilter.clearRateLimitCache();
+        }
     }
 
     @Test

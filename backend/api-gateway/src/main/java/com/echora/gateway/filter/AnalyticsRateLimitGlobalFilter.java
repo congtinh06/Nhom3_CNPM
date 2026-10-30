@@ -1,7 +1,10 @@
 package com.echora.gateway.filter;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.Ordered;
@@ -16,8 +19,13 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.time.Instant;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -27,20 +35,43 @@ public class AnalyticsRateLimitGlobalFilter implements GlobalFilter, Ordered {
 
     private static final Logger log = LoggerFactory.getLogger(AnalyticsRateLimitGlobalFilter.class);
 
-    private static final int MAX_TRACKED_IPS = 10_000;
-    private static final int MAX_REQUESTS_PER_MINUTE = 60;
+    private static final int MAX_TRACKED_ENTRIES = 10_000;
     private static final long WINDOW_DURATION_MS = 60_000L;
+    private static final int MIN_SECRET_LENGTH = 32;
+
+    @Value("${app.jwt.secret:${JWT_SECRET:}}")
+    private String jwtSecret;
+
+    @Value("${gateway.trusted-proxies:${GATEWAY_TRUSTED_PROXIES:}}")
+    private String trustedProxiesConfig;
+
+    @Value("${gateway.rate-limit.analytics-per-minute:${RATE_LIMIT_ANALYTICS_PER_MINUTE:60}}")
+    private int maxRequestsPerMinute = 60;
+
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     // Bounded in-memory LRU map to ensure memory cannot grow without limit.
-    // When tracked IPs exceed MAX_TRACKED_IPS, the eldest (least recently used) entry is evicted.
+    // When tracked identities exceed MAX_TRACKED_ENTRIES, the eldest entry is evicted.
     private final Map<String, RateLimitWindow> rateLimitCache = Collections.synchronizedMap(
             new LinkedHashMap<>(128, 0.75f, true) {
                 @Override
                 protected boolean removeEldestEntry(Map.Entry<String, RateLimitWindow> eldest) {
-                    return size() > MAX_TRACKED_IPS;
+                    return size() > MAX_TRACKED_ENTRIES;
                 }
             }
     );
+
+    public void setJwtSecret(String jwtSecret) {
+        this.jwtSecret = jwtSecret;
+    }
+
+    public void setTrustedProxiesConfig(String trustedProxiesConfig) {
+        this.trustedProxiesConfig = trustedProxiesConfig;
+    }
+
+    public void setMaxRequestsPerMinute(int maxRequestsPerMinute) {
+        this.maxRequestsPerMinute = maxRequestsPerMinute;
+    }
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
@@ -53,20 +84,18 @@ public class AnalyticsRateLimitGlobalFilter implements GlobalFilter, Ordered {
             return chain.filter(exchange);
         }
 
-        // Security note: We intentionally ignore X-Forwarded-For headers to prevent client IP spoofing,
-        // and rely exclusively on the direct TCP remote socket address of the incoming connection.
-        String clientIp = resolveClientIp(request);
+        String rateLimitKey = resolveKey(exchange);
 
         long now = System.currentTimeMillis();
         long retryAfterSeconds;
 
         synchronized (rateLimitCache) {
-            RateLimitWindow window = rateLimitCache.get(clientIp);
+            RateLimitWindow window = rateLimitCache.get(rateLimitKey);
             if (window == null || (now - window.windowStartMs) >= WINDOW_DURATION_MS) {
-                rateLimitCache.put(clientIp, new RateLimitWindow(now, 1));
+                rateLimitCache.put(rateLimitKey, new RateLimitWindow(now, 1));
                 return chain.filter(exchange);
             } else {
-                if (window.requestCount >= MAX_REQUESTS_PER_MINUTE) {
+                if (window.requestCount >= maxRequestsPerMinute) {
                     long remainingMs = WINDOW_DURATION_MS - (now - window.windowStartMs);
                     retryAfterSeconds = Math.max(1, (remainingMs + 999) / 1000);
                 } else {
@@ -76,12 +105,83 @@ public class AnalyticsRateLimitGlobalFilter implements GlobalFilter, Ordered {
             }
         }
 
-        log.warn("Rate limit exceeded for IP: {} on POST /api/analytics/events. Retry-After: {}s",
-                clientIp, retryAfterSeconds);
+        log.warn("Rate limit exceeded for key: {} on POST /api/analytics/events. Retry-After: {}s",
+                rateLimitKey, retryAfterSeconds);
         return sendRateLimitResponse(exchange, retryAfterSeconds);
     }
 
-    private String resolveClientIp(ServerHttpRequest request) {
+    /**
+     * Resolves the identity key for the rate limiter bucket:
+     * 1. Authenticated user id (from verified JWT) when present -> "user:<id>"
+     * 2. Direct TCP socket IP
+     * 3. First hop of X-Forwarded-For ONLY when direct peer is in trusted-proxy list -> "ip:<first-hop>"
+     * 4. Fall back to socket IP (untrusted clients cannot spoof headers) -> "ip:<socket-ip>"
+     */
+    public String resolveKey(ServerWebExchange exchange) {
+        ServerHttpRequest request = exchange.getRequest();
+
+        // 1. Authenticated user ID from validated JWT when present
+        String userId = resolveAuthenticatedUserId(request);
+        if (userId != null && !userId.isBlank()) {
+            return "user:" + userId;
+        }
+
+        // 2. Direct TCP peer socket IP
+        String socketIp = resolveSocketIp(request);
+
+        // 3. Client IP from X-Forwarded-For first hop ONLY when direct peer is in trusted proxies
+        if (isTrustedProxy(socketIp)) {
+            String xff = request.getHeaders().getFirst("X-Forwarded-For");
+            if (xff != null && !xff.isBlank()) {
+                String firstHop = xff.split(",")[0].trim();
+                if (!firstHop.isEmpty()) {
+                    return "ip:" + firstHop;
+                }
+            }
+        }
+
+        // 4. Fall back to direct socket IP (untrusted peers cannot spoof X-Forwarded-For)
+        return "ip:" + socketIp;
+    }
+
+    private String resolveAuthenticatedUserId(ServerHttpRequest request) {
+        String authHeader = request.getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
+        if (authHeader == null || !authHeader.regionMatches(true, 0, "Bearer ", 0, 7)) {
+            return null;
+        }
+        if (jwtSecret == null || jwtSecret.isBlank() || resolveSecretBytes(jwtSecret.trim()).length < MIN_SECRET_LENGTH) {
+            return null;
+        }
+        String token = authHeader.substring(7).trim();
+        if (token.isEmpty() || token.length() > 8192) {
+            return null;
+        }
+        try {
+            String[] parts = token.split("\\.");
+            if (parts.length != 3) {
+                return null;
+            }
+            byte[] secretBytes = resolveSecretBytes(jwtSecret.trim());
+            Mac mac = Mac.getInstance("HmacSHA256");
+            mac.init(new SecretKeySpec(secretBytes, "HmacSHA256"));
+            byte[] expected = mac.doFinal((parts[0] + "." + parts[1]).getBytes(StandardCharsets.US_ASCII));
+            byte[] actual = Base64.getUrlDecoder().decode(parts[2]);
+            if (!MessageDigest.isEqual(expected, actual)) {
+                return null;
+            }
+            JsonNode payload = objectMapper.readTree(Base64.getUrlDecoder().decode(parts[1]));
+            JsonNode exp = payload.get("exp");
+            if (exp != null && exp.isNumber() && Instant.now().getEpochSecond() >= exp.asLong()) {
+                return null;
+            }
+            String sub = payload.path("sub").asText("");
+            return sub.isBlank() ? null : sub;
+        } catch (Exception ex) {
+            return null;
+        }
+    }
+
+    private String resolveSocketIp(ServerHttpRequest request) {
         InetSocketAddress remoteAddress = request.getRemoteAddress();
         if (remoteAddress != null && remoteAddress.getAddress() != null) {
             return remoteAddress.getAddress().getHostAddress();
@@ -89,11 +189,40 @@ public class AnalyticsRateLimitGlobalFilter implements GlobalFilter, Ordered {
         return "unknown";
     }
 
+    private boolean isTrustedProxy(String socketIp) {
+        if (socketIp == null || socketIp.isBlank()) {
+            return false;
+        }
+        if (trustedProxiesConfig == null || trustedProxiesConfig.isBlank()) {
+            return false;
+        }
+        for (String proxy : trustedProxiesConfig.split(",")) {
+            String trimmed = proxy.trim();
+            if (!trimmed.isEmpty() && trimmed.equalsIgnoreCase(socketIp)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private byte[] resolveSecretBytes(String secret) {
+        try {
+            byte[] decoded = Base64.getDecoder().decode(secret);
+            if (decoded.length >= MIN_SECRET_LENGTH) {
+                return decoded;
+            }
+        } catch (Exception ignored) {
+        }
+        return secret.getBytes(StandardCharsets.UTF_8);
+    }
+
     private Mono<Void> sendRateLimitResponse(ServerWebExchange exchange, long retryAfterSeconds) {
         ServerHttpResponse response = exchange.getResponse();
         response.setStatusCode(HttpStatus.TOO_MANY_REQUESTS);
         response.getHeaders().setContentType(MediaType.APPLICATION_JSON);
         response.getHeaders().set(HttpHeaders.RETRY_AFTER, String.valueOf(retryAfterSeconds));
+        response.getHeaders().set("Access-Control-Expose-Headers", "Retry-After");
+        SecurityHeadersGlobalFilter.applyHeaders(response.getHeaders());
 
         byte[] jsonBytes = String.format(
                 "{\"status\":429,\"error\":\"Too Many Requests\",\"message\":\"Rate limit exceeded. Retry after %d seconds.\"}",

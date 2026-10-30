@@ -215,6 +215,24 @@ Sau khi hệ thống khởi động thành công, bạn mở trình duyệt truy
 
 ---
 
+### 4.5b. Cấu trúc Hàng đợi RabbitMQ & Dead-Letter Queue (DLQ)
+Hệ thống sử dụng RabbitMQ để xử lý bất đồng bộ các sự kiện phân tích du khách và tiến trình tổng hợp audio:
+
+| Dịch vụ | Exchange | Hàng đợi chính | Dead-Letter Exchange (DLX) | Dead-Letter Queue (DLQ) |
+|---|---|---|---|---|
+| **Analytics Service** | `echora.analytics` (topic, key: `analytics.event`) | `analytics.event.queue` | `echora.analytics.dlx` (direct) | `analytics.event.dlq` (key: `analytics.event.dlq`) |
+| **Translation TTS** | `echora.topic` (topic) | `poi.created.queue`, `poi.updated.queue` | `echora.dlx` (direct) | `poi.dlq` |
+
+> **Lưu ý xử lý lỗi PRECONDITION_FAILED (thao tác 1 lần khi cập nhật hàng đợi):**
+> Nếu broker RabbitMQ đã tồn tại hàng đợi `analytics.event.queue` từ phiên bản cũ (chưa được cấu hình đối số Dead-Letter Exchange `x-dead-letter-exchange`), việc khởi động `analytics-service` có thể báo lỗi `PRECONDITION_FAILED - inequivalent arg 'x-dead-letter-exchange'`.
+> Để khắc phục:
+> 1. Truy cập RabbitMQ Management tại `http://localhost:15800` (đăng nhập bằng tài khoản `echora_app`).
+> 2. Vào tab **Queues**, chọn hàng đợi `analytics.event.queue`.
+> 3. Kéo xuống mục **Delete / Purge**, chọn **Delete Queue**.
+> 4. Chạy lại `analytics-service` (`docker compose restart --no-deps analytics-service`); Spring AMQP sẽ tự động khởi tạo lại hàng đợi với đầy đủ cấu hình DLX & DLQ.
+
+---
+
 ### 4.6. Bước 5: Thao tác CSDL SQL Server 2022 qua Terminal
 CSDL SQL Server 2022 đã được đóng gói sẵn trong container `mssql` (lắng nghe cổng `1433`). Bạn có thể thực thi truy vấn trực tiếp qua Terminal (thay `$MSSQL_SA_PASSWORD` bằng mật khẩu đã cấu hình trong `.env`):
 
