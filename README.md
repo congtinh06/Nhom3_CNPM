@@ -162,7 +162,7 @@ cp .env.example .env
 cp frontend/.env.example frontend/.env
 ```
 
-> **Ghi chú:** Tệp `.env.example` đã thiết lập sẵn mật khẩu đồng bộ (`Saigon@123`, `Admin@123456`, khóa JWT, cổng VNPAY sandbox) nên sau khi copy bạn có thể khởi động ngay mà không cần cấu hình thủ công.
+> **Ghi chú:** Khởi tạo file `.env` từ `.env.example` và đặt các giá trị bí mật (mật khẩu CSDL, tài khoản admin, khóa JWT, RabbitMQ...) theo hướng dẫn trước khi khởi động.
 
 ---
 
@@ -208,35 +208,35 @@ Sau khi hệ thống khởi động thành công, bạn mở trình duyệt truy
 | **Giao diện Dev (Hot Reload)** | `http://localhost:5173` | Chạy khi gõ `npm run dev` ở thư mục frontend |
 | **Trang Quản trị (Admin)** | `http://localhost:8088/quan-tri` | Đăng nhập bằng tài khoản Quản trị viên (xem mục 5) |
 | **Cổng API Gateway** | `http://localhost:18080/actuator/health` | Kiểm tra sức khỏe toàn bộ microservices |
-| **Bảng quản trị RabbitMQ** | `http://localhost:15800` | User: `echora_app` / Pass: `SgVoice_Rabbit!2026` |
-| **Cơ sở dữ liệu SQL Server** | `localhost:1433` | User: `sa` / Pass: `Saigon@123` |
+| **Bảng quản trị RabbitMQ** | `http://localhost:15800` | User: `echora_app` / Pass: `<xem RABBITMQ_DEFAULT_PASS trong .env>` |
+| **Cơ sở dữ liệu SQL Server** | `localhost:1433` | User: `sa` / Pass: `<xem MSSQL_SA_PASSWORD trong .env>` |
 
 > **Ghi chú về cổng API Gateway:** `docker-compose.yml` ánh xạ cổng host `${GATEWAY_PORT}` (mặc định `18080`) vào cổng `8080` bên trong container, tránh xung đột với cổng `8080` thường bị tiến trình nội bộ của Windows chiếm dụng. Muốn đổi cổng host, sửa `GATEWAY_PORT` trong `.env` rồi chạy lại `docker compose up -d`; Vite dev proxy cũng đang trỏ tới `http://localhost:18080`.
 
 ---
 
 ### 4.6. Bước 5: Thao tác CSDL SQL Server 2022 qua Terminal
-CSDL SQL Server 2022 đã được đóng gói sẵn trong container `mssql` (lắng nghe cổng `1433`). Bạn có thể thực thi truy vấn trực tiếp qua Terminal:
+CSDL SQL Server 2022 đã được đóng gói sẵn trong container `mssql` (lắng nghe cổng `1433`). Bạn có thể thực thi truy vấn trực tiếp qua Terminal (thay `$MSSQL_SA_PASSWORD` bằng mật khẩu đã cấu hình trong `.env`):
 
 ```bash
 # 1. Liệt kê danh sách các CSDL trong hệ thống:
-docker exec -it mssql /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "Saigon@123" -C -Q "SELECT name FROM sys.databases;"
+docker exec -it mssql /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "$MSSQL_SA_PASSWORD" -C -Q "SELECT name FROM sys.databases;"
 
 # 2. Xem các bảng dữ liệu trong CSDL nội dung du lịch (echora_content_db):
-docker exec -it mssql /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "Saigon@123" -C -d echora_content_db -Q "SELECT name FROM sys.tables;"
+docker exec -it mssql /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "$MSSQL_SA_PASSWORD" -C -d echora_content_db -Q "SELECT name FROM sys.tables;"
 
 # 3. Xem danh sách 7 điểm du lịch kèm bán kính kích hoạt tự động (35m - 60m):
-docker exec -it mssql /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "Saigon@123" -C -d echora_content_db -Q "SELECT id, name, trigger_radius_meters FROM dbo.poi;"
+docker exec -it mssql /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "$MSSQL_SA_PASSWORD" -C -d echora_content_db -Q "SELECT id, name, trigger_radius_meters FROM dbo.poi;"
 
 # 4. Mở cửa sổ dòng lệnh SQL tương tác trực tiếp (SQL Shell):
-docker exec -it mssql /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "Saigon@123" -C
+docker exec -it mssql /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "$MSSQL_SA_PASSWORD" -C
 # (Trong shell: gõ lệnh SQL kết thúc bằng GO để thực thi, gõ QUIT để thoát)
 ```
 
 > **Tùy chọn seed thêm người dùng mẫu:** `docker/seed-46-users.sql` thêm các tài khoản `dukhach24@echora.vn` … `dukhach46@echora.vn` vào bảng `dbo.users` của `echora_auth_db` (chạy được trên cả PowerShell):
 ```bash
 docker cp docker/seed-46-users.sql mssql:/tmp/seed-46-users.sql
-docker exec -it mssql /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "Saigon@123" -C -d echora_auth_db -i /tmp/seed-46-users.sql
+docker exec -it mssql /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "$MSSQL_SA_PASSWORD" -C -d echora_auth_db -i /tmp/seed-46-users.sql
 ```
 
 ---
@@ -268,39 +268,17 @@ Truy cập giao diện phát triển tại: **http://localhost:5173**
 
 ---
 
-## 5. Danh mục Tài khoản & Mật khẩu hệ thống (System Credentials)
+## 5. Tài khoản & Mật khẩu hệ thống
 
-Dưới đây là bảng tổng hợp toàn bộ tài khoản mẫu đã được cấu hình sẵn trong hệ thống để thành viên nhóm kiểm thử và báo cáo:
+Tài liệu này **không lưu** mật khẩu, hash, token hay khóa bí mật. Mọi giá trị nhạy cảm phải được khai báo trong `.env` (không commit) và sinh ngẫu nhiên theo hướng dẫn ở đầu `.env.example`.
 
-### 5.1. Tài khoản Đăng nhập Ứng dụng Web
-| Loại tài khoản | Email đăng nhập | Mật khẩu | Quyền hạn / Mục đích |
-|---|---|---|---|
-| **Quản trị viên (Admin)** | `quantri@echora.test` | `Admin@123456` | Quản lý POI, duyệt bài thuyết minh, quản lý sản phẩm quà lưu niệm tại `/quan-tri` |
-| **Người dùng mẫu (User)** | `user@echora.local` | `User@123456` | Trải nghiệm nghe audio tour, đặt hàng quà lưu niệm, lịch sử đơn hàng |
+Tài khoản seed chỉ được tạo khi đặt biến môi trường tương ứng:
+- `ADMIN_SEED_EMAIL` + `ADMIN_SEED_PASSWORD`: tạo tài khoản ADMIN đầu tiên.
+- `SEED_TEST_USER_EMAIL` + `SEED_TEST_USER_PASSWORD`: tạo tài khoản USER kiểm thử (để trống để bỏ qua).
 
-### 5.2. Mật khẩu Hạ tầng & Cơ sở dữ liệu (Database & Broker)
-| Phân hệ / CSDL | Địa chỉ & Cổng | Tên đăng nhập (User) | Mật khẩu (Password) |
-|---|---|---|---|
-| **SQL Server (System Admin)** | `localhost:1433` | `sa` | `Saigon@123` |
-| **CSDL Nội dung du lịch** | `echora_content_db` | `content_user` | `Zpu0fBATzxn6nIriiirxbgNm` |
-| **CSDL Bản dịch & TTS** | `echora_translation_db` | `translation_user` | `6CWO1eUnX5NcbRkRnBCZYGGb` |
-| **CSDL Thống kê lượt nghe** | `echora_analytics_db` | `analytics_user` | `e2GHyc3TbAHyfpvlLzYCt3fG` |
-| **CSDL Xác thực tài khoản** | `echora_auth_db` | `auth_user` | `Auth!Pass2026` |
-| **CSDL Đơn hàng & Thanh toán**| `echora_order_db` | `order_user` | `Order!Pass2026` |
-| **RabbitMQ Management Dashboard** | `http://localhost:15800` | `echora_app` | `SgVoice_Rabbit!2026` |
+Để tạo thêm ADMIN, dùng chức năng quản lý người dùng trong `/quan-tri` bằng tài khoản ADMIN hiện có, hoặc đổi `ADMIN_SEED_EMAIL`/`ADMIN_SEED_PASSWORD` sang email mới rồi khởi động lại `auth-service` (seeder chỉ tạo khi email chưa tồn tại).
 
-> Đây là các giá trị mặc định trong `.env.example`. Nếu bạn đổi trong `.env`, hãy cập nhật lại bảng này. Riêng mật khẩu `sa` của SQL Server chỉ đổi được sau khi xoá volume (`docker compose down -v`); mật khẩu của các login microservice sẽ được `init-databases.sql` cập nhật lại mỗi lần container `mssql-db-init` chạy.
-
-### 5.3. Cấu hình Cổng thanh toán Thử nghiệm VNPAY Sandbox
-* **Mã định danh website (TMN Code):** `SQYS1VK9`
-* **Chuỗi khóa bí mật (Hash Secret):** `MMSXWBZDMNKEHMJPNKJJYGFOQFBZVNCI`
-* **URL Cổng thanh toán:** `https://sandbox.vnpayment.vn/paymentv2/vpcpay.html`
-* **Thông tin thẻ ATM Test của VNPAY Sandbox:**
-  * **Ngân hàng:** `NCB`
-  * **Số thẻ:** `9704198526191432198`
-  * **Tên chủ thẻ:** `NGUYEN VAN A`
-  * **Ngày phát hành:** `07/15`
-  * **Mã OTP xác thực:** `123456`
+Thông tin VNPAY Sandbox (mã website, hash secret, thẻ test) tra cứu tại tài liệu chính thức của VNPAY; không lưu trong repo.
 
 ---
 

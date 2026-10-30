@@ -40,7 +40,7 @@ public class AdminUserSeeder implements ApplicationRunner {
                            @Value("${app.admin.email:}") String adminEmail,
                            @Value("${app.admin.password:}") String adminPassword,
                            @Value("${app.test-user.email:user@echora.local}") String testUserEmail,
-                           @Value("${app.test-user.password:User@123456}") String testUserPassword) {
+                           @Value("${app.test-user.password:}") String testUserPassword) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.passwordPolicy = passwordPolicy;

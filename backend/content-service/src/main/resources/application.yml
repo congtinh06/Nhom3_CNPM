@@ -11,7 +11,7 @@ spring:
   datasource:
     url: ${DB_URL:jdbc:sqlserver://localhost:1433;databaseName=echora_content_db;encrypt=true;trustServerCertificate=true}
     username: ${DB_USERNAME:content_user}
-    password: ${DB_PASSWORD:Saigon@123}
+    password: ${DB_PASSWORD}
     driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
   jpa:
     open-in-view: false
@@ -26,7 +26,7 @@ spring:
     host: ${RABBITMQ_HOST:localhost}
     port: ${RABBITMQ_PORT:5672}
     username: ${RABBITMQ_USERNAME:echora_app}
-    password: ${RABBITMQ_PASSWORD:SgVoice_Rabbit!2026}
+    password: ${RABBITMQ_PASSWORD}
     # Publisher: chờ broker ACK và nhận lại message không route được (PoiEventPublisher kiểm tra cả hai)
     publisher-confirm-type: correlated
     publisher-returns: true

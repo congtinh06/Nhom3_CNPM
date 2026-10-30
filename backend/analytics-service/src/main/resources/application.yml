@@ -7,7 +7,7 @@ spring:
   datasource:
     url: ${DB_URL:jdbc:sqlserver://localhost:1433;databaseName=echora_analytics_db;encrypt=true;trustServerCertificate=true}
     username: ${DB_USERNAME:analytics_user}
-    password: ${DB_PASSWORD:Analytics_Pass!2026}
+    password: ${DB_PASSWORD}
     driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
   jpa:
     hibernate:
@@ -24,7 +24,7 @@ spring:
     host: ${RABBITMQ_HOST:localhost}
     port: ${RABBITMQ_PORT:5672}
     username: ${RABBITMQ_USERNAME:echora_app}
-    password: ${RABBITMQ_PASSWORD:SgVoice_Rabbit!2026}
+    password: ${RABBITMQ_PASSWORD}
     connection-timeout: 2s
     publisher-confirm-type: correlated
     publisher-returns: true
