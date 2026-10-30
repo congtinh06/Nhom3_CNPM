@@ -56,6 +56,7 @@ public class GatewayExceptionHandler implements ErrorWebExceptionHandler {
 
         response.setStatusCode(status);
         response.getHeaders().setContentType(MediaType.APPLICATION_JSON);
+        com.echora.gateway.filter.SecurityHeadersGlobalFilter.applyHeaders(response.getHeaders());
 
         byte[] jsonBytes = String.format("{\"status\":%d,\"error\":\"%s\",\"message\":\"%s\"}",
                 status.value(), errorMessage, errorMessage).getBytes(StandardCharsets.UTF_8);

@@ -454,7 +454,7 @@ class ApiGatewayApplicationTest {
     @Test
     void ttsAudioGetWithoutTokenIsRejected() {
         int before = downstreamRequestCount.get();
-        webTestClient.get().uri("/api/tts/audio/poi_1_vi_12345678.mp3")
+        webTestClient.get().uri("/api/tts/audio/poi_1_en_12345678.mp3")
                 .exchange()
                 .expectStatus().isUnauthorized();
         assertThat(downstreamRequestCount.get()).isEqualTo(before);
@@ -1672,6 +1672,45 @@ class ApiGatewayApplicationTest {
                 .bodyValue("{\"status\":\"ACTIVE\"}")
                 .exchange()
                 .expectStatus().isOk();
+    }
+
+    // ==========================================
+    // Security Headers Tests (HIGH-08)
+    // ==========================================
+
+    @Test
+    void securityHeaders_PresentOnPublicRoute() {
+        webTestClient.get().uri("/api/content/pois")
+                .exchange()
+                .expectStatus().isOk()
+                .expectHeader().valueEquals("X-Content-Type-Options", "nosniff")
+                .expectHeader().valueEquals("X-Frame-Options", "DENY")
+                .expectHeader().valueEquals("Referrer-Policy", "strict-origin-when-cross-origin")
+                .expectHeader().valueEquals("Permissions-Policy", "geolocation=(self), camera=(self)")
+                .expectHeader().exists("Content-Security-Policy");
+    }
+
+    @Test
+    void securityHeaders_PresentOnErrorResponse() {
+        // Downstream connection refused returns 503
+        webTestClient.get().uri("/api/location/refused/probe")
+                .exchange()
+                .expectStatus().isEqualTo(org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE)
+                .expectHeader().valueEquals("X-Content-Type-Options", "nosniff")
+                .expectHeader().valueEquals("X-Frame-Options", "DENY")
+                .expectHeader().valueEquals("Referrer-Policy", "strict-origin-when-cross-origin")
+                .expectHeader().valueEquals("Permissions-Policy", "geolocation=(self), camera=(self)")
+                .expectHeader().exists("Content-Security-Policy");
+
+        // Unauthorized admin route returns 401
+        webTestClient.get().uri("/api/admin/products")
+                .exchange()
+                .expectStatus().isUnauthorized()
+                .expectHeader().valueEquals("X-Content-Type-Options", "nosniff")
+                .expectHeader().valueEquals("X-Frame-Options", "DENY")
+                .expectHeader().valueEquals("Referrer-Policy", "strict-origin-when-cross-origin")
+                .expectHeader().valueEquals("Permissions-Policy", "geolocation=(self), camera=(self)")
+                .expectHeader().exists("Content-Security-Policy");
     }
 }
 
