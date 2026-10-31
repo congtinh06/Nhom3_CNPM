@@ -184,11 +184,11 @@ describe('Header Navigation Redesign', () => {
 
       // Dropdown menu tài khoản (mở bằng cách bấm trigger)
       fireEvent.click(userBtn);
-      const accountMenu = screen.getByRole('menu', { name: 'Tùy chọn người dùng' });
+      const accountMenu = await screen.findByRole('menu', { name: 'Tùy chọn người dùng' });
       expect(accountMenu).toBeInTheDocument();
 
       // Mục Đơn hàng của tôi
-      const ordersLink = screen.getByRole('menuitem', { name: 'Đơn hàng của tôi' });
+      const ordersLink = await screen.findByRole('menuitem', { name: 'Đơn hàng của tôi' });
       expect(ordersLink).toBeInTheDocument();
       expect(ordersLink).toHaveAttribute('href', '/don-hang');
 
