@@ -50,5 +50,26 @@ export default defineConfig(({ mode }) => {
       setupFiles: './src/test/setup.ts',
       testTimeout: 10000,
     },
+    build: {
+      // Tách thư viện lớn khỏi bundle chính để trang du khách tải nhanh hơn.
+      rollupOptions: {
+        output: {
+          manualChunks(id) {
+            if (!id.includes('node_modules')) return undefined;
+            if (id.includes('react-router')) return 'vendor-router';
+            if (id.includes('node_modules/react-dom/') || id.includes('node_modules/react/')) {
+              return 'vendor-react';
+            }
+            if (id.includes('leaflet')) return 'vendor-map';
+            if (id.includes('recharts') || id.includes('node_modules/d3-')) return 'vendor-charts';
+            if (id.includes('gsap') || id.includes('lenis')) return 'vendor-motion';
+            if (id.includes('qrcode') || id.includes('qr-scanner')) return 'vendor-qr';
+            if (id.includes('lucide-react')) return 'vendor-icons';
+            if (id.includes('axios')) return 'vendor-http';
+            return 'vendor';
+          },
+        },
+      },
+    },
   };
 });
