@@ -45,5 +45,8 @@ jobs:
       - name: Run Tests
         run: npm test
 
+      - name: Check SPA Route Config
+        run: npm run check:spa-routes
+
       - name: Build Production Assets & Typecheck
         run: npm run build
