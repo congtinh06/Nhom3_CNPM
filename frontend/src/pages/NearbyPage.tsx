@@ -24,6 +24,7 @@ import { Lock } from 'lucide-react';
 import nearbyPoisData from '../content/nearbyPois.json';
 import { api } from '../api/client';
 import { mapGuidesToGeoPois } from '../content/poiGuideAdapter';
+import { DEMO_FIXTURES_ENABLED } from '../config/demoMode';
 import { useNavbarLanguage, SUPPORTED_LANGUAGES } from '../content/languages';
 import { useToastOptional } from '../context/ToastContext';
 import { usePremium, buildPremiumPath, buildPoiPremiumPath, isPremiumLanguage, normalizePoiId } from '../context/PremiumContext';
@@ -268,31 +269,43 @@ export const NearbyPage: React.FC = () => {
   const rootRef = useRef<HTMLDivElement>(null);
   const heroRef = useRef<HTMLDivElement>(null);
 
-  // Nguồn dữ liệu: API/DB (nguồn chung với admin). Nếu API lỗi, rơi về file tĩnh cũ.
+  // Nguồn dữ liệu: API/DB (nguồn chung với admin). Chỉ rơi về file tĩnh khi bật chế độ demo.
   const [apiPois, setApiPois] = useState<GeoPoi[] | null>(null);
+  const [apiFailed, setApiFailed] = useState(false);
+  const [apiLoading, setApiLoading] = useState(!DEMO_FIXTURES_ENABLED);
+  const [reloadToken, setReloadToken] = useState(0);
 
   useEffect(() => {
     if (import.meta.env.MODE === 'test') return;
-    if (typeof api.getPoiGuides !== 'function') return;
+    if (typeof api.getPoiGuides !== 'function') {
+      setApiLoading(false);
+      return;
+    }
     let cancelled = false;
+    setApiLoading(true);
+    setApiFailed(false);
     api
       .getPoiGuides()
       .then((guides) => {
-        if (!cancelled && guides.length > 0) {
-          setApiPois(mapGuidesToGeoPois(guides));
-        }
+        if (cancelled) return;
+        setApiPois(mapGuidesToGeoPois(guides));
+        setApiLoading(false);
       })
       .catch(() => {
-        // Giữ nguyên nguồn tĩnh nếu API không sẵn sàng.
+        if (cancelled) return;
+        // Không còn âm thầm thay bằng dữ liệu mẫu ở bản build thật.
+        setApiFailed(true);
+        setApiLoading(false);
       });
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [reloadToken]);
 
   // Read slug from data; fall back to a slugified id only if missing
   const pois: GeoPoi[] = useMemo(() => {
-    if (apiPois && apiPois.length > 0) return apiPois;
+    if (apiPois) return apiPois;
+    if (!DEMO_FIXTURES_ENABLED) return [];
     return (nearbyPoisData as GeoPoi[]).map((p) => {
       const derivedSlug =
         p.slug ||
@@ -734,7 +747,6 @@ export const NearbyPage: React.FC = () => {
         ? formatDistance(min, currentLang)
         : `${formatDistance(min, currentLang)} - ${formatDistance(max, currentLang)}`;
     })();
-
     if (!isAutoEnabled) return t(currentLang, 'autoStatusOff');
 
     const nearest = sortedPois[0];
@@ -787,6 +799,30 @@ export const NearbyPage: React.FC = () => {
         </section>
       )}
 
+      {apiFailed && !DEMO_FIXTURES_ENABLED && (
+        <section className="nearby-data-error" role="alert">
+          <div>
+            <strong>Không tải được danh sách điểm thuyết minh</strong>
+            <p>Máy chủ chưa phản hồi. Kiểm tra kết nối rồi thử lại.</p>
+          </div>
+          <button type="button" onClick={() => setReloadToken((n) => n + 1)}>
+            Thử lại
+          </button>
+        </section>
+      )}
+
+      {apiLoading && !DEMO_FIXTURES_ENABLED && (
+        <p className="nearby-data-loading" role="status">
+          Đang tải danh sách điểm thuyết minh...
+        </p>
+      )}
+
+      {!apiLoading && !apiFailed && pois.length === 0 && (
+        <section className="nearby-data-empty" role="status">
+          <p>Chưa có điểm thuyết minh nào được công bố.</p>
+        </section>
+      )}
+
       <PoiHeader
         stopsCount={pois.length}
         languagesCount={languagesCount}
@@ -794,7 +830,6 @@ export const NearbyPage: React.FC = () => {
         listenedCount={listenedPoiIds.length}
         currentLang={currentLang}
       />
-
       {/* 3. STICKY CONTROL BAR UNDER HEADER */}
       <ToolbarControls
         myLocationBtnText={t(currentLang, 'myLocation')}

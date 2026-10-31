@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { NewsListDomain, NewsDetail, NewsItem } from '../types/domain';
 import { adaptNewsListResponse, adaptNewsDetail } from './adapters';
 import { newsArticles, fourNewsArticles, sampleAnnouncement } from '../content/newsFixtures';
+import { DEMO_FIXTURES_ENABLED } from '../config/demoMode';
 
 export { getArticles, getArticleBySlug } from '../services/articleService';
 import { getArticles, getArticleBySlug } from '../services/articleService';
@@ -19,10 +20,12 @@ export interface FetchNewsListParams {
  * Powered by the shared data layer (getArticles).
  */
 export async function fetchNewsList(params: FetchNewsListParams = {}): Promise<NewsListDomain> {
-  // Check if test environment requested 4-item test fixture
+  // Chỉ dùng fixture 4 bài khi bật chế độ demo (hoặc trong test).
   const useSmallFixture =
-    (typeof window !== 'undefined' && (window as unknown as { __TEST_USE_4_ARTICLES?: boolean }).__TEST_USE_4_ARTICLES) ||
-    (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('fixture') === '4');
+    DEMO_FIXTURES_ENABLED &&
+    ((typeof window !== 'undefined' &&
+      (window as unknown as { __TEST_USE_4_ARTICLES?: boolean }).__TEST_USE_4_ARTICLES) ||
+      (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('fixture') === '4'));
 
   if (useSmallFixture) {
     let filtered = [...fourNewsArticles];
@@ -48,7 +51,7 @@ export async function fetchNewsList(params: FetchNewsListParams = {}): Promise<N
 
   return {
     items: res.items,
-    announcement: res.announcement || sampleAnnouncement,
+    announcement: res.announcement || (DEMO_FIXTURES_ENABLED ? sampleAnnouncement : null),
   };
 }
 
@@ -60,7 +63,9 @@ export async function fetchNewsDetail(slug: string, signal?: AbortSignal): Promi
   const detail = await getArticleBySlug(slug, signal);
   if (detail) return detail;
 
-  // Fallback to fixture if slug matches
+  if (!DEMO_FIXTURES_ENABLED) return null;
+
+  // Chế độ demo: bài mẫu theo slug.
   const found = newsArticles.find((a) => a.slug === slug);
   if (found) return adaptNewsDetail(found);
 

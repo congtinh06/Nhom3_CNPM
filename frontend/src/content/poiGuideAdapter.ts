@@ -18,6 +18,7 @@
 import type { GeoPoi, NarrationChapterBlock } from '../pages/NearbyPage';
 import { PoiGuide, SupportedLanguage } from '../types';
 import nearbyPoisData from './nearbyPois.json';
+import { DEMO_FIXTURES_ENABLED } from '../config/demoMode';
 
 const LANGS: SupportedLanguage[] = ['vi', 'en', 'ja', 'ko'];
 
@@ -84,10 +85,11 @@ function deriveSlug(guide: PoiGuide): string {
     .replace(/(^-|-$)/g, '');
 }
 
-/** Bản ghi tĩnh cũ (nearbyPois.json) chỉ dùng để bù các ngôn ngữ DB chưa có (ví dụ ja/ko). */
+/** Bản ghi tĩnh cũ (nearbyPois.json) chỉ dùng để bù khi bật chế độ demo. */
 const staticPois = nearbyPoisData as unknown as GeoPoi[];
 
 function findStatic(guide: PoiGuide): GeoPoi | undefined {
+  if (!DEMO_FIXTURES_ENABLED) return undefined;
   return staticPois.find(
     (p) =>
       (guide.slug && p.slug === guide.slug) ||

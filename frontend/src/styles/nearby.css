@@ -3388,6 +3388,70 @@ body:has(.nearby-sv-root:has(.nearby-sticky-player-bar)) #up {
   }
 }
 
+/* Trạng thái tải dữ liệu POI từ API (không còn fallback dữ liệu mẫu) */
+.nearby-sv-root .nearby-data-error,
+.nearby-sv-root .nearby-data-empty {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin: 0 0 18px;
+  padding: 14px 16px;
+  border: 1px solid #e8d2b4;
+  border-radius: 14px;
+  background: #fff8ec;
+  color: #5f452c;
+}
+
+.nearby-sv-root .nearby-data-error strong {
+  display: block;
+  font-size: 14px;
+  line-height: 1.35;
+}
+
+.nearby-sv-root .nearby-data-error p,
+.nearby-sv-root .nearby-data-empty p {
+  margin: 3px 0 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: #7a5a36;
+}
+
+.nearby-sv-root .nearby-data-error > button {
+  flex: 0 0 auto;
+  min-height: 40px;
+  padding: 0 16px;
+  border: 1px solid #8a2f12;
+  border-radius: 999px;
+  background: #8a2f12;
+  color: #fff8ec;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.nearby-sv-root .nearby-data-error > button:hover {
+  background: #6f240d;
+  border-color: #6f240d;
+}
+
+.nearby-sv-root .nearby-data-loading {
+  margin: 0 0 18px;
+  font-size: 14px;
+  color: #7a5a36;
+}
+
+@media (max-width: 640px) {
+  .nearby-sv-root .nearby-data-error {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .nearby-sv-root .nearby-data-error > button {
+    width: 100%;
+  }
+}
+
 /* Bộ chọn ngôn ngữ của riêng điểm đến */
 .nearby-sv-root .hero-lang-chips {
   display: inline-flex;
