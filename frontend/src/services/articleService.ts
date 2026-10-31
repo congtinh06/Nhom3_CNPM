@@ -76,15 +76,11 @@ export async function getArticleBySlug(slug: string, signal?: AbortSignal): Prom
   if (!slug) return null;
 
   if (!DEMO_FIXTURES_ENABLED) {
-    try {
-      const response = await apiClient.get(`/api/content/news/${encodeURIComponent(slug)}`, {
-        signal,
-      });
-      return adaptNewsDetail(response.data);
-    } catch (error) {
-      // Bản build thật: lỗi API phải hiện ra, không thay bằng bài mẫu.
-      throw error;
-    }
+    // Bản build thật: lỗi API phải hiện ra, không thay bằng bài mẫu.
+    const response = await apiClient.get(`/api/content/news/${encodeURIComponent(slug)}`, {
+      signal,
+    });
+    return adaptNewsDetail(response.data);
   }
 
   const raw = newsArticles.find((item) => item.slug === slug);

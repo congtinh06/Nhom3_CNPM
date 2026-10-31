@@ -217,6 +217,7 @@ export const PaymentResultPage: React.FC = () => {
   if (isPremiumOrder) {
     const isFailure = outcome === 'failed' || outcome === 'cancelled' || orderPollExpired;
     const isSuccess = outcome === 'success';
+    
     const entitlementReady = entitlementState === 'ready';
     const entitlementTimedOut = entitlementState === 'timeout';
 

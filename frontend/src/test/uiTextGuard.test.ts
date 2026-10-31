@@ -25,6 +25,7 @@ const FORBIDDEN: [string, string][] = [
 ];
 
 const EMOJI_RE =
+  // eslint-disable-next-line no-misleading-character-class -- Cố ý gộp các dải emoji/ký hiệu để chặn trong UI.
   /[\u{1F000}-\u{1FAFF}\u{1F1E6}-\u{1F1FF}\u{FE0F}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\u{2B05}\u{27A1}\u{2797}]/u;
 
 const ALLOW_FILES = ['content/newsFixtures.ts'];

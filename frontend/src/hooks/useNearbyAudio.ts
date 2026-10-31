@@ -42,7 +42,7 @@ export function resolvePlayback(
   lang: SupportedLanguage,
   layer: NarrationLayer = 'full'
 ): PlaybackResolution {
-  let text = '';
+  let text: string;
   if (layer === 'full') {
     const fullParas = poi.narration?.full?.[lang];
     if (fullParas && fullParas.length > 0) {
@@ -294,7 +294,7 @@ export function splitTranscriptIntoSentences(text: string): SentenceRange[] {
         const nextChar = i + 1 < len ? (text[i + 1] ?? '') : '';
 
         // 1. Decimal check: digit before and digit after (e.g. 1.5 km)
-        if (Boolean(prevChar && nextChar && /\d/.test(prevChar) && /\d/.test(nextChar))) {
+        if (prevChar && nextChar && /\d/.test(prevChar) && /\d/.test(nextChar)) {
           isSplit = false;
         }
 
