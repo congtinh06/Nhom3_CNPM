@@ -66,7 +66,7 @@ export const VerifyEmailPage: React.FC = () => {
   return (
     <div className="auth-standalone-page">
       <div className="auth-standalone-card">
-        <h2 className="auth-modal-title">Xác thực email</h2>
+        <h1 className="auth-modal-title">Xác thực email</h1>
 
         {phase === 'success' && message && (
           <>
