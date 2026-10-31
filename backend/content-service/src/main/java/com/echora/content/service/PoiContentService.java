@@ -1,7 +1,10 @@
 package com.echora.content.service;
 
+import com.echora.content.dto.AdminAudioStatusDto;
 import com.echora.content.dto.AdminPoiDetailDto;
 import com.echora.content.dto.AdminPoiListItemDto;
+import com.echora.content.dto.AudioRegenerationBatchDto;
+import com.echora.content.dto.AudioRegenerationResultDto;
 import com.echora.content.dto.CreatePoiRequest;
 import com.echora.content.dto.PoiBoundingBoxDto;
 import com.echora.content.dto.PoiDetailDto;
@@ -52,6 +55,18 @@ public interface PoiContentService {
     List<PoiPublishStatusDto> getPublishStatuses(String status);
 
     PoiPublishStatusDto republish(Long poiId);
+
+    /** Trạng thái audio của toàn bộ POI theo 4 ngôn ngữ, dùng cho admin và script kiểm tra. */
+    AdminAudioStatusDto getAudioStatus();
+
+    /**
+     * Tạo lại audio cho một POI. languages null/rỗng = mọi ngôn ngữ chưa READY.
+     * Danh sách ngôn ngữ chỉ định sẽ được tạo lại kể cả khi đang READY.
+     */
+    AudioRegenerationResultDto regenerateAudio(Long poiId, List<String> languages);
+
+    /** Tạo lại audio cho mọi POI có ít nhất một ngôn ngữ chưa READY. */
+    AudioRegenerationBatchDto regenerateNonReadyAudio();
 
     /**
      * Endpoint nội bộ cho order-service: giá mua lẻ Premium của 1 POI.

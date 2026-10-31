@@ -2,6 +2,7 @@ package com.echora.content.messaging;
 
 import com.echora.content.config.RabbitMQConfig;
 import com.echora.content.event.PoiAudioFailedEvent;
+import com.echora.content.event.PoiAudioProgressEvent;
 import com.echora.content.event.PoiAudioReadyEvent;
 import com.echora.content.service.PoiAudioUpdateService;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +19,11 @@ import org.springframework.stereotype.Component;
 public class PoiAudioEventListener {
 
     private final PoiAudioUpdateService poiAudioUpdateService;
+
+    @RabbitListener(id = "poiAudioProgressListener", queues = RabbitMQConfig.QUEUE_POI_AUDIO_PROGRESS)
+    public void onAudioProgress(PoiAudioProgressEvent event) {
+        poiAudioUpdateService.applyAudioGenerating(event);
+    }
 
     @RabbitListener(id = "poiAudioReadyListener", queues = RabbitMQConfig.QUEUE_POI_AUDIO_READY)
     public void onAudioReady(PoiAudioReadyEvent event) {

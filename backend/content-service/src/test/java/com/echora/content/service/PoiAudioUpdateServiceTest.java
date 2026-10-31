@@ -3,6 +3,7 @@ package com.echora.content.service;
 import com.echora.content.entity.Poi;
 import com.echora.content.entity.PoiTranslation;
 import com.echora.content.event.PoiAudioFailedEvent;
+import com.echora.content.event.PoiAudioProgressEvent;
 import com.echora.content.event.PoiAudioReadyEvent;
 import com.echora.content.repository.PoiRepository;
 import com.echora.content.repository.PoiTranslationRepository;
@@ -56,6 +57,53 @@ class PoiAudioUpdateServiceTest {
 
         lenient().when(translationRepository.findByPoiIdAndLanguageCode(100L, "vi"))
                 .thenReturn(Optional.of(viTranslationV2));
+    }
+
+    @Test
+    @DisplayName("applyAudioGenerating: hash khớp -> chuyển GENERATING, xóa audio cũ")
+    void testApplyAudioGenerating_matchingHash_setsGenerating() {
+        String currentHash = ContentHashUtils.computeHash(
+                "en", "Tiêu đề tiếng Việt V2", "Tóm tắt V2", "Mô tả V2", "Ý nghĩa V2");
+        PoiTranslation existing = PoiTranslation.builder()
+                .id(20L).poi(poi).languageCode("en")
+                .title("Old").summary("Old").description("Old")
+                .audioStatus("FAILED_TTS").audioUrl("/old.mp3").audioDurationSeconds(10)
+                .audioErrorReason("old error")
+                .build();
+        when(translationRepository.findByPoiIdAndLanguageCode(100L, "en"))
+                .thenReturn(Optional.of(existing));
+
+        poiAudioUpdateService.applyAudioGenerating(PoiAudioProgressEvent.builder()
+                .poiId(100L)
+                .languageCode("en")
+                .audioStatus("GENERATING")
+                .contentHash(currentHash)
+                .build());
+
+        ArgumentCaptor<PoiTranslation> captor = ArgumentCaptor.forClass(PoiTranslation.class);
+        verify(translationRepository).save(captor.capture());
+        PoiTranslation saved = captor.getValue();
+        assertThat(saved.getAudioStatus()).isEqualTo("GENERATING");
+        assertThat(saved.getAudioUrl()).isNull();
+        assertThat(saved.getAudioDurationSeconds()).isZero();
+        assertThat(saved.getAudioErrorReason()).isNull();
+        assertThat(saved.getAudioLastAttemptAt()).isNotNull();
+    }
+
+    @Test
+    @DisplayName("applyAudioGenerating: hash cũ -> bỏ qua, không hạ cấp bản mới")
+    void testApplyAudioGenerating_staleHash_isIgnored() {
+        String staleHash = ContentHashUtils.computeHash(
+                "en", "Tiêu đề V1", "Tóm tắt V1", "Mô tả V1", "Ý nghĩa V1");
+
+        poiAudioUpdateService.applyAudioGenerating(PoiAudioProgressEvent.builder()
+                .poiId(100L)
+                .languageCode("en")
+                .audioStatus("GENERATING")
+                .contentHash(staleHash)
+                .build());
+
+        verify(translationRepository, never()).save(any());
     }
 
     @Test

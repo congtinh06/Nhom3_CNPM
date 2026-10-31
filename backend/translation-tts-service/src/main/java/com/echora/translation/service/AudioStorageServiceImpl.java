@@ -38,6 +38,11 @@ public class AudioStorageServiceImpl implements AudioStorageService {
 
     @Override
     public AudioStorageResult storeAudio(long poiId, String lang, String contentHash, String text) {
+        return storeAudio(poiId, lang, contentHash, text, false);
+    }
+
+    @Override
+    public AudioStorageResult storeAudio(long poiId, String lang, String contentHash, String text, boolean force) {
         // 1. Validation BEFORE building any path
         if (poiId <= 0) {
             throw new IllegalArgumentException("poiId must be a positive integer, got: " + poiId);
@@ -65,10 +70,15 @@ public class AudioStorageServiceImpl implements AudioStorageService {
         try {
             Files.createDirectories(baseDir);
 
-            // 3. Idempotent check: if non-empty file already exists, reuse without calling edge-tts
+            // 3. Idempotent check: if non-empty file already exists, reuse without calling edge-tts.
+            // force=true (admin regenerate) deletes the old file and synthesizes again.
             if (Files.exists(targetFile) && Files.size(targetFile) > 0) {
-                log.info("Audio file already exists for poiId={}, lang={}, hash8={}: reusing {}", poiId, lang, hash8, fileName);
-                return new AudioStorageResult(fileName, buildAudioUrl(fileName), targetFile, null, false);
+                if (!force) {
+                    log.info("Audio file already exists for poiId={}, lang={}, hash8={}: reusing {}", poiId, lang, hash8, fileName);
+                    return new AudioStorageResult(fileName, buildAudioUrl(fileName), targetFile, null, false);
+                }
+                log.info("Force regeneration requested: deleting old audio file {}", fileName);
+                Files.delete(targetFile);
             }
         } catch (IOException e) {
             throw new TtsException("Failed to access audio storage directory: " + baseDir, e);

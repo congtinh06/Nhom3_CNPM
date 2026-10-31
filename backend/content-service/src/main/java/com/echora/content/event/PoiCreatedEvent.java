@@ -23,4 +23,8 @@ public class PoiCreatedEvent implements Serializable {
     private List<String> targetLanguages; // e.g. ["en", "ja", "ko"]
     /** Ngôn ngữ có văn bản do người viết (translation_source = MANUAL) -> dùng nguyên văn. */
     private Map<String, AuthoredPoiText> authoredTexts;
+    /** Admin yêu cầu tạo lại audio kể cả khi job đã DONE. */
+    private Boolean forceRegenerate;
+    /** Giới hạn ngôn ngữ cần tạo lại; null/rỗng = mọi ngôn ngữ đích. */
+    private List<String> forceLanguages;
 }

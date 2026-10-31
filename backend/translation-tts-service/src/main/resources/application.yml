@@ -59,6 +59,7 @@ app:
       poi-created: ${RABBITMQ_QUEUE_POI_CREATED:poi.created.queue}
       poi-updated: ${RABBITMQ_QUEUE_POI_UPDATED:poi.updated.queue}
     routing-keys:
+      poi-audio-progress: ${RABBITMQ_ROUTING_KEY_AUDIO_PROGRESS:poi.audio.progress}
       poi-audio-ready: ${RABBITMQ_ROUTING_KEY_AUDIO_READY:poi.audio.ready}
       poi-audio-failed: ${RABBITMQ_ROUTING_KEY_AUDIO_FAILED:poi.audio.failed}
   audio:
@@ -77,6 +78,12 @@ app:
   tts:
     command: ${TTS_COMMAND:edge-tts}
     timeout-ms: ${TTS_TIMEOUT_MS:30000}
+    retry:
+      # Edge-TTS có thể lỗi mạng tạm thời; thử lại có backoff thay vì đánh FAILED_TTS ngay.
+      max-attempts: ${TTS_RETRY_MAX_ATTEMPTS:3}
+      initial-backoff-ms: ${TTS_RETRY_INITIAL_BACKOFF_MS:1000}
+      multiplier: ${TTS_RETRY_MULTIPLIER:2.0}
+      max-backoff-ms: ${TTS_RETRY_MAX_BACKOFF_MS:8000}
     voices:
       vi: ${TTS_VOICE_VI:vi-VN-HoaiMyNeural}
       en: ${TTS_VOICE_EN:en-US-AvaNeural}

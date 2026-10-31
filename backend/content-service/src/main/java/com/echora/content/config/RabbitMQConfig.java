@@ -24,6 +24,7 @@ import org.springframework.boot.autoconfigure.amqp.RabbitTemplateCustomizer;
  *
  * echora.topic (topic)
  *   poi.created / poi.updated      -> (queue do translation-tts-service khai báo)
+ *   poi.audio.progress -> poi.audio.progress.queue --(reject)--> echora.dlx -> poi.audio.progress.dlq
  *   poi.audio.ready  -> poi.audio.ready.queue   --(reject)--> echora.dlx -> poi.audio.ready.dlq
  *   poi.audio.failed -> poi.audio.failed.queue  --(reject)--> echora.dlx -> poi.audio.failed.dlq
  *
@@ -40,18 +41,21 @@ public class RabbitMQConfig {
     public static final String ROUTING_KEY_POI_CREATED = "poi.created";
     public static final String ROUTING_KEY_POI_UPDATED = "poi.updated";
 
+    public static final String ROUTING_KEY_POI_AUDIO_PROGRESS = "poi.audio.progress";
     public static final String ROUTING_KEY_POI_AUDIO_READY = "poi.audio.ready";
     public static final String ROUTING_KEY_POI_AUDIO_FAILED = "poi.audio.failed";
 
     public static final String QUEUE_POI_CREATED = "poi.created.queue";
     public static final String QUEUE_POI_UPDATED = "poi.updated.queue";
 
+    public static final String QUEUE_POI_AUDIO_PROGRESS = "poi.audio.progress.queue";
     public static final String QUEUE_POI_AUDIO_READY = "poi.audio.ready.queue";
     public static final String QUEUE_POI_AUDIO_FAILED = "poi.audio.failed.queue";
 
     public static final String DLQ_POI_CREATED = "poi.created.dlq";
     public static final String DLQ_POI_UPDATED = "poi.updated.dlq";
 
+    public static final String DLQ_POI_AUDIO_PROGRESS = "poi.audio.progress.dlq";
     public static final String DLQ_POI_AUDIO_READY = "poi.audio.ready.dlq";
     public static final String DLQ_POI_AUDIO_FAILED = "poi.audio.failed.dlq";
 
@@ -94,6 +98,14 @@ public class RabbitMQConfig {
     }
 
     @Bean
+    public Queue poiAudioProgressQueue() {
+        return QueueBuilder.durable(QUEUE_POI_AUDIO_PROGRESS)
+                .deadLetterExchange(DLX_NAME)
+                .deadLetterRoutingKey(DLQ_POI_AUDIO_PROGRESS)
+                .build();
+    }
+
+    @Bean
     public Queue poiAudioReadyQueue() {
         return QueueBuilder.durable(QUEUE_POI_AUDIO_READY)
                 .deadLetterExchange(DLX_NAME)
@@ -107,6 +119,11 @@ public class RabbitMQConfig {
                 .deadLetterExchange(DLX_NAME)
                 .deadLetterRoutingKey(DLQ_POI_AUDIO_FAILED)
                 .build();
+    }
+
+    @Bean
+    public Binding bindingPoiAudioProgress() {
+        return BindingBuilder.bind(poiAudioProgressQueue()).to(echoraTopicExchange()).with(ROUTING_KEY_POI_AUDIO_PROGRESS);
     }
 
     @Bean
@@ -141,6 +158,11 @@ public class RabbitMQConfig {
     }
 
     @Bean
+    public Queue poiAudioProgressDlq() {
+        return QueueBuilder.durable(DLQ_POI_AUDIO_PROGRESS).build();
+    }
+
+    @Bean
     public Queue poiAudioReadyDlq() {
         return QueueBuilder.durable(DLQ_POI_AUDIO_READY).build();
     }
@@ -148,6 +170,11 @@ public class RabbitMQConfig {
     @Bean
     public Queue poiAudioFailedDlq() {
         return QueueBuilder.durable(DLQ_POI_AUDIO_FAILED).build();
+    }
+
+    @Bean
+    public Binding bindingPoiAudioProgressDlq() {
+        return BindingBuilder.bind(poiAudioProgressDlq()).to(echoraDeadLetterExchange()).with(DLQ_POI_AUDIO_PROGRESS);
     }
 
     @Bean

@@ -82,6 +82,27 @@ class AudioStorageServiceTest {
     }
 
     @Test
+    @DisplayName("force=true deletes existing audio and synthesizes again")
+    void testStoreAudio_forceRegeneration() throws IOException {
+        String fileName = "poi_101_en_" + HASH_8 + ".mp3";
+        Path existingFile = tempStorageDir.resolve(fileName);
+        Files.write(existingFile, new byte[]{10, 20, 30});
+
+        when(edgeTtsRunner.synthesize(eq("en-US-AvaNeural"), eq("Hello World"), any(Path.class), any(Path.class)))
+                .thenAnswer(invocation -> {
+                    Files.write(invocation.getArgument(2), new byte[]{7, 8, 9, 10});
+                    return 21;
+                });
+
+        AudioStorageResult result = storageService.storeAudio(101, "en", VALID_HASH, "Hello World", true);
+
+        assertTrue(result.newlyGenerated());
+        assertEquals(21, result.durationSeconds());
+        assertEquals(4, Files.size(existingFile));
+        verify(edgeTtsRunner).synthesize(eq("en-US-AvaNeural"), eq("Hello World"), any(Path.class), any(Path.class));
+    }
+
+    @Test
     @DisplayName("Should clean up temp files and leave no partial file when synthesis fails")
     void testStoreAudio_atomicWrite_cleansUpOnRunnerFailure() throws IOException {
         when(edgeTtsRunner.synthesize(anyString(), anyString(), any(Path.class), any(Path.class)))

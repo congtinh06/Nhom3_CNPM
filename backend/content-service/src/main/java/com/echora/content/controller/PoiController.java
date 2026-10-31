@@ -1,7 +1,10 @@
 package com.echora.content.controller;
 
+import com.echora.content.dto.AdminAudioStatusDto;
 import com.echora.content.dto.AdminPoiDetailDto;
 import com.echora.content.dto.AdminPoiListItemDto;
+import com.echora.content.dto.AudioRegenerationBatchDto;
+import com.echora.content.dto.AudioRegenerationResultDto;
 import com.echora.content.dto.CreatePoiRequest;
 import com.echora.content.dto.PoiBoundingBoxDto;
 import com.echora.content.dto.PoiDetailDto;
@@ -134,5 +137,25 @@ public class PoiController {
     @PostMapping("/api/content/admin/pois/{id}/republish")
     public ResponseEntity<PoiPublishStatusDto> republish(@PathVariable Long id) {
         return ResponseEntity.ok(poiContentService.republish(id));
+    }
+
+    // Ma trận trạng thái audio của toàn bộ POI, dùng trước demo và cho script kiểm tra.
+    @GetMapping("/api/content/admin/audio/status")
+    public ResponseEntity<AdminAudioStatusDto> getAudioStatus() {
+        return ResponseEntity.ok(poiContentService.getAudioStatus());
+    }
+
+    // Tạo lại audio cho một POI. Không truyền languages = chỉ các ngôn ngữ chưa READY.
+    @PostMapping("/api/content/admin/pois/{id}/audio/regenerate")
+    public ResponseEntity<AudioRegenerationResultDto> regenerateAudio(
+            @PathVariable Long id,
+            @RequestParam(required = false) List<String> languages) {
+        return ResponseEntity.accepted().body(poiContentService.regenerateAudio(id, languages));
+    }
+
+    // Tạo lại audio cho mọi POI còn ngôn ngữ chưa READY.
+    @PostMapping("/api/content/admin/audio/regenerate")
+    public ResponseEntity<AudioRegenerationBatchDto> regenerateNonReadyAudio() {
+        return ResponseEntity.accepted().body(poiContentService.regenerateNonReadyAudio());
     }
 }
