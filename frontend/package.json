@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "test": "vitest run",
     "lint": "eslint src",
-    "check:spa-routes": "node scripts/check-spa-routes.mjs"
+    "check:spa-routes": "node scripts/check-spa-routes.mjs",
+    "prebuild-vercel": "node scripts/prebuild-vercel.mjs"
   },
   "dependencies": {
     "@types/leaflet": "^1.9.22",
