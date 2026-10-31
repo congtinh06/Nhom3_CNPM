@@ -49,6 +49,10 @@ export default defineConfig(({ mode }) => {
       environment: 'jsdom',
       setupFiles: './src/test/setup.ts',
       testTimeout: 10000,
+      coverage: {
+        reporter: ['text', 'json', 'html'],
+        reportsDirectory: './coverage',
+      },
     },
     build: {
       // Tách thư viện lớn khỏi bundle chính để trang du khách tải nhanh hơn.

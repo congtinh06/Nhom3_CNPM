@@ -113,7 +113,6 @@ describe('T2.5 POI Seed vs Frontend Alignment Contract', () => {
   });
 
   it('nearby walking tour fixtures match backend seed for the 5 historic core stops', () => {
-    const nearbySlugs = nearbyPoisData.map((p) => p.slug);
     const coreSeedPois = BACKEND_SEED_POIS.slice(0, 5);
 
     expect(nearbyPoisData).toHaveLength(5);
