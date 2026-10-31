@@ -8,7 +8,7 @@
 [![SQL Server 2022](https://img.shields.io/badge/SQL_Server-2022-CC292B?logo=microsoftsqlserver&logoColor=white)](https://www.microsoft.com/sql-server)
 [![RabbitMQ](https://img.shields.io/badge/RabbitMQ-3.13-FF6600?logo=rabbitmq&logoColor=white)](https://www.rabbitmq.com/)
 [![Leaflet](https://img.shields.io/badge/Leaflet-1.9.4-199900?logo=leaflet&logoColor=white)](https://leafletjs.com/)
-[![Vitest](https://img.shields.io/badge/Vitest-62_Tests_Passed-green?logo=vitest&logoColor=white)](https://vitest.dev/)
+[![Vitest](https://img.shields.io/badge/Vitest-582_Tests_Passed-green?logo=vitest&logoColor=white)](https://vitest.dev/)
 
 ---
 
@@ -308,8 +308,11 @@ Dự án tích hợp bộ kiểm thử tự động toàn diện đảm bảo đ
 ```bash
 cd frontend
 
-# Chạy toàn bộ 13 test suites (62 unit & integration tests)
-npm test -- --run
+# Chạy toàn bộ 74 test suites (582 unit & integration tests)
+npm test
+
+# Kiểm tra danh sách route SPA khớp giữa App.tsx, nginx.conf và vercel.json
+npm run check:spa-routes
 
 # Kiểm tra kiểu TypeScript và biên dịch bundle
 npm run build
@@ -326,6 +329,23 @@ mvn -f backend/auth-service/pom.xml test
 mvn -f backend/order-service/pom.xml test
 mvn -f backend/api-gateway/pom.xml test
 ```
+
+Backend hiện có 68 file kiểm thử: content 19, translation-tts 16, auth 13, analytics 12, location 4, api-gateway 2, order 2. Một số test tích hợp cần Docker/Testcontainers; 8 workflow trong `.github/workflows/` (frontend + 7 microservice) chạy test và build Docker image trên CI.
+
+### Kiểm tra trạng thái audio trước demo
+```powershell
+$env:ECHORA_BASE_URL = 'http://localhost:18080'
+$env:ECHORA_ADMIN_TOKEN = '<token ADMIN>'
+pwsh -File scripts/check-audio-status.ps1
+```
+
+Script chỉ gửi GET tới `/api/content/admin/audio/status` và in ma trận POI × ngôn ngữ (READY/PENDING/FAILED...). Các endpoint quản trị audio khác đều yêu cầu Bearer token ADMIN:
+- `GET /api/content/admin/audio/status`
+- `POST /api/content/admin/pois/{id}/audio/regenerate` (tùy chọn `?languages=vi,en`)
+- `POST /api/content/admin/audio/regenerate` (tạo lại cho mọi ngôn ngữ chưa READY)
+
+### Dữ liệu mẫu khi demo offline
+Frontend mặc định gọi API thật. Chỉ khi đặt `VITE_USE_SAMPLE_DATA=true` (hoặc chạy test) mới dùng fixture cho Tin tức và Điểm du lịch gần bạn; không bật biến này trên production.
 
 ---
 
