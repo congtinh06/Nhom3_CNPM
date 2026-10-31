@@ -6,24 +6,24 @@ param(
 
 <#
 .SYNOPSIS
-    Kiểm tra sức khỏe toàn bộ hệ thống Echora trước demo (GET only, không sửa dữ liệu).
-    Thoát với code 0 nếu tất cả pass, code 1 nếu có bất kỳ lỗi nào.
+    Kiem tra suc khoe toan bo he thong Echora truoc demo (GET only, khong sua du lieu).
+    Thoat voi code 0 neu tat ca pass, code 1 neu co bat ky loi nao.
 
 .PARAMETER BaseUrl
-    URL gốc gateway. Mặc định: $env:ECHORA_BASE_URL hoặc http://localhost:18080.
+    URL goc gateway. Mac dinh: $env:ECHORA_BASE_URL hoac http://localhost:18080.
 
 .PARAMETER AdminToken
-    Bearer token của Admin. Lấy từ $env:ECHORA_ADMIN_TOKEN.
+    Bearer token cua Admin. Lay tu $env:ECHORA_ADMIN_TOKEN.
 
 .PARAMETER WhatIf
-    In danh sách kiểm tra mà không thực thi.
+    In danh sach kiem tra ma khong thuc thi.
 
 .EXAMPLE
     $env:ECHORA_ADMIN_TOKEN = '<token>'
-    pwsh scripts/preflight.ps1
+    powershell -File scripts/preflight.ps1
 
 .EXAMPLE
-    pwsh scripts/preflight.ps1 -WhatIf
+    powershell -File scripts/preflight.ps1 -WhatIf
 #>
 
 $ErrorActionPreference = 'Continue'
@@ -43,11 +43,11 @@ $checks.Add(@{
 })
 
 $checks.Add(@{
-    Name = 'Content API: danh sách POI'
+    Name = 'Content API: danh sach POI'
     Url  = "$BaseUrl/api/content/pois/guide"
     Auth = $false
     Expect = { param($r) ($r -is [array] -and $r.Count -gt 0) -or ($r.pois -is [array] -and $r.pois.Count -gt 0) }
-    ExpectDesc = 'trả mảng POI không rỗng'
+    ExpectDesc = 'tra mang POI khong rong'
 })
 
 $checks.Add(@{
@@ -59,14 +59,14 @@ $checks.Add(@{
 })
 
 if ($WhatIf) {
-    Write-Host "[WhatIf] Danh sách kiểm tra preflight ($($checks.Count) mục):"
+    Write-Host "[WhatIf] Danh sach kiem tra preflight ($($checks.Count) muc):"
     $checks | ForEach-Object { Write-Host "  - $($_.Name): $($_.Url)" }
     exit 0
 }
 
-if ($checks | Where-Object Auth | Select-Object -First 1) {
+if ($checks | Where-Object { $_.Auth } | Select-Object -First 1) {
     if ([string]::IsNullOrWhiteSpace($AdminToken)) {
-        Write-Warning 'ECHORA_ADMIN_TOKEN chưa được đặt. Các kiểm tra yêu cầu Admin token sẽ bị bỏ qua.'
+        Write-Warning 'ECHORA_ADMIN_TOKEN chua duoc dat. Cac kiem tra yeu cau Admin token se bi bo qua.'
     }
 }
 
@@ -78,7 +78,7 @@ foreach ($check in $checks) {
     $headers = @{}
     if ($check.Auth) {
         if ([string]::IsNullOrWhiteSpace($AdminToken)) {
-            Write-Host "  [SKIP] $($check.Name) — thiếu Admin token" -ForegroundColor Yellow
+            Write-Host "  [SKIP] $($check.Name) - thieu Admin token" -ForegroundColor Yellow
             $skipped++
             continue
         }
@@ -91,22 +91,22 @@ foreach ($check in $checks) {
             Write-Host "  [PASS] $($check.Name)" -ForegroundColor Green
             $passed++
         } else {
-            Write-Host "  [FAIL] $($check.Name) — Kỳ vọng: $($check.ExpectDesc)" -ForegroundColor Red
+            Write-Host "  [FAIL] $($check.Name) - Ky vong: $($check.ExpectDesc)" -ForegroundColor Red
             $failed++
         }
     } catch {
-        Write-Host "  [FAIL] $($check.Name) — $($_.Exception.Message)" -ForegroundColor Red
+        Write-Host "  [FAIL] $($check.Name) - $($_.Exception.Message)" -ForegroundColor Red
         $failed++
     }
 }
 
 Write-Host ""
-Write-Host "Kết quả: $passed pass, $failed fail, $skipped skip (trong $($checks.Count) kiểm tra)"
+Write-Host "Ket qua: $passed pass, $failed fail, $skipped skip (trong $($checks.Count) kiem tra)"
 
 if ($failed -gt 0) {
-    Write-Host "Hệ thống chưa sẵn sàng cho demo. Xem chi tiết lỗi ở trên." -ForegroundColor Red
+    Write-Host 'He thong chua san sang cho demo. Xem chi tiet loi o tren.' -ForegroundColor Red
     exit 1
 }
 
-Write-Host "Hệ thống sẵn sàng." -ForegroundColor Green
+Write-Host 'He thong san sang.' -ForegroundColor Green
 exit 0
