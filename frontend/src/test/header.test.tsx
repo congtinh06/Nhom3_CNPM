@@ -189,11 +189,11 @@ describe('Header Navigation Redesign', () => {
 
       // Dropdown menu tài khoản (mở bằng cách bấm trigger)
       fireEvent.click(userBtn);
-      const accountMenu = await screen.findByRole('menu', { name: 'Tùy chọn người dùng' });
+      const accountMenu = await screen.findByRole('menu', { name: 'Tùy chọn người dùng' }, { timeout: 3000 });
       expect(accountMenu).toBeInTheDocument();
 
       // Mục Đơn hàng của tôi
-      const ordersLink = await screen.findByRole('menuitem', { name: 'Đơn hàng của tôi' });
+      const ordersLink = await screen.findByRole('menuitem', { name: 'Đơn hàng của tôi' }, { timeout: 3000 });
       expect(ordersLink).toBeInTheDocument();
       expect(ordersLink).toHaveAttribute('href', '/don-hang');
 

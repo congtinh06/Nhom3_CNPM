@@ -4,6 +4,7 @@ import { SupportedLanguage, TriggerType } from '../types';
 import { detectDeviceType } from '../lib/device';
 import { getAnalyticsSessionId } from '../lib/analytics';
 import { formatNarrationNumerals } from '../lib/numerals';
+import { toNarrationScript } from '../lib/narrationScript';
 import { getSharedAudio } from '../lib/audioUnlock';
 import { GeoPoi, getNarration, NarrationLayer } from '../pages/NearbyPage';
 
@@ -781,7 +782,8 @@ export function useNearbyAudio({
           if (hadPendingSpeech) {
             synth.cancel();
           }
-          const utterance = new SpeechSynthesisUtterance(text);
+          const spokenText = toNarrationScript(text, langCode);
+          const utterance = new SpeechSynthesisUtterance(spokenText);
           activeUtteranceRef.current = utterance;
           utterance.lang = targetLocale; // Never left unset!
           utterance.voice = matchedVoice;
