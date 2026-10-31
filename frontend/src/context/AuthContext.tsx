@@ -31,6 +31,10 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 // Chạy tối đa một lần trong một chuỗi trang (React StrictMode mount/umount/ mount lại).
 const bootstrapPromises = new Map<AuthScope, Promise<AuthSession | null>>();
 
+export function resetAuthBootstrapForTests(): void {
+  bootstrapPromises.clear();
+}
+
 function bootstrapSession(scope: AuthScope): Promise<AuthSession | null> {
   const existing = bootstrapPromises.get(scope);
   if (existing) return existing;
