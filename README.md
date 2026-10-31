@@ -9,8 +9,14 @@
 [![RabbitMQ](https://img.shields.io/badge/RabbitMQ-3.13-FF6600?logo=rabbitmq&logoColor=white)](https://www.rabbitmq.com/)
 [![Leaflet](https://img.shields.io/badge/Leaflet-1.9.4-199900?logo=leaflet&logoColor=white)](https://leafletjs.com/)
 [![Vitest](https://img.shields.io/badge/Vitest-582_Tests_Passed-green?logo=vitest&logoColor=white)](https://vitest.dev/)
+[![Frontend CI](https://github.com/congtinh06/Nhom3_CNPM/actions/workflows/frontend-ci.yml/badge.svg)](https://github.com/congtinh06/Nhom3_CNPM/actions/workflows/frontend-ci.yml)
+[![CD](https://github.com/congtinh06/Nhom3_CNPM/actions/workflows/cd.yml/badge.svg)](https://github.com/congtinh06/Nhom3_CNPM/actions/workflows/cd.yml)
+
+> **Tài liệu kỹ thuật:** [Kiến trúc](docs/ARCHITECTURE.md) · [Bảo mật](docs/SECURITY.md) · [Kịch bản demo](docs/DEMO_SCRIPT.md) · [Q&A bảo vệ](docs/DEFENSE_QA.md)
 
 ---
+
+
 
 ## 1. Giới thiệu dự án (Overview)
 
