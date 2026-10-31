@@ -63,6 +63,15 @@ echora:
   audio:
     # Ngôn ngữ ở trạng thái chờ xử lý lâu hơn ngưỡng này sẽ bị đánh dấu "cần chú ý".
     pending-timeout-minutes: 30
+  poi:
+    # Biên tọa độ hợp lệ cho POI (mặc định bao trọn TP.HCM).
+    bounds:
+      min-latitude: ${POI_MIN_LATITUDE:10.30}
+      max-latitude: ${POI_MAX_LATITUDE:11.20}
+      min-longitude: ${POI_MIN_LONGITUDE:106.30}
+      max-longitude: ${POI_MAX_LONGITUDE:107.10}
+    trigger-radius:
+      max-meters: ${POI_MAX_TRIGGER_RADIUS_METERS:5000}
 
 management:
   endpoints:

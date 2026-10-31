@@ -13,6 +13,7 @@ import com.echora.content.dto.PoiSummaryDto;
 import com.echora.content.dto.UpdatePoiRequest;
 import com.echora.content.service.PoiContentService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Pattern;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -20,6 +21,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
@@ -28,6 +30,7 @@ import java.util.Set;
 
 @RestController
 @RequiredArgsConstructor
+@Validated
 public class PoiController {
 
     private final PoiContentService poiContentService;
@@ -50,14 +53,16 @@ public class PoiController {
     @GetMapping("/api/content/pois/{id}")
     public ResponseEntity<PoiDetailDto> getPoiDetail(
             @PathVariable Long id,
-            @RequestParam(defaultValue = "vi") String lang) {
+            @RequestParam(defaultValue = "vi")
+            @Pattern(regexp = "vi|en|ja|ko", message = "lang must be one of: vi, en, ja, ko") String lang) {
         return ResponseEntity.ok(poiContentService.getPoiDetail(id, lang));
     }
 
     @GetMapping("/api/content/pois/qr/{qrToken}")
     public ResponseEntity<PoiDetailDto> getPoiByQrToken(
             @PathVariable String qrToken,
-            @RequestParam(defaultValue = "vi") String lang) {
+            @RequestParam(defaultValue = "vi")
+            @Pattern(regexp = "vi|en|ja|ko", message = "lang must be one of: vi, en, ja, ko") String lang) {
         return ResponseEntity.ok(poiContentService.getPoiByQrToken(qrToken, lang));
     }
 
