@@ -36,6 +36,7 @@ public class InternalPathBlockFilter implements GlobalFilter, Ordered {
     private static final Pattern POI_DETAIL_OR_PUBLISH = Pattern.compile("^/api/content/admin/pois/\\d+(/publish-status)?$");
     private static final Pattern POI_STATUS = Pattern.compile("^/api/content/admin/pois/\\d+/status$");
     private static final Pattern POI_REPUBLISH = Pattern.compile("^/api/content/admin/pois/\\d+/republish$");
+    private static final Pattern POI_AUDIO_REGEN = Pattern.compile("^/api/content/admin/pois/\\d+/audio/regenerate$");
     private static final Pattern ZONE_DETAIL = Pattern.compile("^/api/content/admin/zones/\\d+$");
     private static final Pattern ZONE_STATUS = Pattern.compile("^/api/content/admin/zones/\\d+/status$");
     private static final Pattern ROUTE_DETAIL = Pattern.compile("^/api/content/admin/routes/\\d+$");
@@ -183,6 +184,9 @@ public class InternalPathBlockFilter implements GlobalFilter, Ordered {
             return HttpMethod.GET.equals(method) || HttpMethod.PUT.equals(method);
         }
         if (POI_REPUBLISH.matcher(path).matches()) {
+            return HttpMethod.POST.equals(method);
+        }
+        if (path.equals("/api/content/admin/audio/regenerate") || POI_AUDIO_REGEN.matcher(path).matches()) {
             return HttpMethod.POST.equals(method);
         }
 
