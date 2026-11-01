@@ -42,6 +42,29 @@ jobs:
       - name: Install Dependencies
         run: npm ci
 
+      - name: Security Check - Verify .env Files Not Committed
+        run: |
+          if git ls-files | grep -qE "^frontend/\.env$|^\.env$"; then
+            echo "❌ ERROR: .env file is tracked by git"
+            echo "These files contain secrets and must never be committed."
+            echo "Add to .gitignore and remove from git history if needed."
+            exit 1
+          fi
+          echo "✅ No .env files tracked in git"
+
+      - name: Security Check - Verify PAYMENTS_MOCK_ENABLED Not True in Production Config
+        run: |
+          # Check .env.example and docker-compose.yml don't have PAYMENTS_MOCK_ENABLED=true
+          if grep -qE "PAYMENTS_MOCK_ENABLED\s*=\s*true" ../.env.example; then
+            echo "❌ ERROR: PAYMENTS_MOCK_ENABLED=true in .env.example (must default to false)"
+            exit 1
+          fi
+          if grep -qE "PAYMENTS_MOCK_ENABLED:\s*\$\{PAYMENTS_MOCK_ENABLED:-true\}" ../docker-compose.yml; then
+            echo "❌ ERROR: PAYMENTS_MOCK_ENABLED defaults to true in docker-compose.yml (must be false)"
+            exit 1
+          fi
+          echo "✅ Mock payment defaults are secure (false)"
+
       - name: Lint
         run: npm run lint
 
