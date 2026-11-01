@@ -1818,6 +1818,20 @@ class ApiGatewayApplicationTest {
                 .expectStatus().isOk();
     }
 
+    @Test
+    void privilegeEscalation_FakeUserRoleHeader_Blocked() {
+        // B3: User (role=USER) tries to add fake X-User-Role=ADMIN header
+        // Expected: Gateway strips the fake header and sets correct role from JWT
+        // Result: 403 Forbidden (USER is not ADMIN)
+        webTestClient.patch().uri("http://localhost:" + port + "/api/auth/admin/users/1/plan")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + USER_TOKEN)
+                .header("X-User-Role", "ADMIN")  // Fake header — will be stripped by UntrustedHeaderStripGlobalFilter
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue("{\"plan\":\"PREMIUM\",\"durationDays\":30}")
+                .exchange()
+                .expectStatus().isForbidden();  // Because JWT role is USER, not ADMIN
+    }
+
     // ==========================================
     // Security Headers Tests (HIGH-08)
     // ==========================================
