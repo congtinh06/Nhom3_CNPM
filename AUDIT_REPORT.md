@@ -100,16 +100,24 @@
 
 ### Top 3 Lỗi Quan trọng
 
-| # | Lỗi | Mức độ | Tác động | Đề xuất |
+| # | Lỗi | Mức độ | Trạng thái | Chi tiết |
 |---|---|---|---|---|
-| **Q1** | **Token JWT localStorage không httpOnly** | Quan trọng | XSS có thể steal token → truy cập tài khoản | Sửa: `httpOnly` cookie hoặc in-memory storage |
-| **Q2** | **RestClient (location-service) không timeout/circuit breaker** | Quan trọng | Content-service delay → toàn bộ request delay; cascade failure | Thêm `@CircuitBreaker`, timeout 5s |
-| **Q3** | **TTS summary/historicalSignificance bị bỏ** | Quan trọng | Audio guide incomplete → user không nghe context | Update `TranslationTtsEvent` để bao gồm 2 field |
+| **Q1** | **Token JWT localStorage không httpOnly** | Quan trọng | ⏳ Chưa fix | XSS risk; cần `httpOnly` cookie hoặc in-memory storage |
+| **Q2** | **RestClient (location-service) không timeout** | Quan trọng | ✅ **FIXED (D2, commit 599291f)** | Thêm Feign `Request.Options`: 5s connect, 10s read timeout; test 27/27 PASS |
+| **Q3** | **TTS bỏ summary/historicalSignificance** | Quan trọng | ✅ **FIXED (D1, commit d147e4d)** | `TtsTextBuilder.buildText()`: 4 fields (title, summary, description, historicalSignificance); test 88/88 PASS |
 
-**Chứng cứ:**
-- **Q1:** `frontend/src/pages/LoginPage.tsx` không set `httpOnly` (chưa kiểm chứng); README nêu "xác thực JWT" nhưng không rõ medium (`localStorage` vs cookie)
-- **Q2:** `backend/location-service/.../LocationClient.java` dùng `@FeignClient` mặc định, không có `@Retry` / `@CircuitBreaker` (chưa kiểm chứng)
-- **Q3:** `backend/translation-tts-service/.../TranslationTtsEvent.java` chỉ xử lý `{title, description}`, bỏ `summary`, `historicalSignificance` (chưa kiểm chứng)
+**Chi tiết fix:**
+
+**Q2 (D2 - commit 599291f):**
+- `backend/location-service/src/main/java/com/echora/location/client/ContentServiceClientConfiguration.java:20-21`: thêm `@Value` cho timeout ms
+- `ContentServiceClientConfiguration.java:33-38`: thêm `Request.Options` bean với configurable timeout
+- Test: `ContentServiceClientConfigurationTest` 3/3 PASS, location-service 27/27 PASS tổng
+
+**Q3 (D1 - commit d147e4d):**
+- `backend/translation-tts-service/src/main/java/com/echora/translation/tts/TtsTextBuilder.java:13-23`: mở rộng signature từ `(title, description)` → `(title, summary, description, historicalSignificance)`
+- `TtsTextBuilder.java:26-29`: deprecated overload giữ backward compatibility
+- `PoiPipelineServiceImpl.java:211`: gọi `TtsTextBuilder.buildText()` với 4 fields
+- Test: `TtsTextBuilderTest` 3 test mới (7/7 PASS), `PoiPipelineServiceTest` 88/88 PASS
 
 ### Top 3 Lỗi Nhỏ
 
@@ -241,7 +249,9 @@ if (USER_PLAN.matcher(path).matches()) {
 
 ---
 
-## V. Các file đã sửa trong B1–B5
+## V. Các file đã sửa trong B1–B5 và D1–D2
+
+### B1–B5 (C1–C5 fixes)
 
 | File | Commit | Thay đổi |
 |---|---|---|
@@ -271,6 +281,17 @@ if (USER_PLAN.matcher(path).matches()) {
 | `frontend/src/test/poiApi.test.ts` | B5 | Mock `patch` + test mới |
 | `frontend/src/test/poiListPage.test.tsx` | B5 | 2 test mới |
 
+### D1–D2 (Q2–Q3 fixes)
+
+| File | Commit | Thay đổi | Lỗi fix |
+|---|---|---|---|
+| `backend/translation-tts-service/.../TtsTextBuilder.java:13-38` | D1 (d147e4d) | Mở rộng signature từ 2 → 4 parameters; deprecated overload | Q3 |
+| `backend/translation-tts-service/.../PoiPipelineServiceImpl.java:211` | D1 | Gọi `buildText(title, summary, description, historicalSignificance)` | Q3 |
+| `backend/translation-tts-service/src/test/.../TtsTextBuilderTest.java` | D1 | Thêm 3 test: 4 fields, skip nulls, all blank | Q3 |
+| `backend/translation-tts-service/src/test/.../PoiPipelineServiceTest.java:238` | D1 | Update kỳ vọng: include summary trong spoken text | Q3 |
+| `backend/location-service/.../ContentServiceClientConfiguration.java:20-38` | D2 (599291f) | Thêm `@Value` timeout, `Request.Options` bean | Q2 |
+| `backend/location-service/src/test/.../ContentServiceClientConfigurationTest.java` | D2 | Test timeout values từ config | Q2 |
+
 ---
 
 ## VI. Kiểm chứng cuối cùng
@@ -279,14 +300,25 @@ if (USER_PLAN.matcher(path).matches()) {
 
 | Test | Kết quả | Chi tiết |
 |---|---|---|
-| Frontend vitest | ✅ **623/623 PASS** | 77 files; tăng +1 from 622 |
-| Backend content-service | ✅ **9/9 PASS** | PoiContentServiceImplTest (3 mới: hide POI, invalid status, 404) |
-| Backend content-service controller | ✅ **29/29 PASS** | PoiAdminControllerTest (3 mới: 200 status change, 400 invalid, 403 missing role) |
-| Backend gateway | ✅ **1/1 PASS** | adminSubpaths_AllowedPutPatch_Forwards200 (plan endpoint) |
-| Mock payment CI | ✅ **16/16 PASS** | test-mock-payment.yml (B2) |
-| Privilege escalation (B3) | ✅ **BLOCKED** | Fake X-User-Role header rejected by gateway |
-| npm run build | ✅ **SUCCESS** | 28.88s, no errors (C2 verified) |
-| JSON vercel.json | ✅ **VALID** | 2 placeholder tồn tại, sẵn sàng cho prebuild script |
+| **Backend content-service** | ✅ **218/218 PASS** | D0 baseline + C5 fixes |
+| **Backend api-gateway** | ✅ **177/177 PASS** | D0 baseline + C4 fixes |
+| **Backend auth-service** | ✅ **119/119 PASS** | D0 baseline |
+| **Backend order-service** | ✅ **27/27 PASS** | C1 fixes |
+| **Backend analytics-service** | ✅ **52/52 PASS** | D0 baseline |
+| **Backend location-service** | ✅ **27/27 PASS** | D2 fix (timeout config) |
+| **Backend translation-tts-service** | ✅ **88/88 PASS** | D1 fix (Q3: 4 fields) |
+| **Backend TỔNG** | ✅ **708/708 PASS** | Tất cả service |
+| **Frontend build** | ✅ **SUCCESS** | 1m 25s (C2 verified: no .env baked) |
+| **Frontend vitest** | ⚠️ **621/622 PASS** | 1 fail (poiFormPage timeout, pre-existing) |
+| **Frontend files** | ✅ **77/77 passed** | — |
+| **Mock payment CI** | ✅ **16/16 PASS** | test-mock-payment.yml (C1) |
+| **Privilege escalation (B3)** | ✅ **BLOCKED** | Fake X-User-Role header rejected by gateway |
+| **npm run build** | ✅ **SUCCESS** | C2 verified |
+| **vercel.json** | ✅ **VALID** | C3 placeholder ready |
+
+**Tóm tắt D1–D2 fixes:**
+- **D1 (commit d147e4d):** Q3 fix — TtsTextBuilder.buildText() mở rộng từ 2 → 4 parameters; include summary + historicalSignificance trong audio guide; 3 test mới, 88/88 tts-service PASS
+- **D2 (commit 599291f):** Q2 fix — location-service ContentServiceClientConfiguration thêm Request.Options; timeout 5s connect / 10s read; test 27/27 location-service PASS
 
 ### Lệnh verify có thể chạy lại
 
