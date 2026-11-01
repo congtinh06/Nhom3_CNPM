@@ -1808,6 +1808,14 @@ class ApiGatewayApplicationTest {
                 .bodyValue("{\"status\":\"ACTIVE\"}")
                 .exchange()
                 .expectStatus().isOk();
+
+        // Admin đổi gói Premium: endpoint có thật ở auth-service (AdminUserController#changePlan).
+        webTestClient.patch().uri("http://localhost:" + port + "/api/auth/admin/users/1/plan")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + ADMIN_TOKEN)
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue("{\"plan\":\"PREMIUM\",\"durationDays\":30}")
+                .exchange()
+                .expectStatus().isOk();
     }
 
     // ==========================================

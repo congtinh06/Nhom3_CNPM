@@ -1,4 +1,5 @@
 import React, { FormEvent, useEffect, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { authApi } from '../../api/auth';
 import { normalizeApiError } from '../../api/errors';
 import { useAuth } from '../../context/AuthContext';
@@ -272,6 +273,14 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
         >
           {t.auth.backToLogin}
         </button>
+      </p>
+
+      <p className="af-alt" style={{ fontSize: '0.8rem', marginTop: 10, opacity: 0.8 }}>
+        Bằng việc tạo tài khoản, bạn đồng ý với{' '}
+        <Link to="/chinh-sach-quyen-rieng-tu" className="af-link">
+          Chính sách quyền riêng tư
+        </Link>{' '}
+        của Echora.
       </p>
     </div>
   );

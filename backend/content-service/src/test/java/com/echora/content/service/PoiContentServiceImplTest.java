@@ -902,4 +902,39 @@ class PoiContentServiceImplTest {
         verify(poiRepository).findByPublishStatus(PublishStatus.FAILED);
         verify(poiRepository, never()).findAll();
     }
+
+    @Test
+    @DisplayName("changeStatus: hides an ACTIVE POI, bumps version and persists it")
+    void testChangeStatus_HidesPoi() {
+        when(poiRepository.findById(100L)).thenReturn(Optional.of(samplePoi));
+        when(poiRepository.save(any(Poi.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(translationRepository.findByPoiId(100L)).thenReturn(List.of(viTranslation));
+
+        AdminPoiDetailDto result = poiContentService.changeStatus(100L, "inactive");
+
+        assertThat(result.getStatus()).isEqualTo("INACTIVE");
+        assertThat(samplePoi.getStatus()).isEqualTo("INACTIVE");
+        assertThat(samplePoi.getVersion()).isEqualTo(1L);
+        verify(poiRepository).save(samplePoi);
+    }
+
+    @Test
+    @DisplayName("changeStatus: rejects an unknown status before touching the database")
+    void testChangeStatus_RejectsUnknownStatus() {
+        assertThatThrownBy(() -> poiContentService.changeStatus(100L, "DELETED"))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessageContaining("ACTIVE");
+
+        verifyNoInteractions(poiRepository);
+    }
+
+    @Test
+    @DisplayName("changeStatus: unknown POI -> ResourceNotFoundException")
+    void testChangeStatus_NotFound() {
+        when(poiRepository.findById(404L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> poiContentService.changeStatus(404L, "ACTIVE"))
+                .isInstanceOf(ResourceNotFoundException.class)
+                .hasMessageContaining("404");
+    }
 }

@@ -80,6 +80,9 @@ public class PoiContentServiceImpl implements PoiContentService {
     // Giá trị lọc hợp lệ cho overallStatus / languageStatus của danh sách admin.
     private static final Set<String> OVERALL_STATUS_VALUES = Set.of("ACTIVE", "NEEDS_ATTENTION", "HIDDEN");
     private static final Set<String> LANGUAGE_STATUS_VALUES = Set.of("ERROR", "PENDING");
+    // Trạng thái hiển thị hợp lệ của POI (khớp comment ở Poi#status).
+    private static final List<String> POI_STATUS_VALUES = List.of("ACTIVE", "INACTIVE", "MAINTENANCE");
+    private static final Set<String> POI_STATUSES = Set.copyOf(POI_STATUS_VALUES);
     private static final Map<String, String> LANGUAGE_NAMES = Map.of(
             "vi", "Tiếng Việt",
             "en", "Tiếng Anh",
@@ -585,6 +588,30 @@ public class PoiContentServiceImpl implements PoiContentService {
         }
 
         return result;
+    }
+
+    /**
+     * Đổi trạng thái hiển thị của POI. Không phát event dịch/TTS vì nội dung không đổi;
+     * API công khai chỉ đọc POI ACTIVE nên thao tác ẩn có hiệu lực ngay.
+     */
+    @Override
+    @Transactional
+    public AdminPoiDetailDto changeStatus(Long id, String status) {
+        String normalized = status == null ? "" : status.trim().toUpperCase(Locale.ROOT);
+        if (!POI_STATUSES.contains(normalized)) {
+            throw new BadRequestException(
+                    "status phải là một trong: " + String.join(", ", POI_STATUS_VALUES));
+        }
+
+        Poi poi = poiRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("POI not found with id: " + id));
+
+        poi.setStatus(normalized);
+        poi.setUpdatedAt(TimeUtils.nowUtc());
+        poi.setVersion((poi.getVersion() == null ? 0L : poi.getVersion()) + 1);
+        poiRepository.save(poi);
+
+        return mapToAdminDetail(poi, translationRepository.findByPoiId(id), null);
     }
 
     private Long applyRouteAssignment(Poi poi, UpdatePoiRequest request) {

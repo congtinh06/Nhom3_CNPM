@@ -79,9 +79,9 @@ export const Footer: React.FC = () => {
             justifyContent: 'flex-end',
           }}
         >
-          <a href="/privacy.html" target="_blank" rel="noopener noreferrer">
+          <Link to="/chinh-sach-quyen-rieng-tu" onClick={handleLinkClick}>
             Chính sách quyền riêng tư
-          </a>
+          </Link>
           <a href="#top" onClick={handleTopClick} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
             {footerContent.backToTop}
             <ChevronUp size={16} aria-hidden="true" />

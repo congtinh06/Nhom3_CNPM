@@ -45,6 +45,7 @@ public class InternalPathBlockFilter implements GlobalFilter, Ordered {
     private static final Pattern USER_DETAIL = Pattern.compile("^/api/auth/admin/users/\\d+$");
     private static final Pattern USER_ROLE = Pattern.compile("^/api/auth/admin/users/\\d+/role$");
     private static final Pattern USER_STATUS = Pattern.compile("^/api/auth/admin/users/\\d+/status$");
+    private static final Pattern USER_PLAN = Pattern.compile("^/api/auth/admin/users/\\d+/plan$");
     private static final Pattern PRODUCT_DETAIL = Pattern.compile("^/api/admin/products/\\d+$");
     private static final Pattern PRODUCT_STATUS = Pattern.compile("^/api/admin/products/\\d+/status$");
     private static final Pattern PRODUCT_SORT_ORDER = Pattern.compile("^/api/admin/products/\\d+/sort-order$");
@@ -175,7 +176,8 @@ public class InternalPathBlockFilter implements GlobalFilter, Ordered {
             return HttpMethod.GET.equals(method);
         }
         if (POI_STATUS.matcher(path).matches()) {
-            return HttpMethod.GET.equals(method) || HttpMethod.PUT.equals(method) || HttpMethod.PATCH.equals(method);
+            // Controller chỉ map PATCH/PUT cho đổi trạng thái; GET sẽ 405 ở content-service.
+            return HttpMethod.PUT.equals(method) || HttpMethod.PATCH.equals(method);
         }
         if (POI_DETAIL_OR_PUBLISH.matcher(path).matches()) {
             if (path.endsWith("/publish-status")) {
@@ -221,7 +223,8 @@ public class InternalPathBlockFilter implements GlobalFilter, Ordered {
         if (path.equals("/api/auth/admin/users")) {
             return HttpMethod.GET.equals(method);
         }
-        if (USER_ROLE.matcher(path).matches() || USER_STATUS.matcher(path).matches()) {
+        if (USER_ROLE.matcher(path).matches() || USER_STATUS.matcher(path).matches() || USER_PLAN.matcher(path).matches()) {
+            // USER_PLAN: AdminUserController#changePlan chỉ map PATCH/PUT (không có GET).
             return HttpMethod.GET.equals(method) || HttpMethod.PUT.equals(method) || HttpMethod.PATCH.equals(method);
         }
         if (USER_DETAIL.matcher(path).matches()) {

@@ -1,6 +1,6 @@
 import React, { FormEvent, useEffect, useRef, useState } from 'react';
 import { Eye, ScanLine } from 'lucide-react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, Link } from 'react-router-dom';
 import { normalizeApiError } from '../../api/errors';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
@@ -205,6 +205,10 @@ export const LoginForm: React.FC<LoginFormProps> = ({
             >
               {t.auth.createAccount}
             </button>
+          </p>
+
+          <p className="af-alt" style={{ fontSize: '0.8rem', marginTop: 10, opacity: 0.8 }}>
+            Xem <Link to="/chinh-sach-quyen-rieng-tu" className="af-link">Chính sách quyền riêng tư</Link> của Echora.
           </p>
 
           {onGuestSuccess && !guestMode && (

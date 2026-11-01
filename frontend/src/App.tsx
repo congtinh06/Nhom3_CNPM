@@ -23,6 +23,7 @@ import { PaymentResultPage } from './pages/PaymentResultPage';
 import { VietQrPage } from './pages/VietQrPage';
 import { GuidePage } from './pages/GuidePage';
 import { ContactPage } from './pages/ContactPage';
+import { PrivacyPolicyPage } from './pages/PrivacyPolicyPage';
 import { NewsListPage } from './pages/NewsListPage';
 import { NewsDetailPage } from './pages/NewsDetailPage';
 import { PremiumPage } from './pages/PremiumPage';
@@ -181,6 +182,7 @@ const AppContent: React.FC = () => {
             <Route path="/tin-tuc/:slug" element={<NewsDetailPage />} />
             <Route path="/huong-dan" element={<GuidePage />} />
             <Route path="/lien-he" element={<ContactPage />} />
+            <Route path="/chinh-sach-quyen-rieng-tu" element={<PrivacyPolicyPage />} />
             <Route path="/nang-cap" element={<PremiumPage />} />
 
             {/* Product detail routes (all legacy paths stay real) */}

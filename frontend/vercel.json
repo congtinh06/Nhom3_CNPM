@@ -29,7 +29,7 @@
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "https://affection-smokiness-watch.ngrok-free.dev/api/$1",
+      "dest": "https://YOUR_BACKEND_URL_HERE/api/$1",
       "transforms": [
         {
           "type": "request.headers",
@@ -43,7 +43,7 @@
     },
     {
       "src": "/img/products/(.*)",
-      "dest": "https://affection-smokiness-watch.ngrok-free.dev/img/products/$1",
+      "dest": "https://YOUR_BACKEND_URL_HERE/img/products/$1",
       "transforms": [
         {
           "type": "request.headers",

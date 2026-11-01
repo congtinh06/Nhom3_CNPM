@@ -39,6 +39,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -249,5 +250,47 @@ class PoiAdminControllerTest {
                 .andExpect(jsonPath("$.status").value(409))
                 .andExpect(jsonPath("$.message")
                         .value("Nội dung đã được người khác cập nhật. Vui lòng tải lại trang."));
+    }
+
+    @Test
+    @DisplayName("PATCH /api/content/admin/pois/{id}/status: ADMIN -> 200 kèm trạng thái mới")
+    void testChangeStatus_Returns200() throws Exception {
+        when(poiContentService.changeStatus(100L, "INACTIVE"))
+                .thenReturn(AdminPoiDetailDto.builder()
+                        .id(100L).code("POI_TEST_01").status("INACTIVE").version(1L)
+                        .publishStatus("PUBLISHED")
+                        .translations(Map.of())
+                        .build());
+
+        adminMockMvc.perform(patch("/api/content/admin/pois/{id}/status", 100L)
+                        .header(AdminRoleFilter.HEADER_ROLE, "ADMIN")
+                        .header(AdminRoleFilter.HEADER_INTERNAL_API_KEY, VALID_KEY)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"status\":\"INACTIVE\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("INACTIVE"))
+                .andExpect(jsonPath("$.id").value(100));
+    }
+
+    @Test
+    @DisplayName("PATCH /api/content/admin/pois/{id}/status: giá trị lạ -> 400, không gọi service")
+    void testChangeStatus_InvalidValue_Returns400() throws Exception {
+        adminMockMvc.perform(patch("/api/content/admin/pois/{id}/status", 100L)
+                        .header(AdminRoleFilter.HEADER_ROLE, "ADMIN")
+                        .header(AdminRoleFilter.HEADER_INTERNAL_API_KEY, VALID_KEY)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"status\":\"DELETED\"}"))
+                .andExpect(status().isBadRequest());
+
+        verify(poiContentService, org.mockito.Mockito.never()).changeStatus(any(), any());
+    }
+
+    @Test
+    @DisplayName("PATCH /api/content/admin/pois/{id}/status: thiếu role ADMIN -> 403")
+    void testChangeStatus_MissingRole_Returns403() throws Exception {
+        adminMockMvc.perform(patch("/api/content/admin/pois/{id}/status", 100L)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"status\":\"INACTIVE\"}"))
+                .andExpect(status().isForbidden());
     }
 }

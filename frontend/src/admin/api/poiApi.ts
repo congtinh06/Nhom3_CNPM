@@ -58,4 +58,19 @@ export const poiApi = {
     );
     return response.data;
   },
+
+  /**
+   * Đổi trạng thái hiển thị của POI. INACTIVE = ẩn khỏi bản đồ/API công khai.
+   * Tách khỏi updatePoi nên không cần gửi kèm version.
+   */
+  updatePoiStatus: async (
+    id: number,
+    status: 'ACTIVE' | 'INACTIVE' | 'MAINTENANCE'
+  ): Promise<AdminPoiDetail> => {
+    const response = await adminClient.patch<AdminPoiDetail>(
+      `/api/content/admin/pois/${id}/status`,
+      { status }
+    );
+    return response.data;
+  },
 };

@@ -50,6 +50,12 @@ public interface PoiContentService {
 
     AdminPoiDetailDto updatePoi(Long id, UpdatePoiRequest request);
 
+    /**
+     * Đổi trạng thái hiển thị của POI (ACTIVE / INACTIVE / MAINTENANCE).
+     * Ẩn POI (INACTIVE) sẽ loại nó khỏi mọi API công khai ngay lập tức.
+     */
+    AdminPoiDetailDto changeStatus(Long id, String status);
+
     PoiPublishStatusDto getPublishStatus(Long poiId);
 
     List<PoiPublishStatusDto> getPublishStatuses(String status);

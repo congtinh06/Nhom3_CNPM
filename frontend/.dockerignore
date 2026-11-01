@@ -1,5 +1,10 @@
 node_modules
 dist
 .git
-.env.local
+# Không đưa file .env cục bộ vào image: Vite sẽ inline mọi VITE_* vào bundle
+# (ví dụ VITE_USE_SAMPLE_DATA=true khiến bản production chạy bằng dữ liệu mẫu).
+# Truyền cấu hình qua --build-arg (xem Dockerfile) hoặc biến môi trường CI.
+.env
+.env.*
+!.env.example
 *.log

@@ -8,6 +8,7 @@ vi.mock('../admin/api/adminClient', () => ({
     get: vi.fn(),
     post: vi.fn(),
     put: vi.fn(),
+    patch: vi.fn(),
   },
 }));
 
@@ -99,5 +100,13 @@ describe('poiApi', () => {
     vi.mocked(adminClient.post).mockResolvedValueOnce({ data: {} });
     await poiApi.republish(9);
     expect(adminClient.post).toHaveBeenCalledWith('/api/content/admin/pois/9/republish');
+  });
+
+  it('updatePoiStatus: gửi PATCH tới /api/content/admin/pois/:id/status', async () => {
+    vi.mocked(adminClient.patch).mockResolvedValueOnce({ data: {} });
+    await poiApi.updatePoiStatus(9, 'INACTIVE');
+    expect(adminClient.patch).toHaveBeenCalledWith('/api/content/admin/pois/9/status', {
+      status: 'INACTIVE',
+    });
   });
 });

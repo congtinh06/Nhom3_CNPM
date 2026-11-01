@@ -11,7 +11,8 @@
     "test": "vitest run",
     "lint": "eslint src",
     "check:spa-routes": "node scripts/check-spa-routes.mjs",
-    "prebuild-vercel": "node scripts/prebuild-vercel.mjs"
+    "prebuild-vercel": "node scripts/prebuild-vercel.mjs",
+    "build:vercel": "node scripts/prebuild-vercel.mjs && tsc && vite build"
   },
   "dependencies": {
     "@types/leaflet": "^1.9.22",

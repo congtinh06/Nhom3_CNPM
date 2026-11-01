@@ -44,7 +44,8 @@ app:
     poi-price: ${ORDER_PREMIUM_POI_PRICE:100000}
     access-days: ${ORDER_PREMIUM_ACCESS_DAYS:365}
   payments:
-    mock-enabled: ${PAYMENTS_MOCK_ENABLED:true}
+    # Mặc định TẮT. Bật bằng PAYMENTS_MOCK_ENABLED=true (chỉ dùng cho dev/demo).
+    mock-enabled: ${PAYMENTS_MOCK_ENABLED:false}
   vnpay:
     tmn-code: ${VNPAY_TMN_CODE:}
     hash-secret: ${VNPAY_HASH_SECRET:}

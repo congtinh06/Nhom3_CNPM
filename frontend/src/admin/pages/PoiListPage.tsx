@@ -43,6 +43,7 @@ export const PoiListPage: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<PoiStatusFilterValue>('');
   const [languageFilter, setLanguageFilter] = useState<PoiLanguageFilterValue>('');
   const [page, setPage] = useState(0);
+  const [statusUpdatingId, setStatusUpdatingId] = useState<number | null>(null);
 
   useEffect(() => {
     poiApi
@@ -122,11 +123,23 @@ export const PoiListPage: React.FC = () => {
     fetchList();
   }, [fetchList]);
 
+  const handleToggleVisibility = async (poi: AdminPoiListItem) => {
+    const nextStatus = (poi.status || '').toUpperCase() === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
+    setStatusUpdatingId(poi.id);
+    setError(null);
+    try {
+      await poiApi.updatePoiStatus(poi.id, nextStatus);
+      await fetchList();
+    } catch (err) {
+      setError(normalizeAdminError(err).message);
+    } finally {
+      setStatusUpdatingId(null);
+    }
+  };
+
   const hasActiveFilters = Boolean(
     searchInput.trim() || zoneFilter || routeFilter || statusFilter || languageFilter
-  );
-
-  const handleClearFilters = () => {
+  );  const handleClearFilters = () => {
     setSearchInput('');
     setSearch('');
     setZoneFilter('');
@@ -232,18 +245,31 @@ export const PoiListPage: React.FC = () => {
       key: 'actions',
       title: 'Thao tác',
       align: 'right',
-      width: '100px',
-      render: (poi) => (
-        <div className="adm-row-actions">
-          <Link
-            to={`/quan-tri/diem-thuyet-minh/${poi.id}`}
-            className="adm-btn adm-btn-secondary adm-btn-sm"
-            aria-label={`Chỉnh sửa ${poi.name}`}
-          >
-            Sửa
-          </Link>
-        </div>
-      ),
+      width: '160px',
+      render: (poi) => {
+        const isActive = (poi.status || '').toUpperCase() === 'ACTIVE';
+        const busy = statusUpdatingId === poi.id;
+        return (
+          <div className="adm-row-actions">
+            <Link
+              to={`/quan-tri/diem-thuyet-minh/${poi.id}`}
+              className="adm-btn adm-btn-secondary adm-btn-sm"
+              aria-label={`Chỉnh sửa ${poi.name}`}
+            >
+              Sửa
+            </Link>
+            <button
+              type="button"
+              className="adm-btn adm-btn-secondary adm-btn-sm"
+              onClick={() => handleToggleVisibility(poi)}
+              disabled={busy}
+              aria-label={`${isActive ? 'Ẩn' : 'Hiện'} ${poi.name}`}
+            >
+              {busy ? 'Đang lưu…' : isActive ? 'Ẩn' : 'Hiện'}
+            </button>
+          </div>
+        );
+      },
     },
   ];
 

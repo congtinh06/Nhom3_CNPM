@@ -14,6 +14,7 @@ import com.echora.content.dto.PoiPremiumPriceDto;
 import com.echora.content.dto.PoiPublishStatusDto;
 import com.echora.content.dto.PoiSummaryDto;
 import com.echora.content.dto.UpdatePoiRequest;
+import com.echora.content.dto.UpdatePoiStatusRequest;
 import com.echora.content.service.PoiContentService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Pattern;
@@ -120,6 +121,16 @@ public class PoiController {
             @PathVariable Long id,
             @Valid @RequestBody UpdatePoiRequest request) {
         return ResponseEntity.ok(poiContentService.updatePoi(id, request));
+    }
+
+    // Ẩn/hiện/tạm dừng một POI. Tách khỏi PUT nội dung nên không cần gửi kèm version.
+    @RequestMapping(
+            value = "/api/content/admin/pois/{id}/status",
+            method = {RequestMethod.PATCH, RequestMethod.PUT})
+    public ResponseEntity<AdminPoiDetailDto> changePoiStatus(
+            @PathVariable Long id,
+            @Valid @RequestBody UpdatePoiStatusRequest request) {
+        return ResponseEntity.ok(poiContentService.changeStatus(id, request.getStatus()));
     }
 
     // Danh sách POI theo trạng thái gửi event (mặc định FAILED) để admin biết POI nào kẹt

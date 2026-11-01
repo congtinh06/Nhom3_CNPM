@@ -310,7 +310,8 @@ services:
       ORDER_FREE_SHIPPING_THRESHOLD: ${ORDER_FREE_SHIPPING_THRESHOLD:-50000}
       ORDER_PREMIUM_PRICE: ${ORDER_PREMIUM_PRICE:-500000}
       ORDER_PREMIUM_POI_PRICE: ${ORDER_PREMIUM_POI_PRICE:-100000}
-      PAYMENTS_MOCK_ENABLED: ${PAYMENTS_MOCK_ENABLED:-true}
+      # TẮT bypass thanh toán mock trong production. Chỉ bật khi demo offline.
+      PAYMENTS_MOCK_ENABLED: ${PAYMENTS_MOCK_ENABLED:-false}
       VNPAY_TMN_CODE: ${VNPAY_TMN_CODE:-}
       VNPAY_HASH_SECRET: ${VNPAY_HASH_SECRET:-}
       VNPAY_PAY_URL: ${VNPAY_PAY_URL:-https://sandbox.vnpayment.vn/paymentv2/vpcpay.html}
