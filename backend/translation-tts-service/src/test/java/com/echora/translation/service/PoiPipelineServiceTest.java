@@ -232,10 +232,11 @@ class PoiPipelineServiceTest {
         String expectedHash = ContentHashUtils.computeHash("en", authoredTitle, authoredSummary, authoredDesc, null);
         assertEquals(expectedHash, enReady.getContentHash());
 
-        // TTS chỉ đánh tiếng tiêu đề + mô tả
+        // D1-Fix Q3: TTS giờ đánh tiếng title + summary + description (+ historicalSignificance nếu có)
         ArgumentCaptor<String> spokenCaptor = ArgumentCaptor.forClass(String.class);
         verify(audioStorageService).storeAudio(eq(909L), eq("en"), eq(expectedHash), spokenCaptor.capture());
-        assertEquals(authoredTitle + "\n\n" + authoredDesc, spokenCaptor.getValue());
+        String expectedSpoken = authoredTitle + "\n\n" + authoredSummary + "\n\n" + authoredDesc;
+        assertEquals(expectedSpoken, spokenCaptor.getValue());
     }
 
     @Test

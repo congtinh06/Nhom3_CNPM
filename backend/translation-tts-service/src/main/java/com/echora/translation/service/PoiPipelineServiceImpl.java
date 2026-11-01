@@ -207,8 +207,8 @@ public class PoiPipelineServiceImpl implements PoiPipelineService {
             }
         }
 
-        // 8. TTS & Audio Storage (chỉ đọc tiêu đề + mô tả)
-        String spokenText = TtsTextBuilder.buildText(targetTitle, targetDescription);
+        // 8. TTS & Audio Storage (D1-Fix Q3: include title, summary, description, historicalSignificance)
+        String spokenText = TtsTextBuilder.buildText(targetTitle, targetSummary, targetDescription, targetHistorical);
         eventPublisher.publishAudioProgress(PoiAudioProgressEvent.builder()
                 .poiId(event.getPoiId())
                 .languageCode(lang)
