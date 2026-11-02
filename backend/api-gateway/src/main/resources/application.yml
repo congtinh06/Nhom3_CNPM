@@ -72,6 +72,13 @@ spring:
           metadata:
             connect-timeout: ${GATEWAY_CONNECT_TIMEOUT_MS:3000}
             response-timeout: ${GATEWAY_ORDER_RESPONSE_TIMEOUT_MS:15000}
+        - id: api-docs
+          uri: ${CONTENT_SERVICE_URL:http://localhost:8085}
+          predicates:
+            - Path=/v3/api-docs/**
+          metadata:
+            connect-timeout: ${GATEWAY_CONNECT_TIMEOUT_MS:3000}
+            response-timeout: ${GATEWAY_CONTENT_RESPONSE_TIMEOUT_MS:15000}
 
 frontend:
   url: ${FRONTEND_URL:http://localhost:5173}

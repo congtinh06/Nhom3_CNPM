@@ -82,6 +82,12 @@ Hệ thống được thiết kế theo kiến trúc Microservices phân tán, c
 
 > Ngoài các dịch vụ trong sơ đồ, hệ thống còn có **`order-service`** (Port: `8087`) phụ trách giỏ hàng, đơn hàng và thanh toán VNPAY.
 
+### 3.1. Contract API (OpenAPI / Swagger)
+
+- Tất cả backend service (auth, content, location, translation-tts, analytics, order, api-gateway) cài `springdoc-openapi` 2.6.0 (webmvc-ui cho service servlet, webflux-ui cho gateway).
+- api-gateway route: `Path=/v3/api-docs/**` → content-service.
+- Endpoint đang chạy thật: `GET http://localhost:18080/v3/api-docs` qua gateway (xác nhận **200**; payload chứa các path như `/api/content/pois/guide`, `/api/content/pois/{id}`, `/api/orders/**` và schema DTO tương ứng).
+
 ```text
 Cổng host mặc định:
 - api-gateway: 18080 (điều khiển qua GATEWAY_PORT trong .env)
