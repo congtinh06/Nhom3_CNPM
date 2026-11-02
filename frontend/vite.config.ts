@@ -52,6 +52,14 @@ export default defineConfig(({ mode }) => {
       coverage: {
         reporter: ['text', 'json', 'html'],
         reportsDirectory: './coverage',
+        // Gate cho `npm run test:coverage`. Ngưỡng dưới số liệu thật 76.76% lines / 72.24% branches
+        // / 59.58% funcs (run 2026-11-02), đặt lỏng để tránh chặn CI khi coverage tăng thêm.
+        thresholds: {
+          statements: 70,
+          branches: 65,
+          functions: 50,
+          lines: 70,
+        },
       },
     },
     build: {
