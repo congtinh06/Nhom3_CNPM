@@ -2,7 +2,7 @@ name: Translation TTS Service CI
 
 on:
   push:
-    branches: [main, master, 'refactor/**']
+    branches: [main, master, 'fix/**', 'feat/**', 'refactor/**']
     paths:
       - 'backend/translation-tts-service/**'
       - '.github/workflows/translation-tts-service.yml'

@@ -2,7 +2,7 @@ name: Location Service CI
 
 on:
   push:
-    branches: [main, master, 'refactor/**']
+    branches: [main, master, 'fix/**', 'feat/**', 'refactor/**']
     paths:
       - 'backend/location-service/**'
       - '.github/workflows/location-service.yml'

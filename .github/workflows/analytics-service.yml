@@ -2,7 +2,7 @@ name: Analytics Service CI
 
 on:
   push:
-    branches: [main, master, 'refactor/**']
+    branches: [main, master, 'fix/**', 'feat/**', 'refactor/**']
     paths:
       - 'backend/analytics-service/**'
       - '.github/workflows/analytics-service.yml'

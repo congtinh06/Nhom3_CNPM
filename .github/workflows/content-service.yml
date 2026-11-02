@@ -2,7 +2,7 @@ name: Content Service CI
 
 on:
   push:
-    branches: [main, master, 'refactor/**']
+    branches: [main, master, 'fix/**', 'feat/**', 'refactor/**']
     paths:
       - 'backend/content-service/**'
       - '.github/workflows/content-service.yml'

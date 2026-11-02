@@ -2,7 +2,7 @@ name: Config & Environment Check
 
 on:
   push:
-    branches: [main, master, 'fix/**', 'refactor/**']
+    branches: [main, master, 'fix/**', 'feat/**', 'refactor/**']
     paths:
       - '.env.example'
       - 'docker-compose*.yml'

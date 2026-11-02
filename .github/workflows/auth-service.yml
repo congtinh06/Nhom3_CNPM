@@ -2,7 +2,7 @@ name: Auth Service CI
 
 on:
   push:
-    branches: [main, master, 'refactor/**']
+    branches: [main, master, 'fix/**', 'feat/**', 'refactor/**']
     paths:
       - 'backend/auth-service/**'
       - '.github/workflows/auth-service.yml'
