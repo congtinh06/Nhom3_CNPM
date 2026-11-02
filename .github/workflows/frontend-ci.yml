@@ -82,5 +82,10 @@ jobs:
       - name: Check SPA Route Config
         run: npm run check:spa-routes
 
+      - name: Verify Vercel Prebuild Replaces Placeholder
+        env:
+          BACKEND_ORIGIN: https://api.echora.example
+        run: npm run prebuild-vercel
+
       - name: Build Production Assets & Typecheck
         run: npm run build

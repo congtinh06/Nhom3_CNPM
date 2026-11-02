@@ -26,21 +26,19 @@ const root = join(__dirname, '..');
 const backendOrigin = process.env.BACKEND_ORIGIN;
 
 const vercelPath = join(root, 'vercel.json');
-const raw = readFileSync(vercelPath, 'utf8');
-const hasPlaceholder =
-  raw.includes('BACKEND_ORIGIN_PLACEHOLDER') || raw.includes('YOUR_BACKEND_URL_HERE');
+const raw = readFileSync(vercelPath, 'utf8').replace(/^\uFEFF/, '');
 
-if (!backendOrigin) {
-  if (hasPlaceholder) {
-    console.error(
-      '[prebuild-vercel] BACKEND_ORIGIN chưa được đặt nhưng vercel.json vẫn còn ' +
-        'BACKEND_ORIGIN_PLACEHOLDER. Bản deploy sẽ không gọi được API.\n' +
-        '  Chạy: BACKEND_ORIGIN=https://api-cua-ban.example.com npm run build:vercel'
-    );
-    process.exit(1);
-  }
-  console.log('[prebuild-vercel] BACKEND_ORIGIN không được đặt — giữ nguyên vercel.json hiện tại.');
-  process.exit(0);
+const invalidOrigin =
+  !backendOrigin ||
+  backendOrigin === 'BACKEND_ORIGIN_PLACEHOLDER' ||
+  backendOrigin === 'YOUR_BACKEND_URL_HERE';
+
+if (invalidOrigin) {
+  console.error(
+    '[prebuild-vercel] BACKEND_ORIGIN chưa được đặt hoặc vẫn là placeholder.\n' +
+      '  Chạy: BACKEND_ORIGIN=https://api-cua-ban.example.com npm run build:vercel'
+  );
+  process.exit(1);
 }
 
 // Validate URL cơ bản

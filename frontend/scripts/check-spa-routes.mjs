@@ -5,7 +5,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
-const read = (file) => readFileSync(join(root, file), 'utf8');
+const read = (file) => readFileSync(join(root, file), 'utf8').replace(/^\uFEFF/, '');
 
 const app = read('src/App.tsx');
 const nginx = read('nginx.conf');
