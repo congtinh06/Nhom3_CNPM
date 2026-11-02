@@ -112,3 +112,81 @@ jobs:
             ${{ steps.meta.outputs.image }}:${{ steps.meta.outputs.sha-tag }}
           cache-from: type=gha,scope=${{ matrix.service }}
           cache-to: type=gha,mode=max,scope=${{ matrix.service }}
+
+  # ── Deploy: kéo image GHCR về host đích, health check và rollback ───────────
+  # Bỏ qua an toàn nếu chưa cấu hình secret. Khi có secret, job này deploy thật.
+  deploy:
+    name: Deploy to production host
+    needs: build-push
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    environment:
+      name: production
+    env:
+      DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+      DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+      DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+      DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
+      DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+      DEPLOY_HEALTH_URL: ${{ secrets.DEPLOY_HEALTH_URL }}
+    steps:
+      - name: Detect deployment target
+        id: target
+        run: |
+          if [ -z "${DEPLOY_HOST}" ] || [ -z "${DEPLOY_SSH_KEY}" ]; then
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "::notice title=Deploy skipped::DEPLOY_HOST/DEPLOY_SSH_KEY chưa cấu hình; chỉ build và push image."
+          else
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Resolve image tag
+        id: meta
+        if: steps.target.outputs.enabled == 'true'
+        run: echo "tag=sha-$(echo "${GITHUB_SHA}" | cut -c1-7)" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout
+        if: steps.target.outputs.enabled == 'true'
+        uses: actions/checkout@v4
+
+      - name: Set up SSH agent
+        if: steps.target.outputs.enabled == 'true'
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.DEPLOY_SSH_KEY }}
+
+      - name: Trust remote host key
+        if: steps.target.outputs.enabled == 'true'
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -p "${DEPLOY_PORT:-22}" -H "${DEPLOY_HOST}" >> ~/.ssh/known_hosts
+
+      - name: Deploy over SSH
+        if: steps.target.outputs.enabled == 'true'
+        env:
+          IMAGE_TAG: ${{ steps.meta.outputs.tag }}
+          HEALTH_URL: ${{ secrets.DEPLOY_HEALTH_URL }}
+        run: |
+          set -euo pipefail
+          REMOTE_HEALTH="${HEALTH_URL:-http://localhost:18080/actuator/health}"
+          ssh -p "${DEPLOY_PORT:-22}" "${DEPLOY_USER}@${DEPLOY_HOST}" \
+            "cd '${DEPLOY_PATH:-~/echora}' && git fetch --prune origin main && git reset --hard origin/main && IMAGE_TAG='${IMAGE_TAG}' HEALTH_URL='${REMOTE_HEALTH}' bash scripts/deploy/remote-deploy.sh"
+
+      - name: Smoke test deployed endpoint
+        if: steps.target.outputs.enabled == 'true'
+        env:
+          HEALTH_URL: ${{ secrets.DEPLOY_HEALTH_URL }}
+        run: |
+          set -euo pipefail
+          URL="${HEALTH_URL:-http://localhost:18080/actuator/health}"
+          for attempt in $(seq 1 12); do
+            if curl -fsS --max-time 10 "$URL"; then
+              echo "Smoke test OK: $URL"
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "Smoke test thất bại: $URL" >&2
+          exit 1
+

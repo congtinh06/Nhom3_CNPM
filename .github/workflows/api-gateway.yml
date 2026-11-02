@@ -41,6 +41,14 @@ jobs:
       - name: Run tests
         run: mvn -B test
 
+      - name: Upload JaCoCo Report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ${{ github.workflow }}-jacoco
+          path: backend/api-gateway/target/site/jacoco/
+          if-no-files-found: ignore
+
   docker-build:
     name: Build image api-gateway
     runs-on: ubuntu-24.04

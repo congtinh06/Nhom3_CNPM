@@ -53,6 +53,9 @@ internal:
 app:
   auth-service:
     url: ${AUTH_SERVICE_URL:http://localhost:8086}
+    # Timeout cho RestClient kiểm tra entitlement khi stream audio.
+    connect-timeout-ms: ${AUTH_CONNECT_TIMEOUT_MS:2000}
+    read-timeout-ms: ${AUTH_READ_TIMEOUT_MS:3000}
   rabbitmq:
     exchange: ${RABBITMQ_EXCHANGE:echora.topic}
     queues:

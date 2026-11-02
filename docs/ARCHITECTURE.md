@@ -145,8 +145,8 @@ sequenceDiagram
 
     alt audioStatus === READY
         FE->>GW: GET /api/tts/audio/{file}
-        GW->>CS: AudioEntitlementFilter kiểm tra quyền
-        CS-->>FE: audio/mpeg
+        GW->>TTS: AudioEntitlementFilter kiểm tra quyền
+        TTS-->>FE: audio/mpeg
         FE->>User: Phát audio Edge-TTS
     else Chưa READY
         FE->>User: speechSynthesis fallback + thông báo

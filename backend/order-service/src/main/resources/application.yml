@@ -34,8 +34,13 @@ internal:
 app:
   content-service:
     url: ${CONTENT_SERVICE_URL:http://localhost:8085}
+    # Timeout cho RestClient đọc giá sản phẩm/POI (tránh treo checkout).
+    connect-timeout-ms: ${CONTENT_CONNECT_TIMEOUT_MS:2000}
+    read-timeout-ms: ${CONTENT_READ_TIMEOUT_MS:3000}
   auth-service:
     url: ${AUTH_SERVICE_URL:http://localhost:8086}
+    connect-timeout-ms: ${AUTH_CONNECT_TIMEOUT_MS:2000}
+    read-timeout-ms: ${AUTH_READ_TIMEOUT_MS:3000}
   pricing:
     shipping-fee: ${ORDER_SHIPPING_FEE:20000}
     free-shipping-threshold: ${ORDER_FREE_SHIPPING_THRESHOLD:50000}

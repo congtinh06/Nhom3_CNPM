@@ -8,7 +8,7 @@
 [![SQL Server 2022](https://img.shields.io/badge/SQL_Server-2022-CC292B?logo=microsoftsqlserver&logoColor=white)](https://www.microsoft.com/sql-server)
 [![RabbitMQ](https://img.shields.io/badge/RabbitMQ-3.13-FF6600?logo=rabbitmq&logoColor=white)](https://www.rabbitmq.com/)
 [![Leaflet](https://img.shields.io/badge/Leaflet-1.9.4-199900?logo=leaflet&logoColor=white)](https://leafletjs.com/)
-[![Vitest](https://img.shields.io/badge/Vitest-582_Tests_Passed-green?logo=vitest&logoColor=white)](https://vitest.dev/)
+[![Vitest](https://img.shields.io/badge/Vitest-622_Tests_Passed-green?logo=vitest&logoColor=white)](https://vitest.dev/)
 [![Frontend CI](https://github.com/congtinh06/Nhom3_CNPM/actions/workflows/frontend-ci.yml/badge.svg)](https://github.com/congtinh06/Nhom3_CNPM/actions/workflows/frontend-ci.yml)
 [![CD](https://github.com/congtinh06/Nhom3_CNPM/actions/workflows/cd.yml/badge.svg)](https://github.com/congtinh06/Nhom3_CNPM/actions/workflows/cd.yml)
 
@@ -154,21 +154,29 @@ git pull origin main
 ---
 
 ### 4.3. Bước 2: Thiết lập file cấu hình môi trường (.env)
-Dự án sử dụng cơ chế bảo mật thông qua biến môi trường. Tệp `.env.example` đã được nhóm điền sẵn đầy đủ toàn bộ cấu hình mẫu, mật khẩu CSDL và khóa bí mật dùng cho môi trường nội bộ. Thành viên mới chỉ cần sao chép sang `.env`:
 
-* **Trên Windows PowerShell:**
+**Cách khuyến nghị — một lệnh, secret ngẫu nhiên:**
+
 ```powershell
-Copy-Item .env.example .env
-Copy-Item frontend\.env.example frontend\.env
+# Windows PowerShell (từ thư mục gốc repo)
+powershell -ExecutionPolicy Bypass -File scripts/bootstrap.ps1
 ```
 
-* **Trên Linux / macOS / Git Bash:**
 ```bash
-cp .env.example .env
-cp frontend/.env.example frontend/.env
+# Linux / macOS / Git Bash
+bash scripts/bootstrap.sh
 ```
 
-> **Ghi chú:** Khởi tạo file `.env` từ `.env.example` và đặt các giá trị bí mật (mật khẩu CSDL, tài khoản admin, khóa JWT, RabbitMQ...) theo hướng dẫn trước khi khởi động.
+Script `scripts/bootstrap.ps1|sh` sẽ: sinh `.env` + `frontend/.env`, kiểm tra cấu hình bằng `scripts/check-env.mjs`, rồi chạy `docker compose up -d --build`. Không cần sửa tay file `.env`.
+
+**Cách thủ công (nếu muốn tự chỉnh cấu hình):**
+
+```powershell
+node scripts/setup-env.mjs     # sinh .env với secret ngẫu nhiên
+node scripts/check-env.mjs     # kiểm tra trước khi chạy
+```
+
+> **Ghi chú:** `.env.example` chứa placeholder hợp lệ để `Copy-Item .env.example .env` vẫn khởi động được ở local. Tuyệt đối không dùng nguyên trạng cho production. `JWT_SECRET` phải dài tối thiểu 32 ký tự, nếu không `auth-service` sẽ từ chối khởi động (fail-closed).
 
 ---
 
@@ -314,7 +322,7 @@ Dự án tích hợp bộ kiểm thử tự động toàn diện đảm bảo đ
 ```bash
 cd frontend
 
-# Chạy toàn bộ 74 test suites (582 unit & integration tests)
+# Chạy toàn bộ 77 test suites (622 unit & integration tests)
 npm test
 
 # Kiểm tra danh sách route SPA khớp giữa App.tsx, nginx.conf và vercel.json
@@ -336,7 +344,7 @@ mvn -f backend/order-service/pom.xml test
 mvn -f backend/api-gateway/pom.xml test
 ```
 
-Backend hiện có 68 file kiểm thử: content 19, translation-tts 16, auth 13, analytics 12, location 4, api-gateway 2, order 2. Một số test tích hợp cần Docker/Testcontainers; 8 workflow trong `.github/workflows/` (frontend + 7 microservice) chạy test và build Docker image trên CI.
+Backend hiện có 70 file kiểm thử (708 test, 0 failure): content 19, translation-tts 16, auth 13, analytics 12, location 5, api-gateway 2, order 3. Frontend có 77 file test với 622 test (Vitest + React Testing Library). Repo có 10 workflow trong `.github/workflows/` (7 microservice, frontend, `config-check` kiểm tra clean-machine bootstrap, và `cd` build/push image + deploy khi cấu hình secret).
 
 ### Kiểm tra trạng thái audio trước demo
 ```powershell

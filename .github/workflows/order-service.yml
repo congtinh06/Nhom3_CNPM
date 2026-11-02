@@ -45,6 +45,14 @@ jobs:
         uses: actions/upload-artifact@v4
         if: always()
         with:
+          name: ${{ github.workflow }}-jacoco
+          path: backend/order-service/target/site/jacoco/
+          if-no-files-found: ignore
+
+      - name: Upload JaCoCo Report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
           name: order-service-jacoco-report
           path: backend/order-service/target/site/jacoco/
 

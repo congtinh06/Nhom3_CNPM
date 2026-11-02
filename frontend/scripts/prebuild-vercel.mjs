@@ -27,7 +27,8 @@ const backendOrigin = process.env.BACKEND_ORIGIN;
 
 const vercelPath = join(root, 'vercel.json');
 const raw = readFileSync(vercelPath, 'utf8');
-const hasPlaceholder = raw.includes('BACKEND_ORIGIN_PLACEHOLDER');
+const hasPlaceholder =
+  raw.includes('BACKEND_ORIGIN_PLACEHOLDER') || raw.includes('YOUR_BACKEND_URL_HERE');
 
 if (!backendOrigin) {
   if (hasPlaceholder) {
@@ -54,7 +55,7 @@ const config = JSON.parse(raw);
 
 let changed = false;
 for (const route of config.routes ?? []) {
-  if (typeof route.dest === 'string' && route.dest.match(/ngrok|BACKEND_ORIGIN_PLACEHOLDER/)) {
+  if (typeof route.dest === 'string' && route.dest.match(/ngrok|BACKEND_ORIGIN_PLACEHOLDER|YOUR_BACKEND_URL_HERE/)) {
     // Thay phần origin cũ bằng origin mới, giữ nguyên path
     const url = new URL(route.dest);
     const newDest = backendOrigin.replace(/\/$/, '') + url.pathname + (url.search || '');

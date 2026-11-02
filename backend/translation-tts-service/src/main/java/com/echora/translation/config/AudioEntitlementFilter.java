@@ -11,6 +11,7 @@ import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.web.client.RestClient;
 
 import java.io.IOException;
@@ -42,8 +43,16 @@ public class AudioEntitlementFilter extends OncePerRequestFilter {
     private final Map<String, CachedGrant> poiGrantCache = new ConcurrentHashMap<>();
 
     public AudioEntitlementFilter(@Value("${app.auth-service.url:http://localhost:8086}") String authBaseUrl,
-                                  @Value("${internal.api-key:}") String expectedApiKey) {
-        this.restClient = RestClient.builder().baseUrl(authBaseUrl).build();
+                                  @Value("${internal.api-key:}") String expectedApiKey,
+                                  @Value("${app.auth-service.connect-timeout-ms:2000}") int connectTimeoutMs,
+                                  @Value("${app.auth-service.read-timeout-ms:3000}") int readTimeoutMs) {
+        SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
+        requestFactory.setConnectTimeout(connectTimeoutMs);
+        requestFactory.setReadTimeout(readTimeoutMs);
+        this.restClient = RestClient.builder()
+                .baseUrl(authBaseUrl)
+                .requestFactory(requestFactory)
+                .build();
         this.expectedApiKey = expectedApiKey;
     }
 

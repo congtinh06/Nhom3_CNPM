@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
@@ -27,8 +28,16 @@ public class InternalPoiEntitlementClient {
     private final Map<Long, CachedPois> purchasedCache = new ConcurrentHashMap<>();
 
     InternalPoiEntitlementClient(@Value("${app.auth-service.url:${AUTH_SERVICE_URL:http://localhost:8086}}") String baseUrl,
-                                 @Value("${internal.api-key:}") String internalApiKey) {
-        this.restClient = RestClient.builder().baseUrl(baseUrl).build();
+                                 @Value("${internal.api-key:}") String internalApiKey,
+                                 @Value("${app.auth-service.connect-timeout-ms:2000}") int connectTimeoutMs,
+                                 @Value("${app.auth-service.read-timeout-ms:3000}") int readTimeoutMs) {
+        SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
+        requestFactory.setConnectTimeout(connectTimeoutMs);
+        requestFactory.setReadTimeout(readTimeoutMs);
+        this.restClient = RestClient.builder()
+                .baseUrl(baseUrl)
+                .requestFactory(requestFactory)
+                .build();
         this.internalApiKey = internalApiKey;
     }
 

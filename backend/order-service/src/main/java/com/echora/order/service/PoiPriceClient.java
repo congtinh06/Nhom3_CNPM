@@ -5,6 +5,7 @@ import com.echora.order.exception.BadRequestException;
 import com.echora.order.exception.ServiceUnavailableException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
@@ -19,8 +20,16 @@ public class PoiPriceClient {
     private final String internalApiKey;
 
     public PoiPriceClient(@Value("${app.content-service.url:http://localhost:8085}") String baseUrl,
-                          @Value("${internal.api-key:}") String internalApiKey) {
-        this.restClient = RestClient.builder().baseUrl(baseUrl).build();
+                          @Value("${internal.api-key:}") String internalApiKey,
+                          @Value("${app.content-service.connect-timeout-ms:2000}") int connectTimeoutMs,
+                          @Value("${app.content-service.read-timeout-ms:3000}") int readTimeoutMs) {
+        SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
+        requestFactory.setConnectTimeout(connectTimeoutMs);
+        requestFactory.setReadTimeout(readTimeoutMs);
+        this.restClient = RestClient.builder()
+                .baseUrl(baseUrl)
+                .requestFactory(requestFactory)
+                .build();
         this.internalApiKey = internalApiKey;
     }
 
