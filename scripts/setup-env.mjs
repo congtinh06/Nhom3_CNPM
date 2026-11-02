@@ -3,7 +3,9 @@
  * setup-env.mjs — Sinh file .env từ .env.example với secret ngẫu nhiên.
  *
  * Mục tiêu: máy sạch chỉ cần 1 lệnh là có cấu hình hợp lệ để `docker compose up`.
- * Script KHÔNG in secret ra stdout và KHÔNG ghi đè .env đang có (trừ khi --force).
+ * Script KHÔNG in secret ra stdout. Nếu .env đã tồn tại, script giữ nguyên giá trị
+ * hiện có và chỉ bổ sung các key còn thiếu từ .env.example (secret thiếu được sinh ngẫu nhiên).
+ * Dùng --force để ghi đè toàn bộ.
  *
  * Cách dùng:
  *   node scripts/setup-env.mjs
@@ -59,7 +61,32 @@ if (!existsSync(examplePath)) {
 }
 
 if (existsSync(envPath) && !force) {
-  console.log('[setup-env] .env đã tồn tại — giữ nguyên. Dùng --force để ghi đè.');
+  const envLines = readFileSync(envPath, 'utf8').replace(/\r\n/g, '\n').split('\n');
+  const present = new Set();
+  for (const line of envLines) {
+    const match = line.match(/^([A-Za-z_][A-Za-z0-9_]*)=/);
+    if (match) present.add(match[1]);
+  }
+
+  const added = [];
+  const additions = [];
+  for (const line of readFileSync(examplePath, 'utf8').replace(/\r\n/g, '\n').split('\n')) {
+    const match = line.match(/^([A-Za-z_][A-Za-z0-9_]*)=/);
+    if (!match || present.has(match[1])) continue;
+    const key = match[1];
+    const value = Object.hasOwn(generated, key) ? generated[key] : line.slice(line.indexOf('=') + 1);
+    additions.push(`${key}=${value}`);
+    added.push(key);
+    present.add(key);
+  }
+
+  if (added.length > 0) {
+    const body = envLines.join('\n').replace(/\n*$/, '');
+    writeFileSync(envPath, `${body}\n${additions.join('\n')}\n`, 'utf8');
+    console.log(`[setup-env] Đã bổ sung ${added.length} key còn thiếu vào .env: ${added.join(', ')}`);
+  } else {
+    console.log('[setup-env] .env đã tồn tại và đủ key — không thay đổi.');
+  }
 } else {
   const lines = readFileSync(examplePath, 'utf8').replace(/\r\n/g, '\n').split('\n');
   for (const [key, value] of Object.entries(generated)) {
