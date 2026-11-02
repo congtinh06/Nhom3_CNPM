@@ -84,8 +84,8 @@ class LocationControllerTest {
                         .param("radius", "500"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status").value(400))
-                .andExpect(jsonPath("$.error").value("Bad Request"))
-                .andExpect(jsonPath("$.message").value("Latitude must be between -90 and 90 degrees"));
+                .andExpect(jsonPath("$.title").value("Bad Request"))
+                .andExpect(jsonPath("$.detail").value("Latitude must be between -90 and 90 degrees"));
     }
 
     @Test
@@ -107,8 +107,8 @@ class LocationControllerTest {
                         .param("radius", "500"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status").value(400))
-                .andExpect(jsonPath("$.error").value("Bad Request"))
-                .andExpect(jsonPath("$.message").value("Parameter 'lat' must be a valid number"));
+                .andExpect(jsonPath("$.title").value("Bad Request"))
+                .andExpect(jsonPath("$.detail").value("Parameter 'lat' must be a valid number"));
     }
 
     @Test
@@ -171,7 +171,7 @@ class LocationControllerTest {
         mockMvc.perform(get("/api/location/qr/unknown-token"))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.status").value(404))
-                .andExpect(jsonPath("$.error").value("Not Found"));
+                .andExpect(jsonPath("$.title").value("Not Found"));
     }
 
     @Test
@@ -192,8 +192,8 @@ class LocationControllerTest {
                         .param("radius", "500"))
                 .andExpect(status().isServiceUnavailable())
                 .andExpect(jsonPath("$.status").value(503))
-                .andExpect(jsonPath("$.error").value("Service Unavailable"))
-                .andExpect(jsonPath("$.message").value("Content-service is currently unavailable or timed out"))
+                .andExpect(jsonPath("$.title").value("Service Unavailable"))
+                .andExpect(jsonPath("$.detail").value("Content-service is currently unavailable or timed out"))
                 .andExpect(jsonPath("$.trace").doesNotExist());
     }
 
@@ -209,7 +209,7 @@ class LocationControllerTest {
                         .param("radius", "500"))
                 .andExpect(status().isServiceUnavailable())
                 .andExpect(jsonPath("$.status").value(503))
-                .andExpect(jsonPath("$.error").value("Service Unavailable"))
+                .andExpect(jsonPath("$.title").value("Service Unavailable"))
                 .andExpect(jsonPath("$.trace").doesNotExist());
     }
 }

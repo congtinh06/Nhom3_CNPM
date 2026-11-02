@@ -226,8 +226,8 @@ class AuthServiceIntegrationTest {
         assertThat(unknownEmail.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
         // Cùng một thông điệp -> không phân biệt được email có tồn tại hay không
         // (chỉ khác timestamp nên so sánh riêng message)
-        assertThat(json(unknownEmail).get("message").asText())
-                .isEqualTo(json(wrongPassword).get("message").asText());
+        assertThat(json(unknownEmail).get("detail").asText())
+                .isEqualTo(json(wrongPassword).get("detail").asText());
     }
 
     @Test

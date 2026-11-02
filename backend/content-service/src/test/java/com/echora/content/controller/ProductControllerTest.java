@@ -325,7 +325,7 @@ class ProductControllerTest {
                         .content(objectMapper.writeValueAsString(req)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status").value(400))
-                .andExpect(jsonPath("$.details.slug").value("Slug chỉ được chứa chữ thường không dấu, số và dấu gạch ngang"));
+                .andExpect(jsonPath("$.errors.slug").value("Slug chỉ được chứa chữ thường không dấu, số và dấu gạch ngang"));
     }
 
     @Test
@@ -345,7 +345,7 @@ class ProductControllerTest {
                         .content(objectMapper.writeValueAsString(req)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status").value(400))
-                .andExpect(jsonPath("$.details.slug").value("Slug chỉ được chứa chữ thường không dấu, số và dấu gạch ngang"));
+                .andExpect(jsonPath("$.errors.slug").value("Slug chỉ được chứa chữ thường không dấu, số và dấu gạch ngang"));
     }
 
     // --- Admin API Tests: Gateway Credential (Defense-in-Depth) ---

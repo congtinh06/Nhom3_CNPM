@@ -106,8 +106,8 @@ class PoiInternalQrControllerTest {
                         .header(InternalApiKeyFilter.HEADER, VALID_KEY))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.status").value(404))
-                .andExpect(jsonPath("$.error").value("Not Found"))
-                .andExpect(jsonPath("$.message").value("POI not found with QR token: unknown-qr"));
+                .andExpect(jsonPath("$.title").value("Not Found"))
+                .andExpect(jsonPath("$.detail").value("POI not found with QR token: unknown-qr"));
     }
 
     @Test

@@ -1387,11 +1387,11 @@ class ApiGatewayApplicationTest {
         webTestClient.get().uri("/api/location/refused/service")
                 .exchange()
                 .expectStatus().isEqualTo(503)
-                .expectHeader().contentType(MediaType.APPLICATION_JSON)
+                .expectHeader().contentType(MediaType.APPLICATION_PROBLEM_JSON)
                 .expectBody()
                 .jsonPath("$.status").isEqualTo(503)
-                .jsonPath("$.error").isEqualTo("Service Unavailable")
-                .jsonPath("$.message").isEqualTo("Service Unavailable")
+                .jsonPath("$.title").isEqualTo("Service Unavailable")
+                .jsonPath("$.detail").isEqualTo("Service Unavailable")
                 .jsonPath("$.trace").doesNotExist();
     }
 
@@ -1400,11 +1400,11 @@ class ApiGatewayApplicationTest {
         webTestClient.get().uri("/api/location/timeout")
                 .exchange()
                 .expectStatus().isEqualTo(504)
-                .expectHeader().contentType(MediaType.APPLICATION_JSON)
+                .expectHeader().contentType(MediaType.APPLICATION_PROBLEM_JSON)
                 .expectBody()
                 .jsonPath("$.status").isEqualTo(504)
-                .jsonPath("$.error").isEqualTo("Gateway Timeout")
-                .jsonPath("$.message").isEqualTo("Gateway Timeout")
+                .jsonPath("$.title").isEqualTo("Gateway Timeout")
+                .jsonPath("$.detail").isEqualTo("Gateway Timeout")
                 .jsonPath("$.trace").doesNotExist();
     }
 
@@ -1413,11 +1413,11 @@ class ApiGatewayApplicationTest {
         webTestClient.get().uri("/api/location/unknown-host/service")
                 .exchange()
                 .expectStatus().isEqualTo(503)
-                .expectHeader().contentType(MediaType.APPLICATION_JSON)
+                .expectHeader().contentType(MediaType.APPLICATION_PROBLEM_JSON)
                 .expectBody()
                 .jsonPath("$.status").isEqualTo(503)
-                .jsonPath("$.error").isEqualTo("Service Unavailable")
-                .jsonPath("$.message").isEqualTo("Service Unavailable")
+                .jsonPath("$.title").isEqualTo("Service Unavailable")
+                .jsonPath("$.detail").isEqualTo("Service Unavailable")
                 .jsonPath("$.trace").doesNotExist();
     }
 
@@ -1426,11 +1426,11 @@ class ApiGatewayApplicationTest {
         webTestClient.get().uri("/api/content/pois/refused-probe")
                 .exchange()
                 .expectStatus().isEqualTo(503)
-                .expectHeader().contentType(MediaType.APPLICATION_JSON)
+                .expectHeader().contentType(MediaType.APPLICATION_PROBLEM_JSON)
                 .expectBody()
                 .jsonPath("$.status").isEqualTo(503)
-                .jsonPath("$.error").isEqualTo("Service Unavailable")
-                .jsonPath("$.message").isEqualTo("Service Unavailable")
+                .jsonPath("$.title").isEqualTo("Service Unavailable")
+                .jsonPath("$.detail").isEqualTo("Service Unavailable")
                 .jsonPath("$.trace").doesNotExist();
     }
 
@@ -1439,11 +1439,11 @@ class ApiGatewayApplicationTest {
         webTestClient.get().uri("/api/location/refused/probe")
                 .exchange()
                 .expectStatus().isEqualTo(503)
-                .expectHeader().contentType(MediaType.APPLICATION_JSON)
+                .expectHeader().contentType(MediaType.APPLICATION_PROBLEM_JSON)
                 .expectBody()
                 .jsonPath("$.status").isEqualTo(503)
-                .jsonPath("$.error").isEqualTo("Service Unavailable")
-                .jsonPath("$.message").isEqualTo("Service Unavailable")
+                .jsonPath("$.title").isEqualTo("Service Unavailable")
+                .jsonPath("$.detail").isEqualTo("Service Unavailable")
                 .jsonPath("$.trace").doesNotExist();
     }
 
@@ -1452,11 +1452,11 @@ class ApiGatewayApplicationTest {
         webTestClient.get().uri("/api/content/pois/slow-probe")
                 .exchange()
                 .expectStatus().isEqualTo(504)
-                .expectHeader().contentType(MediaType.APPLICATION_JSON)
+                .expectHeader().contentType(MediaType.APPLICATION_PROBLEM_JSON)
                 .expectBody()
                 .jsonPath("$.status").isEqualTo(504)
-                .jsonPath("$.error").isEqualTo("Gateway Timeout")
-                .jsonPath("$.message").isEqualTo("Gateway Timeout")
+                .jsonPath("$.title").isEqualTo("Gateway Timeout")
+                .jsonPath("$.detail").isEqualTo("Gateway Timeout")
                 .jsonPath("$.trace").doesNotExist();
     }
 

@@ -140,7 +140,7 @@ class ZoneAdminControllerTest {
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status").value(400))
-                .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("Không thể ngừng hoạt động khu vực")));
+                .andExpect(jsonPath("$.detail").value(org.hamcrest.Matchers.containsString("Không thể ngừng hoạt động khu vực")));
     }
 
     @Test

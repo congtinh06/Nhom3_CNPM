@@ -248,7 +248,7 @@ class PoiAdminControllerTest {
                         .content(objectMapper.writeValueAsString(sampleUpdateRequest(0L))))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.status").value(409))
-                .andExpect(jsonPath("$.message")
+                .andExpect(jsonPath("$.detail")
                         .value("Nội dung đã được người khác cập nhật. Vui lòng tải lại trang."));
     }
 

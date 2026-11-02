@@ -92,7 +92,7 @@ class AdminUserControllerTest {
 
         mockMvc.perform(get("/api/auth/admin/users/99"))
                 .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.message").value("Không tìm thấy người dùng."));
+                .andExpect(jsonPath("$.detail").value("Không tìm thấy người dùng."));
     }
 
     @Test
@@ -134,7 +134,7 @@ class AdminUserControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"role\":\"OWNER\"}"))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message").value("Vai trò không hợp lệ. Chỉ chấp nhận USER hoặc ADMIN."));
+                .andExpect(jsonPath("$.detail").value("Vai trò không hợp lệ. Chỉ chấp nhận USER hoặc ADMIN."));
     }
 
     @Test
@@ -144,7 +144,7 @@ class AdminUserControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"role\":\"\"}"))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.details.role").exists());
+                .andExpect(jsonPath("$.errors.role").exists());
     }
 
     @Test
@@ -157,7 +157,7 @@ class AdminUserControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"role\":\"USER\"}"))
                 .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.message").exists());
+                .andExpect(jsonPath("$.detail").exists());
     }
 
     @Test
@@ -170,6 +170,6 @@ class AdminUserControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"role\":\"USER\"}"))
                 .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.message").exists());
+                .andExpect(jsonPath("$.detail").exists());
     }
 }
