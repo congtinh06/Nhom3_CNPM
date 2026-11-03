@@ -63,22 +63,16 @@ export default defineConfig(({ mode }) => {
       },
     },
     build: {
-      // Tách thư viện lớn khỏi bundle chính để trang du khách tải nhanh hơn.
       rollupOptions: {
         output: {
+          // Giu TOAN BO node_modules trong MOT chunk. Tach react/react-dom ra
+          // chunk rieng se tao vong import: vendor-react -> vendor (scheduler,
+          // object-assign...) -> vendor-react (recharts goi React.forwardRef o
+          // top-level), gay TDZ "Cannot access ... before initialization" va
+          // trang trang hoan toan tren ban production.
           manualChunks(id) {
-            if (!id.includes('node_modules')) return undefined;
-            if (id.includes('react-router')) return 'vendor-router';
-            if (id.includes('node_modules/react-dom/') || id.includes('node_modules/react/')) {
-              return 'vendor-react';
-            }
-            if (id.includes('leaflet')) return 'vendor-map';
-            if (id.includes('recharts') || id.includes('node_modules/d3-')) return 'vendor-charts';
-            if (id.includes('gsap') || id.includes('lenis')) return 'vendor-motion';
-            if (id.includes('qrcode') || id.includes('qr-scanner')) return 'vendor-qr';
-            if (id.includes('lucide-react')) return 'vendor-icons';
-            if (id.includes('axios')) return 'vendor-http';
-            return 'vendor';
+            if (id.includes('node_modules')) return 'vendor';
+            return undefined;
           },
         },
       },
