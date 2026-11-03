@@ -19,7 +19,9 @@ public class ContentServiceClientConfiguration {
     @Value("${feign.content-service.connect-timeout-ms:5000}")
     private int connectTimeoutMs;
 
-    @Value("${feign.content-service.read-timeout-ms:10000}")
+    // 5s matches FEIGN_READ_TIMEOUT in application.yml. With max-attempts=2 the worst case is
+    // 2*5s + 200ms backoff = 10.2s, still below the gateway's 15s response timeout.
+    @Value("${feign.content-service.read-timeout-ms:5000}")
     private int readTimeoutMs;
 
     @Bean

@@ -7,7 +7,7 @@ import {
   PoiSummary,
   PoiDetail,
   PoiGuide,
-  NearbyPoi,
+  NearbyPoisResponse,
   ResolvePoiResponse,
   CreateAnalyticsEventRequest,
   MeEntitlement,
@@ -150,8 +150,8 @@ export const api = {
     lng: number,
     radius: number,
     signal?: AbortSignal
-  ): Promise<NearbyPoi[]> => {
-    const response = await apiClient.get<NearbyPoi[]>('/api/location/nearby', {
+  ): Promise<NearbyPoisResponse> => {
+    const response = await apiClient.get<NearbyPoisResponse>('/api/location/nearby', {
       params: { lat, lng, radius },
       signal,
     });

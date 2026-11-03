@@ -1,11 +1,15 @@
 package com.echora.location.service;
 
-import com.echora.location.client.ContentServiceClient;
+import com.echora.location.client.ResilientContentServiceClient;
 import com.echora.location.dto.NearbyPoiDto;
+import com.echora.location.dto.NearbyPoisResponse;
 import com.echora.location.dto.PoiBoundingBoxDto;
 import com.echora.location.dto.PoiInternalQrDto;
 import com.echora.location.dto.ResolvePoiResponse;
 import com.echora.location.util.GeoUtils;
+import feign.FeignException;
+import feign.RetryableException;
+import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -22,11 +26,11 @@ public class LocationServiceImpl implements LocationService {
 
     private static final Logger log = LoggerFactory.getLogger(LocationServiceImpl.class);
 
-    private final ContentServiceClient contentServiceClient;
+    private final ResilientContentServiceClient contentServiceClient;
     private final double maxRadiusMeters;
 
     public LocationServiceImpl(
-            ContentServiceClient contentServiceClient,
+            ResilientContentServiceClient contentServiceClient,
             @Value("${location.max-radius-meters:5000}") double maxRadiusMeters
     ) {
         this.contentServiceClient = contentServiceClient;
@@ -34,21 +38,31 @@ public class LocationServiceImpl implements LocationService {
     }
 
     @Override
-    public List<NearbyPoiDto> getNearbyPois(double lat, double lng, double radius) {
+    public NearbyPoisResponse getNearbyPois(double lat, double lng, double radius) {
         validateCoordinates(lat, lng);
         validateRadius(radius);
 
         GeoUtils.BoundingBox bbox = GeoUtils.calculateBoundingBox(lat, lng, radius);
-        List<PoiBoundingBoxDto> candidates = contentServiceClient.getPoisInBoundingBox(
-                null,
-                bbox.minLat(),
-                bbox.maxLat(),
-                bbox.minLng(),
-                bbox.maxLng()
-        );
+        List<PoiBoundingBoxDto> candidates;
+        try {
+            candidates = contentServiceClient.getPoisInBoundingBox(
+                    null,
+                    bbox.minLat(),
+                    bbox.maxLat(),
+                    bbox.minLng(),
+                    bbox.maxLng()
+            );
+        } catch (RuntimeException ex) {
+            if (!isDependencyFailure(ex)) {
+                throw ex;
+            }
+            log.warn("content-service unavailable while loading nearby POIs; returning degraded response: {}",
+                    ex.getMessage());
+            return NearbyPoisResponse.degraded();
+        }
 
         if (candidates == null || candidates.isEmpty()) {
-            return List.of();
+            return NearbyPoisResponse.ok(List.of());
         }
 
         List<NearbyPoiDto> result = new ArrayList<>();
@@ -77,7 +91,7 @@ public class LocationServiceImpl implements LocationService {
         }
 
         result.sort(Comparator.comparingDouble(NearbyPoiDto::getDistanceMeters));
-        return result;
+        return NearbyPoisResponse.ok(result);
     }
 
     @Override
@@ -144,6 +158,17 @@ public class LocationServiceImpl implements LocationService {
             throw new IllegalArgumentException("QR token must not be blank");
         }
         return contentServiceClient.getPoiByQrToken(qrToken);
+    }
+
+    private boolean isDependencyFailure(Throwable ex) {
+        if (ex instanceof CallNotPermittedException || ex instanceof RetryableException) {
+            return true;
+        }
+        if (ex instanceof FeignException feignException) {
+            // 4xx are caller/validation errors and must keep their existing status mapping.
+            return feignException.status() < 400 || feignException.status() >= 500;
+        }
+        return false;
     }
 
     private void validateCoordinates(double lat, double lng) {

@@ -1,10 +1,15 @@
 package com.echora.location.service;
 
-import com.echora.location.client.ContentServiceClient;
+import com.echora.location.client.ResilientContentServiceClient;
 import com.echora.location.dto.NearbyPoiDto;
+import com.echora.location.dto.NearbyPoisResponse;
 import com.echora.location.dto.PoiBoundingBoxDto;
 import com.echora.location.dto.PoiInternalQrDto;
 import com.echora.location.dto.ResolvePoiResponse;
+import feign.FeignException;
+import feign.Request;
+import feign.RequestTemplate;
+import feign.RetryableException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -13,6 +18,9 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
+import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -25,7 +33,7 @@ import static org.mockito.Mockito.when;
 class LocationServiceImplTest {
 
     @Mock
-    private ContentServiceClient contentServiceClient;
+    private ResilientContentServiceClient contentServiceClient;
 
     private LocationServiceImpl locationService;
 
@@ -63,14 +71,67 @@ class LocationServiceImplTest {
                 .thenReturn(List.of(poi3, poi1, poi2));
 
         // Search with radius 200m -> POI 3 must be filtered out
-        List<NearbyPoiDto> nearby = locationService.getNearbyPois(userLat, userLng, 200.0);
+        NearbyPoisResponse response = locationService.getNearbyPois(userLat, userLng, 200.0);
+        List<NearbyPoiDto> nearby = response.getPois();
 
+        assertThat(response.isDegraded()).isFalse();
         assertThat(nearby).hasSize(2);
         // Sorted ascending: POI 1 first (~0m), then POI 2 (~120m)
         assertThat(nearby.get(0).getPoiId()).isEqualTo(1L);
         assertThat(nearby.get(0).getDistanceMeters()).isLessThan(1.0);
         assertThat(nearby.get(1).getPoiId()).isEqualTo(2L);
         assertThat(nearby.get(1).getDistanceMeters()).isGreaterThan(100.0);
+    }
+
+    @Test
+    @DisplayName("nearby: returns empty degraded response when content-service times out")
+    void testGetNearbyPois_Timeout_ReturnsDegraded() {
+        when(contentServiceClient.getPoisInBoundingBox(any(), any(), any(), any(), any()))
+                .thenThrow(new RetryableException(
+                        503,
+                        "Read timed out",
+                        Request.HttpMethod.GET,
+                        new Date(),
+                        dummyRequest()));
+
+        NearbyPoisResponse response = locationService.getNearbyPois(10.7799, 106.7001, 500.0);
+
+        assertThat(response.isDegraded()).isTrue();
+        assertThat(response.getPois()).isEmpty();
+        assertThat(response.getNotice()).contains("thử lại");
+    }
+
+    @Test
+    @DisplayName("nearby: returns empty degraded response when content-service returns 5xx")
+    void testGetNearbyPois_ServerError_ReturnsDegraded() {
+        when(contentServiceClient.getPoisInBoundingBox(any(), any(), any(), any(), any()))
+                .thenThrow(new FeignException.ServiceUnavailable(
+                        "Service Unavailable", dummyRequest(), null, null));
+
+        NearbyPoisResponse response = locationService.getNearbyPois(10.7799, 106.7001, 500.0);
+
+        assertThat(response.isDegraded()).isTrue();
+        assertThat(response.getPois()).isEmpty();
+    }
+
+    @Test
+    @DisplayName("nearby: propagates 4xx instead of masking it as degraded")
+    void testGetNearbyPois_ClientError_IsNotDegraded() {
+        when(contentServiceClient.getPoisInBoundingBox(any(), any(), any(), any(), any()))
+                .thenThrow(new FeignException.BadRequest("Bad Request", dummyRequest(), null, null));
+
+        assertThatThrownBy(() -> locationService.getNearbyPois(10.7799, 106.7001, 500.0))
+                .isInstanceOf(FeignException.BadRequest.class);
+    }
+
+    private Request dummyRequest() {
+        return Request.create(
+                Request.HttpMethod.GET,
+                "http://localhost:8085/api/content/internal/pois/bounding-box",
+                Collections.emptyMap(),
+                null,
+                StandardCharsets.UTF_8,
+                new RequestTemplate());
     }
 
     @Test
