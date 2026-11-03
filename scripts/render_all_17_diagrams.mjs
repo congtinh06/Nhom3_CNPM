@@ -123,7 +123,7 @@ const diagram3_1_svg = `
   <rect x="390" y="660" width="520" height="80" fill="#f5f5f5" stroke="#000000" stroke-width="1"/>
   <text x="650" y="685" text-anchor="middle" font-size="12" font-weight="bold">Ranh giới Triển khai Nội bộ (Docker Compose Network)</text>
   <text x="650" y="705" text-anchor="middle" font-size="10.5">Các dịch vụ giao tiếp qua mạng nội bộ Docker echora-network (DNS service discovery)</text>
-  <text x="650" y="722" text-anchor="middle" font-size="10.5" fill="#444444">Chỉ có Gateway (:8080) và Frontend (:80/:5173) mở cổng công khai ra Internet</text>
+  <text x="650" y="722" text-anchor="middle" font-size="10.5" fill="#444444">Chỉ có Gateway (:8080) và Frontend (:8080/:5173) mở cổng công khai ra Internet</text>
 
   <!-- Left: Human Actors -->
   ${stickFigure(70, 150, 'Khách vãng lai', '(Guest / Visitor)')}

@@ -335,7 +335,7 @@ void getPoiStatusNotAllowed() {
 - rabbitmq: 127.0.0.1:5672, 127.0.0.1:15800
 - mssql: 127.0.0.1:1433
 - api-gateway: ${GATEWAY_PORT:-18080}:8080
-- frontend: 0.0.0.0:${FRONTEND_HOST_PORT:-8088}:80
+- frontend: 0.0.0.0:${FRONTEND_HOST_PORT:-8088}:8080
 
 # Các service sau KHÔNG expose port:
 - content-service (8085)

@@ -217,6 +217,25 @@ docker compose down -v
 docker compose up -d --build
 ```
 
+#### Nâng cấp từ bản cũ (Docker hardening — NHIỆM VỤ 1.2)
+
+Từ phiên bản này, các service backend chạy bằng user/group **`app` (uid/gid 10001)** và frontend chạy bằng **`nginx` (uid 101)**. Nếu máy bạn đã từng chạy bản cũ, các volume `audio-storage-data` và `product-uploads-data` được tạo bởi `root` sẽ khiến service không ghi được file (`Permission denied`). Chọn một trong hai cách sau:
+
+```bash
+# 1) Giữ dữ liệu cũ: chown lại volume cho uid/gid 10001
+docker compose down
+docker run --rm -v nhom3_cnpm_audio-storage-data:/data alpine chown -R 10001:10001 /data
+docker run --rm -v nhom3_cnpm_product-uploads-data:/data alpine chown -R 10001:10001 /data
+docker compose up -d --build
+
+# 2) Không cần dữ liệu cũ: xoá volume để Docker tạo lại với đúng owner
+docker compose down
+docker volume rm nhom3_cnpm_audio-storage-data nhom3_cnpm_product-uploads-data
+docker compose up -d --build
+```
+
+> Tên volume có tiền tố tên project Compose. Nếu project của bạn khác `nhom3_cnpm`, xem tên thật bằng `docker volume ls` rồi thay vào lệnh trên. Chỉ cần chown/xoá các volume liên quan tới file (audio, ảnh sản phẩm); volume CSDL `mssql-data` giữ nguyên.
+
 ---
 
 ### 4.5. Bước 4: Kiểm tra các cổng và địa chỉ truy cập
@@ -232,6 +251,8 @@ Sau khi hệ thống khởi động thành công, bạn mở trình duyệt truy
 | **Cơ sở dữ liệu SQL Server** | `localhost:1433` | User: `sa` / Pass: `<xem MSSQL_SA_PASSWORD trong .env>` |
 
 > **Ghi chú về cổng API Gateway:** `docker-compose.yml` ánh xạ cổng host `${GATEWAY_PORT}` (mặc định `18080`) vào cổng `8080` bên trong container, tránh xung đột với cổng `8080` thường bị tiến trình nội bộ của Windows chiếm dụng. Muốn đổi cổng host, sửa `GATEWAY_PORT` trong `.env` rồi chạy lại `docker compose up -d`; Vite dev proxy cũng đang trỏ tới `http://localhost:18080`.
+
+> **Ghi chú về cổng Frontend:** container frontend dùng `nginxinc/nginx-unprivileged` chạy bằng uid 101 nên **lắng nghe cổng nội bộ `8080`** (không phải `80`). `docker-compose.yml` chỉ publish ra host qua `${FRONTEND_HOST_PORT}` (mặc định `8088` → `8080`). Khi gọi trực tiếp từ trình duyệt luôn dùng `http://localhost:8088`.
 
 ---
 
