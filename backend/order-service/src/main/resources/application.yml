@@ -111,3 +111,6 @@ app:
 logging:
   level:
     com.echora.order: INFO
+  pattern:
+    # MDC traceId được set bởi TraceIdFilter để log service dùng cùng giá trị X-Trace-Id với gateway/response.
+    console: "%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX} %5p ${PID:- } --- [%15.15t] [%X{traceId:-}] %-40.40logger{39} : %m%n"

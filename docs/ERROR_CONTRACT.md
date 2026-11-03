@@ -54,4 +54,45 @@ Header `X-Trace-Id` của response phải khớp với giá trị `traceId` tron
 ## Áp dụng
 
 - Gateway: mọi lỗi do filter/gateway handler (401, 403, 429, 500...) đều qua `ProblemDetailSupport`.
-- Service: mọi lỗi do handler/filter/service (400, 401, 403, 404, 409, 429, 500...) đều qua `ProblemDetailWriter` / `GlobalExceptionHandler`.
+- Service: mọi lỗi do handler/filter/service (400, 401, 403, 404, 409, 500...) đều qua `ProblemDetailWriter` / `GlobalExceptionHandler`.
+
+## Chịu lỗi: Circuit Breaker & Retry
+
+Mọi lời gọi liên service/ra ngoài đều được bọc bởi Resilience4j (Circuit Breaker + Retry cho GET idempotent).
+Cấu hình chi tiết nằm ở `application.yml` của từng service; phần dưới ghi lại **lý do chọn `max-attempts`**.
+
+### Ngân sách thời gian (worst-case) so với timeout của gateway
+
+Gateway đặt `response-timeout` 15s cho toàn cục và cho các route content/order
+(`GATEWAY_RESPONSE_TIMEOUT`, `GATEWAY_CONTENT_RESPONSE_TIMEOUT_MS`, `GATEWAY_ORDER_RESPONSE_TIMEOUT_MS`),
+và 60s cho route audio (`GATEWAY_AUDIO_RESPONSE_TIMEOUT_MS`). Điều kiện bắt buộc:
+
+```
+(read timeout × max-attempts) + backoff (200ms × (max-attempts − 1) × 2^k) < gateway timeout
+```
+
+| Instance (service → đích) | Read timeout | max-attempts | Worst-case | Gateway timeout | Ghi chú |
+|---|---|---|---|---|---|
+| `locationContentService` (location → content) | 5s | **2** | 2×5s + 0.2s = **10.2s** | 15s | 3 lần thử sẽ là 15.6s > 15s nên chỉ giữ 1 lần retry |
+| `contentAuthEntitlement` (content → auth) | 3s | 3 | 3×3s + 0.6s = **9.6s** | 15s | Còn dư ngân sách |
+| `orderContentPoiPrice` (order → content, GET) | 3s | 3 | 3×3s + 0.6s = **9.6s** | 15s | Còn dư ngân sách |
+| `translationMyMemory` (translation → MyMemory) | 10s | 3 | 3×10s + 0.6s = **30.6s** | 60s (audio) | Còn dư ngân sách |
+| `translationEdgeTts` (edge-tts) | — | **1** (không retry) | 30s / lần | 60s (audio) | Pipeline đã tự retry; breaker chỉ để ngắt khi lỗi liên tục |
+
+### Vì sao `locationContentService` dùng `max-attempts: 2` (khác 3)
+
+`location-service` gọi `content-service` bằng Feign với **read timeout 5s** (giữ nguyên timeout cũ, không hạ).
+Nếu để 3 lần thử: `3 × 5s + backoff ≈ 15.6s`, **vượt** `response-timeout 15s` của gateway → gateway cắt
+trước khi service kịp trả fallback `degraded=true`. Vì vậy giảm xuống **1 lần retry** (tổng 2 attempt),
+worst-case `10.2s < 15s`, fallback luôn kịp trả về trong ngân sách của gateway.
+
+> Quy tắc: nếu `read timeout × max-attempts + backoff` không nhỏ hơn timeout gateway, phải **giảm số lần thử
+> hoặc giảm timeout**, không được để retry vượt ngân sách (retry sẽ vô nghĩa vì client đã ngắt kết nối).
+
+### Retry chỉ áp dụng cho GET idempotent
+
+`Retry` bọc **ngoài** `CircuitBreaker` (thứ tự: Retry → CircuitBreaker → call) và chỉ bật cho `GET`.
+`POST`/`PUT` không retry trừ khi có idempotency key, để tránh tạo trùng đơn/ghi trùng dữ liệu.
+Lỗi 4xx (`FeignException$BadRequest`, `$Unauthorized`, `$Forbidden`, `$NotFound`, ...) được đưa vào
+`ignore-exceptions` của circuit breaker: lỗi do phía client **không** làm breaker mở.
+

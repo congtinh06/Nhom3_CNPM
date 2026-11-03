@@ -36,6 +36,9 @@ import static org.mockito.Mockito.when;
         "resilience4j.circuitbreaker.instances.locationContentService.sliding-window-size=2",
         "resilience4j.circuitbreaker.instances.locationContentService.slow-call-duration-threshold=50ms",
         "resilience4j.circuitbreaker.instances.locationContentService.wait-duration-in-open-state=1s",
+        // Tắt auto-transition trong test để trạng thái OPEN quan sát được một cách xác định
+        // (nếu bật, chỉ cần chậm >1s là breaker đã chuyển HALF_OPEN và assert sẽ flaky).
+        "resilience4j.circuitbreaker.instances.locationContentService.automatic-transition-from-open-to-half-open-enabled=false",
         "resilience4j.retry.instances.locationContentService.max-attempts=2",
         "resilience4j.retry.instances.locationContentService.wait-duration=10ms"
 })

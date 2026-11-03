@@ -47,6 +47,7 @@ import { PoiMap } from '../components/nearby/PoiMap';
 import { PoiList } from '../components/nearby/PoiList';
 import { PoiHero } from '../components/nearby/PoiHero';
 import { PoiReadingSection } from '../components/nearby/PoiReadingSection';
+import { NearbyDegradedNotice } from '../components/nearby/NearbyDegradedNotice';
 import { SouvenirStrip } from '../components/souvenir/SouvenirStrip';
 import { AudioPlayerBar } from '../components/nearby/AudioPlayerBar';
 import { PageHero } from '../components/common/PageHero';
@@ -274,6 +275,9 @@ export const NearbyPage: React.FC = () => {
   const [apiFailed, setApiFailed] = useState(false);
   const [apiLoading, setApiLoading] = useState(!DEMO_FIXTURES_ENABLED);
   const [reloadToken, setReloadToken] = useState(0);
+  // Thông báo "giảm chất" khi content-service không phản hồi: location-service trả
+  // GET /api/location/nearby -> { pois: [], degraded: true, notice }.
+  const [degradedNotice, setDegradedNotice] = useState<string | null>(null);
 
   useEffect(() => {
     if (import.meta.env.MODE === 'test') return;
@@ -296,6 +300,29 @@ export const NearbyPage: React.FC = () => {
         // Không còn âm thầm thay bằng dữ liệu mẫu ở bản build thật.
         setApiFailed(true);
         setApiLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [reloadToken]);
+
+  // Khi content-service không sẵn sàng, location-service trả `degraded=true` kèm `notice`
+  // thay vì lỗi cứng. Gọi endpoint này để hiển thị thông báo thân thiện và cho phép thử lại.
+  useEffect(() => {
+    if (import.meta.env.MODE === 'test') return;
+    if (typeof api.getNearbyPois !== 'function') return;
+    let cancelled = false;
+    // Dùng toạ độ TP.HCM làm tâm để không phụ thuộc quyền GPS mà vẫn kích hoạt cảnh báo giảm chất.
+    api
+      .getNearbyPois(10.7770, 106.6958, 1500)
+      .then((response) => {
+        if (cancelled) return;
+        setDegradedNotice(response.degraded ? response.notice ?? null : null);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        // Lỗi cứng (không phải giảm chất) đã được xử lý qua getPoiGuides/apiFailed.
+        setDegradedNotice(null);
       });
     return () => {
       cancelled = true;
@@ -797,6 +824,13 @@ export const NearbyPage: React.FC = () => {
             {PREMIUM_GATE_COPY[currentLang].cta}
           </button>
         </section>
+      )}
+
+      {degradedNotice !== null && !DEMO_FIXTURES_ENABLED && (
+        <NearbyDegradedNotice
+          notice={degradedNotice}
+          onRetry={() => setReloadToken((n) => n + 1)}
+        />
       )}
 
       {apiFailed && !DEMO_FIXTURES_ENABLED && (
