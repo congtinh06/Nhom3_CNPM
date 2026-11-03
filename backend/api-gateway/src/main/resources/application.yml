@@ -111,3 +111,7 @@ logging:
   level:
     org.springframework.cloud.gateway: INFO
     com.echora.gateway: DEBUG
+  pattern:
+    # Gateway la reactive: MDC chi duoc set trong TraceIdGlobalFilter cho dong log
+    # cua chinh filter nay; traceId van duoc forward xuong service qua header X-Trace-Id.
+    console: "%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX} %5p ${PID:- } --- [%15.15t] [%X{traceId:-}] %-40.40logger{39} : %m%n"

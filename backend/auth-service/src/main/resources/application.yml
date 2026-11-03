@@ -92,3 +92,6 @@ management:
 logging:
   level:
     com.echora.auth: INFO
+  pattern:
+    # traceId duoc set boi TraceIdFilter tu header X-Trace-Id (gateway truyen xuong).
+    console: "%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX} %5p ${PID:- } --- [%15.15t] [%X{traceId:-}] %-40.40logger{39} : %m%n"
