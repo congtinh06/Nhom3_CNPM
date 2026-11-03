@@ -20,9 +20,10 @@ services:
     healthcheck:
       test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
       interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 15s
+      # May CI/dev chay cham: rabbitmq-diagnostics co the mat >5s khi host dang build.
+      timeout: 15s
+      retries: 10
+      start_period: 60s
     networks:
       - echora-net
 
