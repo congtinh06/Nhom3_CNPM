@@ -2,12 +2,9 @@ package com.echora.order.service;
 
 import com.echora.order.dto.ProductPrice;
 import com.echora.order.exception.ServiceUnavailableException;
+import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.http.MediaType;
-import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 
 import java.util.Collection;
@@ -15,25 +12,23 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Maps content-service batch price responses to order domain results.
+ *
+ * <p>Failures become a 503 before any order is created. There is deliberately no fallback price:
+ * charging the user with an invented price is worse than asking them to retry.</p>
+ */
 @Service
 public class ProductPriceClient {
 
-    public static final String HEADER_INTERNAL_API_KEY = "X-Internal-Api-Key";
+    public static final String HEADER_INTERNAL_API_KEY = ContentProductPriceRestClient.HEADER_INTERNAL_API_KEY;
 
-    private final RestClient restClient;
+    private final ContentProductPriceRestClient restClient;
     private final String internalApiKey;
 
-    public ProductPriceClient(@Value("${app.content-service.url:http://localhost:8085}") String baseUrl,
-                              @Value("${internal.api-key:}") String internalApiKey,
-                              @Value("${app.content-service.connect-timeout-ms:2000}") int connectTimeoutMs,
-                              @Value("${app.content-service.read-timeout-ms:3000}") int readTimeoutMs) {
-        SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
-        requestFactory.setConnectTimeout(connectTimeoutMs);
-        requestFactory.setReadTimeout(readTimeoutMs);
-        this.restClient = RestClient.builder()
-                .baseUrl(baseUrl)
-                .requestFactory(requestFactory)
-                .build();
+    public ProductPriceClient(ContentProductPriceRestClient restClient,
+                              @Value("${internal.api-key:}") String internalApiKey) {
+        this.restClient = restClient;
         this.internalApiKey = internalApiKey;
     }
 
@@ -43,14 +38,7 @@ public class ProductPriceClient {
         }
 
         try {
-            List<ProductPrice> prices = restClient.post()
-                    .uri("/api/content/internal/products/prices")
-                    .header(HEADER_INTERNAL_API_KEY, internalApiKey)
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(Map.of("productIds", productIds))
-                    .retrieve()
-                    .body(new ParameterizedTypeReference<List<ProductPrice>>() {
-                    });
+            List<ProductPrice> prices = restClient.fetchPrices(productIds);
 
             Map<Long, ProductPrice> result = new HashMap<>();
             if (prices != null) {
@@ -61,7 +49,7 @@ public class ProductPriceClient {
                 }
             }
             return result;
-        } catch (RestClientException ex) {
+        } catch (CallNotPermittedException | RestClientException ex) {
             throw new ServiceUnavailableException("Không thể kiểm tra giá sản phẩm. Vui lòng thử lại sau.");
         }
     }

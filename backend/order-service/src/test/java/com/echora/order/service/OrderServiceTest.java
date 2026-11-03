@@ -358,6 +358,22 @@ class OrderServiceTest {
     }
 
     @Test
+    @DisplayName("createPoiOrder: content-service outage returns 503 and creates no order")
+    void createPoiOrder_ContentOutageFailsClosed() {
+        CreatePoiOrderRequest req = new CreatePoiOrderRequest();
+        req.setPoiId(99L);
+        req.setPaymentMethod("VIETQR");
+        when(poiPriceClient.fetchPoiPrice(99L))
+                .thenThrow(new ServiceUnavailableException(
+                        "Không thể kiểm tra giá điểm thuyết minh. Vui lòng thử lại sau."));
+
+        assertThatThrownBy(() -> orderService.createPoiOrder(USER_ID, null, req, "127.0.0.1"))
+                .isInstanceOf(ServiceUnavailableException.class);
+
+        verify(orderRepository, never()).save(any(Order.class));
+    }
+
+    @Test
     @DisplayName("adminConfirmPayment: transitions order to PAID and enqueues entitlement")
     void adminConfirmPayment_Success() {
         Order order = Order.builder()
