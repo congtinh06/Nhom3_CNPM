@@ -4,6 +4,7 @@ import com.echora.translation.exception.TtsEmptyOutputException;
 import com.echora.translation.exception.TtsException;
 import com.echora.translation.exception.TtsExecutionException;
 import com.echora.translation.tts.SubtitleDurationParser;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -42,6 +43,7 @@ public class EdgeTtsRunner {
      * @return duration in seconds, or null if subtitles could not be parsed
      * @throws TtsException on timeout, non-zero exit, or missing/empty output file
      */
+    @CircuitBreaker(name = "translationEdgeTts")
     public Integer synthesize(String voice, String text, Path targetOutputFile, Path targetSubtitleFile) {
         if (text == null || text.trim().isEmpty()) {
             throw new IllegalArgumentException("Text to synthesize cannot be null or empty");

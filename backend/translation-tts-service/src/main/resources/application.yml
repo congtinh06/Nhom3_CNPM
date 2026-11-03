@@ -97,10 +97,60 @@ management:
   endpoints:
     web:
       exposure:
-        include: health
+        include: health,circuitbreakers,circuitbreakerevents
   endpoint:
     health:
       show-details: never
+  health:
+    circuitbreakers:
+      enabled: true
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      translationMyMemory:
+        sliding-window-type: COUNT_BASED
+        sliding-window-size: 10
+        minimum-number-of-calls: 5
+        failure-rate-threshold: 50
+        slow-call-duration-threshold: 2s
+        slow-call-rate-threshold: 80
+        wait-duration-in-open-state: 10s
+        permitted-number-of-calls-in-half-open-state: 3
+        automatic-transition-from-open-to-half-open-enabled: true
+        register-health-indicator: true
+        ignore-exceptions:
+          - org.springframework.web.client.HttpClientErrorException
+      translationEdgeTts:
+        sliding-window-type: COUNT_BASED
+        sliding-window-size: 10
+        minimum-number-of-calls: 5
+        failure-rate-threshold: 50
+        slow-call-duration-threshold: 2s
+        slow-call-rate-threshold: 80
+        wait-duration-in-open-state: 10s
+        permitted-number-of-calls-in-half-open-state: 3
+        automatic-transition-from-open-to-half-open-enabled: true
+        register-health-indicator: true
+        # Bad input / unsupported voice are configuration errors, not provider outages.
+        ignore-exceptions:
+          - java.lang.IllegalArgumentException
+          - com.echora.translation.exception.TtsUnsupportedVoiceException
+  retry:
+    instances:
+      # MyMemory GETs are idempotent. 10s read timeout x 3 attempts + backoff (~0.6s)
+      # = 30.6s, below the 60s audio route timeout. Edge-TTS is not retried here because the
+      # pipeline already retries TTS with backoff; multiplying retries would be unsafe.
+      translationMyMemory:
+        max-attempts: 3
+        wait-duration: 200ms
+        enable-exponential-backoff: true
+        exponential-backoff-multiplier: 2
+        retry-exceptions:
+          - java.io.IOException
+          - java.util.concurrent.TimeoutException
+          - org.springframework.web.client.ResourceAccessException
+          - org.springframework.web.client.HttpServerErrorException
 
 logging:
   level:

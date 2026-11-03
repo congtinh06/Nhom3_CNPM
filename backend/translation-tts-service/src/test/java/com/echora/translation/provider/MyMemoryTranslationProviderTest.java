@@ -35,7 +35,8 @@ class MyMemoryTranslationProviderTest {
 
     private MyMemoryTranslationProvider createProvider(String email, int maxChunkBytes) {
         RestClient restClient = restClientBuilder.build();
-        return new MyMemoryTranslationProvider(restClient, objectMapper, BASE_URL, email, maxChunkBytes);
+        return new MyMemoryTranslationProvider(
+                new MyMemoryRestClient(restClient), objectMapper, BASE_URL, email, maxChunkBytes);
     }
 
     @Test

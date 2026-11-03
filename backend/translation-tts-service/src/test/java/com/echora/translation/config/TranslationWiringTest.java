@@ -2,6 +2,7 @@ package com.echora.translation.config;
 
 import com.echora.translation.listener.PoiEventListener;
 import com.echora.translation.messaging.PoiAudioEventPublisher;
+import com.echora.translation.provider.MyMemoryRestClient;
 import com.echora.translation.provider.MyMemoryTranslationProvider;
 import com.echora.translation.provider.SeedTranslationProvider;
 import com.echora.translation.provider.TranslationProvider;
@@ -35,6 +36,7 @@ class TranslationWiringTest {
             .withUserConfiguration(
                     TranslationConfig.class,
                     SeedTranslationProvider.class,
+                    MyMemoryRestClient.class,
                     MyMemoryTranslationProvider.class
             );
 
@@ -100,6 +102,7 @@ class TranslationWiringTest {
                 .withUserConfiguration(
                         TranslationConfig.class,
                         SeedTranslationProvider.class,
+                        MyMemoryRestClient.class,
                         MyMemoryTranslationProvider.class,
                         TranslationGlossary.class,
                         TranslationCacheServiceImpl.class,

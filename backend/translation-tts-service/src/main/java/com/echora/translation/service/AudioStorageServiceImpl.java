@@ -3,6 +3,7 @@ package com.echora.translation.service;
 import com.echora.translation.exception.TtsException;
 import com.echora.translation.tts.TtsVoiceProvider;
 import com.echora.translation.tts.runner.EdgeTtsRunner;
+import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -101,6 +102,9 @@ public class AudioStorageServiceImpl implements AudioStorageService {
 
             return new AudioStorageResult(fileName, buildAudioUrl(fileName), targetFile, duration, true);
 
+        } catch (CallNotPermittedException e) {
+            // Circuit open: do not fabricate audio. The pipeline marks the job FAILED_TTS.
+            throw new TtsException("edge-tts circuit breaker is open", e);
         } catch (Exception e) {
             if (tempOutputFile != null) {
                 try {

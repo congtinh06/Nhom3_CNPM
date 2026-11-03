@@ -5,21 +5,18 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.echora.translation.exception.TranslationProviderException;
 import com.echora.translation.exception.TranslationQuotaExceededException;
 import com.echora.translation.exception.TranslationTimeoutException;
+import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.http.MediaType;
-import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.ResourceAccessException;
-import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
-import java.time.Duration;
 import java.util.List;
 import java.util.Locale;
 
@@ -43,7 +40,7 @@ public class MyMemoryTranslationProvider implements TranslationProvider {
     public static final String PROVIDER_NAME = "mymemory";
     public static final int DEFAULT_MAX_CHUNK_BYTES = 450;
 
-    private final RestClient restClient;
+    private final MyMemoryRestClient myMemoryClient;
     private final ObjectMapper objectMapper;
     private final String baseUrl;
     private final String email;
@@ -51,40 +48,13 @@ public class MyMemoryTranslationProvider implements TranslationProvider {
 
     @Autowired
     public MyMemoryTranslationProvider(
-            RestClient.Builder restClientBuilder,
+            MyMemoryRestClient myMemoryClient,
             ObjectMapper objectMapper,
             @Value("${app.translation.mymemory.base-url:https://api.mymemory.translated.net}") String baseUrl,
             @Value("${app.translation.mymemory.email:${MYMEMORY_EMAIL:}}") String email,
-            @Value("${app.translation.mymemory.connect-timeout-ms:5000}") int connectTimeoutMs,
-            @Value("${app.translation.mymemory.read-timeout-ms:10000}") int readTimeoutMs,
             @Value("${app.translation.mymemory.max-chunk-bytes:450}") int maxChunkBytes
     ) {
-        this.objectMapper = objectMapper;
-        this.baseUrl = baseUrl;
-        this.email = (email != null && !email.isBlank()) ? email.trim() : null;
-        this.maxChunkBytes = maxChunkBytes > 0 ? maxChunkBytes : DEFAULT_MAX_CHUNK_BYTES;
-
-        SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
-        requestFactory.setConnectTimeout(Duration.ofMillis(connectTimeoutMs));
-        requestFactory.setReadTimeout(Duration.ofMillis(readTimeoutMs));
-
-        this.restClient = restClientBuilder
-                .baseUrl(baseUrl)
-                .requestFactory(requestFactory)
-                .build();
-    }
-
-    /**
-     * Constructor for unit tests with preconfigured RestClient or MockRestServiceServer.
-     */
-    public MyMemoryTranslationProvider(
-            RestClient restClient,
-            ObjectMapper objectMapper,
-            String baseUrl,
-            String email,
-            int maxChunkBytes
-    ) {
-        this.restClient = restClient;
+        this.myMemoryClient = myMemoryClient;
         this.objectMapper = objectMapper;
         this.baseUrl = baseUrl;
         this.email = (email != null && !email.isBlank()) ? email.trim() : null;
@@ -141,11 +111,10 @@ public class MyMemoryTranslationProvider implements TranslationProvider {
 
         String responseBody;
         try {
-            responseBody = restClient.get()
-                    .uri(uri)
-                    .accept(MediaType.APPLICATION_JSON)
-                    .retrieve()
-                    .body(String.class);
+            responseBody = myMemoryClient.fetch(uri);
+        } catch (CallNotPermittedException e) {
+            log.warn("MyMemory circuit breaker is open for langpair={}", langPair);
+            throw new TranslationProviderException("MyMemory circuit breaker is open", e);
         } catch (ResourceAccessException e) {
             log.warn("Connection or read timeout calling MyMemory for langpair={}: {}", langPair, e.getMessage());
             throw new TranslationTimeoutException("Connection or read timeout contacting MyMemory translation API", e);

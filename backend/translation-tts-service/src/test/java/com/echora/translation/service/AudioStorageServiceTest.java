@@ -1,8 +1,11 @@
 package com.echora.translation.service;
 
+import com.echora.translation.exception.TtsException;
 import com.echora.translation.exception.TtsExecutionException;
 import com.echora.translation.tts.TtsVoiceProvider;
 import com.echora.translation.tts.runner.EdgeTtsRunner;
+import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
+import io.github.resilience4j.circuitbreaker.CircuitBreaker;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -61,6 +64,17 @@ class AudioStorageServiceTest {
         assertEquals(12, result.durationSeconds());
         assertTrue(result.newlyGenerated());
         assertTrue(Files.exists(result.filePath()));
+    }
+
+    @Test
+    @DisplayName("Open edge-tts circuit marks audio as failed instead of fabricating output")
+    void testStoreAudio_openCircuitFailsWithoutOutput() {
+        when(edgeTtsRunner.synthesize(anyString(), anyString(), any(Path.class), any(Path.class)))
+                .thenThrow(CallNotPermittedException.createCallNotPermittedException(
+                        CircuitBreaker.ofDefaults("translationEdgeTts")));
+
+        assertThrows(TtsException.class,
+                () -> storageService.storeAudio(101, "en", VALID_HASH, "Hello World"));
     }
 
     @Test
