@@ -1,6 +1,7 @@
 package com.echora.content.config;
 
 import com.echora.content.entity.Poi;
+import com.echora.content.exception.EntitlementServiceUnavailableException;
 import com.echora.content.exception.ProblemDetailWriter;
 import com.echora.content.repository.PoiRepository;
 import jakarta.annotation.PostConstruct;
@@ -39,6 +40,9 @@ public class EntitlementFilter extends OncePerRequestFilter {
             "Ngôn ngữ này yêu cầu gói Premium đang hoạt động.";
     private static final String POI_LOCKED_MESSAGE =
             "Điểm thuyết minh này yêu cầu gói Premium hoặc mua lẻ gói ngoại ngữ.";
+    private static final String ENTITLEMENT_UNAVAILABLE_MESSAGE =
+            "Không thể xác minh quyền truy cập nội dung lúc này. Vui lòng thử lại sau.";
+    private static final String RETRY_AFTER_SECONDS = "10";
 
     private final InternalPoiEntitlementClient poiEntitlementClient;
     private final PoiRepository poiRepository;
@@ -114,6 +118,15 @@ public class EntitlementFilter extends OncePerRequestFilter {
             if (!premium && !isBlank(userIdHeader)) {
                 try {
                     purchasedPois = poiEntitlementClient.purchasedPoiIds(Long.valueOf(userIdHeader.trim()));
+                } catch (EntitlementServiceUnavailableException ex) {
+                    // Fail closed: an auth-service outage must never be treated as "no purchase"
+                    // and must never grant Premium content.
+                    log.warn("auth-service entitlement check unavailable (userId={}); failing closed: {}",
+                            userIdHeader, ex.getMessage());
+                    response.setHeader("Retry-After", RETRY_AFTER_SECONDS);
+                    reject(request, response, HttpServletResponse.SC_SERVICE_UNAVAILABLE,
+                            ENTITLEMENT_UNAVAILABLE_MESSAGE);
+                    return;
                 } catch (NumberFormatException ex) {
                     log.warn("X-User-Id không hợp lệ: {}", userIdHeader);
                 }
