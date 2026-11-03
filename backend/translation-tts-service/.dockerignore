@@ -1,0 +1,23 @@
+# Build output
+target/
+
+# Dependencies (khong copy vao build context)
+node_modules/
+
+# Secrets / env cua may dev
+.env
+.env.*
+!.env.example
+
+# VCS / IDE
+.git/
+.gitignore
+.idea/
+.vscode/
+*.iml
+
+# Logs
+*.log
+
+# Audio tao local khi chay ngoai Docker
+storage/
