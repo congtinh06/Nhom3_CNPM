@@ -126,7 +126,11 @@ resilience4j:
         sliding-window-size: 10
         minimum-number-of-calls: 5
         failure-rate-threshold: 50
-        slow-call-duration-threshold: 2s
+        # Edge-TTS la tien trinh ngoai sinh file mp3: mot POI dai mat 5-120s.
+        # Nguong 2s (dung cho HTTP MyMemory) se danh dau 100% call la "slow"
+        # va mo breaker sau 5 call, du moi call deu thanh cong. Chi mo breaker
+        # khi that su loi/timeout (failure-rate-threshold ben duoi).
+        slow-call-duration-threshold: 300s
         slow-call-rate-threshold: 80
         wait-duration-in-open-state: 10s
         permitted-number-of-calls-in-half-open-state: 3
