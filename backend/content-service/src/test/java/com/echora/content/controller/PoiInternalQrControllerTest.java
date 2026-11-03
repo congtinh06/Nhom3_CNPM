@@ -83,7 +83,7 @@ class PoiInternalQrControllerTest {
         mockMvc.perform(get("/api/content/internal/pois/qr/{qrToken}", QR_TOKEN))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.status").value(401))
-                .andExpect(jsonPath("$.error").value("Missing or invalid X-Internal-Api-Key"));
+                .andExpect(jsonPath("$.detail").value("Missing or invalid X-Internal-Api-Key"));
     }
 
     @Test
@@ -93,7 +93,7 @@ class PoiInternalQrControllerTest {
                         .header(InternalApiKeyFilter.HEADER, "wrong-key"))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.status").value(401))
-                .andExpect(jsonPath("$.error").value("Missing or invalid X-Internal-Api-Key"));
+                .andExpect(jsonPath("$.detail").value("Missing or invalid X-Internal-Api-Key"));
     }
 
     @Test

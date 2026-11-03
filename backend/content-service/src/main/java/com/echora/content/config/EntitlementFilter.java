@@ -1,6 +1,7 @@
 package com.echora.content.config;
 
 import com.echora.content.entity.Poi;
+import com.echora.content.exception.ProblemDetailWriter;
 import com.echora.content.repository.PoiRepository;
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.FilterChain;
@@ -105,7 +106,7 @@ public class EntitlementFilter extends OncePerRequestFilter {
         if (hasTrustedIdentity) {
             if (isBlank(expectedApiKey)
                     || !constantTimeEquals(request.getHeader(HEADER_INTERNAL_API_KEY), expectedApiKey)) {
-                reject(response, HttpServletResponse.SC_FORBIDDEN,
+                reject(request, response, HttpServletResponse.SC_FORBIDDEN,
                         "Không thể xác minh quyền truy cập nội dung.");
                 return;
             }
@@ -123,7 +124,7 @@ public class EntitlementFilter extends OncePerRequestFilter {
         String normalized = lang == null || lang.isBlank() ? "vi" : lang.trim().toLowerCase();
         if (!"vi".equals(normalized) && !premium) {
             if (purchasedPois.isEmpty()) {
-                reject(response, HttpServletResponse.SC_FORBIDDEN, PREMIUM_REQUIRED_MESSAGE);
+                reject(request, response, HttpServletResponse.SC_FORBIDDEN, PREMIUM_REQUIRED_MESSAGE);
                 return;
             }
 
@@ -140,7 +141,7 @@ public class EntitlementFilter extends OncePerRequestFilter {
 
             Long poiId = resolvePoiId(request);
             if (poiId == null || !purchasedPois.contains(poiId)) {
-                reject(response, HttpServletResponse.SC_FORBIDDEN, POI_LOCKED_MESSAGE);
+                reject(request, response, HttpServletResponse.SC_FORBIDDEN, POI_LOCKED_MESSAGE);
                 return;
             }
         }
@@ -180,10 +181,9 @@ public class EntitlementFilter extends OncePerRequestFilter {
                 expected.getBytes(StandardCharsets.UTF_8));
     }
 
-    private static void reject(HttpServletResponse response, int status, String message) throws IOException {
-        response.setStatus(status);
-        response.setContentType("application/json;charset=UTF-8");
-        response.getWriter().write("{\"status\":" + status + ",\"message\":\"" + message + "\"}");
+    private static void reject(HttpServletRequest request, HttpServletResponse response,
+                               int status, String message) throws IOException {
+        ProblemDetailWriter.write(response, request, status, message);
     }
 
     private static boolean isBlank(String value) {

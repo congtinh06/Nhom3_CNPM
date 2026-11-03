@@ -94,7 +94,14 @@ class AdminUserSecurityTest {
     void userForbiddenOnAdminArea() throws Exception {
         mockMvc.perform(get("/api/auth/admin/users").with(authentication(auth(2L, UserRole.USER))))
                 .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.message").value("Bạn không có quyền thực hiện thao tác này."));
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.content()
+                        .contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.type").value("https://api.echora.dev/problems/403"))
+                .andExpect(jsonPath("$.title").value("Forbidden"))
+                .andExpect(jsonPath("$.status").value(403))
+                .andExpect(jsonPath("$.detail").value("Bạn không có quyền thực hiện thao tác này."))
+                .andExpect(jsonPath("$.instance").value("/api/auth/admin/users"))
+                .andExpect(jsonPath("$.traceId").isNotEmpty());
     }
 
     @Test
@@ -112,7 +119,14 @@ class AdminUserSecurityTest {
     void anonymousUnauthorized() throws Exception {
         mockMvc.perform(get("/api/auth/admin/users"))
                 .andExpect(status().isUnauthorized())
-                .andExpect(jsonPath("$.message").value("Phiên đăng nhập không hợp lệ hoặc đã hết hạn."));
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.content()
+                        .contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.type").value("https://api.echora.dev/problems/401"))
+                .andExpect(jsonPath("$.title").value("Unauthorized"))
+                .andExpect(jsonPath("$.status").value(401))
+                .andExpect(jsonPath("$.detail").value("Phiên đăng nhập không hợp lệ hoặc đã hết hạn."))
+                .andExpect(jsonPath("$.instance").value("/api/auth/admin/users"))
+                .andExpect(jsonPath("$.traceId").isNotEmpty());
     }
 
     @Test

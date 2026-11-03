@@ -1,5 +1,6 @@
 package com.echora.translation.config;
 
+import com.echora.translation.exception.ProblemDetailWriter;
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -85,13 +86,13 @@ public class AudioEntitlementFilter extends OncePerRequestFilter {
         }
 
         if (isBlank(expectedApiKey)) {
-            reject(response, HttpServletResponse.SC_SERVICE_UNAVAILABLE,
+            reject(request, response, HttpServletResponse.SC_SERVICE_UNAVAILABLE,
                     "Dịch vụ âm thanh chưa được cấu hình.");
             return;
         }
         if (!constantTimeEquals(request.getHeader(HEADER_INTERNAL_API_KEY), expectedApiKey)
                 || isBlank(request.getHeader(HEADER_USER_ID))) {
-            reject(response, HttpServletResponse.SC_UNAUTHORIZED,
+            reject(request, response, HttpServletResponse.SC_UNAUTHORIZED,
                     "Phiên đăng nhập không hợp lệ hoặc đã hết hạn.");
             return;
         }
@@ -107,7 +108,7 @@ public class AudioEntitlementFilter extends OncePerRequestFilter {
                 userId = null;
             }
             if (poiId == null || userId == null || !hasPurchasedPoi(userId, poiId)) {
-                reject(response, HttpServletResponse.SC_FORBIDDEN,
+                reject(request, response, HttpServletResponse.SC_FORBIDDEN,
                         "Ngôn ngữ này yêu cầu gói Premium đang hoạt động.");
                 return;
             }
@@ -157,10 +158,9 @@ public class AudioEntitlementFilter extends OncePerRequestFilter {
                 expected.getBytes(StandardCharsets.UTF_8));
     }
 
-    private static void reject(HttpServletResponse response, int status, String message) throws IOException {
-        response.setStatus(status);
-        response.setContentType("application/json;charset=UTF-8");
-        response.getWriter().write("{\"status\":" + status + ",\"message\":\"" + message + "\"}");
+    private static void reject(HttpServletRequest request, HttpServletResponse response,
+                               int status, String message) throws IOException {
+        ProblemDetailWriter.write(response, request, status, message);
     }
 
     private static boolean isBlank(String value) {

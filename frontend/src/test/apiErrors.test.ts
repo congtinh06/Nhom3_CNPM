@@ -79,4 +79,104 @@ describe('normalizeApiError', () => {
     const norm = normalizeApiError(error);
     expect(norm.isAborted).toBe(true);
   });
+
+  it('reads RFC 7807 detail for 401 Unauthorized', () => {
+    const error = {
+      response: {
+        status: 401,
+        data: {
+          type: 'https://api.echora.dev/problems/401',
+          title: 'Unauthorized',
+          status: 401,
+          detail: 'Phiên đăng nhập không hợp lệ hoặc đã hết hạn.',
+          instance: '/api/orders',
+          traceId: 'trace-401',
+        },
+      },
+    };
+    const norm = normalizeApiError(error);
+    expect(norm.status).toBe(401);
+    expect(norm.message).toBe('Phiên đăng nhập không hợp lệ hoặc đã hết hạn.');
+  });
+
+  it('reads RFC 7807 detail for 403 Forbidden', () => {
+    const error = {
+      response: {
+        status: 403,
+        data: {
+          title: 'Forbidden',
+          status: 403,
+          detail: 'Ngôn ngữ này yêu cầu gói Premium đang hoạt động.',
+          instance: '/api/content/pois/guide',
+          traceId: 'trace-403',
+        },
+      },
+    };
+    const norm = normalizeApiError(error);
+    expect(norm.status).toBe(403);
+    expect(norm.message).toBe('Ngôn ngữ này yêu cầu gói Premium đang hoạt động.');
+  });
+
+  it('reads RFC 7807 detail for 429 and keeps Retry-After', () => {
+    const error = {
+      response: {
+        status: 429,
+        headers: { 'retry-after': '12' },
+        data: {
+          title: 'Too Many Requests',
+          status: 429,
+          detail: 'Rate limit exceeded. Retry after 12 seconds.',
+          instance: '/api/analytics/events',
+          traceId: 'trace-429',
+        },
+      },
+    };
+    const norm = normalizeApiError(error);
+    expect(norm.status).toBe(429);
+    expect(norm.retryAfter).toBe(12);
+    expect(norm.message).toBe('Rate limit exceeded. Retry after 12 seconds.');
+  });
+
+  it('reads RFC 7807 detail for 500 and falls back to title', () => {
+    const error = {
+      response: {
+        status: 500,
+        data: {
+          title: 'Internal Server Error',
+          status: 500,
+          detail: 'An unexpected error occurred',
+          instance: '/api/content/pois',
+          traceId: 'trace-500',
+        },
+      },
+    };
+    const norm = normalizeApiError(error);
+    expect(norm.status).toBe(500);
+    expect(norm.message).toBe('An unexpected error occurred');
+
+    const titleOnly = normalizeApiError({
+      response: { status: 500, data: { title: 'Internal Server Error' } },
+    });
+    expect(titleOnly.message).toBe('Internal Server Error');
+  });
+
+  it('reads the RFC 7807 errors map and the legacy details field', () => {
+    const problem = normalizeApiError({
+      response: {
+        status: 400,
+        data: {
+          title: 'Bad Request',
+          status: 400,
+          detail: 'Validation failed',
+          errors: { email: 'Email không hợp lệ' },
+        },
+      },
+    });
+    expect(problem.details).toEqual({ email: 'Email không hợp lệ' });
+
+    const legacy = normalizeApiError({
+      response: { status: 400, data: { details: { slug: 'Slug bị trùng' } } },
+    });
+    expect(legacy.details).toEqual({ slug: 'Slug bị trùng' });
+  });
 });

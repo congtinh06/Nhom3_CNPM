@@ -63,14 +63,31 @@ adminClient.interceptors.response.use(
 export function normalizeAdminError(error: unknown): AdminApiError {
   if (axios.isAxiosError(error)) {
     const status = error.response?.status || 0;
-    const data = error.response?.data as { message?: string; error?: string; details?: Record<string, string> } | undefined;
-    const serverMessage = data?.message || data?.error;
+    const data = error.response?.data as
+      | {
+          // RFC 7807 ProblemDetail fields (current contract)
+          type?: string;
+          title?: string;
+          status?: number;
+          detail?: string;
+          instance?: string;
+          traceId?: string;
+          errors?: Record<string, string>;
+          // Legacy fields kept as safe fallbacks
+          message?: string;
+          error?: string;
+          details?: Record<string, string>;
+        }
+      | undefined;
+    // Prefer the RFC 7807 detail, then title; fall back to legacy message/error.
+    const serverMessage = data?.detail || data?.title || data?.message || data?.error;
+    const details = data?.errors ?? data?.details;
 
     if (status === 403) {
       return {
         status: 403,
         message: serverMessage || 'Bạn không có quyền thực hiện thao tác này.',
-        details: data?.details,
+        details,
       };
     }
 
@@ -78,22 +95,22 @@ export function normalizeAdminError(error: unknown): AdminApiError {
       return {
         status: 401,
         message: serverMessage || 'Phiên làm việc đã hết hạn. Vui lòng đăng nhập lại.',
-        details: data?.details,
+        details,
       };
     }
 
     if (status >= 500) {
       return {
         status,
-        message: 'Máy chủ đang gặp sự cố. Vui lòng thử lại sau.',
-        details: data?.details,
+        message: serverMessage || 'Máy chủ đang gặp sự cố. Vui lòng thử lại sau.',
+        details,
       };
     }
 
     return {
       status,
       message: serverMessage || error.message || 'Đã xảy ra lỗi khi kết nối máy chủ.',
-      details: data?.details,
+      details,
     };
   }
 

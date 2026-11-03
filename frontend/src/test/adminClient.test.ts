@@ -85,6 +85,97 @@ describe('adminClient & normalizeAdminError', () => {
       expect(normalized.status).toBe(400);
       expect(normalized.message).toBe('Tên danh mục không được để trống');
     });
+
+    it('đọc detail của ProblemDetail cho 401/403', () => {
+      const unauthorized = new AxiosError('Unauthorized', 'ERR_BAD_REQUEST', undefined, undefined, {
+        status: 401,
+        statusText: 'Unauthorized',
+        data: {
+          title: 'Unauthorized',
+          status: 401,
+          detail: 'Phiên đăng nhập không hợp lệ hoặc đã hết hạn.',
+          traceId: 'trace-401',
+        },
+        headers: {},
+        config: { headers: new AxiosHeaders() },
+      });
+      expect(normalizeAdminError(unauthorized).message).toBe(
+        'Phiên đăng nhập không hợp lệ hoặc đã hết hạn.'
+      );
+
+      const forbidden = new AxiosError('Forbidden', 'ERR_BAD_REQUEST', undefined, undefined, {
+        status: 403,
+        statusText: 'Forbidden',
+        data: {
+          title: 'Forbidden',
+          status: 403,
+          detail: 'Bạn không có quyền thực hiện thao tác này.',
+          traceId: 'trace-403',
+        },
+        headers: {},
+        config: { headers: new AxiosHeaders() },
+      });
+      expect(normalizeAdminError(forbidden).message).toBe(
+        'Bạn không có quyền thực hiện thao tác này.'
+      );
+    });
+
+    it('đọc detail của ProblemDetail cho 429 và 500', () => {
+      const rateLimited = new AxiosError('Too Many Requests', 'ERR_BAD_REQUEST', undefined, undefined, {
+        status: 429,
+        statusText: 'Too Many Requests',
+        data: {
+          title: 'Too Many Requests',
+          status: 429,
+          detail: 'Rate limit exceeded. Retry after 12 seconds.',
+          traceId: 'trace-429',
+        },
+        headers: {},
+        config: { headers: new AxiosHeaders() },
+      });
+      expect(normalizeAdminError(rateLimited).message).toBe(
+        'Rate limit exceeded. Retry after 12 seconds.'
+      );
+
+      const serverError = new AxiosError('Server Error', 'ERR_BAD_RESPONSE', undefined, undefined, {
+        status: 500,
+        statusText: 'Internal Server Error',
+        data: {
+          title: 'Internal Server Error',
+          status: 500,
+          detail: 'An unexpected error occurred',
+          traceId: 'trace-500',
+        },
+        headers: {},
+        config: { headers: new AxiosHeaders() },
+      });
+      expect(normalizeAdminError(serverError).message).toBe('An unexpected error occurred');
+    });
+
+    it('đọc errors map của ProblemDetail và giữ fallback details cũ', () => {
+      const problem = new AxiosError('Bad Request', 'ERR_BAD_REQUEST', undefined, undefined, {
+        status: 400,
+        statusText: 'Bad Request',
+        data: {
+          title: 'Bad Request',
+          status: 400,
+          detail: 'Validation failed',
+          errors: { email: 'Email không hợp lệ' },
+        },
+        headers: {},
+        config: { headers: new AxiosHeaders() },
+      });
+      expect(normalizeAdminError(problem).details).toEqual({ email: 'Email không hợp lệ' });
+
+      const legacy = new AxiosError('Bad Request', 'ERR_BAD_REQUEST', undefined, undefined, {
+        status: 400,
+        statusText: 'Bad Request',
+        data: { details: { slug: 'Slug bị trùng' } },
+        headers: {},
+        config: { headers: new AxiosHeaders() },
+      });
+      expect(normalizeAdminError(legacy).details).toEqual({ slug: 'Slug bị trùng' });
+    });
   });
 
   describe('Request Interceptor', () => {

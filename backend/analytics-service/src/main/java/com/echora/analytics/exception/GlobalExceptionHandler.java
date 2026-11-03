@@ -11,10 +11,13 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.FieldError;
 import org.springframework.validation.ObjectError;
 import org.springframework.web.ErrorResponse;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -50,6 +53,17 @@ public class GlobalExceptionHandler {
         Map<String, String> errors = new LinkedHashMap<>();
         ex.getConstraintViolations().forEach(v -> errors.put(v.getPropertyPath().toString(), v.getMessage()));
         return buildProblemDetail(HttpStatus.BAD_REQUEST, "Validation failed", request, errors);
+    }
+
+    @ExceptionHandler({HttpMessageNotReadableException.class,
+            MissingServletRequestParameterException.class,
+            MethodArgumentTypeMismatchException.class})
+    public ResponseEntity<Map<String, Object>> handleMalformedRequest(Exception ex, HttpServletRequest request) {
+        String message = ex instanceof HttpMessageNotReadableException
+                ? "Malformed JSON request body"
+                : ex.getMessage();
+        log.warn("Malformed request on {}: {}", request.getRequestURI(), message);
+        return buildProblemDetail(HttpStatus.BAD_REQUEST, message, request, null);
     }
 
     @ExceptionHandler(DataIntegrityViolationException.class)

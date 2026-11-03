@@ -1,5 +1,6 @@
 package com.echora.content.config;
 
+import com.echora.content.exception.ProblemDetailWriter;
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -71,7 +72,7 @@ public class AdminRoleFilter extends OncePerRequestFilter {
         if (isBlank(expectedApiKey)) {
             log.warn("Access denied on admin path {} - internal API key is not configured (fail-closed)",
                     request.getRequestURI());
-            reject(response, HttpServletResponse.SC_FORBIDDEN, FORBIDDEN_MESSAGE);
+            reject(request, response, HttpServletResponse.SC_FORBIDDEN, FORBIDDEN_MESSAGE);
             return;
         }
 
@@ -79,14 +80,14 @@ public class AdminRoleFilter extends OncePerRequestFilter {
         if (role == null || !REQUIRED_ROLE.equalsIgnoreCase(role.trim())) {
             log.warn("Access denied on admin path {} - missing or invalid {}: {}",
                     request.getRequestURI(), HEADER_ROLE, role);
-            reject(response, HttpServletResponse.SC_FORBIDDEN, FORBIDDEN_MESSAGE);
+            reject(request, response, HttpServletResponse.SC_FORBIDDEN, FORBIDDEN_MESSAGE);
             return;
         }
 
         if (!constantTimeEquals(request.getHeader(HEADER_INTERNAL_API_KEY), expectedApiKey)) {
             log.warn("Access denied on admin path {} - missing or invalid {}",
                     request.getRequestURI(), HEADER_INTERNAL_API_KEY);
-            reject(response, HttpServletResponse.SC_FORBIDDEN, FORBIDDEN_MESSAGE);
+            reject(request, response, HttpServletResponse.SC_FORBIDDEN, FORBIDDEN_MESSAGE);
             return;
         }
 
@@ -102,10 +103,9 @@ public class AdminRoleFilter extends OncePerRequestFilter {
                 expected.getBytes(StandardCharsets.UTF_8));
     }
 
-    private static void reject(HttpServletResponse response, int status, String message) throws IOException {
-        response.setStatus(status);
-        response.setContentType("application/json;charset=UTF-8");
-        response.getWriter().write("{\"status\":" + status + ",\"error\":\"Forbidden\",\"message\":\"" + message + "\"}");
+    private static void reject(HttpServletRequest request, HttpServletResponse response,
+                               int status, String message) throws IOException {
+        ProblemDetailWriter.write(response, request, status, message);
     }
 
     private static boolean isBlank(String value) {

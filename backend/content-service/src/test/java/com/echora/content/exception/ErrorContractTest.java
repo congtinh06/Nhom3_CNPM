@@ -18,7 +18,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * Shared error contract for every Echora service: RFC 7807 ProblemDetail with
  * type, title, status, detail, instance and traceId. Validation errors add an
  * errors map. The same schema is implemented by each service's exception
- * handler; this test locks the contract for 400, 404, 409 and 500.
+ * handler; this test locks the contract for 400, 403, 404, 409 and 500.
+ * 401/403/429 emitted directly by gateway filters are covered by
+ * GatewayErrorContractTest in api-gateway.
  */
 class ErrorContractTest {
 
@@ -78,6 +80,13 @@ class ErrorContractTest {
         public void setSlug(String slug) {
             this.slug = slug;
         }
+    }
+
+    @Test
+    @DisplayName("403 ForbiddenException -> ProblemDetail")
+    void forbiddenUsesProblemDetail() {
+        assertProblem(handler.handleForbidden(new ForbiddenException("premium required"), request()),
+                HttpStatus.FORBIDDEN.value(), "Forbidden");
     }
 
     @Test

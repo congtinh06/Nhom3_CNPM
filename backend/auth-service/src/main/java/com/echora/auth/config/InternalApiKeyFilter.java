@@ -1,5 +1,6 @@
 package com.echora.auth.config;
 
+import com.echora.auth.exception.ProblemDetailWriter;
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -45,22 +46,21 @@ public class InternalApiKeyFilter extends OncePerRequestFilter {
             return;
         }
         if (isBlank(expectedApiKey)) {
-            reject(response, HttpServletResponse.SC_SERVICE_UNAVAILABLE, "Internal API key is not configured");
+            reject(request, response, HttpServletResponse.SC_SERVICE_UNAVAILABLE, "Internal API key is not configured");
             return;
         }
         String incoming = request.getHeader(HEADER);
         if (incoming == null || !MessageDigest.isEqual(
                 incoming.getBytes(StandardCharsets.UTF_8), expectedApiKey.getBytes(StandardCharsets.UTF_8))) {
-            reject(response, HttpServletResponse.SC_UNAUTHORIZED, "Missing or invalid " + HEADER);
+            reject(request, response, HttpServletResponse.SC_UNAUTHORIZED, "Missing or invalid " + HEADER);
             return;
         }
         filterChain.doFilter(request, response);
     }
 
-    private static void reject(HttpServletResponse response, int status, String message) throws IOException {
-        response.setStatus(status);
-        response.setContentType("application/json;charset=UTF-8");
-        response.getWriter().write("{\"status\":" + status + ",\"message\":\"" + message + "\"}");
+    private static void reject(HttpServletRequest request, HttpServletResponse response,
+                               int status, String message) throws IOException {
+        ProblemDetailWriter.write(response, request, status, message);
     }
 
     private static boolean isBlank(String value) {

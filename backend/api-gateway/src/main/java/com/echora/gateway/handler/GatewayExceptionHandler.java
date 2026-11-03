@@ -1,17 +1,10 @@
 package com.echora.gateway.handler;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.web.reactive.error.ErrorWebExceptionHandler;
 import org.springframework.core.annotation.Order;
-import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.server.reactive.ServerHttpResponse;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ResponseStatusException;
@@ -29,7 +22,6 @@ import reactor.core.publisher.Mono;
 public class GatewayExceptionHandler implements ErrorWebExceptionHandler {
 
     private static final Logger log = LoggerFactory.getLogger(GatewayExceptionHandler.class);
-    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Override
     public Mono<Void> handle(ServerWebExchange exchange, Throwable ex) {
@@ -58,36 +50,7 @@ public class GatewayExceptionHandler implements ErrorWebExceptionHandler {
             log.error("Unhandled gateway error on path '{}': {}", exchange.getRequest().getURI().getPath(), ex.getMessage(), ex);
         }
 
-        String traceId = exchange.getRequest().getHeaders().getFirst("X-Trace-Id");
-        if (traceId == null || traceId.isBlank()) {
-            traceId = UUID.randomUUID().toString();
-        }
-
-        response.setStatusCode(status);
-        response.getHeaders().setContentType(MediaType.APPLICATION_PROBLEM_JSON);
-        response.getHeaders().set("X-Trace-Id", traceId);
-        com.echora.gateway.filter.SecurityHeadersGlobalFilter.applyHeaders(response.getHeaders());
-
-        Map<String, Object> body = new HashMap<>();
-        body.put("type", "https://api.echora.dev/problems/" + status.value());
-        body.put("title", status.getReasonPhrase());
-        body.put("status", status.value());
-        body.put("detail", errorMessage);
-        body.put("instance", exchange.getRequest().getURI().getPath());
-        body.put("traceId", traceId);
-
-        byte[] jsonBytes;
-        try {
-            jsonBytes = objectMapper.writeValueAsBytes(body);
-        } catch (Exception e) {
-            jsonBytes = ("{\"type\":\"https://api.echora.dev/problems/" + status.value()
-                    + "\",\"title\":\"" + status.getReasonPhrase()
-                    + "\",\"status\":" + status.value()
-                    + ",\"detail\":\"" + errorMessage.replace("\"", "\\\"") + "\",\"instance\":\"" + exchange.getRequest().getURI().getPath().replace("\"", "\\\"") + "\",\"traceId\":\"" + traceId + "\"}")
-                    .getBytes(StandardCharsets.UTF_8);
-        }
-        DataBuffer buffer = response.bufferFactory().wrap(jsonBytes);
-        return response.writeWith(Mono.just(buffer));
+        return ProblemDetailSupport.write(exchange, status, errorMessage);
     }
 
     private boolean isTimeoutError(Throwable ex) {

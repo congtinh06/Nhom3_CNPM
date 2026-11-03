@@ -490,21 +490,28 @@ class ApiGatewayApplicationTest {
         webTestClient.get().uri("/api/analytics/summary")
                 .exchange()
                 .expectStatus().isUnauthorized()
-                .expectHeader().contentType(MediaType.APPLICATION_JSON)
+                .expectHeader().contentType(MediaType.APPLICATION_PROBLEM_JSON)
                 .expectBody()
+                .jsonPath("$.type").isEqualTo("https://api.echora.dev/problems/401")
+                .jsonPath("$.title").isEqualTo("Unauthorized")
                 .jsonPath("$.status").isEqualTo(401)
-                .jsonPath("$.error").isEqualTo("Unauthorized")
-                .jsonPath("$.message").isEqualTo("Phiên đăng nhập không hợp lệ hoặc đã hết hạn.");
+                .jsonPath("$.detail").isEqualTo("Phiên đăng nhập không hợp lệ hoặc đã hết hạn.")
+                .jsonPath("$.instance").isEqualTo("/api/analytics/summary")
+                .jsonPath("$.traceId").exists();
 
         // USER token on GET /api/analytics/summary -> 403
         webTestClient.get().uri("/api/analytics/summary")
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + USER_TOKEN)
                 .exchange()
                 .expectStatus().isForbidden()
+                .expectHeader().contentType(MediaType.APPLICATION_PROBLEM_JSON)
                 .expectBody()
+                .jsonPath("$.type").isEqualTo("https://api.echora.dev/problems/403")
+                .jsonPath("$.title").isEqualTo("Forbidden")
                 .jsonPath("$.status").isEqualTo(403)
-                .jsonPath("$.error").isEqualTo("Forbidden")
-                .jsonPath("$.message").isEqualTo("Bạn không có quyền thực hiện thao tác này.");
+                .jsonPath("$.detail").isEqualTo("Bạn không có quyền thực hiện thao tác này.")
+                .jsonPath("$.instance").isEqualTo("/api/analytics/summary")
+                .jsonPath("$.traceId").exists();
 
         // ADMIN token on GET /api/analytics/summary -> 200 OK
         webTestClient.get().uri("/api/analytics/summary")
@@ -527,7 +534,7 @@ class ApiGatewayApplicationTest {
                 .expectStatus().isUnauthorized()
                 .expectBody()
                 .jsonPath("$.status").isEqualTo(401)
-                .jsonPath("$.message").isEqualTo("Phiên đăng nhập không hợp lệ hoặc đã hết hạn.");
+                .jsonPath("$.detail").isEqualTo("Phiên đăng nhập không hợp lệ hoặc đã hết hạn.");
 
         webTestClient.get().uri("/api/analytics/summary")
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + ADMIN_TOKEN)
@@ -535,7 +542,7 @@ class ApiGatewayApplicationTest {
                 .expectStatus().isUnauthorized()
                 .expectBody()
                 .jsonPath("$.status").isEqualTo(401)
-                .jsonPath("$.message").isEqualTo("Phiên đăng nhập không hợp lệ hoặc đã hết hạn.");
+                .jsonPath("$.detail").isEqualTo("Phiên đăng nhập không hợp lệ hoặc đã hết hạn.");
     }
 
     @Test
@@ -588,7 +595,7 @@ class ApiGatewayApplicationTest {
                         .expectStatus().isUnauthorized()
                         .expectBody()
                         .jsonPath("$.status").isEqualTo(401)
-                        .jsonPath("$.message").isEqualTo("Phiên đăng nhập không hợp lệ hoặc đã hết hạn.");
+                        .jsonPath("$.detail").isEqualTo("Phiên đăng nhập không hợp lệ hoặc đã hết hạn.");
                 assertThat(downstreamRequestCount.get())
                         .as("Downstream must receive NOTHING for " + method + " " + path + " without token")
                         .isEqualTo(before);
@@ -605,7 +612,7 @@ class ApiGatewayApplicationTest {
                 .expectStatus().isForbidden()
                 .expectBody()
                 .jsonPath("$.status").isEqualTo(403)
-                .jsonPath("$.message").isEqualTo("Bạn không có quyền thực hiện thao tác này.");
+                .jsonPath("$.detail").isEqualTo("Bạn không có quyền thực hiện thao tác này.");
         assertThat(downstreamRequestCount.get()).isEqualTo(before);
     }
 
@@ -618,7 +625,7 @@ class ApiGatewayApplicationTest {
                 .expectStatus().isUnauthorized()
                 .expectBody()
                 .jsonPath("$.status").isEqualTo(401)
-                .jsonPath("$.message").isEqualTo("Phiên đăng nhập không hợp lệ hoặc đã hết hạn.");
+                .jsonPath("$.detail").isEqualTo("Phiên đăng nhập không hợp lệ hoặc đã hết hạn.");
         assertThat(downstreamRequestCount.get()).isEqualTo(before);
     }
 
@@ -631,7 +638,7 @@ class ApiGatewayApplicationTest {
                 .expectStatus().isUnauthorized()
                 .expectBody()
                 .jsonPath("$.status").isEqualTo(401)
-                .jsonPath("$.message").isEqualTo("Phiên đăng nhập không hợp lệ hoặc đã hết hạn.");
+                .jsonPath("$.detail").isEqualTo("Phiên đăng nhập không hợp lệ hoặc đã hết hạn.");
         assertThat(downstreamRequestCount.get()).isEqualTo(before);
     }
 
@@ -716,7 +723,7 @@ class ApiGatewayApplicationTest {
                 .expectStatus().isUnauthorized()
                 .expectBody()
                 .jsonPath("$.status").isEqualTo(401)
-                .jsonPath("$.message").isEqualTo("Phiên đăng nhập không hợp lệ hoặc đã hết hạn.");
+                .jsonPath("$.detail").isEqualTo("Phiên đăng nhập không hợp lệ hoặc đã hết hạn.");
 
         webTestClient.post().uri("http://localhost:" + port + "/api/admin/products")
                 .header("X-User-Role", "admin")
@@ -757,7 +764,7 @@ class ApiGatewayApplicationTest {
                     .expectStatus().isUnauthorized()
                     .expectBody()
                     .jsonPath("$.status").isEqualTo(401)
-                    .jsonPath("$.message").isEqualTo("Phiên đăng nhập không hợp lệ hoặc đã hết hạn.");
+                    .jsonPath("$.detail").isEqualTo("Phiên đăng nhập không hợp lệ hoặc đã hết hạn.");
         }
     }
 
@@ -769,7 +776,7 @@ class ApiGatewayApplicationTest {
                 .expectStatus().isUnauthorized()
                 .expectBody()
                 .jsonPath("$.status").isEqualTo(401)
-                .jsonPath("$.message").isEqualTo("Phiên đăng nhập không hợp lệ hoặc đã hết hạn.");
+                .jsonPath("$.detail").isEqualTo("Phiên đăng nhập không hợp lệ hoặc đã hết hạn.");
     }
 
     @Test
@@ -787,7 +794,7 @@ class ApiGatewayApplicationTest {
                 .expectStatus().isUnauthorized()
                 .expectBody()
                 .jsonPath("$.status").isEqualTo(401)
-                .jsonPath("$.message").isEqualTo("Phiên đăng nhập không hợp lệ hoặc đã hết hạn.");
+                .jsonPath("$.detail").isEqualTo("Phiên đăng nhập không hợp lệ hoặc đã hết hạn.");
 
         // Phase 3: Token refreshed from auth-service with demoted role USER -> 403 Forbidden
         String demotedUserToken = createToken(1L, "admin@echora.local", "USER", "ACTIVE", 900);
@@ -797,7 +804,7 @@ class ApiGatewayApplicationTest {
                 .expectStatus().isForbidden()
                 .expectBody()
                 .jsonPath("$.status").isEqualTo(403)
-                .jsonPath("$.message").isEqualTo("Bạn không có quyền thực hiện thao tác này.");
+                .jsonPath("$.detail").isEqualTo("Bạn không có quyền thực hiện thao tác này.");
     }
 
     @Test
@@ -816,7 +823,7 @@ class ApiGatewayApplicationTest {
                     .expectStatus().isUnauthorized()
                     .expectBody()
                     .jsonPath("$.status").isEqualTo(401)
-                    .jsonPath("$.message").isEqualTo("Phiên đăng nhập không hợp lệ hoặc đã hết hạn.");
+                    .jsonPath("$.detail").isEqualTo("Phiên đăng nhập không hợp lệ hoặc đã hết hạn.");
 
             // 2. USER token -> 403
             webTestClient.get().uri("http://localhost:" + port + path)
@@ -825,7 +832,7 @@ class ApiGatewayApplicationTest {
                     .expectStatus().isForbidden()
                     .expectBody()
                     .jsonPath("$.status").isEqualTo(403)
-                    .jsonPath("$.message").isEqualTo("Bạn không có quyền thực hiện thao tác này.");
+                    .jsonPath("$.detail").isEqualTo("Bạn không có quyền thực hiện thao tác này.");
 
             // 3. ADMIN token -> reaches downstream (200 OK from mock server)
             webTestClient.get().uri("http://localhost:" + port + path)
@@ -844,7 +851,7 @@ class ApiGatewayApplicationTest {
                 .expectStatus().isUnauthorized()
                 .expectBody()
                 .jsonPath("$.status").isEqualTo(401)
-                .jsonPath("$.message").isEqualTo("Phiên đăng nhập không hợp lệ hoặc đã hết hạn.");
+                .jsonPath("$.detail").isEqualTo("Phiên đăng nhập không hợp lệ hoặc đã hết hạn.");
 
         // 2. Bad signature -> 401
         webTestClient.method(method).uri("http://localhost:" + port + path)
@@ -853,7 +860,7 @@ class ApiGatewayApplicationTest {
                 .expectStatus().isUnauthorized()
                 .expectBody()
                 .jsonPath("$.status").isEqualTo(401)
-                .jsonPath("$.message").isEqualTo("Phiên đăng nhập không hợp lệ hoặc đã hết hạn.");
+                .jsonPath("$.detail").isEqualTo("Phiên đăng nhập không hợp lệ hoặc đã hết hạn.");
 
         // 3. Expired token -> 401
         webTestClient.method(method).uri("http://localhost:" + port + path)
@@ -862,7 +869,7 @@ class ApiGatewayApplicationTest {
                 .expectStatus().isUnauthorized()
                 .expectBody()
                 .jsonPath("$.status").isEqualTo(401)
-                .jsonPath("$.message").isEqualTo("Phiên đăng nhập không hợp lệ hoặc đã hết hạn.");
+                .jsonPath("$.detail").isEqualTo("Phiên đăng nhập không hợp lệ hoặc đã hết hạn.");
 
         // 4. Malformed token -> 401
         webTestClient.method(method).uri("http://localhost:" + port + path)
@@ -871,7 +878,7 @@ class ApiGatewayApplicationTest {
                 .expectStatus().isUnauthorized()
                 .expectBody()
                 .jsonPath("$.status").isEqualTo(401)
-                .jsonPath("$.message").isEqualTo("Phiên đăng nhập không hợp lệ hoặc đã hết hạn.");
+                .jsonPath("$.detail").isEqualTo("Phiên đăng nhập không hợp lệ hoặc đã hết hạn.");
 
         // 5. Old X-Admin-Key without Bearer -> 401
         webTestClient.method(method).uri("http://localhost:" + port + path)
@@ -880,7 +887,7 @@ class ApiGatewayApplicationTest {
                 .expectStatus().isUnauthorized()
                 .expectBody()
                 .jsonPath("$.status").isEqualTo(401)
-                .jsonPath("$.message").isEqualTo("Phiên đăng nhập không hợp lệ hoặc đã hết hạn.");
+                .jsonPath("$.detail").isEqualTo("Phiên đăng nhập không hợp lệ hoặc đã hết hạn.");
 
         // 6. Valid token, role USER -> 403
         webTestClient.method(method).uri("http://localhost:" + port + path)
@@ -889,7 +896,7 @@ class ApiGatewayApplicationTest {
                 .expectStatus().isForbidden()
                 .expectBody()
                 .jsonPath("$.status").isEqualTo(403)
-                .jsonPath("$.message").isEqualTo("Bạn không có quyền thực hiện thao tác này.");
+                .jsonPath("$.detail").isEqualTo("Bạn không có quyền thực hiện thao tác này.");
 
         // 7. Valid token, role ADMIN -> 2xx
         webTestClient.method(method).uri("http://localhost:" + port + path)
@@ -972,10 +979,14 @@ class ApiGatewayApplicationTest {
                 .exchange()
                 .expectStatus().isEqualTo(429)
                 .expectHeader().exists(HttpHeaders.RETRY_AFTER)
-                .expectHeader().contentType(MediaType.APPLICATION_JSON)
+                .expectHeader().contentType(MediaType.APPLICATION_PROBLEM_JSON)
                 .expectBody()
+                .jsonPath("$.type").isEqualTo("https://api.echora.dev/problems/429")
+                .jsonPath("$.title").isEqualTo("Too Many Requests")
                 .jsonPath("$.status").isEqualTo(429)
-                .jsonPath("$.error").isEqualTo("Too Many Requests");
+                .jsonPath("$.detail").exists()
+                .jsonPath("$.instance").isEqualTo("/api/analytics/events")
+                .jsonPath("$.traceId").exists();
     }
 
     @Test
@@ -1281,7 +1292,7 @@ class ApiGatewayApplicationTest {
                 .expectStatus().isForbidden()
                 .expectBody()
                 .jsonPath("$.status").isEqualTo(403)
-                .jsonPath("$.message").isEqualTo("Bạn không có quyền thực hiện thao tác này.");
+                .jsonPath("$.detail").isEqualTo("Bạn không có quyền thực hiện thao tác này.");
     }
 
     @Test

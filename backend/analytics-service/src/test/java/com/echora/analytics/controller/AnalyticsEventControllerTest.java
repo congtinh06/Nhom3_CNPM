@@ -90,6 +90,19 @@ class AnalyticsEventControllerTest {
     }
 
     @Test
+    @DisplayName("POST /api/analytics/events returns 400 ProblemDetail on malformed JSON")
+    void testRecordEvent_malformedJson_returns400() throws Exception {
+        mockMvc.perform(post("/api/analytics/events")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{not-json"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.type").value("https://api.echora.dev/problems/400"))
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.title").value("Bad Request"))
+                .andExpect(jsonPath("$.detail").value("Malformed JSON request body"));
+    }
+
+    @Test
     @DisplayName("POST /api/analytics/events returns 503 Service Unavailable when broker publish fails")
     void testRecordEvent_brokerPublishFails_returns503() throws Exception {
         CreateEventRequest request = CreateEventRequest.builder()

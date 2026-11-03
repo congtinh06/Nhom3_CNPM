@@ -84,7 +84,7 @@ class AnalyticsSummaryControllerTest {
         mockMvc.perform(get("/api/analytics/summary"))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.status").value(403))
-                .andExpect(jsonPath("$.message").value("Bạn không có quyền thực hiện thao tác này."));
+                .andExpect(jsonPath("$.detail").value("Bạn không có quyền thực hiện thao tác này."));
     }
 
     @Test

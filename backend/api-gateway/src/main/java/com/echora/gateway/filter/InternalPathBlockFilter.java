@@ -1,21 +1,18 @@
 package com.echora.gateway.filter;
 
+import com.echora.gateway.handler.ProblemDetailSupport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.Ordered;
-import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.server.reactive.ServerHttpRequest;
-import org.springframework.http.server.reactive.ServerHttpResponse;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
-import java.nio.charset.StandardCharsets;
 import java.util.Locale;
 import java.util.Set;
 import java.util.regex.Pattern;
@@ -279,23 +276,11 @@ public class InternalPathBlockFilter implements GlobalFilter, Ordered {
     }
 
     private Mono<Void> sendNotFound(ServerWebExchange exchange) {
-        ServerHttpResponse response = exchange.getResponse();
-        response.setStatusCode(HttpStatus.NOT_FOUND);
-        response.getHeaders().setContentType(MediaType.APPLICATION_JSON);
-        byte[] jsonBytes = "{\"status\":404,\"error\":\"Not Found\",\"message\":\"Not Found\"}"
-                .getBytes(StandardCharsets.UTF_8);
-        DataBuffer buffer = response.bufferFactory().wrap(jsonBytes);
-        return response.writeWith(Mono.just(buffer));
+        return ProblemDetailSupport.write(exchange, HttpStatus.NOT_FOUND, "Not Found");
     }
 
     private Mono<Void> sendMethodNotAllowed(ServerWebExchange exchange) {
-        ServerHttpResponse response = exchange.getResponse();
-        response.setStatusCode(HttpStatus.METHOD_NOT_ALLOWED);
-        response.getHeaders().setContentType(MediaType.APPLICATION_JSON);
-        byte[] jsonBytes = "{\"status\":405,\"error\":\"Method Not Allowed\",\"message\":\"Method Not Allowed\"}"
-                .getBytes(StandardCharsets.UTF_8);
-        DataBuffer buffer = response.bufferFactory().wrap(jsonBytes);
-        return response.writeWith(Mono.just(buffer));
+        return ProblemDetailSupport.write(exchange, HttpStatus.METHOD_NOT_ALLOWED, "Method Not Allowed");
     }
 
     @Override
