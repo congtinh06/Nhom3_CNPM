@@ -2,6 +2,7 @@ package com.echora.gateway;
 
 import com.echora.gateway.filter.AdminAuthGlobalFilter;
 import com.echora.gateway.filter.AnalyticsRateLimitGlobalFilter;
+import com.echora.gateway.filter.UntrustedHeaderStripGlobalFilter;
 import com.echora.gateway.filter.UserAuthGlobalFilter;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -85,6 +86,19 @@ class GatewayErrorContractTest {
         assertThat(body.get("detail").asText()).isEqualTo("Bạn không có quyền thực hiện thao tác này.");
         assertThat(body.get("instance").asText()).isEqualTo("/api/admin/products");
         assertThat(forwarded).isFalse();
+    }
+
+    @Test
+    @DisplayName("UntrustedHeaderStripGlobalFilter normalizes X-Request-Id to X-Trace-Id")
+    void requestIdIsNormalizedToTraceId() {
+        MockServerWebExchange exchange = MockServerWebExchange.from(
+                MockServerHttpRequest.get("/api/orders")
+                        .header("X-Request-Id", "trace-req-123")
+                        .build());
+
+        new UntrustedHeaderStripGlobalFilter().filter(exchange, ex -> Mono.empty()).block();
+
+        assertThat(exchange.getRequest().getHeaders().getFirst("X-Trace-Id")).isEqualTo("trace-req-123");
     }
 
     @Test
