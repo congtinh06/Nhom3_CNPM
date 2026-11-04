@@ -99,7 +99,8 @@ class AnalyticsEventControllerTest {
                 .andExpect(jsonPath("$.type").value("https://api.echora.dev/problems/400"))
                 .andExpect(jsonPath("$.status").value(400))
                 .andExpect(jsonPath("$.title").value("Bad Request"))
-                .andExpect(jsonPath("$.detail").value("Malformed JSON request body"));
+                .andExpect(jsonPath("$.detail").value(
+                        "Dữ liệu gửi lên không hợp lệ. Vui lòng kiểm tra định dạng JSON và thử lại."));
     }
 
     @Test

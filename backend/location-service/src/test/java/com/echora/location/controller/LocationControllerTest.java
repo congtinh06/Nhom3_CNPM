@@ -102,7 +102,7 @@ class LocationControllerTest {
     }
 
     @Test
-    @DisplayName("GET /nearby: returns 400 with Parameter 'lat' must be a valid number when lat=abc")
+    @DisplayName("GET /nearby: returns 400 with a friendly detail when lat=abc")
     void testGetNearby_TypeMismatch_Returns400() throws Exception {
         mockMvc.perform(get("/api/location/nearby")
                         .param("lat", "abc")
@@ -111,7 +111,8 @@ class LocationControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status").value(400))
                 .andExpect(jsonPath("$.title").value("Bad Request"))
-                .andExpect(jsonPath("$.detail").value("Parameter 'lat' must be a valid number"));
+                .andExpect(jsonPath("$.detail").value(
+                        "Tham số trong yêu cầu không hợp lệ. Vui lòng kiểm tra lại giá trị đã gửi."));
     }
 
     @Test
