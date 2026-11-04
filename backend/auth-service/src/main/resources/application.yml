@@ -58,6 +58,10 @@ app:
   test-user:
     email: ${SEED_TEST_USER_EMAIL:user@echora.local}
     password: ${SEED_TEST_USER_PASSWORD:}
+  demo-premium:
+    # Tài khoản demo nghe audio EN/JA/KO; mật khẩu lấy từ .env, không hard-code.
+    email: ${DEMO_PREMIUM_EMAIL:}
+    password: ${DEMO_PREMIUM_PASSWORD:}
   rate-limit:
     login-max-failures: 5
     login-lock: PT15M

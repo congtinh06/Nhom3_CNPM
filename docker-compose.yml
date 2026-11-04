@@ -278,6 +278,9 @@ services:
       SEED_TEST_USER_EMAIL: ${SEED_TEST_USER_EMAIL:-user@echora.local}
       # Để trống = không seed tài khoản USER kiểm thử (không còn mật khẩu mặc định).
       SEED_TEST_USER_PASSWORD: ${SEED_TEST_USER_PASSWORD:-}
+      # Tài khoản demo Premium nghe audio EN/JA/KO; mật khẩu lấy từ .env, không hard-code.
+      DEMO_PREMIUM_EMAIL: ${DEMO_PREMIUM_EMAIL:-}
+      DEMO_PREMIUM_PASSWORD: ${DEMO_PREMIUM_PASSWORD:-}
     depends_on:
       mssql-db-init:
         condition: service_completed_successfully

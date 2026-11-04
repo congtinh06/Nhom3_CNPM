@@ -337,6 +337,30 @@ Tài khoản seed chỉ được tạo khi đặt biến môi trường tương 
 
 Để tạo thêm ADMIN, dùng chức năng quản lý người dùng trong `/quan-tri` bằng tài khoản ADMIN hiện có, hoặc đổi `ADMIN_SEED_EMAIL`/`ADMIN_SEED_PASSWORD` sang email mới rồi khởi động lại `auth-service` (seeder chỉ tạo khi email chưa tồn tại).
 
+### Tài khoản demo Premium (nghe audio EN/JA/KO)
+
+`EntitlementFilter` của content-service chỉ cho `lang=vi` miễn phí; `en`, `ja`, `ko` yêu cầu
+plan `PREMIUM` đang hoạt động hoặc mua lẻ đúng POI. Tài khoản ADMIN seed hiện là `FREE`
+nên **không** nghe được ba ngoại ngữ này.
+
+Seeder của auth-service tạo (và luôn bảo đảm) một tài khoản demo Premium từ biến môi trường:
+
+- `DEMO_PREMIUM_EMAIL` — gợi ý trong `.env.example`: `demo.premium@echora.test`
+- `DEMO_PREMIUM_PASSWORD` — lấy từ `.env` (`.env.example` có placeholder `ChangeMe_Demo123`)
+
+Đăng nhập tại `http://localhost:8088/dang-nhap` bằng email trên và đúng mật khẩu
+`DEMO_PREMIUM_PASSWORD` trong `.env`. Tài khoản được đặt `ACTIVE`, `USER`, `PREMIUM`
+(hạn dùng +10 năm) mỗi khi auth-service khởi động, nên dựng lại stack vẫn dùng được.
+
+Kiểm tra nhanh sau khi đăng nhập (thay `<token>` bằng access token nhận từ `/api/auth/login`):
+
+```powershell
+$headers = @{ Authorization = "Bearer <token>" }
+$poi = Invoke-RestMethod "http://localhost:18080/api/content/pois/1?lang=en" -Headers $headers
+Invoke-WebRequest $poi.audioUrl -Headers $headers -OutFile "$env:TEMP\poi1-en.mp3"
+(Get-Item "$env:TEMP\poi1-en.mp3").Length
+```
+
 Thông tin VNPAY Sandbox (mã website, hash secret, thẻ test) tra cứu tại tài liệu chính thức của VNPAY; không lưu trong repo.
 
 ---

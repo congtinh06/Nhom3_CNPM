@@ -1,6 +1,7 @@
 package com.echora.auth.bootstrap;
 
 import com.echora.auth.entity.User;
+import com.echora.auth.entity.UserPlan;
 import com.echora.auth.entity.UserRole;
 import com.echora.auth.entity.UserStatus;
 import com.echora.auth.repository.UserRepository;
@@ -33,6 +34,8 @@ public class AdminUserSeeder implements ApplicationRunner {
     private final String adminPassword;
     private final String testUserEmail;
     private final String testUserPassword;
+    private final String demoPremiumEmail;
+    private final String demoPremiumPassword;
 
     public AdminUserSeeder(UserRepository userRepository,
                            PasswordEncoder passwordEncoder,
@@ -40,7 +43,9 @@ public class AdminUserSeeder implements ApplicationRunner {
                            @Value("${app.admin.email:}") String adminEmail,
                            @Value("${app.admin.password:}") String adminPassword,
                            @Value("${app.test-user.email:user@echora.local}") String testUserEmail,
-                           @Value("${app.test-user.password:}") String testUserPassword) {
+                           @Value("${app.test-user.password:}") String testUserPassword,
+                           @Value("${app.demo-premium.email:}") String demoPremiumEmail,
+                           @Value("${app.demo-premium.password:}") String demoPremiumPassword) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.passwordPolicy = passwordPolicy;
@@ -48,12 +53,15 @@ public class AdminUserSeeder implements ApplicationRunner {
         this.adminPassword = adminPassword;
         this.testUserEmail = testUserEmail;
         this.testUserPassword = testUserPassword;
+        this.demoPremiumEmail = demoPremiumEmail;
+        this.demoPremiumPassword = demoPremiumPassword;
     }
 
     @Override
     public void run(ApplicationArguments args) {
         seedAdmin();
         seedTestUser();
+        seedDemoPremiumUser();
     }
 
     private void seedAdmin() {
@@ -133,6 +141,61 @@ public class AdminUserSeeder implements ApplicationRunner {
                 .build();
         userRepository.save(testUser);
         log.info("Đã tạo tài khoản USER kiểm thử mặc định với email {}.", normalizedEmail);
+    }
+
+    /**
+     * Tài khoản demo Premium để nghe audio EN/JA/KO. Mật khẩu lấy từ
+     * DEMO_PREMIUM_PASSWORD (.env/.env.example), không hard-code trong mã.
+     */
+    private void seedDemoPremiumUser() {
+        boolean hasEmail = demoPremiumEmail != null && !demoPremiumEmail.isBlank();
+        boolean hasPassword = demoPremiumPassword != null && !demoPremiumPassword.isBlank();
+
+        if (!hasEmail || !hasPassword) {
+            log.info("DEMO_PREMIUM_EMAIL/DEMO_PREMIUM_PASSWORD chưa được đặt đầy đủ -> bỏ qua tài khoản demo Premium.");
+            return;
+        }
+
+        List<String> violations = passwordPolicy.validate(demoPremiumPassword);
+        if (!violations.isEmpty()) {
+            log.warn("DEMO_PREMIUM_PASSWORD không hợp lệ: {}, bỏ qua tài khoản demo Premium.", violations);
+            return;
+        }
+
+        String normalizedEmail = demoPremiumEmail.trim().toLowerCase(Locale.ROOT);
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime premiumExpiresAt = now.plusYears(10);
+
+        User demo = userRepository.findByEmail(normalizedEmail).orElse(null);
+        if (demo == null) {
+            demo = User.builder()
+                    .fullName("Khách Demo Premium")
+                    .email(normalizedEmail)
+                    .passwordHash(passwordEncoder.encode(demoPremiumPassword))
+                    .role(UserRole.USER)
+                    .status(UserStatus.ACTIVE)
+                    .emailVerifiedAt(now)
+                    .plan(UserPlan.PREMIUM)
+                    .premiumExpiresAt(premiumExpiresAt)
+                    .createdAt(now)
+                    .updatedAt(now)
+                    .build();
+            userRepository.save(demo);
+            log.info("Đã tạo tài khoản demo Premium {} (hết hạn {}).", normalizedEmail, premiumExpiresAt);
+            return;
+        }
+
+        // Idempotent: bảo đảm tài khoản demo luôn ACTIVE + PREMIUM khi stack được dựng lại.
+        demo.setFullName("Khách Demo Premium");
+        demo.setRole(UserRole.USER);
+        demo.setStatus(UserStatus.ACTIVE);
+        demo.setEmailVerifiedAt(demo.getEmailVerifiedAt() != null ? demo.getEmailVerifiedAt() : now);
+        demo.setPlan(UserPlan.PREMIUM);
+        demo.setPremiumExpiresAt(premiumExpiresAt);
+        demo.setUpdatedAt(now);
+        userRepository.save(demo);
+        log.info("Đã bảo đảm tài khoản demo Premium {} ở trạng thái PREMIUM (hết hạn {}).",
+                normalizedEmail, premiumExpiresAt);
     }
 }
 

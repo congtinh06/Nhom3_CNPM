@@ -1,6 +1,7 @@
 package com.echora.auth.bootstrap;
 
 import com.echora.auth.entity.User;
+import com.echora.auth.entity.UserPlan;
 import com.echora.auth.entity.UserRole;
 import com.echora.auth.entity.UserStatus;
 import com.echora.auth.repository.UserRepository;
@@ -44,14 +45,21 @@ class AdminUserSeederTest {
     private final PasswordPolicy passwordPolicy = new PasswordPolicy();
 
     private AdminUserSeeder seeder(String email, String password) {
+        return seeder(email, password, "", "");
+    }
+
+    private AdminUserSeeder seeder(String adminEmail, String adminPassword,
+                                   String demoEmail, String demoPassword) {
         return new AdminUserSeeder(
                 userRepository,
                 passwordEncoder,
                 passwordPolicy,
-                email,
-                password,
+                adminEmail,
+                adminPassword,
                 "",
-                "");
+                "",
+                demoEmail,
+                demoPassword);
     }
 
     @Test
@@ -126,5 +134,49 @@ class AdminUserSeederTest {
         seeder(NEW_EMAIL, "").run(applicationArguments);
 
         verifyNoInteractions(userRepository, passwordEncoder);
+    }
+
+    @Test
+    @DisplayName("Tạo tài khoản demo Premium ACTIVE từ DEMO_PREMIUM_*")
+    void createsDemoPremiumUserFromEnvironment() {
+        String demoEmail = "demo.premium@echora.test";
+        String demoPassword = "ChangeMe_Demo123";
+        when(userRepository.findByEmail(demoEmail)).thenReturn(Optional.empty());
+        when(passwordEncoder.encode(demoPassword)).thenReturn("$2a$12$demo-hash");
+
+        seeder("", "", demoEmail, demoPassword).run(applicationArguments);
+
+        ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
+        verify(userRepository).save(captor.capture());
+        User created = captor.getValue();
+
+        assertThat(created.getEmail()).isEqualTo(demoEmail);
+        assertThat(created.getPasswordHash()).isEqualTo("$2a$12$demo-hash");
+        assertThat(created.getRole()).isEqualTo(UserRole.USER);
+        assertThat(created.getStatus()).isEqualTo(UserStatus.ACTIVE);
+        assertThat(created.getPlan()).isEqualTo(UserPlan.PREMIUM);
+        assertThat(created.getPremiumExpiresAt()).isAfter(LocalDateTime.now());
+        assertThat(created.isEmailVerified()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Tài khoản demo đã tồn tại được nâng lên PREMIUM (idempotent)")
+    void upgradesExistingDemoUserToPremium() {
+        String demoEmail = "demo.premium@echora.test";
+        User existing = User.builder()
+                .id(9L)
+                .email(demoEmail)
+                .role(UserRole.USER)
+                .status(UserStatus.ACTIVE)
+                .plan(UserPlan.FREE)
+                .build();
+        when(userRepository.findByEmail(demoEmail)).thenReturn(Optional.of(existing));
+
+        seeder("", "", demoEmail, "ChangeMe_Demo123").run(applicationArguments);
+
+        assertThat(existing.getPlan()).isEqualTo(UserPlan.PREMIUM);
+        assertThat(existing.getPremiumExpiresAt()).isAfter(LocalDateTime.now());
+        verify(userRepository).save(existing);
+        verify(passwordEncoder, never()).encode(anyString());
     }
 }
