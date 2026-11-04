@@ -72,13 +72,63 @@ spring:
           metadata:
             connect-timeout: ${GATEWAY_CONNECT_TIMEOUT_MS:3000}
             response-timeout: ${GATEWAY_ORDER_RESPONSE_TIMEOUT_MS:15000}
-        - id: api-docs
+        - id: auth-service-docs
+          uri: ${AUTH_SERVICE_URL:http://localhost:8086}
+          predicates:
+            - Path=/v3/api-docs/auth-service
+          filters:
+            - RewritePath=/v3/api-docs/auth-service, /v3/api-docs
+        - id: content-service-docs
           uri: ${CONTENT_SERVICE_URL:http://localhost:8085}
           predicates:
-            - Path=/v3/api-docs/**
-          metadata:
-            connect-timeout: ${GATEWAY_CONNECT_TIMEOUT_MS:3000}
-            response-timeout: ${GATEWAY_CONTENT_RESPONSE_TIMEOUT_MS:15000}
+            - Path=/v3/api-docs/content-service
+          filters:
+            - RewritePath=/v3/api-docs/content-service, /v3/api-docs
+        - id: location-service-docs
+          uri: ${LOCATION_SERVICE_URL:http://localhost:8082}
+          predicates:
+            - Path=/v3/api-docs/location-service
+          filters:
+            - RewritePath=/v3/api-docs/location-service, /v3/api-docs
+        - id: translation-tts-service-docs
+          uri: ${TRANSLATION_TTS_SERVICE_URL:http://localhost:8083}
+          predicates:
+            - Path=/v3/api-docs/translation-tts-service
+          filters:
+            - RewritePath=/v3/api-docs/translation-tts-service, /v3/api-docs
+        - id: analytics-service-docs
+          uri: ${ANALYTICS_SERVICE_URL:http://localhost:8081}
+          predicates:
+            - Path=/v3/api-docs/analytics-service
+          filters:
+            - RewritePath=/v3/api-docs/analytics-service, /v3/api-docs
+        - id: order-service-docs
+          uri: ${ORDER_SERVICE_URL:http://localhost:8087}
+          predicates:
+            - Path=/v3/api-docs/order-service
+          filters:
+            - RewritePath=/v3/api-docs/order-service, /v3/api-docs
+
+springdoc:
+  api-docs:
+    enabled: ${ECHORA_DOCS_ENABLED:false}
+    path: /v3/api-docs
+  swagger-ui:
+    enabled: ${ECHORA_DOCS_ENABLED:false}
+    path: /swagger-ui.html
+    urls:
+      - name: "Auth Service"
+        url: /v3/api-docs/auth-service
+      - name: "Content Service"
+        url: /v3/api-docs/content-service
+      - name: "Location Service"
+        url: /v3/api-docs/location-service
+      - name: "Translation & TTS Service"
+        url: /v3/api-docs/translation-tts-service
+      - name: "Analytics Service"
+        url: /v3/api-docs/analytics-service
+      - name: "Order Service"
+        url: /v3/api-docs/order-service
 
 frontend:
   url: ${FRONTEND_URL:http://localhost:5173}

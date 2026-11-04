@@ -84,6 +84,28 @@ feign:
         readTimeout: ${FEIGN_READ_TIMEOUT:5000}
         retryer: feign.Retryer.NEVER_RETRY
 
+# OpenAPI / Swagger qua API Gateway. ECHORA_DOCS_ENABLED=true (default) -> /v3/api-docs
+# va /swagger-ui.html hoat dong; false -> tra ve 404/403 (khong lo noi dung).
+springdoc:
+  api-docs:
+    enabled: ${ECHORA_DOCS_ENABLED:false}
+    path: /v3/api-docs
+  swagger-ui:
+    enabled: ${ECHORA_DOCS_ENABLED:false}
+    path: /swagger-ui.html
+    operations-sorter: method
+    tags-sorter: alpha
+  paths-to-exclude:
+    - /internal/**
+    - /**/internal/**
+  info:
+    title: Echora Analytics Service
+    version: "1.0.0"
+    description: "Thu thập sự kiện hành vi du khách và thống kê tương tác mã QR."
+  servers:
+    - url: ${GATEWAY_URL:http://localhost:18080}
+      description: API Gateway (http://localhost:18080 trong moi truong local)
+
 management:
   endpoints:
     web:

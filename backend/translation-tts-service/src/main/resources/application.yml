@@ -94,6 +94,27 @@ app:
       ko: ${TTS_VOICE_KO:ko-KR-SunHiNeural}
 
 
+# OpenAPI / Swagger qua API Gateway. ECHORA_DOCS_ENABLED=false (default: tắt ở deploy)
+springdoc:
+  api-docs:
+    enabled: ${ECHORA_DOCS_ENABLED:false}
+    path: /v3/api-docs
+  swagger-ui:
+    enabled: ${ECHORA_DOCS_ENABLED:false}
+    path: /swagger-ui.html
+    operations-sorter: method
+    tags-sorter: alpha
+  paths-to-exclude:
+    - /internal/**
+    - /**/internal/**
+  info:
+    title: Echora Translation TTS Service
+    version: "1.0.0"
+    description: "Dịch đa ngôn ngữ và tạo giọng đọc thuyết minh tự động."
+  servers:
+    - url: ${GATEWAY_URL:http://localhost:18080}
+      description: API Gateway (http://localhost:18080 trong moi truong local)
+
 management:
   endpoints:
     web:

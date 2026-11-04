@@ -132,6 +132,7 @@ services:
       INTERNAL_API_KEY: ${INTERNAL_API_KEY:?INTERNAL_API_KEY is required in .env}
       AUTH_SERVICE_URL: http://auth-service:8086
       PRODUCT_UPLOAD_DIR: /app/uploads/products
+      ECHORA_DOCS_ENABLED: ${ECHORA_DOCS_ENABLED:-true}
     volumes:
       - product-uploads-data:/app/uploads/products
     depends_on:
@@ -158,6 +159,7 @@ services:
       JAVA_TOOL_OPTIONS: "-Xms128m -Xmx256m"
       CONTENT_SERVICE_URL: http://content-service:8085
       INTERNAL_API_KEY: ${INTERNAL_API_KEY:?INTERNAL_API_KEY is required in .env}
+      ECHORA_DOCS_ENABLED: ${ECHORA_DOCS_ENABLED:-true}
     depends_on:
       content-service:
         condition: service_healthy
@@ -193,6 +195,7 @@ services:
       MYMEMORY_EMAIL: ${MYMEMORY_EMAIL:-}
       TRANSLATION_PROVIDER: ${TRANSLATION_PROVIDER:-seed}
       TTS_TIMEOUT_MS: ${TTS_TIMEOUT_MS:-120000}
+      ECHORA_DOCS_ENABLED: ${ECHORA_DOCS_ENABLED:-true}
     volumes:
       - audio-storage-data:/app/storage/audio
     depends_on:
@@ -228,6 +231,7 @@ services:
       RABBITMQ_PASSWORD: ${RABBITMQ_DEFAULT_PASS:?RABBITMQ_DEFAULT_PASS is required in .env}
       CONTENT_SERVICE_URL: http://content-service:8085
       INTERNAL_API_KEY: ${INTERNAL_API_KEY:?INTERNAL_API_KEY is required in .env}
+      ECHORA_DOCS_ENABLED: ${ECHORA_DOCS_ENABLED:-true}
     depends_on:
       mssql-db-init:
         condition: service_completed_successfully
@@ -284,6 +288,7 @@ services:
       # Cờ ECHORA_SEED_DEMO: default false (không seed demo Premium). Local có thể
       # bật qua .env (VD: ECHORA_SEED_DEMO=true) để tạo tài khoản demo.
       ECHORA_SEED_DEMO: ${ECHORA_SEED_DEMO:-false}
+      ECHORA_DOCS_ENABLED: ${ECHORA_DOCS_ENABLED:-true}
     depends_on:
       mssql-db-init:
         condition: service_completed_successfully
@@ -327,6 +332,7 @@ services:
       VNPAY_LOCALE: ${VNPAY_LOCALE:-vn}
       VNPAY_ORDER_TYPE: ${VNPAY_ORDER_TYPE:-other}
       VNPAY_EXPIRE_MINUTES: ${VNPAY_EXPIRE_MINUTES:-15}
+      ECHORA_DOCS_ENABLED: ${ECHORA_DOCS_ENABLED:-true}
     depends_on:
       mssql-db-init:
         condition: service_completed_successfully
@@ -363,6 +369,7 @@ services:
       INTERNAL_API_KEY: ${INTERNAL_API_KEY:?INTERNAL_API_KEY is required in .env}
       GATEWAY_TRUSTED_PROXIES: ${GATEWAY_TRUSTED_PROXIES:-}
       RATE_LIMIT_ANALYTICS_PER_MINUTE: ${RATE_LIMIT_ANALYTICS_PER_MINUTE:-120}
+      ECHORA_DOCS_ENABLED: ${ECHORA_DOCS_ENABLED:-true}
     depends_on:
       content-service:
         condition: service_healthy

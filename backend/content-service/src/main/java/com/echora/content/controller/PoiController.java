@@ -16,6 +16,7 @@ import com.echora.content.dto.PoiSummaryDto;
 import com.echora.content.dto.UpdatePoiRequest;
 import com.echora.content.dto.UpdatePoiStatusRequest;
 import com.echora.content.service.PoiContentService;
+import io.swagger.v3.oas.annotations.Hidden;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Pattern;
 import lombok.RequiredArgsConstructor;
@@ -70,6 +71,7 @@ public class PoiController {
         return ResponseEntity.ok(poiContentService.getPoiByQrToken(qrToken, lang));
     }
 
+    @Hidden
     @GetMapping("/api/content/internal/pois/bounding-box")
     public ResponseEntity<List<PoiBoundingBoxDto>> getPoisInBoundingBox(
             @RequestParam(required = false) Long zoneId,
@@ -79,12 +81,14 @@ public class PoiController {
             @RequestParam BigDecimal maxLng) {
         return ResponseEntity.ok(poiContentService.getPoisInBoundingBox(zoneId, minLat, maxLat, minLng, maxLng));
     }
+    @Hidden
     @GetMapping("/api/content/internal/pois/qr/{qrToken}")
     public ResponseEntity<PoiInternalQrDto> getInternalPoiByQrToken(@PathVariable String qrToken) {
         return ResponseEntity.ok(poiContentService.getInternalPoiByQrToken(qrToken));
     }
 
     // Nội bộ cho order-service: giá mua lẻ Premium của một POI.
+    @Hidden
     @GetMapping("/api/content/internal/pois/{id}/premium-price")
     public ResponseEntity<PoiPremiumPriceDto> getInternalPoiPremiumPrice(@PathVariable Long id) {
         return ResponseEntity.ok(poiContentService.getInternalPoiPremiumPrice(id));

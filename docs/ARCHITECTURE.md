@@ -16,7 +16,7 @@ flowchart TB
     end
 
     subgraph GatewayLayer["Lớp API Gateway"]
-        GW["api-gateway :8080\nPathGuardFilter · AdminAuthGlobalFilter\nJwtAuthenticationFilter · AnalyticsRateLimitGlobalFilter\nCorsConfig · SecurityHeadersFilter"]
+        GW["api-gateway :8080\nInternalPathBlockFilter · AdminAuthGlobalFilter\nUserAuthGlobalFilter · OpenApiDocsFilter\nAnalyticsRateLimitGlobalFilter · SecurityHeadersGlobalFilter"]
     end
 
     subgraph ServiceLayer["Lớp Microservices"]

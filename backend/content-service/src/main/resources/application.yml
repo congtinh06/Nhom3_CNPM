@@ -103,6 +103,28 @@ resilience4j:
           - org.springframework.web.client.ResourceAccessException
           - org.springframework.web.client.HttpServerErrorException
 
+# OpenAPI / Swagger qua API Gateway. ECHORA_DOCS_ENABLED=true (default) -> /v3/api-docs
+# va /swagger-ui.html hoat dong; false -> tra ve 404/403 (khong lo noi dung).
+springdoc:
+  api-docs:
+    enabled: ${ECHORA_DOCS_ENABLED:false}
+    path: /v3/api-docs
+  swagger-ui:
+    enabled: ${ECHORA_DOCS_ENABLED:false}
+    path: /swagger-ui.html
+    operations-sorter: method
+    tags-sorter: alpha
+  paths-to-exclude:
+    - /api/content/internal/**
+    - /**/internal/**
+  info:
+    title: Echora Content Service
+    version: "1.0.0"
+    description: "Quản lý điểm du lịch (POI), khu vực, lộ trình và quà lưu niệm."
+  servers:
+    - url: ${GATEWAY_URL:http://localhost:18080}
+      description: API Gateway (http://localhost:18080 trong moi truong local)
+
 management:
   endpoints:
     web:
