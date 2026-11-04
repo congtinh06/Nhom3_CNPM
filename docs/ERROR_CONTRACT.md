@@ -77,7 +77,7 @@ và 60s cho route audio (`GATEWAY_AUDIO_RESPONSE_TIMEOUT_MS`). Điều kiện b�
 | `contentAuthEntitlement` (content → auth) | 3s | 3 | 3×3s + 0.6s = **9.6s** | 15s | Còn dư ngân sách |
 | `orderContentPoiPrice` (order → content, GET) | 3s | 3 | 3×3s + 0.6s = **9.6s** | 15s | Còn dư ngân sách |
 | `translationMyMemory` (translation → MyMemory) | 10s | 3 | 3×10s + 0.6s = **30.6s** | 60s (audio) | Còn dư ngân sách |
-| `translationEdgeTts` (edge-tts) | — | **1** (không retry) | 30s / lần | 60s (audio) | Pipeline đã tự retry; breaker chỉ để ngắt khi lỗi liên tục |
+| `translationEdgeTts` (edge-tts) | **120s** (`TTS_TIMEOUT_MS`) | **1** (không retry) | 120s / lần | không qua gateway (chạy async qua RabbitMQ) | Pipeline đã tự retry; `slow-call-duration-threshold: 115s` > max hợp lệ 112.866s và < timeout 120s |
 
 ### Vì sao `locationContentService` dùng `max-attempts: 2` (khác 3)
 
