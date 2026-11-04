@@ -43,6 +43,7 @@ const generated = {
   JWT_SECRET: base64url(48),
   ADMIN_SEED_PASSWORD: strongPassword(),
   SEED_TEST_USER_PASSWORD: strongPassword(),
+  ECHORA_SEED_DEMO: 'false',
 };
 
 function upsert(lines, key, value) {

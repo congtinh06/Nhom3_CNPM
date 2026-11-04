@@ -281,6 +281,9 @@ services:
       # Tài khoản demo Premium nghe audio EN/JA/KO; mật khẩu lấy từ .env, không hard-code.
       DEMO_PREMIUM_EMAIL: ${DEMO_PREMIUM_EMAIL:-}
       DEMO_PREMIUM_PASSWORD: ${DEMO_PREMIUM_PASSWORD:-}
+      # Cờ ECHORA_SEED_DEMO: default false (không seed demo Premium). Local có thể
+      # bật qua .env (VD: ECHORA_SEED_DEMO=true) để tạo tài khoản demo.
+      ECHORA_SEED_DEMO: ${ECHORA_SEED_DEMO:-false}
     depends_on:
       mssql-db-init:
         condition: service_completed_successfully

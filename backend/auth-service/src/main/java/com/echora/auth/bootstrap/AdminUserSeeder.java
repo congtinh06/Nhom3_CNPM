@@ -14,6 +14,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 
@@ -26,6 +27,12 @@ import java.util.Locale;
 public class AdminUserSeeder implements ApplicationRunner {
 
     private static final String LEGACY_ADMIN_EMAIL = "admin@echora.local";
+    /** Các giá trị mật khẩu mặc định (ví dụ .env.example / legacy) — bị cấm ở profile deploy/prod. */
+    private static final String DEFAULT_ADMIN_SEED_PASSWORD = "ChangeMe_Admin123";
+    private static final List<String> DEFAULT_ADMIN_SEED_PASSWORDS = List.of(
+            "ChangeMe_Admin123",
+            "Admin@123456"
+    );
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
@@ -36,6 +43,8 @@ public class AdminUserSeeder implements ApplicationRunner {
     private final String testUserPassword;
     private final String demoPremiumEmail;
     private final String demoPremiumPassword;
+    private final boolean demoPremiumSeedEnabled;
+    private final String springProfiles;
 
     public AdminUserSeeder(UserRepository userRepository,
                            PasswordEncoder passwordEncoder,
@@ -45,23 +54,65 @@ public class AdminUserSeeder implements ApplicationRunner {
                            @Value("${app.test-user.email:user@echora.local}") String testUserEmail,
                            @Value("${app.test-user.password:}") String testUserPassword,
                            @Value("${app.demo-premium.email:}") String demoPremiumEmail,
-                           @Value("${app.demo-premium.password:}") String demoPremiumPassword) {
+                           @Value("${app.demo-premium.password:}") String demoPremiumPassword,
+                           @Value("${app.demo-premium.seed-enabled:false}") boolean demoPremiumSeedEnabled,
+                           @Value("${spring.profiles.active:}") String springProfiles) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.passwordPolicy = passwordPolicy;
         this.adminEmail = adminEmail;
         this.adminPassword = adminPassword;
-        this.testUserEmail = testUserEmail;
         this.testUserPassword = testUserPassword;
+        this.testUserEmail = testUserEmail;
         this.demoPremiumEmail = demoPremiumEmail;
         this.demoPremiumPassword = demoPremiumPassword;
+        this.demoPremiumSeedEnabled = demoPremiumSeedEnabled;
+        this.springProfiles = springProfiles;
     }
 
     @Override
     public void run(ApplicationArguments args) {
+        ensureSeedAllowedInDeployProfile();
         seedAdmin();
         seedTestUser();
-        seedDemoPremiumUser();
+        if (demoPremiumSeedEnabled) {
+            seedDemoPremiumUser();
+        } else {
+            log.info("ECHORA_SEED_DEMO=false -> bỏ qua seed tài khoản demo Premium.");
+        }
+    }
+
+    /**
+     * An toàn cho môi trường deploy/prod: không được khởi động tài khoản ADMIN mặc định
+     * (hoặc để trống mật khẩu seed khi email có cấu hình) khi đang chạy ở profile deploy/prod.
+     */
+    private void ensureSeedAllowedInDeployProfile() {
+        List<String> profiles = Arrays.stream(springProfiles.split(","))
+                .map(String::trim)
+                .filter(value -> !value.isEmpty())
+                .map(value -> value.toLowerCase(Locale.ROOT))
+                .toList();
+        boolean deployLike = profiles.contains("deploy")
+                || profiles.contains("prod")
+                || profiles.contains("production");
+        if (!deployLike) {
+            return;
+        }
+
+        String email = adminEmail == null ? "" : adminEmail.trim();
+        String password = adminPassword == null ? "" : adminPassword.trim();
+        if (email.isEmpty() && password.isEmpty()) {
+            return;
+        }
+
+        boolean isDefault = DEFAULT_ADMIN_SEED_PASSWORDS.stream().anyMatch(d -> d.equalsIgnoreCase(password));
+        if (password.isEmpty() || isDefault) {
+            throw new IllegalStateException(
+                    "AUTH_SEED: auth-service đang chạy ở profile deploy/prod nhưng ADMIN_SEED_PASSWORD "
+                            + "đang để trống hoặc bằng giá trị mặc định (" + DEFAULT_ADMIN_SEED_PASSWORDS + "). "
+                            + "Không cho phép seed tài khoản ADMIN mặc định. Hãy đặt ADMIN_SEED_EMAIL/ADMIN_SEED_PASSWORD "
+                            + "thật cho production (hoặc để trống cả hai để tắt seed).");
+        }
     }
 
     private void seedAdmin() {
@@ -146,6 +197,7 @@ public class AdminUserSeeder implements ApplicationRunner {
     /**
      * Tài khoản demo Premium để nghe audio EN/JA/KO. Mật khẩu lấy từ
      * DEMO_PREMIUM_PASSWORD (.env/.env.example), không hard-code trong mã.
+     * Chỉ seed khi cờ {@code app.demo-premium.seed-enabled} (env {@code ECHORA_SEED_DEMO}) = true.
      */
     private void seedDemoPremiumUser() {
         boolean hasEmail = demoPremiumEmail != null && !demoPremiumEmail.isBlank();
@@ -153,6 +205,11 @@ public class AdminUserSeeder implements ApplicationRunner {
 
         if (!hasEmail || !hasPassword) {
             log.info("DEMO_PREMIUM_EMAIL/DEMO_PREMIUM_PASSWORD chưa được đặt đầy đủ -> bỏ qua tài khoản demo Premium.");
+            return;
+        }
+
+        if (!demoPremiumSeedEnabled) {
+            log.info("ECHORA_SEED_DEMO=false -> bỏ qua seed tài khoản demo Premium.");
             return;
         }
 
@@ -198,4 +255,3 @@ public class AdminUserSeeder implements ApplicationRunner {
                 normalizedEmail, premiumExpiresAt);
     }
 }
-

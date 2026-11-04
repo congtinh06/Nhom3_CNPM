@@ -6,6 +6,16 @@
 services:
   auth-service:
     image: ghcr.io/${GHCR_REPO:-congtinh06/nhom3_cnpm}-auth-service:${IMAGE_TAG:?IMAGE_TAG is required}
+    environment:
+      # Production: tắt mọi seed tài khoản (admin / test user / demo premium).
+      # Chỉ seed demo Premium khi ECHORA_SEED_DEMO=true; mặc định false.
+      ECHORA_SEED_DEMO: "false"
+      ADMIN_SEED_EMAIL: ""
+      ADMIN_SEED_PASSWORD: ""
+      SEED_TEST_USER_EMAIL: ""
+      SEED_TEST_USER_PASSWORD: ""
+      DEMO_PREMIUM_EMAIL: ""
+      DEMO_PREMIUM_PASSWORD: ""
   content-service:
     image: ghcr.io/${GHCR_REPO:-congtinh06/nhom3_cnpm}-content-service:${IMAGE_TAG:?IMAGE_TAG is required}
   location-service:

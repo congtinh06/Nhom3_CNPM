@@ -19,6 +19,7 @@ import java.time.LocalDateTime;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -32,6 +33,9 @@ class AdminUserSeederTest {
     private static final String NEW_EMAIL = "quantri@echora.test";
     private static final String LEGACY_EMAIL = "admin@echora.local";
     private static final String PASSWORD = "Admin@123456";
+    private static final String DEFAULT_ADMIN_SEED_PASSWORD = "ChangeMe_Admin123";
+    private static final String DEMO_EMAIL = "demo.premium@echora.test";
+    private static final String DEMO_PASSWORD = "ChangeMe_Demo123";
 
     @Mock
     private UserRepository userRepository;
@@ -45,11 +49,17 @@ class AdminUserSeederTest {
     private final PasswordPolicy passwordPolicy = new PasswordPolicy();
 
     private AdminUserSeeder seeder(String email, String password) {
-        return seeder(email, password, "", "");
+        return seeder(email, password, "", "", false, "local");
     }
 
     private AdminUserSeeder seeder(String adminEmail, String adminPassword,
                                    String demoEmail, String demoPassword) {
+        return seeder(adminEmail, adminPassword, demoEmail, demoPassword, false, "local");
+    }
+
+    private AdminUserSeeder seeder(String adminEmail, String adminPassword,
+                                   String demoEmail, String demoPassword,
+                                   boolean demoSeedEnabled, String profiles) {
         return new AdminUserSeeder(
                 userRepository,
                 passwordEncoder,
@@ -59,7 +69,9 @@ class AdminUserSeederTest {
                 "",
                 "",
                 demoEmail,
-                demoPassword);
+                demoPassword,
+                demoSeedEnabled,
+                profiles);
     }
 
     @Test
@@ -137,14 +149,14 @@ class AdminUserSeederTest {
     }
 
     @Test
-    @DisplayName("Tạo tài khoản demo Premium ACTIVE từ DEMO_PREMIUM_*")
+    @DisplayName("Tạo tài khoản demo Premium ACTIVE từ DEMO_PREMIUM_* khi ECHORA_SEED_DEMO=true")
     void createsDemoPremiumUserFromEnvironment() {
-        String demoEmail = "demo.premium@echora.test";
-        String demoPassword = "ChangeMe_Demo123";
+        String demoEmail = DEMO_EMAIL;
+        String demoPassword = DEMO_PASSWORD;
         when(userRepository.findByEmail(demoEmail)).thenReturn(Optional.empty());
         when(passwordEncoder.encode(demoPassword)).thenReturn("$2a$12$demo-hash");
 
-        seeder("", "", demoEmail, demoPassword).run(applicationArguments);
+        seeder("", "", demoEmail, demoPassword, true, "local").run(applicationArguments);
 
         ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
         verify(userRepository).save(captor.capture());
@@ -160,23 +172,82 @@ class AdminUserSeederTest {
     }
 
     @Test
-    @DisplayName("Tài khoản demo đã tồn tại được nâng lên PREMIUM (idempotent)")
+    @DisplayName("Bỏ qua seed demo Premium khi ECHORA_SEED_DEMO=false")
+    void skipsDemoSeedWhenFlagDisabled() {
+        seeder("", "", DEMO_EMAIL, DEMO_PASSWORD, false, "local").run(applicationArguments);
+
+        verifyNoInteractions(userRepository, passwordEncoder);
+    }
+
+    @Test
+    @DisplayName("Tài khoản demo đã tồn tại được nâng lên PREMIUM (idempotent) khi ECHORA_SEED_DEMO=true")
     void upgradesExistingDemoUserToPremium() {
-        String demoEmail = "demo.premium@echora.test";
         User existing = User.builder()
                 .id(9L)
-                .email(demoEmail)
+                .email(DEMO_EMAIL)
                 .role(UserRole.USER)
                 .status(UserStatus.ACTIVE)
                 .plan(UserPlan.FREE)
                 .build();
-        when(userRepository.findByEmail(demoEmail)).thenReturn(Optional.of(existing));
+        when(userRepository.findByEmail(DEMO_EMAIL)).thenReturn(Optional.of(existing));
 
-        seeder("", "", demoEmail, "ChangeMe_Demo123").run(applicationArguments);
+        seeder("", "", DEMO_EMAIL, DEMO_PASSWORD, true, "local").run(applicationArguments);
 
         assertThat(existing.getPlan()).isEqualTo(UserPlan.PREMIUM);
         assertThat(existing.getPremiumExpiresAt()).isAfter(LocalDateTime.now());
         verify(userRepository).save(existing);
         verify(passwordEncoder, never()).encode(anyString());
+    }
+
+    @Test
+    @DisplayName("Không cho khởi động auth-service ở profile deploy/prod khi mật khẩu ADMIN là giá trị mặc định")
+    void refusesStartInDeployProfileWithDefaultAdminPassword() {
+        assertThatThrownBy(() -> seeder(NEW_EMAIL, DEFAULT_ADMIN_SEED_PASSWORD, "", "", false, "deploy").run(applicationArguments))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("AUTH_SEED");
+
+        verifyNoInteractions(userRepository, passwordEncoder);
+    }
+
+    @Test
+    @DisplayName("Không cho khởi động auth-service ở profile deploy khi mật khẩu ADMIN là Admin@123456")
+    void refusesStartInDeployProfileWithLegacyAdminPassword() {
+        assertThatThrownBy(() -> seeder(NEW_EMAIL, "Admin@123456", "", "", false, "deploy").run(applicationArguments))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("AUTH_SEED");
+
+        verifyNoInteractions(userRepository, passwordEncoder);
+    }
+
+    @Test
+    @DisplayName("Không cho khởi động auth-service ở profile prod khi mật khẩu ADMIN để trống (email có cấu hình)")
+    void refusesStartInProdProfileWhenAdminPasswordBlank() {
+        assertThatThrownBy(() -> seeder(NEW_EMAIL, "", "", "", false, "prod").run(applicationArguments))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("AUTH_SEED");
+
+        verifyNoInteractions(userRepository, passwordEncoder);
+    }
+
+    @Test
+    @DisplayName("Cho phép khởi động auth-service ở profile deploy khi cả email và mật khẩu đều để trống (tắt seed)")
+    void allowsDeployProfileWhenSeedDisabledCompletely() {
+        seeder("", "", "", "", false, "deploy").run(applicationArguments);
+
+        verifyNoInteractions(userRepository, passwordEncoder);
+    }
+
+    @Test
+    @DisplayName("Cho phép seed ADMIN khi profile local và mật khẩu không phải giá trị mặc định")
+    void allowsSeedInLocalProfileWithCustomAdminPassword() {
+        when(userRepository.findByEmail(NEW_EMAIL)).thenReturn(Optional.empty());
+        when(userRepository.findByEmail(LEGACY_EMAIL)).thenReturn(Optional.empty());
+        when(passwordEncoder.encode(PASSWORD)).thenReturn("$2a$12$new-password-hash");
+
+        seeder("Quantri@Echora.Test", PASSWORD, "", "", false, "local").run(applicationArguments);
+
+        ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
+        verify(userRepository).save(captor.capture());
+        assertThat(captor.getValue().getEmail()).isEqualTo(NEW_EMAIL);
     }
 }

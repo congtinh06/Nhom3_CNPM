@@ -85,6 +85,11 @@ if ((values.get('PAYMENTS_MOCK_ENABLED') ?? 'false').toLowerCase() === 'true' &&
   errors.push('PAYMENTS_MOCK_ENABLED=true không được phép ở production.');
 }
 
+const seedDemoEnabled = (values.get('ECHORA_SEED_DEMO') ?? 'false').toLowerCase() === 'true';
+if (seedDemoEnabled && production) {
+  errors.push('ECHORA_SEED_DEMO=true không được phép ở production (phải giữ false để tắt seed demo).');
+}
+
 for (const [key, value] of values) {
   if (PLACEHOLDER_PATTERN.test(value)) {
     const message = `${key} vẫn là giá trị placeholder mẫu.`;
