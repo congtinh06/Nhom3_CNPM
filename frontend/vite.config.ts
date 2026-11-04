@@ -65,13 +65,18 @@ export default defineConfig(({ mode }) => {
     build: {
       rollupOptions: {
         output: {
-          // Giu TOAN BO node_modules trong MOT chunk. Tach react/react-dom ra
-          // chunk rieng se tao vong import: vendor-react -> vendor (scheduler,
-          // object-assign...) -> vendor-react (recharts goi React.forwardRef o
-          // top-level), gay TDZ "Cannot access ... before initialization" va
-          // trang trang hoan toan tren ban production.
+          // Toan bo node_modules vao MOT chunk `vendor` de tranh vong import
+          // vendor-react -> vendor -> vendor-react (recharts goi React.forwardRef
+          // o top-level gay TDZ). Ngoai le: recharts + d3 duoc tach rieng va chi
+          // duoc nap khi mo trang admin co bieu do (AdminOverviewPage/QrAnalyticsPage).
+          // vendor-charts chi phu thuoc vendor, khong co chieu nguoc lai.
           manualChunks(id) {
-            if (id.includes('node_modules')) return 'vendor';
+            if (id.includes('node_modules')) {
+              if (/[\\/]node_modules[\\/](recharts|victory-vendor|d3-[^\\/]+)[\\/]/.test(id)) {
+                return 'vendor-charts';
+              }
+              return 'vendor';
+            }
             return undefined;
           },
         },

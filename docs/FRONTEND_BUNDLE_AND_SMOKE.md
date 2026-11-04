@@ -53,6 +53,33 @@ Build in `1m 21s`; không còn cảnh báo circular chunk.
 raw tăng 3,44 kB). Giá trị của nó là sửa lỗi thứ tự khởi tạo module, không phải
 tối ưu kích thước. Vì vậy không cần kỳ vọng bundle nhỏ hơn sau thay đổi.
 
+## 2b. Code-split route + tách recharts (đo lại 2026-11-04)
+
+Lần này thay đổi thật sự ảnh hưởng kích thước chunk đầu vào:
+
+- Toàn bộ trang (kể cả `HomePage`, `NearbyPage`, các trang admin) được `React.lazy`
+  + `Suspense`; `App.tsx` chỉ còn layout/context dùng chung.
+- `recharts`, `victory-vendor`, `d3-*` được tách khỏi `vendor` thành `vendor-charts`.
+  `index.html` chỉ preload `vendor`; `vendor-charts` chỉ được import bởi
+  `AdminOverviewPage`/`QrAnalyticsPage`, nên chỉ tải khi mở trang admin có biểu đồ.
+  Không còn vòng import `vendor -> vendor-charts -> vendor` (build không cảnh báo
+  circular chunk; smoke `/` và `/gan-toi` xanh).
+
+Cùng mã nguồn, chỉ khác `App.tsx` + `manualChunks`:
+
+| Asset | Trước — eager route (kB) | Sau — lazy route + charts (kB) | Gzip trước | Gzip sau |
+|---|---:|---:|---:|---:|
+| `index-*.js` | 530,15 | **155,99** | 171,49 | 53,25 |
+| `vendor-*.js` | 1.029,52 | 693,11 | 309,70 | 225,25 |
+| `vendor-charts-*.js` | — (nằm trong `vendor`) | 334,19 | — | 84,22 |
+| `HomePage-*.js` | — | 30,27 | — | 12,88 |
+| `NearbyPage-*.js` | — | 109,52 | — | 38,90 |
+| `PremiumPage-*.js` | — | 40,73 | — | 15,07 |
+
+`index` giảm từ **530,15 kB → 155,99 kB** (gzip 171,49 → 53,25 kB), đạt mục tiêu
+dưới 300 kB. Tổng JS vẫn tương đương vì code được chia sang các chunk tải lười;
+lợi ích là lần đầu vào trang chỉ tải `index` + `vendor` + chunk của route hiện tại.
+
 ## 3. Smoke test production bằng Playwright
 
 Script: `frontend/scripts/smoke-preview.mjs` (chạy bằng `npm run smoke:preview`).
