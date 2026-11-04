@@ -52,8 +52,21 @@ public class ProcessCommandRunner implements CommandRunner {
         if (!completed) {
             log.warn("Process timed out after {}ms. Terminating process and descendants forcibly.", timeoutMs);
             killProcessAndDescendants(process);
+            try {
+                // Doi toi da 5s sau khi kill forcibly de dam duong tien trinh da thoat.
+                if (!process.waitFor(5, TimeUnit.SECONDS)) {
+                    log.warn("Process still running after forceful termination; continuing to fail call.");
+                }
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            } finally {
+                // Khong de reader thread treo tren stream cua process da bi kill.
+                readerPool.shutdownNow();
+            }
             throw new TtsTimeoutException("TTS process timed out after " + timeoutMs + "ms");
         }
+
+        awaitReaderPool(readerPool);
 
         int exitCode = process.exitValue();
         String stderr = "";
@@ -65,6 +78,21 @@ public class ProcessCommandRunner implements CommandRunner {
         }
 
         return new CommandResult(exitCode, stderr, stdout);
+    }
+
+    /**
+     * Cho reader thread doc not stream xong (toi da 2s) de khong ro ri thread khi process
+     * da thoat binh thuong nhung stream chua duoc dong.
+     */
+    private void awaitReaderPool(ExecutorService readerPool) {
+        try {
+            if (!readerPool.awaitTermination(2, TimeUnit.SECONDS)) {
+                readerPool.shutdownNow();
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            readerPool.shutdownNow();
+        }
     }
 
     private void killProcessAndDescendants(Process process) {

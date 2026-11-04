@@ -93,6 +93,7 @@ app:
       ja: ${TTS_VOICE_JA:ja-JP-NanamiNeural}
       ko: ${TTS_VOICE_KO:ko-KR-SunHiNeural}
 
+
 management:
   endpoints:
     web:
@@ -130,7 +131,9 @@ resilience4j:
         # den gan 120s (TTS_TIMEOUT_MS). Do 12 call that tren POI 1 (1923 ky tu):
         # p50 = 3.657s, max = 112.866s. Nguong phai > max hop le va < timeout
         # 120s, neu khong call cham se khong bao gio duoc ghi nhan (300s cu).
-        slow-call-duration-threshold: 115s
+        # Siep nguong xuong 110s (timeout 120s - bo phan tu du nui 10 giay) de dam bien do
+        # "nguon cham nho hon timeout" voi du nui toi thieu 10 giay.
+        slow-call-duration-threshold: 110s
         slow-call-rate-threshold: 80
         wait-duration-in-open-state: 10s
         permitted-number-of-calls-in-half-open-state: 3

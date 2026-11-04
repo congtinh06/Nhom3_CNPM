@@ -63,11 +63,35 @@ translationEdgeTts: 226839 4168 3552 2564 112866 7711 2628 4161 3657 2420 2347 1
 Resilience4j kịp phân loại là "slow". Ngưỡng cũ 2s thì ngược lại: mọi lời gọi TTS bình
 thường (3–113s) đều bị coi là chậm và mở breaker sau 5 lần.
 
-**Sửa:** đặt `slow-call-duration-threshold: 115s`.
+**Sửa:** đặt `slow-call-duration-threshold: 110s`.
 
-- Lớn hơn max hợp lệ đo được: `115s > 112.866s`.
-- Nhỏ hơn timeout: `115s < 120s`.
+- Nhỏ hơn timeout: `110s < 120s`, chừa đúng 10 giây — thỏa yêu cầu "ngưỡng chậm giữ dưới
+  timeout ít nhất 10 giây". Call nào chạy 110–120s sẽ được ghi nhận là *slow* (đúng mục
+  đích của ngưỡng), còn call vượt 120s bị `CommandRunner` kill và tính là *failure*.
+- Không đặt ngưỡng thấp hơn: p50 chỉ 3.657s, nhưng max hợp lệ đo được là 112.866s; nếu đặt
+  ngưỡng dưới 112.866s thì một POI dài bình thường cũng bị coi là chậm, dễ mở breaker oan.
 - `slow-call-rate-threshold: 80%` vẫn giữ nguyên, nên một vài call chậm lẻ tẻ không mở breaker.
+
+### Vì sao có lần 143s và 226s dù timeout là 120s?
+
+Hai con số 143s/226s là thời gian **đo trực tiếp tiến trình `edge-tts` bằng `time`**, không
+đi qua `ProcessCommandRunner`, nên không bị cắt ở 120s. Trong service, `EdgeTtsRunner` gọi
+`CommandRunner.run(command, timeoutMs)`; `ProcessCommandRunner` dùng
+`process.waitFor(timeoutMs, MILLISECONDS)`:
+
+- `waitFor` trả `false` sau đúng `TTS_TIMEOUT_MS` (120s), không phụ thuộc việc tiến trình
+  có tự thoát hay không.
+- Khi đó code gọi `killProcessAndDescendants(process)`: duyệt `process.descendants()` và
+  `destroyForcibly()` từng tiến trình con (python `edge-tts`) rồi `destroyForcibly()`
+  tiến trình cha, sau đó ném `TtsTimeoutException` — call được đánh dấu **thất bại** cho
+  breaker.
+
+Bản trước đã có `destroyForcibly()` nhưng **không chờ** tiến trình thực sự thoát trước khi
+ném lỗi, nên trong khoảng ngắn vẫn có thể thấy tiến trình python còn sống. Bản hiện tại chờ
+tối đa 5s sau kill để bảo đảm tiến trình đã exit; nếu vẫn còn sống thì ghi log cảnh báo và
+vẫn fail call (không treo request). Bằng chứng `ps aux` sau khi chạy 5 POI: không còn tiến
+trình `edge-tts`/`python` nào (chỉ còn PID 1 là Java và một `[sh] <defunct>` có từ trước,
+không phải tiến trình TTS).
 
 Bốn breaker HTTP còn lại đã thỏa điều kiện `max < ngưỡng 2s < timeout` nên **không đổi**.
 
@@ -80,7 +104,7 @@ Bốn breaker HTTP còn lại đã thỏa điều kiện `max < ngưỡng 2s < t
 | `orderContentPoiPrice` | 2s | 2s (không đổi) |
 | `orderContentProductPrice` | 2s | 2s (không đổi) |
 | `translationMyMemory` | 2s | 2s (không đổi) |
-| `translationEdgeTts` | **300s** | **115s** |
+| `translationEdgeTts` | **300s** | **110s** |
 
 ## 5. Bằng chứng breaker vẫn đóng sau khi đo
 
