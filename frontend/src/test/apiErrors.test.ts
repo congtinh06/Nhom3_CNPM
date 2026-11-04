@@ -160,8 +160,50 @@ describe('normalizeApiError', () => {
     expect(titleOnly.message).toBe('Internal Server Error');
   });
 
-  it('reads the RFC 7807 errors map and the legacy details field', () => {
-    const problem = normalizeApiError({
+  it('shows the friendly 400 detail for an unreadable JSON body without Java internals', () => {
+    const detail =
+      'Dữ liệu gửi lên không hợp lệ. Vui lòng kiểm tra định dạng JSON và thử lại.';
+    const norm = normalizeApiError({
+      response: {
+        status: 400,
+        data: {
+          type: 'https://api.echora.dev/problems/400',
+          title: 'Bad Request',
+          status: 400,
+          detail,
+          instance: '/api/content/admin/pois',
+          traceId: 'trace-400-json',
+        },
+      },
+    });
+
+    expect(norm.status).toBe(400);
+    expect(norm.message).toBe(detail);
+    expect(norm.message).not.toContain('java.');
+    expect(norm.message).not.toContain('HttpMessageNotReadableException');
+  });
+
+  it('shows the friendly 400 detail for a type-mismatched request parameter', () => {
+    const detail =
+      'Tham số trong yêu cầu không hợp lệ. Vui lòng kiểm tra lại giá trị đã gửi.';
+    const norm = normalizeApiError({
+      response: {
+        status: 400,
+        data: {
+          title: 'Bad Request',
+          status: 400,
+          detail,
+          instance: '/api/location/nearby',
+          traceId: 'trace-400-param',
+        },
+      },
+    });
+
+    expect(norm.message).toBe(detail);
+    expect(norm.message).not.toContain('MethodArgumentTypeMismatchException');
+  });
+
+  it('reads the RFC 7807 errors map and the legacy details field', () => {    const problem = normalizeApiError({
       response: {
         status: 400,
         data: {

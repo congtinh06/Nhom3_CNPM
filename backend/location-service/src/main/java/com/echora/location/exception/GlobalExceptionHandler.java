@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.ErrorResponse;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -31,25 +32,34 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     public ResponseEntity<Map<String, Object>> handleMethodArgumentTypeMismatch(MethodArgumentTypeMismatchException ex, HttpServletRequest request) {
-        String paramName = ex.getName() != null ? ex.getName() : "parameter";
-        String message = String.format("Parameter '%s' must be a valid number", paramName);
-        log.warn("Parameter type mismatch: {}", message);
-        return buildProblemDetail(HttpStatus.BAD_REQUEST, message, request, null);
+        return badRequest(ex, request);
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<Map<String, Object>> handleHttpMessageNotReadable(HttpMessageNotReadableException ex, HttpServletRequest request) {
+        return badRequest(ex, request);
     }
 
     @ExceptionHandler(NumberFormatException.class)
     public ResponseEntity<Map<String, Object>> handleNumberFormatException(NumberFormatException ex, HttpServletRequest request) {
-        log.warn("Number format error: {}", ex.getMessage());
-        return buildProblemDetail(HttpStatus.BAD_REQUEST, "Parameter value must be a valid number", request, null);
+        return badRequest(ex, request);
     }
 
-    @ExceptionHandler({
-            MissingServletRequestParameterException.class,
-            ConstraintViolationException.class
-    })
-    public ResponseEntity<Map<String, Object>> handleBadRequest(Exception ex, HttpServletRequest request) {
+    @ExceptionHandler({MissingServletRequestParameterException.class})
+    public ResponseEntity<Map<String, Object>> handleMissingParameter(MissingServletRequestParameterException ex, HttpServletRequest request) {
+        return badRequest(ex, request);
+    }
+
+    private ResponseEntity<Map<String, Object>> badRequest(Exception ex, HttpServletRequest request) {
+        String traceId = resolveTraceId(request);
+        log.warn("Malformed request traceId={} on {}: {}", traceId, request.getRequestURI(), ex.toString());
+        return buildProblemDetail(HttpStatus.BAD_REQUEST, friendlyBadRequestDetail(ex), request, null, traceId);
+    }
+
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<Map<String, Object>> handleBadRequest(ConstraintViolationException ex, HttpServletRequest request) {
         log.warn("Bad request parameter: {}", ex.getMessage());
-        return buildProblemDetail(HttpStatus.BAD_REQUEST, "Invalid request parameters: " + ex.getMessage(), request, null);
+        return buildProblemDetail(HttpStatus.BAD_REQUEST, "Tham số trong yêu cầu không hợp lệ. Vui lòng kiểm tra lại giá trị đã gửi.", request, null);
     }
 
     @ExceptionHandler(ResourceNotFoundException.class)
@@ -91,7 +101,13 @@ public class GlobalExceptionHandler {
     }
 
     private ResponseEntity<Map<String, Object>> buildProblemDetail(HttpStatus status, String message, HttpServletRequest request, Map<String, String> errors) {
-        String traceId = resolveTraceId(request);
+        return buildProblemDetail(status, message, request, errors, resolveTraceId(request));
+    }
+
+    private ResponseEntity<Map<String, Object>> buildProblemDetail(HttpStatus status, String message,
+                                                                   HttpServletRequest request,
+                                                                   Map<String, String> errors,
+                                                                   String traceId) {
         Map<String, Object> body = new HashMap<>();
         body.put("type", "https://api.echora.dev/problems/" + status.value());
         body.put("title", status.getReasonPhrase());
@@ -106,6 +122,19 @@ public class GlobalExceptionHandler {
                 .contentType(MediaType.APPLICATION_PROBLEM_JSON)
                 .header("X-Trace-Id", traceId)
                 .body(body);
+    }
+
+    /**
+     * Friendly client-facing 400 detail. Never expose Java class names or Jackson internals.
+     */
+    static String friendlyBadRequestDetail(Exception ex) {
+        if (ex instanceof HttpMessageNotReadableException) {
+            return "Dữ liệu gửi lên không hợp lệ. Vui lòng kiểm tra định dạng JSON và thử lại.";
+        }
+        if (ex instanceof MethodArgumentTypeMismatchException || ex instanceof NumberFormatException) {
+            return "Tham số trong yêu cầu không hợp lệ. Vui lòng kiểm tra lại giá trị đã gửi.";
+        }
+        return "Thiếu tham số bắt buộc. Vui lòng kiểm tra lại yêu cầu.";
     }
 
     private String resolveTraceId(HttpServletRequest request) {

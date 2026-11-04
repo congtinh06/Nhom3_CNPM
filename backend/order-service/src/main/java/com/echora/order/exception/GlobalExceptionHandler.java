@@ -41,8 +41,9 @@ public class GlobalExceptionHandler {
     @ExceptionHandler({HttpMessageNotReadableException.class, MethodArgumentTypeMismatchException.class,
             MissingRequestHeaderException.class})
     public ResponseEntity<Map<String, Object>> handleBadInput(Exception ex, HttpServletRequest request) {
-        log.warn("Bad input on {}: {}", request.getRequestURI(), ex.getMessage());
-        return buildProblemDetail(HttpStatus.BAD_REQUEST, "Validation failed", request, null);
+        String traceId = resolveTraceId(request);
+        log.warn("Bad input traceId={} on {}: {}", traceId, request.getRequestURI(), ex.toString());
+        return buildProblemDetail(HttpStatus.BAD_REQUEST, friendlyBadRequestDetail(ex), request, null, traceId);
     }
 
     @ExceptionHandler(Exception.class)
@@ -57,7 +58,13 @@ public class GlobalExceptionHandler {
     }
 
     private ResponseEntity<Map<String, Object>> buildProblemDetail(HttpStatus status, String message, HttpServletRequest request, Map<String, String> errors) {
-        String traceId = resolveTraceId(request);
+        return buildProblemDetail(status, message, request, errors, resolveTraceId(request));
+    }
+
+    private ResponseEntity<Map<String, Object>> buildProblemDetail(HttpStatus status, String message,
+                                                                   HttpServletRequest request,
+                                                                   Map<String, String> errors,
+                                                                   String traceId) {
         Map<String, Object> body = new HashMap<>();
         body.put("type", "https://api.echora.dev/problems/" + status.value());
         body.put("title", status.getReasonPhrase());
@@ -72,6 +79,19 @@ public class GlobalExceptionHandler {
                 .contentType(MediaType.APPLICATION_PROBLEM_JSON)
                 .header("X-Trace-Id", traceId)
                 .body(body);
+    }
+
+    /**
+     * Friendly client-facing 400 detail. Never expose Java class names or Jackson internals.
+     */
+    static String friendlyBadRequestDetail(Exception ex) {
+        if (ex instanceof HttpMessageNotReadableException) {
+            return "Dữ liệu gửi lên không hợp lệ. Vui lòng kiểm tra định dạng JSON và thử lại.";
+        }
+        if (ex instanceof MethodArgumentTypeMismatchException) {
+            return "Tham số trong yêu cầu không hợp lệ. Vui lòng kiểm tra lại giá trị đã gửi.";
+        }
+        return "Thiếu tham số bắt buộc. Vui lòng kiểm tra lại yêu cầu.";
     }
 
     private String resolveTraceId(HttpServletRequest request) {
