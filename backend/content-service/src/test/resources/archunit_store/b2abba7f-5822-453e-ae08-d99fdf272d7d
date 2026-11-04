@@ -1,0 +1,22 @@
+Cycle detected: Slice messaging -> \
+                Slice service -> \
+                Slice messaging\
+  1. Dependencies of Slice messaging\
+    - Constructor <com.echora.content.messaging.PoiAudioEventListener.<init>(com.echora.content.service.PoiAudioUpdateService)> has parameter of type <com.echora.content.service.PoiAudioUpdateService> in (PoiAudioEventListener.java:0)\
+    - Constructor <com.echora.content.messaging.PoiPublishRelay.<init>(com.echora.content.service.PoiPublishService)> has parameter of type <com.echora.content.service.PoiPublishService> in (PoiPublishRelay.java:0)\
+    - Constructor <com.echora.content.messaging.PoiPublishRetryJob.<init>(com.echora.content.repository.PoiRepository, com.echora.content.service.PoiPublishService, java.time.Duration)> has parameter of type <com.echora.content.service.PoiPublishService> in (PoiPublishRetryJob.java:0)\
+    - Field <com.echora.content.messaging.PoiAudioEventListener.poiAudioUpdateService> has type <com.echora.content.service.PoiAudioUpdateService> in (PoiAudioEventListener.java:0)\
+    - Field <com.echora.content.messaging.PoiPublishRelay.poiPublishService> has type <com.echora.content.service.PoiPublishService> in (PoiPublishRelay.java:0)\
+    - Field <com.echora.content.messaging.PoiPublishRetryJob.poiPublishService> has type <com.echora.content.service.PoiPublishService> in (PoiPublishRetryJob.java:0)\
+    - Method <com.echora.content.messaging.PoiAudioEventListener.onAudioProgress(com.echora.content.event.PoiAudioProgressEvent)> calls method <com.echora.content.service.PoiAudioUpdateService.applyAudioGenerating(com.echora.content.event.PoiAudioProgressEvent)> in (PoiAudioEventListener.java:25)\
+    - Method <com.echora.content.messaging.PoiPublishRelay.onPoiPublishRequested(com.echora.content.messaging.PoiPublishRequestedEvent)> calls method <com.echora.content.service.PoiPublishService.publishPoiUpdated(java.lang.Long)> in (PoiPublishRelay.java:27)\
+    - Method <com.echora.content.messaging.PoiPublishRelay.onPoiPublishRequested(com.echora.content.messaging.PoiPublishRequestedEvent)> calls method <com.echora.content.service.PoiPublishService.publishPoiCreated(java.lang.Long)> in (PoiPublishRelay.java:29)\
+    - Method <com.echora.content.messaging.PoiAudioEventListener.onAudioReady(com.echora.content.event.PoiAudioReadyEvent)> calls method <com.echora.content.service.PoiAudioUpdateService.applyAudioReady(com.echora.content.event.PoiAudioReadyEvent)> in (PoiAudioEventListener.java:30)\
+    - Method <com.echora.content.messaging.PoiAudioEventListener.onAudioFailed(com.echora.content.event.PoiAudioFailedEvent)> calls method <com.echora.content.service.PoiAudioUpdateService.applyAudioFailed(com.echora.content.event.PoiAudioFailedEvent)> in (PoiAudioEventListener.java:35)\
+    - Method <com.echora.content.messaging.PoiPublishRetryJob.retryPendingPublishes()> calls method <com.echora.content.service.PoiPublishService.retryPendingPublish(java.lang.Long)> in (PoiPublishRetryJob.java:47)\
+  2. Dependencies of Slice service\
+    - Constructor <com.echora.content.service.PoiPublishService.<init>(com.echora.content.repository.PoiRepository, com.echora.content.repository.PoiTranslationRepository, com.echora.content.messaging.PoiEventPublisher, int)> has parameter of type <com.echora.content.messaging.PoiEventPublisher> in (PoiPublishService.java:0)\
+    - Field <com.echora.content.service.PoiPublishService.eventPublisher> has type <com.echora.content.messaging.PoiEventPublisher> in (PoiPublishService.java:0)\
+    - Method <com.echora.content.service.PoiPublishService.doPublish(com.echora.content.entity.Poi, java.lang.String, boolean, java.util.List)> calls method <com.echora.content.messaging.PoiEventPublisher.publish(java.lang.String, java.lang.Object)> in (PoiPublishService.java:156)\
+    - Method <com.echora.content.service.PoiContentServiceImpl.createPoi(com.echora.content.dto.CreatePoiRequest)> calls constructor <com.echora.content.messaging.PoiPublishRequestedEvent.<init>(java.lang.Long)> in (PoiContentServiceImpl.java:480)\
+    - Method <com.echora.content.service.PoiContentServiceImpl.updatePoi(java.lang.Long, com.echora.content.dto.UpdatePoiRequest)> calls constructor <com.echora.content.messaging.PoiPublishRequestedEvent.<init>(java.lang.Long, java.lang.String)> in (PoiContentServiceImpl.java:580)

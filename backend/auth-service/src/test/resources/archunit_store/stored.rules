@@ -1,0 +1,8 @@
+#
+#Wed Nov 04 22:02:49 ICT 2026
+Controllers\ must\ not\ be\ annotated\ with\ @Transactional=3816d4d1-60d5-4482-bf58-d59258eb3c26
+Controller\ methods\ must\ not\ be\ annotated\ with\ @Transactional=07f0ee60-9e55-4340-9cb5-deba05dbba59
+Packages\ must\ be\ free\ of\ cyclic\ dependencies=340fb7ab-5720-40d9-8ce4-1d07b58bac16
+Repositories\ must\ only\ be\ accessed\ by\ service\ or\ repository\ classes=67fed748-9b36-4308-a390-0de3b02186a4
+Controllers\ must\ not\ depend\ directly\ on\ repositories\ or\ entities=84e9db5e-9f21-4c15-a6f8-63481988f55e
+Public\ controller\ methods\ must\ not\ return\ entity\ classes\ directly=dec7186a-91ed-4712-a85f-57541b455ef1

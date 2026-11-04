@@ -1,0 +1,6 @@
+Constructor <com.echora.content.config.EntitlementFilter.<init>(com.echora.content.config.InternalPoiEntitlementClient, com.echora.content.repository.PoiRepository)> has parameter of type <com.echora.content.repository.PoiRepository> in (EntitlementFilter.java:0)
+Constructor <com.echora.content.messaging.PoiPublishRetryJob.<init>(com.echora.content.repository.PoiRepository, com.echora.content.service.PoiPublishService, java.time.Duration)> has parameter of type <com.echora.content.repository.PoiRepository> in (PoiPublishRetryJob.java:0)
+Field <com.echora.content.config.EntitlementFilter.poiRepository> has type <com.echora.content.repository.PoiRepository> in (EntitlementFilter.java:0)
+Field <com.echora.content.messaging.PoiPublishRetryJob.poiRepository> has type <com.echora.content.repository.PoiRepository> in (PoiPublishRetryJob.java:0)
+Method <com.echora.content.config.EntitlementFilter.resolvePoiId(jakarta.servlet.http.HttpServletRequest)> calls method <com.echora.content.repository.PoiRepository.findByQrToken(java.lang.String)> in (EntitlementFilter.java:176)
+Method <com.echora.content.messaging.PoiPublishRetryJob.retryPendingPublishes()> calls method <com.echora.content.repository.PoiRepository.findPendingPublishIds(java.time.LocalDateTime)> in (PoiPublishRetryJob.java:40)
