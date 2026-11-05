@@ -85,6 +85,28 @@ Cùng mã nguồn, chỉ khác `App.tsx` + `manualChunks`:
 2. Khối lượng tải khởi tạo ban đầu cho người dùng giảm gần một nửa (từ 1,56 MB xuống 849 kB raw; gzip chỉ còn 278 kB).
 3. Tổng JS toàn ứng dụng tăng 18,14% do phân rã thành 86 chunk tải lười riêng biệt (chi phí runtime wrapper và metadata import của Vite/Rollup), nhưng người dùng thông thường chỉ tải các chunk thuộc route mà họ ghé thăm, tiết kiệm đáng kể tài nguyên mạng.
 
+## 2c. Đo lượng JS tải thực tế qua mạng khi mở trang đầu (Playwright)
+
+Để đo chính xác lượng JavaScript mà trình duyệt tải về trong lần truy cập đầu tiên (cold load) mà không tính các chunk tải lười của các trang khác, script `frontend/scripts/measure-bundle-network.mjs` sử dụng Playwright (Chromium headless) mở từng route trong browser context mới:
+
+- **Phương pháp đo**:
+  1. Khởi chạy `vite preview` ở chế độ production trên cổng cách ly `4175`.
+  2. Dùng Playwright tạo context mới (cache trống, giả lập người dùng mới truy cập).
+  3. Lắng nghe toàn bộ sự kiện network `response` đối với các file `.js` từ `/assets/`.
+  4. Truy cập tuyến đường (`/` hoặc `/gan-toi`), chờ `networkidle` và React render xong.
+  5. Tính tổng dung lượng raw bytes và gzip bytes (compression level 9) của tất cả chunk JS thực tế được tải.
+
+### Kết quả đo thực tế cho `/` và `/gan-toi`
+
+| Tuyến đường (Route) | Số chunk JS tải | Danh sách chunk tải về | JS Raw tải thực tế (kB) | JS Gzip tải thực tế (kB) | So với trước khi code-split (1.559,67 kB raw / 481,19 kB gzip) |
+|---|---:|---|---:|---:|---:|
+| `/` (Trang chủ) | 7 | `index`, `vendor`, `HomePage`, `NewsCardLink`, `domain`, `feedbackService`, `demoMode` | **894,66** | **289,15** | **Giảm 42,64% raw (-665,01 kB)**<br>**Giảm 39,91% gzip (-192,04 kB)** |
+| `/gan-toi` (Bản đồ / POI) | 8 | `index`, `vendor`, `NearbyPage`, `souvenir`, `PageHero`, `useFavorites`, `placeQrContent`, `demoMode` | **969,34** | **311,45** | **Giảm 37,85% raw (-590,33 kB)**<br>**Giảm 35,28% gzip (-169,74 kB)** |
+
+*Nhận xét*:
+- `vendor-charts-*.js` (326 kB raw / 82 kB gzip) và toàn bộ các trang quản trị admin hoàn toàn **không bị tải** khi người dùng truy cập trang chủ hoặc bản đồ lân cận.
+- Lượng dữ liệu mạng chuyển tải trên mỗi phiên duyệt giảm từ ~481 kB gzip xuống dưới 312 kB gzip, giúp thời gian tương tác (TTI - Time to Interactive) trên thiết bị di động được cải thiện rõ rệt.
+
 ## 3. Smoke test production bằng Playwright
 
 Script: `frontend/scripts/smoke-preview.mjs` (chạy bằng `npm run smoke:preview`).

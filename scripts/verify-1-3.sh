@@ -37,8 +37,18 @@ log_result "Docker Compose stack" "PASS" "Stack dang hoat dong va cac container 
 
 echo ""
 echo "[2/4] Kiem tra OpenAPI qua API Gateway (curl that)..."
-GATEWAY_PORT="${GATEWAY_PORT:-18080}"
+if [ -z "$GATEWAY_PORT" ]; then
+  DOCKER_PORT=$(docker port api-gateway 8080 2>/dev/null | grep -oE '[0-9]+$' | head -n 1 || true)
+  if [ -n "$DOCKER_PORT" ]; then
+    GATEWAY_PORT="$DOCKER_PORT"
+  elif [ -f .env ] && grep -qE '^GATEWAY_PORT=' .env; then
+    GATEWAY_PORT=$(grep -E '^GATEWAY_PORT=' .env | cut -d '=' -f2 | tr -d ' \r\n')
+  else
+    GATEWAY_PORT="18080"
+  fi
+fi
 BASE_URL="http://localhost:$GATEWAY_PORT"
+echo "  -> Dang dung Gateway tai: $BASE_URL (cong host: $GATEWAY_PORT)"
 
 SERVICES=("auth" "content" "location" "translation" "analytics" "order")
 
@@ -49,7 +59,15 @@ for svc in "${SERVICES[@]}"; do
     if grep -q '"/internal' /tmp/openapi_resp.json; then
       log_result "OpenAPI Gateway: $svc" "FAIL" "Chua duong dan /internal trong docs"
     else
-      PATHS_COUNT=$(grep -o '"paths":{[^}]*}' /tmp/openapi_resp.json | grep -o '":"' | wc -l || echo "0")
+      if command -v python3 >/dev/null 2>&1; then
+        PATHS_COUNT=$(python3 -c "import json; d=json.load(open('/tmp/openapi_resp.json')); print(len(d.get('paths', {})))" 2>/dev/null || echo "0")
+      elif command -v python >/dev/null 2>&1; then
+        PATHS_COUNT=$(python -c "import json; d=json.load(open('/tmp/openapi_resp.json')); print(len(d.get('paths', {})))" 2>/dev/null || echo "0")
+      elif command -v node >/dev/null 2>&1; then
+        PATHS_COUNT=$(node -e "const d=require('/tmp/openapi_resp.json'); console.log(Object.keys(d.paths||{}).length);" 2>/dev/null || echo "0")
+      else
+        PATHS_COUNT=$(grep -o '"paths":{[^}]*}' /tmp/openapi_resp.json | grep -o '":"' | wc -l || echo "0")
+      fi
       log_result "OpenAPI Gateway: $svc" "PASS" "200 OK | So paths: $PATHS_COUNT | Zero /internal"
     fi
   else
@@ -71,7 +89,7 @@ echo "[3/4] Kiem tra bat/tat ECHORA_DOCS_ENABLED tren stack that..."
 export ECHORA_DOCS_ENABLED=false
 $COMPOSE_CMD up -d --no-deps api-gateway >/dev/null 2>&1 || true
 
-retries=15
+retries=30
 while [ $retries -gt 0 ]; do
   sleep 2
   code=$(curl -s -o /dev/null -w "%{http_code}" "$BASE_URL/actuator/health" 2>/dev/null || echo "000")
@@ -80,7 +98,7 @@ while [ $retries -gt 0 ]; do
 done
 
 DISABLED_CODE=$(curl -s -o /tmp/openapi_disabled.json -w "%{http_code}" "$BASE_URL/v3/api-docs/auth" 2>/dev/null || echo "000")
-if [ "$DISABLED_CODE" = "404" ] && grep -q "problem+json" /tmp/openapi_disabled.json 2>/dev/null; then
+if [ "$DISABLED_CODE" = "404" ] && (grep -q "problem+json" /tmp/openapi_disabled.json 2>/dev/null || grep -q "API Documentation is disabled" /tmp/openapi_disabled.json 2>/dev/null); then
   log_result "ECHORA_DOCS_ENABLED=false" "PASS" "Tra ve HTTP 404 ProblemDetail, khong lo noi dung docs"
 else
   log_result "ECHORA_DOCS_ENABLED=false" "FAIL" "Khong chan duoc docs khi tat ECHORA_DOCS_ENABLED (HTTP $DISABLED_CODE)"
@@ -90,7 +108,7 @@ fi
 export ECHORA_DOCS_ENABLED=true
 $COMPOSE_CMD up -d --no-deps api-gateway >/dev/null 2>&1 || true
 
-retries=15
+retries=30
 while [ $retries -gt 0 ]; do
   sleep 2
   code=$(curl -s -o /dev/null -w "%{http_code}" "$BASE_URL/actuator/health" 2>/dev/null || echo "000")

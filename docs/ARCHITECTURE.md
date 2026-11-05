@@ -332,9 +332,10 @@ flowchart LR
         PR["Pull Request"]
     end
 
-    subgraph CI["CI — 8 workflows"]
-        FE_CI["frontend-ci.yml\nnpm ci · vitest · tsc · build"]
-        BE_CI["7 backend CI\nmvn test · docker build"]
+    subgraph CI["CI — 9 workflows"]
+        FE_CI["frontend-ci.yml\nnpm ci · vitest · tsc · build · smoke"]
+        BE_CI["7 backend CI\nmvn test · ArchUnit · docker build"]
+        ENV_CI["config-check.yml\nclean-machine env verification"]
     end
 
     subgraph CD["CD — cd.yml"]

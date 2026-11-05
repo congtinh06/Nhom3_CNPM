@@ -45,17 +45,48 @@ try {
 
 # 2. Kiem tra OpenAPI tung service qua Gateway tren stack that
 Write-Host "`n[2/4] Kiem tra OpenAPI qua API Gateway (curl that)..." -ForegroundColor Yellow
-$GATEWAY_PORT = if ($env:GATEWAY_PORT) { $env:GATEWAY_PORT } else { "18080" }
+
+# Port gateway tren host: uu tien $env:GATEWAY_PORT, neu khong co thi lay tu docker port hoac .env, mac dinh 18080
+$GATEWAY_PORT = $env:GATEWAY_PORT
+if (-not $GATEWAY_PORT) {
+    try {
+        $dockerPort = & docker port api-gateway 8080 2>$null
+        if ($dockerPort -match ":(\d+)") {
+            $GATEWAY_PORT = $matches[1]
+        }
+    } catch {}
+}
+if (-not $GATEWAY_PORT -and (Test-Path ".env")) {
+    $envLine = Get-Content ".env" | Where-Object { $_ -match "^GATEWAY_PORT\s*=\s*(\d+)" }
+    if ($envLine -match "^GATEWAY_PORT\s*=\s*(\d+)") {
+        $GATEWAY_PORT = $matches[1]
+    }
+}
+if (-not $GATEWAY_PORT) {
+    $GATEWAY_PORT = "18080"
+}
 $BASE_URL = "http://localhost:$GATEWAY_PORT"
+Write-Host "  -> Dang dung Gateway tai: $BASE_URL (cong host: $GATEWAY_PORT)" -ForegroundColor Gray
 
 $SERVICES = @("auth", "content", "location", "translation", "analytics", "order")
 
 foreach ($svc in $SERVICES) {
     $url = "$BASE_URL/v3/api-docs/$svc"
+    $tempFile = [System.IO.Path]::GetTempFileName()
     try {
-        $resp = Invoke-RestMethod -Uri $url -Method Get -TimeoutSec 15 -ErrorAction Stop
-        $pathsCount = if ($resp.paths) { ($resp.paths | Get-Member -MemberType NoteProperty).Count } else { 0 }
-        $rawJson = $resp | ConvertTo-Json -Depth 10 -Compress
+        $httpCode = & curl.exe -s -o $tempFile -w "%{http_code}" $url
+        if ($httpCode -ne "200") {
+            Log-Result "OpenAPI Gateway: $svc" "FAIL" "HTTP $httpCode khi goi $url"
+            continue
+        }
+        $rawJson = Get-Content $tempFile -Raw -Encoding UTF8
+        $pathsCount = 0
+        try {
+            $jsonObj = $rawJson | ConvertFrom-Json
+            if ($jsonObj.paths) {
+                $pathsCount = ($jsonObj.paths | Get-Member -MemberType NoteProperty).Count
+            }
+        } catch {}
         $hasInternal = $rawJson.Contains("/internal")
 
         if ($hasInternal) {
@@ -67,21 +98,31 @@ foreach ($svc in $SERVICES) {
         }
     } catch {
         Log-Result "OpenAPI Gateway: $svc" "FAIL" "Loi khi goi $url : $($_.Exception.Message)"
+    } finally {
+        if (Test-Path $tempFile) { Remove-Item $tempFile -Force -ErrorAction SilentlyContinue }
     }
 }
 
 # Kiem tra Swagger UI danh sach service tren Gateway
+$tempCfg = [System.IO.Path]::GetTempFileName()
 try {
-    $cfgUrl = "$BASE_URL/v3/api-docs/swagger-config"
-    $cfg = Invoke-RestMethod -Uri $cfgUrl -Method Get -TimeoutSec 10 -ErrorAction Stop
-    $urlCount = if ($cfg.urls) { $cfg.urls.Count } else { 0 }
-    if ($urlCount -ge 6) {
-        Log-Result "Swagger UI multi-service config" "PASS" "Config liet ke du $urlCount service tren UI"
+    $cfgCode = & curl.exe -s -o $tempCfg -w "%{http_code}" "$BASE_URL/v3/api-docs/swagger-config"
+    if ($cfgCode -eq "200") {
+        $rawCfg = Get-Content $tempCfg -Raw -Encoding UTF8
+        $cfg = $rawCfg | ConvertFrom-Json
+        $urlCount = if ($cfg.urls) { $cfg.urls.Count } else { 0 }
+        if ($urlCount -ge 6) {
+            Log-Result "Swagger UI multi-service config" "PASS" "Config liet ke du $urlCount service tren UI"
+        } else {
+            Log-Result "Swagger UI multi-service config" "FAIL" "Chi tim thay $urlCount service"
+        }
     } else {
-        Log-Result "Swagger UI multi-service config" "FAIL" "Chi tim thay $urlCount service"
+        Log-Result "Swagger UI multi-service config" "FAIL" "HTTP $cfgCode khi goi swagger-config"
     }
 } catch {
     Log-Result "Swagger UI multi-service config" "FAIL" $_.Exception.Message
+} finally {
+    if (Test-Path $tempCfg) { Remove-Item $tempCfg -Force -ErrorAction SilentlyContinue }
 }
 
 # 3. Kiem tra bat/tat ECHORA_DOCS_ENABLED tren stack that
@@ -89,11 +130,12 @@ Write-Host "`n[3/4] Kiem tra bat/tat ECHORA_DOCS_ENABLED tren stack that..." -Fo
 try {
     # 3a. Tat docs bang cach set bien moi truong va restart gateway
     Write-Host "  -> Dang tat docs (ECHORA_DOCS_ENABLED=false)..." -ForegroundColor Gray
+    $env:ECHORA_DOCS_ENABLED = "false"
     [System.Environment]::SetEnvironmentVariable('ECHORA_DOCS_ENABLED', 'false')
     & $composeCmd up -d --no-deps api-gateway 2>&1 | Out-Null
     
     # Cho gateway san sang
-    $retries = 15
+    $retries = 30
     while ($retries -gt 0) {
         Start-Sleep -Seconds 2
         $h = & curl.exe -s -o NUL -w "%{http_code}" "$BASE_URL/actuator/health"
@@ -106,7 +148,7 @@ try {
     $disabledCode = & curl.exe -s -o $tempDisabled -w "%{http_code}" "$BASE_URL/v3/api-docs/auth"
     $disabledBody = if (Test-Path $tempDisabled) { Get-Content $tempDisabled -Raw } else { "" }
 
-    if ($disabledCode -eq "404" -and ($disabledBody -match "problem\+json" -or $disabledBody -match "Tài liệu API đã bị tắt")) {
+    if ($disabledCode -eq "404" -and ($disabledBody -match "problem\+json" -or $disabledBody -match "API Documentation is disabled" -or $disabledBody -match "Tài liệu API đã bị tắt")) {
         Log-Result "ECHORA_DOCS_ENABLED=false" "PASS" "Tra ve HTTP 404 ProblemDetail, khong lo noi dung docs"
     } else {
         Log-Result "ECHORA_DOCS_ENABLED=false" "FAIL" "HTTP $disabledCode - $disabledBody"
@@ -114,10 +156,11 @@ try {
 
     # 3c. Khoi phuc lai ECHORA_DOCS_ENABLED=true
     Write-Host "  -> Dang khoi phuc docs (ECHORA_DOCS_ENABLED=true)..." -ForegroundColor Gray
+    $env:ECHORA_DOCS_ENABLED = "true"
     [System.Environment]::SetEnvironmentVariable('ECHORA_DOCS_ENABLED', 'true')
     & $composeCmd up -d --no-deps api-gateway 2>&1 | Out-Null
     
-    $retries = 15
+    $retries = 30
     while ($retries -gt 0) {
         Start-Sleep -Seconds 2
         $h = & curl.exe -s -o NUL -w "%{http_code}" "$BASE_URL/actuator/health"

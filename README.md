@@ -8,7 +8,8 @@
 [![SQL Server 2022](https://img.shields.io/badge/SQL_Server-2022-CC292B?logo=microsoftsqlserver&logoColor=white)](https://www.microsoft.com/sql-server)
 [![RabbitMQ](https://img.shields.io/badge/RabbitMQ-3.13-FF6600?logo=rabbitmq&logoColor=white)](https://www.rabbitmq.com/)
 [![Leaflet](https://img.shields.io/badge/Leaflet-1.9.4-199900?logo=leaflet&logoColor=white)](https://leafletjs.com/)
-[![Vitest](https://img.shields.io/badge/Vitest-622_Tests_Passed-green?logo=vitest&logoColor=white)](https://vitest.dev/)
+[![Vitest](https://img.shields.io/badge/Vitest-635_Tests_Passed-green?logo=vitest&logoColor=white)](https://vitest.dev/)
+[![Backend Tests](https://img.shields.io/badge/Maven-840_Tests_Passed-green?logo=apachemaven&logoColor=white)](https://maven.apache.org/)
 [![Frontend CI](https://github.com/congtinh06/Nhom3_CNPM/actions/workflows/frontend-ci.yml/badge.svg)](https://github.com/congtinh06/Nhom3_CNPM/actions/workflows/frontend-ci.yml)
 [![CD](https://github.com/congtinh06/Nhom3_CNPM/actions/workflows/cd.yml/badge.svg)](https://github.com/congtinh06/Nhom3_CNPM/actions/workflows/cd.yml)
 
@@ -406,7 +407,7 @@ Dự án tích hợp bộ kiểm thử tự động toàn diện đảm bảo đ
 ```bash
 cd frontend
 
-# Chạy toàn bộ 77 test suites (622 unit & integration tests)
+# Chạy toàn bộ 79 test suites (635 unit & integration tests)
 npm test
 
 # Kiểm tra danh sách route SPA khớp giữa App.tsx, nginx.conf và vercel.json
@@ -428,7 +429,7 @@ mvn -f backend/order-service/pom.xml test
 mvn -f backend/api-gateway/pom.xml test
 ```
 
-Backend hiện có 70 file kiểm thử (708 test, 0 failure): content 19, translation-tts 16, auth 13, analytics 12, location 5, api-gateway 2, order 3. Frontend có 77 file test với 622 test (Vitest + React Testing Library). Repo có 10 workflow trong `.github/workflows/` (7 microservice, frontend, `config-check` kiểm tra clean-machine bootstrap, và `cd` build/push image + deploy khi cấu hình secret).
+Backend hiện có **840 tests passed (0 failures, 0 errors)**: content 246, translation-tts 106, auth 136, analytics 69, location 44, api-gateway 185, order 54. Frontend có **79 file test với 635 test** (Vitest + React Testing Library). Toàn bộ 6 service nghiệp vụ đều tích hợp kiểm tra quy tắc phân lớp kiến trúc Spring MVC bằng ArchUnit. Repo có 10 workflow trong `.github/workflows/` (7 microservice, frontend, `config-check` kiểm tra clean-machine bootstrap, và `cd` build/push image + deploy khi cấu hình secret).
 
 ### Kiểm tra trạng thái audio trước demo
 ```powershell
