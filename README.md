@@ -358,7 +358,7 @@ nên **không** nghe được ba ngoại ngữ này.
 Seeder của auth-service tạo (và luôn bảo đảm) một tài khoản demo Premium từ biến môi trường:
 
 - `DEMO_PREMIUM_EMAIL` — gợi ý trong `.env.example`: `demo.premium@echora.test`
-- `DEMO_PREMIUM_PASSWORD` — lấy từ `.env` (`.env.example` có placeholder `ChangeMe_Demo123`)
+- `DEMO_PREMIUM_PASSWORD` — lấy từ `.env` (`.env.example` có placeholder `ChangeMe_DemoPremium123`)
 - `ECHORA_SEED_DEMO` — cờ bật/tắt seed demo (`true` = seed, `false` mặc định = tắt)
 
 Tài khoản demo Premium **chỉ được seed khi biến môi trường `ECHORA_SEED_DEMO=true**
@@ -378,6 +378,9 @@ docker compose up -d --build auth-service
 Sau khi seed, đăng nhập tại `http://localhost:8088/dang-nhap` bằng email trên và đúng mật khẩu
 `DEMO_PREMIUM_PASSWORD` trong `.env`. Tài khoản được đặt `ACTIVE`, `USER`, `PREMIUM`
 (hạn dùng +10 năm) mỗi khi auth-service khởi động, nên dựng lại stack vẫn dùng được.
+
+> [!WARNING]
+> **Khuyến cáo bảo mật môi trường thực tế**: Các mật khẩu mẫu từng xuất hiện trong tài liệu mẫu hoặc lịch sử git (như mật khẩu seed ban đầu) tuyệt đối **không** được dùng trên môi trường staging hoặc production. Bắt buộc phải thay đổi toàn bộ mật khẩu (`ADMIN_SEED_PASSWORD`, `DEMO_PREMIUM_PASSWORD`, mật khẩu database, v.v.) thành mật khẩu mạnh, an toàn qua biến môi trường thực tế trước khi triển khai hệ thống. Profile deploy sẽ tự động từ chối khởi động nếu phát hiện mật khẩu mặc định.
 
 Lưu ý: nếu không đặt `ECHORA_SEED_DEMO=true`, auth-service sẽ **bỏ qua** seed demo Premium
 (ngày mặc định là tắt seed để tránh tạo tài khoản lạ trên môi trường mới).
