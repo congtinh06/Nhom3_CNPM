@@ -85,6 +85,29 @@ flowchart TB
     SPA --> OSM
 ```
 
+### 1.1. Chuỗi bộ lọc API Gateway và Hợp đồng OpenAPI gộp
+
+**Chuỗi Bộ lọc API Gateway (Spring Cloud Gateway WebFlux):**
+1. `TraceIdGlobalFilter`: Đính kèm và chuẩn hóa header `X-Trace-Id` (UUID) xuyên suốt toàn bộ vòng đời request.
+2. `UntrustedHeaderStripGlobalFilter`: Loại bỏ các header đặc quyền giả mạo từ bên ngoài gửi vào (`X-User-Id`, `X-User-Role`, `X-Internal-Api-Key`).
+3. `InternalPathBlockFilter`: Chặn tuyệt đối mọi request từ client cố tình truy cập vào các đường dẫn nội bộ (`/internal/**`, `/api/**/internal/**`).
+4. `PathGuardFilter`: Kiểm tra và ngăn chặn các hành vi tấn công Path Traversal (`..`, `%2e%2e`).
+5. `OpenApiDocsFilter`: Kiểm soát truy cập tài liệu API dựa trên biến môi trường `ECHORA_DOCS_ENABLED` (mặc định tắt trên môi trường deploy). Khi tắt, trả về HTTP 404 với chuẩn `application/problem+json` (`RFC 7807`), không làm lộ cấu trúc hệ thống.
+6. `UserAuthGlobalFilter`: Xác thực JWT token từ HttpOnly Cookie `auth_token`, trích xuất thông tin người dùng và chuyển tiếp tới downstream services.
+7. `AdminAuthGlobalFilter`: Kiểm tra quyền hạn `ADMIN` cho các endpoint quản trị (`/api/auth/admin/**`, `/api/admin/**`, `/api/content/admin/**`, `/api/orders/admin/**`).
+8. `AnalyticsRateLimitGlobalFilter`: Áp dụng Rate Limiting bảo vệ endpoint thu thập sự kiện phân tích.
+9. `SecurityHeadersGlobalFilter`: Gắn các header bảo mật HTTP nghiêm ngặt (CSP, HSTS, `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy`, `Permissions-Policy`).
+
+**Hợp đồng OpenAPI gộp (OpenAPI 3.0 / Swagger UI):**
+- Gateway cung cấp Swagger UI thống nhất tại `http://localhost:18080/swagger-ui.html` cho phép xem và thử nghiệm API của toàn bộ 6 microservices thông qua menu chọn:
+  - **Auth Service** (`/v3/api-docs/auth`): **30 public paths** (xác thực, đăng ký/đăng nhập, đổi mật khẩu, xác thực email, quản trị tài khoản, phiên QR Login).
+  - **Content Service** (`/v3/api-docs/content`): **40 public paths** (điểm tham quan POI, lộ trình du lịch, ẩm thực & quà lưu niệm, tin tức di sản, audio admin).
+  - **Location Service** (`/v3/api-docs/location`): **3 public paths** (tính khoảng cách Haversine, tìm POI lân cận theo tọa độ GPS, quét mã QR điểm đến).
+  - **Translation & TTS Service** (`/v3/api-docs/translation`): **1 public path** (phát luồng âm thanh thuyết minh audio đa ngữ theo định dạng byte-range).
+  - **Analytics Service** (`/v3/api-docs/analytics`): **6 public paths** (tiếp nhận sự kiện nghe thuyết minh, thống kê tương tác du khách, biểu đồ xu hướng).
+  - **Order Service** (`/v3/api-docs/order`): **18 public paths** (giỏ hàng, tạo đơn hàng mua gói Premium / quà lưu niệm, thanh toán VNPAY, VietQR).
+- **Tổng số public paths**: **98 endpoints** (toàn bộ endpoint nội bộ được ẩn với `@Hidden`, số endpoint `/internal` lộ ra = 0). Mọi URL máy chủ trong tài liệu đều trỏ về API Gateway (`http://localhost:18080`).
+
 ---
 
 ## 2. Sơ đồ triển khai (Deployment Diagram)

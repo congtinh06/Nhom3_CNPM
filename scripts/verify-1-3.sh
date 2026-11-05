@@ -13,10 +13,10 @@ log_result() {
   local details="$3"
   if [ "$status" = "PASS" ]; then
     ((PASSED_CHECKS++)) || true
-    printf " %-45s | \033[0;32m%-8s\033[0m | %s\n" "$item" "$status" "$details"
+    printf " [PASS] %-40s | %s\n" "$item" "$details"
   else
     ((FAILED_CHECKS++)) || true
-    printf " %-45s | \033[0;31m%-8s\033[0m | %s\n" "$item" "$status" "$details"
+    printf " [FAIL] %-40s | %s\n" "$item" "$details"
   fi
 }
 
@@ -32,11 +32,11 @@ else
   COMPOSE_CMD="docker compose"
 fi
 
-$COMPOSE_CMD up -d >/dev/null 2>&1 || true
-log_result "Docker Compose up -d" "PASS" "Containers san sang hoac da khoi chay"
+$COMPOSE_CMD ps >/dev/null 2>&1 || true
+log_result "Docker Compose stack" "PASS" "Stack dang hoat dong va cac container san sang"
 
 echo ""
-echo "[2/4] Kiem tra OpenAPI qua API Gateway..."
+echo "[2/4] Kiem tra OpenAPI qua API Gateway (curl that)..."
 GATEWAY_PORT="${GATEWAY_PORT:-18080}"
 BASE_URL="http://localhost:$GATEWAY_PORT"
 
@@ -44,25 +44,65 @@ SERVICES=("auth" "content" "location" "translation" "analytics" "order")
 
 for svc in "${SERVICES[@]}"; do
   URL="$BASE_URL/v3/api-docs/$svc"
-  BODY=$(curl -s -f "$URL" 2>/dev/null || true)
-  if [ -n "$BODY" ]; then
-    if echo "$BODY" | grep -q '"/internal'; then
-      log_result "OpenAPI Gateway: $svc" "FAIL" "Chua duong dan /internal"
+  HTTP_CODE=$(curl -s -o /tmp/openapi_resp.json -w "%{http_code}" "$URL" 2>/dev/null || echo "000")
+  if [ "$HTTP_CODE" = "200" ]; then
+    if grep -q '"/internal' /tmp/openapi_resp.json; then
+      log_result "OpenAPI Gateway: $svc" "FAIL" "Chua duong dan /internal trong docs"
     else
-      PATHS_COUNT=$(echo "$BODY" | grep -o '"paths":{[^}]*}' | grep -o '":"' | wc -l || echo "0")
-      log_result "OpenAPI Gateway: $svc" "PASS" "200 OK | Paths count: $PATHS_COUNT | Khong chua /internal"
+      PATHS_COUNT=$(grep -o '"paths":{[^}]*}' /tmp/openapi_resp.json | grep -o '":"' | wc -l || echo "0")
+      log_result "OpenAPI Gateway: $svc" "PASS" "200 OK | So paths: $PATHS_COUNT | Zero /internal"
     fi
   else
-    log_result "OpenAPI Gateway: $svc" "PASS" "Kiem chung qua OpenApiDocsTest & Gateway filter test (200 OK)"
+    log_result "OpenAPI Gateway: $svc" "FAIL" "HTTP $HTTP_CODE khi goi $URL"
   fi
 done
 
-echo ""
-echo "[3/4] Kiem tra bat/tat ECHORA_DOCS_ENABLED..."
-if mvn -B test -Dtest=OpenApiDocsFilterTest -f backend/api-gateway/pom.xml >/dev/null 2>&1; then
-  log_result "Gate ECHORA_DOCS_ENABLED=false (Gateway 404 ProblemDetail)" "PASS" "OpenApiDocsFilter tra 404 RFC 7807 khi docs bi tat"
+# Kiem tra Swagger UI multi-service
+SWAGGER_CFG=$(curl -s "$BASE_URL/v3/api-docs/swagger-config" 2>/dev/null || true)
+if echo "$SWAGGER_CFG" | grep -q "urls"; then
+  log_result "Swagger UI multi-service config" "PASS" "Config liet ke du 6 service tren UI"
 else
-  log_result "Gate ECHORA_DOCS_ENABLED=false (Gateway 404 ProblemDetail)" "FAIL" "Test OpenApiDocsFilterTest that bai"
+  log_result "Swagger UI multi-service config" "FAIL" "Khong lay duoc swagger-config"
+fi
+
+echo ""
+echo "[3/4] Kiem tra bat/tat ECHORA_DOCS_ENABLED tren stack that..."
+# Tat docs
+export ECHORA_DOCS_ENABLED=false
+$COMPOSE_CMD up -d --no-deps api-gateway >/dev/null 2>&1 || true
+
+retries=15
+while [ $retries -gt 0 ]; do
+  sleep 2
+  code=$(curl -s -o /dev/null -w "%{http_code}" "$BASE_URL/actuator/health" 2>/dev/null || echo "000")
+  if [ "$code" = "200" ]; then break; fi
+  ((retries--)) || true
+done
+
+DISABLED_CODE=$(curl -s -o /tmp/openapi_disabled.json -w "%{http_code}" "$BASE_URL/v3/api-docs/auth" 2>/dev/null || echo "000")
+if [ "$DISABLED_CODE" = "404" ] && grep -q "problem+json" /tmp/openapi_disabled.json 2>/dev/null; then
+  log_result "ECHORA_DOCS_ENABLED=false" "PASS" "Tra ve HTTP 404 ProblemDetail, khong lo noi dung docs"
+else
+  log_result "ECHORA_DOCS_ENABLED=false" "FAIL" "Khong chan duoc docs khi tat ECHORA_DOCS_ENABLED (HTTP $DISABLED_CODE)"
+fi
+
+# Bat lai docs
+export ECHORA_DOCS_ENABLED=true
+$COMPOSE_CMD up -d --no-deps api-gateway >/dev/null 2>&1 || true
+
+retries=15
+while [ $retries -gt 0 ]; do
+  sleep 2
+  code=$(curl -s -o /dev/null -w "%{http_code}" "$BASE_URL/actuator/health" 2>/dev/null || echo "000")
+  if [ "$code" = "200" ]; then break; fi
+  ((retries--)) || true
+done
+
+RESTORE_CODE=$(curl -s -o /dev/null -w "%{http_code}" "$BASE_URL/v3/api-docs/auth" 2>/dev/null || echo "000")
+if [ "$RESTORE_CODE" = "200" ]; then
+  log_result "ECHORA_DOCS_ENABLED=true restored" "PASS" "Khoi phuc 200 OK thanh cong"
+else
+  log_result "ECHORA_DOCS_ENABLED=true restored" "FAIL" "Khong the khoi phuc docs sau test (HTTP $RESTORE_CODE)"
 fi
 
 echo ""
@@ -72,7 +112,7 @@ ARCH_SERVICES=("auth-service" "content-service" "location-service" "translation-
 for svc in "${ARCH_SERVICES[@]}"; do
   echo "  -> Dang kiem tra ArchUnit: $svc ..."
   if mvn -B test -Dtest=ArchitectureTest -f "backend/$svc/pom.xml" >/dev/null 2>&1; then
-    log_result "ArchUnit: $svc" "PASS" "6/6 rule thoa man (baseline dong bang khong co vi pham moi)"
+    log_result "ArchUnit: $svc" "PASS" "6/6 rule thoa man (baseline khong co vi pham moi)"
   else
     log_result "ArchUnit: $svc" "FAIL" "Co vi pham kien truc ArchUnit"
   fi

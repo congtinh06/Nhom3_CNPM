@@ -75,39 +75,39 @@ spring:
         - id: auth-service-docs
           uri: ${AUTH_SERVICE_URL:http://localhost:8086}
           predicates:
-            - Path=/v3/api-docs/auth-service
+            - Path=/v3/api-docs/auth,/v3/api-docs/auth-service
           filters:
-            - RewritePath=/v3/api-docs/auth-service, /v3/api-docs
+            - RewritePath=/v3/api-docs/(auth|auth-service), /v3/api-docs
         - id: content-service-docs
           uri: ${CONTENT_SERVICE_URL:http://localhost:8085}
           predicates:
-            - Path=/v3/api-docs/content-service
+            - Path=/v3/api-docs/content,/v3/api-docs/content-service
           filters:
-            - RewritePath=/v3/api-docs/content-service, /v3/api-docs
+            - RewritePath=/v3/api-docs/(content|content-service), /v3/api-docs
         - id: location-service-docs
           uri: ${LOCATION_SERVICE_URL:http://localhost:8082}
           predicates:
-            - Path=/v3/api-docs/location-service
+            - Path=/v3/api-docs/location,/v3/api-docs/location-service
           filters:
-            - RewritePath=/v3/api-docs/location-service, /v3/api-docs
+            - RewritePath=/v3/api-docs/(location|location-service), /v3/api-docs
         - id: translation-tts-service-docs
           uri: ${TRANSLATION_TTS_SERVICE_URL:http://localhost:8083}
           predicates:
-            - Path=/v3/api-docs/translation-tts-service
+            - Path=/v3/api-docs/translation,/v3/api-docs/translation-tts-service
           filters:
-            - RewritePath=/v3/api-docs/translation-tts-service, /v3/api-docs
+            - RewritePath=/v3/api-docs/(translation|translation-tts-service), /v3/api-docs
         - id: analytics-service-docs
           uri: ${ANALYTICS_SERVICE_URL:http://localhost:8081}
           predicates:
-            - Path=/v3/api-docs/analytics-service
+            - Path=/v3/api-docs/analytics,/v3/api-docs/analytics-service
           filters:
-            - RewritePath=/v3/api-docs/analytics-service, /v3/api-docs
+            - RewritePath=/v3/api-docs/(analytics|analytics-service), /v3/api-docs
         - id: order-service-docs
           uri: ${ORDER_SERVICE_URL:http://localhost:8087}
           predicates:
-            - Path=/v3/api-docs/order-service
+            - Path=/v3/api-docs/order,/v3/api-docs/order-service
           filters:
-            - RewritePath=/v3/api-docs/order-service, /v3/api-docs
+            - RewritePath=/v3/api-docs/(order|order-service), /v3/api-docs
 
 springdoc:
   api-docs:

@@ -86,11 +86,11 @@ Hệ thống được thiết kế theo kiến trúc Microservices phân tán, c
 
 - Mọi backend service nghiệp vụ tích hợp `springdoc-openapi-starter-webmvc-ui:2.6.0` và API Gateway tích hợp `springdoc-openapi-starter-webflux-ui:2.6.0`.
 - API Gateway điều hướng `/v3/api-docs/<service>` tới từng service tương ứng (`RewritePath`) và cung cấp Swagger UI gộp tại `/swagger-ui/index.html` với danh sách chọn cả 6 microservices:
-  - **Auth Service**: `/v3/api-docs/auth` (28 public paths - xác thực, tài khoản, đổi mật khẩu, admin user, phiên QR)
-  - **Content Service**: `/v3/api-docs/content` (37 public paths - POI, danh mục, tin tức, sản phẩm, lộ trình, admin POI/audio)
-  - **Location Service**: `/v3/api-docs/location` (4 public paths - GPS geofence, quét QR, lân cận, định vị)
-  - **Translation & TTS Service**: `/v3/api-docs/translation` (2 public paths - phát luồng âm thanh audio thuyết minh)
-  - **Analytics Service**: `/v3/api-docs/analytics` (8 public paths - sự kiện tương tác du khách, quét QR, xu hướng)
+  - **Auth Service**: `/v3/api-docs/auth` (30 public paths - xác thực, tài khoản, đổi mật khẩu, admin user, phiên QR)
+  - **Content Service**: `/v3/api-docs/content` (40 public paths - POI, danh mục, tin tức, sản phẩm, lộ trình, admin POI/audio)
+  - **Location Service**: `/v3/api-docs/location` (3 public paths - GPS geofence, quét QR, lân cận, định vị)
+  - **Translation & TTS Service**: `/v3/api-docs/translation` (1 public path - phát luồng âm thanh audio thuyết minh)
+  - **Analytics Service**: `/v3/api-docs/analytics` (6 public paths - sự kiện tương tác du khách, quét QR, xu hướng)
   - **Order Service**: `/v3/api-docs/order` (18 public paths - đơn hàng, giỏ hàng, thanh toán VNPAY/VietQR)
 - Toàn bộ endpoint nội bộ (`/internal/**`, mang `X-Internal-Api-Key`) được ẩn (`@Hidden` và cấu hình lọc) khỏi tài liệu công khai.
 - Kiểm soát môi trường: Tài liệu OpenAPI được bật ở môi trường phát triển cục bộ (`ECHORA_DOCS_ENABLED=true`) và mặc định tắt trên môi trường deploy/production (`ECHORA_DOCS_ENABLED=false`). Khi tắt, gateway trả về mã lỗi 404 ProblemDetail (`RFC 7807`) và không làm lộ cấu trúc hệ thống.
