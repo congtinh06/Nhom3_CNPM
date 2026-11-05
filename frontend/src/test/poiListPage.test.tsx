@@ -3,13 +3,14 @@ import { render, screen, fireEvent, waitFor, within } from '@testing-library/rea
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { PoiListPage } from '../admin/pages/PoiListPage';
 import { poiApi } from '../admin/api/poiApi';
-import { AdminPoiListItem, AdminPoiPageResponse } from '../admin/types/poi';
+import { AdminPoiDetail, AdminPoiListItem, AdminPoiPageResponse } from '../admin/types/poi';
 
 vi.mock('../admin/api/poiApi', () => ({
   poiApi: {
     getAdminPois: vi.fn(),
     getZones: vi.fn(),
     getRoutes: vi.fn(),
+    updatePoiStatus: vi.fn(),
   },
 }));
 
@@ -247,6 +248,36 @@ describe('PoiListPage', () => {
 
     await waitFor(() => {
       expect(screen.getByText('Chưa có điểm thuyết minh nào')).toBeInTheDocument();
+    });
+  });
+
+  it('ẩn một điểm đang hoạt động qua endpoint đổi trạng thái', async () => {
+    vi.mocked(poiApi.updatePoiStatus).mockResolvedValue({} as AdminPoiDetail);
+    renderComponent();
+
+    await waitFor(() => {
+      expect(screen.getByText('Chợ Bến Thành')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Ẩn Chợ Bến Thành' }));
+
+    await waitFor(() => {
+      expect(poiApi.updatePoiStatus).toHaveBeenCalledWith(1, 'INACTIVE');
+    });
+  });
+
+  it('hiện lại một điểm đã ẩn qua endpoint đổi trạng thái', async () => {
+    vi.mocked(poiApi.updatePoiStatus).mockResolvedValue({} as AdminPoiDetail);
+    renderComponent();
+
+    await waitFor(() => {
+      expect(screen.getByText('Dinh Độc Lập')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Hiện Dinh Độc Lập' }));
+
+    await waitFor(() => {
+      expect(poiApi.updatePoiStatus).toHaveBeenCalledWith(2, 'ACTIVE');
     });
   });
 

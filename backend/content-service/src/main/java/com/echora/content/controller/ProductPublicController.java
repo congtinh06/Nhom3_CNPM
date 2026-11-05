@@ -1,7 +1,7 @@
 package com.echora.content.controller;
 
 import com.echora.content.dto.ProductDto;
-import com.echora.content.entity.ProductCategory;
+import com.echora.content.model.ProductCategory;
 import com.echora.content.service.ProductService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;

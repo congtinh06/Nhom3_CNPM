@@ -77,13 +77,13 @@ describe('AdminLoginPage', () => {
     fireEvent.change(screen.getByLabelText(/email quản trị/i), {
       target: { value: '  QUANTRI@ECHORA.TEST  ' },
     });
-    fireEvent.change(screen.getByLabelText(/^mật khẩu/i), { target: { value: 'Admin@123456' } });
+    fireEvent.change(screen.getByLabelText(/^mật khẩu/i), { target: { value: 'AdminTest@2026' } });
     fireEvent.click(screen.getByRole('button', { name: 'Đăng nhập' }));
 
     await waitFor(() => {
       expect(mockLogin).toHaveBeenCalledWith({
         email: 'quantri@echora.test',
-        password: 'Admin@123456',
+        password: 'AdminTest@2026',
       });
     });
   });
@@ -101,7 +101,7 @@ describe('AdminLoginPage', () => {
     fireEvent.change(screen.getByLabelText(/email quản trị/i), {
       target: { value: 'quantri@echora.test' },
     });
-    fireEvent.change(screen.getByLabelText(/^mật khẩu/i), { target: { value: 'Admin@123456' } });
+    fireEvent.change(screen.getByLabelText(/^mật khẩu/i), { target: { value: 'AdminTest@2026' } });
     fireEvent.click(screen.getByRole('button', { name: 'Đăng nhập' }));
 
     const loadingButton = await screen.findByRole('button', { name: 'Đang đăng nhập...' });
@@ -137,7 +137,7 @@ describe('AdminLoginPage', () => {
     fireEvent.change(screen.getByLabelText(/email quản trị/i), {
       target: { value: 'quantri@echora.test' },
     });
-    fireEvent.change(screen.getByLabelText(/^mật khẩu/i), { target: { value: 'Admin@123456' } });
+    fireEvent.change(screen.getByLabelText(/^mật khẩu/i), { target: { value: 'AdminTest@2026' } });
     fireEvent.click(screen.getByRole('button', { name: 'Đăng nhập' }));
 
     expect(await screen.findByRole('alert')).toHaveTextContent(
@@ -186,13 +186,13 @@ describe('AdminLoginPage', () => {
     fireEvent.change(screen.getByLabelText(/email quản trị/i), {
       target: { value: 'quantri@echora.test' },
     });
-    fireEvent.change(screen.getByLabelText(/^mật khẩu/i), { target: { value: 'Admin@123456' } });
+    fireEvent.change(screen.getByLabelText(/^mật khẩu/i), { target: { value: 'AdminTest@2026' } });
     fireEvent.click(screen.getByRole('button', { name: 'Đăng nhập' }));
 
     await waitFor(() => {
       expect(mockLogin).toHaveBeenCalledWith({
         email: 'quantri@echora.test',
-        password: 'Admin@123456',
+        password: 'AdminTest@2026',
       });
       expect(mockLogout).not.toHaveBeenCalled();
     });

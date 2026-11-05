@@ -51,4 +51,42 @@ class TtsTextBuilderTest {
         String result = TtsTextBuilder.buildText("  Tiêu đề  ", "  Tóm tắt\n  ");
         assertEquals("Tiêu đề\n\nTóm tắt", result);
     }
+
+    @Test
+    @DisplayName("Q3-FIX: buildText should include title, summary, description, historicalSignificance in order")
+    void testBuildText_Q3_includesAllFourFields() {
+        String title = "Nhà thờ Đức Bà";
+        String summary = "Công trình kiến trúc Gothic nổi tiếng";
+        String description = "Xây dựng từ năm 1877, tọa lạc tại Quận 1";
+        String historicalSignificance = "Biểu tượng của thành phố Hồ Chí Minh";
+
+        String result = TtsTextBuilder.buildText(title, summary, description, historicalSignificance);
+
+        String expected = "Nhà thờ Đức Bà\n\nCông trình kiến trúc Gothic nổi tiếng\n\nXây dựng từ năm 1877, tọa lạc tại Quận 1\n\nBiểu tượng của thành phố Hồ Chí Minh";
+        assertEquals(expected, result);
+    }
+
+    @Test
+    @DisplayName("Q3-FIX: buildText should skip null/blank fields but preserve order of non-blank fields")
+    void testBuildText_Q3_skipsBlankFieldsPreservesOrder() {
+        // Test: title + description (skip summary and historicalSignificance)
+        String result1 = TtsTextBuilder.buildText("Tiêu đề", null, "Mô tả", null);
+        assertEquals("Tiêu đề\n\nMô tả", result1);
+
+        // Test: title + summary (skip description and historicalSignificance)
+        String result2 = TtsTextBuilder.buildText("Tiêu đề", "Tóm tắt", null, null);
+        assertEquals("Tiêu đề\n\nTóm tắt", result2);
+
+        // Test: all blank except description
+        String result3 = TtsTextBuilder.buildText(null, "  ", "Mô tả chi tiết", null);
+        assertEquals("Mô tả chi tiết", result3);
+    }
+
+    @Test
+    @DisplayName("Q3-FIX: buildText should never return null, always return empty string if all fields blank")
+    void testBuildText_Q3_allFieldsBlank() {
+        String result = TtsTextBuilder.buildText(null, "  ", "", null);
+        assertNotNull(result);
+        assertEquals("", result);
+    }
 }

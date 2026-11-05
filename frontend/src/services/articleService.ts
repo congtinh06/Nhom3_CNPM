@@ -3,6 +3,7 @@ import { NewsItem, NewsDetail } from '../types/domain';
 import { adaptNewsDetail, adaptNewsListResponse } from '../api/adapters';
 import { apiClient } from '../api/client';
 import { newsArticles, sampleAnnouncement } from '../content/newsFixtures';
+import { DEMO_FIXTURES_ENABLED } from '../config/demoMode';
 
 export interface GetArticlesParams {
   category?: string;
@@ -16,8 +17,6 @@ export interface GetArticlesResult {
   total: number;
   announcement?: string | null;
 }
-
-const IS_TEST_ENV = import.meta.env.MODE === 'test';
 
 function getFixtureArticles(params: GetArticlesParams = {}): GetArticlesResult {
   const { category, limit, offset = 0 } = params;
@@ -39,8 +38,8 @@ function getFixtureArticles(params: GetArticlesParams = {}): GetArticlesResult {
 export async function getArticles(params: GetArticlesParams = {}): Promise<GetArticlesResult> {
   const { category, limit, offset = 0, signal } = params;
 
-  // Trong môi trường test, dùng fixtures để tránh gọi mạng làm treo/timeout test.
-  if (IS_TEST_ENV) {
+  // Chế độ test/demo: dùng fixtures để tránh gọi mạng.
+  if (DEMO_FIXTURES_ENABLED) {
     return getFixtureArticles(params);
   }
 
@@ -59,31 +58,29 @@ export async function getArticles(params: GetArticlesParams = {}): Promise<GetAr
     return {
       items: offset > 0 ? paged.slice(offset) : paged,
       total,
-      announcement: adapted.announcement ?? sampleAnnouncement,
+      announcement: adapted.announcement ?? (DEMO_FIXTURES_ENABLED ? sampleAnnouncement : null),
     };
   } catch (error) {
     if (isCancel(error)) {
       throw error;
     }
-    return getFixtureArticles(params);
+    if (DEMO_FIXTURES_ENABLED) {
+      return getFixtureArticles(params);
+    }
+    // Bản build thật: để trang hiển thị lỗi thay vì thay bằng dữ liệu mẫu.
+    throw error;
   }
 }
 
 export async function getArticleBySlug(slug: string, signal?: AbortSignal): Promise<NewsDetail | null> {
   if (!slug) return null;
 
-  if (!IS_TEST_ENV) {
-    try {
-      const response = await apiClient.get(`/api/content/news/${encodeURIComponent(slug)}`, {
-        signal,
-      });
-      return adaptNewsDetail(response.data);
-    } catch (error) {
-      if (isCancel(error)) {
-        throw error;
-      }
-      // Rơi về fixtures bên dưới khi backend lỗi hoặc không có bài viết.
-    }
+  if (!DEMO_FIXTURES_ENABLED) {
+    // Bản build thật: lỗi API phải hiện ra, không thay bằng bài mẫu.
+    const response = await apiClient.get(`/api/content/news/${encodeURIComponent(slug)}`, {
+      signal,
+    });
+    return adaptNewsDetail(response.data);
   }
 
   const raw = newsArticles.find((item) => item.slug === slug);

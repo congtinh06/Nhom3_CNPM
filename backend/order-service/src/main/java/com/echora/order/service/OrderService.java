@@ -73,7 +73,8 @@ public class OrderService {
     @Value("${app.pricing.free-shipping-threshold:50000}")
     private BigDecimal freeShippingThreshold;
 
-    @Value("${app.payments.mock-enabled:true}")
+    // Mặc định TẮT: chỉ bật xác nhận chuyển khoản giả lập ở profile dev/test.
+    @Value("${app.payments.mock-enabled:false}")
     private boolean mockEnabled;
 
     @Value("${app.premium.price:500000}")

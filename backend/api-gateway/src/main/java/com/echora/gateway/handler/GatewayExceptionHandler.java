@@ -4,22 +4,18 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.web.reactive.error.ErrorWebExceptionHandler;
 import org.springframework.core.annotation.Order;
-import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.server.reactive.ServerHttpResponse;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
-import java.nio.charset.StandardCharsets;
-
 /**
  * Handles errors and exceptions in the gateway pipeline.
  * Translates downstream connection refused to 503 Service Unavailable,
  * and downstream timeouts to 504 Gateway Timeout.
- * Emits short generic JSON response body with no stack trace or internal details.
+ * Emits RFC 7807 ProblemDetail JSON body with traceId field.
  */
 @Component
 @Order(-2)
@@ -54,14 +50,7 @@ public class GatewayExceptionHandler implements ErrorWebExceptionHandler {
             log.error("Unhandled gateway error on path '{}': {}", exchange.getRequest().getURI().getPath(), ex.getMessage(), ex);
         }
 
-        response.setStatusCode(status);
-        response.getHeaders().setContentType(MediaType.APPLICATION_JSON);
-        com.echora.gateway.filter.SecurityHeadersGlobalFilter.applyHeaders(response.getHeaders());
-
-        byte[] jsonBytes = String.format("{\"status\":%d,\"error\":\"%s\",\"message\":\"%s\"}",
-                status.value(), errorMessage, errorMessage).getBytes(StandardCharsets.UTF_8);
-        DataBuffer buffer = response.bufferFactory().wrap(jsonBytes);
-        return response.writeWith(Mono.just(buffer));
+        return ProblemDetailSupport.write(exchange, status, errorMessage);
     }
 
     private boolean isTimeoutError(Throwable ex) {
@@ -70,9 +59,13 @@ public class GatewayExceptionHandler implements ErrorWebExceptionHandler {
         }
         Throwable current = ex;
         while (current != null) {
+            if (current instanceof io.netty.channel.ConnectTimeoutException) {
+                return false;
+            }
             String name = current.getClass().getName();
             if (name.contains("TimeoutException") ||
                     current instanceof java.util.concurrent.TimeoutException ||
+                    current instanceof java.net.http.HttpTimeoutException ||
                     current instanceof io.netty.handler.timeout.ReadTimeoutException ||
                     current instanceof io.netty.handler.timeout.WriteTimeoutException) {
                 return true;

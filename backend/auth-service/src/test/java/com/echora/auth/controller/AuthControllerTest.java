@@ -78,7 +78,7 @@ class AuthControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(registerBody("khong-phai-email", "Abcdefg1", "Abcdefg1")))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.details.email").exists());
+                .andExpect(jsonPath("$.errors.email").exists());
     }
 
     @Test
@@ -92,7 +92,7 @@ class AuthControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(registerBody("a@echora.local", "abcdefgh", "abcdefgh")))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.details.password").exists());
+                .andExpect(jsonPath("$.errors.password").exists());
     }
 
     @Test
@@ -150,7 +150,7 @@ class AuthControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"email\":\"a@echora.local\",\"password\":\"sai\"}"))
                 .andExpect(status().isUnauthorized())
-                .andExpect(jsonPath("$.message").value("Email hoặc mật khẩu không đúng."));
+                .andExpect(jsonPath("$.detail").value("Email hoặc mật khẩu không đúng."));
     }
 
     @Test
@@ -180,7 +180,7 @@ class AuthControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"credential\":\"\"}"))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.details.credential").exists());
+                .andExpect(jsonPath("$.errors.credential").exists());
     }
 
     @Test
@@ -194,7 +194,7 @@ class AuthControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"credential\":\"fake-google-id-token\"}"))
                 .andExpect(status().isServiceUnavailable())
-                .andExpect(jsonPath("$.message").value("Đăng nhập Google chưa được cấu hình."));
+                .andExpect(jsonPath("$.detail").value("Đăng nhập Google chưa được cấu hình."));
     }
 
     @Test
@@ -213,7 +213,7 @@ class AuthControllerTest {
     void meWithoutAuthenticationReturns401() throws Exception {
         mockMvc.perform(get("/api/auth/me"))
                 .andExpect(status().isUnauthorized())
-                .andExpect(jsonPath("$.message").exists());
+                .andExpect(jsonPath("$.detail").exists());
     }
 
     @Test

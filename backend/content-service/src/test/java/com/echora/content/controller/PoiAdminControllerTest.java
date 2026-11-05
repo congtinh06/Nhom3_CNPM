@@ -2,9 +2,14 @@ package com.echora.content.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.echora.content.config.AdminRoleFilter;
+import com.echora.content.dto.AdminAudioPoiDto;
+import com.echora.content.dto.AdminAudioStatusDto;
 import com.echora.content.dto.AdminPoiDetailDto;
+import com.echora.content.dto.AdminPoiLanguageDto;
 import com.echora.content.dto.AdminPoiListItemDto;
 import com.echora.content.dto.AdminPoiTranslationDto;
+import com.echora.content.dto.AudioRegenerationBatchDto;
+import com.echora.content.dto.AudioRegenerationResultDto;
 import com.echora.content.dto.UpdatePoiRequest;
 import com.echora.content.exception.ConflictException;
 import com.echora.content.exception.GlobalExceptionHandler;
@@ -34,6 +39,8 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -116,6 +123,63 @@ class PoiAdminControllerTest {
     }
 
     @Test
+    @DisplayName("GET /api/content/admin/audio/status: ADMIN -> 200 kèm ma trận trạng thái")
+    void testAudioStatus_Returns200() throws Exception {
+        when(poiContentService.getAudioStatus()).thenReturn(AdminAudioStatusDto.builder()
+                .totalPois(1).readyLanguages(2).pendingLanguages(1).failedLanguages(1).allReady(false)
+                .pois(List.of(AdminAudioPoiDto.builder()
+                        .id(100L).code("POI_TEST_01").name("Bưu điện Trung tâm")
+                        .status("ACTIVE").publishStatus("PUBLISHED").allReady(false)
+                        .languages(List.of(
+                                AdminPoiLanguageDto.builder().languageCode("vi").audioStatus("READY").build(),
+                                AdminPoiLanguageDto.builder().languageCode("en").audioStatus("FAILED_TTS").build()))
+                        .build()))
+                .build());
+
+        adminMockMvc.perform(get("/api/content/admin/audio/status")
+                        .header(AdminRoleFilter.HEADER_ROLE, "ADMIN")
+                        .header(AdminRoleFilter.HEADER_INTERNAL_API_KEY, VALID_KEY))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.allReady").value(false))
+                .andExpect(jsonPath("$.totalPois").value(1))
+                .andExpect(jsonPath("$.pois[0].languages[0].audioStatus").value("READY"));
+    }
+
+    @Test
+    @DisplayName("POST /api/content/admin/pois/{id}/audio/regenerate: ADMIN -> 202 kèm ngôn ngữ")
+    void testRegenerateAudio_Returns202() throws Exception {
+        when(poiContentService.regenerateAudio(100L, List.of("en", "ja")))
+                .thenReturn(AudioRegenerationResultDto.builder()
+                        .poiId(100L).languages(List.of("en", "ja")).requestedLanguages(2)
+                        .publishStatus("PUBLISHED").message("Đã xếp hàng tạo lại audio cho 2 ngôn ngữ.")
+                        .build());
+
+        adminMockMvc.perform(post("/api/content/admin/pois/{id}/audio/regenerate", 100L)
+                        .param("languages", "en", "ja")
+                        .header(AdminRoleFilter.HEADER_ROLE, "ADMIN")
+                        .header(AdminRoleFilter.HEADER_INTERNAL_API_KEY, VALID_KEY))
+                .andExpect(status().isAccepted())
+                .andExpect(jsonPath("$.poiId").value(100))
+                .andExpect(jsonPath("$.requestedLanguages").value(2));
+    }
+
+    @Test
+    @DisplayName("POST /api/content/admin/audio/regenerate: ADMIN -> 202 kèm số POI/ngôn ngữ")
+    void testRegenerateNonReadyAudio_Returns202() throws Exception {
+        when(poiContentService.regenerateNonReadyAudio()).thenReturn(AudioRegenerationBatchDto.builder()
+                .poiCount(1).languageCount(2).skippedPoiCount(3)
+                .poiIds(List.of(100L)).failures(List.of())
+                .build());
+
+        adminMockMvc.perform(post("/api/content/admin/audio/regenerate")
+                        .header(AdminRoleFilter.HEADER_ROLE, "ADMIN")
+                        .header(AdminRoleFilter.HEADER_INTERNAL_API_KEY, VALID_KEY))
+                .andExpect(status().isAccepted())
+                .andExpect(jsonPath("$.poiCount").value(1))
+                .andExpect(jsonPath("$.languageCount").value(2));
+    }
+
+    @Test
     @DisplayName("GET /api/content/admin/pois: truyền overallStatus/languageStatus xuống service")
     void testAdminList_PassesStatusFilters() throws Exception {
         when(poiContentService.getAdminPois(any(), any(), any(), any(), any(), any(), any(), any(Pageable.class)))
@@ -139,7 +203,7 @@ class PoiAdminControllerTest {
         adminMockMvc.perform(get("/api/content/admin/pois"))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.status").value(403))
-                .andExpect(jsonPath("$.message").value("Bạn không có quyền thực hiện thao tác này."));
+                .andExpect(jsonPath("$.detail").value("Bạn không có quyền thực hiện thao tác này."));
     }
 
     @Test
@@ -184,7 +248,49 @@ class PoiAdminControllerTest {
                         .content(objectMapper.writeValueAsString(sampleUpdateRequest(0L))))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.status").value(409))
-                .andExpect(jsonPath("$.message")
+                .andExpect(jsonPath("$.detail")
                         .value("Nội dung đã được người khác cập nhật. Vui lòng tải lại trang."));
+    }
+
+    @Test
+    @DisplayName("PATCH /api/content/admin/pois/{id}/status: ADMIN -> 200 kèm trạng thái mới")
+    void testChangeStatus_Returns200() throws Exception {
+        when(poiContentService.changeStatus(100L, "INACTIVE"))
+                .thenReturn(AdminPoiDetailDto.builder()
+                        .id(100L).code("POI_TEST_01").status("INACTIVE").version(1L)
+                        .publishStatus("PUBLISHED")
+                        .translations(Map.of())
+                        .build());
+
+        adminMockMvc.perform(patch("/api/content/admin/pois/{id}/status", 100L)
+                        .header(AdminRoleFilter.HEADER_ROLE, "ADMIN")
+                        .header(AdminRoleFilter.HEADER_INTERNAL_API_KEY, VALID_KEY)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"status\":\"INACTIVE\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("INACTIVE"))
+                .andExpect(jsonPath("$.id").value(100));
+    }
+
+    @Test
+    @DisplayName("PATCH /api/content/admin/pois/{id}/status: giá trị lạ -> 400, không gọi service")
+    void testChangeStatus_InvalidValue_Returns400() throws Exception {
+        adminMockMvc.perform(patch("/api/content/admin/pois/{id}/status", 100L)
+                        .header(AdminRoleFilter.HEADER_ROLE, "ADMIN")
+                        .header(AdminRoleFilter.HEADER_INTERNAL_API_KEY, VALID_KEY)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"status\":\"DELETED\"}"))
+                .andExpect(status().isBadRequest());
+
+        verify(poiContentService, org.mockito.Mockito.never()).changeStatus(any(), any());
+    }
+
+    @Test
+    @DisplayName("PATCH /api/content/admin/pois/{id}/status: thiếu role ADMIN -> 403")
+    void testChangeStatus_MissingRole_Returns403() throws Exception {
+        adminMockMvc.perform(patch("/api/content/admin/pois/{id}/status", 100L)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"status\":\"INACTIVE\"}"))
+                .andExpect(status().isForbidden());
     }
 }

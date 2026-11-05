@@ -91,7 +91,7 @@ export const HOME_DICTIONARY: Record<SupportedLanguage, Record<HomeKey, string>>
     faq1Q: 'Vì sao đôi lúc không nghe được tiếng Việt?',
     faq1A:
       'Thuyết minh được đọc bằng giọng có sẵn trên thiết bị của bạn. Nếu máy chưa cài giọng tiếng Việt, hãy thêm gói giọng đó trong cài đặt hệ điều hành rồi mở lại trang.',
-    faq2Q: 'Ứng dụng có lưu vị trí của tôi không?',
+    faq2Q: 'Trang web có lưu vị trí của tôi không?',
     faq2A:
       'Không. Vị trí chỉ được dùng ngay trên thiết bị để quyết định khi nào phát thuyết minh. Vị trí không được gửi lên máy chủ và không được lưu lại.',
     faq3Q: 'Vì sao thuyết minh tự phát khi tôi vừa tới?',
@@ -110,7 +110,7 @@ export const HOME_DICTIONARY: Record<SupportedLanguage, Record<HomeKey, string>>
     ctaSecondary: 'Quét mã QR',
     aboutTitle: 'Về dự án',
     aboutText:
-      'Echora là sản phẩm demo của Nhóm 3 trong môn Công nghệ phần mềm. Nhóm xây dựng một ứng dụng thuyết minh du lịch tự động cho TP. Hồ Chí Minh, kết hợp bản đồ, mã QR và giọng đọc bốn ngôn ngữ.',
+      'Echora là sản phẩm demo của Nhóm 3 trong môn Công nghệ phần mềm. Nhóm xây dựng một website thuyết minh du lịch tự động cho TP. Hồ Chí Minh, kết hợp bản đồ, mã QR và giọng đọc bốn ngôn ngữ.',
   },
   en: {
     heroKicker: 'Your digital audio guide',
@@ -141,7 +141,7 @@ export const HOME_DICTIONARY: Record<SupportedLanguage, Record<HomeKey, string>>
     feat1Title: 'Automatic GPS narration',
     feat1Desc: 'The story plays by itself as you get near a stop, with no button to press.',
     feat2Title: 'Scan the QR code on site',
-    feat2Desc: "No GPS needed, scan the code to open that stop\'s narration right away.",
+    feat2Desc: "No GPS needed, scan the code to open that stop's narration right away.",
     feat3Title: 'Four languages',
     feat3Desc: 'Vietnamese, English, Japanese and Korean for every stop.',
     feat4Title: 'Route map',
@@ -151,7 +151,7 @@ export const HOME_DICTIONARY: Record<SupportedLanguage, Record<HomeKey, string>>
     faq1Q: 'Why is the Vietnamese voice sometimes missing?',
     faq1A:
       'The narration is read aloud with a voice installed on your device. If your device has no Vietnamese voice, add that voice in your system settings and reload the page.',
-    faq2Q: 'Does the app store my location?',
+    faq2Q: 'Does the website store my location?',
     faq2A:
       'No. Location is used only on your device to decide when to play the narration. It is not sent to any server and is not saved.',
     faq3Q: 'Why does the narration start by itself as I arrive?',
@@ -170,7 +170,7 @@ export const HOME_DICTIONARY: Record<SupportedLanguage, Record<HomeKey, string>>
     ctaSecondary: 'Scan QR code',
     aboutTitle: 'About the project',
     aboutText:
-      'Echora is a demo project by Group 3 for a Software Engineering course. We built an automatic audio-guide app for Ho Chi Minh City that combines a map, QR codes and four-language narration.',
+      'Echora is a demo project by Group 3 for a Software Engineering course. We built an automatic audio-guide website for Ho Chi Minh City that combines a map, QR codes and four-language narration.',
   },
   ja: {
     heroKicker: 'あなたのデジタル音声ガイド',

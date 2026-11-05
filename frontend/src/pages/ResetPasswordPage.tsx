@@ -57,7 +57,7 @@ export const ResetPasswordPage: React.FC = () => {
   return (
     <div className="auth-standalone-page">
       <div className="auth-standalone-card">
-        <h2 className="auth-modal-title">Đặt lại mật khẩu</h2>
+        <h1 className="auth-modal-title">Đặt lại mật khẩu</h1>
 
         {done ? (
           <>

@@ -21,12 +21,84 @@ internal:
 location:
   max-radius-meters: ${LOCATION_MAX_RADIUS_METERS:5000}
 
+resilience4j:
+  circuitbreaker:
+    instances:
+      locationContentService:
+        sliding-window-type: COUNT_BASED
+        sliding-window-size: 10
+        minimum-number-of-calls: 5
+        failure-rate-threshold: 50
+        slow-call-duration-threshold: 2s
+        slow-call-rate-threshold: 80
+        wait-duration-in-open-state: 10s
+        permitted-number-of-calls-in-half-open-state: 3
+        automatic-transition-from-open-to-half-open-enabled: true
+        register-health-indicator: true
+        ignore-exceptions:
+          - feign.FeignException$BadRequest
+          - feign.FeignException$Unauthorized
+          - feign.FeignException$Forbidden
+          - feign.FeignException$NotFound
+          - feign.FeignException$MethodNotAllowed
+          - feign.FeignException$NotAcceptable
+          - feign.FeignException$Conflict
+          - feign.FeignException$Gone
+          - feign.FeignException$UnsupportedMediaType
+          - feign.FeignException$TooManyRequests
+          - feign.FeignException$UnprocessableEntity
+  retry:
+    instances:
+      locationContentService:
+        # Gateway timeout for this route is 15s. One retry gives
+        # 2 * 5s read timeout + 200ms backoff = 10.2s worst case.
+        max-attempts: 2
+        wait-duration: 200ms
+        enable-exponential-backoff: true
+        exponential-backoff-multiplier: 2
+        retry-exceptions:
+          - java.io.IOException
+          - java.util.concurrent.TimeoutException
+          - feign.FeignException$ServiceUnavailable
+          - feign.RetryableException
+
+# OpenAPI / Swagger qua API Gateway. ECHORA_DOCS_ENABLED=true (default) -> /v3/api-docs
+# va /swagger-ui.html hoat dong; false -> tra ve 404/403 (khong lo noi dung).
+springdoc:
+  api-docs:
+    enabled: ${ECHORA_DOCS_ENABLED:false}
+    path: /v3/api-docs
+  swagger-ui:
+    enabled: ${ECHORA_DOCS_ENABLED:false}
+    path: /swagger-ui.html
+    operations-sorter: method
+    tags-sorter: alpha
+  paths-to-exclude:
+    - /internal/**
+    - /**/internal/**
+  info:
+    title: Echora Location Service
+    version: "1.0.0"
+    description: "Định vị vị trí GPS, tìm kiếm điểm du lịch lân cận và giải mã tọa độ."
+  servers:
+    - url: ${GATEWAY_URL:http://localhost:18080}
+      description: API Gateway (http://localhost:18080 trong moi truong local)
+
 management:
   endpoints:
     web:
       exposure:
-        include: health,info
+        include: health,info,circuitbreakers,circuitbreakerevents
+  endpoint:
+    health:
+      show-details: always
+  health:
+    circuitbreakers:
+      enabled: true
 
 logging:
   level:
     com.echora.location: INFO
+  pattern:
+    # MDC traceId được set bởi TraceIdFilter để log service dùng cùng giá trị X-Trace-Id với gateway/response.
+    console: "%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX} %5p ${PID:- } --- [%15.15t] [%X{traceId:-}] %-40.40logger{39} : %m%n"

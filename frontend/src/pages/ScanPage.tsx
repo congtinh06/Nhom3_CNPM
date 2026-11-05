@@ -432,6 +432,9 @@ export const ScanPage: React.FC = () => {
 
   return (
     <section className="s sp scan-page">
+      <h1 className="sr-only">
+        {displayName ? `${displayName} - Thuyết minh tự động` : 'Quét mã QR thuyết minh'}
+      </h1>
       {isGuest && (
         <div className="scan-guest-bar" role="note">
           <span className="scan-guest-text">

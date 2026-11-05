@@ -16,6 +16,14 @@ public interface AudioStorageService {
     AudioStorageResult storeAudio(long poiId, String lang, String contentHash, String text);
 
     /**
+     * Như {@link #storeAudio(long, String, String, String)} nhưng có thể bỏ qua file cũ
+     * để tạo lại audio (dùng cho thao tác admin).
+     */
+    default AudioStorageResult storeAudio(long poiId, String lang, String contentHash, String text, boolean force) {
+        return storeAudio(poiId, lang, contentHash, text);
+    }
+
+    /**
      * Resolves an audio file name safely within the storage directory, asserting it does not escape.
      *
      * @param fileName file name matching the strict audio file pattern

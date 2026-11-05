@@ -3,6 +3,7 @@ package com.echora.content.controller;
 import com.echora.content.dto.ProductPriceQueryDto;
 import com.echora.content.dto.ProductPriceResponseDto;
 import com.echora.content.service.ProductService;
+import io.swagger.v3.oas.annotations.Hidden;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -13,6 +14,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/content/internal/products")
 @RequiredArgsConstructor
+@Hidden
 public class ProductInternalController {
 
     private final ProductService productService;

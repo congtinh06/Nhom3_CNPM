@@ -53,12 +53,16 @@ internal:
 app:
   auth-service:
     url: ${AUTH_SERVICE_URL:http://localhost:8086}
+    # Timeout cho RestClient kiểm tra entitlement khi stream audio.
+    connect-timeout-ms: ${AUTH_CONNECT_TIMEOUT_MS:2000}
+    read-timeout-ms: ${AUTH_READ_TIMEOUT_MS:3000}
   rabbitmq:
     exchange: ${RABBITMQ_EXCHANGE:echora.topic}
     queues:
       poi-created: ${RABBITMQ_QUEUE_POI_CREATED:poi.created.queue}
       poi-updated: ${RABBITMQ_QUEUE_POI_UPDATED:poi.updated.queue}
     routing-keys:
+      poi-audio-progress: ${RABBITMQ_ROUTING_KEY_AUDIO_PROGRESS:poi.audio.progress}
       poi-audio-ready: ${RABBITMQ_ROUTING_KEY_AUDIO_READY:poi.audio.ready}
       poi-audio-failed: ${RABBITMQ_ROUTING_KEY_AUDIO_FAILED:poi.audio.failed}
   audio:
@@ -77,21 +81,108 @@ app:
   tts:
     command: ${TTS_COMMAND:edge-tts}
     timeout-ms: ${TTS_TIMEOUT_MS:30000}
+    retry:
+      # Edge-TTS có thể lỗi mạng tạm thời; thử lại có backoff thay vì đánh FAILED_TTS ngay.
+      max-attempts: ${TTS_RETRY_MAX_ATTEMPTS:3}
+      initial-backoff-ms: ${TTS_RETRY_INITIAL_BACKOFF_MS:1000}
+      multiplier: ${TTS_RETRY_MULTIPLIER:2.0}
+      max-backoff-ms: ${TTS_RETRY_MAX_BACKOFF_MS:8000}
     voices:
       vi: ${TTS_VOICE_VI:vi-VN-HoaiMyNeural}
       en: ${TTS_VOICE_EN:en-US-AvaNeural}
       ja: ${TTS_VOICE_JA:ja-JP-NanamiNeural}
       ko: ${TTS_VOICE_KO:ko-KR-SunHiNeural}
 
+
+# OpenAPI / Swagger qua API Gateway. ECHORA_DOCS_ENABLED=false (default: tắt ở deploy)
+springdoc:
+  api-docs:
+    enabled: ${ECHORA_DOCS_ENABLED:false}
+    path: /v3/api-docs
+  swagger-ui:
+    enabled: ${ECHORA_DOCS_ENABLED:false}
+    path: /swagger-ui.html
+    operations-sorter: method
+    tags-sorter: alpha
+  paths-to-exclude:
+    - /internal/**
+    - /**/internal/**
+  info:
+    title: Echora Translation TTS Service
+    version: "1.0.0"
+    description: "Dịch đa ngôn ngữ và tạo giọng đọc thuyết minh tự động."
+  servers:
+    - url: ${GATEWAY_URL:http://localhost:18080}
+      description: API Gateway (http://localhost:18080 trong moi truong local)
+
 management:
   endpoints:
     web:
       exposure:
-        include: health
+        include: health,circuitbreakers,circuitbreakerevents
   endpoint:
     health:
       show-details: never
+  health:
+    circuitbreakers:
+      enabled: true
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      translationMyMemory:
+        sliding-window-type: COUNT_BASED
+        sliding-window-size: 10
+        minimum-number-of-calls: 5
+        failure-rate-threshold: 50
+        slow-call-duration-threshold: 2s
+        slow-call-rate-threshold: 80
+        wait-duration-in-open-state: 10s
+        permitted-number-of-calls-in-half-open-state: 3
+        automatic-transition-from-open-to-half-open-enabled: true
+        register-health-indicator: true
+        ignore-exceptions:
+          - org.springframework.web.client.HttpClientErrorException
+      translationEdgeTts:
+        sliding-window-type: COUNT_BASED
+        sliding-window-size: 10
+        minimum-number-of-calls: 5
+        failure-rate-threshold: 50
+        # Edge-TTS la tien trinh ngoai sinh file mp3: mot POI dai mat vai giay
+        # den gan 120s (TTS_TIMEOUT_MS). Do 12 call that tren POI 1 (1923 ky tu):
+        # p50 = 3.657s, max = 112.866s. Nguong phai > max hop le va < timeout
+        # 120s, neu khong call cham se khong bao gio duoc ghi nhan (300s cu).
+        # Siep nguong xuong 110s (timeout 120s - bo phan tu du nui 10 giay) de dam bien do
+        # "nguon cham nho hon timeout" voi du nui toi thieu 10 giay.
+        slow-call-duration-threshold: 110s
+        slow-call-rate-threshold: 80
+        wait-duration-in-open-state: 10s
+        permitted-number-of-calls-in-half-open-state: 3
+        automatic-transition-from-open-to-half-open-enabled: true
+        register-health-indicator: true
+        # Bad input / unsupported voice are configuration errors, not provider outages.
+        ignore-exceptions:
+          - java.lang.IllegalArgumentException
+          - com.echora.translation.exception.TtsUnsupportedVoiceException
+  retry:
+    instances:
+      # MyMemory GETs are idempotent. 10s read timeout x 3 attempts + backoff (~0.6s)
+      # = 30.6s, below the 60s audio route timeout. Edge-TTS is not retried here because the
+      # pipeline already retries TTS with backoff; multiplying retries would be unsafe.
+      translationMyMemory:
+        max-attempts: 3
+        wait-duration: 200ms
+        enable-exponential-backoff: true
+        exponential-backoff-multiplier: 2
+        retry-exceptions:
+          - java.io.IOException
+          - java.util.concurrent.TimeoutException
+          - org.springframework.web.client.ResourceAccessException
+          - org.springframework.web.client.HttpServerErrorException
 
 logging:
   level:
     com.echora.translation: INFO
+  pattern:
+    # MDC traceId được set bởi TraceIdFilter để log service dùng cùng giá trị X-Trace-Id với gateway/response.
+    console: "%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX} %5p ${PID:- } --- [%15.15t] [%X{traceId:-}] %-40.40logger{39} : %m%n"

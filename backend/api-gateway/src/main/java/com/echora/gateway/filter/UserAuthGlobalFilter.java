@@ -1,5 +1,6 @@
 package com.echora.gateway.filter;
 
+import com.echora.gateway.handler.ProblemDetailSupport;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
@@ -9,13 +10,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.Ordered;
-import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.server.reactive.ServerHttpRequest;
-import org.springframework.http.server.reactive.ServerHttpResponse;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
@@ -26,8 +24,6 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.time.Instant;
 import java.util.Base64;
-import java.util.LinkedHashMap;
-import java.util.Map;
 
 @Component
 public class UserAuthGlobalFilter implements GlobalFilter, Ordered {
@@ -205,26 +201,7 @@ public class UserAuthGlobalFilter implements GlobalFilter, Ordered {
     }
 
     private Mono<Void> sendError(ServerWebExchange exchange, HttpStatus status, String message) {
-        ServerHttpResponse response = exchange.getResponse();
-        response.setStatusCode(status);
-        response.getHeaders().setContentType(MediaType.APPLICATION_JSON);
-        SecurityHeadersGlobalFilter.applyHeaders(response.getHeaders());
-
-        Map<String, Object> body = new LinkedHashMap<>();
-        body.put("status", status.value());
-        body.put("error", status.getReasonPhrase());
-        body.put("message", message);
-        body.put("path", exchange.getRequest().getURI().getPath());
-
-        try {
-            byte[] bytes = objectMapper.writeValueAsBytes(body);
-            DataBuffer buffer = response.bufferFactory().wrap(bytes);
-            return response.writeWith(Mono.just(buffer));
-        } catch (Exception ex) {
-            byte[] fallback = ("{\"status\":" + status.value() + ",\"message\":\"" + message + "\"}")
-                    .getBytes(StandardCharsets.UTF_8);
-            return response.writeWith(Mono.just(response.bufferFactory().wrap(fallback)));
-        }
+        return ProblemDetailSupport.write(exchange, status, message);
     }
 
     @Override

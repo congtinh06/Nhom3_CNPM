@@ -102,7 +102,7 @@ class ZoneAdminControllerTest {
         adminMockMvc.perform(get("/api/content/admin/zones"))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.status").value(403))
-                .andExpect(jsonPath("$.message").value("Bạn không có quyền thực hiện thao tác này."));
+                .andExpect(jsonPath("$.detail").value("Bạn không có quyền thực hiện thao tác này."));
     }
 
     @Test
@@ -140,7 +140,7 @@ class ZoneAdminControllerTest {
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status").value(400))
-                .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("Không thể ngừng hoạt động khu vực")));
+                .andExpect(jsonPath("$.detail").value(org.hamcrest.Matchers.containsString("Không thể ngừng hoạt động khu vực")));
     }
 
     @Test

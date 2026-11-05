@@ -278,6 +278,79 @@ class PoiContentServiceImplTest {
     }
 
     @Test
+    @DisplayName("createPoi: rejects coordinates outside the configured Ho Chi Minh City bounds")
+    void testCreatePoi_RejectsOutOfCityCoordinates() {
+        CreatePoiRequest request = baseRequest()
+                .latitude(new BigDecimal("25.0000000"))
+                .longitude(new BigDecimal("25.0000000"))
+                .build();
+        when(zoneRepository.findById(1L)).thenReturn(Optional.of(sampleZone));
+        when(categoryRepository.findById(1L)).thenReturn(Optional.of(sampleCategory));
+
+        assertThatThrownBy(() -> poiContentService.createPoi(request))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessageContaining("TP.HCM");
+        verifyNoInteractions(poiRepository);
+    }
+
+    @Test
+    @DisplayName("createPoi: accepts coordinates exactly on the configured city boundary")
+    void testCreatePoi_AcceptsBoundaryCoordinates() {
+        CreatePoiRequest request = baseRequest()
+                .latitude(new BigDecimal("10.3000000"))
+                .longitude(new BigDecimal("106.3000000"))
+                .build();
+        when(zoneRepository.findById(1L)).thenReturn(Optional.of(sampleZone));
+        when(categoryRepository.findById(1L)).thenReturn(Optional.of(sampleCategory));
+        when(poiRepository.findByCode("POI_NEW_01")).thenReturn(Optional.empty());
+        when(poiRepository.findByQrToken("qr-new-01")).thenReturn(Optional.empty());
+        when(poiRepository.save(any(Poi.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(translationRepository.save(any(PoiTranslation.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        assertThat(poiContentService.createPoi(request).getLatitude())
+                .isEqualByComparingTo("10.3000000");
+    }
+
+    @Test
+    @DisplayName("createPoi: rejects trigger radius above the configured maximum")
+    void testCreatePoi_RejectsTooLargeRadius() {
+        CreatePoiRequest request = baseRequest().triggerRadiusMeters(5001).build();
+        when(zoneRepository.findById(1L)).thenReturn(Optional.of(sampleZone));
+        when(categoryRepository.findById(1L)).thenReturn(Optional.of(sampleCategory));
+
+        assertThatThrownBy(() -> poiContentService.createPoi(request))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessageContaining("Bán kính");
+        verifyNoInteractions(poiRepository);
+    }
+
+    @Test
+    @DisplayName("createPoi: rejects unsupported narration languages")
+    void testCreatePoi_RejectsUnsupportedLanguage() {
+        CreatePoiRequest request = baseRequest().supportedLanguages(List.of("vi", "fr")).build();
+        when(zoneRepository.findById(1L)).thenReturn(Optional.of(sampleZone));
+        when(categoryRepository.findById(1L)).thenReturn(Optional.of(sampleCategory));
+
+        assertThatThrownBy(() -> poiContentService.createPoi(request))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessageContaining("fr");
+        verifyNoInteractions(poiRepository);
+    }
+
+    @Test
+    @DisplayName("getPois: only queries ACTIVE POIs, so inactive or junk rows never reach the public list")
+    void testGetPois_OnlyActiveRows() {
+        when(poiRepository.findByStatus("ACTIVE")).thenReturn(List.of(samplePoi));
+
+        List<PoiSummaryDto> results = poiContentService.getPois(null);
+
+        assertThat(results).extracting(PoiSummaryDto::getCode).containsExactly("POI_TEST_01");
+        verify(poiRepository).findByStatus("ACTIVE");
+        verify(poiRepository, never()).findAll();
+    }
+
+
+    @Test
     @DisplayName("createPoi: throws BadRequestException if code already exists")
     void testCreatePoi_DuplicateCode() {
         CreatePoiRequest request = baseRequest().code("POI_TEST_01").build();
@@ -828,5 +901,40 @@ class PoiContentServiceImplTest {
         assertThat(result.get(0).getPoiId()).isEqualTo(100L);
         verify(poiRepository).findByPublishStatus(PublishStatus.FAILED);
         verify(poiRepository, never()).findAll();
+    }
+
+    @Test
+    @DisplayName("changeStatus: hides an ACTIVE POI, bumps version and persists it")
+    void testChangeStatus_HidesPoi() {
+        when(poiRepository.findById(100L)).thenReturn(Optional.of(samplePoi));
+        when(poiRepository.save(any(Poi.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(translationRepository.findByPoiId(100L)).thenReturn(List.of(viTranslation));
+
+        AdminPoiDetailDto result = poiContentService.changeStatus(100L, "inactive");
+
+        assertThat(result.getStatus()).isEqualTo("INACTIVE");
+        assertThat(samplePoi.getStatus()).isEqualTo("INACTIVE");
+        assertThat(samplePoi.getVersion()).isEqualTo(1L);
+        verify(poiRepository).save(samplePoi);
+    }
+
+    @Test
+    @DisplayName("changeStatus: rejects an unknown status before touching the database")
+    void testChangeStatus_RejectsUnknownStatus() {
+        assertThatThrownBy(() -> poiContentService.changeStatus(100L, "DELETED"))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessageContaining("ACTIVE");
+
+        verifyNoInteractions(poiRepository);
+    }
+
+    @Test
+    @DisplayName("changeStatus: unknown POI -> ResourceNotFoundException")
+    void testChangeStatus_NotFound() {
+        when(poiRepository.findById(404L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> poiContentService.changeStatus(404L, "ACTIVE"))
+                .isInstanceOf(ResourceNotFoundException.class)
+                .hasMessageContaining("404");
     }
 }

@@ -3,7 +3,7 @@ package com.echora.content.controller;
 import com.echora.content.config.AdminRoleFilter;
 import com.echora.content.config.InternalApiKeyFilter;
 import com.echora.content.dto.ProductDto;
-import com.echora.content.entity.ProductCategory;
+import com.echora.content.model.ProductCategory;
 import com.echora.content.exception.GlobalExceptionHandler;
 import com.echora.content.service.ProductService;
 import org.junit.jupiter.api.BeforeEach;

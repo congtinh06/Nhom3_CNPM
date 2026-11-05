@@ -243,7 +243,7 @@ export const FoodBeveragePage: React.FC = () => {
                 </nav>
 
                 {/* Tiêu đề mục */}
-                <h1 className="editorial-catalog-heading">{heading.title}</h1>
+                <h2 className="editorial-catalog-heading">{heading.title}</h2>
 
                 {/* Hàng thông tin phụ: Badge số lượng sản phẩm + Subtitle mô tả */}
                 <div className="editorial-catalog-meta-row">

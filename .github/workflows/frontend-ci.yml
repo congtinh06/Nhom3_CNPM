@@ -2,32 +2,96 @@ name: Frontend CI
 
 on:
   push:
-    branches: [main, master]
+    branches: [main, master, 'fix/**', 'feat/**', 'refactor/**']
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/frontend-ci.yml'
   pull_request:
     branches: [main, master]
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/frontend-ci.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: frontend-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
     name: Build & Check TypeScript
     runs-on: ubuntu-24.04
+    timeout-minutes: 25
     defaults:
       run:
         working-directory: frontend
 
     steps:
       - name: Checkout Source Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Set up Node.js 20
         uses: actions/setup-node@v4
         with:
           node-version: '20'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
 
       - name: Install Dependencies
-        run: npm install
+        run: npm ci
+
+      - name: Security Check - Verify .env Files Not Committed
+        run: |
+          if git ls-files | grep -qE "^frontend/\.env$|^\.env$"; then
+            echo "❌ ERROR: .env file is tracked by git"
+            echo "These files contain secrets and must never be committed."
+            echo "Add to .gitignore and remove from git history if needed."
+            exit 1
+          fi
+          echo "✅ No .env files tracked in git"
+
+      - name: Security Check - Verify PAYMENTS_MOCK_ENABLED Not True in Production Config
+        run: |
+          # Check .env.example and docker-compose.yml don't have PAYMENTS_MOCK_ENABLED=true
+          if grep -qE "PAYMENTS_MOCK_ENABLED\s*=\s*true" ../.env.example; then
+            echo "❌ ERROR: PAYMENTS_MOCK_ENABLED=true in .env.example (must default to false)"
+            exit 1
+          fi
+          if grep -qE "PAYMENTS_MOCK_ENABLED:\s*\$\{PAYMENTS_MOCK_ENABLED:-true\}" ../docker-compose.yml; then
+            echo "❌ ERROR: PAYMENTS_MOCK_ENABLED defaults to true in docker-compose.yml (must be false)"
+            exit 1
+          fi
+          echo "✅ Mock payment defaults are secure (false)"
+
+      - name: Lint
+        run: npm run lint
 
       - name: Run Tests
         run: npm test
 
+      - name: Upload Frontend Coverage (if generated)
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: frontend-coverage-report
+          path: frontend/coverage/
+          if-no-files-found: ignore
+
+      - name: Check SPA Route Config
+        run: npm run check:spa-routes
+
+      - name: Verify Vercel Prebuild Replaces Placeholder
+        env:
+          BACKEND_ORIGIN: https://api.echora.example
+        run: npm run prebuild-vercel
+
       - name: Build Production Assets & Typecheck
         run: npm run build
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Smoke Test Production Preview
+        run: npm run smoke:preview

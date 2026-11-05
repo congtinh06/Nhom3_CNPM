@@ -20,7 +20,20 @@ export function normalizeApiError(error: unknown): NormalizedApiError {
   const err = error as {
     response?: {
       status: number;
-      data?: { message?: string; error?: string };
+      data?: {
+        // RFC 7807 ProblemDetail fields (current contract)
+        type?: string;
+        title?: string;
+        status?: number;
+        detail?: string;
+        instance?: string;
+        traceId?: string;
+        errors?: unknown;
+        // Legacy fields kept as safe fallbacks for older/non-contract responses
+        message?: string;
+        error?: string;
+        details?: unknown;
+      };
       headers?: Record<string, string | undefined>;
     };
     request?: unknown;
@@ -38,8 +51,10 @@ export function normalizeApiError(error: unknown): NormalizedApiError {
       }
     }
 
-    const serverMsg = err.response.data?.message || err.response.data?.error;
-    const rawDetails = (err.response.data as unknown as { details?: unknown } | undefined)?.details;
+    const data = err.response.data;
+    // Prefer the RFC 7807 detail, then title; fall back to legacy message/error.
+    const serverMsg = data?.detail || data?.title || data?.message || data?.error;
+    const rawDetails = data?.errors ?? data?.details;
     const details =
       rawDetails && typeof rawDetails === 'object' && !Array.isArray(rawDetails)
         ? (rawDetails as Record<string, string>)
@@ -63,6 +78,15 @@ export function normalizeApiError(error: unknown): NormalizedApiError {
         isAborted: false,
       };
     }
+    if (status === 403) {
+      return {
+        status,
+        message: serverMsg || 'Bạn không có quyền thực hiện thao tác này.',
+        details,
+        isNetworkError: false,
+        isAborted: false,
+      };
+    }
     if (status === 404) {
       return {
         status,
@@ -75,16 +99,25 @@ export function normalizeApiError(error: unknown): NormalizedApiError {
     if (status === 429) {
       return {
         status,
-        message: retryAfter
-          ? `Hệ thống đang bận. Vui lòng thử lại sau ${retryAfter} giây.`
-          : 'Gửi yêu cầu quá nhanh. Vui lòng đợi trong giây lát.',
+        message:
+          serverMsg ||
+          (retryAfter
+            ? `Hệ thống đang bận. Vui lòng thử lại sau ${retryAfter} giây.`
+            : 'Gửi yêu cầu quá nhanh. Vui lòng đợi trong giây lát.'),
         retryAfter,
+        details,
         isNetworkError: false,
         isAborted: false,
       };
     }
     if (status >= 500) {
-      return { status, message: 'Máy chủ đang gặp sự cố. Vui lòng thử lại sau.', isNetworkError: false, isAborted: false };
+      return {
+        status,
+        message: serverMsg || 'Máy chủ đang gặp sự cố. Vui lòng thử lại sau.',
+        details,
+        isNetworkError: false,
+        isAborted: false,
+      };
     }
 
     return {

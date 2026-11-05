@@ -1,7 +1,7 @@
 package com.echora.content.controller;
 
 import com.echora.content.dto.*;
-import com.echora.content.entity.ProductCategory;
+import com.echora.content.model.ProductCategory;
 import com.echora.content.service.ProductService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

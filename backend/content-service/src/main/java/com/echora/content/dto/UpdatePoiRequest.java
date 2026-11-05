@@ -2,14 +2,17 @@ package com.echora.content.dto;
 
 import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 import lombok.*;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @Getter
 @Setter
@@ -45,6 +48,7 @@ public class UpdatePoiRequest {
     private BigDecimal longitude;
 
     @Min(value = 1, message = "triggerRadiusMeters must be >= 1")
+    @Max(value = 5000, message = "triggerRadiusMeters must be <= 5000")
     private Integer triggerRadiusMeters;
 
     @Size(max = 500, message = "address must be at most 500 characters")
@@ -52,6 +56,11 @@ public class UpdatePoiRequest {
 
     @Size(max = 500, message = "thumbnailUrl must be at most 500 characters")
     private String thumbnailUrl;
+
+    /** Ngôn ngữ thuyết minh được hỗ trợ cho POI này; null = giữ nguyên cấu hình hiện tại. */
+    @Size(max = 4, message = "supportedLanguages must contain at most 4 languages")
+    private List<@Pattern(regexp = "vi|en|ja|ko", message = "supportedLanguages must be one of: vi, en, ja, ko") String>
+            supportedLanguages;
 
     @DecimalMin(value = "0.0", message = "premiumPrice must be >= 0")
     private BigDecimal premiumPrice;

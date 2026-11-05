@@ -1,6 +1,7 @@
 package com.echora.translation.messaging;
 
 import com.echora.translation.event.PoiAudioFailedEvent;
+import com.echora.translation.event.PoiAudioProgressEvent;
 import com.echora.translation.event.PoiAudioReadyEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,11 +19,20 @@ public class PoiAudioEventPublisher {
     @Value("${app.rabbitmq.exchange:echora.topic}")
     private String exchange;
 
+    @Value("${app.rabbitmq.routing-keys.poi-audio-progress:poi.audio.progress}")
+    private String routingKeyProgress;
+
     @Value("${app.rabbitmq.routing-keys.poi-audio-ready:poi.audio.ready}")
     private String routingKeyReady;
 
     @Value("${app.rabbitmq.routing-keys.poi-audio-failed:poi.audio.failed}")
     private String routingKeyFailed;
+
+    public void publishAudioProgress(PoiAudioProgressEvent event) {
+        log.info("Publishing poi.audio.progress: poiId={}, lang={}, hash={}",
+                event.getPoiId(), event.getLanguageCode(), event.getContentHash());
+        rabbitTemplate.convertAndSend(exchange, routingKeyProgress, event);
+    }
 
     public void publishAudioReady(PoiAudioReadyEvent event) {
         log.info("Publishing poi.audio.ready: poiId={}, lang={}, hash={}",

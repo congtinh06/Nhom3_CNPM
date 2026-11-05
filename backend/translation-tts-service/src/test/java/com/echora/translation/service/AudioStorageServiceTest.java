@@ -1,8 +1,11 @@
 package com.echora.translation.service;
 
+import com.echora.translation.exception.TtsException;
 import com.echora.translation.exception.TtsExecutionException;
 import com.echora.translation.tts.TtsVoiceProvider;
 import com.echora.translation.tts.runner.EdgeTtsRunner;
+import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
+import io.github.resilience4j.circuitbreaker.CircuitBreaker;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -64,6 +67,17 @@ class AudioStorageServiceTest {
     }
 
     @Test
+    @DisplayName("Open edge-tts circuit marks audio as failed instead of fabricating output")
+    void testStoreAudio_openCircuitFailsWithoutOutput() {
+        when(edgeTtsRunner.synthesize(anyString(), anyString(), any(Path.class), any(Path.class)))
+                .thenThrow(CallNotPermittedException.createCallNotPermittedException(
+                        CircuitBreaker.ofDefaults("translationEdgeTts")));
+
+        assertThrows(TtsException.class,
+                () -> storageService.storeAudio(101, "en", VALID_HASH, "Hello World"));
+    }
+
+    @Test
     @DisplayName("Should reuse existing non-empty file idempotently without calling edge-tts")
     void testStoreAudio_idempotentReuse() throws IOException {
         String fileName = "poi_101_en_" + HASH_8 + ".mp3";
@@ -79,6 +93,27 @@ class AudioStorageServiceTest {
 
         // edge-tts should NOT have been invoked
         verify(edgeTtsRunner, never()).synthesize(anyString(), anyString(), any(Path.class), any(Path.class));
+    }
+
+    @Test
+    @DisplayName("force=true deletes existing audio and synthesizes again")
+    void testStoreAudio_forceRegeneration() throws IOException {
+        String fileName = "poi_101_en_" + HASH_8 + ".mp3";
+        Path existingFile = tempStorageDir.resolve(fileName);
+        Files.write(existingFile, new byte[]{10, 20, 30});
+
+        when(edgeTtsRunner.synthesize(eq("en-US-AvaNeural"), eq("Hello World"), any(Path.class), any(Path.class)))
+                .thenAnswer(invocation -> {
+                    Files.write(invocation.getArgument(2), new byte[]{7, 8, 9, 10});
+                    return 21;
+                });
+
+        AudioStorageResult result = storageService.storeAudio(101, "en", VALID_HASH, "Hello World", true);
+
+        assertTrue(result.newlyGenerated());
+        assertEquals(21, result.durationSeconds());
+        assertEquals(4, Files.size(existingFile));
+        verify(edgeTtsRunner).synthesize(eq("en-US-AvaNeural"), eq("Hello World"), any(Path.class), any(Path.class));
     }
 
     @Test

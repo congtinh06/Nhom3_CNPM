@@ -4,6 +4,7 @@ import { SupportedLanguage, TriggerType } from '../types';
 import { detectDeviceType } from '../lib/device';
 import { getAnalyticsSessionId } from '../lib/analytics';
 import { formatNarrationNumerals } from '../lib/numerals';
+import { toNarrationScript } from '../lib/narrationScript';
 import { getSharedAudio } from '../lib/audioUnlock';
 import { GeoPoi, getNarration, NarrationLayer } from '../pages/NearbyPage';
 
@@ -42,7 +43,7 @@ export function resolvePlayback(
   lang: SupportedLanguage,
   layer: NarrationLayer = 'full'
 ): PlaybackResolution {
-  let text = '';
+  let text: string;
   if (layer === 'full') {
     const fullParas = poi.narration?.full?.[lang];
     if (fullParas && fullParas.length > 0) {
@@ -294,7 +295,7 @@ export function splitTranscriptIntoSentences(text: string): SentenceRange[] {
         const nextChar = i + 1 < len ? (text[i + 1] ?? '') : '';
 
         // 1. Decimal check: digit before and digit after (e.g. 1.5 km)
-        if (Boolean(prevChar && nextChar && /\d/.test(prevChar) && /\d/.test(nextChar))) {
+        if (prevChar && nextChar && /\d/.test(prevChar) && /\d/.test(nextChar)) {
           isSplit = false;
         }
 
@@ -781,7 +782,8 @@ export function useNearbyAudio({
           if (hadPendingSpeech) {
             synth.cancel();
           }
-          const utterance = new SpeechSynthesisUtterance(text);
+          const spokenText = toNarrationScript(text, langCode);
+          const utterance = new SpeechSynthesisUtterance(spokenText);
           activeUtteranceRef.current = utterance;
           utterance.lang = targetLocale; // Never left unset!
           utterance.voice = matchedVoice;

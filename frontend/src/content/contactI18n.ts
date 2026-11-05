@@ -95,10 +95,10 @@ export const CONTACT_TRANSLATIONS: Record<SupportedLanguage, ContactTranslation>
     mapSubheading: 'Tọa lạc ngay trái tim lịch sử Sài Gòn, thuận tiện cho mọi hành trình đi bộ khám phá.',
     directionsBtn: 'Xem chỉ đường trên Google Maps',
     faqHeading: 'Câu hỏi thường gặp',
-    faqSubheading: 'Giải đáp nhanh các thắc mắc phổ biến về audio tour và ứng dụng Echora.',
+    faqSubheading: 'Giải đáp nhanh các thắc mắc phổ biến về audio tour và website Echora.',
     faqs: [
       {
-        q: 'Ứng dụng Echora có thu phí thuyết minh du lịch không?',
+        q: 'Website Echora có thu phí thuyết minh du lịch không?',
         a: 'Hoàn toàn không. Echora là dự án số hóa di sản phục vụ cộng đồng, toàn bộ tính năng nghe thuyết minh đa ngôn ngữ (Việt, Anh, Nhật, Hàn) và bản đồ đều được cung cấp miễn phí cho mọi du khách.',
       },
       {
@@ -110,7 +110,7 @@ export const CONTACT_TRANSLATIONS: Record<SupportedLanguage, ContactTranslation>
         a: 'Rất hoan nghênh! Bạn có thể chọn chủ đề "Báo lỗi thuyết minh / bản dịch" hoặc "Hợp tác truyền thông & di sản" trong biểu mẫu trên trang này. Đội ngũ biên tập sẽ liên hệ và ghi nhận nguồn đóng góp của bạn.',
       },
       {
-        q: 'Ứng dụng có thể hoạt động khi mất kết nối mạng (offline) không?',
+        q: 'Website có thể hoạt động khi mất kết nối mạng (offline) không?',
         a: 'Dữ liệu các điểm đến và lời thuyết minh đã được lưu vào bộ nhớ đệm (cache) của trình duyệt. Bạn vẫn có thể xem danh sách điểm dừng và bản đồ cơ bản kể cả khi mạng chập chờn.',
       },
     ],
@@ -171,7 +171,7 @@ export const CONTACT_TRANSLATIONS: Record<SupportedLanguage, ContactTranslation>
         a: 'We warmly welcome contributions! Select "Report Translation / Audio Bug" or "Heritage & Media Partnership" in the form above. Our curation team will review and credit your contribution.',
       },
       {
-        q: 'Does the application work in low-connectivity areas?',
+        q: 'Does the website work in low-connectivity areas?',
         a: 'Yes. Core stop data and narration texts are cached in your browser so you can view stops and transcripts even with intermittent internet.',
       },
     ],

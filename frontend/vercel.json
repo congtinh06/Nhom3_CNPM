@@ -1,4 +1,7 @@
 {
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "vite",
+  "buildCommand": "node scripts/prebuild-vercel.mjs && npm run build",
   "headers": [
     {
       "source": "/(.*)",
@@ -29,7 +32,7 @@
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "https://affection-smokiness-watch.ngrok-free.dev/api/$1",
+      "dest": "https://BACKEND_ORIGIN_PLACEHOLDER/api/$1",
       "transforms": [
         {
           "type": "request.headers",
@@ -43,7 +46,7 @@
     },
     {
       "src": "/img/products/(.*)",
-      "dest": "https://affection-smokiness-watch.ngrok-free.dev/img/products/$1",
+      "dest": "https://BACKEND_ORIGIN_PLACEHOLDER/img/products/$1",
       "transforms": [
         {
           "type": "request.headers",
@@ -59,8 +62,17 @@
       "handle": "filesystem"
     },
     {
-      "src": "/(.*)",
+      "src": "/",
       "dest": "/index.html"
+    },
+    {
+      "src": "/(van-hoa|culture|kham-pha|explore|diem-du-lich|thuyet-minh|gan-toi|am-thuc|thuc-uong|am-thuc-thuc-uong|qua-luu-niem|tin-tuc|huong-dan|lien-he|chinh-sach-quyen-rieng-tu|nang-cap|thanh-toan|don-hang|qr|quet-ma|quet-qr-dang-nhap|nhan-dang-nhap|qr-tai-khoan|dat-lai-mat-khau|xac-thuc-email|tai-khoan|quan-tri|dang-nhap|dang-ky|quen-mat-khau)(/.*)?",
+      "dest": "/index.html"
+    },
+    {
+      "src": "/.*",
+      "status": 404,
+      "dest": "/404.html"
     }
   ]
 }

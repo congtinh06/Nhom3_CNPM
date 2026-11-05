@@ -85,12 +85,20 @@ public class PoiPublishService {
     /** Admin yêu cầu gửi lại: reset bộ đếm rồi gửi ngay (kể cả POI đang FAILED hoặc đã PUBLISHED). */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public String republish(Long poiId) {
+        return republish(poiId, false, null);
+    }
+
+    /**
+     * Gửi lại event kèm cờ tạo lại audio. forceLanguages chỉ được dùng khi forceRegenerate=true.
+     */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public String republish(Long poiId, boolean forceRegenerate, List<String> forceLanguages) {
         Poi poi = poiRepository.findById(poiId)
                 .orElseThrow(() -> new ResourceNotFoundException("POI not found with id: " + poiId));
         poi.setPublishAttempts(0);
         poi.setPublishStatus(PublishStatus.PENDING);
         poi.setLastPublishError(null);
-        return doPublish(poi, resolveRoutingKey(poi));
+        return doPublish(poi, resolveRoutingKey(poi), forceRegenerate, forceLanguages);
     }
 
     private String resolveRoutingKey(Poi poi) {
@@ -100,6 +108,10 @@ public class PoiPublishService {
     }
 
     private String doPublish(Poi poi, String routingKey) {
+        return doPublish(poi, routingKey, false, null);
+    }
+
+    private String doPublish(Poi poi, String routingKey, boolean forceRegenerate, List<String> forceLanguages) {
         poi.setPublishAttempts(poi.getPublishAttempts() + 1);
         poi.setLastPublishAttemptAt(TimeUtils.nowUtc());
         try {
@@ -121,6 +133,8 @@ public class PoiPublishService {
                         .historicalSignificance(vi.getHistoricalSignificance())
                         .targetLanguages(TARGET_LANGUAGES)
                         .authoredTexts(authoredTexts)
+                        .forceRegenerate(forceRegenerate)
+                        .forceLanguages(forceRegenerate ? forceLanguages : null)
                         .build();
             } else {
                 event = PoiCreatedEvent.builder()
@@ -134,6 +148,8 @@ public class PoiPublishService {
                         .historicalSignificance(vi.getHistoricalSignificance())
                         .targetLanguages(TARGET_LANGUAGES)
                         .authoredTexts(authoredTexts)
+                        .forceRegenerate(forceRegenerate)
+                        .forceLanguages(forceRegenerate ? forceLanguages : null)
                         .build();
             }
 
@@ -175,6 +191,11 @@ public class PoiPublishService {
                             .build()));
         }
         return authored;
+    }
+
+    @Transactional(readOnly = true)
+    public List<Long> findPendingPublishIds(java.time.LocalDateTime olderThan) {
+        return poiRepository.findPendingPublishIds(olderThan);
     }
 
     private static String truncate(String value, int max) {

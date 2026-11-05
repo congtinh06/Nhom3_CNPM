@@ -1,7 +1,8 @@
 package com.echora.content.config;
 
-import com.echora.content.entity.Poi;
-import com.echora.content.repository.PoiRepository;
+import com.echora.content.exception.EntitlementServiceUnavailableException;
+import com.echora.content.exception.ProblemDetailWriter;
+import com.echora.content.service.PoiContentService;
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -38,17 +39,20 @@ public class EntitlementFilter extends OncePerRequestFilter {
             "Ngôn ngữ này yêu cầu gói Premium đang hoạt động.";
     private static final String POI_LOCKED_MESSAGE =
             "Điểm thuyết minh này yêu cầu gói Premium hoặc mua lẻ gói ngoại ngữ.";
+    private static final String ENTITLEMENT_UNAVAILABLE_MESSAGE =
+            "Không thể xác minh quyền truy cập nội dung lúc này. Vui lòng thử lại sau.";
+    private static final String RETRY_AFTER_SECONDS = "10";
 
     private final InternalPoiEntitlementClient poiEntitlementClient;
-    private final PoiRepository poiRepository;
+    private final PoiContentService poiContentService;
 
     @Value("${internal.api-key:}")
     private String expectedApiKey;
 
     public EntitlementFilter(InternalPoiEntitlementClient poiEntitlementClient,
-                             PoiRepository poiRepository) {
+                             PoiContentService poiContentService) {
         this.poiEntitlementClient = poiEntitlementClient;
-        this.poiRepository = poiRepository;
+        this.poiContentService = poiContentService;
     }
 
     /** Port nội bộ để filter map qrToken -> poiId cho luồng mua lẻ theo POI. */
@@ -105,7 +109,7 @@ public class EntitlementFilter extends OncePerRequestFilter {
         if (hasTrustedIdentity) {
             if (isBlank(expectedApiKey)
                     || !constantTimeEquals(request.getHeader(HEADER_INTERNAL_API_KEY), expectedApiKey)) {
-                reject(response, HttpServletResponse.SC_FORBIDDEN,
+                reject(request, response, HttpServletResponse.SC_FORBIDDEN,
                         "Không thể xác minh quyền truy cập nội dung.");
                 return;
             }
@@ -113,6 +117,15 @@ public class EntitlementFilter extends OncePerRequestFilter {
             if (!premium && !isBlank(userIdHeader)) {
                 try {
                     purchasedPois = poiEntitlementClient.purchasedPoiIds(Long.valueOf(userIdHeader.trim()));
+                } catch (EntitlementServiceUnavailableException ex) {
+                    // Fail closed: an auth-service outage must never be treated as "no purchase"
+                    // and must never grant Premium content.
+                    log.warn("auth-service entitlement check unavailable (userId={}); failing closed: {}",
+                            userIdHeader, ex.getMessage());
+                    response.setHeader("Retry-After", RETRY_AFTER_SECONDS);
+                    reject(request, response, HttpServletResponse.SC_SERVICE_UNAVAILABLE,
+                            ENTITLEMENT_UNAVAILABLE_MESSAGE);
+                    return;
                 } catch (NumberFormatException ex) {
                     log.warn("X-User-Id không hợp lệ: {}", userIdHeader);
                 }
@@ -123,7 +136,7 @@ public class EntitlementFilter extends OncePerRequestFilter {
         String normalized = lang == null || lang.isBlank() ? "vi" : lang.trim().toLowerCase();
         if (!"vi".equals(normalized) && !premium) {
             if (purchasedPois.isEmpty()) {
-                reject(response, HttpServletResponse.SC_FORBIDDEN, PREMIUM_REQUIRED_MESSAGE);
+                reject(request, response, HttpServletResponse.SC_FORBIDDEN, PREMIUM_REQUIRED_MESSAGE);
                 return;
             }
 
@@ -140,7 +153,7 @@ public class EntitlementFilter extends OncePerRequestFilter {
 
             Long poiId = resolvePoiId(request);
             if (poiId == null || !purchasedPois.contains(poiId)) {
-                reject(response, HttpServletResponse.SC_FORBIDDEN, POI_LOCKED_MESSAGE);
+                reject(request, response, HttpServletResponse.SC_FORBIDDEN, POI_LOCKED_MESSAGE);
                 return;
             }
         }
@@ -159,9 +172,7 @@ public class EntitlementFilter extends OncePerRequestFilter {
             if (isBlank(qrToken) || qrToken.contains("/")) {
                 return null;
             }
-            return poiRepository.findByQrToken(qrToken)
-                    .map(Poi::getId)
-                    .orElse(null);
+            return poiContentService.findPoiIdByQrToken(qrToken).orElse(null);
         }
         String id = path.substring(POIS_PREFIX.length());
         try {
@@ -180,10 +191,9 @@ public class EntitlementFilter extends OncePerRequestFilter {
                 expected.getBytes(StandardCharsets.UTF_8));
     }
 
-    private static void reject(HttpServletResponse response, int status, String message) throws IOException {
-        response.setStatus(status);
-        response.setContentType("application/json;charset=UTF-8");
-        response.getWriter().write("{\"status\":" + status + ",\"message\":\"" + message + "\"}");
+    private static void reject(HttpServletRequest request, HttpServletResponse response,
+                               int status, String message) throws IOException {
+        ProblemDetailWriter.write(response, request, status, message);
     }
 
     private static boolean isBlank(String value) {

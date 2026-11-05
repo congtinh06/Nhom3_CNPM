@@ -1,5 +1,6 @@
 package com.echora.gateway.filter;
 
+import com.echora.gateway.handler.ProblemDetailSupport;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
@@ -8,13 +9,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.Ordered;
-import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.server.reactive.ServerHttpRequest;
-import org.springframework.http.server.reactive.ServerHttpResponse;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
@@ -217,20 +215,10 @@ public class AnalyticsRateLimitGlobalFilter implements GlobalFilter, Ordered {
     }
 
     private Mono<Void> sendRateLimitResponse(ServerWebExchange exchange, long retryAfterSeconds) {
-        ServerHttpResponse response = exchange.getResponse();
-        response.setStatusCode(HttpStatus.TOO_MANY_REQUESTS);
-        response.getHeaders().setContentType(MediaType.APPLICATION_JSON);
-        response.getHeaders().set(HttpHeaders.RETRY_AFTER, String.valueOf(retryAfterSeconds));
-        response.getHeaders().set("Access-Control-Expose-Headers", "Retry-After");
-        SecurityHeadersGlobalFilter.applyHeaders(response.getHeaders());
-
-        byte[] jsonBytes = String.format(
-                "{\"status\":429,\"error\":\"Too Many Requests\",\"message\":\"Rate limit exceeded. Retry after %d seconds.\"}",
-                retryAfterSeconds
-        ).getBytes(StandardCharsets.UTF_8);
-
-        DataBuffer buffer = response.bufferFactory().wrap(jsonBytes);
-        return response.writeWith(Mono.just(buffer));
+        exchange.getResponse().getHeaders().set(HttpHeaders.RETRY_AFTER, String.valueOf(retryAfterSeconds));
+        exchange.getResponse().getHeaders().set("Access-Control-Expose-Headers", "Retry-After");
+        return ProblemDetailSupport.write(exchange, HttpStatus.TOO_MANY_REQUESTS,
+                String.format("Rate limit exceeded. Retry after %d seconds.", retryAfterSeconds));
     }
 
     public void clearRateLimitCache() {

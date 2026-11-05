@@ -1,11 +1,15 @@
 package com.echora.content.service;
 
 import com.echora.content.config.RabbitMQConfig;
+import com.echora.content.dto.AdminAudioPoiDto;
+import com.echora.content.dto.AdminAudioStatusDto;
 import com.echora.content.dto.AdminPoiDetailDto;
 import com.echora.content.dto.AdminPoiLanguageDto;
 import com.echora.content.dto.AdminPoiLanguageSummaryDto;
 import com.echora.content.dto.AdminPoiListItemDto;
 import com.echora.content.dto.AdminPoiTranslationDto;
+import com.echora.content.dto.AudioRegenerationBatchDto;
+import com.echora.content.dto.AudioRegenerationResultDto;
 import com.echora.content.dto.CreatePoiRequest;
 import com.echora.content.dto.PoiBoundingBoxDto;
 import com.echora.content.dto.PoiDetailDto;
@@ -44,8 +48,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -53,13 +60,13 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.TreeMap;
 
 @Service
 @RequiredArgsConstructor
@@ -73,6 +80,9 @@ public class PoiContentServiceImpl implements PoiContentService {
     // Giá trị lọc hợp lệ cho overallStatus / languageStatus của danh sách admin.
     private static final Set<String> OVERALL_STATUS_VALUES = Set.of("ACTIVE", "NEEDS_ATTENTION", "HIDDEN");
     private static final Set<String> LANGUAGE_STATUS_VALUES = Set.of("ERROR", "PENDING");
+    // Trạng thái hiển thị hợp lệ của POI (khớp comment ở Poi#status).
+    private static final List<String> POI_STATUS_VALUES = List.of("ACTIVE", "INACTIVE", "MAINTENANCE");
+    private static final Set<String> POI_STATUSES = Set.copyOf(POI_STATUS_VALUES);
     private static final Map<String, String> LANGUAGE_NAMES = Map.of(
             "vi", "Tiếng Việt",
             "en", "Tiếng Anh",
@@ -89,10 +99,67 @@ public class PoiContentServiceImpl implements PoiContentService {
     private final ApplicationEventPublisher applicationEventPublisher;
     private final PoiPublishService poiPublishService;
     private final RouteStopsSynchronizer routeStopsSynchronizer;
+    private final TransactionTemplate transactionTemplate;
 
     // Ngưỡng coi một ngôn ngữ "chờ xử lý quá lâu" (phút).
     @Value("${echora.audio.pending-timeout-minutes:30}")
     private long pendingTimeoutMinutes = 30;
+
+    // Biên hợp lệ cho tọa độ POI (mặc định bao trọn TP.HCM). Có thể ghi đè bằng biến môi trường.
+    @Value("${echora.poi.bounds.min-latitude:10.30}")
+    private double minLatitude = 10.30;
+
+    @Value("${echora.poi.bounds.max-latitude:11.20}")
+    private double maxLatitude = 11.20;
+
+    @Value("${echora.poi.bounds.min-longitude:106.30}")
+    private double minLongitude = 106.30;
+
+    @Value("${echora.poi.bounds.max-longitude:107.10}")
+    private double maxLongitude = 107.10;
+
+    @Value("${echora.poi.trigger-radius.max-meters:5000}")
+    private int maxTriggerRadiusMeters = 5000;
+
+    private static final List<String> SUPPORTED_POI_LANGUAGES = List.of("vi", "en", "ja", "ko");
+
+    /**
+     * Kiểm tra tọa độ nằm trong biên cấu hình (mặc định TP.HCM). Bean Validation chỉ chặn
+     * -90..90 / -180..180, còn biên này chặn dữ liệu test như (25, 25) lọt vào danh sách public.
+     */
+    private void validatePoiLocation(BigDecimal latitude, BigDecimal longitude) {
+        if (latitude == null || longitude == null) {
+            return;
+        }
+        double lat = latitude.doubleValue();
+        double lng = longitude.doubleValue();
+        if (lat < minLatitude || lat > maxLatitude || lng < minLongitude || lng > maxLongitude) {
+            throw new BadRequestException(String.format(
+                    "Tọa độ POI phải nằm trong khu vực TP.HCM: vĩ độ %.4f..%.4f, kinh độ %.4f..%.4f",
+                    minLatitude, maxLatitude, minLongitude, maxLongitude));
+        }
+    }
+
+    private void validateTriggerRadius(Integer radius) {
+        if (radius == null) {
+            return;
+        }
+        if (radius < 1 || radius > maxTriggerRadiusMeters) {
+            throw new BadRequestException("Bán kính kích hoạt phải trong khoảng 1.." + maxTriggerRadiusMeters + " mét");
+        }
+    }
+
+    private void validateSupportedLanguages(List<String> languages) {
+        if (languages == null) {
+            return;
+        }
+        for (String language : languages) {
+            if (language == null || !SUPPORTED_POI_LANGUAGES.contains(language.toLowerCase(Locale.ROOT))) {
+                throw new BadRequestException("Ngôn ngữ không được hỗ trợ: " + language
+                        + ". Chỉ hỗ trợ: " + String.join(", ", SUPPORTED_POI_LANGUAGES));
+            }
+        }
+    }
 
     @Override
     public List<PoiSummaryDto> getPois(Long zoneId) {
@@ -323,6 +390,15 @@ public class PoiContentServiceImpl implements PoiContentService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public java.util.Optional<Long> findPoiIdByQrToken(String qrToken) {
+        if (qrToken == null || qrToken.isBlank()) {
+            return java.util.Optional.empty();
+        }
+        return poiRepository.findByQrToken(qrToken).map(Poi::getId);
+    }
+
+    @Override
     public List<PoiBoundingBoxDto> getPoisInBoundingBox(
             Long zoneId, BigDecimal minLat, BigDecimal maxLat, BigDecimal minLng, BigDecimal maxLng) {
         if (minLat.compareTo(maxLat) > 0 || minLng.compareTo(maxLng) > 0) {
@@ -357,6 +433,10 @@ public class PoiContentServiceImpl implements PoiContentService {
 
         Category category = categoryRepository.findById(request.getCategoryId())
                 .orElseThrow(() -> new ResourceNotFoundException("Category not found with id: " + request.getCategoryId()));
+
+        validatePoiLocation(request.getLatitude(), request.getLongitude());
+        validateTriggerRadius(request.getTriggerRadiusMeters());
+        validateSupportedLanguages(request.getSupportedLanguages());
 
         if (poiRepository.findByCode(request.getCode()).isPresent()) {
             throw new BadRequestException("POI code already exists: " + request.getCode());
@@ -424,6 +504,10 @@ public class PoiContentServiceImpl implements PoiContentService {
         Category category = categoryRepository.findById(request.getCategoryId())
                 .orElseThrow(() -> new BadRequestException("Category not found with id: " + request.getCategoryId()));
 
+        validatePoiLocation(request.getLatitude(), request.getLongitude());
+        validateTriggerRadius(request.getTriggerRadiusMeters());
+        validateSupportedLanguages(request.getSupportedLanguages());
+
         Long oldRouteId = applyRouteAssignment(poi, request);
 
         poi.setName(request.getName());
@@ -433,6 +517,7 @@ public class PoiContentServiceImpl implements PoiContentService {
         if (request.getTriggerRadiusMeters() != null) {
             poi.setTriggerRadiusMeters(request.getTriggerRadiusMeters());
         }
+
         poi.setAddress(request.getAddress());
         poi.setThumbnailUrl(request.getThumbnailUrl());
         poi.setPremiumPrice(request.getPremiumPrice());
@@ -514,6 +599,30 @@ public class PoiContentServiceImpl implements PoiContentService {
         return result;
     }
 
+    /**
+     * Đổi trạng thái hiển thị của POI. Không phát event dịch/TTS vì nội dung không đổi;
+     * API công khai chỉ đọc POI ACTIVE nên thao tác ẩn có hiệu lực ngay.
+     */
+    @Override
+    @Transactional
+    public AdminPoiDetailDto changeStatus(Long id, String status) {
+        String normalized = status == null ? "" : status.trim().toUpperCase(Locale.ROOT);
+        if (!POI_STATUSES.contains(normalized)) {
+            throw new BadRequestException(
+                    "status phải là một trong: " + String.join(", ", POI_STATUS_VALUES));
+        }
+
+        Poi poi = poiRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("POI not found with id: " + id));
+
+        poi.setStatus(normalized);
+        poi.setUpdatedAt(TimeUtils.nowUtc());
+        poi.setVersion((poi.getVersion() == null ? 0L : poi.getVersion()) + 1);
+        poiRepository.save(poi);
+
+        return mapToAdminDetail(poi, translationRepository.findByPoiId(id), null);
+    }
+
     private Long applyRouteAssignment(Poi poi, UpdatePoiRequest request) {
         Long routeId = request.getRouteId();
         Integer stopOrder = request.getStopOrder();
@@ -592,7 +701,7 @@ public class PoiContentServiceImpl implements PoiContentService {
                     : "PENDING";
             if ("READY".equals(status)) {
                 ready++;
-            } else if ("FAILED".equals(status) || "FAILED_TTS".equals(status)) {
+            } else if (status.startsWith("FAILED")) {
                 failed++;
             }
             if (t != null) {
@@ -657,9 +766,11 @@ public class PoiContentServiceImpl implements PoiContentService {
             String status = lang.getAudioStatus();
             if ("FAILED_TTS".equals(status)) {
                 reasons.add(name + ": lỗi tổng hợp giọng đọc");
+            } else if ("FAILED_TRANSLATION".equals(status)) {
+                reasons.add(name + ": lỗi dịch nội dung");
             } else if ("FAILED".equals(status)) {
-                reasons.add(name + ": dịch nội dung thất bại");
-            } else if ("PENDING".equals(status) || "PROCESSING".equals(status)) {
+                reasons.add(name + ": lỗi xử lý audio");
+            } else if ("PENDING".equals(status) || "PROCESSING".equals(status) || "GENERATING".equals(status)) {
                 LocalDateTime attemptAt = lang.getLastAttemptAt();
                 if (attemptAt == null) {
                     PoiTranslation t = translationsByLang.get(lang.getLanguageCode());
@@ -785,6 +896,185 @@ public class PoiContentServiceImpl implements PoiContentService {
     private PoiPublishStatusDto getPublishStatusFresh(Long poiId) {
         return poiRepository.findById(poiId).map(PoiMapper::toPublishStatus)
                 .orElseThrow(() -> new ResourceNotFoundException("POI not found with id: " + poiId));
+    }
+
+    @Override
+    public AdminAudioStatusDto getAudioStatus() {
+        List<Poi> pois = poiRepository.findAll(Sort.by(Sort.Direction.ASC, "id"));
+        Map<Long, Map<String, PoiTranslation>> translationsByPoi =
+                loadTranslations(pois.stream().map(Poi::getId).toList());
+
+        List<AdminAudioPoiDto> items = new ArrayList<>(pois.size());
+        int ready = 0;
+        int pending = 0;
+        int failed = 0;
+        for (Poi poi : pois) {
+            Map<String, PoiTranslation> byLang = translationsByPoi.getOrDefault(poi.getId(), Map.of());
+            LanguageAggregate aggregate = aggregateLanguages(byLang);
+            ready += aggregate.summary.getReady();
+            pending += aggregate.summary.getPending();
+            failed += aggregate.summary.getFailed();
+            items.add(AdminAudioPoiDto.builder()
+                    .id(poi.getId())
+                    .code(poi.getCode())
+                    .name(poi.getName())
+                    .status(poi.getStatus())
+                    .publishStatus(poi.getPublishStatus())
+                    .allReady(aggregate.summary.getReady() == aggregate.summary.getTotal())
+                    .languages(aggregate.languages)
+                    .build());
+        }
+
+        return AdminAudioStatusDto.builder()
+                .generatedAt(TimeUtils.nowUtc())
+                .totalPois(pois.size())
+                .readyLanguages(ready)
+                .pendingLanguages(pending)
+                .failedLanguages(failed)
+                .allReady(pending == 0 && failed == 0)
+                .pois(items)
+                .build();
+    }
+
+    @Override
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    public AudioRegenerationResultDto regenerateAudio(Long poiId, List<String> languages) {
+        poiRepository.findById(poiId)
+                .orElseThrow(() -> new ResourceNotFoundException("POI not found with id: " + poiId));
+        List<PoiTranslation> translations = translationRepository.findByPoiId(poiId);
+        List<String> selected = resolveAudioLanguages(translations, languages);
+
+        if (selected.isEmpty()) {
+            return AudioRegenerationResultDto.builder()
+                    .poiId(poiId)
+                    .languages(List.of())
+                    .requestedLanguages(0)
+                    .message("Tất cả ngôn ngữ đã READY, không cần tạo lại audio.")
+                    .build();
+        }
+
+        resetAudioTranslations(poiId, selected);
+        String publishStatus = poiPublishService.republish(poiId, true, selected);
+        log.info("Admin requested audio regeneration for poiId={}, languages={}, publishStatus={}",
+                poiId, selected, publishStatus);
+
+        return AudioRegenerationResultDto.builder()
+                .poiId(poiId)
+                .languages(selected)
+                .requestedLanguages(selected.size())
+                .publishStatus(publishStatus)
+                .message("Đã xếp hàng tạo lại audio cho " + selected.size() + " ngôn ngữ.")
+                .build();
+    }
+
+    @Override
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    public AudioRegenerationBatchDto regenerateNonReadyAudio() {
+        List<Poi> pois = poiRepository.findAll(Sort.by(Sort.Direction.ASC, "id"));
+        List<Long> requestedPois = new ArrayList<>();
+        List<String> failures = new ArrayList<>();
+        int languageCount = 0;
+        int skipped = 0;
+
+        for (Poi poi : pois) {
+            List<PoiTranslation> translations = translationRepository.findByPoiId(poi.getId());
+            List<String> nonReady = resolveAudioLanguages(translations, null);
+            if (nonReady.isEmpty()) {
+                skipped++;
+                continue;
+            }
+            try {
+                AudioRegenerationResultDto result = regenerateAudio(poi.getId(), nonReady);
+                if (result.getRequestedLanguages() > 0) {
+                    requestedPois.add(poi.getId());
+                    languageCount += result.getRequestedLanguages();
+                } else {
+                    skipped++;
+                }
+            } catch (RuntimeException ex) {
+                log.warn("Cannot regenerate audio for poiId={}: {}", poi.getId(), ex.getMessage());
+                failures.add("POI " + poi.getId() + ": " + ex.getMessage());
+            }
+        }
+
+        return AudioRegenerationBatchDto.builder()
+                .poiCount(requestedPois.size())
+                .languageCount(languageCount)
+                .skippedPoiCount(skipped)
+                .poiIds(requestedPois)
+                .failures(failures)
+                .build();
+    }
+
+    /**
+     * Danh sách ngôn ngữ cần tạo lại:
+     * - languages rỗng/null: mọi ngôn ngữ chưa READY (kể cả hàng bản dịch còn thiếu).
+     * - languages chỉ định: tạo lại đúng các ngôn ngữ đó, kể cả đang READY.
+     */
+    private List<String> resolveAudioLanguages(List<PoiTranslation> translations, List<String> requested) {
+        Map<String, PoiTranslation> byLang = new HashMap<>();
+        for (PoiTranslation translation : translations) {
+            if (translation.getLanguageCode() != null) {
+                byLang.put(translation.getLanguageCode().toLowerCase(Locale.ROOT), translation);
+            }
+        }
+
+        if (requested == null || requested.isEmpty()) {
+            List<String> nonReady = new ArrayList<>();
+            for (String code : SUPPORTED_LANGUAGES) {
+                PoiTranslation translation = byLang.get(code);
+                String status = translation != null && translation.getAudioStatus() != null
+                        ? translation.getAudioStatus().toUpperCase(Locale.ROOT)
+                        : "PENDING";
+                if (!"READY".equals(status)) {
+                    nonReady.add(code);
+                }
+            }
+            return nonReady;
+        }
+
+        LinkedHashSet<String> normalized = new LinkedHashSet<>();
+        for (String raw : requested) {
+            if (raw == null) {
+                continue;
+            }
+            for (String part : raw.split(",")) {
+                String code = part.trim().toLowerCase(Locale.ROOT);
+                if (code.isEmpty()) {
+                    continue;
+                }
+                if (!SUPPORTED_LANGUAGES.contains(code)) {
+                    throw new BadRequestException("Ngôn ngữ không được hỗ trợ: " + part
+                            + ". Chỉ hỗ trợ: " + String.join(", ", SUPPORTED_LANGUAGES));
+                }
+                normalized.add(code);
+            }
+        }
+        return new ArrayList<>(normalized);
+    }
+
+    private void resetAudioTranslations(Long poiId, List<String> languages) {
+        if (transactionTemplate == null) {
+            throw new IllegalStateException("TransactionTemplate is required to regenerate audio");
+        }
+        Set<String> selected = Set.copyOf(languages);
+        transactionTemplate.executeWithoutResult(status -> {
+            LocalDateTime now = TimeUtils.nowUtc();
+            for (PoiTranslation translation : translationRepository.findByPoiId(poiId)) {
+                String code = translation.getLanguageCode() != null
+                        ? translation.getLanguageCode().toLowerCase(Locale.ROOT) : null;
+                if (code == null || !selected.contains(code)) {
+                    continue;
+                }
+                translation.setAudioStatus("PENDING");
+                translation.setAudioUrl(null);
+                translation.setAudioDurationSeconds(0);
+                translation.setAudioErrorReason(null);
+                translation.setAudioLastAttemptAt(null);
+                translation.setUpdatedAt(now);
+                translationRepository.save(translation);
+            }
+        });
     }
 
     private Route resolveRoute(CreatePoiRequest request, Zone zone) {

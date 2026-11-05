@@ -1,6 +1,7 @@
 package com.echora.location.controller;
 
 import com.echora.location.dto.NearbyPoiDto;
+import com.echora.location.dto.NearbyPoisResponse;
 import com.echora.location.dto.PoiInternalQrDto;
 import com.echora.location.dto.ResolvePoiResponse;
 import com.echora.location.exception.GlobalExceptionHandler;
@@ -60,16 +61,18 @@ class LocationControllerTest {
                 .triggerRadiusMeters(50).distanceMeters(25.5)
                 .build();
 
-        when(locationService.getNearbyPois(10.7799, 106.7001, 500.0)).thenReturn(List.of(poi));
+        when(locationService.getNearbyPois(10.7799, 106.7001, 500.0))
+                .thenReturn(NearbyPoisResponse.ok(List.of(poi)));
 
         mockMvc.perform(get("/api/location/nearby")
                         .param("lat", "10.7799")
                         .param("lng", "106.7001")
                         .param("radius", "500"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].poiId").value(1L))
-                .andExpect(jsonPath("$[0].poiCode").value("POI_01"))
-                .andExpect(jsonPath("$[0].distanceMeters").value(25.5));
+                .andExpect(jsonPath("$.degraded").value(false))
+                .andExpect(jsonPath("$.pois[0].poiId").value(1L))
+                .andExpect(jsonPath("$.pois[0].poiCode").value("POI_01"))
+                .andExpect(jsonPath("$.pois[0].distanceMeters").value(25.5));
     }
 
     @Test
@@ -84,8 +87,8 @@ class LocationControllerTest {
                         .param("radius", "500"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status").value(400))
-                .andExpect(jsonPath("$.error").value("Bad Request"))
-                .andExpect(jsonPath("$.message").value("Latitude must be between -90 and 90 degrees"));
+                .andExpect(jsonPath("$.title").value("Bad Request"))
+                .andExpect(jsonPath("$.detail").value("Latitude must be between -90 and 90 degrees"));
     }
 
     @Test
@@ -99,7 +102,7 @@ class LocationControllerTest {
     }
 
     @Test
-    @DisplayName("GET /nearby: returns 400 with Parameter 'lat' must be a valid number when lat=abc")
+    @DisplayName("GET /nearby: returns 400 with a friendly detail when lat=abc")
     void testGetNearby_TypeMismatch_Returns400() throws Exception {
         mockMvc.perform(get("/api/location/nearby")
                         .param("lat", "abc")
@@ -107,8 +110,9 @@ class LocationControllerTest {
                         .param("radius", "500"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status").value(400))
-                .andExpect(jsonPath("$.error").value("Bad Request"))
-                .andExpect(jsonPath("$.message").value("Parameter 'lat' must be a valid number"));
+                .andExpect(jsonPath("$.title").value("Bad Request"))
+                .andExpect(jsonPath("$.detail").value(
+                        "Tham số trong yêu cầu không hợp lệ. Vui lòng kiểm tra lại giá trị đã gửi."));
     }
 
     @Test
@@ -171,34 +175,27 @@ class LocationControllerTest {
         mockMvc.perform(get("/api/location/qr/unknown-token"))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.status").value(404))
-                .andExpect(jsonPath("$.error").value("Not Found"));
+                .andExpect(jsonPath("$.title").value("Not Found"));
     }
 
     @Test
-    @DisplayName("GET /nearby: returns 503 without stack trace when content-service times out")
-    void testGetNearby_Timeout_Returns503() throws Exception {
+    @DisplayName("GET /nearby: returns 200 with degraded=true when content-service times out")
+    void testGetNearby_Timeout_ReturnsDegraded() throws Exception {
         when(locationService.getNearbyPois(anyDouble(), anyDouble(), anyDouble()))
-                .thenThrow(new RetryableException(
-                        503,
-                        "Read timed out",
-                        Request.HttpMethod.GET,
-                        new Date(),
-                        dummyRequest()
-                ));
+                .thenReturn(NearbyPoisResponse.degraded());
 
         mockMvc.perform(get("/api/location/nearby")
                         .param("lat", "10.7799")
                         .param("lng", "106.7001")
                         .param("radius", "500"))
-                .andExpect(status().isServiceUnavailable())
-                .andExpect(jsonPath("$.status").value(503))
-                .andExpect(jsonPath("$.error").value("Service Unavailable"))
-                .andExpect(jsonPath("$.message").value("Content-service is currently unavailable or timed out"))
-                .andExpect(jsonPath("$.trace").doesNotExist());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.degraded").value(true))
+                .andExpect(jsonPath("$.pois").isEmpty())
+                .andExpect(jsonPath("$.notice").isNotEmpty());
     }
 
     @Test
-    @DisplayName("GET /nearby: returns 503 without stack trace when content-service is down")
+    @DisplayName("GET /nearby: returns 503 without stack trace for an unmapped content-service failure")
     void testGetNearby_Down_Returns503() throws Exception {
         when(locationService.getNearbyPois(anyDouble(), anyDouble(), anyDouble()))
                 .thenThrow(new FeignException.ServiceUnavailable("Service Unavailable", dummyRequest(), null, null));
@@ -209,7 +206,7 @@ class LocationControllerTest {
                         .param("radius", "500"))
                 .andExpect(status().isServiceUnavailable())
                 .andExpect(jsonPath("$.status").value(503))
-                .andExpect(jsonPath("$.error").value("Service Unavailable"))
+                .andExpect(jsonPath("$.title").value("Service Unavailable"))
                 .andExpect(jsonPath("$.trace").doesNotExist());
     }
 }

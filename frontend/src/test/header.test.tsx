@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, fireEvent, act } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { Header } from '../components/layout/Header';
-import { AuthProvider } from '../context/AuthContext';
+import { AuthProvider, resetAuthBootstrapForTests } from '../context/AuthContext';
 import { CartProvider } from '../context/CartContext';
 import { authApi } from '../api/auth';
 import { tokenStore } from '../api/tokenStore';
@@ -15,6 +15,7 @@ vi.mock('../api/auth', () => ({
     refresh: vi.fn(),
     logout: vi.fn(),
     getProfile: vi.fn(),
+    me: vi.fn(),
   },
 }));
 
@@ -43,9 +44,12 @@ function renderHeader(initialRoute = '/') {
 describe('Header Navigation Redesign', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    resetAuthBootstrapForTests();
     tokenStore.clear();
     localStorage.clear();
+    sessionStorage.clear();
     vi.mocked(authApi.refresh).mockRejectedValue({ response: { status: 401 } });
+    vi.mocked(authApi.me).mockRejectedValue({ response: { status: 401 } });
   });
 
   describe('Phần giữa: Cấu trúc điều hướng desktop', () => {
@@ -170,6 +174,7 @@ describe('Header Navigation Redesign', () => {
         tokenType: 'Bearer',
         user: MOCK_USER,
       });
+      vi.mocked(authApi.me).mockResolvedValue(MOCK_USER);
 
       renderHeader('/');
 
@@ -184,11 +189,11 @@ describe('Header Navigation Redesign', () => {
 
       // Dropdown menu tài khoản (mở bằng cách bấm trigger)
       fireEvent.click(userBtn);
-      const accountMenu = screen.getByRole('menu', { name: 'Tùy chọn người dùng' });
+      const accountMenu = await screen.findByRole('menu', { name: 'Tùy chọn người dùng' }, { timeout: 3000 });
       expect(accountMenu).toBeInTheDocument();
 
       // Mục Đơn hàng của tôi
-      const ordersLink = screen.getByRole('menuitem', { name: 'Đơn hàng của tôi' });
+      const ordersLink = await screen.findByRole('menuitem', { name: 'Đơn hàng của tôi' }, { timeout: 3000 });
       expect(ordersLink).toBeInTheDocument();
       expect(ordersLink).toHaveAttribute('href', '/don-hang');
 

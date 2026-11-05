@@ -49,6 +49,38 @@ export default defineConfig(({ mode }) => {
       environment: 'jsdom',
       setupFiles: './src/test/setup.ts',
       testTimeout: 10000,
+      coverage: {
+        reporter: ['text', 'json', 'html'],
+        reportsDirectory: './coverage',
+        // Gate cho `npm run test:coverage`. Ngưỡng dưới số liệu thật 76.76% lines / 72.24% branches
+        // / 59.58% funcs (run 2026-11-02), đặt lỏng để tránh chặn CI khi coverage tăng thêm.
+        thresholds: {
+          statements: 70,
+          branches: 65,
+          functions: 50,
+          lines: 70,
+        },
+      },
+    },
+    build: {
+      rollupOptions: {
+        output: {
+          // Toan bo node_modules vao MOT chunk `vendor` de tranh vong import
+          // vendor-react -> vendor -> vendor-react (recharts goi React.forwardRef
+          // o top-level gay TDZ). Ngoai le: recharts + d3 duoc tach rieng va chi
+          // duoc nap khi mo trang admin co bieu do (AdminOverviewPage/QrAnalyticsPage).
+          // vendor-charts chi phu thuoc vendor, khong co chieu nguoc lai.
+          manualChunks(id) {
+            if (id.includes('node_modules')) {
+              if (/[\\/]node_modules[\\/](recharts|victory-vendor|d3-[^\\/]+)[\\/]/.test(id)) {
+                return 'vendor-charts';
+              }
+              return 'vendor';
+            }
+            return undefined;
+          },
+        },
+      },
     },
   };
 });

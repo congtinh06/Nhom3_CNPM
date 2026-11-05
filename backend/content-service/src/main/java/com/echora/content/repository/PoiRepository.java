@@ -55,9 +55,9 @@ public interface PoiRepository extends JpaRepository<Poi, Long> {
             "  AND t.title IS NOT NULL AND TRIM(t.title) <> '' " +
             "  AND t.description IS NOT NULL AND TRIM(t.description) <> '') " +
             "OR EXISTS (SELECT 1 FROM PoiTranslation t WHERE t.poi = p " +
-            "  AND t.languageCode IN :supportedLanguages AND t.audioStatus IN ('FAILED', 'FAILED_TTS')) " +
+            "  AND t.languageCode IN :supportedLanguages AND t.audioStatus LIKE 'FAILED%') " +
             "OR EXISTS (SELECT 1 FROM PoiTranslation t WHERE t.poi = p " +
-            "  AND t.languageCode IN :supportedLanguages AND t.audioStatus IN ('PENDING', 'PROCESSING') " +
+            "  AND t.languageCode IN :supportedLanguages AND t.audioStatus IN ('PENDING', 'PROCESSING', 'GENERATING') " +
             "  AND COALESCE(t.audioLastAttemptAt, t.updatedAt) < :pendingCutoff)";
 
     // Danh sách POI cho admin: lọc + phân trang phía server. JOIN FETCH zone/category/route để tránh N+1.
@@ -87,11 +87,11 @@ public interface PoiRepository extends JpaRepository<Poi, Long> {
             "  :languageStatus IS NULL " +
             "  OR (:languageStatus = 'ERROR' AND EXISTS (" +
             "    SELECT 1 FROM PoiTranslation t WHERE t.poi = p AND t.languageCode IN :supportedLanguages " +
-            "    AND t.audioStatus IN ('FAILED', 'FAILED_TTS', 'FAILED_TRANSLATION'))) " +
+            "    AND t.audioStatus LIKE 'FAILED%')) " +
             "  OR (:languageStatus = 'PENDING' AND (" +
             "    EXISTS (" +
             "      SELECT 1 FROM PoiTranslation t WHERE t.poi = p AND t.languageCode IN :supportedLanguages " +
-            "      AND t.audioStatus NOT IN ('READY', 'FAILED', 'FAILED_TTS')) " +
+            "      AND t.audioStatus <> 'READY' AND t.audioStatus NOT LIKE 'FAILED%') " +
             "    OR (SELECT COUNT(t) FROM PoiTranslation t WHERE t.poi = p AND t.languageCode IN :supportedLanguages) " +
             "       < :supportedLangCount))" +
             ")",
@@ -111,11 +111,11 @@ public interface PoiRepository extends JpaRepository<Poi, Long> {
             "  :languageStatus IS NULL " +
             "  OR (:languageStatus = 'ERROR' AND EXISTS (" +
             "    SELECT 1 FROM PoiTranslation t WHERE t.poi = p AND t.languageCode IN :supportedLanguages " +
-            "    AND t.audioStatus IN ('FAILED', 'FAILED_TTS', 'FAILED_TRANSLATION'))) " +
+            "    AND t.audioStatus LIKE 'FAILED%')) " +
             "  OR (:languageStatus = 'PENDING' AND (" +
             "    EXISTS (" +
             "      SELECT 1 FROM PoiTranslation t WHERE t.poi = p AND t.languageCode IN :supportedLanguages " +
-            "      AND t.audioStatus NOT IN ('READY', 'FAILED', 'FAILED_TTS')) " +
+            "      AND t.audioStatus <> 'READY' AND t.audioStatus NOT LIKE 'FAILED%') " +
             "    OR (SELECT COUNT(t) FROM PoiTranslation t WHERE t.poi = p AND t.languageCode IN :supportedLanguages) " +
             "       < :supportedLangCount))" +
             ")")

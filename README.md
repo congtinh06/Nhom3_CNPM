@@ -8,9 +8,16 @@
 [![SQL Server 2022](https://img.shields.io/badge/SQL_Server-2022-CC292B?logo=microsoftsqlserver&logoColor=white)](https://www.microsoft.com/sql-server)
 [![RabbitMQ](https://img.shields.io/badge/RabbitMQ-3.13-FF6600?logo=rabbitmq&logoColor=white)](https://www.rabbitmq.com/)
 [![Leaflet](https://img.shields.io/badge/Leaflet-1.9.4-199900?logo=leaflet&logoColor=white)](https://leafletjs.com/)
-[![Vitest](https://img.shields.io/badge/Vitest-62_Tests_Passed-green?logo=vitest&logoColor=white)](https://vitest.dev/)
+[![Vitest](https://img.shields.io/badge/Vitest-635_Tests_Passed-green?logo=vitest&logoColor=white)](https://vitest.dev/)
+[![Backend Tests](https://img.shields.io/badge/Maven-840_Tests_Passed-green?logo=apachemaven&logoColor=white)](https://maven.apache.org/)
+[![Frontend CI](https://github.com/congtinh06/Nhom3_CNPM/actions/workflows/frontend-ci.yml/badge.svg)](https://github.com/congtinh06/Nhom3_CNPM/actions/workflows/frontend-ci.yml)
+[![CD](https://github.com/congtinh06/Nhom3_CNPM/actions/workflows/cd.yml/badge.svg)](https://github.com/congtinh06/Nhom3_CNPM/actions/workflows/cd.yml)
+
+> **Tài liệu kỹ thuật:** [Kiến trúc](docs/ARCHITECTURE.md) · [Bảo mật](docs/SECURITY.md) · [Kịch bản demo](docs/DEMO_SCRIPT.md) · [Q&A bảo vệ](docs/DEFENSE_QA.md)
 
 ---
+
+
 
 ## 1. Giới thiệu dự án (Overview)
 
@@ -75,6 +82,19 @@ Hệ thống được thiết kế theo kiến trúc Microservices phân tán, c
 ```
 
 > Ngoài các dịch vụ trong sơ đồ, hệ thống còn có **`order-service`** (Port: `8087`) phụ trách giỏ hàng, đơn hàng và thanh toán VNPAY.
+
+### 3.1. Contract API (OpenAPI / Swagger gộp tại Gateway)
+
+- Mọi backend service nghiệp vụ tích hợp `springdoc-openapi-starter-webmvc-ui:2.6.0` và API Gateway tích hợp `springdoc-openapi-starter-webflux-ui:2.6.0`.
+- API Gateway điều hướng `/v3/api-docs/<service>` tới từng service tương ứng (`RewritePath`) và cung cấp Swagger UI gộp tại `/swagger-ui/index.html` với danh sách chọn cả 6 microservices:
+  - **Auth Service**: `/v3/api-docs/auth` (30 public paths - xác thực, tài khoản, đổi mật khẩu, admin user, phiên QR)
+  - **Content Service**: `/v3/api-docs/content` (40 public paths - POI, danh mục, tin tức, sản phẩm, lộ trình, admin POI/audio)
+  - **Location Service**: `/v3/api-docs/location` (3 public paths - GPS geofence, quét QR, lân cận, định vị)
+  - **Translation & TTS Service**: `/v3/api-docs/translation` (1 public path - phát luồng âm thanh audio thuyết minh)
+  - **Analytics Service**: `/v3/api-docs/analytics` (6 public paths - sự kiện tương tác du khách, quét QR, xu hướng)
+  - **Order Service**: `/v3/api-docs/order` (18 public paths - đơn hàng, giỏ hàng, thanh toán VNPAY/VietQR)
+- Toàn bộ endpoint nội bộ (`/internal/**`, mang `X-Internal-Api-Key`) được ẩn (`@Hidden` và cấu hình lọc) khỏi tài liệu công khai.
+- Kiểm soát môi trường: Tài liệu OpenAPI được bật ở môi trường phát triển cục bộ (`ECHORA_DOCS_ENABLED=true`) và mặc định tắt trên môi trường deploy/production (`ECHORA_DOCS_ENABLED=false`). Khi tắt, gateway trả về mã lỗi 404 ProblemDetail (`RFC 7807`) và không làm lộ cấu trúc hệ thống.
 
 ```text
 Cổng host mặc định:
@@ -148,21 +168,29 @@ git pull origin main
 ---
 
 ### 4.3. Bước 2: Thiết lập file cấu hình môi trường (.env)
-Dự án sử dụng cơ chế bảo mật thông qua biến môi trường. Tệp `.env.example` đã được nhóm điền sẵn đầy đủ toàn bộ cấu hình mẫu, mật khẩu CSDL và khóa bí mật dùng cho môi trường nội bộ. Thành viên mới chỉ cần sao chép sang `.env`:
 
-* **Trên Windows PowerShell:**
+**Cách khuyến nghị — một lệnh, secret ngẫu nhiên:**
+
 ```powershell
-Copy-Item .env.example .env
-Copy-Item frontend\.env.example frontend\.env
+# Windows PowerShell (từ thư mục gốc repo)
+powershell -ExecutionPolicy Bypass -File scripts/bootstrap.ps1
 ```
 
-* **Trên Linux / macOS / Git Bash:**
 ```bash
-cp .env.example .env
-cp frontend/.env.example frontend/.env
+# Linux / macOS / Git Bash
+bash scripts/bootstrap.sh
 ```
 
-> **Ghi chú:** Khởi tạo file `.env` từ `.env.example` và đặt các giá trị bí mật (mật khẩu CSDL, tài khoản admin, khóa JWT, RabbitMQ...) theo hướng dẫn trước khi khởi động.
+Script `scripts/bootstrap.ps1|sh` sẽ: sinh `.env` + `frontend/.env`, kiểm tra cấu hình bằng `scripts/check-env.mjs`, rồi chạy `docker compose up -d --build`. Không cần sửa tay file `.env`.
+
+**Cách thủ công (nếu muốn tự chỉnh cấu hình):**
+
+```powershell
+node scripts/setup-env.mjs     # sinh .env với secret ngẫu nhiên
+node scripts/check-env.mjs     # kiểm tra trước khi chạy
+```
+
+> **Ghi chú:** `.env.example` chứa placeholder hợp lệ để `Copy-Item .env.example .env` vẫn khởi động được ở local. Tuyệt đối không dùng nguyên trạng cho production. `JWT_SECRET` phải dài tối thiểu 32 ký tự, nếu không `auth-service` sẽ từ chối khởi động (fail-closed).
 
 ---
 
@@ -197,6 +225,25 @@ docker compose down -v
 docker compose up -d --build
 ```
 
+#### Nâng cấp từ bản cũ (Docker hardening — NHIỆM VỤ 1.2)
+
+Từ phiên bản này, các service backend chạy bằng user/group **`app` (uid/gid 10001)** và frontend chạy bằng **`nginx` (uid 101)**. Nếu máy bạn đã từng chạy bản cũ, các volume `audio-storage-data` và `product-uploads-data` được tạo bởi `root` sẽ khiến service không ghi được file (`Permission denied`). Chọn một trong hai cách sau:
+
+```bash
+# 1) Giữ dữ liệu cũ: chown lại volume cho uid/gid 10001
+docker compose down
+docker run --rm -v nhom3_cnpm_audio-storage-data:/data alpine chown -R 10001:10001 /data
+docker run --rm -v nhom3_cnpm_product-uploads-data:/data alpine chown -R 10001:10001 /data
+docker compose up -d --build
+
+# 2) Không cần dữ liệu cũ: xoá volume để Docker tạo lại với đúng owner
+docker compose down
+docker volume rm nhom3_cnpm_audio-storage-data nhom3_cnpm_product-uploads-data
+docker compose up -d --build
+```
+
+> Tên volume có tiền tố tên project Compose. Nếu project của bạn khác `nhom3_cnpm`, xem tên thật bằng `docker volume ls` rồi thay vào lệnh trên. Chỉ cần chown/xoá các volume liên quan tới file (audio, ảnh sản phẩm); volume CSDL `mssql-data` giữ nguyên.
+
 ---
 
 ### 4.5. Bước 4: Kiểm tra các cổng và địa chỉ truy cập
@@ -212,6 +259,8 @@ Sau khi hệ thống khởi động thành công, bạn mở trình duyệt truy
 | **Cơ sở dữ liệu SQL Server** | `localhost:1433` | User: `sa` / Pass: `<xem MSSQL_SA_PASSWORD trong .env>` |
 
 > **Ghi chú về cổng API Gateway:** `docker-compose.yml` ánh xạ cổng host `${GATEWAY_PORT}` (mặc định `18080`) vào cổng `8080` bên trong container, tránh xung đột với cổng `8080` thường bị tiến trình nội bộ của Windows chiếm dụng. Muốn đổi cổng host, sửa `GATEWAY_PORT` trong `.env` rồi chạy lại `docker compose up -d`; Vite dev proxy cũng đang trỏ tới `http://localhost:18080`.
+
+> **Ghi chú về cổng Frontend:** container frontend dùng `nginxinc/nginx-unprivileged` chạy bằng uid 101 nên **lắng nghe cổng nội bộ `8080`** (không phải `80`). `docker-compose.yml` chỉ publish ra host qua `${FRONTEND_HOST_PORT}` (mặc định `8088` → `8080`). Khi gọi trực tiếp từ trình duyệt luôn dùng `http://localhost:8088`.
 
 ---
 
@@ -291,10 +340,60 @@ Truy cập giao diện phát triển tại: **http://localhost:5173**
 Tài liệu này **không lưu** mật khẩu, hash, token hay khóa bí mật. Mọi giá trị nhạy cảm phải được khai báo trong `.env` (không commit) và sinh ngẫu nhiên theo hướng dẫn ở đầu `.env.example`.
 
 Tài khoản seed chỉ được tạo khi đặt biến môi trường tương ứng:
-- `ADMIN_SEED_EMAIL` + `ADMIN_SEED_PASSWORD`: tạo tài khoản ADMIN đầu tiên.
+- `ADMIN_SEED_EMAIL` + `ADMIN_SEED_PASSWORD`: tạo tài khoản ADMIN đầu tiên (chỉ khi cả hai đã đặt).
 - `SEED_TEST_USER_EMAIL` + `SEED_TEST_USER_PASSWORD`: tạo tài khoản USER kiểm thử (để trống để bỏ qua).
 
 Để tạo thêm ADMIN, dùng chức năng quản lý người dùng trong `/quan-tri` bằng tài khoản ADMIN hiện có, hoặc đổi `ADMIN_SEED_EMAIL`/`ADMIN_SEED_PASSWORD` sang email mới rồi khởi động lại `auth-service` (seeder chỉ tạo khi email chưa tồn tại).
+
+Lưu ý bảo mật: ở môi trường **deploy/prod**, auth-service không cho khởi động khi
+`mật khẩu ADMIN` đang để trống hoặc bằng giá trị mặc định (`ChangeMe_Admin123`); thông báo
+lỗi `AUTH_SEED: ...` sẽ xuất hiện và service sẽ fail-fast. Script deploy (`docker-compose.deploy.yml`,
+`.github/workflows/cd.yml`) luôn tắt seed ở production.
+
+### Tài khoản demo Premium (nghe audio EN/JA/KO)
+
+`EntitlementFilter` của content-service chỉ cho `lang=vi` miễn phí; `en`, `ja`, `ko` yêu cầu
+plan `PREMIUM` đang hoạt động hoặc mua lẻ đúng POI. Tài khoản ADMIN seed hiện là `FREE`
+nên **không** nghe được ba ngoại ngữ này.
+
+Seeder của auth-service tạo (và luôn bảo đảm) một tài khoản demo Premium từ biến môi trường:
+
+- `DEMO_PREMIUM_EMAIL` — gợi ý trong `.env.example`: `demo.premium@echora.test`
+- `DEMO_PREMIUM_PASSWORD` — lấy từ `.env` (`.env.example` có placeholder `ChangeMe_DemoPremium123`)
+- `ECHORA_SEED_DEMO` — cờ bật/tắt seed demo (`true` = seed, `false` mặc định = tắt)
+
+Tài khoản demo Premium **chỉ được seed khi biến môi trường `ECHORA_SEED_DEMO=true**
+(đọc trong auth-service qua cờ `app.demo-premium.seed-enabled`).
+
+**Cách tạo tài khoản demo cho máy local:**
+
+```bash
+# 1. Sao chép .env.example -> .env, điền DEMO_PREMIUM_EMAIL / DEMO_PREMIUM_PASSWORD của bạn.
+# 2. Bật seed demo (có thể đặt cả 2: trong .env thêm dòng "ECHORA_SEED_DEMO=true" hoặc export trước khi compose up):
+#    PowerShell:  $env:ECHORA_SEED_DEMO="true"
+#    bash:         export ECHORA_SEED_DEMO=true
+# 3. Khởi động lại auth-service:
+docker compose up -d --build auth-service
+```
+
+Sau khi seed, đăng nhập tại `http://localhost:8088/dang-nhap` bằng email trên và đúng mật khẩu
+`DEMO_PREMIUM_PASSWORD` trong `.env`. Tài khoản được đặt `ACTIVE`, `USER`, `PREMIUM`
+(hạn dùng +10 năm) mỗi khi auth-service khởi động, nên dựng lại stack vẫn dùng được.
+
+> [!WARNING]
+> **Khuyến cáo bảo mật môi trường thực tế**: Các mật khẩu mẫu từng xuất hiện trong tài liệu mẫu hoặc lịch sử git (như mật khẩu seed ban đầu) tuyệt đối **không** được dùng trên môi trường staging hoặc production. Bắt buộc phải thay đổi toàn bộ mật khẩu (`ADMIN_SEED_PASSWORD`, `DEMO_PREMIUM_PASSWORD`, mật khẩu database, v.v.) thành mật khẩu mạnh, an toàn qua biến môi trường thực tế trước khi triển khai hệ thống. Profile deploy sẽ tự động từ chối khởi động nếu phát hiện mật khẩu mặc định.
+
+Lưu ý: nếu không đặt `ECHORA_SEED_DEMO=true`, auth-service sẽ **bỏ qua** seed demo Premium
+(ngày mặc định là tắt seed để tránh tạo tài khoản lạ trên môi trường mới).
+
+Kiểm tra nhanh sau khi đăng nhập (thay `<token>` bằng access token nhận từ `/api/auth/login`):
+
+```powershell
+$headers = @{ Authorization = "Bearer <token>" }
+$poi = Invoke-RestMethod "http://localhost:18080/api/content/pois/1?lang=en" -Headers $headers
+Invoke-WebRequest $poi.audioUrl -Headers $headers -OutFile "$env:TEMP\poi1-en.mp3"
+(Get-Item "$env:TEMP\poi1-en.mp3").Length
+```
 
 Thông tin VNPAY Sandbox (mã website, hash secret, thẻ test) tra cứu tại tài liệu chính thức của VNPAY; không lưu trong repo.
 
@@ -308,8 +407,11 @@ Dự án tích hợp bộ kiểm thử tự động toàn diện đảm bảo đ
 ```bash
 cd frontend
 
-# Chạy toàn bộ 13 test suites (62 unit & integration tests)
-npm test -- --run
+# Chạy toàn bộ 79 test suites (635 unit & integration tests)
+npm test
+
+# Kiểm tra danh sách route SPA khớp giữa App.tsx, nginx.conf và vercel.json
+npm run check:spa-routes
 
 # Kiểm tra kiểu TypeScript và biên dịch bundle
 npm run build
@@ -326,6 +428,23 @@ mvn -f backend/auth-service/pom.xml test
 mvn -f backend/order-service/pom.xml test
 mvn -f backend/api-gateway/pom.xml test
 ```
+
+Backend hiện có **840 tests passed (0 failures, 0 errors)**: content 246, translation-tts 106, auth 136, analytics 69, location 44, api-gateway 185, order 54. Frontend có **79 file test với 635 test** (Vitest + React Testing Library). Toàn bộ 6 service nghiệp vụ đều tích hợp kiểm tra quy tắc phân lớp kiến trúc Spring MVC bằng ArchUnit. Repo có 10 workflow trong `.github/workflows/` (7 microservice, frontend, `config-check` kiểm tra clean-machine bootstrap, và `cd` build/push image + deploy khi cấu hình secret).
+
+### Kiểm tra trạng thái audio trước demo
+```powershell
+$env:ECHORA_BASE_URL = 'http://localhost:18080'
+$env:ECHORA_ADMIN_TOKEN = '<token ADMIN>'
+pwsh -File scripts/check-audio-status.ps1
+```
+
+Script chỉ gửi GET tới `/api/content/admin/audio/status` và in ma trận POI × ngôn ngữ (READY/PENDING/FAILED...). Các endpoint quản trị audio khác đều yêu cầu Bearer token ADMIN:
+- `GET /api/content/admin/audio/status`
+- `POST /api/content/admin/pois/{id}/audio/regenerate` (tùy chọn `?languages=vi,en`)
+- `POST /api/content/admin/audio/regenerate` (tạo lại cho mọi ngôn ngữ chưa READY)
+
+### Dữ liệu mẫu khi demo offline
+Frontend mặc định gọi API thật. Chỉ khi đặt `VITE_USE_SAMPLE_DATA=true` (hoặc chạy test) mới dùng fixture cho Tin tức và Điểm du lịch gần bạn; không bật biến này trên production.
 
 ---
 

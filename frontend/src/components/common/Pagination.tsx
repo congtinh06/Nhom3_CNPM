@@ -36,7 +36,7 @@ export const Pagination: React.FC<PaginationProps> = ({
   // Thuật toán hiển thị các trang với dấu chấm lửng (Ellipsis) khi totalPages > 7
   const renderPageNumbers = () => {
     type PageItem = number | 'ellipsis-start' | 'ellipsis-end';
-    let pages: PageItem[] = [];
+    let pages: PageItem[];
 
     if (totalPages <= 7) {
       pages = Array.from({ length: totalPages }, (_, i) => i + 1);

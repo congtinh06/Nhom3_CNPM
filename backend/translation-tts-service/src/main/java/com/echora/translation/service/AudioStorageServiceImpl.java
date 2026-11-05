@@ -3,6 +3,7 @@ package com.echora.translation.service;
 import com.echora.translation.exception.TtsException;
 import com.echora.translation.tts.TtsVoiceProvider;
 import com.echora.translation.tts.runner.EdgeTtsRunner;
+import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -38,6 +39,11 @@ public class AudioStorageServiceImpl implements AudioStorageService {
 
     @Override
     public AudioStorageResult storeAudio(long poiId, String lang, String contentHash, String text) {
+        return storeAudio(poiId, lang, contentHash, text, false);
+    }
+
+    @Override
+    public AudioStorageResult storeAudio(long poiId, String lang, String contentHash, String text, boolean force) {
         // 1. Validation BEFORE building any path
         if (poiId <= 0) {
             throw new IllegalArgumentException("poiId must be a positive integer, got: " + poiId);
@@ -65,10 +71,15 @@ public class AudioStorageServiceImpl implements AudioStorageService {
         try {
             Files.createDirectories(baseDir);
 
-            // 3. Idempotent check: if non-empty file already exists, reuse without calling edge-tts
+            // 3. Idempotent check: if non-empty file already exists, reuse without calling edge-tts.
+            // force=true (admin regenerate) deletes the old file and synthesizes again.
             if (Files.exists(targetFile) && Files.size(targetFile) > 0) {
-                log.info("Audio file already exists for poiId={}, lang={}, hash8={}: reusing {}", poiId, lang, hash8, fileName);
-                return new AudioStorageResult(fileName, buildAudioUrl(fileName), targetFile, null, false);
+                if (!force) {
+                    log.info("Audio file already exists for poiId={}, lang={}, hash8={}: reusing {}", poiId, lang, hash8, fileName);
+                    return new AudioStorageResult(fileName, buildAudioUrl(fileName), targetFile, null, false);
+                }
+                log.info("Force regeneration requested: deleting old audio file {}", fileName);
+                Files.delete(targetFile);
             }
         } catch (IOException e) {
             throw new TtsException("Failed to access audio storage directory: " + baseDir, e);
@@ -91,6 +102,9 @@ public class AudioStorageServiceImpl implements AudioStorageService {
 
             return new AudioStorageResult(fileName, buildAudioUrl(fileName), targetFile, duration, true);
 
+        } catch (CallNotPermittedException e) {
+            // Circuit open: do not fabricate audio. The pipeline marks the job FAILED_TTS.
+            throw new TtsException("edge-tts circuit breaker is open", e);
         } catch (Exception e) {
             if (tempOutputFile != null) {
                 try {

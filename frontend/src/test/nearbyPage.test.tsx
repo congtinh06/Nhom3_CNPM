@@ -218,6 +218,11 @@ describe('NearbyPage - Clean Multilingual & Audio Narration Integration', () => 
     expect(
       screen.getByText(/Location access denied\. You can still manually play audio tours\./i)
     ).toBeInTheDocument();
+
+    // Denying geolocation must not hide the landmark list: visitors can still
+    // browse the POIs and play each audio tour manually.
+    expect(screen.getAllByText('Independence Palace').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Ben Thanh Market').length).toBeGreaterThan(0);
   });
 
   it('triggers auto narration and calculates distance when real GPS position matches a POI radius', () => {

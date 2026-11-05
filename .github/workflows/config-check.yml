@@ -1,0 +1,71 @@
+name: Config & Environment Check
+
+on:
+  push:
+    branches: [main, master, 'fix/**', 'feat/**', 'refactor/**']
+    paths:
+      - '.env.example'
+      - 'docker-compose*.yml'
+      - 'scripts/**'
+      - '.github/workflows/config-check.yml'
+  pull_request:
+    branches: [main, master]
+    paths:
+      - '.env.example'
+      - 'docker-compose*.yml'
+      - 'scripts/**'
+      - '.github/workflows/config-check.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: config-check-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate-clean-machine:
+    name: Validate clean-machine bootstrap
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Validate committed .env.example
+        run: node scripts/check-env.mjs --file .env.example --allow-placeholder
+
+      - name: Simulate clean-machine .env generation
+        run: |
+          test ! -f .env
+          node scripts/setup-env.mjs
+          node scripts/check-env.mjs
+          test -f frontend/.env
+
+      - name: Assert generated secrets are not placeholders
+        run: |
+          set -euo pipefail
+          JWT=$(grep -E '^JWT_SECRET=' .env | cut -d= -f2-)
+          if [ "${#JWT}" -lt 32 ]; then
+            echo "JWT_SECRET generated is shorter than 32 characters"
+            exit 1
+          fi
+          if echo "$JWT" | grep -qE '^(CHANGE_ME|ChangeMe)'; then
+            echo "JWT_SECRET still looks like a placeholder"
+            exit 1
+          fi
+
+      - name: Validate Compose configuration
+        run: docker compose config --quiet
+
+      - name: Ensure .env files are never tracked
+        run: |
+          if git ls-files | grep -qE '^\.env$|^frontend/\.env$'; then
+            echo "ERROR: .env files must not be tracked"
+            exit 1
+          fi

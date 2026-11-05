@@ -337,7 +337,7 @@ export const PremiumPage: React.FC = () => {
   useEffect(() => {
     if (!requestedPoiId || !poiGuides) return;
     const frame = window.requestAnimationFrame(() => {
-      requestPoiCardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      requestPoiCardRef.current?.scrollIntoView?.({ behavior: 'smooth', block: 'center' });
     });
     return () => window.cancelAnimationFrame(frame);
   }, [requestedPoiId, poiGuides]);
@@ -347,7 +347,7 @@ export const PremiumPage: React.FC = () => {
     const frame = window.requestAnimationFrame(() => {
       document
         .getElementById(`premium-poi-experience-${expandedExperienceId}`)
-        ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        ?.scrollIntoView?.({ behavior: 'smooth', block: 'center' });
     });
     return () => window.cancelAnimationFrame(frame);
   }, [expandedExperienceId]);

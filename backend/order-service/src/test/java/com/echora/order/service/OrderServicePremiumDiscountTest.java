@@ -68,7 +68,7 @@ class OrderServicePremiumDiscountTest {
     void premiumMemberGetsTenPercentOffSouvenirsAndShippingUsesDiscountedSubtotal() {
         ProductPrice souvenir = product(1L, "55000", "SOUVENIR");
         when(productPriceClient.fetchPrices(any())).thenReturn(Map.of(1L, souvenir));
-        when(authEntitlementClient.isPremiumActive(7L)).thenReturn(true);
+        when(authEntitlementClient.isEligibleForSouvenirDiscount(7L)).thenReturn(true);
 
         OrderResponse response = orderService.createOrder(
                 7L, null, orderRequest(item(1L, 1)), "127.0.0.1");
@@ -79,14 +79,14 @@ class OrderServicePremiumDiscountTest {
         assertThat(response.getTotalAmount()).isEqualByComparingTo("69500");
         assertThat(response.getItems()).hasSize(1);
         assertThat(response.getItems().get(0).getUnitPrice()).isEqualByComparingTo("55000");
-        verify(authEntitlementClient).isPremiumActive(7L);
+        verify(authEntitlementClient).isEligibleForSouvenirDiscount(7L);
     }
 
     @Test
     void nonPremiumMemberPaysFullPrice() {
         ProductPrice souvenir = product(1L, "55000", "SOUVENIR");
         when(productPriceClient.fetchPrices(any())).thenReturn(Map.of(1L, souvenir));
-        when(authEntitlementClient.isPremiumActive(7L)).thenReturn(false);
+        when(authEntitlementClient.isEligibleForSouvenirDiscount(7L)).thenReturn(false);
 
         OrderResponse response = orderService.createOrder(
                 7L, null, orderRequest(item(1L, 1)), "127.0.0.1");
@@ -107,14 +107,14 @@ class OrderServicePremiumDiscountTest {
         assertThat(response.getSubtotal()).isEqualByComparingTo("30000");
         assertThat(response.getDiscountAmount()).isEqualByComparingTo("0");
         assertThat(response.getTotalAmount()).isEqualByComparingTo("50000");
-        verify(authEntitlementClient, never()).isPremiumActive(any());
+        verify(authEntitlementClient, never()).isEligibleForSouvenirDiscount(any());
     }
 
     @Test
     void entitlementLookupFailureDoesNotBlockCheckout() {
         ProductPrice souvenir = product(3L, "70000", "SOUVENIR");
         when(productPriceClient.fetchPrices(any())).thenReturn(Map.of(3L, souvenir));
-        when(authEntitlementClient.isPremiumActive(7L)).thenReturn(false);
+        when(authEntitlementClient.isEligibleForSouvenirDiscount(7L)).thenReturn(false);
 
         OrderResponse response = orderService.createOrder(
                 7L, null, orderRequest(item(3L, 1)), "127.0.0.1");

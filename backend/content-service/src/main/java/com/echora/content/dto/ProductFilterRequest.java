@@ -1,6 +1,6 @@
 package com.echora.content.dto;
 
-import com.echora.content.entity.ProductCategory;
+import com.echora.content.model.ProductCategory;
 import jakarta.validation.constraints.Min;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

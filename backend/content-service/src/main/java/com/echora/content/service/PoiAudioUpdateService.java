@@ -4,6 +4,7 @@ import com.echora.content.entity.Poi;
 import com.echora.content.entity.PoiTranslation;
 import com.echora.content.entity.TranslationSource;
 import com.echora.content.event.PoiAudioFailedEvent;
+import com.echora.content.event.PoiAudioProgressEvent;
 import com.echora.content.event.PoiAudioReadyEvent;
 import com.echora.content.exception.ResourceNotFoundException;
 import com.echora.content.repository.PoiRepository;
@@ -31,11 +32,73 @@ import java.util.Locale;
 public class PoiAudioUpdateService {
 
     public static final String STATUS_READY = "READY";
+    public static final String STATUS_GENERATING = "GENERATING";
     public static final String STATUS_FAILED_TTS = "FAILED_TTS";
     public static final String STATUS_FAILED = "FAILED";
 
     private final PoiRepository poiRepository;
     private final PoiTranslationRepository translationRepository;
+
+    /**
+     * Đánh dấu ngôn ngữ đang tổng hợp audio. Event chỉ có tác dụng khi hash còn khớp nội dung
+     * nguồn hiện tại; event đến muộn của phiên bản cũ bị bỏ qua.
+     */
+    @Transactional
+    public void applyAudioGenerating(PoiAudioProgressEvent event) {
+        if (event == null) {
+            throw new AmqpRejectAndDontRequeueException("Invalid poi.audio.progress payload: empty body");
+        }
+        List<String> missing = new ArrayList<>();
+        if (event.getPoiId() == null) missing.add("poiId");
+        if (isBlank(event.getLanguageCode())) missing.add("languageCode");
+        if (isBlank(event.getContentHash())) missing.add("contentHash");
+        if (!missing.isEmpty()) {
+            throw new AmqpRejectAndDontRequeueException("Invalid poi.audio.progress payload, missing " + missing);
+        }
+
+        String lang = normalizeLang(event.getLanguageCode());
+        Poi poi = findPoiOrThrow(event.getPoiId(), "poi.audio.progress");
+
+        PoiTranslation viTranslation = translationRepository.findByPoiIdAndLanguageCode(poi.getId(), "vi")
+                .orElse(null);
+        if (viTranslation == null) {
+            log.warn("Missing source 'vi' translation for POI id={}, cannot verify contentHash for poi.audio.progress (lang={}). Rejecting to DLQ.",
+                    poi.getId(), lang);
+            throw new AmqpRejectAndDontRequeueException("Missing source 'vi' translation for POI id=" + poi.getId());
+        }
+
+        String expectedHash = expectedHashFor(poi.getId(), lang, viTranslation);
+        if (!event.getContentHash().equalsIgnoreCase(expectedHash)) {
+            log.info("Ignoring stale poi.audio.progress for poiId={}, lang={}: event hash {} does not match current content hash {}",
+                    poi.getId(), lang, event.getContentHash(), expectedHash);
+            return;
+        }
+
+        PoiTranslation translation = translationRepository.findByPoiIdAndLanguageCode(poi.getId(), lang).orElse(null);
+        if (translation == null) {
+            // Bản dịch chưa tồn tại: poi.audio.ready sau đó sẽ tạo hàng mới. Không tạo hàng rỗng ở đây
+            // vì các cột title/summary/description là NOT NULL.
+            log.info("poi.audio.progress for poiId={}, lang={} has no translation row yet; waiting for ready event",
+                    poi.getId(), lang);
+            return;
+        }
+        if (STATUS_READY.equalsIgnoreCase(translation.getAudioStatus())
+                && event.getContentHash().equalsIgnoreCase(translation.getContentHash())) {
+            log.info("Ignoring late poi.audio.progress for poiId={}, lang={}: translation is already READY with matching contentHash {}",
+                    poi.getId(), lang, event.getContentHash());
+            return;
+        }
+
+        translation.setAudioStatus(STATUS_GENERATING);
+        translation.setAudioUrl(null);
+        translation.setAudioDurationSeconds(0);
+        translation.setAudioErrorReason(null);
+        translation.setAudioLastAttemptAt(TimeUtils.nowUtc());
+        translation.setUpdatedAt(TimeUtils.nowUtc());
+        translationRepository.save(translation);
+
+        log.info("poi.audio.progress applied: poiId={}, lang={}", poi.getId(), lang);
+    }
 
     @Transactional
     public void applyAudioReady(PoiAudioReadyEvent event) {

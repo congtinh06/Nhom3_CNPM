@@ -1,6 +1,5 @@
 package com.echora.content.messaging;
 
-import com.echora.content.repository.PoiRepository;
 import com.echora.content.service.PoiPublishService;
 import com.echora.content.util.TimeUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -22,14 +21,11 @@ import java.util.List;
 @Slf4j
 public class PoiPublishRetryJob {
 
-    private final PoiRepository poiRepository;
     private final PoiPublishService poiPublishService;
     private final Duration minAge;
 
-    public PoiPublishRetryJob(PoiRepository poiRepository,
-                              PoiPublishService poiPublishService,
+    public PoiPublishRetryJob(PoiPublishService poiPublishService,
                               @Value("${echora.publish-retry.min-age:PT30S}") Duration minAge) {
-        this.poiRepository = poiRepository;
         this.poiPublishService = poiPublishService;
         this.minAge = minAge;
     }
@@ -37,7 +33,7 @@ public class PoiPublishRetryJob {
     @Scheduled(initialDelayString = "${echora.publish-retry.initial-delay:PT30S}",
                fixedDelayString = "${echora.publish-retry.interval:PT60S}")
     public void retryPendingPublishes() {
-        List<Long> ids = poiRepository.findPendingPublishIds(TimeUtils.nowUtc().minus(minAge));
+        List<Long> ids = poiPublishService.findPendingPublishIds(TimeUtils.nowUtc().minus(minAge));
         if (ids.isEmpty()) {
             return;
         }

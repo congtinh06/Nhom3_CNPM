@@ -1,6 +1,6 @@
 package com.echora.content.dto;
 
-import com.echora.content.entity.ProductCategory;
+import com.echora.content.model.ProductCategory;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;

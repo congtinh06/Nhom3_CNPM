@@ -3,6 +3,7 @@ package com.echora.translation.service;
 import com.echora.translation.entity.TranslationJob;
 import com.echora.translation.event.AuthoredPoiText;
 import com.echora.translation.event.PoiAudioFailedEvent;
+import com.echora.translation.event.PoiAudioProgressEvent;
 import com.echora.translation.event.PoiAudioReadyEvent;
 import com.echora.translation.event.PoiEventPayload;
 import com.echora.translation.exception.TranslationException;
@@ -18,6 +19,7 @@ import com.echora.translation.util.ContentHashUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.AmqpRejectAndDontRequeueException;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
@@ -35,21 +37,41 @@ public class PoiPipelineServiceImpl implements PoiPipelineService {
     private final TranslationJobRepository translationJobRepository;
     private final PoiAudioEventPublisher eventPublisher;
 
+    // Giá trị mặc định 1 để unit test tạo trực tiếp không phải chờ backoff; Spring ghi đè từ application.yml.
+    @Value("${app.tts.retry.max-attempts:3}")
+    private int ttsMaxAttempts = 1;
+
+    @Value("${app.tts.retry.initial-backoff-ms:1000}")
+    private long ttsInitialBackoffMs = 0;
+
+    @Value("${app.tts.retry.multiplier:2.0}")
+    private double ttsBackoffMultiplier = 2.0;
+
+    @Value("${app.tts.retry.max-backoff-ms:8000}")
+    private long ttsMaxBackoffMs = 8000;
+
     @Override
     public void processPoiEvent(PoiEventPayload event) {
         // 1. Validate incoming event
         validateEvent(event);
 
+        boolean force = Boolean.TRUE.equals(event.getForceRegenerate());
         // 2. Build distinct normalized languages list ("vi" always first)
         Set<String> languages = resolveLanguages(event.getTargetLanguages());
-        log.info("Processing POI event for poiId={}, languages={}", event.getPoiId(), languages);
+        if (force) {
+            Set<String> forced = resolveForceLanguages(event.getForceLanguages());
+            if (!forced.isEmpty()) {
+                languages = forced;
+            }
+        }
+        log.info("Processing POI event for poiId={}, languages={}, force={}", event.getPoiId(), languages, force);
 
         boolean quotaWarned = false;
 
         // 3. Process each language INDEPENDENTLY
         for (String lang : languages) {
             try {
-                quotaWarned = processLanguage(event, lang, quotaWarned);
+                quotaWarned = processLanguage(event, lang, quotaWarned, force);
             } catch (AmqpRejectAndDontRequeueException e) {
                 throw e;
             } catch (Exception e) {
@@ -60,7 +82,7 @@ public class PoiPipelineServiceImpl implements PoiPipelineService {
         }
     }
 
-    private boolean processLanguage(PoiEventPayload event, String lang, boolean quotaWarned) {
+    private boolean processLanguage(PoiEventPayload event, String lang, boolean quotaWarned, boolean force) {
         // Ngôn ngữ có văn bản do người viết (MANUAL) được dùng nguyên văn, không dịch máy.
         AuthoredPoiText authored = resolveAuthoredText(event, lang);
 
@@ -79,11 +101,20 @@ public class PoiPipelineServiceImpl implements PoiPipelineService {
                         event.getDescription(),
                         event.getHistoricalSignificance());
 
-        // 5. Idempotency on translation_job
+        // 5. Idempotency on translation_job. Admin force regeneration reopens a DONE job.
         TranslationJob job = getOrCreateJob(event.getPoiId(), lang, contentHash);
         if ("DONE".equals(job.getStatus())) {
-            log.info("Job already DONE for poiId={}, lang={}, hash={}. Skipping.", event.getPoiId(), lang, contentHash);
-            return quotaWarned;
+            if (!force) {
+                log.info("Job already DONE for poiId={}, lang={}, hash={}. Skipping.", event.getPoiId(), lang, contentHash);
+                return quotaWarned;
+            }
+            job.setStatus("RECEIVED");
+            job.setAttempts(job.getAttempts() + 1);
+            job.setErrorMessage(null);
+            job.setUpdatedAt(LocalDateTime.now());
+            job = translationJobRepository.save(job);
+            log.info("Force regeneration reopens DONE job for poiId={}, lang={}, hash={}",
+                    event.getPoiId(), lang, contentHash);
         }
 
         String targetTitle;
@@ -176,11 +207,19 @@ public class PoiPipelineServiceImpl implements PoiPipelineService {
             }
         }
 
-        // 8. TTS & Audio Storage (chỉ đọc tiêu đề + mô tả)
-        String spokenText = TtsTextBuilder.buildText(targetTitle, targetDescription);
+        // 8. TTS & Audio Storage (D1-Fix Q3: include title, summary, description, historicalSignificance)
+        String spokenText = TtsTextBuilder.buildText(targetTitle, targetSummary, targetDescription, targetHistorical);
+        eventPublisher.publishAudioProgress(PoiAudioProgressEvent.builder()
+                .poiId(event.getPoiId())
+                .languageCode(lang)
+                .audioStatus("GENERATING")
+                .contentHash(contentHash)
+                .message("Đang tổng hợp audio")
+                .build());
+
         AudioStorageResult storageResult;
         try {
-            storageResult = audioStorageService.storeAudio(event.getPoiId(), lang, contentHash, spokenText);
+            storageResult = storeAudioWithRetry(event.getPoiId(), lang, contentHash, spokenText, force);
         } catch (TtsException ex) {
             log.warn("TTS error for poiId={}, lang={}: {}", event.getPoiId(), lang, ex.getMessage());
             markJobFailed(job, "FAILED_TTS", ex.getMessage());
@@ -282,6 +321,72 @@ public class PoiPipelineServiceImpl implements PoiPipelineService {
             }
         }
         return languages;
+    }
+
+    private Set<String> resolveForceLanguages(List<String> forceLanguages) {
+        Set<String> languages = new LinkedHashSet<>();
+        if (forceLanguages == null) {
+            return languages;
+        }
+        for (String raw : forceLanguages) {
+            if (raw == null) {
+                continue;
+            }
+            for (String part : raw.split(",")) {
+                String normalized = part.trim().toLowerCase(Locale.ROOT);
+                if (normalized.matches("^[a-z]{2,3}$")) {
+                    languages.add(normalized);
+                }
+            }
+        }
+        return languages;
+    }
+
+    private AudioStorageResult storeAudioWithRetry(
+            Long poiId, String lang, String contentHash, String spokenText, boolean force) {
+        int maxAttempts = Math.max(1, ttsMaxAttempts);
+        long backoffMs = Math.max(0, ttsInitialBackoffMs);
+        TtsException lastError = null;
+
+        for (int attempt = 1; attempt <= maxAttempts; attempt++) {
+            try {
+                return force
+                        ? audioStorageService.storeAudio(poiId, lang, contentHash, spokenText, true)
+                        : audioStorageService.storeAudio(poiId, lang, contentHash, spokenText);
+            } catch (TtsUnsupportedVoiceException ex) {
+                // Lỗi cấu hình giọng đọc: thử lại không giúp gì.
+                throw ex;
+            } catch (TtsException ex) {
+                lastError = ex;
+                if (attempt >= maxAttempts) {
+                    throw ex;
+                }
+                log.warn("TTS attempt {}/{} failed for poiId={}, lang={}: {}. Retrying in {}ms",
+                        attempt, maxAttempts, poiId, lang, ex.getMessage(), backoffMs);
+                sleepBeforeRetry(backoffMs);
+                backoffMs = nextBackoff(backoffMs);
+            }
+        }
+        throw lastError != null ? lastError : new TtsException("TTS failed without a specific error");
+    }
+
+    private long nextBackoff(long currentBackoffMs) {
+        long maxBackoffMs = Math.max(0, ttsMaxBackoffMs);
+        double multiplier = ttsBackoffMultiplier > 1.0 ? ttsBackoffMultiplier : 1.0;
+        long next = (long) Math.min(maxBackoffMs, Math.max(0, currentBackoffMs) * multiplier);
+        return Math.max(0, next);
+    }
+
+    private void sleepBeforeRetry(long backoffMs) {
+        if (backoffMs <= 0) {
+            return;
+        }
+        try {
+            Thread.sleep(backoffMs);
+        } catch (InterruptedException ex) {
+            Thread.currentThread().interrupt();
+            throw new TtsException("Interrupted while waiting to retry TTS", ex);
+        }
     }
 
     private TranslationJob getOrCreateJob(Long poiId, String lang, String contentHash) {

@@ -1,21 +1,18 @@
 package com.echora.gateway.filter;
 
+import com.echora.gateway.handler.ProblemDetailSupport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.Ordered;
-import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.server.reactive.ServerHttpRequest;
-import org.springframework.http.server.reactive.ServerHttpResponse;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
-import java.nio.charset.StandardCharsets;
 import java.util.Locale;
 import java.util.Set;
 import java.util.regex.Pattern;
@@ -36,6 +33,7 @@ public class InternalPathBlockFilter implements GlobalFilter, Ordered {
     private static final Pattern POI_DETAIL_OR_PUBLISH = Pattern.compile("^/api/content/admin/pois/\\d+(/publish-status)?$");
     private static final Pattern POI_STATUS = Pattern.compile("^/api/content/admin/pois/\\d+/status$");
     private static final Pattern POI_REPUBLISH = Pattern.compile("^/api/content/admin/pois/\\d+/republish$");
+    private static final Pattern POI_AUDIO_REGEN = Pattern.compile("^/api/content/admin/pois/\\d+/audio/regenerate$");
     private static final Pattern ZONE_DETAIL = Pattern.compile("^/api/content/admin/zones/\\d+$");
     private static final Pattern ZONE_STATUS = Pattern.compile("^/api/content/admin/zones/\\d+/status$");
     private static final Pattern ROUTE_DETAIL = Pattern.compile("^/api/content/admin/routes/\\d+$");
@@ -44,6 +42,7 @@ public class InternalPathBlockFilter implements GlobalFilter, Ordered {
     private static final Pattern USER_DETAIL = Pattern.compile("^/api/auth/admin/users/\\d+$");
     private static final Pattern USER_ROLE = Pattern.compile("^/api/auth/admin/users/\\d+/role$");
     private static final Pattern USER_STATUS = Pattern.compile("^/api/auth/admin/users/\\d+/status$");
+    private static final Pattern USER_PLAN = Pattern.compile("^/api/auth/admin/users/\\d+/plan$");
     private static final Pattern PRODUCT_DETAIL = Pattern.compile("^/api/admin/products/\\d+$");
     private static final Pattern PRODUCT_STATUS = Pattern.compile("^/api/admin/products/\\d+/status$");
     private static final Pattern PRODUCT_SORT_ORDER = Pattern.compile("^/api/admin/products/\\d+/sort-order$");
@@ -174,7 +173,8 @@ public class InternalPathBlockFilter implements GlobalFilter, Ordered {
             return HttpMethod.GET.equals(method);
         }
         if (POI_STATUS.matcher(path).matches()) {
-            return HttpMethod.GET.equals(method) || HttpMethod.PUT.equals(method) || HttpMethod.PATCH.equals(method);
+            // Controller chỉ map PATCH/PUT cho đổi trạng thái; GET sẽ 405 ở content-service.
+            return HttpMethod.PUT.equals(method) || HttpMethod.PATCH.equals(method);
         }
         if (POI_DETAIL_OR_PUBLISH.matcher(path).matches()) {
             if (path.endsWith("/publish-status")) {
@@ -183,6 +183,9 @@ public class InternalPathBlockFilter implements GlobalFilter, Ordered {
             return HttpMethod.GET.equals(method) || HttpMethod.PUT.equals(method);
         }
         if (POI_REPUBLISH.matcher(path).matches()) {
+            return HttpMethod.POST.equals(method);
+        }
+        if (path.equals("/api/content/admin/audio/regenerate") || POI_AUDIO_REGEN.matcher(path).matches()) {
             return HttpMethod.POST.equals(method);
         }
 
@@ -217,7 +220,8 @@ public class InternalPathBlockFilter implements GlobalFilter, Ordered {
         if (path.equals("/api/auth/admin/users")) {
             return HttpMethod.GET.equals(method);
         }
-        if (USER_ROLE.matcher(path).matches() || USER_STATUS.matcher(path).matches()) {
+        if (USER_ROLE.matcher(path).matches() || USER_STATUS.matcher(path).matches() || USER_PLAN.matcher(path).matches()) {
+            // USER_PLAN: AdminUserController#changePlan chỉ map PATCH/PUT (không có GET).
             return HttpMethod.GET.equals(method) || HttpMethod.PUT.equals(method) || HttpMethod.PATCH.equals(method);
         }
         if (USER_DETAIL.matcher(path).matches()) {
@@ -272,23 +276,11 @@ public class InternalPathBlockFilter implements GlobalFilter, Ordered {
     }
 
     private Mono<Void> sendNotFound(ServerWebExchange exchange) {
-        ServerHttpResponse response = exchange.getResponse();
-        response.setStatusCode(HttpStatus.NOT_FOUND);
-        response.getHeaders().setContentType(MediaType.APPLICATION_JSON);
-        byte[] jsonBytes = "{\"status\":404,\"error\":\"Not Found\",\"message\":\"Not Found\"}"
-                .getBytes(StandardCharsets.UTF_8);
-        DataBuffer buffer = response.bufferFactory().wrap(jsonBytes);
-        return response.writeWith(Mono.just(buffer));
+        return ProblemDetailSupport.write(exchange, HttpStatus.NOT_FOUND, "Not Found");
     }
 
     private Mono<Void> sendMethodNotAllowed(ServerWebExchange exchange) {
-        ServerHttpResponse response = exchange.getResponse();
-        response.setStatusCode(HttpStatus.METHOD_NOT_ALLOWED);
-        response.getHeaders().setContentType(MediaType.APPLICATION_JSON);
-        byte[] jsonBytes = "{\"status\":405,\"error\":\"Method Not Allowed\",\"message\":\"Method Not Allowed\"}"
-                .getBytes(StandardCharsets.UTF_8);
-        DataBuffer buffer = response.bufferFactory().wrap(jsonBytes);
-        return response.writeWith(Mono.just(buffer));
+        return ProblemDetailSupport.write(exchange, HttpStatus.METHOD_NOT_ALLOWED, "Method Not Allowed");
     }
 
     @Override

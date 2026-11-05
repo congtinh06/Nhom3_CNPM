@@ -20,9 +20,10 @@ services:
     healthcheck:
       test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
       interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 15s
+      # May CI/dev chay cham: rabbitmq-diagnostics co the mat >5s khi host dang build.
+      timeout: 15s
+      retries: 10
+      start_period: 60s
     networks:
       - echora-net
 
@@ -131,6 +132,7 @@ services:
       INTERNAL_API_KEY: ${INTERNAL_API_KEY:?INTERNAL_API_KEY is required in .env}
       AUTH_SERVICE_URL: http://auth-service:8086
       PRODUCT_UPLOAD_DIR: /app/uploads/products
+      ECHORA_DOCS_ENABLED: ${ECHORA_DOCS_ENABLED:-true}
     volumes:
       - product-uploads-data:/app/uploads/products
     depends_on:
@@ -143,7 +145,7 @@ services:
       interval: 15s
       timeout: 5s
       retries: 5
-      start_period: 60s
+      start_period: 180s
     networks:
       - echora-net
 
@@ -157,6 +159,7 @@ services:
       JAVA_TOOL_OPTIONS: "-Xms128m -Xmx256m"
       CONTENT_SERVICE_URL: http://content-service:8085
       INTERNAL_API_KEY: ${INTERNAL_API_KEY:?INTERNAL_API_KEY is required in .env}
+      ECHORA_DOCS_ENABLED: ${ECHORA_DOCS_ENABLED:-true}
     depends_on:
       content-service:
         condition: service_healthy
@@ -165,7 +168,7 @@ services:
       interval: 15s
       timeout: 5s
       retries: 5
-      start_period: 60s
+      start_period: 180s
     networks:
       - echora-net
 
@@ -192,6 +195,7 @@ services:
       MYMEMORY_EMAIL: ${MYMEMORY_EMAIL:-}
       TRANSLATION_PROVIDER: ${TRANSLATION_PROVIDER:-seed}
       TTS_TIMEOUT_MS: ${TTS_TIMEOUT_MS:-120000}
+      ECHORA_DOCS_ENABLED: ${ECHORA_DOCS_ENABLED:-true}
     volumes:
       - audio-storage-data:/app/storage/audio
     depends_on:
@@ -206,7 +210,7 @@ services:
       interval: 15s
       timeout: 5s
       retries: 5
-      start_period: 60s
+      start_period: 180s
     networks:
       - echora-net
 
@@ -227,6 +231,7 @@ services:
       RABBITMQ_PASSWORD: ${RABBITMQ_DEFAULT_PASS:?RABBITMQ_DEFAULT_PASS is required in .env}
       CONTENT_SERVICE_URL: http://content-service:8085
       INTERNAL_API_KEY: ${INTERNAL_API_KEY:?INTERNAL_API_KEY is required in .env}
+      ECHORA_DOCS_ENABLED: ${ECHORA_DOCS_ENABLED:-true}
     depends_on:
       mssql-db-init:
         condition: service_completed_successfully
@@ -239,7 +244,7 @@ services:
       interval: 15s
       timeout: 5s
       retries: 5
-      start_period: 60s
+      start_period: 180s
     networks:
       - echora-net
 
@@ -277,6 +282,13 @@ services:
       SEED_TEST_USER_EMAIL: ${SEED_TEST_USER_EMAIL:-user@echora.local}
       # Để trống = không seed tài khoản USER kiểm thử (không còn mật khẩu mặc định).
       SEED_TEST_USER_PASSWORD: ${SEED_TEST_USER_PASSWORD:-}
+      # Tài khoản demo Premium nghe audio EN/JA/KO; mật khẩu lấy từ .env, không hard-code.
+      DEMO_PREMIUM_EMAIL: ${DEMO_PREMIUM_EMAIL:-}
+      DEMO_PREMIUM_PASSWORD: ${DEMO_PREMIUM_PASSWORD:-}
+      # Cờ ECHORA_SEED_DEMO: default false (không seed demo Premium). Local có thể
+      # bật qua .env (VD: ECHORA_SEED_DEMO=true) để tạo tài khoản demo.
+      ECHORA_SEED_DEMO: ${ECHORA_SEED_DEMO:-false}
+      ECHORA_DOCS_ENABLED: ${ECHORA_DOCS_ENABLED:-true}
     depends_on:
       mssql-db-init:
         condition: service_completed_successfully
@@ -285,7 +297,7 @@ services:
       interval: 15s
       timeout: 5s
       retries: 5
-      start_period: 60s
+      start_period: 180s
     networks:
       - echora-net
 
@@ -310,7 +322,8 @@ services:
       ORDER_FREE_SHIPPING_THRESHOLD: ${ORDER_FREE_SHIPPING_THRESHOLD:-50000}
       ORDER_PREMIUM_PRICE: ${ORDER_PREMIUM_PRICE:-500000}
       ORDER_PREMIUM_POI_PRICE: ${ORDER_PREMIUM_POI_PRICE:-100000}
-      PAYMENTS_MOCK_ENABLED: ${PAYMENTS_MOCK_ENABLED:-true}
+      # TẮT bypass thanh toán mock trong production. Chỉ bật khi demo offline.
+      PAYMENTS_MOCK_ENABLED: ${PAYMENTS_MOCK_ENABLED:-false}
       VNPAY_TMN_CODE: ${VNPAY_TMN_CODE:-}
       VNPAY_HASH_SECRET: ${VNPAY_HASH_SECRET:-}
       VNPAY_PAY_URL: ${VNPAY_PAY_URL:-https://sandbox.vnpayment.vn/paymentv2/vpcpay.html}
@@ -319,6 +332,7 @@ services:
       VNPAY_LOCALE: ${VNPAY_LOCALE:-vn}
       VNPAY_ORDER_TYPE: ${VNPAY_ORDER_TYPE:-other}
       VNPAY_EXPIRE_MINUTES: ${VNPAY_EXPIRE_MINUTES:-15}
+      ECHORA_DOCS_ENABLED: ${ECHORA_DOCS_ENABLED:-true}
     depends_on:
       mssql-db-init:
         condition: service_completed_successfully
@@ -329,7 +343,7 @@ services:
       interval: 15s
       timeout: 5s
       retries: 5
-      start_period: 60s
+      start_period: 180s
     networks:
       - echora-net
 
@@ -355,6 +369,7 @@ services:
       INTERNAL_API_KEY: ${INTERNAL_API_KEY:?INTERNAL_API_KEY is required in .env}
       GATEWAY_TRUSTED_PROXIES: ${GATEWAY_TRUSTED_PROXIES:-}
       RATE_LIMIT_ANALYTICS_PER_MINUTE: ${RATE_LIMIT_ANALYTICS_PER_MINUTE:-120}
+      ECHORA_DOCS_ENABLED: ${ECHORA_DOCS_ENABLED:-true}
     depends_on:
       content-service:
         condition: service_healthy
@@ -369,7 +384,7 @@ services:
       interval: 15s
       timeout: 5s
       retries: 5
-      start_period: 60s
+      start_period: 180s
     networks:
       - echora-net
 
@@ -380,10 +395,17 @@ services:
     container_name: frontend
     restart: unless-stopped
     ports:
-      - "0.0.0.0:${FRONTEND_HOST_PORT:-8088}:80"
+      # nginx-unprivileged listen 8080 trong container (uid 101 khong bind duoc port 80)
+      - "0.0.0.0:${FRONTEND_HOST_PORT:-8088}:8080"
     depends_on:
       api-gateway:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:8080/"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
     networks:
       - echora-net
 

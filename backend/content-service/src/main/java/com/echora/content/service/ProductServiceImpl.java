@@ -2,7 +2,7 @@ package com.echora.content.service;
 
 import com.echora.content.dto.*;
 import com.echora.content.entity.Product;
-import com.echora.content.entity.ProductCategory;
+import com.echora.content.model.ProductCategory;
 import com.echora.content.exception.BadRequestException;
 import com.echora.content.exception.ResourceNotFoundException;
 import com.echora.content.repository.ProductRepository;

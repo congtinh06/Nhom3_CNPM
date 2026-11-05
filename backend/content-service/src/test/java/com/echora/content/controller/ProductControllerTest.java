@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.echora.content.config.AdminRoleFilter;
 import com.echora.content.config.InternalApiKeyFilter;
 import com.echora.content.dto.*;
-import com.echora.content.entity.ProductCategory;
+import com.echora.content.model.ProductCategory;
 import com.echora.content.exception.GlobalExceptionHandler;
 import com.echora.content.exception.ResourceNotFoundException;
 import com.echora.content.service.ProductService;
@@ -159,7 +159,7 @@ class ProductControllerTest {
         adminMockMvc.perform(get("/api/admin/products"))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.status").value(403))
-                .andExpect(jsonPath("$.message").value("Bạn không có quyền thực hiện thao tác này."));
+                .andExpect(jsonPath("$.detail").value("Bạn không có quyền thực hiện thao tác này."));
     }
 
     @Test
@@ -169,7 +169,7 @@ class ProductControllerTest {
                         .header("X-User-Role", "USER"))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.status").value(403))
-                .andExpect(jsonPath("$.message").value("Bạn không có quyền thực hiện thao tác này."));
+                .andExpect(jsonPath("$.detail").value("Bạn không có quyền thực hiện thao tác này."));
     }
 
     @Test
@@ -325,7 +325,7 @@ class ProductControllerTest {
                         .content(objectMapper.writeValueAsString(req)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status").value(400))
-                .andExpect(jsonPath("$.details.slug").value("Slug chỉ được chứa chữ thường không dấu, số và dấu gạch ngang"));
+                .andExpect(jsonPath("$.errors.slug").value("Slug chỉ được chứa chữ thường không dấu, số và dấu gạch ngang"));
     }
 
     @Test
@@ -345,7 +345,7 @@ class ProductControllerTest {
                         .content(objectMapper.writeValueAsString(req)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status").value(400))
-                .andExpect(jsonPath("$.details.slug").value("Slug chỉ được chứa chữ thường không dấu, số và dấu gạch ngang"));
+                .andExpect(jsonPath("$.errors.slug").value("Slug chỉ được chứa chữ thường không dấu, số và dấu gạch ngang"));
     }
 
     // --- Admin API Tests: Gateway Credential (Defense-in-Depth) ---
@@ -357,7 +357,7 @@ class ProductControllerTest {
                         .header("X-User-Role", "ADMIN"))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.status").value(403))
-                .andExpect(jsonPath("$.message").value("Bạn không có quyền thực hiện thao tác này."));
+                .andExpect(jsonPath("$.detail").value("Bạn không có quyền thực hiện thao tác này."));
     }
 
     @Test

@@ -1,5 +1,6 @@
 package com.echora.order.config;
 
+import com.echora.order.exception.ProblemDetailWriter;
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -72,19 +73,19 @@ public class InternalAuthFilter extends OncePerRequestFilter {
         }
 
         if (isBlank(expectedApiKey)) {
-            reject(response, HttpServletResponse.SC_SERVICE_UNAVAILABLE, "Dịch vụ đơn hàng chưa được cấu hình.");
+            reject(request, response, HttpServletResponse.SC_SERVICE_UNAVAILABLE, "Dịch vụ đơn hàng chưa được cấu hình.");
             return;
         }
 
         if (!constantTimeEquals(request.getHeader(HEADER_INTERNAL_API_KEY), expectedApiKey)) {
             log.warn("Denied direct access to {} - missing or invalid {}", request.getRequestURI(), HEADER_INTERNAL_API_KEY);
-            reject(response, HttpServletResponse.SC_UNAUTHORIZED, UNAUTHORIZED_MESSAGE);
+            reject(request, response, HttpServletResponse.SC_UNAUTHORIZED, UNAUTHORIZED_MESSAGE);
             return;
         }
 
         String rawUserId = request.getHeader(HEADER_USER_ID);
         if (isBlank(rawUserId)) {
-            reject(response, HttpServletResponse.SC_UNAUTHORIZED, UNAUTHORIZED_MESSAGE);
+            reject(request, response, HttpServletResponse.SC_UNAUTHORIZED, UNAUTHORIZED_MESSAGE);
             return;
         }
 
@@ -92,11 +93,11 @@ public class InternalAuthFilter extends OncePerRequestFilter {
         try {
             userId = Long.parseLong(rawUserId.trim());
         } catch (NumberFormatException ex) {
-            reject(response, HttpServletResponse.SC_UNAUTHORIZED, UNAUTHORIZED_MESSAGE);
+            reject(request, response, HttpServletResponse.SC_UNAUTHORIZED, UNAUTHORIZED_MESSAGE);
             return;
         }
         if (userId <= 0) {
-            reject(response, HttpServletResponse.SC_UNAUTHORIZED, UNAUTHORIZED_MESSAGE);
+            reject(request, response, HttpServletResponse.SC_UNAUTHORIZED, UNAUTHORIZED_MESSAGE);
             return;
         }
 
@@ -107,7 +108,7 @@ public class InternalAuthFilter extends OncePerRequestFilter {
             String role = request.getHeader(HEADER_USER_ROLE);
             if (role == null || !REQUIRED_ADMIN_ROLE.equalsIgnoreCase(role.trim())) {
                 log.warn("Denied non-admin access to {} - role: {}", path, role);
-                reject(response, HttpServletResponse.SC_FORBIDDEN, FORBIDDEN_MESSAGE);
+                reject(request, response, HttpServletResponse.SC_FORBIDDEN, FORBIDDEN_MESSAGE);
                 return;
             }
         }
@@ -125,10 +126,9 @@ public class InternalAuthFilter extends OncePerRequestFilter {
                 expected.getBytes(StandardCharsets.UTF_8));
     }
 
-    private static void reject(HttpServletResponse response, int status, String message) throws IOException {
-        response.setStatus(status);
-        response.setContentType("application/json;charset=UTF-8");
-        response.getWriter().write("{\"status\":" + status + ",\"message\":\"" + message + "\"}");
+    private static void reject(HttpServletRequest request, HttpServletResponse response,
+                               int status, String message) throws IOException {
+        ProblemDetailWriter.write(response, request, status, message);
     }
 
     private static boolean isBlank(String value) {

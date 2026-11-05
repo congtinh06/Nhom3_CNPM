@@ -19,14 +19,83 @@ spring:
     encoding: UTF-8
     locations: classpath:db/migration
 
+# OpenAPI / Swagger qua API Gateway. ECHORA_DOCS_ENABLED=true (default) -> /v3/api-docs
+# va /swagger-ui.html hoat dong; false -> tra ve 404/403 (khong lo noi dung).
+springdoc:
+  api-docs:
+    enabled: ${ECHORA_DOCS_ENABLED:false}
+    path: /v3/api-docs
+  swagger-ui:
+    enabled: ${ECHORA_DOCS_ENABLED:false}
+    path: /swagger-ui.html
+    operations-sorter: method
+    tags-sorter: alpha
+  paths-to-exclude:
+    - /internal/**
+    - /**/internal/**
+  info:
+    title: Echora Order Service
+    version: "1.0.0"
+    description: "Quản lý đơn hàng mua quyền thuyết minh Premium và thanh toán VNPay."
+  servers:
+    - url: ${GATEWAY_URL:http://localhost:18080}
+      description: API Gateway (http://localhost:18080 trong moi truong local)
+
 management:
   endpoints:
     web:
       exposure:
-        include: health,info
+        include: health,info,circuitbreakers,circuitbreakerevents
   endpoint:
     health:
       show-details: never
+  health:
+    circuitbreakers:
+      enabled: true
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      orderContentPoiPrice:
+        sliding-window-type: COUNT_BASED
+        sliding-window-size: 10
+        minimum-number-of-calls: 5
+        failure-rate-threshold: 50
+        slow-call-duration-threshold: 2s
+        slow-call-rate-threshold: 80
+        wait-duration-in-open-state: 10s
+        permitted-number-of-calls-in-half-open-state: 3
+        automatic-transition-from-open-to-half-open-enabled: true
+        register-health-indicator: true
+        ignore-exceptions:
+          - org.springframework.web.client.HttpClientErrorException
+      orderContentProductPrice:
+        sliding-window-type: COUNT_BASED
+        sliding-window-size: 10
+        minimum-number-of-calls: 5
+        failure-rate-threshold: 50
+        slow-call-duration-threshold: 2s
+        slow-call-rate-threshold: 80
+        wait-duration-in-open-state: 10s
+        permitted-number-of-calls-in-half-open-state: 3
+        automatic-transition-from-open-to-half-open-enabled: true
+        register-health-indicator: true
+        ignore-exceptions:
+          - org.springframework.web.client.HttpClientErrorException
+  retry:
+    instances:
+      # Chỉ retry GET giá POI (idempotent). POST batch giá sản phẩm không retry.
+      # content read timeout 3s x 3 attempts + backoff (~0.6s) = 9.6s < 15s gateway.
+      orderContentPoiPrice:
+        max-attempts: 3
+        wait-duration: 200ms
+        enable-exponential-backoff: true
+        exponential-backoff-multiplier: 2
+        retry-exceptions:
+          - java.io.IOException
+          - java.util.concurrent.TimeoutException
+          - org.springframework.web.client.ResourceAccessException
+          - org.springframework.web.client.HttpServerErrorException
 
 internal:
   api-key: ${INTERNAL_API_KEY:}
@@ -34,8 +103,13 @@ internal:
 app:
   content-service:
     url: ${CONTENT_SERVICE_URL:http://localhost:8085}
+    # Timeout cho RestClient đọc giá sản phẩm/POI (tránh treo checkout).
+    connect-timeout-ms: ${CONTENT_CONNECT_TIMEOUT_MS:2000}
+    read-timeout-ms: ${CONTENT_READ_TIMEOUT_MS:3000}
   auth-service:
     url: ${AUTH_SERVICE_URL:http://localhost:8086}
+    connect-timeout-ms: ${AUTH_CONNECT_TIMEOUT_MS:2000}
+    read-timeout-ms: ${AUTH_READ_TIMEOUT_MS:3000}
   pricing:
     shipping-fee: ${ORDER_SHIPPING_FEE:20000}
     free-shipping-threshold: ${ORDER_FREE_SHIPPING_THRESHOLD:50000}
@@ -44,7 +118,8 @@ app:
     poi-price: ${ORDER_PREMIUM_POI_PRICE:100000}
     access-days: ${ORDER_PREMIUM_ACCESS_DAYS:365}
   payments:
-    mock-enabled: ${PAYMENTS_MOCK_ENABLED:true}
+    # Mặc định TẮT. Bật bằng PAYMENTS_MOCK_ENABLED=true (chỉ dùng cho dev/demo).
+    mock-enabled: ${PAYMENTS_MOCK_ENABLED:false}
   vnpay:
     tmn-code: ${VNPAY_TMN_CODE:}
     hash-secret: ${VNPAY_HASH_SECRET:}
@@ -58,3 +133,6 @@ app:
 logging:
   level:
     com.echora.order: INFO
+  pattern:
+    # MDC traceId được set bởi TraceIdFilter để log service dùng cùng giá trị X-Trace-Id với gateway/response.
+    console: "%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX} %5p ${PID:- } --- [%15.15t] [%X{traceId:-}] %-40.40logger{39} : %m%n"

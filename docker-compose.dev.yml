@@ -31,3 +31,7 @@ services:
   order-service:
     ports:
       - "8087:8087"
+    # Dev/demo: giữ nút "Giả lập đã thanh toán" để thử luồng cấp quyền.
+    # Production (docker-compose.yml) mặc định TẮT.
+    environment:
+      PAYMENTS_MOCK_ENABLED: "true"

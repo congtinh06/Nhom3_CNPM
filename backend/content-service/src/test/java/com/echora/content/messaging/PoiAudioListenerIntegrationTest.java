@@ -73,7 +73,9 @@ class PoiAudioListenerIntegrationTest {
 
     @Container
     @ServiceConnection
-    static final RabbitMQContainer RABBIT = new RabbitMQContainer(DockerImageName.parse("rabbitmq:3-management"));
+    static final RabbitMQContainer RABBIT = new RabbitMQContainer(DockerImageName.parse("rabbitmq:3-management"))
+            // RabbitMQ can take longer than the 60s default on a cold or loaded machine.
+            .withStartupTimeout(Duration.ofMinutes(3));
 
     @DynamicPropertySource
     static void configureDatasource(DynamicPropertyRegistry registry) {

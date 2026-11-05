@@ -1,5 +1,19 @@
+# Dependencies & build output
 node_modules
 dist
+coverage
+target
+
+# VCS
 .git
-.env.local
+.gitignore
+
+# Secrets: khong dua .env vao image (Vite se inline VITE_* vao bundle)
+.env
+.env.*
+!.env.example
+
+# Test artifacts
+playwright-report
+test-results
 *.log

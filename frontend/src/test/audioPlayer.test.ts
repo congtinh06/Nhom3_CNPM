@@ -484,6 +484,16 @@ describe('Audio Resolution, Voice Selection & Linkage (Tasks 1 to 6)', () => {
       audioStatus: 'PENDING',
     };
     expect(resolvePlayback(pendingPoi, 'vi', 'short').source).toBe('speech');
+
+    // FAILED_TTS status must also fall back to speech synthesis.
+    const failedPoi: GeoPoi = {
+      ...pois[0]!,
+      audioUrl: '/api/tts/audio/poi_1_vi_ab12cd34.mp3',
+      audioStatus: 'FAILED_TTS',
+      audioStatusByLanguage: { vi: 'FAILED_TTS', en: 'READY' },
+    };
+    expect(resolvePlayback(failedPoi, 'vi', 'short').source).toBe('speech');
+    expect(resolvePlayback(failedPoi, 'vi', 'short').url).toBeUndefined();
   });
 
   it('(b2) remote audio follows the selected language and never another language', () => {

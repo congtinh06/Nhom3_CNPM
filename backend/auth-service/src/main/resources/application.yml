@@ -58,6 +58,12 @@ app:
   test-user:
     email: ${SEED_TEST_USER_EMAIL:user@echora.local}
     password: ${SEED_TEST_USER_PASSWORD:}
+  demo-premium:
+    # Tài khoản demo nghe audio EN/JA/KO; mật khẩu lấy từ .env, không hard-code.
+    email: ${DEMO_PREMIUM_EMAIL:}
+    password: ${DEMO_PREMIUM_PASSWORD:}
+    # Chi seed tai khoản demo Premium khi ECHORA_SEED_DEMO=true (default false: tắt seed).
+    seed-enabled: ${ECHORA_SEED_DEMO:false}
   rate-limit:
     login-max-failures: 5
     login-lock: PT15M
@@ -80,6 +86,28 @@ app:
     stats:
       max-range-days: ${QR_LOGIN_STATS_MAX_RANGE_DAYS:30}
 
+# OpenAPI / Swagger qua API Gateway. ECHORA_DOCS_ENABLED=true (default) -> /v3/api-docs
+# va /swagger-ui.html hoat dong; false -> tra ve 404/403 (khong lo noi dung).
+springdoc:
+  api-docs:
+    enabled: ${ECHORA_DOCS_ENABLED:false}
+    path: /v3/api-docs
+  swagger-ui:
+    enabled: ${ECHORA_DOCS_ENABLED:false}
+    path: /swagger-ui.html
+    operations-sorter: method
+    tags-sorter: alpha
+  paths-to-exclude:
+    - /internal/**
+    - /**/internal/**
+  info:
+    title: Echora Auth Service
+    version: "1.0.0"
+    description: "Xac thuc nguoi dung, phan quyen Premium va quan tri tai khoan."
+  servers:
+    - url: ${GATEWAY_URL:http://localhost:18080}
+      description: API Gateway (http://localhost:18080 trong moi truong local)
+
 management:
   endpoints:
     web:
@@ -92,3 +120,6 @@ management:
 logging:
   level:
     com.echora.auth: INFO
+  pattern:
+    # traceId duoc set boi TraceIdFilter tu header X-Trace-Id (gateway truyen xuong).
+    console: "%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX} %5p ${PID:- } --- [%15.15t] [%X{traceId:-}] %-40.40logger{39} : %m%n"

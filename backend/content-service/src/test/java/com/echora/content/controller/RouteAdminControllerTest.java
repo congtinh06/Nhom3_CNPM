@@ -106,7 +106,7 @@ class RouteAdminControllerTest {
     void testAdminList_MissingRole_Returns403() throws Exception {
         adminMockMvc.perform(get("/api/content/admin/routes"))
                 .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.message").value("Bạn không có quyền thực hiện thao tác này."));
+                .andExpect(jsonPath("$.detail").value("Bạn không có quyền thực hiện thao tác này."));
     }
 
     @Test

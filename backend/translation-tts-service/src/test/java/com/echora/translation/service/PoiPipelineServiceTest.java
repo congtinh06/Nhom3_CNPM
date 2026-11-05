@@ -3,6 +3,7 @@ package com.echora.translation.service;
 import com.echora.translation.entity.TranslationJob;
 import com.echora.translation.event.AuthoredPoiText;
 import com.echora.translation.event.PoiAudioFailedEvent;
+import com.echora.translation.event.PoiAudioProgressEvent;
 import com.echora.translation.event.PoiAudioReadyEvent;
 import com.echora.translation.event.PoiEventPayload;
 import com.echora.translation.exception.TranslationQuotaExceededException;
@@ -20,6 +21,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
 import org.springframework.amqp.AmqpException;
 import org.springframework.amqp.AmqpRejectAndDontRequeueException;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
@@ -230,10 +232,11 @@ class PoiPipelineServiceTest {
         String expectedHash = ContentHashUtils.computeHash("en", authoredTitle, authoredSummary, authoredDesc, null);
         assertEquals(expectedHash, enReady.getContentHash());
 
-        // TTS chỉ đánh tiếng tiêu đề + mô tả
+        // D1-Fix Q3: TTS giờ đánh tiếng title + summary + description (+ historicalSignificance nếu có)
         ArgumentCaptor<String> spokenCaptor = ArgumentCaptor.forClass(String.class);
         verify(audioStorageService).storeAudio(eq(909L), eq("en"), eq(expectedHash), spokenCaptor.capture());
-        assertEquals(authoredTitle + "\n\n" + authoredDesc, spokenCaptor.getValue());
+        String expectedSpoken = authoredTitle + "\n\n" + authoredSummary + "\n\n" + authoredDesc;
+        assertEquals(expectedSpoken, spokenCaptor.getValue());
     }
 
     @Test
@@ -442,6 +445,75 @@ class PoiPipelineServiceTest {
         inOrder.verify(eventPublisher).publishAudioReady(any(PoiAudioReadyEvent.class)); // 1st attempt (failed)
         inOrder.verify(eventPublisher).publishAudioReady(any(PoiAudioReadyEvent.class)); // 2nd attempt (succeeded)
         inOrder.verify(translationJobRepository).save(argThat(j -> "DONE".equals(j.getStatus())));
+    }
+
+    @Test
+    @DisplayName("Force regenerate: mở lại job DONE, chỉ xử lý ngôn ngữ được chỉ định và gọi TTS force")
+    void testForceRegenerate_reopensDoneJob_andOnlyProcessesForcedLanguage() {
+        String viTitle = "Dinh Độc Lập";
+        String viDesc = "Mô tả";
+        String enHash = ContentHashUtils.computeHash("en", viTitle, null, viDesc, null);
+
+        TranslationJob doneJob = TranslationJob.builder()
+                .poiId(120L).languageCode("en").contentHash(enHash)
+                .status("DONE").attempts(1)
+                .build();
+        jobStore.put("120_en_" + enHash, doneJob);
+
+        when(translationCacheService.getOrTranslate(eq("en"), any(), any(), any(), any()))
+                .thenReturn(new TranslatedPoiContent("Independence Palace", "Summary", "Description", null));
+        when(audioStorageService.storeAudio(eq(120L), eq("en"), eq(enHash), anyString(), eq(true)))
+                .thenReturn(new AudioStorageResult("forced.mp3", "/api/tts/audio/forced.mp3",
+                        Path.of("forced.mp3"), 12, true));
+
+        PoiEventPayload event = PoiEventPayload.builder()
+                .poiId(120L)
+                .title(viTitle)
+                .description(viDesc)
+                .targetLanguages(List.of("en", "ja", "ko"))
+                .forceRegenerate(true)
+                .forceLanguages(List.of("en"))
+                .build();
+
+        pipelineService.processPoiEvent(event);
+
+        verify(audioStorageService, times(1))
+                .storeAudio(eq(120L), eq("en"), eq(enHash), anyString(), eq(true));
+        verify(audioStorageService, never())
+                .storeAudio(eq(120L), eq("vi"), anyString(), anyString());
+        verify(translationCacheService, times(1))
+                .getOrTranslate(eq("en"), any(), any(), any(), any());
+        verify(eventPublisher, times(1)).publishAudioProgress(argThat(p -> "en".equals(p.getLanguageCode())));
+        verify(eventPublisher, times(1)).publishAudioReady(argThat(r -> "en".equals(r.getLanguageCode())));
+        verify(eventPublisher, never()).publishAudioReady(argThat(r -> "vi".equals(r.getLanguageCode())));
+        assertEquals("DONE", doneJob.getStatus());
+    }
+
+    @Test
+    @DisplayName("TTS tạm lỗi được retry có giới hạn rồi publish READY, không đánh FAILED_TTS")
+    void testTtsRetry_transientFailureThenSuccess() {
+        String hash = ContentHashUtils.computeHash("vi", "Tiêu đề", null, "Mô tả", null);
+        when(audioStorageService.storeAudio(eq(130L), eq("vi"), eq(hash), anyString()))
+                .thenThrow(new TtsExecutionException(1, "network glitch"))
+                .thenThrow(new TtsExecutionException(1, "network glitch"))
+                .thenReturn(new AudioStorageResult("retry.mp3", "/api/tts/audio/retry.mp3",
+                        Path.of("retry.mp3"), 9, true));
+        ReflectionTestUtils.setField(pipelineService, "ttsMaxAttempts", 3);
+        ReflectionTestUtils.setField(pipelineService, "ttsInitialBackoffMs", 0L);
+
+        PoiEventPayload event = PoiEventPayload.builder()
+                .poiId(130L)
+                .title("Tiêu đề")
+                .description("Mô tả")
+                .targetLanguages(List.of())
+                .build();
+
+        pipelineService.processPoiEvent(event);
+
+        verify(audioStorageService, times(3)).storeAudio(eq(130L), eq("vi"), eq(hash), anyString());
+        verify(eventPublisher, times(1)).publishAudioReady(argThat(r -> "vi".equals(r.getLanguageCode())));
+        verify(eventPublisher, never()).publishAudioFailed(any());
+        assertTrue(jobStore.values().stream().allMatch(j -> "DONE".equals(j.getStatus())));
     }
 
     @Test

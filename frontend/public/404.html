@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <title>Không tìm thấy trang - Echora</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600&family=Playfair+Display:wght@700;800&display=swap"
+    />
+    <style>
+      :root {
+        --page: #f1ece2;
+        --cream: #fff1c7;
+        --brown: #8a2f12;
+        --ink: #1c1410;
+        --font-display: 'Playfair Display', Georgia, 'Times New Roman', serif;
+        --font-body: 'Be Vietnam Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 32px 20px;
+        background: var(--page);
+        color: var(--ink);
+        font-family: var(--font-body);
+        line-height: 1.6;
+      }
+
+      main {
+        max-width: 560px;
+        text-align: center;
+      }
+
+      .code {
+        margin: 0;
+        font-family: var(--font-display);
+        font-size: clamp(72px, 18vw, 132px);
+        font-weight: 800;
+        line-height: 1;
+        color: var(--brown);
+      }
+
+      h1 {
+        margin: 12px 0 0;
+        font-family: var(--font-display);
+        font-size: clamp(24px, 5vw, 34px);
+        font-weight: 700;
+        line-height: 1.2;
+      }
+
+      p {
+        margin: 14px auto 28px;
+        max-width: 44ch;
+        font-size: 15px;
+        color: #4a3b32;
+      }
+
+      a.home {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 44px;
+        padding: 10px 22px;
+        border: 2px solid var(--brown);
+        border-radius: 999px;
+        color: var(--brown);
+        font-size: 15px;
+        font-weight: 600;
+        text-decoration: none;
+        transition: background-color 0.2s ease, color 0.2s ease;
+      }
+
+      a.home:hover,
+      a.home:focus-visible {
+        background: var(--brown);
+        color: var(--cream);
+      }
+
+      a.home:focus-visible {
+        outline: 3px solid var(--brown);
+        outline-offset: 3px;
+      }
+
+      .brand {
+        margin: 32px 0 0;
+        font-size: 13px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: #6b5a4e;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <p class="code">404</p>
+      <h1>Không tìm thấy trang</h1>
+      <p>
+        Đường dẫn bạn mở không tồn tại hoặc đã được chuyển đi. Hãy quay về trang chủ để tiếp tục
+        khám phá Sài Gòn cùng Echora.
+      </p>
+      <a class="home" href="/">Về trang chủ</a>
+      <p class="brand">Echora - Thuyết minh du lịch tự động</p>
+    </main>
+  </body>
+</html>

@@ -5,6 +5,7 @@ import com.echora.auth.dto.PoiGrantRequest;
 import com.echora.auth.dto.PremiumActivationRequest;
 import com.echora.auth.dto.UserPoiEntitlementResponse;
 import com.echora.auth.service.AuthService;
+import io.swagger.v3.oas.annotations.Hidden;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -19,6 +20,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/auth/internal/entitlements")
 @RequiredArgsConstructor
+@Hidden
 public class InternalEntitlementController {
 
     private final AuthService authService;

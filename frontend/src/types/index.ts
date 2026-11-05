@@ -136,6 +136,12 @@ export interface NearbyPoi {
   distanceMeters: number;
 }
 
+export interface NearbyPoisResponse {
+  pois: NearbyPoi[];
+  degraded: boolean;
+  notice?: string | null;
+}
+
 export interface ResolvePoiResponse {
   matched: boolean;
   poi: NearbyPoi | null;

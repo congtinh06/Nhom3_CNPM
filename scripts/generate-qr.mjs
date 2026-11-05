@@ -17,7 +17,8 @@ import { buildPlaceQrContent, normalizeQrBaseUrl } from '../frontend/src/lib/pla
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, '..');
-const outputDir = path.join(repoRoot, 'qr-output');
+const rawOutputDir = process.env.QR_OUTPUT_DIR || process.env.OUTPUT_DIR;
+const outputDir = rawOutputDir ? path.resolve(repoRoot, rawOutputDir) : path.join(repoRoot, 'docs', 'qr');
 const seedPath = path.join(
   repoRoot,
   'backend/content-service/src/main/resources/db/migration/R__seed_demo.sql'
@@ -29,10 +30,10 @@ const QR_MARGIN_MODULES = 3; // quiet zone wide enough for phone cameras
 function resolveBaseUrl() {
   const args = process.argv.slice(2);
   const argUrl = args.find((arg) => !arg.startsWith('-'));
-  const raw = process.env.BASE_URL || process.env.QR_BASE_URL || argUrl;
+  const raw = process.env.ECHORA_PUBLIC_DOMAIN || process.env.BASE_URL || process.env.QR_BASE_URL || argUrl;
   if (!raw) {
     console.error(
-      'Thiếu BASE_URL. Ví dụ:\n' +
+      'Thiếu BASE_URL hoặc ECHORA_PUBLIC_DOMAIN. Ví dụ:\n' +
         '  BASE_URL=https://your-app.vercel.app node scripts/generate-qr.mjs\n' +
         '  node scripts/generate-qr.mjs https://your-app.vercel.app'
     );

@@ -85,8 +85,22 @@ class AnalyticsEventControllerTest {
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status").value(400))
-                .andExpect(jsonPath("$.error").value("Bad Request"))
-                .andExpect(jsonPath("$.fieldErrors").isMap());
+                .andExpect(jsonPath("$.title").value("Bad Request"))
+                .andExpect(jsonPath("$.errors").isMap());
+    }
+
+    @Test
+    @DisplayName("POST /api/analytics/events returns 400 ProblemDetail on malformed JSON")
+    void testRecordEvent_malformedJson_returns400() throws Exception {
+        mockMvc.perform(post("/api/analytics/events")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{not-json"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.type").value("https://api.echora.dev/problems/400"))
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.title").value("Bad Request"))
+                .andExpect(jsonPath("$.detail").value(
+                        "Dữ liệu gửi lên không hợp lệ. Vui lòng kiểm tra định dạng JSON và thử lại."));
     }
 
     @Test
@@ -107,7 +121,7 @@ class AnalyticsEventControllerTest {
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isServiceUnavailable())
                 .andExpect(jsonPath("$.status").value(503))
-                .andExpect(jsonPath("$.error").value("Service Unavailable"))
-                .andExpect(jsonPath("$.message").value("Service is temporarily unable to process event due to message broker unavailability"));
+                .andExpect(jsonPath("$.title").value("Service Unavailable"))
+                .andExpect(jsonPath("$.detail").value("Service is temporarily unable to process event due to message broker unavailability"));
     }
 }

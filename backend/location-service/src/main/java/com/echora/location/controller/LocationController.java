@@ -1,6 +1,6 @@
 package com.echora.location.controller;
 
-import com.echora.location.dto.NearbyPoiDto;
+import com.echora.location.dto.NearbyPoisResponse;
 import com.echora.location.dto.PoiInternalQrDto;
 import com.echora.location.dto.ResolvePoiResponse;
 import com.echora.location.service.LocationService;
@@ -10,8 +10,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/location")
@@ -24,12 +22,12 @@ public class LocationController {
     }
 
     @GetMapping("/nearby")
-    public ResponseEntity<List<NearbyPoiDto>> getNearbyPois(
+    public ResponseEntity<NearbyPoisResponse> getNearbyPois(
             @RequestParam("lat") Double lat,
             @RequestParam("lng") Double lng,
             @RequestParam("radius") Double radius
     ) {
-        List<NearbyPoiDto> result = locationService.getNearbyPois(lat, lng, radius);
+        NearbyPoisResponse result = locationService.getNearbyPois(lat, lng, radius);
         return ResponseEntity.ok(result);
     }
 

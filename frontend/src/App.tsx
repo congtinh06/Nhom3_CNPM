@@ -8,24 +8,6 @@ import { Header } from './components/layout/Header';
 import { Footer } from './components/layout/Footer';
 import { CartDialog } from './components/cart/CartDialog';
 import { BackToTop } from './components/common/BackToTop';
-import { HomePage } from './pages/HomePage';
-import { OrdersPage } from './pages/OrdersPage';
-import { ScanPage } from './pages/ScanPage';
-import { QrLoginScanPage } from './pages/QrLoginScanPage';
-import { NotFoundPage } from './pages/NotFoundPage';
-import { ResetPasswordPage } from './pages/ResetPasswordPage';
-import { VerifyEmailPage } from './pages/VerifyEmailPage';
-import { AccountPage } from './pages/AccountPage';
-import { FoodBeveragePage } from './pages/FoodBeveragePage';
-import { ProductDetailPage } from './pages/ProductDetailPage';
-import { CheckoutPage } from './pages/CheckoutPage';
-import { PaymentResultPage } from './pages/PaymentResultPage';
-import { VietQrPage } from './pages/VietQrPage';
-import { GuidePage } from './pages/GuidePage';
-import { ContactPage } from './pages/ContactPage';
-import { NewsListPage } from './pages/NewsListPage';
-import { NewsDetailPage } from './pages/NewsDetailPage';
-import { PremiumPage } from './pages/PremiumPage';
 import { AuthModal } from './components/auth/AuthModal';
 import { RequireAuth } from './components/auth/RequireAuth';
 
@@ -47,6 +29,28 @@ const NearbyPage = lazy(() => import('./pages/NearbyPage'));
 const AdminRoutes = lazy(() => import('./admin/AdminRoutes'));
 const AccountLoginQrPage = lazy(() => import('./pages/AccountLoginQrPage'));
 const QrHandoffReceivePage = lazy(() => import('./pages/QrHandoffReceivePage'));
+const PremiumPage = lazy(() => import('./pages/PremiumPage'));
+// Trang chủ và các trang nặng được tải lười để chunk index ban đầu nhẹ.
+const HomePage = lazy(() => import('./pages/HomePage').then((m) => ({ default: m.HomePage })));
+const OrdersPage = lazy(() => import('./pages/OrdersPage'));
+const ScanPage = lazy(() => import('./pages/ScanPage'));
+const QrLoginScanPage = lazy(() => import('./pages/QrLoginScanPage'));
+const NotFoundPage = lazy(() =>
+  import('./pages/NotFoundPage').then((m) => ({ default: m.NotFoundPage }))
+);
+const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage'));
+const VerifyEmailPage = lazy(() => import('./pages/VerifyEmailPage'));
+const AccountPage = lazy(() => import('./pages/AccountPage'));
+const FoodBeveragePage = lazy(() => import('./pages/FoodBeveragePage'));
+const ProductDetailPage = lazy(() => import('./pages/ProductDetailPage'));
+const CheckoutPage = lazy(() => import('./pages/CheckoutPage'));
+const PaymentResultPage = lazy(() => import('./pages/PaymentResultPage'));
+const VietQrPage = lazy(() => import('./pages/VietQrPage'));
+const GuidePage = lazy(() => import('./pages/GuidePage'));
+const ContactPage = lazy(() => import('./pages/ContactPage'));
+const PrivacyPolicyPage = lazy(() => import('./pages/PrivacyPolicyPage'));
+const NewsListPage = lazy(() => import('./pages/NewsListPage'));
+const NewsDetailPage = lazy(() => import('./pages/NewsDetailPage'));
 
 const PoiRedirect: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -181,6 +185,7 @@ const AppContent: React.FC = () => {
             <Route path="/tin-tuc/:slug" element={<NewsDetailPage />} />
             <Route path="/huong-dan" element={<GuidePage />} />
             <Route path="/lien-he" element={<ContactPage />} />
+            <Route path="/chinh-sach-quyen-rieng-tu" element={<PrivacyPolicyPage />} />
             <Route path="/nang-cap" element={<PremiumPage />} />
 
             {/* Product detail routes (all legacy paths stay real) */}
