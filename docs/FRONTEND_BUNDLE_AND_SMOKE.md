@@ -67,18 +67,23 @@ Lần này thay đổi thật sự ảnh hưởng kích thước chunk đầu v�
 
 Cùng mã nguồn, chỉ khác `App.tsx` + `manualChunks`:
 
-| Asset | Trước — eager route (kB) | Sau — lazy route + charts (kB) | Gzip trước | Gzip sau |
-|---|---:|---:|---:|---:|
-| `index-*.js` | 530,15 | **155,99** | 171,49 | 53,25 |
-| `vendor-*.js` | 1.029,52 | 693,11 | 309,70 | 225,25 |
-| `vendor-charts-*.js` | — (nằm trong `vendor`) | 334,19 | — | 84,22 |
-| `HomePage-*.js` | — | 30,27 | — | 12,88 |
-| `NearbyPage-*.js` | — | 109,52 | — | 38,90 |
-| `PremiumPage-*.js` | — | 40,73 | — | 15,07 |
+### Bảng so sánh thống nhất (Chuẩn đo: `npm run build` — Vite 5.4.21)
 
-`index` giảm từ **530,15 kB → 155,99 kB** (gzip 171,49 → 53,25 kB), đạt mục tiêu
-dưới 300 kB. Tổng JS vẫn tương đương vì code được chia sang các chunk tải lười;
-lợi ích là lần đầu vào trang chỉ tải `index` + `vendor` + chunk của route hiện tại.
+| Asset / Thành phần | Raw trước (kB) | Raw sau (kB) | Gzip trước (kB) | Gzip sau (kB) | Biến động Raw | Biến động Gzip |
+|---|---:|---:|---:|---:|---:|---:|
+| `index-*.js` (entry bundle) | 530,15 | **155,99** | 171,49 | **53,25** | -70,58% | -68,95% |
+| `vendor-*.js` (core vendor) | 1.029,52 | 693,11 | 309,70 | 225,25 | -32,68% | -27,27% |
+| `vendor-charts-*.js` (charts) | — (gộp trong vendor) | 334,19 | — | 84,22 | Tách mới | Tách mới |
+| `NearbyPage-*.js` | — (gộp trong index) | 109,52 | — | 38,90 | Tách mới | Tách mới |
+| `PremiumPage-*.js` | — (gộp trong index) | 40,73 | — | 15,07 | Tách mới | Tách mới |
+| `HomePage-*.js` | — (gộp trong index) | 30,27 | — | 12,88 | Tách mới | Tách mới |
+| **Tải trang ban đầu (`index` + `vendor`)** | **1.559,67** | **849,10** | **481,19** | **278,50** | **-45,56%** | **-42,12%** |
+| **Tổng JS (toàn bộ các chunk)** | **1.559,67** | **1.842,67** | **481,19** | **598,63** | **+18,14%** | **+24,41%** |
+
+*Ghi chú đánh giá*:
+1. Entry bundle `index-*.js` giảm từ **530,15 kB xuống 155,99 kB** (gzip từ 171,49 kB xuống 53,25 kB), vượt xa mục tiêu dưới 300 kB (giảm hơn 70%).
+2. Khối lượng tải khởi tạo ban đầu cho người dùng giảm gần một nửa (từ 1,56 MB xuống 849 kB raw; gzip chỉ còn 278 kB).
+3. Tổng JS toàn ứng dụng tăng 18,14% do phân rã thành 86 chunk tải lười riêng biệt (chi phí runtime wrapper và metadata import của Vite/Rollup), nhưng người dùng thông thường chỉ tải các chunk thuộc route mà họ ghé thăm, tiết kiệm đáng kể tài nguyên mạng.
 
 ## 3. Smoke test production bằng Playwright
 
