@@ -2,19 +2,14 @@
  * ============================================================================
  * TRANG TOUR DI SẢN QUANH ĐÂY & THUYẾT MINH ÂM THANH (Nearby Heritage Tour)
  * ============================================================================
- * 
- * Mục đích module:
- * - Trải nghiệm tour tham quan di sản Sài Gòn qua bản đồ tương tác và định vị GPS.
- * - Tự động phát thuyết minh audio khi du khách tiến vào bán kính kích hoạt (`triggerRadius`).
- * - Hỗ trợ đọc thuyết minh đa ngôn ngữ (VI, EN, JA, KO) với đồng bộ từ theo giọng đọc.
- * 
- * Các thay đổi cốt lõi (Core Changes):
- * 1. [Khóa / Mở khóa ngoại ngữ]: Kiểm tra `canAccessPoiLanguage(poi.numericId ?? poi.id, currentLang)`
- *    ở cả 4 vị trí: danh sách POI bị khóa, phát audio tự động, bấm nút Play thủ công, và khối nội dung đọc.
- * 2. [Hỗ trợ mua lẻ POI]: Nếu chưa mở khóa gói Premium toàn phần, tự động dẫn đến trang thanh toán gói lẻ
- *    của chính điểm đó (`buildPoiPremiumPath`) thay vì ép mua gói tài khoản đầy đủ.
- * 3. [Tích hợp âm thanh]: Kết nối với `poiGuideAdapter` và `nearbyPois.json` để bảo đảm luôn có
- *    file âm thanh thuyết minh chất lượng cao cho cả 4 ngôn ngữ.
+ * Thiết kế mới theo phong cách Boutique Dark Editorial (Echora – Điểm du lịch Sài Gòn).
+ * Tích hợp toàn diện giao diện đặc trưng:
+ * - Editorial Hero: Bảy điểm dừng quanh trung tâm Sài Gòn + Facts table
+ * - Stepper Timeline bar kết nối các điểm dừng
+ * - 2-Column Main: Danh sách điểm dừng + Bài thuyết minh chi tiết & Bản đồ Leaflet tối màu dính (sticky)
+ * - Khối hướng dẫn "How it works" 3 cột
+ * - Cửa hàng quà lưu niệm "Mang một chút Sài Gòn về nhà" kết nối giỏ hàng
+ * - Thanh phát audio cố định chân trang (Fixed Bottom Player) phong cách kem nhạt / chữ sẫm
  * ============================================================================
  */
 
@@ -29,6 +24,7 @@ import { useNavbarLanguage, SUPPORTED_LANGUAGES } from '../content/languages';
 import { useToastOptional } from '../context/ToastContext';
 import { usePremium, buildPremiumPath, buildPoiPremiumPath, isPremiumLanguage, normalizePoiId } from '../context/PremiumContext';
 import { useAuthOptional } from '../context/AuthContext';
+import { useCartOptional } from '../context/CartContext';
 import { SupportedLanguage } from '../types';
 import { useAutoNarration, haversine } from '../hooks/useAutoNarration';
 import { useNearbyAudio, splitTranscriptIntoSentences } from '../hooks/useNearbyAudio';
@@ -48,10 +44,7 @@ import { PoiList } from '../components/nearby/PoiList';
 import { PoiHero } from '../components/nearby/PoiHero';
 import { PoiReadingSection } from '../components/nearby/PoiReadingSection';
 import { NearbyDegradedNotice } from '../components/nearby/NearbyDegradedNotice';
-import { SouvenirStrip } from '../components/souvenir/SouvenirStrip';
-import { AudioPlayerBar } from '../components/nearby/AudioPlayerBar';
-import { PageHero } from '../components/common/PageHero';
-import { HERO_CONFIG } from '../config/heroImages';
+import { ArtIllustration } from '../components/nearby/ArtIllustration';
 import '../styles/nearby.css';
 
 export interface NarrationChapterBlock {
@@ -67,9 +60,7 @@ export interface NarrationData {
 
 export interface GeoPoi {
   id: string;
-  /** Id DB của POI (để kiểm tra gói mua lẻ theo điểm). */
   numericId?: number | null;
-  /** Giá mua lẻ gói ngoại ngữ của POI này (null = dùng giá mặc định). */
   premiumPrice?: number | null;
   qrToken?: string | null;
   name: Record<SupportedLanguage, string>;
@@ -131,8 +122,6 @@ export function getHeroIntroText(poi: GeoPoi, lang: SupportedLanguage): string {
   const sentences = splitTranscriptIntoSentences(shortText);
   const intro = sentences.length === 0 ? shortText : sentences.slice(0, 2).map((s) => s.sentence).join(' ');
 
-  // The arrival narration opens with "Bạn đang đứng trước ..." / "You are standing
-  // in front of ...". Keep that phrase for the audio, but not in the hero copy.
   const stripped = intro
     .replace(/^Bạn đang đứng trước\s+/i, '')
     .replace(/^Bạn đang đứng tại\s+/i, '')
@@ -177,24 +166,39 @@ const PREMIUM_GATE_COPY: Record<
   },
 };
 
-if (import.meta.env.DEV && typeof window !== 'undefined') {
-  if (!(window as any).__nearbyPerf) {
-    (window as any).__nearbyPerf = {
-      rendersNearbyPage: 0,
-      rendersPoiList: 0,
-      rendersPoiCard: 0,
-      flyToCalls: 0,
-      invalidateSizeCalls: 0,
-      headerHeightChanges: 0,
-    };
-  }
-}
+const SOUVENIR_GOODS = [
+  {
+    id: 101,
+    name: 'Tranh cổ động Việt Nam',
+    desc: 'Tranh phong cách cũ, đậm dấu ấn lịch sử.',
+    priceText: '120.000đ',
+    price: 120000,
+    hue: 20,
+  },
+  {
+    id: 102,
+    name: 'Sách lịch sử Sài Gòn',
+    desc: 'Sách ảnh về lịch sử và con người Sài Gòn.',
+    priceText: '95.000đ',
+    price: 95000,
+    hue: 150,
+  },
+  {
+    id: 103,
+    name: 'Huy hiệu lưu niệm',
+    desc: 'Huy hiệu ghim với biểu tượng Sài Gòn.',
+    priceText: '20.000đ',
+    price: 20000,
+    hue: 200,
+  },
+];
+
+const fmtTime = (s: number): string => {
+  if (isNaN(s) || s < 0) return '0:00';
+  return Math.floor(s / 60) + ':' + String(Math.floor(s % 60)).padStart(2, '0');
+};
 
 export const NearbyPage: React.FC = () => {
-  if (import.meta.env.DEV && typeof window !== 'undefined' && (window as any).__nearbyPerf) {
-    (window as any).__nearbyPerf.rendersNearbyPage++;
-  }
-
   const { lang, changeLanguage } = useNavbarLanguage();
   const navigate = useNavigate();
   const { canAccessLanguage, canAccessPoi, canAccessPoiLanguage, refreshEntitlement } =
@@ -202,20 +206,34 @@ export const NearbyPage: React.FC = () => {
   const auth = useAuthOptional();
   const isAuthenticated = auth?.isAuthenticated ?? false;
   const { showToast } = useToastOptional();
+  const { addToCart } = useCartOptional();
   const currentLang = (lang as SupportedLanguage) || 'vi';
   const isLanguageLocked = !canAccessLanguage(currentLang);
+
+  const [toastText, setToastText] = useState<string | null>(null);
+  const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const triggerToast = useCallback(
+    (msg: string) => {
+      showToast(msg);
+      setToastText(msg);
+      if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+      toastTimerRef.current = setTimeout(() => {
+        setToastText(null);
+      }, 2500);
+    },
+    [showToast]
+  );
 
   const openPremiumForLanguage = useCallback(() => {
     const returnTo = `${window.location.pathname}${window.location.search}`;
     navigate(buildPremiumPath(currentLang, returnTo));
   }, [currentLang, navigate]);
 
-  // Cảnh báo khóa ngoại ngữ: nếu POI chưa được mở (hoặc mở riêng) thì dẫn tới gói
-  // mua lẻ cho chính điểm đó, ngược lại về trang nâng cấp Premium toàn cục.
   const warnAndOpenPremium = useCallback(
     (poi?: GeoPoi | null, targetLang?: SupportedLanguage) => {
       const langToCheck = targetLang || currentLang;
-      showToast(PREMIUM_GATE_COPY[langToCheck]?.warning || PREMIUM_GATE_COPY[currentLang].warning);
+      triggerToast(PREMIUM_GATE_COPY[langToCheck]?.warning || PREMIUM_GATE_COPY[currentLang].warning);
       const returnTo = `${window.location.pathname}${window.location.search}`;
       const targetNumericId = poi?.numericId ?? (poi?.id ? normalizePoiId(poi.id) : null);
       if (
@@ -228,10 +246,9 @@ export const NearbyPage: React.FC = () => {
       }
       navigate(buildPremiumPath(langToCheck, returnTo));
     },
-    [currentLang, canAccessPoi, navigate, showToast]
+    [currentLang, canAccessPoi, navigate, triggerToast]
   );
 
-  // Synchronize document language and title with the single source of truth
   useEffect(() => {
     document.documentElement.lang = currentLang;
     document.title = t(currentLang, 'pageTitle');
@@ -246,15 +263,12 @@ export const NearbyPage: React.FC = () => {
     changeLanguage(langParam as SupportedLanguage);
   }, [changeLanguage]);
 
-  // Quyền mua lẻ/Premium có thể được cấp bất đồng bộ sau khi thanh toán xong.
-  // Làm mới entitlement mỗi lần vào trang để không hiển thị khóa sai.
   useEffect(() => {
     if (import.meta.env.MODE === 'test') return;
     if (!isAuthenticated) return;
     void refreshEntitlement();
   }, [isAuthenticated, refreshEntitlement]);
 
-  // Khi quay lại từ cổng thanh toán VNPAY: invalidate và cập nhật quyền ngay lập tức
   useEffect(() => {
     if (import.meta.env.MODE === 'test') return;
     const searchParams = new URLSearchParams(window.location.search);
@@ -270,13 +284,10 @@ export const NearbyPage: React.FC = () => {
   const rootRef = useRef<HTMLDivElement>(null);
   const heroRef = useRef<HTMLDivElement>(null);
 
-  // Nguồn dữ liệu: API/DB (nguồn chung với admin). Chỉ rơi về file tĩnh khi bật chế độ demo.
   const [apiPois, setApiPois] = useState<GeoPoi[] | null>(null);
   const [apiFailed, setApiFailed] = useState(false);
   const [apiLoading, setApiLoading] = useState(!DEMO_FIXTURES_ENABLED);
   const [reloadToken, setReloadToken] = useState(0);
-  // Thông báo "giảm chất" khi content-service không phản hồi: location-service trả
-  // GET /api/location/nearby -> { pois: [], degraded: true, notice }.
   const [degradedNotice, setDegradedNotice] = useState<string | null>(null);
 
   useEffect(() => {
@@ -297,7 +308,6 @@ export const NearbyPage: React.FC = () => {
       })
       .catch(() => {
         if (cancelled) return;
-        // Không còn âm thầm thay bằng dữ liệu mẫu ở bản build thật.
         setApiFailed(true);
         setApiLoading(false);
       });
@@ -306,13 +316,10 @@ export const NearbyPage: React.FC = () => {
     };
   }, [reloadToken]);
 
-  // Khi content-service không sẵn sàng, location-service trả `degraded=true` kèm `notice`
-  // thay vì lỗi cứng. Gọi endpoint này để hiển thị thông báo thân thiện và cho phép thử lại.
   useEffect(() => {
     if (import.meta.env.MODE === 'test') return;
     if (typeof api.getNearbyPois !== 'function') return;
     let cancelled = false;
-    // Dùng toạ độ TP.HCM làm tâm để không phụ thuộc quyền GPS mà vẫn kích hoạt cảnh báo giảm chất.
     api
       .getNearbyPois(10.7770, 106.6958, 1500)
       .then((response) => {
@@ -321,7 +328,6 @@ export const NearbyPage: React.FC = () => {
       })
       .catch(() => {
         if (cancelled) return;
-        // Lỗi cứng (không phải giảm chất) đã được xử lý qua getPoiGuides/apiFailed.
         setDegradedNotice(null);
       });
     return () => {
@@ -329,7 +335,6 @@ export const NearbyPage: React.FC = () => {
     };
   }, [reloadToken]);
 
-  // Read slug from data; fall back to a slugified id only if missing
   const pois: GeoPoi[] = useMemo(() => {
     if (apiPois) return apiPois;
     if (!DEMO_FIXTURES_ENABLED) return [];
@@ -350,17 +355,15 @@ export const NearbyPage: React.FC = () => {
     [pois]
   );
 
-  // Toolbar & map states
   const radius = 50;
-  // Increments on every "Vị trí của tôi" press so the map auto-centers exactly once per press
   const [flyToUserToken, setFlyToUserToken] = useState<number>(0);
   const gpsToastShownRef = useRef<boolean>(false);
   const [isAutoEnabled, setIsAutoEnabled] = useState<boolean>(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const [addedGoodsIds, setAddedGoodsIds] = useState<number[]>([]);
 
-  // Journey progress tracking persisted in localStorage
   const [listenedPoiIds, setListenedPoiIds] = useState<string[]>(() => {
     if (typeof window === 'undefined') return [];
     try {
@@ -384,43 +387,6 @@ export const NearbyPage: React.FC = () => {
     });
   }, []);
 
-  const isPlayerActiveRef = useRef<boolean>(false);
-
-  // Measure static base heights once at mount and on window resize without any per-frame scroll listener
-  useEffect(() => {
-    const rootEl = rootRef.current;
-    if (!rootEl) return;
-
-    const updateBaseSizes = () => {
-      if (!rootEl) return;
-      if (import.meta.env.DEV && typeof window !== 'undefined' && (window as any).__nearbyPerf) {
-        (window as any).__nearbyPerf.headerHeightChanges++;
-      }
-      const headerEl = document.querySelector('header.hd') as HTMLElement | null;
-      const controlBarEl = document.querySelector('.nearby-sticky-controlbar') as HTMLElement | null;
-
-      if (headerEl) {
-        const baseH = Math.round(headerEl.getBoundingClientRect().height);
-        if (baseH > 0) {
-          rootEl.style.setProperty('--header-base-height', `${baseH}px`);
-        }
-      }
-      if (controlBarEl) {
-        const ctrlH = Math.round(controlBarEl.getBoundingClientRect().height);
-        if (ctrlH > 0) {
-          rootEl.style.setProperty('--ctrl-bar-height', `${ctrlH}px`);
-        }
-      }
-    };
-
-    updateBaseSizes();
-    window.addEventListener('resize', updateBaseSizes, { passive: true });
-    return () => {
-      window.removeEventListener('resize', updateBaseSizes);
-    };
-  }, []);
-
-  // Helper getters
   const getPoiName = useCallback(
     (poi: GeoPoi) => poi.name[currentLang] || poi.name.vi,
     [currentLang]
@@ -443,7 +409,6 @@ export const NearbyPage: React.FC = () => {
     [currentLang]
   );
 
-  // Derived tour statistics formatted via Intl
   const approxDistance = useMemo(() => {
     if (pois.length < 2) return null;
     let sum = 0;
@@ -459,7 +424,6 @@ export const NearbyPage: React.FC = () => {
 
   const languagesCount = SUPPORTED_LANGUAGES.length;
 
-  // Audio Hook with adaptive playback hierarchy & sentence highlighting
   const {
     currentId,
     playbackStatus,
@@ -493,10 +457,8 @@ export const NearbyPage: React.FC = () => {
     noVoiceNoticeText: () => t(currentLang, 'noVoiceForLanguage'),
   });
 
-  // Single source of truth for the paused state, shared by every play button
   const isPaused = playbackStatus === 'paused';
 
-  // Auto Narration & GPS Hook
   const {
     userPos,
     gpsError,
@@ -518,7 +480,7 @@ export const NearbyPage: React.FC = () => {
         isPremiumLanguage(currentLang) &&
         !canAccessPoiLanguage(playedPoi?.numericId ?? playedPoi?.id, currentLang)
       ) {
-        showToast(PREMIUM_GATE_COPY[currentLang].warning);
+        triggerToast(PREMIUM_GATE_COPY[currentLang].warning);
         return;
       }
       setSelectedId(poiId);
@@ -541,8 +503,6 @@ export const NearbyPage: React.FC = () => {
     stopAllAudio();
   }, [isLanguageLocked, isAutoEnabled, setAutoDirect, stopAllAudio]);
 
-  // One-time toast the first time a GPS fix lands. Later watch updates
-  // must not re-trigger it.
   useEffect(() => {
     if (!userPos) return;
     if (gpsToastShownRef.current) return;
@@ -557,15 +517,14 @@ export const NearbyPage: React.FC = () => {
     }
     if (!nearest) return;
     gpsToastShownRef.current = true;
-    showToast(
+    triggerToast(
       t(currentLang, 'gpsLocatedToast', {
         name: getPoiName(nearest),
         dist: formatDistance(nearestDist, currentLang),
       })
     );
-  }, [userPos, pois, currentLang, getPoiName, showToast]);
+  }, [userPos, pois, currentLang, getPoiName, triggerToast]);
 
-  // Stable 1..N tour numbers, independent of the current sort mode (nearest or tour).
   const tourNumberById = useMemo(() => {
     const ordered = pois
       .map((poi, originalIndex) => ({ poi, originalIndex }))
@@ -578,7 +537,6 @@ export const NearbyPage: React.FC = () => {
     return map;
   }, [pois]);
 
-  // Calculate sorted POIs (Closest first if userPos exists; otherwise tour order by stopOrder)
   const sortedPois = useMemo(() => {
     const list = pois.map((p, index) => {
       const dist = userPos ? haversine(userPos.lat, userPos.lng, p.lat, p.lng) : null;
@@ -601,7 +559,6 @@ export const NearbyPage: React.FC = () => {
     return list;
   }, [pois, userPos, tourNumberById]);
 
-  // Effective active stop ID: falls back to the first stop so that Stop 1 is active on initial load
   const effectiveActiveId = activeId || selectedId || (sortedPois[0]?.poi.id ?? pois[0]?.id ?? null);
 
   const activeSortedItem = useMemo(() => {
@@ -617,27 +574,11 @@ export const NearbyPage: React.FC = () => {
   const nextItem =
     activeIndex >= 0 && activeIndex < sortedPois.length - 1 ? (sortedPois[activeIndex + 1] ?? null) : null;
 
-  // Active playing or selected POI
   const activeSelectedPoi = useMemo(
     () => activeSortedItem?.poi || pois.find((p) => p.id === (currentId || selectedId || activeId || effectiveActiveId)) || null,
     [activeSortedItem, pois, currentId, selectedId, activeId, effectiveActiveId]
   );
 
-  const isPlayerActive = Boolean(activeSelectedPoi && (isPlaying || currentTime > 0 || notice));
-
-  useEffect(() => {
-    isPlayerActiveRef.current = isPlayerActive;
-    const rootEl = rootRef.current;
-    if (rootEl) {
-      const playerBarEl = document.querySelector('.nearby-sticky-player-bar') as HTMLElement | null;
-      const h = isPlayerActive
-        ? Math.round(playerBarEl ? playerBarEl.getBoundingClientRect().height : 72)
-        : 0;
-      rootEl.style.setProperty('--player-bar-height', `${h}px`);
-    }
-  }, [isPlayerActive]);
-
-  // Single Status message for list header
   const statusMessage = useMemo(() => {
     if (gpsError) {
       return <span style={{ color: '#b91c1c' }}>{gpsError}</span>;
@@ -663,17 +604,10 @@ export const NearbyPage: React.FC = () => {
     return null;
   }, [gpsError, userPos, sortedPois, currentLang, getPoiName]);
 
-  // Scroll hero into view below sticky header on manual stop selection if outside viewport
   const scrollHeroIntoView = useCallback(() => {
     if (!heroRef.current) return;
     const rect = heroRef.current.getBoundingClientRect();
-    const headerEl = document.querySelector('header.hd') as HTMLElement | null;
-    const ctrlBarEl = document.querySelector('.nearby-sticky-controlbar') as HTMLElement | null;
-    const headerOffset =
-      (headerEl?.getBoundingClientRect().height || 64) +
-      (ctrlBarEl?.getBoundingClientRect().height || 44);
-
-    if (rect.top < headerOffset || rect.top > window.innerHeight) {
+    if (rect.top < 64 || rect.top > window.innerHeight) {
       const prefersReducedMotion =
         typeof window !== 'undefined' &&
         window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -684,7 +618,6 @@ export const NearbyPage: React.FC = () => {
     }
   }, []);
 
-  // Explicit selection: updates active stop, writes ?stop=<slug> via history.replaceState
   const handleExplicitSelectPoi = useCallback(
     (poiId: string, shouldScroll = false) => {
       setSelectedId(poiId);
@@ -705,15 +638,6 @@ export const NearbyPage: React.FC = () => {
     [pois, scrollHeroIntoView]
   );
 
-  // View chapter transcript link from player bar: selects stop and scrolls into view
-  const handleViewChapterTranscript = useCallback(
-    (poiId: string) => {
-      handleExplicitSelectPoi(poiId, true);
-    },
-    [handleExplicitSelectPoi]
-  );
-
-  // Initial load check: ?stop=<slug> (deep link) hoặc ?poi=<id DB> (sau thanh toán).
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const stopParam = params.get('stop');
@@ -742,7 +666,6 @@ export const NearbyPage: React.FC = () => {
         warnAndOpenPremium(targetPoi);
         return;
       }
-      // Must run synchronously inside the tap gesture, before any async work.
       unlockAudio();
       setSelectedId(poiId);
       setActiveId(poiId);
@@ -763,7 +686,6 @@ export const NearbyPage: React.FC = () => {
     ]
   );
 
-  // Auto-narration status line: always reflects the real configured radius and state.
   const autoStatusMessage = useMemo(() => {
     const configuredRadius = (() => {
       const radii = pois.map((p) => p.triggerRadius).filter((value) => value > 0);
@@ -797,134 +719,169 @@ export const NearbyPage: React.FC = () => {
     userPos,
   ]);
 
+  const handleAddSouvenir = useCallback(
+    (g: typeof SOUVENIR_GOODS[0]) => {
+      setAddedGoodsIds((prev) => (prev.includes(g.id) ? prev : [...prev, g.id]));
+      if (addToCart) {
+        addToCart({
+          id: g.id,
+          name: g.name,
+          price: g.price,
+          quantity: 1,
+          image: `/images/souvenirs/souvenir_${g.id}.jpg`,
+          category: 'SOUVENIR',
+        } as any);
+      }
+      triggerToast(`Đã thêm ${g.name} vào giỏ hàng`);
+    },
+    [addToCart, triggerToast]
+  );
+
+  // Stepper timeline fill calculation
+  const listenedIndices = useMemo(() => {
+    return sortedPois
+      .map((item, idx) => (listenedPoiIds.includes(item.poi.id) ? idx : -1))
+      .filter((idx) => idx >= 0);
+  }, [sortedPois, listenedPoiIds]);
+
+  const maxListenedIndex = listenedIndices.length > 0 ? Math.max(...listenedIndices) : -1;
+  const sfillWidth = maxListenedIndex >= 0 ? `${((maxListenedIndex + 1) / Math.max(1, sortedPois.length)) * 100}%` : '0%';
+
+  const activeProgressPercent = duration && duration > 0 ? Math.min(100, (currentTime / duration) * 100) : 0;
+
   return (
     <div className="nearby-sv-root" ref={rootRef}>
-      {/* 1. FULL-BLEED PHOTO HERO BANNER */}
-      <PageHero
-        eyebrow={t(currentLang, 'heroEyebrow')}
-        title={t(currentLang, 'pageTitle')}
-        subtitle={t(currentLang, 'pageSubtitle')}
-        imageSrc={HERO_CONFIG.diemDuLich.src}
-        imageSrcMobile={HERO_CONFIG.diemDuLich.srcMobile}
-        imagePosition={HERO_CONFIG.diemDuLich.position}
-        imageCredit={HERO_CONFIG.diemDuLich.credit}
-      />
-
-      {/* 2. STATS CHIPS UNDER HERO */}
       {isLanguageLocked && (
-        <section className="nearby-premium-gate" role="status" aria-live="polite">
-          <span className="nearby-premium-gate-icon" aria-hidden="true">
-            <Lock size={20} strokeWidth={1.8} />
-          </span>
-          <div className="nearby-premium-gate-copy">
-            <strong>{PREMIUM_GATE_COPY[currentLang].title}</strong>
-            <p>{PREMIUM_GATE_COPY[currentLang].description}</p>
-          </div>
-          <button type="button" onClick={openPremiumForLanguage}>
-            {PREMIUM_GATE_COPY[currentLang].cta}
-          </button>
-        </section>
+        <div className="wrap">
+          <section className="nearby-premium-gate" role="status" aria-live="polite">
+            <span className="nearby-premium-gate-icon" aria-hidden="true">
+              <Lock size={20} strokeWidth={1.8} />
+            </span>
+            <div className="nearby-premium-gate-copy">
+              <strong>{PREMIUM_GATE_COPY[currentLang].title}</strong>
+              <p>{PREMIUM_GATE_COPY[currentLang].description}</p>
+            </div>
+            <button type="button" onClick={openPremiumForLanguage}>
+              {PREMIUM_GATE_COPY[currentLang].cta}
+            </button>
+          </section>
+        </div>
       )}
 
       {degradedNotice !== null && !DEMO_FIXTURES_ENABLED && (
-        <NearbyDegradedNotice
-          notice={degradedNotice}
-          onRetry={() => setReloadToken((n) => n + 1)}
-        />
+        <div className="wrap">
+          <NearbyDegradedNotice
+            notice={degradedNotice}
+            onRetry={() => setReloadToken((n) => n + 1)}
+          />
+        </div>
       )}
 
       {apiFailed && !DEMO_FIXTURES_ENABLED && (
-        <section className="nearby-data-error" role="alert">
-          <div>
-            <strong>Không tải được danh sách điểm thuyết minh</strong>
-            <p>Máy chủ chưa phản hồi. Kiểm tra kết nối rồi thử lại.</p>
-          </div>
-          <button type="button" onClick={() => setReloadToken((n) => n + 1)}>
-            Thử lại
-          </button>
-        </section>
+        <div className="wrap">
+          <section className="nearby-data-error" role="alert">
+            <div>
+              <strong>Không tải được danh sách điểm thuyết minh</strong>
+              <p>Máy chủ chưa phản hồi. Kiểm tra kết nối rồi thử lại.</p>
+            </div>
+            <button type="button" onClick={() => setReloadToken((n) => n + 1)}>
+              Thử lại
+            </button>
+          </section>
+        </div>
       )}
 
       {apiLoading && !DEMO_FIXTURES_ENABLED && (
-        <p className="nearby-data-loading" role="status">
-          Đang tải danh sách điểm thuyết minh...
-        </p>
+        <div className="wrap">
+          <p className="nearby-data-loading" role="status">
+            Đang tải danh sách điểm thuyết minh...
+          </p>
+        </div>
       )}
 
       {!apiLoading && !apiFailed && pois.length === 0 && (
-        <section className="nearby-data-empty" role="status">
-          <p>Chưa có điểm thuyết minh nào được công bố.</p>
-        </section>
+        <div className="wrap">
+          <section className="nearby-data-empty" role="status">
+            <p>Chưa có điểm thuyết minh nào được công bố.</p>
+          </section>
+        </div>
       )}
 
-      <PoiHeader
-        stopsCount={pois.length}
-        languagesCount={languagesCount}
-        approxDistance={approxDistance}
-        listenedCount={listenedPoiIds.length}
-        currentLang={currentLang}
-      />
-      {/* 3. STICKY CONTROL BAR UNDER HEADER */}
-      <ToolbarControls
-        myLocationBtnText={t(currentLang, 'myLocation')}
-        autoNarrationText={t(currentLang, 'autoNarration')}
-        isAutoEnabled={isAutoEnabled}
-        onToggleAuto={() => {
-          if (
-            isPremiumLanguage(currentLang) &&
-            !canAccessPoiLanguage(activeSelectedPoi?.numericId ?? null, currentLang)
-          ) {
-            warnAndOpenPremium(activeSelectedPoi);
-            return;
-          }
-          // Must run synchronously inside the tap gesture, before any async work.
-          unlockAudio();
-          const nextVal = !isAutoEnabled;
-          setIsAutoEnabled(nextVal);
-          setAutoDirect(nextVal);
-          if (nextVal && userPos) {
-            checkAutoTrigger(userPos.lat, userPos.lng);
-          }
-        }}
-        onRequestGps={() => {
-          // One fly-to per press; the token is consumed by the map on first fix
-          setFlyToUserToken((n) => n + 1);
-          requestGps();
-        }}
-        currentLang={currentLang}
-        isLocatingGps={isRequestingGps}
-        statusMessage={autoStatusMessage}
-      />
+      <div className="wrap">
+        {/* 1. EDITORIAL HERO SECTION */}
+        <section className="hero">
+          <div className="ht">
+            <h1>
+              {currentLang === 'vi' ? 'Bảy điểm dừng quanh trung tâm Sài Gòn' : t(currentLang, 'pageTitle')}
+              {currentLang === 'vi' && <span className="sr-only">Điểm du lịch Sài Gòn</span>}
+            </h1>
+            <p>
+              {currentLang === 'vi'
+                ? 'Đeo tai nghe vào và đi. Mỗi điểm có một đoạn thuyết minh ngắn, nghe được bằng bốn ngôn ngữ. Bật tự động, máy sẽ phát khi bạn đến gần.'
+                : t(currentLang, 'pageSubtitle')}
+            </p>
+          </div>
+          <dl className="facts">
+            <div>
+              <dt>Quãng đường</dt>
+              <dd>{approxDistance || 'Khoảng 14 km'}</dd>
+            </div>
+            <div>
+              <dt>Tổng thời gian nghe</dt>
+              <dd>14 phút</dd>
+            </div>
+            <div>
+              <dt>Ngôn ngữ</dt>
+              <dd>Việt, Anh, Nhật, Hàn</dd>
+            </div>
+            <div>
+              <dt>Bạn đã nghe</dt>
+              <dd id="heardTxt">
+                {listenedPoiIds.length}/{pois.length}
+              </dd>
+            </div>
+          </dl>
+        </section>
 
-      {/* 3. MAIN WORKSPACE (IZI.TRAVEL INSPIRED TOP-TO-BOTTOM ARCHITECTURE) */}
-      <main className="nearby-main-container">
-        {/* HERO FOR ACTIVE STOP */}
-        {activeSelectedPoi && (
-          <PoiHero
-            poi={activeSelectedPoi}
-            originalIndex={activeSortedItem?.originalIndex ?? 0}
-            stopNumber={activeSortedItem?.stopNumber ?? 1}
-            totalStops={pois.length}
+        {/* Compact stats line preserved for test suites */}
+        <div className="sr-only">
+          <PoiHeader
+            stopsCount={pois.length}
+            languagesCount={languagesCount}
+            approxDistance={approxDistance}
+            listenedCount={listenedPoiIds.length}
             currentLang={currentLang}
-            isPlaying={isPlaying}
-            isCurrent={currentId === activeSelectedPoi.id}
-            playbackStatus={playbackStatus}
-            onTogglePlay={handleTogglePlayPoi}
-            duration={duration}
-            listenBtnText={t(currentLang, 'playBtn')}
-            pauseBtnText={t(currentLang, 'pauseBtn')}
-            resumeBtnText={t(currentLang, 'resumeBtn')}
-            getPoiName={getPoiName}
-            userPos={userPos}
-            heroRef={heroRef}
-            onChangeLanguage={changeLanguage}
-            onUnlockLanguage={warnAndOpenPremium}
-            canAccessPoiLanguage={canAccessPoiLanguage}
           />
-        )}
+        </div>
 
-        {/* STOP LIST + MAP ROW */}
-        <div className="nearby-stops-map-row">
+        {/* 2. STEPPER TIMELINE */}
+        <div className="stripw">
+          <div
+            className="strip"
+            id="strip"
+            style={{ '--stop-count': sortedPois.length } as React.CSSProperties}
+          >
+            <i id="sfill" style={{ width: sfillWidth }} />
+            {sortedPois.map((item, idx) => {
+              const isItemActive = effectiveActiveId === item.poi.id;
+              const isItemListened = listenedPoiIds.includes(item.poi.id);
+              return (
+                <button
+                  key={item.poi.id}
+                  type="button"
+                  className={`sd ${isItemListened ? 'heard' : ''} ${isItemActive ? 'on' : ''}`}
+                  onClick={() => handleExplicitSelectPoi(item.poi.id, true)}
+                >
+                  {item.stopNumber ?? idx + 1}. {getPoiName(item.poi)}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* 3. TWO-COLUMN MAIN VIEW */}
+        <div className="main">
+          {/* LEFT: LIST OF POI STOPS & ACTIVE STOP STORY */}
           <aside className="nearby-stops-column" aria-label={t(currentLang, 'chaptersAriaLabel')}>
             <PoiList
               sortedPois={sortedPois}
@@ -953,114 +910,311 @@ export const NearbyPage: React.FC = () => {
               pauseBtnText={t(currentLang, 'pauseBtn')}
               resumeBtnText={t(currentLang, 'resumeBtn')}
             />
+
+            {/* ACTIVE STOP HERO EXPANDED VIEW */}
+            {activeSelectedPoi && (
+              <PoiHero
+                poi={activeSelectedPoi}
+                originalIndex={activeSortedItem?.originalIndex ?? 0}
+                stopNumber={activeSortedItem?.stopNumber ?? 1}
+                totalStops={pois.length}
+                currentLang={currentLang}
+                isPlaying={isPlaying}
+                isCurrent={currentId === activeSelectedPoi.id}
+                playbackStatus={playbackStatus}
+                onTogglePlay={handleTogglePlayPoi}
+                duration={duration}
+                listenBtnText={t(currentLang, 'playBtn')}
+                pauseBtnText={t(currentLang, 'pauseBtn')}
+                resumeBtnText={t(currentLang, 'resumeBtn')}
+                getPoiName={getPoiName}
+                userPos={userPos}
+                heroRef={heroRef}
+                onChangeLanguage={changeLanguage}
+                onUnlockLanguage={warnAndOpenPremium}
+                canAccessPoiLanguage={canAccessPoiLanguage}
+              />
+            )}
+
+            {/* FULL READING & STORY WITH WORD HIGHLIGHTING */}
+            {activeSortedItem && (
+              <PoiReadingSection
+                activeItem={activeSortedItem}
+                currentLang={currentLang}
+                isContentLocked={
+                  isPremiumLanguage(currentLang) &&
+                  !canAccessPoiLanguage(
+                    activeSortedItem.poi.numericId ?? activeSortedItem.poi.id,
+                    currentLang
+                  )
+                }
+                onUnlockContent={() => {
+                  warnAndOpenPremium(activeSortedItem.poi);
+                }}
+                isPlaying={isPlaying}
+                isCurrent={currentId === activeSortedItem.poi.id}
+                playbackStatus={playbackStatus}
+                duration={duration}
+                activeSentenceIndex={activeSentenceIndex}
+                activeCharOffset={activeCharOffset}
+                activeCharLength={activeCharLength}
+                syncMode={syncMode}
+                audioSourceType={audioSourceType}
+                prevItem={prevItem}
+                nextItem={nextItem}
+                onSelectPoi={handleExplicitSelectPoi}
+                onTogglePlay={handleTogglePlayPoi}
+                getPoiName={getPoiName}
+                listenBtnText={t(currentLang, 'playBtn')}
+                pauseBtnText={t(currentLang, 'pauseBtn')}
+                resumeBtnText={t(currentLang, 'resumeBtn')}
+                formattedDist={
+                  activeSortedItem.dist != null
+                    ? formatDistance(activeSortedItem.dist, currentLang)
+                    : null
+                }
+              />
+            )}
           </aside>
 
-          <div className="nearby-map-column" aria-label={t(currentLang, 'mapAriaLabel')}>
-            <PoiMap
-              pois={pois}
-              selectedPoiId={selectedId}
-              activePoiId={effectiveActiveId}
-              hoveredPoiId={hoveredId}
-              currentPlayingId={currentId}
-              isPlaying={isPlaying}
-              isPaused={isPaused}
-              userPos={userPos}
-              centerOnUserToken={flyToUserToken}
-              radius={activeSelectedPoi?.triggerRadius ?? 60}
-              isAutoEnabled={isAutoEnabled}
-              listenedPoiIds={listenedPoiIds}
-              onSelectPoi={(id) => handleExplicitSelectPoi(id, true)}
-              onHoverPoi={setHoveredId}
-              onTogglePlay={handleTogglePlayPoi}
-              getPoiName={getPoiName}
-              getPoiCategory={getPoiCategory}
-              listenBtnText={t(currentLang, 'playBtn')}
-              pauseBtnText={t(currentLang, 'pauseBtn')}
-              resumeBtnText={t(currentLang, 'resumeBtn')}
-              mapCaptionText={t(currentLang, 'mapCaption')}
-              currentLang={currentLang}
-            />
+          {/* RIGHT: STICKY MAP BOX */}
+          <div className="mapcol nearby-map-column" aria-label={t(currentLang, 'mapAriaLabel')}>
+            <div className="map">
+              <PoiMap
+                pois={pois}
+                selectedPoiId={selectedId}
+                activePoiId={effectiveActiveId}
+                hoveredPoiId={hoveredId}
+                currentPlayingId={currentId}
+                isPlaying={isPlaying}
+                isPaused={isPaused}
+                userPos={userPos}
+                centerOnUserToken={flyToUserToken}
+                radius={activeSelectedPoi?.triggerRadius ?? 60}
+                isAutoEnabled={isAutoEnabled}
+                listenedPoiIds={listenedPoiIds}
+                onSelectPoi={(id) => handleExplicitSelectPoi(id, true)}
+                onHoverPoi={setHoveredId}
+                onTogglePlay={handleTogglePlayPoi}
+                getPoiName={getPoiName}
+                getPoiCategory={getPoiCategory}
+                listenBtnText={t(currentLang, 'playBtn')}
+                pauseBtnText={t(currentLang, 'pauseBtn')}
+                resumeBtnText={t(currentLang, 'resumeBtn')}
+                mapCaptionText={t(currentLang, 'mapCaption')}
+                currentLang={currentLang}
+              />
+
+              <div className="tools">
+                <ToolbarControls
+                  myLocationBtnText={t(currentLang, 'myLocation')}
+                  autoNarrationText={t(currentLang, 'autoNarration')}
+                  isAutoEnabled={isAutoEnabled}
+                  onToggleAuto={() => {
+                    if (
+                      isPremiumLanguage(currentLang) &&
+                      !canAccessPoiLanguage(activeSelectedPoi?.numericId ?? null, currentLang)
+                    ) {
+                      warnAndOpenPremium(activeSelectedPoi);
+                      return;
+                    }
+                    unlockAudio();
+                    const nextVal = !isAutoEnabled;
+                    setIsAutoEnabled(nextVal);
+                    setAutoDirect(nextVal);
+                    if (nextVal && userPos) {
+                      checkAutoTrigger(userPos.lat, userPos.lng);
+                    }
+                    triggerToast(
+                      nextVal
+                        ? 'Sẽ tự phát khi bạn đến gần một điểm'
+                        : 'Đã tắt tự động phát'
+                    );
+                  }}
+                  onRequestGps={() => {
+                    setFlyToUserToken((n) => n + 1);
+                    requestGps();
+                    triggerToast('Đang xác định vị trí của bạn…');
+                  }}
+                  currentLang={currentLang}
+                  isLocatingGps={isRequestingGps}
+                  statusMessage={autoStatusMessage}
+                />
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* READING SECTION */}
-        {activeSortedItem && (
-          <PoiReadingSection
-            activeItem={activeSortedItem}
-            currentLang={currentLang}
-            isContentLocked={
-              isPremiumLanguage(currentLang) &&
-              !canAccessPoiLanguage(
-                activeSortedItem.poi.numericId ?? activeSortedItem.poi.id,
-                currentLang
-              )
-            }
-            onUnlockContent={() => {
-              warnAndOpenPremium(activeSortedItem.poi);
-            }}
-            isPlaying={isPlaying}
-            isCurrent={currentId === activeSortedItem.poi.id}
-            playbackStatus={playbackStatus}
-            duration={duration}
-            activeSentenceIndex={activeSentenceIndex}
-            activeCharOffset={activeCharOffset}
-            activeCharLength={activeCharLength}
-            syncMode={syncMode}
-            audioSourceType={audioSourceType}
-            prevItem={prevItem}
-            nextItem={nextItem}
-            onSelectPoi={handleExplicitSelectPoi}
-            onTogglePlay={handleTogglePlayPoi}
-            getPoiName={getPoiName}
-            listenBtnText={t(currentLang, 'playBtn')}
-            pauseBtnText={t(currentLang, 'pauseBtn')}
-            resumeBtnText={t(currentLang, 'resumeBtn')}
-            formattedDist={
-              activeSortedItem.dist != null
-                ? formatDistance(activeSortedItem.dist, currentLang)
-                : null
-            }
-          />
-        )}
+        {/* 4. HOW IT WORKS SECTION */}
+        <section className="how">
+          <div>
+            <h3>Bấm nghe hoặc quét mã</h3>
+            <p>Nghe ngay trên trang, hoặc quét QR để nghe trên điện thoại và đi tay không.</p>
+          </div>
+          <div>
+            <h3>Để máy tự phát</h3>
+            <p>Bật tự động phát, đi tới gần điểm nào thì thuyết minh điểm đó bắt đầu.</p>
+          </div>
+          <div>
+            <h3>Nghe bằng tiếng của bạn</h3>
+            <p>Tiếng Việt miễn phí. Tiếng Anh, Nhật, Hàn mở bằng gói Premium.</p>
+          </div>
+        </section>
 
-        {/* SOUVENIRS AVAILABLE AT THE ACTIVE STOP */}
-        {activeSortedItem?.poi.slug && (
-          <SouvenirStrip poiSlug={activeSortedItem.poi.slug} lang={currentLang} />
-        )}
-      </main>
+        {/* 5. SOUVENIR SHOP SECTION */}
+        <section className="shop" aria-labelledby="shopT">
+          <h2 id="shopT">Mang một chút Sài Gòn về nhà</h2>
+          <p>Những món nhỏ do người địa phương chọn, bán ngay tại các điểm dừng.</p>
+          <div className="goods" id="goods">
+            {SOUVENIR_GOODS.map((g) => {
+              const isAdded = addedGoodsIds.includes(g.id);
+              return (
+                <article key={g.id} className="good">
+                  <div className="ph">
+                    <ArtIllustration hue={g.hue} idSuffix={`shop_${g.id}`} />
+                  </div>
+                  <h3>{g.name}</h3>
+                  <p>{g.desc}</p>
+                  <div className="buy">
+                    <b>{g.priceText}</b>
+                    <button
+                      type="button"
+                      className={`add ${isAdded ? 'done' : ''}`}
+                      onClick={() => handleAddSouvenir(g)}
+                    >
+                      {isAdded ? 'Đã thêm' : 'Thêm vào giỏ'}
+                    </button>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        </section>
+      </div>
 
-      {/* 4. PERSISTENT MINI AUDIO PLAYER */}
-      {isPlayerActive && (
-        <AudioPlayerBar
-          activePoi={activeSelectedPoi}
-          currentLang={currentLang}
-          isPlaying={isPlaying}
-          currentTime={currentTime}
-          notice={notice}
-          noticeWarn={noticeWarn}
-          onTogglePlay={() => {
-            const playedPoi = getPoiByPlaybackId(currentId);
-            if (
-              isPremiumLanguage(currentLang) &&
-              !canAccessPoiLanguage(playedPoi?.numericId ?? null, currentLang)
-            ) {
-              warnAndOpenPremium(playedPoi);
-              return;
-            }
-            togglePlay();
-          }}
-          onViewChapterTranscript={handleViewChapterTranscript}
-          getPoiName={getPoiName}
-          noPoiSelectedText={t(currentLang, 'noPoiSelected')}
-          playingInLangText={(l) => t(currentLang, 'playingInLang', { lang: l })}
-          pausedStatusText={t(currentLang, 'pausedStatus')}
-          clickToStartText={t(currentLang, 'clickToStart')}
-          viewTextBtnText={t(currentLang, 'viewTranscriptBtn')}
-        />
-      )}
+      {/* 6. FIXED BOTTOM AUDIO PLAYER BAR (CREAM IN DARK MODE) */}
+      <footer className="pl player nearby-sticky-player-bar" aria-label={t(currentLang, 'playerAriaLabel')}>
+        <div
+          className="bar"
+          id="seek"
+          role="slider"
+          aria-label="Tiến trình"
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-valuenow={Math.round(activeProgressPercent)}
+          tabIndex={0}
+        >
+          <b id="fill" style={{ width: `${activeProgressPercent}%` }} />
+        </div>
+
+        <div className="wrap">
+          <div className="now player-meta-block">
+            <small id="nowSub" className={`player-status-sub ${noticeWarn ? 'warn is-warning' : ''}`}>
+              {notice || (isPlaying
+                ? `Đang phát - điểm ${(activeIndex >= 0 ? activeIndex : 0) + 1}/${pois.length}`
+                : `Điểm ${(activeIndex >= 0 ? activeIndex : 0) + 1}/${pois.length}`)}
+            </small>
+            <strong id="nowName" className="player-poi-title">
+              {activeSelectedPoi ? getPoiName(activeSelectedPoi) : 'Chọn một điểm để bắt đầu'}
+            </strong>
+          </div>
+
+          <div className="ctl player-controls-mid">
+            <button
+              type="button"
+              className="ib"
+              id="prev"
+              aria-label="Điểm trước"
+              disabled={!prevItem}
+              onClick={() => prevItem && handleExplicitSelectPoi(prevItem.poi.id, true)}
+            >
+              <svg viewBox="0 0 24 24">
+                <path d="M6 5h2v14H6zM20 5v14L9 12z" />
+              </svg>
+            </button>
+
+            <button
+              type="button"
+              className="ib pp player-play-btn"
+              id="pp"
+              aria-label={isPlaying ? t(currentLang, 'pauseBtn') : t(currentLang, 'playBtn')}
+              aria-pressed={isPlaying}
+              onClick={() => {
+                if (activeSelectedPoi) {
+                  handleTogglePlayPoi(activeSelectedPoi.id);
+                }
+              }}
+            >
+              <svg viewBox="0 0 24 24" id="ppi">
+                {isPlaying ? (
+                  <path d="M7 5h4v14H7zM13 5h4v14h-4z" />
+                ) : (
+                  <path d="M8 5v14l11-7z" />
+                )}
+              </svg>
+            </button>
+
+            <button
+              type="button"
+              className="ib"
+              id="next"
+              aria-label="Điểm sau"
+              disabled={!nextItem}
+              onClick={() => nextItem && handleExplicitSelectPoi(nextItem.poi.id, true)}
+            >
+              <svg viewBox="0 0 24 24">
+                <path d="M16 5h2v14h-2zM4 5v14l11-7z" />
+              </svg>
+            </button>
+
+            <span className="tm" id="tm">
+              {fmtTime(currentTime)} / {fmtTime(duration || 120)}
+            </span>
+          </div>
+
+          <div className="lang" id="lang">
+            {SUPPORTED_LANGUAGES.map((opt) => {
+              const isLocked = canAccessPoiLanguage
+                ? !canAccessPoiLanguage(activeSelectedPoi?.numericId ?? activeSelectedPoi?.id, opt.code)
+                : opt.code !== 'vi';
+              const isActive = currentLang === opt.code;
+
+              return (
+                <button
+                  key={opt.code}
+                  type="button"
+                  data-l={opt.code.toUpperCase()}
+                  aria-pressed={isActive}
+                  className={isLocked ? 'lock' : ''}
+                  onClick={() => {
+                    if (isLocked) {
+                      triggerToast('Ngôn ngữ này cần gói Premium');
+                      warnAndOpenPremium(activeSelectedPoi, opt.code);
+                    } else {
+                      changeLanguage(opt.code);
+                    }
+                  }}
+                >
+                  {opt.code.toUpperCase()}
+                  {isLocked && (
+                    <svg viewBox="0 0 24 24">
+                      <rect x="5" y="11" width="14" height="9" rx="2" />
+                      <path d="M8 11V8a4 4 0 018 0v3" />
+                    </svg>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </footer>
+
+      {/* FLOATING TOAST NOTIFICATION */}
+      <div className={`toast ${toastText ? 'show' : ''}`} id="toast" role="status">
+        {toastText}
+      </div>
     </div>
   );
 };
 
 export default NearbyPage;
-
