@@ -193,6 +193,11 @@ public class PoiPublishService {
         return authored;
     }
 
+    @Transactional(readOnly = true)
+    public List<Long> findPendingPublishIds(java.time.LocalDateTime olderThan) {
+        return poiRepository.findPendingPublishIds(olderThan);
+    }
+
     private static String truncate(String value, int max) {
         if (value == null) {
             return "unknown error";

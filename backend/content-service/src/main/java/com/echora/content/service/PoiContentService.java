@@ -44,6 +44,8 @@ public interface PoiContentService {
 
     PoiInternalQrDto getInternalPoiByQrToken(String qrToken);
 
+    java.util.Optional<Long> findPoiIdByQrToken(String qrToken);
+
     List<PoiBoundingBoxDto> getPoisInBoundingBox(Long zoneId, BigDecimal minLat, BigDecimal maxLat, BigDecimal minLng, BigDecimal maxLng);
 
     PoiDetailDto createPoi(CreatePoiRequest request);

@@ -1,7 +1,7 @@
 package com.echora.content.dto;
 
 import com.echora.content.entity.Product;
-import com.echora.content.entity.ProductCategory;
+import com.echora.content.model.ProductCategory;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

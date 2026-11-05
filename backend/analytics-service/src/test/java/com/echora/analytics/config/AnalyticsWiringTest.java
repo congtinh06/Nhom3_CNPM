@@ -5,6 +5,8 @@ import com.echora.analytics.consumer.AnalyticsEventListener;
 import com.echora.analytics.controller.AnalyticsEventController;
 import com.echora.analytics.controller.AnalyticsSummaryController;
 import com.echora.analytics.repository.AnalyticsEventRepository;
+import com.echora.analytics.service.AnalyticsEventIngestionService;
+import com.echora.analytics.service.AnalyticsEventIngestionServiceImpl;
 import com.echora.analytics.service.AnalyticsEventService;
 import com.echora.analytics.service.AnalyticsEventServiceImpl;
 import com.echora.analytics.service.AnalyticsSummaryService;
@@ -30,6 +32,7 @@ class AnalyticsWiringTest {
                     RabbitMQConfig.class,
                     AnalyticsEventServiceImpl.class,
                     AnalyticsSummaryServiceImpl.class,
+                    AnalyticsEventIngestionServiceImpl.class,
                     AnalyticsEventListener.class,
                     AnalyticsEventController.class,
                     AnalyticsSummaryController.class
@@ -47,6 +50,7 @@ class AnalyticsWiringTest {
             // Services
             assertThat(context).hasSingleBean(AnalyticsEventService.class);
             assertThat(context).hasSingleBean(AnalyticsSummaryService.class);
+            assertThat(context).hasSingleBean(AnalyticsEventIngestionService.class);
 
             // Consumer
             assertThat(context).hasSingleBean(AnalyticsEventListener.class);

@@ -1,9 +1,8 @@
 package com.echora.content.config;
 
-import com.echora.content.entity.Poi;
 import com.echora.content.exception.EntitlementServiceUnavailableException;
 import com.echora.content.exception.ProblemDetailWriter;
-import com.echora.content.repository.PoiRepository;
+import com.echora.content.service.PoiContentService;
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -45,15 +44,15 @@ public class EntitlementFilter extends OncePerRequestFilter {
     private static final String RETRY_AFTER_SECONDS = "10";
 
     private final InternalPoiEntitlementClient poiEntitlementClient;
-    private final PoiRepository poiRepository;
+    private final PoiContentService poiContentService;
 
     @Value("${internal.api-key:}")
     private String expectedApiKey;
 
     public EntitlementFilter(InternalPoiEntitlementClient poiEntitlementClient,
-                             PoiRepository poiRepository) {
+                             PoiContentService poiContentService) {
         this.poiEntitlementClient = poiEntitlementClient;
-        this.poiRepository = poiRepository;
+        this.poiContentService = poiContentService;
     }
 
     /** Port nội bộ để filter map qrToken -> poiId cho luồng mua lẻ theo POI. */
@@ -173,9 +172,7 @@ public class EntitlementFilter extends OncePerRequestFilter {
             if (isBlank(qrToken) || qrToken.contains("/")) {
                 return null;
             }
-            return poiRepository.findByQrToken(qrToken)
-                    .map(Poi::getId)
-                    .orElse(null);
+            return poiContentService.findPoiIdByQrToken(qrToken).orElse(null);
         }
         String id = path.substring(POIS_PREFIX.length());
         try {

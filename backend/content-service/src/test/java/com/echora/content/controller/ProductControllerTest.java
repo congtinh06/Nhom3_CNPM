@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.echora.content.config.AdminRoleFilter;
 import com.echora.content.config.InternalApiKeyFilter;
 import com.echora.content.dto.*;
-import com.echora.content.entity.ProductCategory;
+import com.echora.content.model.ProductCategory;
 import com.echora.content.exception.GlobalExceptionHandler;
 import com.echora.content.exception.ResourceNotFoundException;
 import com.echora.content.service.ProductService;

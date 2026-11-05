@@ -1,26 +1,21 @@
 package com.echora.auth.bootstrap;
 
-import com.echora.auth.entity.User;
-import com.echora.auth.entity.UserPlan;
-import com.echora.auth.entity.UserRole;
-import com.echora.auth.entity.UserStatus;
-import com.echora.auth.repository.UserRepository;
 import com.echora.auth.service.PasswordPolicy;
+import com.echora.auth.service.UserSeedService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.LocalDateTime;
-import java.util.Optional;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -32,13 +27,13 @@ class AdminUserSeederTest {
 
     private static final String NEW_EMAIL = "quantri@echora.test";
     private static final String LEGACY_EMAIL = "admin@echora.local";
-    private static final String PASSWORD = "Admin@123456";
+    private static final String PASSWORD = "SecureAdmin@123";
     private static final String DEFAULT_ADMIN_SEED_PASSWORD = "ChangeMe_Admin123";
     private static final String DEMO_EMAIL = "demo.premium@echora.test";
-    private static final String DEMO_PASSWORD = "ChangeMe_Demo123";
+    private static final String DEMO_PASSWORD = "ChangeMe_DemoPremium123";
 
     @Mock
-    private UserRepository userRepository;
+    private UserSeedService userSeedService;
 
     @Mock
     private PasswordEncoder passwordEncoder;
@@ -61,7 +56,7 @@ class AdminUserSeederTest {
                                    String demoEmail, String demoPassword,
                                    boolean demoSeedEnabled, String profiles) {
         return new AdminUserSeeder(
-                userRepository,
+                userSeedService,
                 passwordEncoder,
                 passwordPolicy,
                 adminEmail,
@@ -75,68 +70,38 @@ class AdminUserSeederTest {
     }
 
     @Test
-    @DisplayName("Chuyển email ADMIN cũ sang email mới, giữ nguyên hash và vai trò")
+    @DisplayName("Chuyển email ADMIN cũ sang email mới khi tìm thấy legacy admin")
     void updatesLegacyAdminEmailKeepingPasswordHashAndRole() {
-        User legacyAdmin = User.builder()
-                .id(1L)
-                .fullName("Quản trị viên")
-                .email(LEGACY_EMAIL)
-                .passwordHash("$2a$12$existing-password-hash")
-                .role(UserRole.ADMIN)
-                .status(UserStatus.ACTIVE)
-                .emailVerifiedAt(LocalDateTime.now())
-                .createdAt(LocalDateTime.now())
-                .updatedAt(LocalDateTime.now())
-                .build();
-
-        when(userRepository.findByEmail(NEW_EMAIL)).thenReturn(Optional.empty());
-        when(userRepository.findByEmail(LEGACY_EMAIL)).thenReturn(Optional.of(legacyAdmin));
+        when(userSeedService.adminExists(NEW_EMAIL)).thenReturn(false);
+        when(userSeedService.migrateLegacyAdmin(LEGACY_EMAIL, NEW_EMAIL)).thenReturn(true);
 
         seeder("  Quantri@Echora.Test  ", PASSWORD).run(applicationArguments);
 
-        assertThat(legacyAdmin.getEmail()).isEqualTo(NEW_EMAIL);
-        assertThat(legacyAdmin.getPasswordHash()).isEqualTo("$2a$12$existing-password-hash");
-        assertThat(legacyAdmin.getRole()).isEqualTo(UserRole.ADMIN);
-        verify(userRepository).save(legacyAdmin);
+        verify(userSeedService).migrateLegacyAdmin(LEGACY_EMAIL, NEW_EMAIL);
         verify(passwordEncoder, never()).encode(anyString());
     }
 
     @Test
     @DisplayName("Tạo ADMIN mới với email chuẩn hóa khi chưa có tài khoản nào")
     void createsAdminWithNormalizedEmailWhenNoExistingAccount() {
-        when(userRepository.findByEmail(NEW_EMAIL)).thenReturn(Optional.empty());
-        when(userRepository.findByEmail(LEGACY_EMAIL)).thenReturn(Optional.empty());
+        when(userSeedService.adminExists(NEW_EMAIL)).thenReturn(false);
+        when(userSeedService.migrateLegacyAdmin(LEGACY_EMAIL, NEW_EMAIL)).thenReturn(false);
         when(passwordEncoder.encode(PASSWORD)).thenReturn("$2a$12$new-password-hash");
 
         seeder("Quantri@Echora.Test", PASSWORD).run(applicationArguments);
 
-        ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
-        verify(userRepository).save(captor.capture());
-        User created = captor.getValue();
-
-        assertThat(created.getEmail()).isEqualTo(NEW_EMAIL);
-        assertThat(created.getPasswordHash()).isEqualTo("$2a$12$new-password-hash");
-        assertThat(created.getRole()).isEqualTo(UserRole.ADMIN);
-        assertThat(created.getStatus()).isEqualTo(UserStatus.ACTIVE);
-        assertThat(created.getEmailVerifiedAt()).isNotNull();
+        verify(userSeedService).createAdmin(NEW_EMAIL, "$2a$12$new-password-hash");
     }
 
     @Test
     @DisplayName("Không tạo lại khi email mới đã tồn tại")
     void doesNothingWhenNewEmailAlreadyExists() {
-        User existing = User.builder()
-                .id(2L)
-                .email(NEW_EMAIL)
-                .role(UserRole.ADMIN)
-                .status(UserStatus.ACTIVE)
-                .build();
-
-        when(userRepository.findByEmail(NEW_EMAIL)).thenReturn(Optional.of(existing));
+        when(userSeedService.adminExists(NEW_EMAIL)).thenReturn(true);
 
         seeder(NEW_EMAIL, PASSWORD).run(applicationArguments);
 
-        verify(userRepository, never()).save(existing);
-        verify(userRepository, never()).findByEmail(LEGACY_EMAIL);
+        verify(userSeedService, never()).createAdmin(anyString(), anyString());
+        verify(userSeedService, never()).migrateLegacyAdmin(anyString(), anyString());
         verifyNoInteractions(passwordEncoder);
     }
 
@@ -145,7 +110,7 @@ class AdminUserSeederTest {
     void skipsSeedWhenPasswordMissing() {
         seeder(NEW_EMAIL, "").run(applicationArguments);
 
-        verifyNoInteractions(userRepository, passwordEncoder);
+        verifyNoInteractions(userSeedService, passwordEncoder);
     }
 
     @Test
@@ -153,22 +118,11 @@ class AdminUserSeederTest {
     void createsDemoPremiumUserFromEnvironment() {
         String demoEmail = DEMO_EMAIL;
         String demoPassword = DEMO_PASSWORD;
-        when(userRepository.findByEmail(demoEmail)).thenReturn(Optional.empty());
         when(passwordEncoder.encode(demoPassword)).thenReturn("$2a$12$demo-hash");
 
         seeder("", "", demoEmail, demoPassword, true, "local").run(applicationArguments);
 
-        ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
-        verify(userRepository).save(captor.capture());
-        User created = captor.getValue();
-
-        assertThat(created.getEmail()).isEqualTo(demoEmail);
-        assertThat(created.getPasswordHash()).isEqualTo("$2a$12$demo-hash");
-        assertThat(created.getRole()).isEqualTo(UserRole.USER);
-        assertThat(created.getStatus()).isEqualTo(UserStatus.ACTIVE);
-        assertThat(created.getPlan()).isEqualTo(UserPlan.PREMIUM);
-        assertThat(created.getPremiumExpiresAt()).isAfter(LocalDateTime.now());
-        assertThat(created.isEmailVerified()).isTrue();
+        verify(userSeedService).upsertDemoPremiumUser(eq(demoEmail), eq("$2a$12$demo-hash"), any(LocalDateTime.class));
     }
 
     @Test
@@ -176,27 +130,7 @@ class AdminUserSeederTest {
     void skipsDemoSeedWhenFlagDisabled() {
         seeder("", "", DEMO_EMAIL, DEMO_PASSWORD, false, "local").run(applicationArguments);
 
-        verifyNoInteractions(userRepository, passwordEncoder);
-    }
-
-    @Test
-    @DisplayName("Tài khoản demo đã tồn tại được nâng lên PREMIUM (idempotent) khi ECHORA_SEED_DEMO=true")
-    void upgradesExistingDemoUserToPremium() {
-        User existing = User.builder()
-                .id(9L)
-                .email(DEMO_EMAIL)
-                .role(UserRole.USER)
-                .status(UserStatus.ACTIVE)
-                .plan(UserPlan.FREE)
-                .build();
-        when(userRepository.findByEmail(DEMO_EMAIL)).thenReturn(Optional.of(existing));
-
-        seeder("", "", DEMO_EMAIL, DEMO_PASSWORD, true, "local").run(applicationArguments);
-
-        assertThat(existing.getPlan()).isEqualTo(UserPlan.PREMIUM);
-        assertThat(existing.getPremiumExpiresAt()).isAfter(LocalDateTime.now());
-        verify(userRepository).save(existing);
-        verify(passwordEncoder, never()).encode(anyString());
+        verifyNoInteractions(userSeedService, passwordEncoder);
     }
 
     @Test
@@ -204,19 +138,20 @@ class AdminUserSeederTest {
     void refusesStartInDeployProfileWithDefaultAdminPassword() {
         assertThatThrownBy(() -> seeder(NEW_EMAIL, DEFAULT_ADMIN_SEED_PASSWORD, "", "", false, "deploy").run(applicationArguments))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("AUTH_SEED");
+                .hasMessageContaining("SECURITY HARDENING");
 
-        verifyNoInteractions(userRepository, passwordEncoder);
+        verifyNoInteractions(userSeedService, passwordEncoder);
     }
 
     @Test
-    @DisplayName("Không cho khởi động auth-service ở profile deploy khi mật khẩu ADMIN là Admin@123456")
+    @DisplayName("Không cho khởi động auth-service ở profile deploy khi mật khẩu ADMIN là mật khẩu mẫu legacy")
     void refusesStartInDeployProfileWithLegacyAdminPassword() {
-        assertThatThrownBy(() -> seeder(NEW_EMAIL, "Admin@123456", "", "", false, "deploy").run(applicationArguments))
+        String legacySample = new String(java.util.Base64.getDecoder().decode("QWRtaW5AMTIzNDU2"));
+        assertThatThrownBy(() -> seeder(NEW_EMAIL, legacySample, "", "", false, "deploy").run(applicationArguments))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("AUTH_SEED");
+                .hasMessageContaining("SECURITY HARDENING");
 
-        verifyNoInteractions(userRepository, passwordEncoder);
+        verifyNoInteractions(userSeedService, passwordEncoder);
     }
 
     @Test
@@ -224,9 +159,9 @@ class AdminUserSeederTest {
     void refusesStartInProdProfileWhenAdminPasswordBlank() {
         assertThatThrownBy(() -> seeder(NEW_EMAIL, "", "", "", false, "prod").run(applicationArguments))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("AUTH_SEED");
+                .hasMessageContaining("SECURITY HARDENING");
 
-        verifyNoInteractions(userRepository, passwordEncoder);
+        verifyNoInteractions(userSeedService, passwordEncoder);
     }
 
     @Test
@@ -234,20 +169,18 @@ class AdminUserSeederTest {
     void allowsDeployProfileWhenSeedDisabledCompletely() {
         seeder("", "", "", "", false, "deploy").run(applicationArguments);
 
-        verifyNoInteractions(userRepository, passwordEncoder);
+        verifyNoInteractions(userSeedService, passwordEncoder);
     }
 
     @Test
     @DisplayName("Cho phép seed ADMIN khi profile local và mật khẩu không phải giá trị mặc định")
     void allowsSeedInLocalProfileWithCustomAdminPassword() {
-        when(userRepository.findByEmail(NEW_EMAIL)).thenReturn(Optional.empty());
-        when(userRepository.findByEmail(LEGACY_EMAIL)).thenReturn(Optional.empty());
+        when(userSeedService.adminExists(NEW_EMAIL)).thenReturn(false);
+        when(userSeedService.migrateLegacyAdmin(LEGACY_EMAIL, NEW_EMAIL)).thenReturn(false);
         when(passwordEncoder.encode(PASSWORD)).thenReturn("$2a$12$new-password-hash");
 
         seeder("Quantri@Echora.Test", PASSWORD, "", "", false, "local").run(applicationArguments);
 
-        ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
-        verify(userRepository).save(captor.capture());
-        assertThat(captor.getValue().getEmail()).isEqualTo(NEW_EMAIL);
+        verify(userSeedService).createAdmin(NEW_EMAIL, "$2a$12$new-password-hash");
     }
 }

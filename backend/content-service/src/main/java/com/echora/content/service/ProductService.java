@@ -1,7 +1,7 @@
 package com.echora.content.service;
 
 import com.echora.content.dto.*;
-import com.echora.content.entity.ProductCategory;
+import com.echora.content.model.ProductCategory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.multipart.MultipartFile;

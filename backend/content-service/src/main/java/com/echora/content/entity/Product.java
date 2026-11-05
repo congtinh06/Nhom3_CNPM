@@ -1,5 +1,7 @@
 package com.echora.content.entity;
 
+import com.echora.content.model.ProductCategory;
+
 import jakarta.persistence.*;
 import lombok.*;
 

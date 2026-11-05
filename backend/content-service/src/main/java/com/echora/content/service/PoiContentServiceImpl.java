@@ -390,6 +390,15 @@ public class PoiContentServiceImpl implements PoiContentService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public java.util.Optional<Long> findPoiIdByQrToken(String qrToken) {
+        if (qrToken == null || qrToken.isBlank()) {
+            return java.util.Optional.empty();
+        }
+        return poiRepository.findByQrToken(qrToken).map(Poi::getId);
+    }
+
+    @Override
     public List<PoiBoundingBoxDto> getPoisInBoundingBox(
             Long zoneId, BigDecimal minLat, BigDecimal maxLat, BigDecimal minLng, BigDecimal maxLng) {
         if (minLat.compareTo(maxLat) > 0 || minLng.compareTo(maxLng) > 0) {

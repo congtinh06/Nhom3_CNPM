@@ -1,7 +1,7 @@
 package com.echora.content.config;
 
 import com.echora.content.exception.EntitlementServiceUnavailableException;
-import com.echora.content.repository.PoiRepository;
+import com.echora.content.service.PoiContentService;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.FilterChain;
@@ -22,15 +22,15 @@ import static org.mockito.Mockito.when;
 class EntitlementFilterFailClosedTest {
 
     private InternalPoiEntitlementClient entitlementClient;
-    private PoiRepository poiRepository;
+    private PoiContentService poiContentService;
     private EntitlementFilter filter;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @BeforeEach
     void setUp() {
         entitlementClient = mock(InternalPoiEntitlementClient.class);
-        poiRepository = mock(PoiRepository.class);
-        filter = new EntitlementFilter(entitlementClient, poiRepository);
+        poiContentService = mock(PoiContentService.class);
+        filter = new EntitlementFilter(entitlementClient, poiContentService);
         ReflectionTestUtils.setField(filter, "expectedApiKey", "internal-secret");
     }
 
