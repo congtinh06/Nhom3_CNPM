@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
-import { MapContainer, Marker, Popup, Circle, useMap } from 'react-leaflet';
+import { MapContainer, Marker, Popup, Circle, Polyline, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { SupportedLanguage } from '../../types';
@@ -575,7 +575,7 @@ export const PoiMap: React.FC<PoiMapProps> = ({
 
   // Dynamic route accent color read from CSS token via getComputedStyle
   const mapWrapperRef = useRef<HTMLDivElement>(null);
-  const [routeAccentColor, setRouteAccentColor] = useState<string>('#C2410C');
+  const [routeAccentColor, setRouteAccentColor] = useState<string>('#D96A47');
 
   useEffect(() => {
     if (mapWrapperRef.current) {
@@ -720,6 +720,19 @@ export const PoiMap: React.FC<PoiMapProps> = ({
           />
 
           {/* No inline directions on this map; only the Google Maps basemap is shown */}
+          {/* Dotted heritage tour route connecting stops */}
+          {pois.length > 1 && (
+            <Polyline
+              positions={pois.map((p) => [p.lat, p.lng])}
+              pathOptions={{
+                color: routeAccentColor,
+                weight: 2.5,
+                dashArray: '2, 7',
+                lineCap: 'round',
+              }}
+            />
+          )}
+
           {/* 3. Geofence ring: translucent accent circle from CSS token around active stop */}
           {activePoi && (
             <Circle
