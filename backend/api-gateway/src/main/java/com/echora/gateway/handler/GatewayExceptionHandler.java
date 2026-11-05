@@ -59,6 +59,9 @@ public class GatewayExceptionHandler implements ErrorWebExceptionHandler {
         }
         Throwable current = ex;
         while (current != null) {
+            if (current instanceof io.netty.channel.ConnectTimeoutException) {
+                return false;
+            }
             String name = current.getClass().getName();
             if (name.contains("TimeoutException") ||
                     current instanceof java.util.concurrent.TimeoutException ||
