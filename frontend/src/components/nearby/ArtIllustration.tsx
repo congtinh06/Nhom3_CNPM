@@ -37,3 +37,4 @@ export const ArtIllustration: React.FC<ArtIllustrationProps> = ({
     </svg>
   );
 };
+
