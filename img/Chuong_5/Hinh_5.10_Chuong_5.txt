@@ -1,0 +1,20 @@
+================================================================================
+THÔNG TIN CHÚ THÍCH HÌNH ẢNH: Hinh_5.10_Chuong_5
+================================================================================
+1. KÝ HIỆU HÌNH         : Hinh 5.10 Chuong 5
+2. TIÊU ĐỀ SƠ ĐỒ        : Giao diện Quản lý Danh sách Đơn hàng và Trạng thái Thanh toán Trực tuyến
+3. THUỘC BÁO CÁO        : Chương 5: Hiện thực Hệ thống
+4. VỊ TRÍ TRONG CHƯƠNG  : Mục 5.7 – Giao diện người dùng và mô tả các màn hình
+5. TÁC NHÂN / THÀNH PHẦN: Kế toán, Cán bộ Đối soát Giao dịch
+6. TIÊU CHUẨN MÔ HÌNH HÓA: Transaction Audit Table, Status Badges (PAID, PENDING, CANCELLED), Idempotency Tracker
+--------------------------------------------------------------------------------
+7. MỤC ĐÍCH VÀ Ý NGHĨA NGHIỆP VỤ:
+   Màn hình quản lý các đơn hàng lưu niệm và giao dịch nâng cấp gói Premium: hiển thị mã đơn hàng (order_code), ngày tạo, thông tin người mua, tổng tiền, phương thức thanh toán (VNPAY/VietQR), mã giao dịch ngân hàng và trạng thái xử lý đơn hàng theo thời gian thực.
+--------------------------------------------------------------------------------
+8. QUY CÁCH TỆP HÌNH ẢNH:
+   • Tệp hình ảnh Raster : Hinh_5.10_Chuong_5.png (Chụp màn hình thực tế từ hệ thống đang vận hành, độ phân giải cao)
+   • Phong cách thể hiện  : Giao diện người dùng thực tế (Clean UI, Modern Aesthetics, Tiêu chuẩn Web/PWA)
+================================================================================
+Đồ án Học phần Công nghệ Phần mềm – Đề tài: Hệ thống Thuyết minh Tự động Đa ngôn ngữ Echora
+Nhóm Sinh viên Thực hiện: Nhóm 03 – Khoa CNTT, Đại học Khoa học Tự nhiên / ĐHQG-HCM
+================================================================================

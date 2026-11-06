@@ -1,8 +1,7 @@
-import React, { ReactNode, useCallback, useState } from 'react';
-import { Check, Lock } from 'lucide-react';
+import React, { ReactNode, useCallback } from 'react';
+import { Check, ChevronDown, Lock } from 'lucide-react';
 import { GeoPoi } from '../../pages/NearbyPage';
 import { SupportedLanguage } from '../../types';
-import { resolveImagePath } from './PoiCard';
 import { t } from '../../content/nearbyI18n';
 
 export interface SortedPoiItem {
@@ -25,6 +24,8 @@ export interface PoiListProps {
   statusMessage?: ReactNode;
   listTitle: string;
   sortNoteText: string;
+  /** Details rendered inline, directly beneath the open (active) row. */
+  details?: ReactNode;
   activeSentenceIndex?: number | null;
   duration?: number;
   onSelectPoi: (poiId: string) => void;
@@ -50,6 +51,7 @@ interface StopRowProps {
   getPoiCategory: (poi: GeoPoi) => string;
   onSelect: (id: string) => void;
   onHover?: (id: string, hovered: boolean) => void;
+  details?: ReactNode;
 }
 
 const StopRow: React.FC<StopRowProps> = ({
@@ -62,19 +64,19 @@ const StopRow: React.FC<StopRowProps> = ({
   getPoiCategory,
   onSelect,
   onHover,
+  details,
 }) => {
-  const [thumbError, setThumbError] = useState(false);
   const { poi, originalIndex, stopNumber } = item;
   const poiName = getPoiName(poi);
   const poiCategory = getPoiCategory(poi);
-  const hasImage = Boolean((poi.image || poi.slug) && !thumbError);
 
   return (
-    <li className="nearby-stop-item">
+    <li className={`nearby-stop-item ${isActive ? 'is-open' : ''}`}>
       <button
         type="button"
         className={`nearby-stop-row ${isActive ? 'is-active' : ''}`}
         aria-current={isActive ? 'true' : undefined}
+        aria-expanded={isActive}
         onClick={() => onSelect(poi.id)}
         onMouseEnter={() => onHover?.(poi.id, true)}
         onMouseLeave={() => onHover?.(poi.id, false)}
@@ -82,16 +84,6 @@ const StopRow: React.FC<StopRowProps> = ({
         <span className="stop-badge-col">
           <span className="stop-number-badge">{stopNumber ?? originalIndex + 1}</span>
         </span>
-        {hasImage && (
-          <img
-            src={resolveImagePath(poi.image, poi.slug)}
-            alt=""
-            className="stop-row-thumb"
-            loading="lazy"
-            decoding="async"
-            onError={() => setThumbError(true)}
-          />
-        )}
         <div className="stop-row-info">
           <span className="stop-row-name">{poiName}</span>
           <span className="stop-row-category">{poiCategory}</span>
@@ -112,8 +104,16 @@ const StopRow: React.FC<StopRowProps> = ({
               <Check size={16} aria-hidden="true" />
             </span>
           )}
+          <span className={`stop-row-chevron${isActive ? ' is-open' : ''}`} aria-hidden="true">
+            <ChevronDown size={16} strokeWidth={2} />
+          </span>
         </span>
       </button>
+      <div className={`nearby-stop-accordion ${isActive ? 'is-open' : ''}`}>
+        <div className="nearby-stop-accordion-inner">
+          {details ? <div className="nearby-stop-detail">{details}</div> : null}
+        </div>
+      </div>
     </li>
   );
 };
@@ -124,9 +124,10 @@ const PoiListComponent: React.FC<PoiListProps> = ({
   activePoiId,
   listenedPoiIds = [],
   lockedPoiIds = [],
-  statusMessage,
+  statusMessage: _statusMessage,
   listTitle,
   sortNoteText,
+  details,
   onSelectPoi,
   onHoverPoi,
   getPoiName,
@@ -157,20 +158,13 @@ const PoiListComponent: React.FC<PoiListProps> = ({
 
   return (
     <div className="nearby-stops-column-inner">
-      {/* Editorial section header */}
-      <div className="chapters-column-header">
+      {/* Assistive heading for screen readers & test contracts, removed visually */}
+      <div className="chapters-column-header sr-only">
         <h2 className="chapters-list-title">{listTitle}</h2>
         <span className="chapters-sort-note" id="sortnote">
           {sortNoteText}
         </span>
       </div>
-
-      {/* Global status notice if any (e.g. no location) */}
-      {statusMessage && (
-        <div className="chapters-status-notice" id="status" role="status" aria-live="polite">
-          {statusMessage}
-        </div>
-      )}
 
       {/* Stop list container: grows with the page so every stop stays visible */}
       <div className="nearby-stop-list-container">
@@ -192,6 +186,7 @@ const PoiListComponent: React.FC<PoiListProps> = ({
                 getPoiCategory={getPoiCategory}
                 onSelect={handleSelect}
                 onHover={handleHover}
+                details={isItemActive ? details : null}
               />
             );
           })}

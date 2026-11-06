@@ -1,4 +1,8 @@
-# Compiled class file
+# Local tunnel tools
+cloudflared.exe
+start-tunnel.bat
+tools/
+
 *.class
 
 # Log file

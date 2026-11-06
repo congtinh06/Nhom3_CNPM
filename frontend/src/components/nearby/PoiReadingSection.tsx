@@ -4,8 +4,6 @@ import { GeoPoi, getNarration } from '../../pages/NearbyPage';
 import { SupportedLanguage } from '../../types';
 import { SortedPoiItem } from './PoiList';
 import { t } from '../../content/nearbyI18n';
-import { PlaceQR, isQrAvailable, buildPoiQrUrl } from '../common/PlaceQR';
-import { resolveImagePath } from './PoiCard';
 import { buildPoiSections } from '../../lib/poiSections';
 import { PlaybackStatus } from '../../hooks/useNearbyAudio';
 
@@ -71,8 +69,6 @@ export const PoiReadingSection: React.FC<PoiReadingSectionProps> = ({
   onUnlockContent,
   isPlaying,
   isCurrent,
-  playbackStatus,
-  duration,
   activeCharOffset = null,
   activeCharLength = 0,
   syncMode = 'boundary',
@@ -80,12 +76,8 @@ export const PoiReadingSection: React.FC<PoiReadingSectionProps> = ({
   prevItem,
   nextItem,
   onSelectPoi,
-  onTogglePlay,
   getPoiName,
   formattedDist,
-  listenBtnText,
-  pauseBtnText,
-  resumeBtnText,
 }) => {
   const { poi } = activeItem;
   const currentWordRef = useRef<HTMLSpanElement | null>(null);
@@ -101,15 +93,13 @@ export const PoiReadingSection: React.FC<PoiReadingSectionProps> = ({
   const showReadingBody = Boolean(fullParagraphs && fullParagraphs.length > 0);
 
   // Narration sections keep the text grouping + section boundaries used by the
-  // word-level highlight and the middle-band auto-scroll. Per-section images
-  // are intentionally not rendered in this layout (handled on another branch).
+  // word-level highlight and the middle-band auto-scroll.
   const sections = useMemo(
     () => buildPoiSections(poi, currentLang, showReadingBody ? (fullParagraphs as string[]) : []),
     [poi, currentLang, fullParagraphs, showReadingBody]
   );
 
   // Tiêu đề chap hiển thị ở đoạn đầu tiên của từng phân đoạn bài thuyết minh.
-  // sections được dựng từ narration.full (merge các chap) nên đếm phẳng khớp 1:1.
   const chapterTitleBySection = useMemo(() => {
     const chapterBlocks = poi.narration?.chapters?.[currentLang];
     if (!chapterBlocks || chapterBlocks.length === 0) return null;
@@ -204,31 +194,6 @@ export const PoiReadingSection: React.FC<PoiReadingSectionProps> = ({
     }
   }, [isReadingActive, activeCharOffset]);
 
-  // Left column: the POI cover image (4:3, sticky on desktop).
-  const hasMedia = Boolean(poi.image || poi.slug);
-
-  // Category label for the content header (falls back to Vietnamese like the hero).
-  const categoryLabel = poi.category[currentLang] || poi.category.vi;
-  const isCatFallback = !poi.category[currentLang] && currentLang !== 'vi';
-
-  // Listen bar mirrors the hero's single-source-of-truth play/pause state.
-  const isCardPlaying = isCurrent && isPlaying;
-  const isCardPaused = isCurrent && !isPlaying && playbackStatus === 'paused';
-  const resolvedListenText = listenBtnText || t(currentLang, 'playBtn');
-  const resolvedPauseText = pauseBtnText || t(currentLang, 'pauseBtn');
-  const resolvedResumeText = resumeBtnText || t(currentLang, 'resumeBtn');
-  const listenLabel = isCardPlaying
-    ? resolvedPauseText
-    : isCardPaused
-    ? resolvedResumeText
-    : resolvedListenText;
-
-  const knownSeconds =
-    (isCardPlaying || isCardPaused) && duration && duration > 0 ? duration : null;
-  const durationLabel = knownSeconds
-    ? `${Math.floor(knownSeconds / 60)}:${String(Math.floor(knownSeconds % 60)).padStart(2, '0')}`
-    : null;
-
   // Facts row: Address and distance
   const rawAddress = (poi as any).address;
   const addressVal =
@@ -264,20 +229,6 @@ export const PoiReadingSection: React.FC<PoiReadingSectionProps> = ({
   const nextLabel = nextItem
     ? t(currentLang, 'nextStop', { name: getPoiName(nextItem.poi) })
     : t(currentLang, 'nextBtn');
-
-  const qrAvailable = isQrAvailable(poi);
-
-  const handleShare = () => {
-    const url = buildPoiQrUrl(poi);
-    if (!url) return;
-    if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
-      navigator.share({ title: displayName, text: displayName, url }).catch(() => {});
-      return;
-    }
-    if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
-      navigator.clipboard.writeText(url).catch(() => {});
-    }
-  };
 
   const renderParagraphText = (pRange: { start: number; end: number; text: string }) => {
     const paraText = pRange.text;
@@ -337,200 +288,115 @@ export const PoiReadingSection: React.FC<PoiReadingSectionProps> = ({
     <section className="nearby-reading-section" aria-label={`Nội dung thuyết minh: ${displayName}`}>
       <div className="nearby-reading-container" data-sync={syncMode}>
         <div className="poi-reading-layout">
-          {/* Left column: POI image (4:3, sticky) with the QR card beneath it */}
-          {(hasMedia || qrAvailable) && (
-            <div className="poi-reading-aside">
-              {hasMedia && (
-                <div className="poi-reading-media">
-                  <img
-                    className="poi-reading-media-img"
-                    src={resolveImagePath(poi.image, poi.slug)}
-                    alt={displayName}
-                    loading="lazy"
-                    decoding="async"
-                  />
-                </div>
-              )}
+          {/* The stop name already lives on the accordion row above, so the
+              heading is kept for assistive tech only. */}
+          <header className="poi-reading-head sr-only">
+            <h3 className="reading-stop-title" lang={isNameFallback ? 'vi' : currentLang}>
+              {displayName}
+            </h3>
+          </header>
 
-              {qrAvailable && (
-                <div
-                  className="place-qr-detail-card"
-                  role="region"
-                  aria-label={t(currentLang, 'qrCardAria')}
-                >
-                  <PlaceQR
-                    poi={poi}
-                    size={144}
-                    lang={currentLang}
-                    label={displayName}
-                    orderNumber={poi.stopOrder}
-                    showHint={false}
-                    showActions
-                  />
-                  <div className="place-qr-detail-meta">
-                    <div className="place-qr-detail-title">
-                      <span className="place-qr-detail-order">{poi.stopOrder}</span>
-                      <h4 className="place-qr-detail-name">{displayName}</h4>
-                    </div>
-                    <p className="place-qr-detail-hint">{t(currentLang, 'qrScanHint')}</p>
-                  </div>
-                </div>
+          {!showReadingBody && !isContentLocked && (
+            <p className="reading-body-fallback" lang={currentLang}>
+              {t(currentLang, 'noTranscript')}
+            </p>
+          )}
+
+          {isContentLocked && (
+            <div className="poi-content-lock" role="region" aria-live="polite">
+              <span className="poi-content-lock-icon" aria-hidden="true">
+                <Lock size={22} strokeWidth={1.8} />
+              </span>
+              <strong>{CONTENT_LOCK_COPY[currentLang].title}</strong>
+              <p lang={currentLang}>{CONTENT_LOCK_COPY[currentLang].description}</p>
+              {onUnlockContent && (
+                <button type="button" onClick={onUnlockContent}>
+                  {CONTENT_LOCK_COPY[currentLang].cta}
+                </button>
               )}
             </div>
           )}
 
-          {/* Right column: name, category, listen bar, narration paragraphs, facts, QR, nav */}
-          <div className="poi-reading-content">
-            <header className="poi-reading-head">
-              {categoryLabel && (
-                <p
-                  className="poi-reading-category"
-                  lang={isCatFallback ? 'vi' : currentLang}
-                >
-                  {categoryLabel}
-                </p>
+          {/* Reading body: rendered only when the full narration layer exists for the current language */}
+          {showReadingBody && !isContentLocked && (
+            <div className="reading-body-flow" lang={currentLang} data-sync={syncMode}>
+              {sections.map((_section, pIdx) => {
+                const pRange = paragraphRanges[pIdx];
+                if (!pRange) return null;
+                const isActiveSection = pIdx === activeSectionIndex;
+                const chapterTitle = chapterTitleBySection?.get(pIdx);
+
+                return (
+                  <div
+                    key={pIdx}
+                    ref={(el) => {
+                      sectionRefs.current[pIdx] = el;
+                    }}
+                    className={`narration-section${isActiveSection ? ' is-active' : ''}`}
+                  >
+                    {chapterTitle && (
+                      <h4 className="reading-chapter-title" lang={currentLang}>
+                        {chapterTitle}
+                      </h4>
+                    )}
+                    {renderParagraphText(pRange)}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Optional facts (distance, address) */}
+          {hasFacts && (
+            <dl className="chapter-facts-row reading-facts-row">
+              {addressVal && (
+                <div className="chapter-fact-pair">
+                  <dt className="chapter-fact-label">{addressLabel}:</dt>
+                  <dd className="chapter-fact-value">{addressVal}</dd>
+                </div>
               )}
-              <h3 className="reading-stop-title" lang={isNameFallback ? 'vi' : currentLang}>
-                {displayName}
-              </h3>
-            </header>
+              {hasDistance && (
+                <div className="chapter-fact-pair">
+                  <dt className="chapter-fact-label">{distanceLabel}:</dt>
+                  <dd className="chapter-fact-value">{formattedDist}</dd>
+                </div>
+              )}
+            </dl>
+          )}
 
-            {onTogglePlay && (
-              <div className="poi-reading-listen-bar">
-                <button
-                  type="button"
-                  className={`poi-reading-play-btn${isCardPlaying ? ' is-playing' : ''}`}
-                  data-id={poi.id}
-                  aria-pressed={isCardPlaying}
-                  onClick={() => onTogglePlay(poi.id)}
-                >
-                  {isCardPlaying ? (
-                    <span className="audio-wave-anim" aria-hidden="true">
-                      <span />
-                      <span />
-                      <span />
-                    </span>
-                  ) : (
-                    <svg
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="currentColor"
-                      aria-hidden="true"
-                      className="play-icon-svg"
-                    >
-                      <polygon points="5 3 19 12 5 21 5 3" />
-                    </svg>
-                  )}
-                  <span>{listenLabel}</span>
-                </button>
-                {durationLabel && <span className="poi-reading-duration">{durationLabel}</span>}
-              </div>
-            )}
+          {/* Bottom Navigation: ONE line Next link, drop Previous button and its box */}
+          <nav className="reading-nav-row" aria-label="Điều hướng các điểm dừng">
+            <button
+              type="button"
+              className="panel-nav-btn btn-prev sr-only"
+              disabled={!prevItem}
+              onClick={() => prevItem && onSelectPoi(prevItem.poi.id)}
+              aria-label={prevLabel}
+            >
+              <span className="nav-btn-text">{prevLabel}</span>
+            </button>
 
-            {!showReadingBody && !isContentLocked && (
-              <p className="reading-body-fallback" lang={currentLang}>
-                {t(currentLang, 'noTranscript')}
-              </p>
-            )}
-
-            {isContentLocked && (
-              <div className="poi-content-lock" role="region" aria-live="polite">
-                <span className="poi-content-lock-icon" aria-hidden="true">
-                  <Lock size={22} strokeWidth={1.8} />
-                </span>
-                <strong>{CONTENT_LOCK_COPY[currentLang].title}</strong>
-                <p lang={currentLang}>{CONTENT_LOCK_COPY[currentLang].description}</p>
-                {onUnlockContent && (
-                  <button type="button" onClick={onUnlockContent}>
-                    {CONTENT_LOCK_COPY[currentLang].cta}
-                  </button>
-                )}
-              </div>
-            )}
-
-            {/* Reading body: rendered only when the full narration layer exists for the current language */}
-            {showReadingBody && !isContentLocked && (
-              <div className="reading-body-flow" lang={currentLang} data-sync={syncMode}>
-                {sections.map((_section, pIdx) => {
-                  const pRange = paragraphRanges[pIdx];
-                  if (!pRange) return null;
-                  const isActiveSection = pIdx === activeSectionIndex;
-                  const chapterTitle = chapterTitleBySection?.get(pIdx);
-
-                  return (
-                    <div
-                      key={pIdx}
-                      ref={(el) => {
-                        sectionRefs.current[pIdx] = el;
-                      }}
-                      className={`narration-section${isActiveSection ? ' is-active' : ''}`}
-                    >
-                      {chapterTitle && (
-                        <h4 className="reading-chapter-title" lang={currentLang}>
-                          {chapterTitle}
-                        </h4>
-                      )}
-                      {renderParagraphText(pRange)}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-
-            {/* Optional facts (distance, address) */}
-            {hasFacts && (
-              <dl className="chapter-facts-row reading-facts-row">
-                {addressVal && (
-                  <div className="chapter-fact-pair">
-                    <dt className="chapter-fact-label">{addressLabel}:</dt>
-                    <dd className="chapter-fact-value">{addressVal}</dd>
-                  </div>
-                )}
-                {hasDistance && (
-                  <div className="chapter-fact-pair">
-                    <dt className="chapter-fact-label">{distanceLabel}:</dt>
-                    <dd className="chapter-fact-value">{formattedDist}</dd>
-                  </div>
-                )}
-              </dl>
-            )}
-
-            {/* Mobile: QR card lives under the image; the share button replaces it here */}
-            {qrAvailable && (
-              <button
-                type="button"
-                className="place-qr-share-btn"
-                onClick={handleShare}
-                aria-label={t(currentLang, 'qrShare')}
-              >
-                {t(currentLang, 'qrShare')}
-              </button>
-            )}
-
-            {/* Bottom Navigation: Previous / Next buttons (min 44px hit area, disabled at ends, no chevron icons) */}
-            <nav className="reading-nav-row" aria-label="Điều hướng các điểm dừng">
-              <button
-                type="button"
-                className="panel-nav-btn btn-prev"
-                disabled={!prevItem}
-                onClick={() => prevItem && onSelectPoi(prevItem.poi.id)}
-                aria-label={prevLabel}
-              >
-                <span className="nav-btn-text">{prevLabel}</span>
-              </button>
-
+            {nextItem && (
               <button
                 type="button"
                 className="panel-nav-btn btn-next"
-                disabled={!nextItem}
-                onClick={() => nextItem && onSelectPoi(nextItem.poi.id)}
+                onClick={() => onSelectPoi(nextItem.poi.id)}
                 aria-label={nextLabel}
               >
                 <span className="nav-btn-text">{nextLabel}</span>
               </button>
-            </nav>
-          </div>
+            )}
+            {!nextItem && (
+              <button
+                type="button"
+                className="panel-nav-btn btn-next sr-only"
+                disabled
+                aria-hidden="true"
+              >
+                <span className="nav-btn-text">{nextLabel}</span>
+              </button>
+            )}
+          </nav>
         </div>
       </div>
     </section>

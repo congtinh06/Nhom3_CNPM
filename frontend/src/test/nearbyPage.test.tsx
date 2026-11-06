@@ -621,35 +621,34 @@ describe('NearbyPage - Clean Multilingual & Audio Narration Integration', () => 
   });
 
   describe('Visual Polish & Chapter Layout V2 Checks (Tasks 1, 2, 3)', () => {
-    it('shows selected-stop card ONLY after explicit marker click, and keeps it closed after dismissal', () => {
-      render(
+    it('selects a stop from a marker click without rendering a floating card under the map', () => {
+      const { container } = render(
         <BrowserRouter>
           <NearbyPage />
         </BrowserRouter>
       );
 
-      // Card must NOT be displayed on initial render
+      // No floating card on initial render.
       expect(screen.queryByTestId('nearby-selected-card')).not.toBeInTheDocument();
 
-      // Click the first marker
+      // Click the first marker: the matching accordion row becomes active.
       const markers = screen.getAllByTestId('leaflet-marker');
       expect(markers.length).toBeGreaterThan(0);
+
+      const rows = container.querySelectorAll('.nearby-stop-row');
+
       act(() => {
         fireEvent.click(markers[0]!);
       });
 
-      // Card appears after marker click
-      const card = screen.getByTestId('nearby-selected-card');
-      expect(card).toBeInTheDocument();
-
-      // Close the card
-      const closeBtn = screen.getByTitle('Đóng thẻ địa điểm');
-      act(() => {
-        fireEvent.click(closeBtn);
-      });
-
-      // Card is dismissed
       expect(screen.queryByTestId('nearby-selected-card')).not.toBeInTheDocument();
+      expect(container.querySelectorAll('.nearby-stop-row.is-active')).toHaveLength(1);
+      const activeRow = container.querySelector('.nearby-stop-row.is-active');
+      expect(activeRow).toBeInTheDocument();
+      expect(rows.length).toBeGreaterThan(0);
+      // The first marker maps to the first stop in tour order.
+      expect(activeRow).toBe(rows[0]);
+      expect(activeRow).toHaveAttribute('aria-expanded', 'true');
     });
 
     describe('Single source of truth for Play / Pause / Resume (Hạng mục 1)', () => {
@@ -957,8 +956,13 @@ describe('NearbyPage - Clean Multilingual & Audio Narration Integration', () => 
 
       const rows = container.querySelectorAll('.nearby-stop-row');
       expect(rows[1]).toHaveAttribute('aria-current', 'true');
-      expect(prevBtn).not.toBeDisabled();
-      expect(prevBtn).toHaveTextContent(/Dinh Độc Lập/i);
+      // The detail accordion moved under the new active row, so re-query the
+      // nav buttons from the freshly opened detail.
+      const prevBtnAfterNext = container.querySelector(
+        '.panel-nav-btn.btn-prev'
+      ) as HTMLButtonElement;
+      expect(prevBtnAfterNext).not.toBeDisabled();
+      expect(prevBtnAfterNext).toHaveTextContent(/Dinh Độc Lập/i);
 
       // Advance to stop 5
       act(() => {
@@ -966,8 +970,10 @@ describe('NearbyPage - Clean Multilingual & Audio Narration Integration', () => 
       });
 
       expect(rows[4]).toHaveAttribute('aria-current', 'true');
-      expect(nextBtn).toBeDisabled();
-      expect(prevBtn).not.toBeDisabled();
+      const prevBtnAtEnd = container.querySelector('.panel-nav-btn.btn-prev') as HTMLButtonElement;
+      const nextBtnAtEnd = container.querySelector('.panel-nav-btn.btn-next') as HTMLButtonElement;
+      expect(nextBtnAtEnd).toBeDisabled();
+      expect(prevBtnAtEnd).not.toBeDisabled();
     });
 
     it('updates title, list heading, control labels, Play, Previous/Next, and html lang on language change', () => {

@@ -1,0 +1,20 @@
+================================================================================
+THÔNG TIN CHÚ THÍCH HÌNH ẢNH: Hinh_5.8_Chuong_5
+================================================================================
+1. KÝ HIỆU HÌNH         : Hinh 5.8 Chuong 5
+2. TIÊU ĐỀ SƠ ĐỒ        : Giao diện Quản trị Điểm Di tích POI, Cấu hình Geofence và Trạng thái Audio
+3. THUỘC BÁO CÁO        : Chương 5: Hiện thực Hệ thống
+4. VỊ TRÍ TRONG CHƯƠNG  : Mục 5.7 – Giao diện người dùng và mô tả các màn hình
+5. TÁC NHÂN / THÀNH PHẦN: Cán bộ Quản lý Di tích, Biên tập viên nội dung
+6. TIÊU CHUẨN MÔ HÌNH HÓA: Formik/React Form, Leaflet Coordinate Picker, Audio Status Tracker
+--------------------------------------------------------------------------------
+7. MỤC ĐÍCH VÀ Ý NGHĨA NGHIỆP VỤ:
+   Biểu mẫu thêm/sửa điểm di tích di sản: nhập tên, chọn tọa độ trực quan trên bản đồ, cấu hình bán kính Geofence (35-60m), tải lên bài viết thuyết minh gốc tiếng Việt, kiểm soát trạng thái xuất bản (PUBLISHED/HIDDEN) và theo dõi tiến độ tổng hợp giọng đọc AI đa ngữ từ Edge-TTS.
+--------------------------------------------------------------------------------
+8. QUY CÁCH TỆP HÌNH ẢNH:
+   • Tệp hình ảnh Raster : Hinh_5.8_Chuong_5.png (Chụp màn hình thực tế từ hệ thống đang vận hành, độ phân giải cao)
+   • Phong cách thể hiện  : Giao diện người dùng thực tế (Clean UI, Modern Aesthetics, Tiêu chuẩn Web/PWA)
+================================================================================
+Đồ án Học phần Công nghệ Phần mềm – Đề tài: Hệ thống Thuyết minh Tự động Đa ngôn ngữ Echora
+Nhóm Sinh viên Thực hiện: Nhóm 03 – Khoa CNTT, Đại học Khoa học Tự nhiên / ĐHQG-HCM
+================================================================================

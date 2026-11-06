@@ -1,10 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Lock } from 'lucide-react';
 import { GeoPoi, getHeroIntroText } from '../../pages/NearbyPage';
 import { SupportedLanguage } from '../../types';
 import { resolveImagePath } from './PoiCard';
 import { t } from '../../content/nearbyI18n';
-import { SUPPORTED_LANGUAGES } from '../../content/languages';
 import { PlaybackStatus } from '../../hooks/useNearbyAudio';
 import { buildGoogleMapsDirectionsUrl } from '../../utils/directions';
 
@@ -31,6 +29,9 @@ interface PoiHeroProps {
     poiId: number | string | null | undefined,
     language: SupportedLanguage
   ) => boolean;
+  /** Opens the "listen on your phone" QR dialog. */
+  onOpenQr?: () => void;
+  qrAvailable?: boolean;
 }
 
 export const PoiHero: React.FC<PoiHeroProps> = ({
@@ -50,9 +51,8 @@ export const PoiHero: React.FC<PoiHeroProps> = ({
   getPoiName,
   userPos,
   heroRef,
-  onChangeLanguage,
-  onUnlockLanguage,
-  canAccessPoiLanguage,
+  onOpenQr,
+  qrAvailable = false,
 }) => {
   const [imageError, setImageError] = useState(false);
 
@@ -64,18 +64,6 @@ export const PoiHero: React.FC<PoiHeroProps> = ({
   const isNameFallback = !hasNameInLang && currentLang !== 'vi';
   const displayName = getPoiName(poi);
   const displayStopNumber = stopNumber ?? originalIndex + 1;
-  const categoryLabel = poi.category?.[currentLang] || poi.category?.vi || '';
-  const eyebrowPrefix =
-    currentLang === 'en'
-      ? 'Stop'
-      : currentLang === 'ja'
-      ? 'スポット'
-      : currentLang === 'ko'
-      ? '정류장'
-      : 'Điểm';
-  const eyebrowText = categoryLabel
-    ? `${eyebrowPrefix} ${displayStopNumber} - ${categoryLabel}`
-    : `${eyebrowPrefix} ${displayStopNumber}`;
 
   // Hero intro: first two sentences of short narration text (2-line clamped)
   const introText = getHeroIntroText(poi, currentLang);
@@ -122,13 +110,9 @@ export const PoiHero: React.FC<PoiHeroProps> = ({
 
         {/* Right column: text content (spans full width if no image) */}
         <div className="nearby-hero-content">
-          {/* Eyebrow badge: uppercase small label (ĐIỂM 1, loại điểm) */}
-          <div className="hero-eyebrow-label" aria-hidden="true">
-            {eyebrowText}
-          </div>
-
-          {/* Stop title */}
-          <h2 className="nearby-hero-title detail-title" lang={isNameFallback ? 'vi' : currentLang}>
+          {/* The stop name is already announced by the accordion row above, so
+              the detail heading is kept for assistive tech only. */}
+          <h2 className="nearby-hero-title detail-title sr-only" lang={isNameFallback ? 'vi' : currentLang}>
             {displayName}
             {isNameFallback && (
               <span className="hero-content-fallback-tag">
@@ -145,45 +129,14 @@ export const PoiHero: React.FC<PoiHeroProps> = ({
             </p>
           )}
 
-          {/* Bộ chọn ngôn ngữ của riêng điểm này */}
-          <div className="hero-lang-chips" role="group" aria-label="Bản dịch thuyết minh của điểm">
-            {SUPPORTED_LANGUAGES.map((opt) => {
-              const isLocked = canAccessPoiLanguage
-                ? !canAccessPoiLanguage(poi.numericId ?? poi.id, opt.code)
-                : opt.code !== 'vi';
-              const isActive = currentLang === opt.code;
-              return (
-                <button
-                  key={opt.code}
-                  type="button"
-                  className={`hero-lang-chip${isActive ? ' is-active' : ''}${isLocked ? ' is-locked' : ''}`}
-                  aria-pressed={isActive}
-                  title={isLocked ? `${opt.label} (Cần mở khóa)` : opt.label}
-                  onClick={() => {
-                    if (isLocked) {
-                      onUnlockLanguage?.(poi, opt.code);
-                    } else {
-                      onChangeLanguage?.(opt.code);
-                    }
-                  }}
-                >
-                  <span className="hero-lang-code">{opt.short}</span>
-                  {isLocked && (
-                    <Lock size={12} strokeWidth={2.2} className="hero-lang-lock-icon" aria-hidden="true" />
-                  )}
-                </button>
-              );
-            })}
-          </div>
-
-          {/* 2-line clamped intro */}
+          {/* Lead paragraph (first two sentences of the narration) */}
           {introText && (
             <p className="nearby-hero-intro chapter-description-measure is-clamped" lang={currentLang}>
               {introText}
             </p>
           )}
 
-          {/* Primary action row: Play button, optional duration, and position indicator */}
+          {/* Action row: one primary action + secondary/small text actions */}
           <div className="hero-actions-row">
             <button
               type="button"
@@ -206,8 +159,8 @@ export const PoiHero: React.FC<PoiHeroProps> = ({
                 </span>
               ) : (
                 <svg
-                  width="16"
-                  height="16"
+                  width="14"
+                  height="14"
                   viewBox="0 0 24 24"
                   fill="currentColor"
                   aria-hidden="true"
@@ -235,12 +188,23 @@ export const PoiHero: React.FC<PoiHeroProps> = ({
               <span>{t(currentLang, 'directionsBtn')}</span>
             </a>
 
+            {onOpenQr && qrAvailable && (
+              <button
+                type="button"
+                className="hero-qr-btn"
+                onClick={onOpenQr}
+                aria-haspopup="dialog"
+              >
+                {t(currentLang, 'qrListenOnPhone')}
+              </button>
+            )}
+
             {formattedAudioDuration && (
-              <span className="hero-audio-duration">{formattedAudioDuration}</span>
+              <span className="hero-audio-duration sr-only">{formattedAudioDuration}</span>
             )}
 
             <span
-              className="hero-position-indicator"
+              className="hero-position-indicator sr-only"
               aria-label={`${displayStopNumber} / ${totalStops}`}
             >
               {displayStopNumber} / {totalStops}

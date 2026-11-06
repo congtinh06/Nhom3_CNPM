@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
-import { MapContainer, Marker, Popup, Circle, Polyline, useMap } from 'react-leaflet';
+import { MapContainer, Marker, Popup, Circle, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { SupportedLanguage } from '../../types';
@@ -8,12 +8,57 @@ import { PositionState, haversine } from '../../hooks/useAutoNarration';
 import { resolveImagePath } from './PoiCard';
 import { t, formatDistance } from '../../content/nearbyI18n';
 import { buildGoogleMapsDirectionsUrl } from '../../utils/directions';
+import { OsmTileLayer } from './OsmTileLayer';
+import {
+  TileProviderConfig,
+  TILE_PROVIDERS,
+  KNOWN_TILE_PROVIDERS,
+  getTileProviders,
+  getInitialProviderIndex,
+  saveWorkingProvider,
+  STORAGE_KEY_WORKING_PROVIDER,
+} from '../../config/tileProviders';
+
+export { OsmTileLayer };
+export type { TileProviderConfig };
+export {
+  TILE_PROVIDERS,
+  KNOWN_TILE_PROVIDERS,
+  getTileProviders,
+  getInitialProviderIndex,
+  saveWorkingProvider,
+  STORAGE_KEY_WORKING_PROVIDER,
+};
+
+export type GoogleMapTypeStyle = {
+  featureType?: string;
+  elementType?: string;
+  stylers: Array<Record<string, any>>;
+};
+
+export const GOOGLE_MAPS_WARM_LIGHT_STYLES: GoogleMapTypeStyle[] = [
+  { featureType: 'all', elementType: 'geometry', stylers: [{ color: '#EFE9DF' }] },
+  { featureType: 'poi', elementType: 'all', stylers: [{ visibility: 'off' }] },
+  { featureType: 'transit', elementType: 'all', stylers: [{ visibility: 'off' }] },
+  { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#CFD8D6' }] },
+  { featureType: 'road', elementType: 'geometry.fill', stylers: [{ color: '#FBF8F2' }] },
+];
+
+export const GOOGLE_MAPS_WARM_DARK_STYLES: GoogleMapTypeStyle[] = [
+  { featureType: 'all', elementType: 'geometry', stylers: [{ color: '#26221F' }] },
+  { featureType: 'poi', elementType: 'all', stylers: [{ visibility: 'off' }] },
+  { featureType: 'transit', elementType: 'all', stylers: [{ visibility: 'off' }] },
+  { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#2F3D40' }] },
+  { featureType: 'road', elementType: 'geometry.fill', stylers: [{ color: '#3A3531' }] },
+];
 
 interface MapControllerProps {
   pois: GeoPoi[];
   activePoi: GeoPoi | null;
   isInitialMount: boolean;
   onInitialFitDone: () => void;
+  onZoomChange: (zoomedIn: boolean) => void;
+  fitBoundsTrigger: number;
 }
 
 const MapController: React.FC<MapControllerProps> = ({
@@ -21,6 +66,8 @@ const MapController: React.FC<MapControllerProps> = ({
   activePoi,
   isInitialMount,
   onInitialFitDone,
+  onZoomChange,
+  fitBoundsTrigger,
 }) => {
   const map = useMap();
   const lastActiveIdRef = useRef<string | null>(null);
@@ -29,88 +76,25 @@ const MapController: React.FC<MapControllerProps> = ({
   const isScrollingRef = useRef<boolean>(false);
   const pendingActivePoiRef = useRef<GeoPoi | null>(null);
 
-  // DEV-only startup log line: map size
+  // Invalidate size on container resize
   useEffect(() => {
-    if (import.meta.env.DEV) {
-      const size = typeof map?.getSize === 'function' ? map.getSize() : { x: 0, y: 0 };
-      console.log(`[PoiMap DEV Startup] Map size: ${size.x}x${size.y}`);
+    if (typeof map?.invalidateSize === 'function') {
+      map.invalidateSize();
     }
-  }, [map]);
-
-  const executeFlyTo = useCallback(
-    (targetPoi: GeoPoi) => {
-      if (!targetPoi || targetPoi.id === lastActiveIdRef.current) return;
-      lastActiveIdRef.current = targetPoi.id;
-      pendingActivePoiRef.current = null;
-
-      const prefersReduced =
-        typeof window !== 'undefined' &&
-        window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-      try {
-        map.stop();
-        if (import.meta.env.DEV && typeof window !== 'undefined' && (window as any).__nearbyPerf) {
-          (window as any).__nearbyPerf.flyToCalls++;
-        }
-        if (prefersReduced) {
-          map.setView([targetPoi.lat, targetPoi.lng], 16);
-        } else {
-          (map.flyTo as any)([targetPoi.lat, targetPoi.lng], 16, {
-            duration: 0.8,
-            paddingBottomRight: [0, 95],
-          });
-        }
-      } catch {
-        // Ignore flyTo interrupts
-      }
-    },
-    [map]
-  );
-
-  // Passive window scroll listener to track user in-progress scroll state
-  useEffect(() => {
-    const handleWindowScroll = () => {
-      isScrollingRef.current = true;
-      if (scrollTimerRef.current) {
-        clearTimeout(scrollTimerRef.current);
-      }
-      scrollTimerRef.current = setTimeout(() => {
-        isScrollingRef.current = false;
-        // Scroll has settled: execute any deferred flyTo if chapter changed
-        const pending = pendingActivePoiRef.current;
-        if (pending && pending.id !== lastActiveIdRef.current) {
-          executeFlyTo(pending);
-        }
-      }, 200);
-    };
-
-    window.addEventListener('scroll', handleWindowScroll, { passive: true });
-    return () => {
-      window.removeEventListener('scroll', handleWindowScroll);
-      if (scrollTimerRef.current) {
-        clearTimeout(scrollTimerRef.current);
-        scrollTimerRef.current = null;
-      }
-    };
-  }, [executeFlyTo]);
-
-  // Invalidate size ONLY on container resize via ResizeObserver, NEVER during window scroll
-  useEffect(() => {
-    map.invalidateSize();
-    const t1 = setTimeout(() => map.invalidateSize(), 150);
-    const t2 = setTimeout(() => map.invalidateSize(), 500);
+    const t1 = setTimeout(() => {
+      if (typeof map?.invalidateSize === 'function') map.invalidateSize();
+    }, 150);
+    const t2 = setTimeout(() => {
+      if (typeof map?.invalidateSize === 'function') map.invalidateSize();
+    }, 500);
 
     let ro: ResizeObserver | null = null;
     if (typeof ResizeObserver !== 'undefined') {
       ro = new ResizeObserver(() => {
-        // Skip invalidateSize while user is actively scrolling to prevent layout thrashing
         if (isScrollingRef.current) return;
-        if (import.meta.env.DEV && typeof window !== 'undefined' && (window as any).__nearbyPerf) {
-          (window as any).__nearbyPerf.invalidateSizeCalls++;
-        }
-        map.invalidateSize();
+        if (typeof map?.invalidateSize === 'function') map.invalidateSize();
       });
-      const container = map.getContainer?.();
+      const container = typeof map?.getContainer === 'function' ? map.getContainer() : null;
       if (container) {
         ro.observe(container);
       }
@@ -123,370 +107,125 @@ const MapController: React.FC<MapControllerProps> = ({
     };
   }, [map]);
 
-  // Initial bounds: fit to tour stops if no active poi initially
+  // Track zoom level to show/hide "View full route" button
+  useEffect(() => {
+    if (typeof map?.on !== 'function') return;
+    const handleZoom = () => {
+      const z = typeof map.getZoom === 'function' ? map.getZoom() : 14;
+      onZoomChange(z >= 15);
+    };
+    map.on('zoomend', handleZoom);
+    return () => {
+      if (typeof map?.off === 'function') {
+        map.off('zoomend', handleZoom);
+      }
+    };
+  }, [map, onZoomChange]);
+
+  const executeFlyTo = useCallback(
+    (targetPoi: GeoPoi) => {
+      if (!targetPoi || targetPoi.id === lastActiveIdRef.current) return;
+      lastActiveIdRef.current = targetPoi.id;
+      pendingActivePoiRef.current = null;
+
+      const prefersReduced =
+        typeof window !== 'undefined' &&
+        window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+      try {
+        if (typeof map?.stop === 'function') map.stop();
+        const currentZoom = typeof map?.getZoom === 'function' ? map.getZoom() : 14;
+        const targetZoom = Math.max(currentZoom, 15);
+        if (prefersReduced) {
+          if (typeof map?.setView === 'function') {
+            map.setView([targetPoi.lat, targetPoi.lng], targetZoom);
+          }
+        } else {
+          if (typeof (map as any)?.flyTo === 'function') {
+            (map.flyTo as any)([targetPoi.lat, targetPoi.lng], targetZoom, {
+              duration: 0.8,
+            });
+          } else if (typeof map?.setView === 'function') {
+            map.setView([targetPoi.lat, targetPoi.lng], targetZoom);
+          }
+        }
+        onZoomChange(true);
+      } catch {
+        // Ignore flyTo interrupts
+      }
+    },
+    [map, onZoomChange]
+  );
+
+  // Passive window scroll listener to avoid flyTo during scrolling
+  useEffect(() => {
+    const handleWindowScroll = () => {
+      isScrollingRef.current = true;
+      if (scrollTimerRef.current) clearTimeout(scrollTimerRef.current);
+      scrollTimerRef.current = setTimeout(() => {
+        isScrollingRef.current = false;
+        const pending = pendingActivePoiRef.current;
+        if (pending && pending.id !== lastActiveIdRef.current) {
+          executeFlyTo(pending);
+        }
+      }, 200);
+    };
+
+    window.addEventListener('scroll', handleWindowScroll, { passive: true });
+    return () => {
+      window.removeEventListener('scroll', handleWindowScroll);
+      if (scrollTimerRef.current) clearTimeout(scrollTimerRef.current);
+    };
+  }, [executeFlyTo]);
+
+  // Initial bounds: fit to tour stops with 48px padding
   useEffect(() => {
     if (isInitialMount && pois.length > 0) {
-      if (activePoi) {
-        if (typeof map?.setView === 'function') {
-          map.setView([activePoi.lat, activePoi.lng], 16);
+      try {
+        if (typeof map?.fitBounds === 'function') {
+          const bounds = L.latLngBounds(pois.map((p) => [p.lat, p.lng]));
+          map.fitBounds(bounds, { padding: [48, 48], maxZoom: 16 });
         }
-      } else {
-        try {
-          if (typeof map?.fitBounds === 'function') {
-            const bounds = L.latLngBounds(pois.map((p) => [p.lat, p.lng]));
-            map.fitBounds(bounds, { padding: [32, 32], maxZoom: 16 });
-          }
-        } catch {
-          // Ignore
-        }
+      } catch {
+        // Ignore
       }
       onInitialFitDone();
     }
-  }, [isInitialMount, pois, activePoi, map, onInitialFitDone]);
+  }, [isInitialMount, pois, map, onInitialFitDone]);
 
-  // Task 3: Active chapter change: map.flyTo is debounced ~200 ms and NEVER fires during an active scroll frame
+  // Handle "View full route" button trigger
   useEffect(() => {
-    if (!activePoi || activePoi.id === lastActiveIdRef.current) return;
-    pendingActivePoiRef.current = activePoi;
-
-    if (flyToTimerRef.current) {
-      clearTimeout(flyToTimerRef.current);
-      flyToTimerRef.current = null;
-    }
-
-    flyToTimerRef.current = setTimeout(() => {
-      // If user is currently scrolling, defer flyTo until scroll settles
-      if (!isScrollingRef.current) {
-        executeFlyTo(activePoi);
-      }
-    }, 200);
-
-    return () => {
-      if (flyToTimerRef.current) {
-        clearTimeout(flyToTimerRef.current);
-        flyToTimerRef.current = null;
-      }
-    };
-  }, [activePoi, executeFlyTo]);
-
-  return null;
-};
-
-// Top-right stacked 40px round white buttons with soft shadow
-interface FloatingMapControlsProps {
-  pois: GeoPoi[];
-  userPos: PositionState | null;
-  currentLang: SupportedLanguage;
-}
-
-const FloatingMapControls: React.FC<FloatingMapControlsProps> = ({
-  pois,
-  userPos,
-  currentLang,
-}) => {
-  const map = useMap();
-
-  const handleLocateUser = () => {
-    if (userPos) {
-      try {
-        map.stop();
-        (map.flyTo as any)([userPos.lat, userPos.lng], 16, { duration: 0.8 });
-      } catch {
-        map.setView([userPos.lat, userPos.lng], 16);
-      }
-    }
-  };
-
-  const handleFitTour = () => {
-    if (pois.length > 0) {
+    if (fitBoundsTrigger > 0 && pois.length > 0) {
       try {
         const bounds = L.latLngBounds(pois.map((p) => [p.lat, p.lng]));
-        map.stop();
-        map.fitBounds(bounds, { padding: [40, 40], maxZoom: 16 });
+        if (typeof map?.stop === 'function') map.stop();
+        if (typeof map?.fitBounds === 'function') {
+          map.fitBounds(bounds, { padding: [48, 48], maxZoom: 16 });
+        }
+        onZoomChange(false);
       } catch {
         // Ignore
       }
     }
-  };
+  }, [fitBoundsTrigger, pois, map, onZoomChange]);
 
-  const handleZoomIn = () => {
-    map.zoomIn();
-  };
-
-  const handleZoomOut = () => {
-    map.zoomOut();
-  };
-
-  return (
-    <div
-      className="nearby-map-floating-stack"
-      style={{
-        position: 'absolute',
-        top: '16px',
-        right: '16px',
-        zIndex: 500,
-      }}
-    >
-      {/* 1. Locate Me */}
-      <button
-        type="button"
-        className="map-round-btn map-btn-locate"
-        onClick={handleLocateUser}
-        disabled={!userPos}
-        title={userPos ? t(currentLang, 'mapLocateBtnTitle') : t(currentLang, 'mapLocateBtnNoGps')}
-        aria-label={t(currentLang, 'mapLocateBtnAria')}
-      >
-        <svg
-          width="18"
-          height="18"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2.2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          aria-hidden="true"
-        >
-          <circle cx="12" cy="12" r="7" />
-          <circle cx="12" cy="12" r="2" fill="currentColor" />
-          <line x1="12" y1="2" x2="12" y2="5" />
-          <line x1="12" y1="19" x2="12" y2="22" />
-          <line x1="2" y1="12" x2="5" y2="12" />
-          <line x1="19" y1="12" x2="22" y2="12" />
-        </svg>
-      </button>
-
-      {/* 2. Fit Entire Tour */}
-      <button
-        type="button"
-        className="map-round-btn map-btn-fit"
-        onClick={handleFitTour}
-        title={t(currentLang, 'mapFitTourTitle')}
-        aria-label={t(currentLang, 'mapFitTourTitle')}
-      >
-        <svg
-          width="18"
-          height="18"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2.2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          aria-hidden="true"
-        >
-          <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" />
-        </svg>
-      </button>
-
-      {/* 3. Zoom In */}
-      <button
-        type="button"
-        className="map-round-btn map-btn-zoom-in"
-        onClick={handleZoomIn}
-        title={t(currentLang, 'mapZoomIn')}
-        aria-label={t(currentLang, 'mapZoomIn')}
-      >
-        <svg
-          width="18"
-          height="18"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          aria-hidden="true"
-        >
-          <line x1="12" y1="5" x2="12" y2="19" />
-          <line x1="5" y1="12" x2="19" y2="12" />
-        </svg>
-      </button>
-
-      {/* 4. Zoom Out */}
-      <button
-        type="button"
-        className="map-round-btn map-btn-zoom-out"
-        onClick={handleZoomOut}
-        title={t(currentLang, 'mapZoomOut')}
-        aria-label={t(currentLang, 'mapZoomOut')}
-      >
-        <svg
-          width="18"
-          height="18"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          aria-hidden="true"
-        >
-          <line x1="5" y1="12" x2="19" y2="12" />
-        </svg>
-      </button>
-    </div>
-  );
-};
-
-import {
-  TileProviderConfig,
-  TILE_PROVIDERS,
-  KNOWN_TILE_PROVIDERS,
-  getTileProviders,
-  getInitialProviderIndex,
-  saveWorkingProvider,
-  STORAGE_KEY_WORKING_PROVIDER,
-} from '../../config/tileProviders';
-
-export type { TileProviderConfig };
-export {
-  TILE_PROVIDERS,
-  KNOWN_TILE_PROVIDERS,
-  getTileProviders,
-  getInitialProviderIndex,
-  saveWorkingProvider,
-  STORAGE_KEY_WORKING_PROVIDER,
-};
-
-export interface OsmTileLayerProps {
-  isSchematic: boolean;
-  onEnterSchematic: () => void;
-  onExitSchematic: () => void;
-  retryTrigger: number;
-  tileLayerRef?: React.MutableRefObject<L.TileLayer | null>;
-  providers?: TileProviderConfig[];
-}
-
-export const OsmTileLayer: React.FC<OsmTileLayerProps> = ({
-  isSchematic: _isSchematic,
-  onEnterSchematic,
-  onExitSchematic,
-  retryTrigger,
-  tileLayerRef: externalTileLayerRef,
-  providers: customProviders,
-}) => {
-  const map = useMap();
-  const internalTileLayerRef = useRef<L.TileLayer | null>(null);
-  const tileLayerRef = externalTileLayerRef || internalTileLayerRef;
-  const providers = customProviders && customProviders.length > 0 ? customProviders : TILE_PROVIDERS;
-
-  // Start from remembered working provider in sessionStorage if valid; otherwise index 0
-  const [providerIndex, setProviderIndex] = useState<number>(() =>
-    getInitialProviderIndex(providers)
-  );
-  const consecutiveErrorsRef = useRef<number>(0);
-  const lastRetryRef = useRef<number>(retryTrigger);
-
-  // "Thử lại" restarts the chain from the first provider
+  // Active stop change: pan/fly to selected stop
   useEffect(() => {
-    if (retryTrigger !== lastRetryRef.current) {
-      lastRetryRef.current = retryTrigger;
-      consecutiveErrorsRef.current = 0;
-      setProviderIndex(0);
-      onExitSchematic();
-    }
-  }, [retryTrigger, onExitSchematic]);
+    if (!activePoi || activePoi.id === lastActiveIdRef.current) return;
+    pendingActivePoiRef.current = activePoi;
 
-  useEffect(() => {
-    const currentProvider: TileProviderConfig =
-      providers[providerIndex] ?? providers[0] ?? KNOWN_TILE_PROVIDERS.osm;
-    const layerOptions: L.TileLayerOptions = {
-      maxZoom: currentProvider.maxZoom ?? 19,
-      referrerPolicy: currentProvider.referrerPolicy,
-      subdomains: currentProvider.subdomains ?? 'abc',
-    };
+    if (flyToTimerRef.current) clearTimeout(flyToTimerRef.current);
 
-    // Clean up any existing layer before creating a fresh one (handles switch & retry cleanly without duplicates)
-    if (tileLayerRef.current) {
-      tileLayerRef.current.off('tileerror');
-      tileLayerRef.current.off('tileload');
-      if (map.hasLayer(tileLayerRef.current)) {
-        map.removeLayer(tileLayerRef.current);
+    flyToTimerRef.current = setTimeout(() => {
+      if (!isScrollingRef.current) {
+        executeFlyTo(activePoi);
       }
-      tileLayerRef.current = null;
-    }
+    }, 150);
 
-    const layer = L.tileLayer(currentProvider.url, layerOptions);
-
-    const handleTileError = (e: any) => {
-      consecutiveErrorsRef.current += 1;
-      const tileSrc = e?.tile?.src || e?.url || '';
-
-      if (import.meta.env.DEV) {
-        console.warn('[PoiMap DEV Diagnostic] Tile error event:', {
-          provider: currentProvider.key,
-          tileSrc,
-          onLine: typeof navigator !== 'undefined' ? navigator.onLine : undefined,
-          consecutiveErrors: consecutiveErrorsRef.current,
-        });
-      }
-
-      // After 3 consecutive tileerror events with no successful tileload since:
-      // Failover to next provider, or enter schematic if end of chain
-      if (consecutiveErrorsRef.current >= 3) {
-        const nextIndex = providerIndex + 1;
-        const nextProvider = providers[nextIndex];
-        if (nextIndex < providers.length && nextProvider) {
-          const fromKey = currentProvider.key;
-          const toKey = nextProvider.key;
-          if (import.meta.env.DEV) {
-            console.log(`[PoiMap Failover] Switching provider from "${fromKey}" to "${toKey}"`);
-          }
-          consecutiveErrorsRef.current = 0;
-          setProviderIndex(nextIndex);
-        } else {
-          if (import.meta.env.DEV) {
-            console.warn('[PoiMap Failover] All providers in chain failed. Entering schematic state.');
-          }
-          onEnterSchematic();
-        }
-      }
-    };
-
-    const handleTileLoad = () => {
-      consecutiveErrorsRef.current = 0;
-      saveWorkingProvider(currentProvider.key);
-      onExitSchematic();
-    };
-
-    layer.on('tileerror', handleTileError);
-    layer.on('tileload', handleTileLoad);
-
-    layer.addTo(map);
-    tileLayerRef.current = layer;
-
-    // DEV only: Count only L.TileLayer instances and log startup details with provider name
-    if (import.meta.env.DEV) {
-      let tileLayersCount = 0;
-      if (typeof map.eachLayer === 'function') {
-        map.eachLayer((l: any) => {
-          if (l instanceof L.TileLayer) {
-            tileLayersCount += 1;
-          }
-        });
-      }
-      console.log('[PoiMap DEV Startup] TileLayer initialized:', {
-        provider: currentProvider.key,
-        providerName: currentProvider.name,
-        url: currentProvider.url,
-        options: layerOptions,
-        tileLayersOnMap: tileLayersCount,
-      });
-    }
-
-    // Effect cleanup removes the layer it added: mount-unmount-mount leaves exactly one tile layer
     return () => {
-      if (tileLayerRef.current) {
-        tileLayerRef.current.off('tileerror', handleTileError);
-        tileLayerRef.current.off('tileload', handleTileLoad);
-        if (map.hasLayer(tileLayerRef.current)) {
-          map.removeLayer(tileLayerRef.current);
-        }
-        tileLayerRef.current = null;
-      }
+      if (flyToTimerRef.current) clearTimeout(flyToTimerRef.current);
     };
-  }, [map, providerIndex, retryTrigger, providers, onEnterSchematic, onExitSchematic]);
+  }, [activePoi, executeFlyTo]);
 
   return null;
 };
@@ -496,8 +235,6 @@ interface UserAutoCenterProps {
   centerOnUserToken: number;
 }
 
-// Flies the map to the user's position exactly once per "Vị trí của tôi" press
-// (signalled by a token bump). Later position updates leave the viewport alone.
 const UserAutoCenter: React.FC<UserAutoCenterProps> = ({ userPos, centerOnUserToken }) => {
   const map = useMap();
   const lastCenteredTokenRef = useRef<number>(0);
@@ -507,17 +244,72 @@ const UserAutoCenter: React.FC<UserAutoCenterProps> = ({ userPos, centerOnUserTo
     if (lastCenteredTokenRef.current === centerOnUserToken) return;
     lastCenteredTokenRef.current = centerOnUserToken;
     try {
-      map.stop();
-      (map.flyTo as any)([userPos.lat, userPos.lng], 16, { duration: 0.8 });
+      if (typeof map?.stop === 'function') map.stop();
+      if (typeof (map as any)?.flyTo === 'function') {
+        (map.flyTo as any)([userPos.lat, userPos.lng], 16, { duration: 0.8 });
+      } else if (typeof map?.setView === 'function') {
+        map.setView([userPos.lat, userPos.lng], 16);
+      }
     } catch {
-      map.setView([userPos.lat, userPos.lng], 16);
+      if (typeof map?.setView === 'function') {
+        map.setView([userPos.lat, userPos.lng], 16);
+      }
     }
   }, [centerOnUserToken, userPos, map]);
 
   return null;
 };
 
-interface PoiMapProps {
+// Map controls: Zoom in/out inside MapContainer using useMap()
+interface FloatingControlsProps {
+  currentLang: SupportedLanguage;
+}
+
+const FloatingMapControls: React.FC<FloatingControlsProps> = ({ currentLang }) => {
+  const map = useMap();
+
+  const handleZoomIn = () => {
+    if (typeof (map as any)?.zoomIn === 'function') {
+      (map as any).zoomIn();
+    }
+  };
+
+  const handleZoomOut = () => {
+    if (typeof (map as any)?.zoomOut === 'function') {
+      (map as any).zoomOut();
+    }
+  };
+
+  return (
+    <div className="nearby-map-floating-stack" style={{ position: 'absolute', top: 16, right: 16, zIndex: 500 }}>
+      <button
+        type="button"
+        className="map-round-btn map-btn-zoom-in"
+        onClick={handleZoomIn}
+        title={t(currentLang, 'mapZoomIn')}
+        aria-label={t(currentLang, 'mapZoomIn')}
+      >
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <line x1="12" y1="5" x2="12" y2="19" />
+          <line x1="5" y1="12" x2="19" y2="12" />
+        </svg>
+      </button>
+      <button
+        type="button"
+        className="map-round-btn map-btn-zoom-out"
+        onClick={handleZoomOut}
+        title={t(currentLang, 'mapZoomOut')}
+        aria-label={t(currentLang, 'mapZoomOut')}
+      >
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <line x1="5" y1="12" x2="19" y2="12" />
+        </svg>
+      </button>
+    </div>
+  );
+};
+
+export interface PoiMapProps {
   pois: GeoPoi[];
   selectedPoiId: string | null;
   activePoiId: string | null;
@@ -538,8 +330,10 @@ interface PoiMapProps {
   listenBtnText: string;
   pauseBtnText: string;
   resumeBtnText?: string;
-  mapCaptionText: string;
+  mapCaptionText?: string;
   currentLang?: SupportedLanguage;
+  showSelectedCard?: boolean;
+  compactPopup?: boolean;
 }
 
 export const PoiMap: React.FC<PoiMapProps> = ({
@@ -563,19 +357,17 @@ export const PoiMap: React.FC<PoiMapProps> = ({
   listenBtnText,
   pauseBtnText,
   resumeBtnText,
-  mapCaptionText,
   currentLang = 'vi',
+  showSelectedCard = true,
 }) => {
-  const [isSchematic, setIsSchematic] = useState<boolean>(false);
-  const [showTileError, setShowTileError] = useState<boolean>(false);
-  const [retryTrigger, setRetryTrigger] = useState<number>(0);
   const [isInitialMount, setIsInitialMount] = useState<boolean>(true);
+  const [isZoomedIn, setIsZoomedIn] = useState<boolean>(false);
+  const [fitBoundsTrigger, setFitBoundsTrigger] = useState<number>(0);
   const [markerClickedPoiId, setMarkerClickedPoiId] = useState<string | null>(null);
   const [thumbErrorPoiId, setThumbErrorPoiId] = useState<string | null>(null);
-
-  // Dynamic route accent color read from CSS token via getComputedStyle
-  const mapWrapperRef = useRef<HTMLDivElement>(null);
   const [routeAccentColor, setRouteAccentColor] = useState<string>('#D96A47');
+
+  const mapWrapperRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (mapWrapperRef.current) {
@@ -588,74 +380,50 @@ export const PoiMap: React.FC<PoiMapProps> = ({
     }
   }, []);
 
-  const activePoi =
-    pois.find((p) => p.id === (activePoiId || selectedPoiId)) || null;
+  const activePoi = pois.find((p) => p.id === (activePoiId || selectedPoiId)) || null;
   const clickedPoi = markerClickedPoiId
     ? pois.find((p) => p.id === markerClickedPoiId) || null
     : null;
   const isClickedPlaying = Boolean(clickedPoi && currentPlayingId === clickedPoi.id && isPlaying);
   const isClickedPaused = Boolean(clickedPoi && currentPlayingId === clickedPoi.id && isPaused);
 
-  const handleEnterSchematic = useCallback(() => {
-    setIsSchematic(true);
-    setShowTileError(true);
-  }, []);
-
-  const handleExitSchematic = useCallback(() => {
-    setIsSchematic(false);
-    setShowTileError(false);
-  }, []);
-
-  // Retry ("Thử lại") removes and re-adds the same layer cleanly (no duplicates, no leaked listeners)
-  const handleRetryTiles = useCallback(() => {
-    setIsSchematic(false);
-    setShowTileError(false);
-    setRetryTrigger((prev) => prev + 1);
-  }, []);
-
-  // 28px round numbered pins with white border and soft shadow; active stop scales to ~40px with label pill
+  // Create Custom Numbered Markers 1-7
+  // - 26px circle, ink background, 2px page-color border, number centered
+  // - Selected: 34px, accent background, highest z-index
+  // - Heard: lighter tint of ink. Number always visible, no badge on top
+  // - Label: full name, one line, nowrap, no max-width, above marker, page-color background
   const createMarkerIcon = (
     num: number,
     name: string,
     isActive: boolean,
     isHovered: boolean,
     isCurPlaying: boolean,
-    isListened: boolean,
-    isSchematic: boolean
+    isListened: boolean
   ) => {
-    const activeClass = isActive ? 'is-active' : '';
+    const activeClass = isActive ? 'is-selected' : '';
     const hoveredClass = isHovered ? 'is-hovered' : '';
     const playingClass = isCurPlaying ? 'is-playing' : '';
-    const listenedClass = isListened ? 'is-listened' : '';
-    const showLabel = isSchematic ? (isActive || isHovered) : isActive;
+    const listenedClass = isListened ? 'is-heard' : '';
+    const showLabel = isActive || isHovered;
 
     return L.divIcon({
       className: 'nearby-marker-pin-wrapper',
       html: `
-        <div class="mk-pin-container ${activeClass} ${hoveredClass} ${playingClass} ${listenedClass}">
-          <div class="mk-pin-node">
-            ${isListened ? '<span class="mk-pin-check"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span>' : `<span class="mk-pin-num">${num}</span>`}
+        <div class="nearby-gmap-marker-container ${activeClass} ${hoveredClass} ${playingClass} ${listenedClass}">
+          ${showLabel ? `<div class="nearby-gmap-marker-label">${name}</div>` : ''}
+          <div class="nearby-gmap-marker-circle">
+            <span class="nearby-gmap-marker-num">${num}</span>
           </div>
-          ${showLabel ? `<div class="mk-pin-label-pill">${name}</div>` : ''}
         </div>
       `,
-      iconSize: [40, 40],
-      iconAnchor: [20, 20],
+      iconSize: [34, 34],
+      iconAnchor: [17, 17],
     });
   };
 
-  // Blue 14px user position dot with white border and pulsing 1.5s ring
-  const userGpsIcon = L.divIcon({
-    className: 'nearby-user-dot-wrapper',
-    html: `
-      <div class="user-position-node">
-        <div class="user-pulse-ring"></div>
-        <div class="user-blue-dot"></div>
-      </div>
-    `,
-    iconSize: [20, 20],
-    iconAnchor: [10, 10],
-  });
+  const handleViewFullRoute = () => {
+    setFitBoundsTrigger((prev) => prev + 1);
+  };
 
   return (
     <div
@@ -663,158 +431,128 @@ export const PoiMap: React.FC<PoiMapProps> = ({
       className="nearby-map-wrapper"
       aria-label={t(currentLang, 'mapAriaLabel')}
     >
-      {/* Slim tile error banner - Task 1a */}
-      {showTileError && (
-        <div
-          className={`nearby-tile-error-banner ${isSchematic ? 'is-schematic' : ''}`}
-          role="status"
-          aria-live="polite"
-        >
-          <span className="tile-error-msg">
-            {t(currentLang, 'tileErrorBanner')}
-          </span>
-          <button
-            type="button"
-            className="tile-error-retry-btn"
-            onClick={handleRetryTiles}
-          >
-            {t(currentLang, 'retryBtn')}
-          </button>
-        </div>
-      )}
-
-      {/* Map box with State 3 grid pattern fallback: .is-grid-fallback */}
-      <div className={`nearby-map-box ${isSchematic ? 'is-grid-fallback' : ''}`}>
+      <div className="nearby-map-box">
         <MapContainer
           center={[10.7769, 106.6954]}
-          zoom={15}
+          zoom={14}
           zoomControl={false}
           attributionControl={false}
-          scrollWheelZoom={false}
-          style={{
-            width: '100%',
-            height: '100%',
-            minHeight: '480px',
-            backgroundColor: 'var(--bg-cream, #FDFBF7)',
-          }}
+          className="nearby-gmap-canvas nearby-leaflet-map"
+          style={{ width: '100%', height: '100%', background: '#EFE9DF', border: 'none' }}
         >
-          {/* Single OSM Raster Tile Layer (StrictMode-safe) */}
+          {/* Tile Layer: Google Maps official roadmap tiles */}
           <OsmTileLayer
-            isSchematic={isSchematic}
-            onEnterSchematic={handleEnterSchematic}
-            onExitSchematic={handleExitSchematic}
-            retryTrigger={retryTrigger}
+            isSchematic={false}
+            onEnterSchematic={() => {}}
+            onExitSchematic={() => {}}
+            retryTrigger={0}
+            providers={TILE_PROVIDERS}
           />
-
-          {/* Floating Controls: top-right stacked 40px round white buttons */}
-          <FloatingMapControls pois={pois} userPos={userPos} currentLang={currentLang} />
-
-          {/* One-shot auto-center to the user's position after a GPS request */}
-          <UserAutoCenter userPos={userPos} centerOnUserToken={centerOnUserToken} />
 
           <MapController
             pois={pois}
             activePoi={activePoi}
             isInitialMount={isInitialMount}
             onInitialFitDone={() => setIsInitialMount(false)}
+            onZoomChange={setIsZoomedIn}
+            fitBoundsTrigger={fitBoundsTrigger}
           />
 
-          {/* No inline directions on this map; only the Google Maps basemap is shown */}
-          {/* Dotted heritage tour route connecting stops */}
-          {pois.length > 1 && (
-            <Polyline
-              positions={pois.map((p) => [p.lat, p.lng])}
-              pathOptions={{
-                color: routeAccentColor,
-                weight: 2.5,
-                dashArray: '2, 7',
-                lineCap: 'round',
-              }}
-            />
-          )}
+          <UserAutoCenter
+            userPos={userPos}
+            centerOnUserToken={centerOnUserToken}
+          />
 
-          {/* 3. Geofence ring: translucent accent circle from CSS token around active stop */}
+          {/* Geofence subtle tint around active stop (no border stroke lines) */}
           {activePoi && (
             <Circle
               center={[activePoi.lat, activePoi.lng]}
-              radius={activePoi.triggerRadius || radius}
+              radius={activePoi.triggerRadius || radius || 60}
               pathOptions={{
-                color: routeAccentColor,
-                weight: 1,
+                stroke: false,
                 fillColor: routeAccentColor,
-                fillOpacity: 0.12,
+                fillOpacity: 0.1,
               }}
             />
           )}
 
-          {/* 4. User position: blue 14px dot with white border, pulsing 1.5s ring, accuracy circle */}
+          {/* User GPS Dot & subtle accuracy tint (no border stroke lines) */}
           {userPos && (
             <>
-              {userPos.accuracy && userPos.accuracy > 0 ? (
+              {userPos.accuracy && userPos.accuracy > 0 && (
                 <Circle
                   center={[userPos.lat, userPos.lng]}
                   radius={userPos.accuracy}
                   pathOptions={{
-                    color: '#2563EB',
-                    weight: 1,
+                    stroke: false,
                     fillColor: '#2563EB',
                     fillOpacity: 0.08,
                   }}
                 />
-              ) : null}
-              <Marker position={[userPos.lat, userPos.lng]} icon={userGpsIcon} />
+              )}
+              <Marker
+                position={[userPos.lat, userPos.lng]}
+                icon={L.divIcon({
+                  className: 'nearby-user-dot-wrapper',
+                  html: `
+                    <div class="user-position-node">
+                      <div class="user-pulse-ring"></div>
+                      <div class="user-blue-dot"></div>
+                    </div>
+                  `,
+                  iconSize: [24, 24],
+                  iconAnchor: [12, 12],
+                })}
+              />
             </>
           )}
 
-          {/* 2. Numbered POI Markers */}
-          {pois.map((p, idx) => {
-            const isActive = p.id === activePoiId || p.id === selectedPoiId;
-            const isHovered = p.id === hoveredPoiId;
-            const isCurPlaying = p.id === currentPlayingId && isPlaying;
-            const isCurPaused = p.id === currentPlayingId && isPaused;
-            const isListened = listenedPoiIds.includes(p.id);
+          {/* Markers for all 7 stops numbered 1-7 */}
+          {pois.map((poi, idx) => {
+            const isActive = poi.id === (activePoiId || selectedPoiId);
+            const isHovered = poi.id === hoveredPoiId;
+            const isCurPlaying = poi.id === currentPlayingId && isPlaying;
+            const isCurPaused = poi.id === currentPlayingId && isPaused;
+            const isListened = listenedPoiIds.includes(poi.id);
+            const poiName = getPoiName(poi);
 
             return (
               <Marker
-                key={p.id}
-                position={[p.lat, p.lng]}
+                key={poi.id}
+                position={[poi.lat, poi.lng]}
                 icon={createMarkerIcon(
                   idx + 1,
-                  getPoiName(p),
+                  poiName,
                   isActive,
                   isHovered,
                   isCurPlaying,
-                  isListened,
-                  isSchematic
+                  isListened
                 )}
                 eventHandlers={{
                   click: () => {
-                    setMarkerClickedPoiId(p.id);
-                    onSelectPoi(p.id);
+                    setMarkerClickedPoiId(poi.id);
+                    onSelectPoi(poi.id);
                   },
                   mouseover: () => {
-                    if (onHoverPoi) onHoverPoi(p.id);
+                    if (onHoverPoi) onHoverPoi(poi.id);
                   },
                   mouseout: () => {
                     if (onHoverPoi) onHoverPoi(null);
                   },
                 }}
               >
-                <Popup>
-                  <div className="nearby-popup-card">
-                    <h4 className="nearby-popup-title">
-                      {idx + 1}. {getPoiName(p)}
-                      {isListened && (
-                        <span className="popup-listened-tag"> {t(currentLang, 'popupListenedTag')}</span>
-                      )}
-                    </h4>
-                    <div className="nearby-popup-cat">{getPoiCategory(p)}</div>
-                    {/* Task 2f: Rename play button "Phát" / "Tạm dừng" */}
+                {/* Embedded Popup for test suites & direct action */}
+                <Popup className="nearby-popup-test-container">
+                  <div data-testid="leaflet-popup" className="nearby-popup-content">
+                    <span className="nearby-popup-name">{idx + 1}. {poiName}</span>
                     <button
                       type="button"
                       className="nearby-popup-play-btn"
                       aria-pressed={isCurPlaying}
-                      onClick={() => onTogglePlay(p.id)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onTogglePlay(poi.id);
+                      }}
                     >
                       {isCurPlaying
                         ? pauseBtnText || t(currentLang, 'pauseBtn')
@@ -824,10 +562,9 @@ export const PoiMap: React.FC<PoiMapProps> = ({
                     </button>
                     <a
                       className="nearby-popup-directions-btn"
-                      href={buildGoogleMapsDirectionsUrl(p, userPos)}
+                      href={buildGoogleMapsDirectionsUrl(poi, userPos)}
                       target="_blank"
                       rel="noopener noreferrer"
-                      aria-label={t(currentLang, 'directionsAria', { name: getPoiName(p) })}
                       onClick={(e) => e.stopPropagation()}
                     >
                       {t(currentLang, 'directionsBtn')}
@@ -837,10 +574,25 @@ export const PoiMap: React.FC<PoiMapProps> = ({
               </Marker>
             );
           })}
+
+          {/* Floating Zoom Controls inside MapContainer */}
+          <FloatingMapControls currentLang={currentLang} />
         </MapContainer>
 
-        {/* Task 1b: Selected-stop card: show ONLY after explicit marker click */}
-        {clickedPoi && (
+        {/* Small text button "View full route" that restores fitBounds */}
+        {isZoomedIn && (
+          <button
+            type="button"
+            className="nearby-map-view-route-btn"
+            onClick={handleViewFullRoute}
+            title={currentLang === 'vi' ? 'Xem toàn bộ lộ trình' : 'View full route'}
+          >
+            {currentLang === 'vi' ? 'Xem toàn bộ lộ trình' : 'View full route'}
+          </button>
+        )}
+
+        {/* Selected stop card when explicit marker is clicked */}
+        {showSelectedCard && clickedPoi && (
           <div
             className="nearby-selected-card"
             data-testid="nearby-selected-card"
@@ -899,12 +651,11 @@ export const PoiMap: React.FC<PoiMapProps> = ({
                   aria-hidden="true"
                 >
                   <line x1="18" y1="6" x2="6" y2="18" />
-                  <line x1="6" y1="6" x2="18" y2="18" />
+                  <line x1="6" y1="12" x2="18" y2="12" />
                 </svg>
               </button>
             </div>
             <div className="selected-card-actions">
-              {/* Task 2f: Compact play button labeled "Phát" / "Tạm dừng" / "Tiếp tục" */}
               <button
                 type="button"
                 className={`selected-card-play-btn ${
@@ -933,8 +684,6 @@ export const PoiMap: React.FC<PoiMapProps> = ({
           </div>
         )}
       </div>
-
-      <p className="nearby-map-caption">{mapCaptionText || t(currentLang, 'mapCaption')}</p>
     </div>
   );
 };

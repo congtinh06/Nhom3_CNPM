@@ -28,51 +28,54 @@ export const ToolbarControls: React.FC<ToolbarControlsProps> = ({
 }) => {
   const locAutoText = autoNarrationText || t(currentLang, 'autoNarration');
   const locMyLocText = myLocationBtnText || t(currentLang, 'myLocation');
+  const autoStateText = isAutoEnabled
+    ? t(currentLang, 'autoStateOn')
+    : t(currentLang, 'autoStateOff');
 
   return (
     <nav className="nearby-sticky-controlbar" aria-label={t(currentLang, 'toolbarAriaLabel')}>
-      <div className="nearby-controlbar-inner">
-        {/* Left: Auto Narration Toggle + One-line Status */}
-        <div className="controlbar-auto-cluster">
-          <button
-            type="button"
-            role="switch"
-            aria-checked={isAutoEnabled}
-            className={`nearby-toggle-switch ${isAutoEnabled ? 'is-on' : ''}`}
-            id="chkAuto"
-            onClick={onToggleAuto}
-            aria-label={locAutoText}
-          >
-            <span className="toggle-track" aria-hidden="true">
-              <span className="toggle-thumb" />
-            </span>
-            <span className="toggle-text">{locAutoText}</span>
-          </button>
+      <div className="nearby-controlbar-inner nearby-controlbar-pill">
+        {/* Auto narration is a single switch: label + state indicator + track */}
+        <button
+          type="button"
+          role="switch"
+          aria-checked={isAutoEnabled}
+          aria-label={`${locAutoText}: ${autoStateText}`}
+          className={`nearby-toggle-switch ${isAutoEnabled ? 'is-on' : ''}`}
+          id="chkAuto"
+          onClick={onToggleAuto}
+        >
+          <span className="toggle-track" aria-hidden="true">
+            <span className="toggle-thumb" />
+          </span>
+          <span className="toggle-text">{locAutoText}</span>
+          <span className={`toggle-state ${isAutoEnabled ? 'is-on' : ''}`} aria-hidden="true">
+            {autoStateText}
+          </span>
+        </button>
 
-          {statusMessage && (
-            <div className="controlbar-status-line" role="status" aria-live="polite">
-              {statusMessage}
-            </div>
-          )}
-        </div>
+        <span className="nearby-controlbar-divider" aria-hidden="true" />
 
-        {/* Right: GPS Location */}
-        <div className="controlbar-action-cluster">
-          <button
-            className="nearby-action-btn btn-gps"
-            id="btnGps"
-            type="button"
-            onClick={onRequestGps}
-            disabled={isLocatingGps}
-            aria-busy={isLocatingGps}
-            aria-label={locMyLocText}
-            title={locMyLocText}
-          >
-            <LocateFixed size={16} aria-hidden="true" />
-            <span>{isLocatingGps ? t(currentLang, 'myLocationLocating') : locMyLocText}</span>
-          </button>
-        </div>
+        {/* GPS location */}
+        <button
+          className="nearby-action-btn btn-gps"
+          id="btnGps"
+          type="button"
+          onClick={onRequestGps}
+          disabled={isLocatingGps}
+          aria-busy={isLocatingGps}
+          aria-label={locMyLocText}
+          title={locMyLocText}
+        >
+          <LocateFixed size={15} aria-hidden="true" />
+          <span>{isLocatingGps ? t(currentLang, 'myLocationLocating') : locMyLocText}</span>
+        </button>
       </div>
+      {statusMessage && (
+        <div className="chapters-status-notice nearby-map-status-line nearby-controlbar-notice" id="status" role="status" aria-live="polite">
+          {statusMessage}
+        </div>
+      )}
     </nav>
   );
 };

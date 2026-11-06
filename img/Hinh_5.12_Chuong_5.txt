@@ -1,0 +1,20 @@
+================================================================================
+THÔNG TIN CHÚ THÍCH HÌNH ẢNH: Hinh_5.12_Chuong_5
+================================================================================
+1. KÝ HIỆU HÌNH         : Hinh 5.12 Chuong 5
+2. TIÊU ĐỀ SƠ ĐỒ        : Giao diện Phân tích Thống kê Lượt quét mã QR và Tương tác của Du khách
+3. THUỘC BÁO CÁO        : Chương 5: Hiện thực Hệ thống
+4. VỊ TRÍ TRONG CHƯƠNG  : Mục 5.7 – Giao diện người dùng và mô tả các màn hình
+5. TÁC NHÂN / THÀNH PHẦN: Ban Quản lý Di tích, Cán bộ Nghiên cứu Du lịch
+6. TIÊU CHUẨN MÔ HÌNH HÓA: Bar Charts, Line Charts, Presence Tracking, QR Analytics Aggregation
+--------------------------------------------------------------------------------
+7. MỤC ĐÍCH VÀ Ý NGHĨA NGHIỆP VỤ:
+   Màn hình chuyên sâu phân tích hành vi tham quan: thống kê tần suất quét mã QR theo từng mốc thời gian trong ngày, tỷ lệ chuyển đổi ngôn ngữ ưa chuộng của du khách quốc tế (Anh, Nhật, Hàn) và bảng xếp hạng các điểm dừng di sản thu hút đông khách nhất.
+--------------------------------------------------------------------------------
+8. QUY CÁCH TỆP HÌNH ẢNH:
+   • Tệp hình ảnh Raster : Hinh_5.12_Chuong_5.png (Chụp màn hình thực tế từ hệ thống đang vận hành, độ phân giải cao)
+   • Phong cách thể hiện  : Giao diện người dùng thực tế (Clean UI, Modern Aesthetics, Tiêu chuẩn Web/PWA)
+================================================================================
+Đồ án Học phần Công nghệ Phần mềm – Đề tài: Hệ thống Thuyết minh Tự động Đa ngôn ngữ Echora
+Nhóm Sinh viên Thực hiện: Nhóm 03 – Khoa CNTT, Đại học Khoa học Tự nhiên / ĐHQG-HCM
+================================================================================

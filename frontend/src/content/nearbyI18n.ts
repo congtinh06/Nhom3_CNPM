@@ -126,6 +126,8 @@ export type NearbyKey =
   | 'photoCredit'
   | 'qrModalTitle'
   | 'qrShowBtn'
+  | 'qrListenOnPhone'
+  | 'qrCloseAria'
   | 'myLocationLocating'
   | 'simPanelTitle'
   | 'simPickStopLabel'
@@ -137,10 +139,18 @@ export type NearbyKey =
   | 'simInvalidCoord'
   | 'gpsLocatedToast'
   | 'autoStatusOff'
+  | 'autoStateOn'
+  | 'autoStateOff'
   | 'autoStatusWaiting'
   | 'autoStatusTracking'
   | 'autoStatusDenied'
-  | 'demoSection';
+  | 'demoSection'
+  | 'playerFabAria'
+  | 'playerCloseAria'
+  | 'shopViewAll'
+  | 'shopEmptyDesc'
+  | 'shopTitle'
+  | 'shopSub';
 
 export const NATIVE_LANG_NAMES: Record<SupportedLanguage, string> = {
   vi: 'Tiếng Việt',
@@ -238,6 +248,12 @@ export const NEARBY_DICTIONARY: Record<SupportedLanguage, Record<NearbyKey, stri
     pauseBtn: 'Tạm dừng',
     resumeBtn: 'Phát tiếp',
     playerAriaLabel: 'Trình phát thuyết minh du lịch',
+    playerFabAria: 'Mở thanh nghe thuyết minh',
+    playerCloseAria: 'Đóng thanh nghe thuyết minh',
+    shopViewAll: 'Xem tất cả quà lưu niệm',
+    shopEmptyDesc: 'Chưa có sản phẩm quà lưu niệm nào ở đây, ghé cửa hàng trực tuyến để xem đầy đủ.',
+    shopTitle: 'Mang một chút Sài Gòn về nhà',
+    shopSub: 'Quà lưu niệm & đặc sản gắn với từng điểm dừng.',
     noPoiSelected: 'Chưa chọn điểm nào',
     clickToStart: 'Bấm Phát ở một điểm để bắt đầu.',
     playingInLang: 'Đang phát bằng {lang}',
@@ -264,7 +280,7 @@ export const NEARBY_DICTIONARY: Record<SupportedLanguage, Record<NearbyKey, stri
     prevBtn: 'Chặng trước',
     nextBtn: 'Chặng sau',
     prevStop: 'Chặng trước: {name}',
-    nextStop: 'Chặng sau: {name}',
+    nextStop: 'Tiếp theo: {name}',
     audioFallbackNotice: 'Chưa có bản ghi âm {lang}, đang phát tiếng Việt.',
     noTranscript: 'Chưa có bản dịch cho ngôn ngữ này',
     addressLabel: 'Địa chỉ',
@@ -286,6 +302,8 @@ export const NEARBY_DICTIONARY: Record<SupportedLanguage, Record<NearbyKey, stri
     photoCredit: 'Ảnh: {author}{license}',
     qrModalTitle: 'Mã QR',
     qrShowBtn: 'Hiện mã QR',
+    qrListenOnPhone: 'Nghe trên điện thoại',
+    qrCloseAria: 'Đóng mã QR',
     myLocationLocating: 'Đang xác định vị trí...',
     simPanelTitle: 'Giả lập vị trí',
     simPickStopLabel: 'Chọn một điểm dừng',
@@ -297,6 +315,8 @@ export const NEARBY_DICTIONARY: Record<SupportedLanguage, Record<NearbyKey, stri
     simInvalidCoord: 'Toạ độ không hợp lệ.',
     gpsLocatedToast: 'Đã xác định vị trí. Điểm gần nhất: {name}, cách {dist}.',
     autoStatusOff: 'Thuyết minh tự động đang tắt.',
+    autoStateOn: 'Bật',
+    autoStateOff: 'Tắt',
     autoStatusWaiting: 'Thuyết minh tự động đang bật, đang chờ vị trí (bán kính {radius}).',
     autoStatusTracking: 'Thuyết minh tự động đang bật (bán kính {radius}). Gần nhất: {name} ({dist}).',
     autoStatusDenied: 'Thuyết minh tự động đang bật nhưng chưa được cấp quyền vị trí (bán kính {radius}).',
@@ -383,6 +403,12 @@ export const NEARBY_DICTIONARY: Record<SupportedLanguage, Record<NearbyKey, stri
     pauseBtn: 'Pause',
     resumeBtn: 'Resume',
     playerAriaLabel: 'Tour audio player',
+    playerFabAria: 'Open the audio player',
+    playerCloseAria: 'Close the audio player',
+    shopViewAll: 'View all souvenirs',
+    shopEmptyDesc: 'No souvenirs stocked here yet. Browse the full shop instead.',
+    shopTitle: 'Take a little Saigon home',
+    shopSub: 'Souvenirs & local specialties tied to each stop.',
     noPoiSelected: 'No attraction selected',
     clickToStart: 'Click Play on any landmark to start playback.',
     playingInLang: 'Playing in {lang}',
@@ -431,6 +457,8 @@ export const NEARBY_DICTIONARY: Record<SupportedLanguage, Record<NearbyKey, stri
     photoCredit: 'Photo: {author}{license}',
     qrModalTitle: 'QR code',
     qrShowBtn: 'Show QR code',
+    qrListenOnPhone: 'Listen on your phone',
+    qrCloseAria: 'Close QR code',
     myLocationLocating: 'Locating...',
     simPanelTitle: 'Simulate location',
     simPickStopLabel: 'Pick a stop',
@@ -442,6 +470,8 @@ export const NEARBY_DICTIONARY: Record<SupportedLanguage, Record<NearbyKey, stri
     simInvalidCoord: 'Invalid coordinates.',
     gpsLocatedToast: 'Location found. Nearest spot: {name}, {dist} away.',
     autoStatusOff: 'Auto narration is off.',
+    autoStateOn: 'On',
+    autoStateOff: 'Off',
     autoStatusWaiting: 'Auto narration is on. Waiting for your location (radius {radius}).',
     autoStatusTracking: 'Auto narration is on (radius {radius}). Nearest: {name} ({dist}).',
     autoStatusDenied: 'Auto narration is on but location access is blocked (radius {radius}).',
@@ -529,6 +559,12 @@ export const NEARBY_DICTIONARY: Record<SupportedLanguage, Record<NearbyKey, stri
     pauseBtn: '일시정지',
     resumeBtn: '이어듣기',
     playerAriaLabel: '투어 오디오 플레이어',
+    playerFabAria: '오디오 플레이어 열기',
+    playerCloseAria: '오디오 플레이어 닫기',
+    shopViewAll: '모든 기념품 보기',
+    shopEmptyDesc: '아직 이곳에 기념품이 없어요. 온라인 스토어에서 확인해 보세요.',
+    shopTitle: '사이공의 한 조각을 집으로',
+    shopSub: '각 정류장과 연결된 기념품 & 지역 특산품.',
     noPoiSelected: '선택된 명소 없음',
     clickToStart: '명소의 재생 버튼을 눌러 시작하세요.',
     playingInLang: '{lang} 오디오 재생 중',
@@ -576,6 +612,8 @@ export const NEARBY_DICTIONARY: Record<SupportedLanguage, Record<NearbyKey, stri
     photoCredit: '사진: {author}{license}',
     qrModalTitle: 'QR 코드',
     qrShowBtn: 'QR 코드 표시',
+    qrListenOnPhone: '휴대폰으로 듣기',
+    qrCloseAria: 'QR 코드 닫기',
     myLocationLocating: '위치 확인 중...',
     simPanelTitle: '위치 시뮬레이션',
     simPickStopLabel: '명소 선택',
@@ -587,6 +625,8 @@ export const NEARBY_DICTIONARY: Record<SupportedLanguage, Record<NearbyKey, stri
     simInvalidCoord: '좌표가 올바르지 않습니다.',
     gpsLocatedToast: '위치 확인 완료. 가장 가까운 명소: {name}, {dist} 거리.',
     autoStatusOff: '자동 해설이 꺼져 있습니다.',
+    autoStateOn: '켜짐',
+    autoStateOff: '꺼짐',
     autoStatusWaiting: '자동 해설이 켜져 있습니다. 위치를 확인하는 중입니다 (반경 {radius}).',
     autoStatusTracking: '자동 해설이 켜져 있습니다 (반경 {radius}). 가장 가까운 곳: {name} ({dist}).',
     autoStatusDenied: '자동 해설이 켜져 있지만 위치 접근 권한이 없습니다 (반경 {radius}).',
@@ -674,6 +714,12 @@ export const NEARBY_DICTIONARY: Record<SupportedLanguage, Record<NearbyKey, stri
     pauseBtn: '一時停止',
     resumeBtn: '再開',
     playerAriaLabel: 'ツアー音声プレイヤー',
+    playerFabAria: '音声プレイヤーを開く',
+    playerCloseAria: '音声プレイヤーを閉じる',
+    shopViewAll: 'すべてのお土産を見る',
+    shopEmptyDesc: 'まだお土産が揃っていません。オンラインショップをご覧ください。',
+    shopTitle: 'サイゴンのかけらを持ち帰ろう',
+    shopSub: '各スポットと結びついたお土産＆名物。',
     noPoiSelected: 'スポット未選択',
     clickToStart: 'スポットの再生ボタンを押して開始してください。',
     playingInLang: '{lang}で再生中',
@@ -721,6 +767,8 @@ export const NEARBY_DICTIONARY: Record<SupportedLanguage, Record<NearbyKey, stri
     photoCredit: '写真: {author}{license}',
     qrModalTitle: 'QRコード',
     qrShowBtn: 'QRコードを表示',
+    qrListenOnPhone: 'スマートフォンで聴く',
+    qrCloseAria: 'QRコードを閉じる',
     myLocationLocating: '位置情報を取得中...',
     simPanelTitle: '位置シミュレーション',
     simPickStopLabel: 'スポットを選択',
@@ -732,6 +780,8 @@ export const NEARBY_DICTIONARY: Record<SupportedLanguage, Record<NearbyKey, stri
     simInvalidCoord: '座標が正しくありません。',
     gpsLocatedToast: '位置を取得しました。最寄りのスポット: {name}（{dist}）。',
     autoStatusOff: '自動ガイドはオフです。',
+    autoStateOn: 'オン',
+    autoStateOff: 'オフ',
     autoStatusWaiting: '自動ガイドはオンです。位置情報を待っています（半径 {radius}）。',
     autoStatusTracking: '自動ガイドはオンです（半径 {radius}）。最寄り: {name}（{dist}）。',
     autoStatusDenied: '自動ガイドはオンですが、位置情報へのアクセスが許可されていません（半径 {radius}）。',
@@ -764,6 +814,8 @@ export const UNREVIEWED_CJK_KEYS: NearbyKey[] = [
   'photoCredit',
   'qrModalTitle',
   'qrShowBtn',
+  'qrListenOnPhone',
+  'qrCloseAria',
   'myLocationLocating',
   'simPanelTitle',
   'simPickStopLabel',

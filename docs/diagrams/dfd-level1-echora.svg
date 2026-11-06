@@ -1,0 +1,186 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2560" height="2260" viewBox="0 0 2560 2260">
+<rect width="100%" height="100%" fill="#fbfcfe"/>
+<g font-family="Segoe UI, Arial, sans-serif" fill="#14181f">
+<text x="1280" y="62" text-anchor="middle" font-size="30" font-weight="700">BIỂU ĐỒ DÒNG DỮ LIỆU (DFD) MỨC 1 — HỆ THỐNG ECHORA</text>
+<text x="1280" y="94" text-anchor="middle" font-size="15" fill="#5b6675">Phân rã 6 chức năng · 4 tác nhân ngoài · 5 kho dữ liệu · 27 luồng dữ liệu</text>
+<g stroke="#3d4859" stroke-width="1.7" fill="none">
+<line x1="1228.6153846153845" y1="202" x2="793.9132552857111" y2="396.86647176847436"/>
+<line x1="1358.833998334224" y1="202" x2="1830.2336335564762" y2="468.8459708744336"/>
+<line x1="1828.8441046214712" y1="471.29808075973665" x2="1354.2479988868413" y2="202"/>
+<line x1="1472.3371114323313" y1="1048" x2="1115.3046101752473" y2="797.9198068637489"/>
+<line x1="1117.2493645505233" y1="795.1500051777496" x2="1476.3907356398636" y2="1048"/>
+<line x1="1541.3333333333333" y1="1048" x2="1855.0692841057564" y2="577.3960738413654"/>
+<line x1="1470.5738030901318" y1="1112" x2="1119.8416284995517" y2="1328.9738262991707"/>
+<line x1="1117.99367124454" y1="1325.9788610927726" x2="1465.5242370813517" y2="1112"/>
+<line x1="586.8923076923077" y1="1048" x2="702.9449578484478" y2="509.18412427506394"/>
+<line x1="634.4757629186482" y1="1112" x2="982.00632875546" y2="1325.9788610927726"/>
+<line x1="980.1583715004483" y1="1328.9738262991707" x2="629.4261969098683" y2="1112"/>
+<line x1="612.6691905833463" y1="1112" x2="1343.320068188085" y2="1842.1347657932963"/>
+<line x1="1342.1347657932963" y1="1843.320068188085" x2="611.3445170117561" y2="1112"/>
+<line x1="625.5757575757576" y1="1048" x2="983.7085450133654" y2="796.5450641395519"/>
+<line x1="2217" y1="467.6990807385514" x2="1980.4777243324654" y2="500.8165427932778"/>
+<line x1="1979.829983377049" y1="496.282356105363" x2="2217" y2="461.7535144058591"/>
+<line x1="798.1324183222229" y1="451.3617697563" x2="1073.1194641383163" y2="534.4973882588399"/>
+<line x1="1071.8675816777773" y1="538.6382302436999" x2="796.8805358616837" y2="455.5026117411601"/>
+<line x1="1872.5831409993232" y1="586.2188680218816" x2="1427.4168590006768" y2="1823.7811319781183"/>
+<line x1="1050" y1="831" x2="1050" y2="1053"/>
+<line x1="799.0927315112067" y1="412.5260244335706" x2="1049.5" y2="357.20348837209303"/>
+<line x1="1231" y1="560" x2="1349.5" y2="560"/>
+<line x1="1821.1188620109147" y1="491.5944011358801" x2="1250.5" y2="358.45"/>
+<line x1="1819.495417491437" y1="518.9449536120626" x2="1550.5" y2="548.8333333333334"/>
+<line x1="1127.7880443670435" y1="1392.5836257839803" x2="1267" y2="1433"/>
+<line x1="1050" y1="1289" x2="1050" y2="1107"/>
+<line x1="1476.8433471420917" y1="1925.614449047364" x2="1709" y2="2003"/>
+</g>
+<polygon points="793.9132552857111,396.86647176847436 803.5424312680582,386.56644410341494 808.0093217407527,396.53104592711816" fill="#3d4859"/>
+<polygon points="1830.2336335564762,468.8459708744336 1816.2307506040233,467.1934367537862 1821.610167270947,457.6903700738338" fill="#3d4859"/>
+<polygon points="1354.2479988868413,202 1368.24918073128,203.6668854066689 1362.8600267901716,213.16443350073175" fill="#3d4859"/>
+<polygon points="1115.3046101752473,797.9198068637489 1129.084846579454,800.9058886851625 1122.8199909747348,809.8500479107141" fill="#3d4859"/>
+<polygon points="1476.3907356398636,1048 1462.6177374102535,1044.9807087309832 1468.9041352692984,1036.0516773189097" fill="#3d4859"/>
+<polygon points="1855.0692841057564,577.3960738413654 1852.401176161913,591.241390739147 1843.3151869477438,585.1840645963676" fill="#3d4859"/>
+<polygon points="1119.8416284995517,1328.9738262991707 1128.024638007583,1317.4912327162092 1133.7696336342867,1326.7778588661708" fill="#3d4859"/>
+<polygon points="1465.5242370813517,1112 1457.3169757159494,1123.4652719496737 1451.59162156089,1114.1665236576107" fill="#3d4859"/>
+<polygon points="702.9449578484478,509.18412427506394 705.5453253863697,523.0423236049812 694.8701323359536,520.7430512556609" fill="#3d4859"/>
+<polygon points="982.00632875546,1325.9788610927726 968.0737132349983,1323.812337435162 973.7990673900578,1314.513589143099" fill="#3d4859"/>
+<polygon points="629.4261969098683,1112 643.3542020446033,1114.1959674329999 637.6092064178996,1123.4825935829615" fill="#3d4859"/>
+<polygon points="1343.320068188085,1842.1347657932963 1330.264994113893,1836.8077928332223 1337.983871553401,1829.0834591354942" fill="#3d4859"/>
+<polygon points="611.3445170117561,1112 624.3957753491692,1117.3363148154983 616.6713717564643,1125.0551223099894" fill="#3d4859"/>
+<polygon points="983.7085450133654,796.5450641395519 976.2066577957816,808.4837947326531 969.9316935932642,799.5467245048254" fill="#3d4859"/>
+<polygon points="1980.4777243324654,500.8165427932778 1992.5950199538674,493.60663663414186 1994.109249194299,504.42114123710087" fill="#3d4859"/>
+<polygon points="2217,461.7535144058591 2204.9222306032966,469.0294395291719 2203.349007158528,458.2233593891382" fill="#3d4859"/>
+<polygon points="1073.1194641383163,534.4973882588399 1059.0956489064656,535.9616991352981 1062.255782260403,525.5089503491973" fill="#3d4859"/>
+<polygon points="796.8805358616837,455.5026117411601 810.9043510935344,454.0383008647019 807.7442177395969,464.49104965080267" fill="#3d4859"/>
+<polygon points="1427.4168590006768,1823.7811319781183 1426.6793793415327,1809.7003747629558 1436.9548119192973,1813.396573531936" fill="#3d4859"/>
+<polygon points="1050,1053 1044.54,1040 1055.46,1040" fill="#3d4859"/>
+<polygon points="1049.5,357.20348837209303 1037.9839802092226,365.3393895623989 1035.6282294291557,354.67651761051764" fill="#3d4859"/>
+<polygon points="1349.5,560 1336.5,565.46 1336.5,554.54" fill="#3d4859"/>
+<polygon points="1250.5,358.45 1264.4006094278543,356.08681199769325 1261.919262025432,366.7211580080736" fill="#3d4859"/>
+<polygon points="1550.5,548.8333333333334 1562.8175324183883,541.9711183030423 1564.0234446831257,552.8243286856783" fill="#3d4859"/>
+<polygon points="1267,1433 1252.9931953882456,1434.6189578648434 1256.03780271616,1424.131977068694" fill="#3d4859"/>
+<polygon points="1050,1107 1055.46,1120 1044.54,1120" fill="#3d4859"/>
+<polygon points="1709,2003 1694.9405135228915,2004.068849849137 1698.3937207277952,1993.7092282344254" fill="#3d4859"/>
+<rect x="1200" y="141" width="200" height="58" fill="#ffffff" stroke="#14181f" stroke-width="2.2"/>
+<text x="1300" y="175" text-anchor="middle" font-size="14.5" font-weight="600">Khách Vãng Lai</text>
+<rect x="1422.5" y="1051" width="195" height="58" fill="#ffffff" stroke="#14181f" stroke-width="2.2"/>
+<text x="1520" y="1085" text-anchor="middle" font-size="14.5" font-weight="600">Người Dùng Đăng Ký</text>
+<rect x="485" y="1051" width="190" height="58" fill="#ffffff" stroke="#14181f" stroke-width="2.2"/>
+<text x="580" y="1085" text-anchor="middle" font-size="14.5" font-weight="600">Quản Trị Viên</text>
+<rect x="2220" y="421" width="200" height="58" fill="#ffffff" stroke="#14181f" stroke-width="2.2"/>
+<text x="2320" y="455" text-anchor="middle" font-size="14.5" font-weight="600">Nhân Viên Quầy Vé</text>
+<circle cx="1050" cy="750" r="78" fill="#ffffff" stroke="#14181f" stroke-width="2.4"/>
+<text x="1050" y="724" text-anchor="middle" font-size="12.5" fill="#5b6675">1.0</text>
+<text x="1050" y="750" text-anchor="middle" font-size="13" font-weight="600">Quản lý Xác</text>
+<text x="1050" y="767" text-anchor="middle" font-size="13" font-weight="600">Thực</text>
+<circle cx="720" cy="430" r="78" fill="#ffffff" stroke="#14181f" stroke-width="2.4"/>
+<text x="720" y="404" text-anchor="middle" font-size="12.5" fill="#5b6675">2.0</text>
+<text x="720" y="430" text-anchor="middle" font-size="13" font-weight="600">Quản lý Nội</text>
+<text x="720" y="447" text-anchor="middle" font-size="13" font-weight="600">Dung</text>
+<circle cx="1150" cy="560" r="78" fill="#ffffff" stroke="#14181f" stroke-width="2.4"/>
+<text x="1150" y="534" text-anchor="middle" font-size="12.5" fill="#5b6675">3.0</text>
+<text x="1150" y="560" text-anchor="middle" font-size="13" font-weight="600">Tạo Giọng</text>
+<text x="1150" y="577" text-anchor="middle" font-size="13" font-weight="600">Nói</text>
+<circle cx="1900" cy="510" r="78" fill="#ffffff" stroke="#14181f" stroke-width="2.4"/>
+<text x="1900" y="484" text-anchor="middle" font-size="12.5" fill="#5b6675">4.0</text>
+<text x="1900" y="502" text-anchor="middle" font-size="13" font-weight="600">Phát Âm</text>
+<text x="1900" y="519" text-anchor="middle" font-size="13" font-weight="600">Thanh Tự</text>
+<text x="1900" y="536" text-anchor="middle" font-size="13" font-weight="600">Động</text>
+<circle cx="1050" cy="1370" r="78" fill="#ffffff" stroke="#14181f" stroke-width="2.4"/>
+<text x="1050" y="1344" text-anchor="middle" font-size="12.5" fill="#5b6675">5.0</text>
+<text x="1050" y="1370" text-anchor="middle" font-size="13" font-weight="600">Quản lý Đơn</text>
+<text x="1050" y="1387" text-anchor="middle" font-size="13" font-weight="600">Hàng</text>
+<circle cx="1400" cy="1900" r="78" fill="#ffffff" stroke="#14181f" stroke-width="2.4"/>
+<text x="1400" y="1874" text-anchor="middle" font-size="12.5" fill="#5b6675">6.0</text>
+<text x="1400" y="1900" text-anchor="middle" font-size="13" font-weight="600">Thu Thập Sự</text>
+<text x="1400" y="1917" text-anchor="middle" font-size="13" font-weight="600">Kiện</text>
+<rect x="949.5" y="1050" width="201" height="60" fill="#fbfcfe"/>
+<line x1="952.5" y1="1056" x2="1147.5" y2="1056" stroke="#14181f" stroke-width="2.4"/>
+<line x1="952.5" y1="1104" x2="1147.5" y2="1104" stroke="#14181f" stroke-width="2.4"/>
+<text x="1050" y="1086" text-anchor="middle" font-size="14" font-weight="600">D1_AUTH</text>
+<rect x="1049.5" y="305" width="201" height="60" fill="#fbfcfe"/>
+<line x1="1052.5" y1="311" x2="1247.5" y2="311" stroke="#14181f" stroke-width="2.4"/>
+<line x1="1052.5" y1="359" x2="1247.5" y2="359" stroke="#14181f" stroke-width="2.4"/>
+<text x="1150" y="341" text-anchor="middle" font-size="14" font-weight="600">D2_CONTENT</text>
+<rect x="1259.5" y="1430" width="201" height="60" fill="#fbfcfe"/>
+<line x1="1262.5" y1="1436" x2="1457.5" y2="1436" stroke="#14181f" stroke-width="2.4"/>
+<line x1="1262.5" y1="1484" x2="1457.5" y2="1484" stroke="#14181f" stroke-width="2.4"/>
+<text x="1360" y="1466" text-anchor="middle" font-size="14" font-weight="600">D3_ORDERS</text>
+<rect x="1689.5" y="2000" width="201" height="60" fill="#fbfcfe"/>
+<line x1="1692.5" y1="2006" x2="1887.5" y2="2006" stroke="#14181f" stroke-width="2.4"/>
+<line x1="1692.5" y1="2054" x2="1887.5" y2="2054" stroke="#14181f" stroke-width="2.4"/>
+<text x="1790" y="2036" text-anchor="middle" font-size="14" font-weight="600">D4_ANALYTICS</text>
+<rect x="1349.5" y="530" width="201" height="60" fill="#fbfcfe"/>
+<line x1="1352.5" y1="536" x2="1547.5" y2="536" stroke="#14181f" stroke-width="2.4"/>
+<line x1="1352.5" y1="584" x2="1547.5" y2="584" stroke="#14181f" stroke-width="2.4"/>
+<text x="1450" y="566" text-anchor="middle" font-size="14" font-weight="600">D5_TTS</text>
+<g font-size="12" fill="#2b3444">
+<rect x="947.1643199505478" y="287.4332358842372" width="128.2" height="20" rx="3" fill="#fbfcfe" fill-opacity="0.97"/>
+<text x="1011.2643199505478" y="302.4332358842372" text-anchor="middle">Danh mục địa điểm</text>
+<rect x="1449.8258961964546" y="264.7168718448414" width="82" height="20" rx="3" fill="#fbfcfe" fill-opacity="0.97"/>
+<text x="1490.8258961964546" y="279.7168718448414" text-anchor="middle">Vị trí GPS</text>
+<rect x="1641.7571950157746" y="383.89461814701036" width="108.39999999999999" height="20" rx="3" fill="#fbfcfe" fill-opacity="0.97"/>
+<text x="1695.9571950157747" y="398.89461814701036" text-anchor="middle">Luồng âm thanh</text>
+<rect x="1301.6680110803477" y="965.9775459218497" width="141.39999999999998" height="20" rx="3" fill="#fbfcfe" fill-opacity="0.97"/>
+<text x="1372.3680110803477" y="980.9775459218497" text-anchor="middle">Thông tin đăng nhập</text>
+<rect x="1163.6089484555384" y="853.9480037279797" width="108.39999999999999" height="20" rx="3" fill="#fbfcfe" fill-opacity="0.97"/>
+<text x="1217.8089484555385" y="868.9480037279797" text-anchor="middle">Phiên làm việc</text>
+<rect x="1620.9013087195449" y="800.6980369206826" width="154.6" height="20" rx="3" fill="#fbfcfe" fill-opacity="0.97"/>
+<text x="1698.2013087195448" y="815.6980369206826" text-anchor="middle">Yêu cầu phát âm thanh</text>
+<rect x="1311.5687942047693" y="1160.7526713637678" width="121.6" height="20" rx="3" fill="#fbfcfe" fill-opacity="0.97"/>
+<text x="1372.3687942047693" y="1175.7526713637678" text-anchor="middle">Yêu cầu đặt hàng</text>
+<rect x="1161.1022296788474" y="1254.0647799867963" width="108.39999999999999" height="20" rx="3" fill="#fbfcfe" fill-opacity="0.97"/>
+<text x="1215.3022296788474" y="1269.0647799867963" text-anchor="middle">Trạng thái đơn</text>
+<rect x="580.8186327703777" y="766.5920621375319" width="128.2" height="20" rx="3" fill="#fbfcfe" fill-opacity="0.97"/>
+<text x="644.9186327703777" y="781.5920621375319" text-anchor="middle">Quản trị nội dung</text>
+<rect x="667.6843213529555" y="1159.9140811059763" width="128.2" height="20" rx="3" fill="#fbfcfe" fill-opacity="0.97"/>
+<text x="731.7843213529555" y="1174.9140811059763" text-anchor="middle">Quản trị đơn hàng</text>
+<rect x="827.7533626150858" y="1256.2211549354029" width="108.39999999999999" height="20" rx="3" fill="#fbfcfe" fill-opacity="0.97"/>
+<text x="881.9533626150859" y="1271.2211549354029" text-anchor="middle">Trạng thái đơn</text>
+<rect x="759.7514363126731" y="1304.437734422123" width="115" height="20" rx="3" fill="#fbfcfe" fill-opacity="0.97"/>
+<text x="817.2514363126731" y="1319.437734422123" text-anchor="middle">Yêu cầu báo cáo</text>
+<rect x="1106.413496134465" y="1626.5504490954213" width="62.199999999999996" height="20" rx="3" fill="#fbfcfe" fill-opacity="0.97"/>
+<text x="1137.513496134465" y="1641.5504490954213" text-anchor="middle">Báo cáo</text>
+<rect x="740.5421512945614" y="910.2725320697759" width="128.2" height="20" rx="3" fill="#fbfcfe" fill-opacity="0.97"/>
+<text x="804.6421512945615" y="925.2725320697759" text-anchor="middle">Quản trị hệ thống</text>
+<rect x="2086.6737628130904" y="464.9719701138748" width="128.2" height="20" rx="3" fill="#fbfcfe" fill-opacity="0.97"/>
+<text x="2150.7737628130903" y="479.9719701138748" text-anchor="middle">Xác nhận thu tiền</text>
+<rect x="2011.8375880314752" y="474.61428042950195" width="68.8" height="20" rx="3" fill="#fbfcfe" fill-opacity="0.97"/>
+<text x="2046.2375880314753" y="489.61428042950195" text-anchor="middle">Mã Claim</text>
+<rect x="784.6287911507291" y="462.6397429370112" width="181" height="20" rx="3" fill="#fbfcfe" fill-opacity="0.97"/>
+<text x="875.1287911507291" y="477.6397429370112" text-anchor="middle">Sự kiện cập nhật nội dung</text>
+<rect x="920.871208849271" y="503.3602570629888" width="148" height="20" rx="3" fill="#fbfcfe" fill-opacity="0.97"/>
+<text x="994.871208849271" y="518.3602570629888" text-anchor="middle">Sự kiện TTS sẵn sàng</text>
+<rect x="1572.7" y="1193" width="154.6" height="20" rx="3" fill="#fbfcfe" fill-opacity="0.97"/>
+<text x="1650" y="1208" text-anchor="middle">Sự kiện phát âm thanh</text>
+<rect x="976" y="930" width="148" height="20" rx="3" fill="#fbfcfe" fill-opacity="0.97"/>
+<text x="1050" y="945" text-anchor="middle">Thông tin người dùng</text>
+<rect x="866.7963657556033" y="372.86475640283186" width="115" height="20" rx="3" fill="#fbfcfe" fill-opacity="0.97"/>
+<text x="924.2963657556033" y="387.86475640283186" text-anchor="middle">Nội dung di sản</text>
+<rect x="1229.45" y="548" width="121.6" height="20" rx="3" fill="#fbfcfe" fill-opacity="0.97"/>
+<text x="1290.25" y="563" text-anchor="middle">Bản dịch &amp; audio</text>
+<rect x="1484.9094310054572" y="413.02220056794005" width="101.8" height="20" rx="3" fill="#fbfcfe" fill-opacity="0.97"/>
+<text x="1535.8094310054573" y="428.02220056794005" text-anchor="middle">Nội dung phát</text>
+<rect x="1634.0977087457184" y="521.8891434726979" width="101.8" height="20" rx="3" fill="#fbfcfe" fill-opacity="0.97"/>
+<text x="1684.9977087457185" y="536.8891434726979" text-anchor="middle">File âm thanh</text>
+<rect x="1162.9940221835218" y="1400.79181289199" width="68.8" height="20" rx="3" fill="#fbfcfe" fill-opacity="0.97"/>
+<text x="1197.3940221835219" y="1415.79181289199" text-anchor="middle">Đơn hàng</text>
+<rect x="999.1" y="1186" width="101.8" height="20" rx="3" fill="#fbfcfe" fill-opacity="0.97"/>
+<text x="1050" y="1201" text-anchor="middle">Quyền Premium</text>
+<rect x="1528.821673571046" y="1952.307224523682" width="128.2" height="20" rx="3" fill="#fbfcfe" fill-opacity="0.97"/>
+<text x="1592.9216735710459" y="1967.307224523682" text-anchor="middle">Sự kiện tương tác</text>
+</g>
+<rect x="70" y="2050" width="660" height="170" rx="8" fill="#ffffff" stroke="#c8d0da"/>
+<text x="90" y="2080" font-size="15" font-weight="700">CHÚ THÍCH</text>
+<rect x="92" y="2098" width="62" height="30" fill="#fff" stroke="#14181f" stroke-width="2"/>
+<text x="170" y="2118" font-size="13">Tác nhân ngoài (Actor)</text>
+<circle cx="123" cy="2158" r="17" fill="#fff" stroke="#14181f" stroke-width="2"/>
+<text x="170" y="2163" font-size="13">Chức năng xử lý (Process)</text>
+<line x1="92" y1="2182" x2="154" y2="2182" stroke="#14181f" stroke-width="2.4"/>
+<line x1="92" y1="2200" x2="154" y2="2200" stroke="#14181f" stroke-width="2.4"/>
+<text x="170" y="2196" font-size="13">Kho dữ liệu (Data store)</text>
+<line x1="425" y1="2112" x2="490" y2="2112" stroke="#3d4859" stroke-width="1.7"/>
+<polygon points="490,2112 477,2117.46 477,2106.54" fill="#3d4859"/>
+<text x="505" y="2117" font-size="13">Luồng dữ liệu</text>
+<text x="425" y="2158" font-size="11.5" fill="#5b6675">Chỉ có 3 kiểu kết nối:</text>
+<text x="425" y="2176" font-size="11.5" fill="#5b6675">Actor–Process · Process–Process</text>
+<text x="425" y="2194" font-size="11.5" fill="#5b6675">Process–Store</text>
+</g></svg>

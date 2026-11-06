@@ -2,20 +2,20 @@
  * ============================================================================
  * TRANG TOUR DI SẢN QUANH ĐÂY & THUYẾT MINH ÂM THANH (Nearby Heritage Tour)
  * ============================================================================
- * Thiết kế mới theo phong cách Boutique Dark Editorial (Echora – Điểm du lịch Sài Gòn).
- * Tích hợp toàn diện giao diện đặc trưng:
+ * Thiết kế đồng bộ với trang chủ, tông nền giấy kem (Warm Paper Editorial):
  * - Editorial Hero: Bảy điểm dừng quanh trung tâm Sài Gòn + Facts table
  * - Stepper Timeline bar kết nối các điểm dừng
- * - 2-Column Main: Danh sách điểm dừng + Bài thuyết minh chi tiết & Bản đồ Leaflet tối màu dính (sticky)
+ * - Hai cột chính: Danh sách điểm dừng dạng accordion (chi tiết mở ngay dưới
+ *   điểm đang chọn) + Bản đồ Google Maps dính (sticky)
  * - Khối hướng dẫn "How it works" 3 cột
- * - Cửa hàng quà lưu niệm "Mang một chút Sài Gòn về nhà" kết nối giỏ hàng
- * - Thanh phát audio cố định chân trang (Fixed Bottom Player) phong cách kem nhạt / chữ sẫm
+ * - Cửa hàng quà lưu niệm "Mang một chút Sài Gòn về nhà" kết nối trực tiếp giỏ hàng
+ * - Một thanh phát audio cố định ở chân trang (luôn hiển thị)
  * ============================================================================
  */
 
 import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Lock } from 'lucide-react';
+import { Lock, ShoppingBag } from 'lucide-react';
 import nearbyPoisData from '../content/nearbyPois.json';
 import { api } from '../api/client';
 import { mapGuidesToGeoPois } from '../content/poiGuideAdapter';
@@ -43,8 +43,15 @@ import { PoiMap } from '../components/nearby/PoiMap';
 import { PoiList } from '../components/nearby/PoiList';
 import { PoiHero } from '../components/nearby/PoiHero';
 import { PoiReadingSection } from '../components/nearby/PoiReadingSection';
+import { PoiQrDialog } from '../components/nearby/PoiQrDialog';
+import { isQrAvailable } from '../components/common/PlaceQR';
 import { NearbyDegradedNotice } from '../components/nearby/NearbyDegradedNotice';
-import { ArtIllustration } from '../components/nearby/ArtIllustration';
+import { Link } from 'react-router-dom';
+import { useFavorites } from '../hooks/useFavorites';
+import { enrichProducts } from '../content/productAdapter';
+import { ProductCard } from '../components/food/ProductCard';
+import { Product } from '../types';
+import '../styles/souvenir.css';
 import '../styles/nearby.css';
 
 export interface NarrationChapterBlock {
@@ -166,37 +173,148 @@ const PREMIUM_GATE_COPY: Record<
   },
 };
 
-const SOUVENIR_GOODS = [
-  {
-    id: 101,
-    name: 'Tranh cổ động Việt Nam',
-    desc: 'Tranh phong cách cũ, đậm dấu ấn lịch sử.',
-    priceText: '120.000đ',
-    price: 120000,
-    hue: 20,
-  },
-  {
-    id: 102,
-    name: 'Sách lịch sử Sài Gòn',
-    desc: 'Sách ảnh về lịch sử và con người Sài Gòn.',
-    priceText: '95.000đ',
-    price: 95000,
-    hue: 150,
-  },
-  {
-    id: 103,
-    name: 'Huy hiệu lưu niệm',
-    desc: 'Huy hiệu ghim với biểu tượng Sài Gòn.',
-    priceText: '20.000đ',
-    price: 20000,
-    hue: 200,
-  },
-];
-
 const fmtTime = (s: number): string => {
   if (isNaN(s) || s < 0) return '0:00';
   return Math.floor(s / 60) + ':' + String(Math.floor(s % 60)).padStart(2, '0');
 };
+
+const FALLBACK_SOUVENIRS: Product[] = [
+  {
+    id: 101,
+    slug: 'tranh-ma-vang-dinh-doc-lap',
+    name: 'Tranh mạ vàng Dinh Độc Lập',
+    category: 'SOUVENIR',
+    shortDescription: 'Tranh mạ vàng ánh kim in hình Dinh Độc Lập, món quà lưu niệm trang trọng của Sài Gòn.',
+    description: 'Lấy cảm hứng từ công trình kiến trúc lịch sử Dinh Độc Lập, bức tranh được in trên nền kim loại rồi mạ vàng tạo hiệu ứng ánh kim bền đẹp. Khung gỗ sang trọng giúp tác phẩm giữ nguyên độ sáng bóng.',
+    price: 180000,
+    imagePath: '/images/souvenirs/tranh-dinh-doc-lap.jpg',
+    poiSlug: 'dinh-doc-lap',
+    isActive: true,
+    sortOrder: 1,
+    rating: 5.0,
+    reviewsCount: 24,
+  },
+  {
+    id: 102,
+    slug: 'mo-hinh-dinh-doc-lap',
+    name: 'Mô hình Dinh Độc Lập',
+    category: 'SOUVENIR',
+    shortDescription: 'Mô hình thu nhỏ Dinh Độc Lập chế tác tỉ mỉ, thích hợp trưng bày và sưu tầm.',
+    description: 'Mô hình tái hiện Dinh Độc Lập với các khối nhà chính và hàng cột lớn đặc trưng, gia công tỉ mỉ từ chất liệu chắc chắn.',
+    price: 220000,
+    imagePath: '/images/souvenirs/mo-hinh.jpg',
+    poiSlug: 'dinh-doc-lap',
+    isActive: true,
+    sortOrder: 2,
+    rating: 5.0,
+    reviewsCount: 18,
+  },
+  {
+    id: 103,
+    slug: 'nam-cham-dinh-doc-lap',
+    name: 'Nam châm tủ lạnh Dinh Độc Lập',
+    category: 'SOUVENIR',
+    shortDescription: 'Nam châm tủ lạnh in hình Dinh Độc Lập, món quà nhỏ gọn và dễ thương.',
+    description: 'Nam châm ép nổi hình Dinh Độc Lập với màu sắc tươi sáng, mặt sau là nam châm dính chắc trên bề mặt kim loại.',
+    price: 30000,
+    imagePath: '/images/souvenirs/nam-cham.jpg',
+    poiSlug: 'dinh-doc-lap',
+    isActive: true,
+    sortOrder: 3,
+    rating: 5.0,
+    reviewsCount: 42,
+  },
+  {
+    id: 104,
+    slug: 'buu-thiep-dinh-doc-lap',
+    name: 'Bộ bưu thiếp Sài Gòn Di Sản',
+    category: 'SOUVENIR',
+    shortDescription: 'Bộ bưu thiếp in các góc chụp đẹp của Sài Gòn xưa và nay.',
+    description: 'Bộ bưu thiếp gồm nhiều tấm in hình các công trình di sản Sài Gòn ở các góc chụp nghệ thuật, giấy dày sắc nét.',
+    price: 25000,
+    imagePath: '/images/souvenirs/buu-thiep.jpg',
+    poiSlug: 'dinh-doc-lap',
+    isActive: true,
+    sortOrder: 4,
+    rating: 4.9,
+    reviewsCount: 35,
+  },
+  {
+    id: 105,
+    slug: 'ca-phe-rang-xay-sai-gon',
+    name: 'Cà phê phin rang xay Sài Gòn',
+    category: 'SOUVENIR',
+    shortDescription: 'Cà phê rang xay đậm vị truyền thống, đóng gói quà tặng trang nhã.',
+    description: 'Cà phê được chọn lọc và rang mộc giữ trọn hương thơm cùng vị đậm đà đặc trưng của người Sài Gòn.',
+    price: 120000,
+    imagePath: '/images/souvenirs/ca-phe-phin.jpg',
+    poiSlug: 'dinh-doc-lap',
+    isActive: true,
+    sortOrder: 5,
+    rating: 5.0,
+    reviewsCount: 56,
+  },
+  {
+    id: 106,
+    slug: 'ao-dai-cach-tan-sai-gon',
+    name: 'Nón lá Bến Thành vẽ tay thủ công',
+    category: 'SOUVENIR',
+    shortDescription: 'Nón lá truyền thống vẽ tay hình Chợ Bến Thành và biểu tượng Sài Gòn.',
+    description: 'Nón lá tự nhiên kết hợp nét cọ mộc mạc của nghệ nhân Sài Gòn, phủ lớp dầu bóng bảo vệ chống thấm.',
+    price: 95000,
+    imagePath: '/images/souvenirs/ao-dai.jpg',
+    poiSlug: 'cho-ben-thanh',
+    isActive: true,
+    sortOrder: 6,
+    rating: 4.8,
+    reviewsCount: 19,
+  },
+];
+
+// Cửa hàng trực tuyến: tải danh mục quà lưu niệm (chung nguồn API với trang /am-thuc),
+// hiển thị 6 sản phẩm trong thanh carousel kéo / trượt và điều hướng chi tiết / giỏ hàng.
+function useNearbySouvenirs() {
+  const [products, setProducts] = useState<Product[] | null>(null);
+
+  useEffect(() => {
+    if (import.meta.env.MODE === 'test') {
+      setProducts([]);
+      return;
+    }
+    if (typeof api.getProducts !== 'function') {
+      setProducts(FALLBACK_SOUVENIRS);
+      return;
+    }
+    let cancelled = false;
+    api
+      .getProducts({ size: 40, sortBy: 'sortOrder' })
+      .then((page) => {
+        if (cancelled) return;
+        const apiSouvenirs = enrichProducts(page?.content ?? [])
+          .filter((item) => item.category === 'SOUVENIR');
+        
+        // Ensure at least 6 souvenirs are available for the carousel
+        const existingSlugs = new Set(apiSouvenirs.map((p) => p.slug));
+        const merged = [...apiSouvenirs];
+        for (const fallback of FALLBACK_SOUVENIRS) {
+          if (merged.length >= 6) break;
+          if (!existingSlugs.has(fallback.slug)) {
+            merged.push(fallback);
+            existingSlugs.add(fallback.slug);
+          }
+        }
+        setProducts(merged.slice(0, 6));
+      })
+      .catch(() => {
+        if (!cancelled) setProducts(FALLBACK_SOUVENIRS);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  return products;
+}
 
 export const NearbyPage: React.FC = () => {
   const { lang, changeLanguage } = useNavbarLanguage();
@@ -212,6 +330,37 @@ export const NearbyPage: React.FC = () => {
 
   const [toastText, setToastText] = useState<string | null>(null);
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Souvenir Carousel drag-to-scroll & arrow navigation
+  const souvenirCarouselRef = useRef<HTMLDivElement>(null);
+  const [isSouvenirDragging, setIsSouvenirDragging] = useState(false);
+  const [souvenirStartX, setSouvenirStartX] = useState(0);
+  const [souvenirScrollLeft, setSouvenirScrollLeft] = useState(0);
+
+  const handleSouvenirMouseDown = (e: React.MouseEvent) => {
+    if (!souvenirCarouselRef.current) return;
+    setIsSouvenirDragging(true);
+    setSouvenirStartX(e.pageX - souvenirCarouselRef.current.offsetLeft);
+    setSouvenirScrollLeft(souvenirCarouselRef.current.scrollLeft);
+  };
+
+  const handleSouvenirMouseMove = (e: React.MouseEvent) => {
+    if (!isSouvenirDragging || !souvenirCarouselRef.current) return;
+    e.preventDefault();
+    const x = e.pageX - souvenirCarouselRef.current.offsetLeft;
+    const walk = (x - souvenirStartX) * 1.5;
+    souvenirCarouselRef.current.scrollLeft = souvenirScrollLeft - walk;
+  };
+
+  const handleSouvenirMouseUpOrLeave = () => {
+    setIsSouvenirDragging(false);
+  };
+
+  const handleScrollSouvenir = (direction: 'left' | 'right') => {
+    if (!souvenirCarouselRef.current) return;
+    const scrollAmount = direction === 'left' ? -280 : 280;
+    souvenirCarouselRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+  };
 
   const triggerToast = useCallback(
     (msg: string) => {
@@ -355,14 +504,13 @@ export const NearbyPage: React.FC = () => {
     [pois]
   );
 
-  const radius = 50;
   const [flyToUserToken, setFlyToUserToken] = useState<number>(0);
   const gpsToastShownRef = useRef<boolean>(false);
   const [isAutoEnabled, setIsAutoEnabled] = useState<boolean>(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
-  const [addedGoodsIds, setAddedGoodsIds] = useState<number[]>([]);
+  const [isQrOpen, setIsQrOpen] = useState<boolean>(false);
 
   const [listenedPoiIds, setListenedPoiIds] = useState<string[]>(() => {
     if (typeof window === 'undefined') return [];
@@ -459,6 +607,11 @@ export const NearbyPage: React.FC = () => {
 
   const isPaused = playbackStatus === 'paused';
 
+  // The bottom player stays hidden until there is an actual listening session,
+  // then slides up once a stop starts loading or playing.
+  const hasAudioSession =
+    Boolean(currentId) || isPlaying || playbackStatus === 'loading' || isPaused;
+
   const {
     userPos,
     gpsError,
@@ -535,6 +688,19 @@ export const NearbyPage: React.FC = () => {
     const map = new Map<string, number>();
     ordered.forEach((item, index) => map.set(item.poi.id, index + 1));
     return map;
+  }, [pois]);
+
+  // Keep the map markers and route in tour order even when the list is
+  // re-sorted by the visitor current location distance.
+  const mapPois = useMemo(() => {
+    return pois
+      .map((poi, originalIndex) => ({ poi, originalIndex }))
+      .sort(
+        (a, b) =>
+          (a.poi.stopOrder ?? a.originalIndex + 1) -
+          (b.poi.stopOrder ?? b.originalIndex + 1)
+      )
+      .map((item) => item.poi);
   }, [pois]);
 
   const sortedPois = useMemo(() => {
@@ -620,6 +786,7 @@ export const NearbyPage: React.FC = () => {
 
   const handleExplicitSelectPoi = useCallback(
     (poiId: string, shouldScroll = false) => {
+      setIsQrOpen(false);
       setSelectedId(poiId);
       setActiveId(poiId);
 
@@ -686,53 +853,20 @@ export const NearbyPage: React.FC = () => {
     ]
   );
 
-  const autoStatusMessage = useMemo(() => {
-    const configuredRadius = (() => {
-      const radii = pois.map((p) => p.triggerRadius).filter((value) => value > 0);
-      if (radii.length === 0) return formatDistance(radius, currentLang);
-      const min = Math.min(...radii);
-      const max = Math.max(...radii);
-      return min === max
-        ? formatDistance(min, currentLang)
-        : `${formatDistance(min, currentLang)} - ${formatDistance(max, currentLang)}`;
-    })();
-    if (!isAutoEnabled) return t(currentLang, 'autoStatusOff');
 
-    const nearest = sortedPois[0];
-    if (userPos && nearest && nearest.dist != null) {
-      return t(currentLang, 'autoStatusTracking', {
-        radius: configuredRadius,
-        name: getPoiName(nearest.poi),
-        dist: formatDistance(nearest.dist, currentLang),
-      });
-    }
-    if (gpsError) return gpsError;
-    return t(currentLang, 'autoStatusWaiting', { radius: configuredRadius });
-  }, [
-    currentLang,
-    getPoiName,
-    gpsError,
-    isAutoEnabled,
-    pois,
-    radius,
-    sortedPois,
-    userPos,
-  ]);
+  const handleSelectSouvenir = useCallback((product: Product) => {
+    navigate(`/am-thuc/${product.slug}`);
+  }, [navigate]);
 
-  const handleAddSouvenir = useCallback(
-    (g: typeof SOUVENIR_GOODS[0]) => {
-      setAddedGoodsIds((prev) => (prev.includes(g.id) ? prev : [...prev, g.id]));
-      if (addToCart) {
-        addToCart({
-          id: g.id,
-          name: g.name,
-          price: g.price,
-          quantity: 1,
-          image: `/images/souvenirs/souvenir_${g.id}.jpg`,
-          category: 'SOUVENIR',
-        } as any);
-      }
-      triggerToast(`Đã thêm ${g.name} vào giỏ hàng`);
+  const souvenirProducts = useNearbySouvenirs();
+  const { isFavorite, toggleFavorite } = useFavorites();
+
+  const handleAddSouvenirToCart = useCallback(
+    (product: Product) => {
+      if (!product.isActive) return;
+      addToCart(product, 1);
+      triggerToast(`Đã thêm ${product.name} vào giỏ hàng`);
+      (window as unknown as { __pop?: () => void }).__pop?.();
     },
     [addToCart, triggerToast]
   );
@@ -898,6 +1032,69 @@ export const NearbyPage: React.FC = () => {
               sortNoteText={userPos ? t(currentLang, 'sortNearest') : t(currentLang, 'sortTour')}
               activeSentenceIndex={activeSentenceIndex}
               duration={duration}
+              details={
+                activeSortedItem ? (
+                  <>
+                    {/* ACTIVE STOP HERO EXPANDED VIEW (image + lead + actions) */}
+                    {activeSelectedPoi && (
+                      <PoiHero
+                        poi={activeSelectedPoi}
+                        originalIndex={activeSortedItem.originalIndex}
+                        stopNumber={activeSortedItem.stopNumber ?? 1}
+                        totalStops={pois.length}
+                        currentLang={currentLang}
+                        isPlaying={isPlaying}
+                        isCurrent={currentId === activeSelectedPoi.id}
+                        playbackStatus={playbackStatus}
+                        onTogglePlay={handleTogglePlayPoi}
+                        duration={duration}
+                        listenBtnText={t(currentLang, 'playBtn')}
+                        pauseBtnText={t(currentLang, 'pauseBtn')}
+                        resumeBtnText={t(currentLang, 'resumeBtn')}
+                        getPoiName={getPoiName}
+                        userPos={userPos}
+                        heroRef={heroRef}
+                        onOpenQr={() => setIsQrOpen(true)}
+                        qrAvailable={isQrAvailable(activeSelectedPoi)}
+                      />
+                    )}
+
+                    {/* FULL READING & STORY WITH WORD HIGHLIGHTING */}
+                    <PoiReadingSection
+                      activeItem={activeSortedItem}
+                      currentLang={currentLang}
+                      isContentLocked={
+                        isPremiumLanguage(currentLang) &&
+                        !canAccessPoiLanguage(
+                          activeSortedItem.poi.numericId ?? activeSortedItem.poi.id,
+                          currentLang
+                        )
+                      }
+                      onUnlockContent={() => {
+                        warnAndOpenPremium(activeSortedItem.poi);
+                      }}
+                      isPlaying={isPlaying}
+                      isCurrent={currentId === activeSortedItem.poi.id}
+                      playbackStatus={playbackStatus}
+                      duration={duration}
+                      activeSentenceIndex={activeSentenceIndex}
+                      activeCharOffset={activeCharOffset}
+                      activeCharLength={activeCharLength}
+                      syncMode={syncMode}
+                      audioSourceType={audioSourceType}
+                      prevItem={prevItem}
+                      nextItem={nextItem}
+                      onSelectPoi={handleExplicitSelectPoi}
+                      getPoiName={getPoiName}
+                      formattedDist={
+                        activeSortedItem.dist != null
+                          ? formatDistance(activeSortedItem.dist, currentLang)
+                          : null
+                      }
+                    />
+                  </>
+                ) : null
+              }
               onSelectPoi={handleExplicitSelectPoi}
               onHoverPoi={setHoveredId}
               onTogglePlay={handleTogglePlayPoi}
@@ -910,78 +1107,13 @@ export const NearbyPage: React.FC = () => {
               pauseBtnText={t(currentLang, 'pauseBtn')}
               resumeBtnText={t(currentLang, 'resumeBtn')}
             />
-
-            {/* ACTIVE STOP HERO EXPANDED VIEW */}
-            {activeSelectedPoi && (
-              <PoiHero
-                poi={activeSelectedPoi}
-                originalIndex={activeSortedItem?.originalIndex ?? 0}
-                stopNumber={activeSortedItem?.stopNumber ?? 1}
-                totalStops={pois.length}
-                currentLang={currentLang}
-                isPlaying={isPlaying}
-                isCurrent={currentId === activeSelectedPoi.id}
-                playbackStatus={playbackStatus}
-                onTogglePlay={handleTogglePlayPoi}
-                duration={duration}
-                listenBtnText={t(currentLang, 'playBtn')}
-                pauseBtnText={t(currentLang, 'pauseBtn')}
-                resumeBtnText={t(currentLang, 'resumeBtn')}
-                getPoiName={getPoiName}
-                userPos={userPos}
-                heroRef={heroRef}
-                onChangeLanguage={changeLanguage}
-                onUnlockLanguage={warnAndOpenPremium}
-                canAccessPoiLanguage={canAccessPoiLanguage}
-              />
-            )}
-
-            {/* FULL READING & STORY WITH WORD HIGHLIGHTING */}
-            {activeSortedItem && (
-              <PoiReadingSection
-                activeItem={activeSortedItem}
-                currentLang={currentLang}
-                isContentLocked={
-                  isPremiumLanguage(currentLang) &&
-                  !canAccessPoiLanguage(
-                    activeSortedItem.poi.numericId ?? activeSortedItem.poi.id,
-                    currentLang
-                  )
-                }
-                onUnlockContent={() => {
-                  warnAndOpenPremium(activeSortedItem.poi);
-                }}
-                isPlaying={isPlaying}
-                isCurrent={currentId === activeSortedItem.poi.id}
-                playbackStatus={playbackStatus}
-                duration={duration}
-                activeSentenceIndex={activeSentenceIndex}
-                activeCharOffset={activeCharOffset}
-                activeCharLength={activeCharLength}
-                syncMode={syncMode}
-                audioSourceType={audioSourceType}
-                prevItem={prevItem}
-                nextItem={nextItem}
-                onSelectPoi={handleExplicitSelectPoi}
-                onTogglePlay={handleTogglePlayPoi}
-                getPoiName={getPoiName}
-                listenBtnText={t(currentLang, 'playBtn')}
-                pauseBtnText={t(currentLang, 'pauseBtn')}
-                resumeBtnText={t(currentLang, 'resumeBtn')}
-                formattedDist={
-                  activeSortedItem.dist != null
-                    ? formatDistance(activeSortedItem.dist, currentLang)
-                    : null
-                }
-              />
-            )}
           </aside>
 
           {/* RIGHT: STICKY MAP BOX */}
           <div className="mapcol nearby-map-column" aria-label={t(currentLang, 'mapAriaLabel')}>
             <div className="map">
               <PoiMap
-                pois={pois}
+                pois={mapPois}
                 selectedPoiId={selectedId}
                 activePoiId={effectiveActiveId}
                 hoveredPoiId={hoveredId}
@@ -1003,6 +1135,8 @@ export const NearbyPage: React.FC = () => {
                 resumeBtnText={t(currentLang, 'resumeBtn')}
                 mapCaptionText={t(currentLang, 'mapCaption')}
                 currentLang={currentLang}
+                showSelectedCard={false}
+                compactPopup
               />
 
               <div className="tools">
@@ -1038,7 +1172,7 @@ export const NearbyPage: React.FC = () => {
                   }}
                   currentLang={currentLang}
                   isLocatingGps={isRequestingGps}
-                  statusMessage={autoStatusMessage}
+                  statusMessage={statusMessage}
                 />
               </div>
             </div>
@@ -1063,37 +1197,93 @@ export const NearbyPage: React.FC = () => {
 
         {/* 5. SOUVENIR SHOP SECTION */}
         <section className="shop" aria-labelledby="shopT">
-          <h2 id="shopT">Mang một chút Sài Gòn về nhà</h2>
-          <p>Những món nhỏ do người địa phương chọn, bán ngay tại các điểm dừng.</p>
-          <div className="goods" id="goods">
-            {SOUVENIR_GOODS.map((g) => {
-              const isAdded = addedGoodsIds.includes(g.id);
-              return (
-                <article key={g.id} className="good">
-                  <div className="ph">
-                    <ArtIllustration hue={g.hue} idSuffix={`shop_${g.id}`} />
-                  </div>
-                  <h3>{g.name}</h3>
-                  <p>{g.desc}</p>
-                  <div className="buy">
-                    <b>{g.priceText}</b>
-                    <button
-                      type="button"
-                      className={`add ${isAdded ? 'done' : ''}`}
-                      onClick={() => handleAddSouvenir(g)}
-                    >
-                      {isAdded ? 'Đã thêm' : 'Thêm vào giỏ'}
-                    </button>
-                  </div>
-                </article>
-              );
-            })}
+          <div className="shop-head">
+            <div>
+              <h2 id="shopT">{t(currentLang, 'shopTitle')}</h2>
+              <p>{t(currentLang, 'shopSub')}</p>
+            </div>
+            <div className="shop-head-actions">
+              <div className="shop-carousel-arrows" aria-label="Điều hướng sản phẩm">
+                <button
+                  type="button"
+                  className="shop-arrow-btn prev"
+                  onClick={() => handleScrollSouvenir('left')}
+                  aria-label="Xem sản phẩm trước"
+                  title="Trước"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" width="16" height="16" aria-hidden="true">
+                    <path d="M15 18l-6-6 6-6" />
+                  </svg>
+                </button>
+                <button
+                  type="button"
+                  className="shop-arrow-btn next"
+                  onClick={() => handleScrollSouvenir('right')}
+                  aria-label="Xem sản phẩm kế tiếp"
+                  title="Kế tiếp"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" width="16" height="16" aria-hidden="true">
+                    <path d="M9 18l6-6-6-6" />
+                  </svg>
+                </button>
+              </div>
+              <Link className="shop-more-link" to="/am-thuc">
+                {t(currentLang, 'shopViewAll')}
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" width="16" height="16">
+                  <path d="M5 12h14" />
+                  <path d="M13 6l6 6-6 6" />
+                </svg>
+              </Link>
+            </div>
           </div>
+          {souvenirProducts === null ? (
+            <div className="goods goods-loading" aria-hidden="true">
+              {[0, 1, 2, 3, 4, 5].map((i) => (
+                <div key={i} className="shop-skeleton" />
+              ))}
+            </div>
+          ) : souvenirProducts.length === 0 ? (
+            <div className="shop-empty" role="status">
+              <div className="shop-empty-icon" aria-hidden="true">
+                <ShoppingBag size={28} strokeWidth={1.6} />
+              </div>
+              <p>{t(currentLang, 'shopEmptyDesc')}</p>
+              <Link className="shop-more-link" to="/am-thuc">
+                {t(currentLang, 'shopViewAll')}
+              </Link>
+            </div>
+          ) : (
+            <div
+              className={`goods goods-carousel ${isSouvenirDragging ? 'is-dragging' : ''}`}
+              id="goods"
+              ref={souvenirCarouselRef}
+              onMouseDown={handleSouvenirMouseDown}
+              onMouseMove={handleSouvenirMouseMove}
+              onMouseUp={handleSouvenirMouseUpOrLeave}
+              onMouseLeave={handleSouvenirMouseUpOrLeave}
+            >
+              {/* Show up to 6 souvenir items with horizontal drag/arrow carousel */}
+              {souvenirProducts.slice(0, 6).map((product) => (
+                <ProductCard
+                  key={product.id}
+                  product={product}
+                  isFavorited={isFavorite(product.id)}
+                  onToggleFavorite={toggleFavorite}
+                  onAddToCart={() => handleAddSouvenirToCart(product)}
+                  onSelect={handleSelectSouvenir}
+                />
+              ))}
+            </div>
+          )}
         </section>
       </div>
 
-      {/* 6. FIXED BOTTOM AUDIO PLAYER BAR (CREAM IN DARK MODE) */}
-      <footer className="pl player nearby-sticky-player-bar" aria-label={t(currentLang, 'playerAriaLabel')}>
+      {/* 6. FIXED BOTTOM AUDIO PLAYER BAR (APPEARS WHEN PLAYBACK STARTS) */}
+      <footer
+        id="nearby-player"
+        className={`pl player nearby-sticky-player-bar${hasAudioSession ? ' is-open' : ''}`}
+        aria-label={t(currentLang, 'playerAriaLabel')}
+      >
         <div
           className="bar"
           id="seek"
@@ -1208,6 +1398,15 @@ export const NearbyPage: React.FC = () => {
           </div>
         </div>
       </footer>
+
+      {isQrOpen && activeSelectedPoi && (
+        <PoiQrDialog
+          poi={activeSelectedPoi}
+          currentLang={currentLang}
+          getPoiName={getPoiName}
+          onClose={() => setIsQrOpen(false)}
+        />
+      )}
 
       {/* FLOATING TOAST NOTIFICATION */}
       <div className={`toast ${toastText ? 'show' : ''}`} id="toast" role="status">
