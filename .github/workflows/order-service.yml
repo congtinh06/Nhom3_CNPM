@@ -49,13 +49,6 @@ jobs:
           path: backend/order-service/target/site/jacoco/
           if-no-files-found: ignore
 
-      - name: Upload JaCoCo Report
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
-        if: always()
-        with:
-          name: order-service-jacoco-report
-          path: backend/order-service/target/site/jacoco/
-
   docker-build:
     name: Build image order-service
     runs-on: ubuntu-24.04
