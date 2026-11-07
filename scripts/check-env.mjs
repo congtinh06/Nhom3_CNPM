@@ -40,6 +40,10 @@ const REQUIRED_KEYS = [
   'JWT_SECRET',
 ];
 
+// Key bí mật được scripts/setup-env.mjs sinh tự động. Trong .env.example các key
+// này để trống; chỉ khi kiểm tra .env.example (--allow-placeholder) mới bỏ qua lỗi trống.
+const GENERATED_KEYS = new Set(['INTERNAL_API_KEY', 'JWT_SECRET']);
+
 const PLACEHOLDER_PATTERN = /^(CHANGE_ME|ChangeMe|YOUR_|PLACEHOLDER)/;
 
 if (!existsSync(filePath)) {
@@ -61,7 +65,13 @@ const warnings = [];
 
 for (const key of REQUIRED_KEYS) {
   const value = values.get(key);
-  if (!value) errors.push(`${key} đang trống hoặc thiếu (docker compose sẽ từ chối khởi động).`);
+  if (!value) {
+    if (allowPlaceholder && GENERATED_KEYS.has(key)) {
+      warnings.push(`${key} đang trống trong file mẫu; scripts/setup-env.mjs sẽ sinh giá trị khi tạo .env.`);
+      continue;
+    }
+    errors.push(`${key} đang trống hoặc thiếu (docker compose sẽ từ chối khởi động).`);
+  }
 }
 
 const jwtSecret = values.get('JWT_SECRET') ?? '';
