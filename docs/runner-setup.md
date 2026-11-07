@@ -28,7 +28,7 @@ Runner chạy trong phiên đăng nhập của chủ máy để dùng được D
 
 - Nhãn: mặc định `self-hosted`, `Windows`, `X64`; thêm `echora`.
 - `cd.yml` dùng `runs-on: [self-hosted, echora]`.
-- Repo variables: `HEALTH_URL` (URL health công khai qua ngrok), `DEPLOY_DIR` (ví dụ `F:\Nhom3_CNPM`).
+- Repo variables: `HEALTH_URL` (`https://<id>.ngrok-free.dev/actuator/health`, ngrok trỏ gateway 18080), `DEPLOY_DIR` (ví dụ `F:\Nhom3_CNPM`).
 
 ## 4. Cài đặt repo
 
