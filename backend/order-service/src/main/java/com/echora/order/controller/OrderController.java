@@ -8,6 +8,7 @@ import com.echora.order.dto.OrderResponse;
 import com.echora.order.dto.PaymentStatusResponse;
 import com.echora.order.dto.PaymentUrlResponse;
 import com.echora.order.service.OrderService;
+import com.echora.order.support.ClientIpResolver;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +26,7 @@ import java.util.Map;
 public class OrderController {
 
     private final OrderService orderService;
+    private final ClientIpResolver clientIpResolver;
 
     @PostMapping
     public ResponseEntity<OrderResponse> createOrder(
@@ -32,7 +34,7 @@ public class OrderController {
             @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey,
             @Valid @RequestBody CreateOrderRequest request,
             HttpServletRequest httpRequest) {
-        OrderResponse response = orderService.createOrder(userId, idempotencyKey, request, clientIp(httpRequest));
+        OrderResponse response = orderService.createOrder(userId, idempotencyKey, request, clientIpResolver.resolve(httpRequest));
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
@@ -43,7 +45,7 @@ public class OrderController {
             @Valid @RequestBody(required = false) CreatePremiumOrderRequest request,
             HttpServletRequest httpRequest) {
         OrderResponse response = orderService.createPremiumOrder(
-                userId, idempotencyKey, request, clientIp(httpRequest));
+                userId, idempotencyKey, request, clientIpResolver.resolve(httpRequest));
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
@@ -55,7 +57,7 @@ public class OrderController {
             @Valid @RequestBody CreatePoiOrderRequest request,
             HttpServletRequest httpRequest) {
         OrderResponse response = orderService.createPoiOrder(
-                userId, idempotencyKey, request, clientIp(httpRequest));
+                userId, idempotencyKey, request, clientIpResolver.resolve(httpRequest));
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
@@ -91,7 +93,7 @@ public class OrderController {
             @RequestAttribute(InternalAuthFilter.ATTRIBUTE_USER_ID) Long userId,
             @PathVariable String orderCode,
             HttpServletRequest httpRequest) {
-        return ResponseEntity.ok(orderService.createVnPayPayment(userId, orderCode, clientIp(httpRequest)));
+        return ResponseEntity.ok(orderService.createVnPayPayment(userId, orderCode, clientIpResolver.resolve(httpRequest)));
     }
 
     @PostMapping("/{orderCode}/pay/mock-confirm")
@@ -121,11 +123,4 @@ public class OrderController {
         return ResponseEntity.ok(orderService.handleVnPayIpn(params));
     }
 
-    private String clientIp(HttpServletRequest request) {
-        String forwarded = request.getHeader("X-Forwarded-For");
-        if (forwarded != null && !forwarded.isBlank()) {
-            return forwarded.split(",")[0].trim();
-        }
-        return request.getRemoteAddr();
-    }
 }

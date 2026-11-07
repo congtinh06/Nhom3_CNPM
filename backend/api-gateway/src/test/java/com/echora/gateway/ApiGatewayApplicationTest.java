@@ -1110,6 +1110,82 @@ class ApiGatewayApplicationTest {
     }
 
     @Test
+    void rateLimit_TrustedPeerMatchedByCidrHonorsXForwardedFor() {
+        rateLimitFilter.clearRateLimitCache();
+        rateLimitFilter.setMaxRequestsPerMinute(2);
+        // Peer is trusted through a CIDR range instead of exact IP matching
+        rateLimitFilter.setTrustedProxiesConfig("127.0.0.0/8,::1/128,unknown");
+
+        try {
+            for (int i = 0; i < 2; i++) {
+                webTestClient.post().uri("/api/analytics/events")
+                        .header("X-Forwarded-For", "203.0.113.10")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .bodyValue("{\"eventType\":\"SCAN\",\"poiId\":1}")
+                        .exchange()
+                        .expectStatus().isOk();
+            }
+
+            // Same forwarded client exceeds the limit even though peer matched by CIDR
+            webTestClient.post().uri("/api/analytics/events")
+                    .header("X-Forwarded-For", "203.0.113.10")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue("{\"eventType\":\"SCAN\",\"poiId\":1}")
+                    .exchange()
+                    .expectStatus().isEqualTo(429)
+                    .expectHeader().exists(HttpHeaders.RETRY_AFTER);
+
+            // Distinct forwarded client still has its own bucket
+            webTestClient.post().uri("/api/analytics/events")
+                    .header("X-Forwarded-For", "203.0.113.11")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue("{\"eventType\":\"SCAN\",\"poiId\":1}")
+                    .exchange()
+                    .expectStatus().isOk();
+        } finally {
+            rateLimitFilter.setTrustedProxiesConfig("");
+            rateLimitFilter.setMaxRequestsPerMinute(60);
+            rateLimitFilter.clearRateLimitCache();
+        }
+    }
+
+    @Test
+    void rateLimit_InvalidOrNonMatchingCidrEntryIsNotTrusted() {
+        rateLimitFilter.clearRateLimitCache();
+        rateLimitFilter.setMaxRequestsPerMinute(2);
+        // Invalid prefix and a range that does not contain the test peer must both be ignored
+        rateLimitFilter.setTrustedProxiesConfig("10.0.0.0/8,not-an-ip/99");
+
+        try {
+            webTestClient.post().uri("/api/analytics/events")
+                    .header("X-Forwarded-For", "198.51.100.1")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue("{\"eventType\":\"SCAN\",\"poiId\":1}")
+                    .exchange()
+                    .expectStatus().isOk();
+
+            webTestClient.post().uri("/api/analytics/events")
+                    .header("X-Forwarded-For", "198.51.100.2")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue("{\"eventType\":\"SCAN\",\"poiId\":1}")
+                    .exchange()
+                    .expectStatus().isOk();
+
+            // Peer untrusted -> all requests share the socket IP bucket
+            webTestClient.post().uri("/api/analytics/events")
+                    .header("X-Forwarded-For", "198.51.100.3")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue("{\"eventType\":\"SCAN\",\"poiId\":1}")
+                    .exchange()
+                    .expectStatus().isEqualTo(429);
+        } finally {
+            rateLimitFilter.setTrustedProxiesConfig("");
+            rateLimitFilter.setMaxRequestsPerMinute(60);
+            rateLimitFilter.clearRateLimitCache();
+        }
+    }
+
+    @Test
     void testActuatorExposesOnlyHealthWithoutDetails() {
         webTestClient.get().uri("/actuator/health")
                 .exchange()

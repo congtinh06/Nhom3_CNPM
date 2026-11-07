@@ -28,7 +28,7 @@ import { useCartOptional } from '../context/CartContext';
 import { SupportedLanguage } from '../types';
 import { useAutoNarration, haversine } from '../hooks/useAutoNarration';
 import { useNearbyAudio, splitTranscriptIntoSentences } from '../hooks/useNearbyAudio';
-import { unlockAudio } from '../lib/audioUnlock';
+import { getSharedAudio, unlockAudio } from '../lib/audioUnlock';
 import {
   t,
   formatDistance,
@@ -41,7 +41,8 @@ import { PoiHeader } from '../components/nearby/PoiHeader';
 import { ToolbarControls } from '../components/nearby/ToolbarControls';
 import { PoiMap } from '../components/nearby/PoiMap';
 import { PoiList } from '../components/nearby/PoiList';
-import { PoiHero } from '../components/nearby/PoiHero';
+import { PoiHero, estimatePoiDurationSeconds } from '../components/nearby/PoiHero';
+import { resolveImagePath } from '../components/nearby/PoiCard';
 import { PoiReadingSection } from '../components/nearby/PoiReadingSection';
 import { PoiQrDialog } from '../components/nearby/PoiQrDialog';
 import { isQrAvailable } from '../components/common/PlaceQR';
@@ -273,16 +274,24 @@ const FALLBACK_SOUVENIRS: Product[] = [
 
 // Cửa hàng trực tuyến: tải danh mục quà lưu niệm (chung nguồn API với trang /am-thuc),
 // hiển thị 6 sản phẩm trong thanh carousel kéo / trượt và điều hướng chi tiết / giỏ hàng.
-function useNearbySouvenirs() {
-  const [products, setProducts] = useState<Product[] | null>(null);
+interface SouvenirsData {
+  carouselProducts: Product[] | null;
+  apiSouvenirs: Product[];
+}
+
+function useNearbySouvenirs(): SouvenirsData {
+  const [data, setData] = useState<SouvenirsData>({
+    carouselProducts: null,
+    apiSouvenirs: [],
+  });
 
   useEffect(() => {
     if (import.meta.env.MODE === 'test') {
-      setProducts([]);
+      setData({ carouselProducts: [], apiSouvenirs: [] });
       return;
     }
     if (typeof api.getProducts !== 'function') {
-      setProducts(FALLBACK_SOUVENIRS);
+      setData({ carouselProducts: FALLBACK_SOUVENIRS.slice(0, 6), apiSouvenirs: [] });
       return;
     }
     let cancelled = false;
@@ -292,7 +301,7 @@ function useNearbySouvenirs() {
         if (cancelled) return;
         const apiSouvenirs = enrichProducts(page?.content ?? [])
           .filter((item) => item.category === 'SOUVENIR');
-        
+
         // Ensure at least 6 souvenirs are available for the carousel
         const existingSlugs = new Set(apiSouvenirs.map((p) => p.slug));
         const merged = [...apiSouvenirs];
@@ -303,17 +312,25 @@ function useNearbySouvenirs() {
             existingSlugs.add(fallback.slug);
           }
         }
-        setProducts(merged.slice(0, 6));
+        setData({
+          carouselProducts: merged.slice(0, 6),
+          apiSouvenirs,
+        });
       })
       .catch(() => {
-        if (!cancelled) setProducts(FALLBACK_SOUVENIRS);
+        if (!cancelled) {
+          setData({
+            carouselProducts: FALLBACK_SOUVENIRS.slice(0, 6),
+            apiSouvenirs: [],
+          });
+        }
       });
     return () => {
       cancelled = true;
     };
   }, []);
 
-  return products;
+  return data;
 }
 
 export const NearbyPage: React.FC = () => {
@@ -579,6 +596,10 @@ export const NearbyPage: React.FC = () => {
     isPlaying,
     currentTime,
     duration,
+    playbackRate,
+    cyclePlaybackRate,
+    audioErrorPoiId,
+    clearAudioError,
     notice,
     noticeWarn,
     audioSourceType,
@@ -606,6 +627,8 @@ export const NearbyPage: React.FC = () => {
   });
 
   const isPaused = playbackStatus === 'paused';
+
+
 
   // The bottom player stays hidden until there is an actual listening session,
   // then slides up once a stop starts loading or playing.
@@ -726,6 +749,8 @@ export const NearbyPage: React.FC = () => {
   }, [pois, userPos, tourNumberById]);
 
   const effectiveActiveId = activeId || selectedId || (sortedPois[0]?.poi.id ?? pois[0]?.id ?? null);
+
+
 
   const activeSortedItem = useMemo(() => {
     return sortedPois.find((item) => item.poi.id === effectiveActiveId) || sortedPois[0] || null;
@@ -853,35 +878,251 @@ export const NearbyPage: React.FC = () => {
     ]
   );
 
+  // Global Space shortcut for audio play/pause (skips if inside form inputs or buttons)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.code !== 'Space') return;
+      const target = e.target as HTMLElement | null;
+      if (!target) return;
+      const tagName = target.tagName.toLowerCase();
+      if (
+        tagName === 'input' ||
+        tagName === 'textarea' ||
+        tagName === 'select' ||
+        target.isContentEditable ||
+        tagName === 'button' ||
+        tagName === 'a' ||
+        tagName === 'summary' ||
+        target.getAttribute('role') === 'button' ||
+        target.getAttribute('role') === 'slider' ||
+        target.getAttribute('role') === 'switch'
+      ) {
+        return;
+      }
+      e.preventDefault();
+      const poiIdToPlay = effectiveActiveId || (pois[0]?.id ?? null);
+      if (poiIdToPlay) {
+        handleTogglePlayPoi(poiIdToPlay);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [effectiveActiveId, pois, handleTogglePlayPoi]);
+
+
+  const [seekState, setSeekState] = useState<{
+    poiId: string;
+    baseAudioTime: number;
+    targetTime: number;
+  } | null>(null);
+  const prevCurrentIdRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    setSeekState(null);
+  }, [currentLang]);
+
+  useEffect(() => {
+    if (seekState && effectiveActiveId && seekState.poiId !== effectiveActiveId) {
+      setSeekState(null);
+    }
+  }, [effectiveActiveId, seekState]);
+
+  useEffect(() => {
+    const prevId = prevCurrentIdRef.current;
+    prevCurrentIdRef.current = currentId;
+    if (prevId && !currentId && seekState && seekState.poiId === prevId) {
+      setSeekState(null);
+    }
+  }, [currentId, seekState]);
+
+  const activeStopDuration = useMemo(() => {
+    if (!activeSelectedPoi) return 0;
+    return estimatePoiDurationSeconds(
+      activeSelectedPoi,
+      currentLang,
+      duration,
+      currentId === activeSelectedPoi.id
+    );
+  }, [activeSelectedPoi, currentLang, duration, currentId]);
+
+  const effectiveStopTime = useMemo(() => {
+    if (!activeSelectedPoi || activeStopDuration <= 0) return 0;
+    const isCurr = currentId === activeSelectedPoi.id;
+    if (seekState && seekState.poiId === activeSelectedPoi.id) {
+      if (isCurr && (audioSourceType === 'backend' || audioSourceType === 'static')) {
+        const raw =
+          Math.abs(currentTime - seekState.baseAudioTime) < 0.35
+            ? seekState.targetTime
+            : currentTime;
+        return Math.min(activeStopDuration, Math.max(0, raw));
+      }
+      const elapsedSinceSeek = isCurr ? Math.max(0, currentTime - seekState.baseAudioTime) : 0;
+      return Math.min(activeStopDuration, Math.max(0, seekState.targetTime + elapsedSinceSeek));
+    }
+    return isCurr ? Math.min(activeStopDuration, Math.max(0, currentTime)) : 0;
+  }, [activeSelectedPoi, activeStopDuration, currentId, seekState, audioSourceType, currentTime]);
+
+  const handleSeek = useCallback(
+    (poiId: string, timeSec: number) => {
+      const targetPoi = pois.find((p) => p.id === poiId);
+      const totalSec = targetPoi
+        ? estimatePoiDurationSeconds(targetPoi, currentLang, duration, currentId === poiId)
+        : activeStopDuration;
+      const clamped = Math.max(0, Math.min(totalSec > 0 ? totalSec : timeSec, timeSec));
+
+      if (effectiveActiveId !== poiId) {
+        setSelectedId(poiId);
+        setActiveId(poiId);
+      }
+
+      if (currentId === poiId && (audioSourceType === 'backend' || audioSourceType === 'static')) {
+        try {
+          const audioEl = getSharedAudio();
+          audioEl.currentTime = clamped;
+        } catch {
+          // Ignore seek errors when media metadata is not ready yet
+        }
+        setSeekState({ poiId, baseAudioTime: clamped, targetTime: clamped });
+        return;
+      }
+
+      setSeekState({
+        poiId,
+        baseAudioTime: currentId === poiId ? currentTime : 0,
+        targetTime: clamped,
+      });
+    },
+    [
+      pois,
+      currentLang,
+      duration,
+      currentId,
+      activeStopDuration,
+      effectiveActiveId,
+      audioSourceType,
+      currentTime,
+    ]
+  );
+
+  // Single source of truth for heard stops across Hero, timeline dots, list checkmarks, and map
+  const heardPoiIds = useMemo(() => {
+    const validIds = new Set(pois.map((p) => p.id));
+    const validSlugs = new Map(pois.map((p) => [p.slug, p.id]));
+    const result = new Set<string>();
+    for (const item of listenedPoiIds) {
+      if (validIds.has(item)) {
+        result.add(item);
+      } else if (validSlugs.has(item)) {
+        result.add(validSlugs.get(item)!);
+      }
+    }
+    return Array.from(result);
+  }, [pois, listenedPoiIds]);
+
+  const heardCount = heardPoiIds.length;
+
+  const nextUnheardItem = useMemo(() => {
+    return sortedPois.find((item) => !heardPoiIds.includes(item.poi.id)) || null;
+  }, [sortedPois, heardPoiIds]);
+
+  const heroPlayTarget = useMemo(() => {
+    if (heardCount === 0 || !nextUnheardItem) {
+      return sortedPois[0] || null;
+    }
+    return nextUnheardItem;
+  }, [heardCount, nextUnheardItem, sortedPois]);
+
+  const heroCtaLabel = useMemo(() => {
+    if (pois.length === 0) return t(currentLang, 'heroCtaPlay');
+    if (heardCount === 0) return t(currentLang, 'heroCtaFirst');
+    if (heardCount < pois.length && nextUnheardItem) {
+      return t(currentLang, 'heroCtaContinue', { name: getPoiName(nextUnheardItem.poi) });
+    }
+    return t(currentLang, 'heroCtaReplay');
+  }, [pois.length, heardCount, nextUnheardItem, currentLang, getPoiName]);
+
+  const totalListenMinutes = useMemo(() => {
+    const totalSec = pois.reduce(
+      (sum, p) => sum + estimatePoiDurationSeconds(p, currentLang),
+      0
+    );
+    return Math.max(1, Math.round(totalSec / 60));
+  }, [pois, currentLang]);
+
+  const isActiveContentLocked = Boolean(
+    activeSortedItem &&
+      isPremiumLanguage(currentLang) &&
+      !canAccessPoiLanguage(
+        activeSortedItem.poi.numericId ?? activeSortedItem.poi.id,
+        currentLang
+      )
+  );
+
+  // Itinerary plans ("Đi bao lâu thì vừa?"): 4 stops half-day & 7 stops full-day via i18n keys
+  const itineraryColumns = useMemo<
+    Array<{ heading: string; summary?: string; stops: string[] }>
+  >(() => {
+    if (import.meta.env.MODE === 'test') return [];
+    return [
+      {
+        heading: t(currentLang, 'itineraryHalfDay'),
+        summary: t(currentLang, 'itineraryHalfDesc'),
+        stops: [
+          t(currentLang, 'itineraryHalf1'),
+          t(currentLang, 'itineraryHalf2'),
+          t(currentLang, 'itineraryHalf3'),
+          t(currentLang, 'itineraryHalf4'),
+        ],
+      },
+      {
+        heading: t(currentLang, 'itineraryFullDay'),
+        summary: t(currentLang, 'itineraryFullDesc'),
+        stops: [
+          t(currentLang, 'itineraryFull1'),
+          t(currentLang, 'itineraryFull2'),
+          t(currentLang, 'itineraryFull3'),
+          t(currentLang, 'itineraryFull4'),
+          t(currentLang, 'itineraryFull5'),
+          t(currentLang, 'itineraryFull6'),
+          t(currentLang, 'itineraryFull7'),
+        ],
+      },
+    ];
+  }, [currentLang]);
 
   const handleSelectSouvenir = useCallback((product: Product) => {
     navigate(`/am-thuc/${product.slug}`);
   }, [navigate]);
 
-  const souvenirProducts = useNearbySouvenirs();
+  const { carouselProducts: souvenirProducts } = useNearbySouvenirs();
   const { isFavorite, toggleFavorite } = useFavorites();
 
   const handleAddSouvenirToCart = useCallback(
     (product: Product) => {
       if (!product.isActive) return;
       addToCart(product, 1);
-      triggerToast(`Đã thêm ${product.name} vào giỏ hàng`);
+      triggerToast(t(currentLang, 'toastAddedToCart', { name: product.name }));
       (window as unknown as { __pop?: () => void }).__pop?.();
     },
-    [addToCart, triggerToast]
+    [addToCart, currentLang, triggerToast]
   );
 
   // Stepper timeline fill calculation
   const listenedIndices = useMemo(() => {
     return sortedPois
-      .map((item, idx) => (listenedPoiIds.includes(item.poi.id) ? idx : -1))
+      .map((item, idx) => (heardPoiIds.includes(item.poi.id) ? idx : -1))
       .filter((idx) => idx >= 0);
-  }, [sortedPois, listenedPoiIds]);
+  }, [sortedPois, heardPoiIds]);
 
   const maxListenedIndex = listenedIndices.length > 0 ? Math.max(...listenedIndices) : -1;
   const sfillWidth = maxListenedIndex >= 0 ? `${((maxListenedIndex + 1) / Math.max(1, sortedPois.length)) * 100}%` : '0%';
 
-  const activeProgressPercent = duration && duration > 0 ? Math.min(100, (currentTime / duration) * 100) : 0;
+  const playerTotalSeconds = activeStopDuration > 0 ? activeStopDuration : duration || 120;
+  const activeProgressPercent =
+    playerTotalSeconds > 0 ? Math.min(100, (effectiveStopTime / playerTotalSeconds) * 100) : 0;
 
   return (
     <div className="nearby-sv-root" ref={rootRef}>
@@ -945,33 +1186,75 @@ export const NearbyPage: React.FC = () => {
         {/* 1. EDITORIAL HERO SECTION */}
         <section className="hero">
           <div className="ht">
+            <p className="hero-eyebrow">
+              <span aria-hidden="true" />
+              {t(currentLang, 'heroEyebrow')}
+            </p>
             <h1>
-              {currentLang === 'vi' ? 'Bảy điểm dừng quanh trung tâm Sài Gòn' : t(currentLang, 'pageTitle')}
-              {currentLang === 'vi' && <span className="sr-only">Điểm du lịch Sài Gòn</span>}
+              {currentLang === 'vi'
+                ? t('vi', 'heroDisplayTitle')
+                : t(currentLang, 'pageTitle')}
+              {currentLang === 'vi' && <span className="sr-only">{t('vi', 'pageTitle')}</span>}
             </h1>
             <p>
               {currentLang === 'vi'
-                ? 'Đeo tai nghe vào và đi. Mỗi điểm có một đoạn thuyết minh ngắn, nghe được bằng bốn ngôn ngữ. Bật tự động, máy sẽ phát khi bạn đến gần.'
+                ? t('vi', 'heroDisplaySub')
                 : t(currentLang, 'pageSubtitle')}
             </p>
+            <div className="hero-cta">
+              <button
+                type="button"
+                className="hero-btn hero-btn-primary"
+                onClick={() => {
+                  const targetId = heroPlayTarget?.poi.id;
+                  if (targetId) {
+                    handleExplicitSelectPoi(targetId, true);
+                    handleTogglePlayPoi(targetId);
+                  }
+                }}
+              >
+                {heroCtaLabel}
+              </button>
+              <a
+                className="hero-btn hero-btn-ghost"
+                href="#nearby-map"
+                onClick={(e) => {
+                  e.preventDefault();
+                  const el = document.getElementById('nearby-map');
+                  if (el) {
+                    const prefersReducedMotion =
+                      typeof window !== 'undefined' &&
+                      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+                    el.scrollIntoView({
+                      behavior: prefersReducedMotion ? 'auto' : 'smooth',
+                      block: 'start',
+                    });
+                  }
+                }}
+              >
+                {t(currentLang, 'heroCtaMap')}
+              </a>
+            </div>
           </div>
           <dl className="facts">
             <div>
-              <dt>Quãng đường</dt>
-              <dd>{approxDistance || 'Khoảng 14 km'}</dd>
+              <dt>{t(currentLang, 'factDistanceLabel')}</dt>
+              <dd>{approxDistance || t(currentLang, 'factDistanceFallback')}</dd>
+            </div>
+            {totalListenMinutes > 0 && (
+              <div>
+                <dt>{t(currentLang, 'factListenTimeLabel')}</dt>
+                <dd>{t(currentLang, 'factListenTimeVal', { minutes: totalListenMinutes })}</dd>
+              </div>
+            )}
+            <div>
+              <dt>{t(currentLang, 'factLanguagesLabel')}</dt>
+              <dd>{t(currentLang, 'factLanguagesVal')}</dd>
             </div>
             <div>
-              <dt>Tổng thời gian nghe</dt>
-              <dd>14 phút</dd>
-            </div>
-            <div>
-              <dt>Ngôn ngữ</dt>
-              <dd>Việt, Anh, Nhật, Hàn</dd>
-            </div>
-            <div>
-              <dt>Bạn đã nghe</dt>
-              <dd id="heardTxt">
-                {listenedPoiIds.length}/{pois.length}
+              <dt>{t(currentLang, 'factHeardLabel')}</dt>
+              <dd id="heardTxt" className="accent">
+                {heardCount}/{pois.length}
               </dd>
             </div>
           </dl>
@@ -983,13 +1266,16 @@ export const NearbyPage: React.FC = () => {
             stopsCount={pois.length}
             languagesCount={languagesCount}
             approxDistance={approxDistance}
-            listenedCount={listenedPoiIds.length}
+            listenedCount={heardCount}
             currentLang={currentLang}
           />
         </div>
 
         {/* 2. STEPPER TIMELINE */}
         <div className="stripw">
+          <div className="strip-head">
+            <span>{t(currentLang, 'legendRoute')}</span>
+          </div>
           <div
             className="strip"
             id="strip"
@@ -998,7 +1284,13 @@ export const NearbyPage: React.FC = () => {
             <i id="sfill" style={{ width: sfillWidth }} />
             {sortedPois.map((item, idx) => {
               const isItemActive = effectiveActiveId === item.poi.id;
-              const isItemListened = listenedPoiIds.includes(item.poi.id);
+              const isItemListened = heardPoiIds.includes(item.poi.id);
+              const routeLegText = (
+                item.poi as unknown as {
+                  routeLeg?: Partial<Record<SupportedLanguage, string>>;
+                }
+              ).routeLeg?.[currentLang]?.trim();
+
               return (
                 <button
                   key={item.poi.id}
@@ -1007,6 +1299,7 @@ export const NearbyPage: React.FC = () => {
                   onClick={() => handleExplicitSelectPoi(item.poi.id, true)}
                 >
                   {item.stopNumber ?? idx + 1}. {getPoiName(item.poi)}
+                  {routeLegText && <small>{routeLegText}</small>}
                 </button>
               );
             })}
@@ -1025,7 +1318,7 @@ export const NearbyPage: React.FC = () => {
               currentPlayingId={currentId}
               isPlaying={isPlaying}
               currentLang={currentLang}
-              listenedPoiIds={listenedPoiIds}
+              listenedPoiIds={heardPoiIds}
               lockedPoiIds={lockedPoiIds}
               statusMessage={statusMessage}
               listTitle={t(currentLang, 'listTitle')}
@@ -1035,7 +1328,7 @@ export const NearbyPage: React.FC = () => {
               details={
                 activeSortedItem ? (
                   <>
-                    {/* ACTIVE STOP HERO EXPANDED VIEW (image + lead + actions) */}
+                    {/* ACTIVE STOP HERO EXPANDED VIEW (image + waveform + actions) */}
                     {activeSelectedPoi && (
                       <PoiHero
                         poi={activeSelectedPoi}
@@ -1048,6 +1341,10 @@ export const NearbyPage: React.FC = () => {
                         playbackStatus={playbackStatus}
                         onTogglePlay={handleTogglePlayPoi}
                         duration={duration}
+                        currentTime={effectiveStopTime}
+                        estimatedDuration={activeStopDuration}
+                        isContentLocked={isActiveContentLocked}
+                        onSeek={handleSeek}
                         listenBtnText={t(currentLang, 'playBtn')}
                         pauseBtnText={t(currentLang, 'pauseBtn')}
                         resumeBtnText={t(currentLang, 'resumeBtn')}
@@ -1056,20 +1353,19 @@ export const NearbyPage: React.FC = () => {
                         heroRef={heroRef}
                         onOpenQr={() => setIsQrOpen(true)}
                         qrAvailable={isQrAvailable(activeSelectedPoi)}
+                        hasAudioError={audioErrorPoiId === activeSelectedPoi.id}
+                        onRetryAudio={() => {
+                          clearAudioError();
+                          playPoi(activeSelectedPoi.id, false);
+                        }}
                       />
                     )}
 
-                    {/* FULL READING & STORY WITH WORD HIGHLIGHTING */}
+                    {/* FULL TRANSCRIPT + OPTIONAL CHAPTERS/TIPS + PREV/NEXT */}
                     <PoiReadingSection
                       activeItem={activeSortedItem}
                       currentLang={currentLang}
-                      isContentLocked={
-                        isPremiumLanguage(currentLang) &&
-                        !canAccessPoiLanguage(
-                          activeSortedItem.poi.numericId ?? activeSortedItem.poi.id,
-                          currentLang
-                        )
-                      }
+                      isContentLocked={isActiveContentLocked}
                       onUnlockContent={() => {
                         warnAndOpenPremium(activeSortedItem.poi);
                       }}
@@ -1077,6 +1373,12 @@ export const NearbyPage: React.FC = () => {
                       isCurrent={currentId === activeSortedItem.poi.id}
                       playbackStatus={playbackStatus}
                       duration={duration}
+                      effectiveTime={effectiveStopTime}
+                      totalDuration={activeStopDuration}
+                      hasUserSeeked={Boolean(
+                        seekState && seekState.poiId === activeSortedItem.poi.id
+                      )}
+                      onSeek={handleSeek}
                       activeSentenceIndex={activeSentenceIndex}
                       activeCharOffset={activeCharOffset}
                       activeCharLength={activeCharLength}
@@ -1124,7 +1426,7 @@ export const NearbyPage: React.FC = () => {
                 centerOnUserToken={flyToUserToken}
                 radius={activeSelectedPoi?.triggerRadius ?? 60}
                 isAutoEnabled={isAutoEnabled}
-                listenedPoiIds={listenedPoiIds}
+                listenedPoiIds={heardPoiIds}
                 onSelectPoi={(id) => handleExplicitSelectPoi(id, true)}
                 onHoverPoi={setHoveredId}
                 onTogglePlay={handleTogglePlayPoi}
@@ -1159,16 +1461,12 @@ export const NearbyPage: React.FC = () => {
                     if (nextVal && userPos) {
                       checkAutoTrigger(userPos.lat, userPos.lng);
                     }
-                    triggerToast(
-                      nextVal
-                        ? 'Sẽ tự phát khi bạn đến gần một điểm'
-                        : 'Đã tắt tự động phát'
-                    );
+                    triggerToast(t(currentLang, nextVal ? 'toastAutoOn' : 'toastAutoOff'));
                   }}
                   onRequestGps={() => {
                     setFlyToUserToken((n) => n + 1);
                     requestGps();
-                    triggerToast('Đang xác định vị trí của bạn…');
+                    triggerToast(t(currentLang, 'toastLocating'));
                   }}
                   currentLang={currentLang}
                   isLocatingGps={isRequestingGps}
@@ -1179,23 +1477,7 @@ export const NearbyPage: React.FC = () => {
           </div>
         </div>
 
-        {/* 4. HOW IT WORKS SECTION */}
-        <section className="how">
-          <div>
-            <h3>Bấm nghe hoặc quét mã</h3>
-            <p>Nghe ngay trên trang, hoặc quét QR để nghe trên điện thoại và đi tay không.</p>
-          </div>
-          <div>
-            <h3>Để máy tự phát</h3>
-            <p>Bật tự động phát, đi tới gần điểm nào thì thuyết minh điểm đó bắt đầu.</p>
-          </div>
-          <div>
-            <h3>Nghe bằng tiếng của bạn</h3>
-            <p>Tiếng Việt miễn phí. Tiếng Anh, Nhật, Hàn mở bằng gói Premium.</p>
-          </div>
-        </section>
-
-        {/* 5. SOUVENIR SHOP SECTION */}
+        {/* 4. SOUVENIR SHOP SECTION */}
         <section className="shop" aria-labelledby="shopT">
           <div className="shop-head">
             <div>
@@ -1203,13 +1485,12 @@ export const NearbyPage: React.FC = () => {
               <p>{t(currentLang, 'shopSub')}</p>
             </div>
             <div className="shop-head-actions">
-              <div className="shop-carousel-arrows" aria-label="Điều hướng sản phẩm">
+              <div className="shop-carousel-arrows" aria-label={t(currentLang, 'shopNavAria')}>
                 <button
                   type="button"
                   className="shop-arrow-btn prev"
                   onClick={() => handleScrollSouvenir('left')}
-                  aria-label="Xem sản phẩm trước"
-                  title="Trước"
+                  aria-label={t(currentLang, 'shopPrevAria')}
                 >
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" width="16" height="16" aria-hidden="true">
                     <path d="M15 18l-6-6 6-6" />
@@ -1219,8 +1500,7 @@ export const NearbyPage: React.FC = () => {
                   type="button"
                   className="shop-arrow-btn next"
                   onClick={() => handleScrollSouvenir('right')}
-                  aria-label="Xem sản phẩm kế tiếp"
-                  title="Kế tiếp"
+                  aria-label={t(currentLang, 'shopNextAria')}
                 >
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" width="16" height="16" aria-hidden="true">
                     <path d="M9 18l6-6-6-6" />
@@ -1276,6 +1556,65 @@ export const NearbyPage: React.FC = () => {
             </div>
           )}
         </section>
+
+        {/* 5a. ITINERARIES ("Đi bao lâu thì vừa?") - rendered ONLY when itinerary data exists */}
+        {itineraryColumns.length > 0 && (
+          <section className="plan" aria-labelledby="nearbyPlanTitle">
+            <h2 id="nearbyPlanTitle">{t(currentLang, 'itineraryTitle')}</h2>
+            <div className="pc2">
+              {itineraryColumns.map((col, idx) => (
+                <div key={idx}>
+                  <h3>{col.heading}</h3>
+                  {col.summary && <p>{col.summary}</p>}
+                  <ol>
+                    {col.stops.map((stopTitle, sIdx) => (
+                      <li key={sIdx}>{stopTitle}</li>
+                    ))}
+                  </ol>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* 5b. HOW IT WORKS SECTION (below souvenir area, 3 hairline columns) */}
+        <section className="how">
+          <div>
+            <h3>{t(currentLang, 'how1Title')}</h3>
+            <p>{t(currentLang, 'how1Desc')}</p>
+          </div>
+          <div>
+            <h3>{t(currentLang, 'how2Title')}</h3>
+            <p>{t(currentLang, 'how2Desc')}</p>
+          </div>
+          <div>
+            <h3>{t(currentLang, 'how3Title')}</h3>
+            <p>{t(currentLang, 'how3Desc')}</p>
+          </div>
+        </section>
+
+        {/* 5c. FAQ SECTION (native <details>/<summary>, +/- indicator, 52px min height) */}
+        <section className="nearby-faq faq" aria-labelledby="nearbyFaqTitle">
+          <h2 id="nearbyFaqTitle">{t(currentLang, 'faqTitle')}</h2>
+          <div className="nearby-faq-list">
+            <details>
+              <summary>{t(currentLang, 'faqQ1')}</summary>
+              <p>{t(currentLang, 'faqA1')}</p>
+            </details>
+            <details>
+              <summary>{t(currentLang, 'faqQ2')}</summary>
+              <p>{t(currentLang, 'faqA2')}</p>
+            </details>
+            <details>
+              <summary>{t(currentLang, 'faqQ3')}</summary>
+              <p>{t(currentLang, 'faqA3')}</p>
+            </details>
+            <details>
+              <summary>{t(currentLang, 'faqQ4')}</summary>
+              <p>{t(currentLang, 'faqA4')}</p>
+            </details>
+          </div>
+        </section>
       </div>
 
       {/* 6. FIXED BOTTOM AUDIO PLAYER BAR (APPEARS WHEN PLAYBACK STARTS) */}
@@ -1288,33 +1627,91 @@ export const NearbyPage: React.FC = () => {
           className="bar"
           id="seek"
           role="slider"
-          aria-label="Tiến trình"
+          aria-label={t(currentLang, 'waveformAria')}
           aria-valuemin={0}
           aria-valuemax={100}
           aria-valuenow={Math.round(activeProgressPercent)}
           tabIndex={0}
+          onClick={(event) => {
+            if (!activeSelectedPoi || playerTotalSeconds <= 0) return;
+            const rect = event.currentTarget.getBoundingClientRect();
+            if (rect.width <= 0) return;
+            const ratio = Math.max(0, Math.min(1, (event.clientX - rect.left) / rect.width));
+            handleSeek(activeSelectedPoi.id, Math.floor(ratio * playerTotalSeconds));
+          }}
+          onKeyDown={(event) => {
+            if (!activeSelectedPoi || playerTotalSeconds <= 0) return;
+            if (event.key === 'ArrowRight' || event.key === 'ArrowLeft') {
+              event.preventDefault();
+              const delta = event.key === 'ArrowRight' ? 5 : -5;
+              handleSeek(
+                activeSelectedPoi.id,
+                Math.max(0, Math.min(playerTotalSeconds, effectiveStopTime + delta))
+              );
+            }
+          }}
         >
           <b id="fill" style={{ width: `${activeProgressPercent}%` }} />
         </div>
 
         <div className="wrap">
           <div className="now player-meta-block">
-            <small id="nowSub" className={`player-status-sub ${noticeWarn ? 'warn is-warning' : ''}`}>
-              {notice || (isPlaying
-                ? `Đang phát - điểm ${(activeIndex >= 0 ? activeIndex : 0) + 1}/${pois.length}`
-                : `Điểm ${(activeIndex >= 0 ? activeIndex : 0) + 1}/${pois.length}`)}
-            </small>
-            <strong id="nowName" className="player-poi-title">
-              {activeSelectedPoi ? getPoiName(activeSelectedPoi) : 'Chọn một điểm để bắt đầu'}
-            </strong>
+            {activeSelectedPoi && (
+              <img
+                className="player-thumb"
+                src={resolveImagePath(activeSelectedPoi.image, activeSelectedPoi.slug)}
+                alt=""
+                width={46}
+                height={46}
+                loading="lazy"
+                decoding="async"
+                onError={(event) => {
+                  event.currentTarget.style.display = 'none';
+                }}
+              />
+            )}
+            <div className="player-meta-text">
+              <small id="nowSub" className={`player-status-sub ${noticeWarn ? 'warn is-warning' : ''}`}>
+                {notice ||
+                  (isPlaying
+                    ? t(currentLang, 'playerPlayingStop', {
+                        current: (activeIndex >= 0 ? activeIndex : 0) + 1,
+                        total: pois.length,
+                      })
+                    : t(currentLang, 'playerStopPosition', {
+                        current: (activeIndex >= 0 ? activeIndex : 0) + 1,
+                        total: pois.length,
+                      }))}
+              </small>
+              <strong id="nowName" className="player-poi-title">
+                {activeSelectedPoi
+                  ? getPoiName(activeSelectedPoi)
+                  : t(currentLang, 'playerSelectToStart')}
+              </strong>
+            </div>
           </div>
 
           <div className="ctl player-controls-mid">
             <button
               type="button"
+              className="ib player-skip-btn"
+              aria-label={t(currentLang, 'rewind10Aria')}
+              onClick={() => {
+                if (!activeSelectedPoi || playerTotalSeconds <= 0) return;
+                handleSeek(activeSelectedPoi.id, Math.max(0, effectiveStopTime - 10));
+              }}
+            >
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M11 17l-5-5 5-5M18 17l-5-5 5-5" />
+              </svg>
+              <span className="player-skip-num">10</span>
+            </button>
+
+            <button
+              type="button"
               className="ib"
               id="prev"
-              aria-label="Điểm trước"
+              aria-label={t(currentLang, 'prevBtn')}
               disabled={!prevItem}
               onClick={() => prevItem && handleExplicitSelectPoi(prevItem.poi.id, true)}
             >
@@ -1348,7 +1745,7 @@ export const NearbyPage: React.FC = () => {
               type="button"
               className="ib"
               id="next"
-              aria-label="Điểm sau"
+              aria-label={t(currentLang, 'nextBtn')}
               disabled={!nextItem}
               onClick={() => nextItem && handleExplicitSelectPoi(nextItem.poi.id, true)}
             >
@@ -1357,8 +1754,32 @@ export const NearbyPage: React.FC = () => {
               </svg>
             </button>
 
+            <button
+              type="button"
+              className="ib player-skip-btn"
+              aria-label={t(currentLang, 'forward10Aria')}
+              onClick={() => {
+                if (!activeSelectedPoi || playerTotalSeconds <= 0) return;
+                handleSeek(activeSelectedPoi.id, Math.min(playerTotalSeconds, effectiveStopTime + 10));
+              }}
+            >
+              <span className="player-skip-num">10</span>
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M13 17l5-5-5-5M6 17l5-5-5-5" />
+              </svg>
+            </button>
+
+            <button
+              type="button"
+              className="player-speed-btn"
+              aria-label={t(currentLang, 'playbackSpeedAria', { rate: playbackRate })}
+              onClick={cyclePlaybackRate}
+            >
+              {playbackRate}x
+            </button>
+
             <span className="tm" id="tm">
-              {fmtTime(currentTime)} / {fmtTime(duration || 120)}
+              {fmtTime(effectiveStopTime)} / {fmtTime(playerTotalSeconds)}
             </span>
           </div>
 
@@ -1378,7 +1799,7 @@ export const NearbyPage: React.FC = () => {
                   className={isLocked ? 'lock' : ''}
                   onClick={() => {
                     if (isLocked) {
-                      triggerToast('Ngôn ngữ này cần gói Premium');
+                      triggerToast(PREMIUM_GATE_COPY[opt.code].warning);
                       warnAndOpenPremium(activeSelectedPoi, opt.code);
                     } else {
                       changeLanguage(opt.code);

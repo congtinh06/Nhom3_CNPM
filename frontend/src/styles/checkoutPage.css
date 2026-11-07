@@ -1,4 +1,6 @@
 .checkout-page-container {
+  --fb-accent: #0E5B53;
+  --fb-accent-hover: #093F39;
   --co-error: #B4432F;
   --co-header-offset: 64px;
 }
@@ -85,9 +87,9 @@
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  background-color: #FFF7ED;
-  border: 1px solid #FFEDD5;
-  color: var(--fb-accent, #C2410C);
+  background-color: #E8F2EE;
+  border: 1px solid #B6D5CE;
+  color: var(--fb-accent, #0E5B53);
   font-size: 13px;
   font-weight: 700;
   display: flex;
@@ -159,7 +161,7 @@
 .co-input:focus,
 .co-select:focus,
 .co-textarea:focus {
-  border-color: var(--fb-accent, #C2410C);
+  border-color: var(--fb-accent, #0E5B53);
   box-shadow: 0 0 0 3px rgba(194, 65, 12, 0.12);
   outline: none;
 }
@@ -206,7 +208,7 @@
   width: 16px;
   height: 16px;
   flex-shrink: 0;
-  accent-color: var(--fb-accent, #C2410C);
+  accent-color: var(--fb-accent, #0E5B53);
 }
 
 .co-other-receiver {
@@ -235,12 +237,12 @@
 }
 
 .co-pay-option:hover {
-  border-color: var(--fb-accent, #C2410C);
+  border-color: var(--fb-accent, #0E5B53);
 }
 
 .co-pay-option.is-selected {
-  border-color: var(--fb-accent, #C2410C);
-  background-color: #FFF7ED;
+  border-color: var(--fb-accent, #0E5B53);
+  background-color: #E8F2EE;
 }
 
 .co-pay-option.is-disabled {
@@ -274,7 +276,7 @@
 }
 
 .co-pay-option.is-selected .co-radio {
-  border-color: var(--fb-accent, #C2410C);
+  border-color: var(--fb-accent, #0E5B53);
 }
 
 .co-radio-dot {
@@ -285,7 +287,7 @@
 }
 
 .co-pay-option.is-selected .co-radio-dot {
-  background-color: var(--fb-accent, #C2410C);
+  background-color: var(--fb-accent, #0E5B53);
 }
 
 .co-pay-text {
@@ -305,7 +307,7 @@
 }
 
 .co-pay-title svg {
-  color: var(--fb-accent, #C2410C);
+  color: var(--fb-accent, #0E5B53);
   flex-shrink: 0;
 }
 
@@ -356,7 +358,7 @@
 }
 
 .co-summary-meta-total {
-  color: var(--fb-accent, #C2410C);
+  color: var(--fb-accent, #0E5B53);
   font-weight: 700;
 }
 
@@ -441,7 +443,7 @@
 .co-item-price {
   font-size: 13px;
   font-weight: 600;
-  color: var(--fb-accent, #C2410C);
+  color: var(--fb-accent, #0E5B53);
 }
 
 .co-item-controls {
@@ -468,8 +470,8 @@
 }
 
 .co-qty-btn:hover {
-  border-color: var(--fb-accent, #C2410C);
-  color: var(--fb-accent, #C2410C);
+  border-color: var(--fb-accent, #0E5B53);
+  color: var(--fb-accent, #0E5B53);
 }
 
 .co-trash-btn {
@@ -537,7 +539,7 @@
   font-family: var(--font-display, 'Playfair Display', Georgia, serif);
   font-size: 20px;
   font-weight: 700;
-  color: var(--fb-accent, #C2410C);
+  color: var(--fb-accent, #0E5B53);
 }
 
 .co-placeorder {
@@ -568,11 +570,11 @@
   height: 16px;
   margin-top: 2px;
   flex-shrink: 0;
-  accent-color: var(--fb-accent, #C2410C);
+  accent-color: var(--fb-accent, #0E5B53);
 }
 
 .co-terms-link {
-  color: var(--fb-accent, #C2410C);
+  color: var(--fb-accent, #0E5B53);
   font-weight: 600;
   text-decoration: none;
 }
@@ -582,7 +584,7 @@
   border: none;
   border-radius: 10px;
   padding: 13px 16px;
-  background-color: var(--fb-accent, #C2410C);
+  background-color: var(--fb-accent, #0E5B53);
   color: #FFFFFF;
   font-family: inherit;
   font-size: 15px;
@@ -592,7 +594,7 @@
 }
 
 .co-submit-btn:not(:disabled):hover {
-  background-color: var(--fb-accent-hover, #9A3412);
+  background-color: var(--fb-accent-hover, #093F39);
 }
 
 .co-submit-btn:disabled {

@@ -33,7 +33,8 @@ class OpenApiDocsTest {
             SpringDocConfiguration.class,
             SpringDocConfigProperties.class,
             SpringDocWebMvcConfiguration.class,
-            JacksonAutoConfiguration.class
+            JacksonAutoConfiguration.class,
+            com.echora.order.support.ClientIpResolver.class
     })
     @TestPropertySource(properties = {
             "springdoc.api-docs.enabled=true",
@@ -65,7 +66,7 @@ class OpenApiDocsTest {
 
     @Nested
     @WebMvcTest(controllers = OrderController.class)
-    @Import(GlobalExceptionHandler.class)
+    @Import({GlobalExceptionHandler.class, com.echora.order.support.ClientIpResolver.class})
     @TestPropertySource(properties = {
             "springdoc.api-docs.enabled=false",
             "ECHORA_DOCS_ENABLED=false"

@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Be+Vietnam+Pro:wght@400;500;600&display=swap');
+
 .souvenir-hero {
   display: flex;
   flex-direction: column;
@@ -300,4 +302,1489 @@
   }
 }
 
+/* ==========================================================================
+   ECHORA – QUÀ LƯU NIỆM SÀI GÒN (UNIFIED WITH ĐIỂM DU LỊCH WARM PAPER + TEAL)
+   Reference structure/spacing: improve/echora-qua-luu-niem.html
+   Color & typography tokens: NearbyPage (--nearby-* / teal #0E5B53, Fraunces + Be Vietnam Pro)
+   ========================================================================== */
 
+html:has(.souvenir-sv-root),
+body:has(.souvenir-sv-root) {
+  background: #F7F2E9 !important;
+  background-image: none !important;
+  color: #201B16 !important;
+  font-family: 'Be Vietnam Pro', system-ui, -apple-system, 'Segoe UI', sans-serif !important;
+}
+
+.souvenir-sv-root {
+  --bg: #F7F2E9;
+  --bg2: #EFE8DA;
+  --surface: #FFFCF6;
+  --ink: #201B16;
+  --mut: #6F6254;
+  --line: #DED2BF;
+  --line2: #C9BAA2;
+  --acc: #0E5B53;
+  --acc-2: #093F39;
+  --acc-ink: #FFFFFF;
+  --serif: 'Fraunces', Georgia, 'Times New Roman', serif;
+  --sans: 'Be Vietnam Pro', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --r: 10px;
+
+  background: var(--bg) !important;
+  background-image: none !important;
+  color: var(--ink) !important;
+  font-family: var(--sans) !important;
+  font-size: 16px;
+  line-height: 1.6;
+  min-height: 100vh;
+  box-sizing: border-box;
+  padding-top: calc(64px + env(safe-area-inset-top, 0px)) !important;
+  padding-bottom: 96px !important;
+}
+
+.souvenir-sv-root *,
+.souvenir-sv-root *::before,
+.souvenir-sv-root *::after {
+  box-sizing: border-box;
+}
+
+.souvenir-sv-root h1,
+.souvenir-sv-root h2,
+.souvenir-sv-root h3,
+.souvenir-sv-root h4,
+.souvenir-sv-root h5,
+.souvenir-sv-root h6 {
+  margin: 0;
+  text-transform: none !important;
+  font-family: var(--serif) !important;
+  color: var(--ink) !important;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+
+.souvenir-sv-root button,
+.souvenir-sv-root select,
+.souvenir-sv-root input {
+  font: inherit;
+  color: inherit;
+}
+
+.souvenir-sv-root button {
+  background: none;
+  border: 0;
+  cursor: pointer;
+  padding: 0;
+}
+
+.souvenir-sv-root :focus-visible {
+  outline: 2px solid var(--acc) !important;
+  outline-offset: 2px !important;
+  border-radius: 4px;
+}
+
+.souvenir-sv-root .sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.souvenir-sv-root .wrap {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+/* 1. Header / Hero (.head) */
+.souvenir-sv-root .head {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);
+  gap: 48px;
+  align-items: end;
+  padding: 48px 0 32px;
+}
+
+.souvenir-sv-root .head h1 {
+  font: 500 clamp(30px, 4.4vw, 52px) / 1.1 var(--serif) !important;
+  letter-spacing: -0.02em;
+}
+
+.souvenir-sv-root .head p {
+  margin: 12px 0 0;
+  color: var(--mut);
+  max-width: 52ch;
+}
+
+.souvenir-sv-root .sr {
+  position: relative;
+  z-index: 25;
+}
+
+.souvenir-sv-root .sr label {
+  display: block;
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--mut);
+  text-transform: none;
+  letter-spacing: 0;
+  margin-bottom: 8px;
+}
+
+.souvenir-sv-root .sr-combo-wrap {
+  position: relative;
+}
+
+.souvenir-sv-root .sr-form {
+  margin: 0;
+}
+
+.souvenir-sv-root .sr-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--surface);
+  border: 1px solid var(--line2);
+  border-radius: var(--r);
+  padding: 4px 5px 4px 14px;
+  min-height: 48px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.souvenir-sv-root .sr-box:focus-within {
+  border-color: var(--acc);
+  box-shadow: 0 0 0 3px rgba(14, 91, 83, 0.14);
+}
+
+.souvenir-sv-root .sr-icon {
+  color: var(--mut);
+  flex-shrink: 0;
+}
+
+.souvenir-sv-root .sr input {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+  background: none;
+  border: 0;
+  padding: 6px 0;
+  font-size: 15.5px;
+  border-radius: 0;
+  color: var(--ink);
+  outline: none !important;
+}
+
+.souvenir-sv-root .sr input::placeholder {
+  color: var(--mut);
+}
+
+.souvenir-sv-root .sr input::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.souvenir-sv-root .sr-clear {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  color: var(--mut);
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.souvenir-sv-root .sr-clear:hover {
+  color: var(--ink);
+  background: var(--bg);
+}
+
+.souvenir-sv-root .sr-submit {
+  background: var(--acc);
+  color: var(--acc-ink);
+  padding: 0 16px;
+  min-height: 38px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  flex-shrink: 0;
+  transition: background-color 0.2s ease;
+}
+
+.souvenir-sv-root .sr-submit:hover {
+  background: var(--acc-2);
+}
+
+/* Live Autocomplete Dropdown */
+.souvenir-sv-root .sr-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  z-index: 40;
+  background: var(--surface);
+  border: 1px solid var(--line2);
+  border-radius: var(--r);
+  box-shadow: 0 14px 36px rgba(32, 27, 22, 0.12);
+  max-height: min(380px, 60vh);
+  overflow-y: auto;
+}
+
+.souvenir-sv-root .sr-dropdown-empty {
+  padding: 16px;
+  font-size: 14px;
+  color: var(--mut);
+  text-align: center;
+}
+
+.souvenir-sv-root .sr-sug-row {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--line);
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.souvenir-sv-root .sr-sug-row:hover,
+.souvenir-sv-root .sr-sug-row.is-highlighted {
+  background: var(--bg);
+}
+
+.souvenir-sv-root .sr-sug-thumb {
+  width: 44px;
+  height: 44px;
+  border-radius: 6px;
+  object-fit: cover;
+  background: var(--bg2);
+  display: block;
+  overflow: hidden;
+  position: relative;
+}
+
+.souvenir-sv-root .sr-sug-thumb.is-art svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.souvenir-sv-root .sr-sug-info {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.souvenir-sv-root .sr-sug-name {
+  font: 500 15px / 1.3 var(--serif);
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.souvenir-sv-root .sr-hl {
+  background: rgba(14, 91, 83, 0.14);
+  color: var(--acc);
+  font-weight: 600;
+  padding: 0 1px;
+  border-radius: 2px;
+}
+
+.souvenir-sv-root .sr-sug-spot {
+  font-size: 12.5px;
+  color: var(--mut);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.souvenir-sv-root .sr-sug-price {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.souvenir-sv-root .sr-dropdown-all {
+  width: 100%;
+  text-align: left;
+  padding: 11px 14px;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--acc);
+  background: transparent;
+}
+
+.souvenir-sv-root .sr-dropdown-all:hover {
+  background: var(--bg);
+  color: var(--acc-2);
+}
+
+.souvenir-sv-root .sr small {
+  display: block;
+  margin-top: 10px;
+  font-size: 14px;
+  color: var(--mut);
+}
+
+.souvenir-sv-root .sr small button {
+  color: var(--ink);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  padding: 6px 2px;
+  min-height: 32px;
+}
+
+.souvenir-sv-root .sr small button:hover {
+  color: var(--acc);
+}
+
+/* 2. Recently Listened Stop Hint (.hint) */
+.souvenir-sv-root .hint {
+  margin: 0;
+  padding: 0 0 20px;
+  font-size: 14px;
+  color: var(--mut);
+}
+
+.souvenir-sv-root .hint b {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.souvenir-sv-root .hint button {
+  color: var(--ink);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  min-height: 44px;
+  padding: 0 2px;
+}
+
+.souvenir-sv-root .hint button:hover {
+  color: var(--acc);
+}
+
+/* 3. Curated Collections (.col) */
+.souvenir-sv-root .col {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  border-top: 1px solid var(--line);
+  margin-bottom: 8px;
+}
+
+.souvenir-sv-root .col button {
+  text-align: left;
+  padding: 20px 20px 20px 0;
+  display: block;
+  min-height: 44px;
+}
+
+.souvenir-sv-root .col button + button {
+  padding-left: 24px;
+  border-left: 1px solid var(--line);
+}
+
+.souvenir-sv-root .col b {
+  display: block;
+  font: 500 20px / 1.25 var(--serif);
+  color: var(--ink);
+  transition: color 0.2s ease;
+}
+
+.souvenir-sv-root .col span {
+  display: block;
+  font-size: 14px;
+  color: var(--mut);
+  margin-top: 2px;
+}
+
+.souvenir-sv-root .col button:hover b,
+.souvenir-sv-root .col button[aria-pressed='true'] b {
+  color: var(--acc);
+}
+
+/* 4. Sticky Destination Strip (.tabs-w / .tabs) */
+.souvenir-sv-root .tabs-w {
+  position: sticky;
+  top: 64px;
+  z-index: 10;
+  background: var(--bg);
+  transition: top 0.25s ease;
+}
+
+body.header-hidden .souvenir-sv-root .tabs-w {
+  top: 0;
+}
+
+.souvenir-sv-root .tabs {
+  display: flex;
+  gap: 28px;
+  overflow-x: auto;
+  border-bottom: 1px solid var(--line);
+  scrollbar-width: none;
+}
+
+.souvenir-sv-root .tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.souvenir-sv-root .tabs button {
+  padding: 14px 0;
+  color: var(--mut);
+  white-space: nowrap;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  min-height: 48px;
+  flex-shrink: 0;
+  transition: color 0.2s ease, border-color 0.2s ease;
+}
+
+.souvenir-sv-root .tabs button:hover {
+  color: var(--ink);
+}
+
+.souvenir-sv-root .tabs button[aria-checked='true'],
+.souvenir-sv-root .tabs button[aria-pressed='true'] {
+  color: var(--ink);
+  font-weight: 500;
+  border-bottom-color: var(--acc);
+}
+
+.souvenir-sv-root .n {
+  font-size: 12px;
+  color: var(--mut);
+  margin-left: 2px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* 5. Inline Tools Row (.tools) */
+.souvenir-sv-root .tools {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 0 28px;
+  font-size: 14px;
+  color: var(--mut);
+  flex-wrap: wrap;
+}
+
+.souvenir-sv-root .tools-meta {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.souvenir-sv-root .tools-reset {
+  font-size: 14px;
+  color: var(--acc);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  min-height: 36px;
+  padding: 0 2px;
+}
+
+.souvenir-sv-root .tools-reset:hover {
+  color: var(--acc-2);
+}
+
+.souvenir-sv-root .tools-controls {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+}
+
+.souvenir-sv-root .tools select {
+  appearance: none;
+  -webkit-appearance: none;
+  background-color: transparent;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236F6254' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 2px center;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  padding: 6px 22px 6px 0;
+  color: var(--ink);
+  min-height: 44px;
+  cursor: pointer;
+}
+
+.souvenir-sv-root .tools select:hover,
+.souvenir-sv-root .tools select:focus-visible {
+  border-bottom-color: var(--ink);
+}
+
+/* 6. Product Grid (.grid / .good) */
+.souvenir-sv-root .souvenir-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 220px;
+  color: var(--mut);
+  font-size: 15px;
+}
+
+.souvenir-sv-root .souvenir-spin {
+  animation: souvenirSpin 1s linear infinite;
+}
+
+@keyframes souvenirSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.souvenir-sv-root .grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 40px 28px;
+}
+
+.souvenir-sv-root .good {
+  min-width: 0;
+  animation: souvenirCardIn 0.4s ease-out both;
+  animation-delay: var(--d, 0ms);
+}
+
+@keyframes souvenirCardIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+
+.souvenir-sv-root .good:first-child {
+  grid-column: span 2;
+}
+
+.souvenir-sv-root .good:first-child .ph {
+  aspect-ratio: 8 / 5;
+}
+
+.souvenir-sv-root .ph {
+  position: relative;
+  aspect-ratio: 4 / 5;
+  background: var(--bg2);
+  color: var(--ink);
+  border-radius: var(--r);
+  overflow: hidden;
+}
+
+.souvenir-sv-root .ph img,
+.souvenir-sv-root .ph > svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.45s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.souvenir-sv-root .good:hover .ph img {
+  transform: scale(1.03);
+}
+
+.souvenir-sv-root .open {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  cursor: pointer;
+}
+
+.souvenir-sv-root .heart {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 2;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--ink);
+  display: grid;
+  place-items: center;
+  opacity: 0;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.souvenir-sv-root .good:hover .heart,
+.souvenir-sv-root .heart:focus-visible,
+.souvenir-sv-root .heart[aria-pressed='true'] {
+  opacity: 1;
+}
+
+@media (hover: none) {
+  .souvenir-sv-root .heart {
+    opacity: 1;
+  }
+}
+
+.souvenir-sv-root .heart svg {
+  position: static;
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+}
+
+.souvenir-sv-root .heart[aria-pressed='true'] svg {
+  fill: var(--acc);
+  stroke: var(--acc);
+}
+
+.souvenir-sv-root .good h3 {
+  font: 500 19px / 1.3 var(--serif) !important;
+  margin-top: 14px;
+  min-width: 0;
+}
+
+.souvenir-sv-root .ttl {
+  font: inherit;
+  text-align: left;
+  color: inherit;
+  padding: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  transition: color 0.18s ease;
+}
+
+.souvenir-sv-root .ttl:hover {
+  color: var(--acc);
+}
+
+.souvenir-sv-root .good p {
+  margin: 4px 0 0;
+  font-size: 14px;
+  color: var(--mut);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.souvenir-sv-root .buy {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-top: 6px;
+  flex-wrap: wrap;
+}
+
+.souvenir-sv-root .buy-price {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.souvenir-sv-root .buy b {
+  font-weight: 600;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.souvenir-sv-root .old-price {
+  font-size: 12.5px;
+  color: var(--mut);
+  font-variant-numeric: tabular-nums;
+}
+
+.souvenir-sv-root .add {
+  font-size: 14px;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  padding: 0 2px;
+  min-height: 44px;
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+.souvenir-sv-root .add:hover:not(:disabled) {
+  color: var(--acc);
+}
+
+.souvenir-sv-root .add.on {
+  color: var(--acc);
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.souvenir-sv-root .add:disabled {
+  color: var(--mut);
+  text-decoration: none;
+  opacity: 0.65;
+  cursor: default;
+}
+
+/* Progressive Load More & Empty State */
+.souvenir-sv-root .more {
+  text-align: center;
+  margin: 56px 0 0;
+  color: var(--mut);
+  font-size: 14px;
+}
+
+.souvenir-sv-root .more button {
+  display: block;
+  margin: 6px auto 0;
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--ink);
+  padding: 10px 4px;
+  min-height: 44px;
+  border-bottom: 1px solid var(--ink);
+  border-radius: 0;
+}
+
+.souvenir-sv-root .more button:hover {
+  color: var(--acc);
+  border-bottom-color: var(--acc);
+}
+
+.souvenir-sv-root .empty {
+  grid-column: 1 / -1;
+  padding: 48px 0;
+  color: var(--mut);
+}
+
+.souvenir-sv-root .empty button {
+  color: var(--acc);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  min-height: 44px;
+  padding: 0 2px;
+}
+
+/* 7. Story Highlight (.story) */
+.souvenir-sv-root .story {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 56px;
+  align-items: center;
+  margin-top: 96px;
+  padding-top: 48px;
+  border-top: 1px solid var(--line);
+}
+
+.souvenir-sv-root .story .ph {
+  aspect-ratio: 5 / 4;
+  cursor: pointer;
+}
+
+.souvenir-sv-root .story h2,
+.souvenir-sv-root .faq h2,
+.souvenir-sv-root .cta h2 {
+  font: 500 clamp(24px, 3vw, 34px) / 1.2 var(--serif) !important;
+  letter-spacing: -0.01em;
+}
+
+.souvenir-sv-root .story p {
+  margin: 14px 0 0;
+  color: var(--mut);
+  max-width: 46ch;
+}
+
+.souvenir-sv-root .lnk {
+  display: inline-block;
+  margin-top: 18px;
+  color: var(--ink);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  font-weight: 500;
+  min-height: 44px;
+  text-align: left;
+}
+
+.souvenir-sv-root .lnk:hover {
+  color: var(--acc);
+}
+
+/* 8. Three-Column Hairline Info (.info) */
+.souvenir-sv-root .info {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  margin-top: 88px;
+  border-top: 1px solid var(--line);
+}
+
+.souvenir-sv-root .info div {
+  padding: 28px 28px 0 0;
+}
+
+.souvenir-sv-root .info div + div {
+  padding-left: 28px;
+  border-left: 1px solid var(--line);
+}
+
+.souvenir-sv-root .info h3 {
+  font: 500 20px / 1.3 var(--serif) !important;
+}
+
+.souvenir-sv-root .info p {
+  margin: 6px 0 0;
+  color: var(--mut);
+  font-size: 15px;
+  max-width: 36ch;
+}
+
+.souvenir-sv-root .sr-dropdown-all::after,
+.souvenir-sv-root .hint button::after,
+.souvenir-sv-root .lnk::after {
+  content: ' \2192';
+  display: inline-block;
+  text-decoration: none;
+}
+
+/* 9. FAQ (.faq) */
+.souvenir-sv-root .faq {
+  display: grid;
+  grid-template-columns: minmax(0, 0.7fr) minmax(0, 1.3fr);
+  gap: 56px;
+  margin-top: 88px;
+  padding-top: 40px;
+  border-top: 1px solid var(--line);
+  background: transparent !important;
+  text-align: left !important;
+}
+
+.souvenir-sv-root .faq details {
+  border-bottom: 1px solid var(--line);
+}
+
+.souvenir-sv-root .faq details:first-of-type {
+  border-top: 1px solid var(--line);
+}
+
+.souvenir-sv-root .faq summary {
+  list-style: none;
+  cursor: pointer;
+  padding: 14px 0;
+  font-weight: 500;
+  color: var(--ink);
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 52px;
+  align-items: center;
+}
+
+.souvenir-sv-root .faq summary::-webkit-details-marker {
+  display: none;
+}
+
+.souvenir-sv-root .faq summary::after {
+  content: '+';
+  color: var(--mut);
+  font-size: 22px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.souvenir-sv-root .faq details[open] summary::after {
+  content: '\2212';
+}
+
+.souvenir-sv-root .faq details p {
+  margin: 0;
+  color: var(--mut);
+  padding: 0 0 18px;
+  max-width: 58ch;
+}
+
+/* 10. Bottom Hairline CTA (.cta) */
+.souvenir-sv-root .cta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 32px;
+  margin-top: 88px;
+  padding: 40px 0 0;
+  border-top: 1px solid var(--line);
+  flex-wrap: wrap;
+}
+
+.souvenir-sv-root .cta p {
+  margin: 6px 0 0;
+  color: var(--mut);
+}
+
+.souvenir-sv-root .go {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--acc);
+  color: var(--acc-ink) !important;
+  padding: 10px 22px;
+  border-radius: var(--r);
+  font-weight: 500;
+  min-height: 44px;
+  text-decoration: none;
+  box-shadow: none;
+  transition: background-color 0.2s ease;
+}
+
+.souvenir-sv-root .go:hover {
+  background: var(--acc-2);
+  color: var(--acc-ink) !important;
+}
+
+/* Responsive Breakpoints (960px, 640px, 390px) */
+@media (max-width: 960px) {
+  .souvenir-sv-root .head {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+
+  .souvenir-sv-root .col b {
+    font-size: 17px;
+  }
+
+  .souvenir-sv-root .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 32px 16px;
+  }
+
+  .souvenir-sv-root .story,
+  .souvenir-sv-root .faq {
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
+
+  .souvenir-sv-root .info {
+    grid-template-columns: 1fr;
+  }
+
+  .souvenir-sv-root .info div,
+  .souvenir-sv-root .info div + div {
+    padding: 20px 0;
+    border-left: 0;
+    border-bottom: 1px solid var(--line);
+  }
+}
+
+@media (max-width: 640px) {
+  .souvenir-sv-root .wrap {
+    padding: 0 16px;
+  }
+
+  .souvenir-sv-root .head {
+    padding-top: 28px;
+  }
+
+  .souvenir-sv-root .col {
+    grid-template-columns: 1fr;
+  }
+
+  .souvenir-sv-root .col button + button {
+    padding-left: 0;
+    border-left: 0;
+    border-top: 1px solid var(--line);
+  }
+
+  .souvenir-sv-root .tools-controls {
+    width: 100%;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .souvenir-sv-root .tools select {
+    flex: 1;
+    min-width: 0;
+    font-size: 13.5px;
+  }
+
+  .souvenir-sv-root .good h3 {
+    font-size: 17px !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .souvenir-sv-root .good,
+  .souvenir-sv-root .souvenir-spin {
+    animation: none !important;
+  }
+
+  .souvenir-sv-root *,
+  .souvenir-sv-root *::before,
+  .souvenir-sv-root *::after {
+    transition: none !important;
+  }
+}
+
+/* 11. Quick View Dialog (#qv / .qv-dialog) */
+.souvenir-sv-root dialog.qv-dialog {
+  border: 1px solid var(--line);
+  background: var(--bg);
+  color: var(--ink);
+  border-radius: 14px;
+  padding: 0;
+  max-width: 880px;
+  width: calc(100% - 32px);
+  max-height: calc(100vh - 32px);
+  margin: auto;
+  overflow: auto;
+  box-shadow: 0 24px 60px rgba(20, 16, 14, 0.28);
+}
+
+.souvenir-sv-root dialog.qv-dialog::backdrop {
+  background: rgba(20, 16, 14, 0.55);
+}
+
+.souvenir-sv-root .qv-in {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
+  padding: 28px;
+  position: relative;
+}
+
+.souvenir-sv-root .qv-in .ph {
+  aspect-ratio: 4 / 5;
+  border-radius: var(--r);
+  overflow: hidden;
+  background: var(--bg2);
+}
+
+.souvenir-sv-root .qi {
+  display: flex;
+  flex-direction: column;
+}
+
+.souvenir-sv-root .qi .m {
+  font-size: 13.5px;
+  color: var(--mut);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-weight: 500;
+}
+
+.souvenir-sv-root .qi h2 {
+  font: 500 clamp(22px, 2.5vw, 30px) / 1.2 var(--serif) !important;
+  margin: 6px 0 10px;
+  color: var(--ink);
+}
+
+.souvenir-sv-root .qi p {
+  color: var(--mut);
+  font-size: 14.5px;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.souvenir-sv-root .qi .pr {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--ink);
+  margin: 16px 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.souvenir-sv-root .qi .pr del {
+  font-size: 14px;
+  color: var(--mut);
+  font-weight: 400;
+}
+
+.souvenir-sv-root .aud {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+  color: var(--mut);
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  padding: 8px 0;
+  margin: 8px 0 20px;
+}
+
+.souvenir-sv-root .aud .pl {
+  color: var(--ink);
+  font-weight: 500;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  min-height: 44px;
+  white-space: nowrap;
+}
+
+.souvenir-sv-root .aud .pl:hover {
+  color: var(--acc);
+}
+
+.souvenir-sv-root .aud i {
+  flex: 1;
+  height: 4px;
+  background: var(--line);
+  border-radius: 2px;
+  overflow: hidden;
+  position: relative;
+}
+
+.souvenir-sv-root .aud i b {
+  display: block;
+  height: 100%;
+  width: 0%;
+  background: var(--acc);
+  border-radius: 2px;
+  transition: width 0.25s linear;
+}
+
+.souvenir-sv-root .qr {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.souvenir-sv-root .stp {
+  display: inline-flex;
+  align-items: center;
+  border-bottom: 1px solid var(--line);
+}
+
+.souvenir-sv-root .stp button {
+  width: 40px;
+  height: 44px;
+  font-size: 20px;
+  color: var(--ink);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.souvenir-sv-root .stp button:hover:not(:disabled) {
+  color: var(--acc);
+}
+
+.souvenir-sv-root .stp button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.souvenir-sv-root .stp > span {
+  min-width: 28px;
+  text-align: center;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.souvenir-sv-root .lk {
+  display: inline-block;
+  margin-top: 14px;
+  color: var(--mut);
+  font-size: 14px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-align: left;
+}
+
+.souvenir-sv-root .lk:hover {
+  color: var(--acc);
+}
+
+.souvenir-sv-root .lk::after {
+  content: ' \2192';
+  display: inline-block;
+  text-decoration: none;
+}
+
+.souvenir-sv-root .x {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  font-size: 14px;
+  color: var(--mut);
+  min-height: 44px;
+  padding: 0 8px;
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+}
+
+.souvenir-sv-root .x:hover {
+  color: var(--ink);
+}
+
+@media (max-width: 960px) {
+  .souvenir-sv-root .qv-in {
+    grid-template-columns: 1fr;
+    padding: 20px;
+  }
+  .souvenir-sv-root .qv-in .ph {
+    aspect-ratio: 16 / 10;
+  }
+}
+
+/* 12. Full Product Detail Page (.product-detail-sv) */
+.product-detail-sv {
+  min-height: 100vh;
+  padding-bottom: 80px;
+}
+
+.product-detail-sv .detail-breadcrumb {
+  padding: 16px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 13.5px;
+  color: var(--mut);
+}
+
+.product-detail-sv .detail-breadcrumb nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.product-detail-sv .detail-breadcrumb a {
+  color: var(--mut);
+  text-decoration: none;
+}
+
+.product-detail-sv .detail-breadcrumb a:hover {
+  color: var(--acc);
+}
+
+.product-detail-sv .detail-breadcrumb .sep {
+  color: var(--line2);
+}
+
+.product-detail-sv .detail-breadcrumb .cur {
+  color: var(--ink);
+  font-weight: 500;
+}
+
+.product-detail-sv .detail-main {
+  margin-top: 36px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 36px;
+}
+
+.product-detail-sv .detail-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+  gap: 48px;
+}
+
+.product-detail-sv .detail-photo {
+  position: relative;
+  aspect-ratio: 4 / 5;
+  border-radius: var(--r);
+  overflow: hidden;
+  background: var(--bg2);
+}
+
+.product-detail-sv .detail-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.product-detail-sv .detail-photo svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.product-detail-sv .detail-badge {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  background: var(--acc);
+  color: var(--acc-ink);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 999px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.product-detail-sv .detail-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.product-detail-sv .detail-spot-tag {
+  display: inline-block;
+  font-size: 13.5px;
+  color: var(--mut);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 500;
+  text-decoration: none;
+  margin-bottom: 8px;
+}
+
+.product-detail-sv .detail-spot-tag:hover {
+  color: var(--acc);
+}
+
+.product-detail-sv .detail-title {
+  font: 500 clamp(26px, 3.2vw, 36px) / 1.15 var(--serif) !important;
+  color: var(--ink);
+  margin: 0 0 16px;
+}
+
+.product-detail-sv .detail-price-row {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 20px;
+}
+
+.product-detail-sv .detail-price-main {
+  font-size: 28px;
+  font-weight: 600;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.product-detail-sv .detail-price-old {
+  font-size: 16px;
+  color: var(--mut);
+  text-decoration: line-through;
+}
+
+.product-detail-sv .detail-discount-tag {
+  background: rgba(14, 91, 83, 0.1);
+  color: var(--acc);
+  font-size: 12.5px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 4px;
+}
+
+.product-detail-sv .detail-short {
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--ink);
+  font-weight: 500;
+  margin: 0 0 12px;
+}
+
+.product-detail-sv .detail-desc {
+  font-size: 14.5px;
+  line-height: 1.7;
+  color: var(--mut);
+  margin: 0 0 24px;
+}
+
+.product-detail-sv .detail-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin: 24px 0 32px;
+}
+
+.product-detail-sv .detail-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--acc);
+  color: var(--acc-ink);
+  padding: 12px 28px;
+  border-radius: var(--r);
+  font-weight: 500;
+  font-size: 15.5px;
+  min-height: 48px;
+  cursor: pointer;
+  border: 0;
+  transition: background-color 0.2s ease;
+}
+
+.product-detail-sv .detail-btn-primary:hover:not(:disabled) {
+  background: var(--acc-2);
+}
+
+.product-detail-sv .detail-btn-primary:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.product-detail-sv .detail-btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  color: var(--ink);
+  border: 1px solid var(--line2);
+  padding: 12px 24px;
+  border-radius: var(--r);
+  font-weight: 500;
+  font-size: 15.5px;
+  min-height: 48px;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.product-detail-sv .detail-btn-secondary:hover {
+  border-color: var(--ink);
+}
+
+.product-detail-sv .detail-guarantees {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  padding-top: 24px;
+  border-top: 1px solid var(--line);
+}
+
+.product-detail-sv .guarantee-item b {
+  display: block;
+  font-size: 13.5px;
+  color: var(--ink);
+  margin-bottom: 2px;
+}
+
+.product-detail-sv .guarantee-item span {
+  font-size: 12.5px;
+  color: var(--mut);
+  line-height: 1.4;
+  display: block;
+}
+
+.product-detail-sv .related-section {
+  margin-top: 64px;
+}
+
+.product-detail-sv .related-title {
+  font: 500 24px / 1.2 var(--serif) !important;
+  color: var(--ink);
+  margin-bottom: 28px;
+}
+
+@media (max-width: 960px) {
+  .product-detail-sv .detail-main {
+    padding: 24px;
+  }
+  .product-detail-sv .detail-grid {
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
+  .product-detail-sv .detail-guarantees {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+}

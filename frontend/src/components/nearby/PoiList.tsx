@@ -1,8 +1,9 @@
 import React, { ReactNode, useCallback } from 'react';
-import { Check, ChevronDown, Lock } from 'lucide-react';
+import { Check, ChevronDown } from 'lucide-react';
 import { GeoPoi } from '../../pages/NearbyPage';
 import { SupportedLanguage } from '../../types';
 import { t } from '../../content/nearbyI18n';
+import { resolveImagePath } from './PoiCard';
 
 export interface SortedPoiItem {
   poi: GeoPoi;
@@ -44,6 +45,7 @@ export interface PoiListProps {
 interface StopRowProps {
   item: SortedPoiItem;
   isActive: boolean;
+  isHovered?: boolean;
   isListened: boolean;
   isLocked: boolean;
   currentLang: SupportedLanguage;
@@ -57,6 +59,7 @@ interface StopRowProps {
 const StopRow: React.FC<StopRowProps> = ({
   item,
   isActive,
+  isHovered = false,
   isListened,
   isLocked,
   currentLang,
@@ -71,18 +74,40 @@ const StopRow: React.FC<StopRowProps> = ({
   const poiCategory = getPoiCategory(poi);
 
   return (
-    <li className={`nearby-stop-item ${isActive ? 'is-open' : ''}`}>
+    <li
+      className={`nearby-stop-item${isActive ? ' is-open' : ''}${isHovered ? ' is-hovered' : ''}${
+        isLocked ? ' is-locked' : ''
+      }`}
+    >
       <button
         type="button"
-        className={`nearby-stop-row ${isActive ? 'is-active' : ''}`}
+        className={`nearby-stop-row${isActive ? ' is-active' : ''}${isHovered ? ' is-hovered' : ''}${
+          isLocked ? ' is-locked' : ''
+        }`}
         aria-current={isActive ? 'true' : undefined}
         aria-expanded={isActive}
         onClick={() => onSelect(poi.id)}
         onMouseEnter={() => onHover?.(poi.id, true)}
         onMouseLeave={() => onHover?.(poi.id, false)}
+        onFocus={() => onHover?.(poi.id, true)}
+        onBlur={() => onHover?.(poi.id, false)}
       >
         <span className="stop-badge-col">
           <span className="stop-number-badge">{stopNumber ?? originalIndex + 1}</span>
+        </span>
+        <span className="stop-thumb-col">
+          <img
+            className="stop-row-thumb"
+            src={resolveImagePath(poi.image, poi.slug)}
+            alt=""
+            width={76}
+            height={56}
+            loading="lazy"
+            decoding="async"
+            onError={(event) => {
+              event.currentTarget.style.visibility = 'hidden';
+            }}
+          />
         </span>
         <div className="stop-row-info">
           <span className="stop-row-name">{poiName}</span>
@@ -95,7 +120,6 @@ const StopRow: React.FC<StopRowProps> = ({
               title={t(currentLang, 'premiumLockedTitle')}
               aria-label={t(currentLang, 'premiumLockedTitle')}
             >
-              <Lock size={13} strokeWidth={2} aria-hidden="true" />
               <span>Premium</span>
             </span>
           )}
@@ -122,6 +146,7 @@ const PoiListComponent: React.FC<PoiListProps> = ({
   sortedPois,
   selectedPoiId,
   activePoiId,
+  hoveredPoiId = null,
   listenedPoiIds = [],
   lockedPoiIds = [],
   statusMessage: _statusMessage,
@@ -171,6 +196,7 @@ const PoiListComponent: React.FC<PoiListProps> = ({
         <ol className="nearby-stop-list" role="list">
           {sortedPois.map((item) => {
             const isItemActive = effectiveActiveId === item.poi.id;
+            const isItemHovered = hoveredPoiId === item.poi.id;
             const isItemListened = listenedPoiIds.includes(item.poi.id);
             const isItemLocked = lockedPoiIds.includes(item.poi.id);
 
@@ -179,6 +205,7 @@ const PoiListComponent: React.FC<PoiListProps> = ({
                 key={item.poi.id}
                 item={item}
                 isActive={isItemActive}
+                isHovered={isItemHovered}
                 isListened={isItemListened}
                 isLocked={isItemLocked}
                 currentLang={currentLang}
