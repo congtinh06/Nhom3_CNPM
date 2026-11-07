@@ -1,61 +1,25 @@
-name: CD – Build and Push Docker Images
+name: CD – Build, Push and Deploy
 
 on:
   push:
     branches: [main]
     tags: ['v*']
-  # Only run after the matching CI workflow has passed.
-  # Using workflow_run (vs needs) because CI and CD are in separate files; this
-  # lets CD react to CI on the same SHA without duplicating job definitions.
-  workflow_run:
-    workflows:
-      - Frontend CI
-      - Auth Service CI
-      - Content Service CI
-      - Location Service CI
-      - Translation TTS Service CI
-      - Analytics Service CI
-      - Api Gateway CI
-      - Order Service CI
-    types: [completed]
-    branches: [main]
 
-# Prevent multiple concurrent CD runs for the same ref (cancel older runs on PR).
+# One CD run per ref. The workflow_run trigger was removed so a push and a
+# workflow_run can no longer start two CD runs for the same SHA. cancel-in-progress
+# stays false so a new push never kills a deploy that is already running.
 concurrency:
   group: cd-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 permissions:
   contents: read
+  actions: read
   packages: write
 
 jobs:
-  # ── Guard: skip if triggered by a failed workflow_run ───────────────────────
-  check-ci:
-    runs-on: ubuntu-24.04
-    outputs:
-      should-run: ${{ steps.guard.outputs.should-run }}
-    steps:
-      - name: Evaluate trigger
-        id: guard
-        run: |
-          # Direct push/tag trigger → always run.
-          # workflow_run trigger → only if the upstream workflow succeeded.
-          if [ "${{ github.event_name }}" = "workflow_run" ]; then
-            if [ "${{ github.event.workflow_run.conclusion }}" != "success" ]; then
-              echo "should-run=false" >> "$GITHUB_OUTPUT"
-              echo "Upstream CI did not succeed; skipping CD."
-            else
-              echo "should-run=true" >> "$GITHUB_OUTPUT"
-            fi
-          else
-            echo "should-run=true" >> "$GITHUB_OUTPUT"
-          fi
-
   # ── Matrix build: one job per service Dockerfile ────────────────────────────
   build-push:
-    needs: check-ci
-    if: needs.check-ci.outputs.should-run == 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     strategy:
@@ -81,13 +45,13 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
 
       - name: Log in to GitHub Container Registry
-        uses: docker/login-action@v3
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -103,7 +67,7 @@ jobs:
           echo "sha-tag=sha-${SHA}" >> "$GITHUB_OUTPUT"
 
       - name: Build and push ${{ matrix.service }}
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
         with:
           context: ${{ matrix.context }}
           push: true
@@ -113,80 +77,177 @@ jobs:
           cache-from: type=gha,scope=${{ matrix.service }}
           cache-to: type=gha,mode=max,scope=${{ matrix.service }}
 
-  # ── Deploy: kéo image GHCR về host đích, health check và rollback ───────────
-  # Bỏ qua an toàn nếu chưa cấu hình secret. Khi có secret, job này deploy thật.
-  deploy:
-    name: Deploy to production host
+  # ── Verify every CI workflow that was actually triggered for this SHA ──────
+  # Backend CI workflows use path filters, so a workflow with no run for this
+  # SHA is not a failure. This job polls the workflow runs of the commit, keeps
+  # the latest attempt per workflow, and fails if any completed run is not green.
+  verify-ci:
+    name: Verify CI for this commit
     needs: build-push
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-24.04
-    timeout-minutes: 25
+    timeout-minutes: 30
+    steps:
+      - name: Poll CI workflow runs for this SHA
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          workflows=(
+            "Frontend CI"
+            "Auth Service CI"
+            "Content Service CI"
+            "Location Service CI"
+            "Translation TTS Service CI"
+            "Analytics Service CI"
+            "API Gateway Service CI"
+            "Order Service CI"
+            "Config & Environment Check"
+          )
+          names_json="$(printf '%s\n' "${workflows[@]}" | jq -R . | jq -s -c .)"
+          deadline=$((SECONDS + 1500))
+
+          while true; do
+            runs="$(gh run list --commit "$SHA" --limit 100 \
+              --json workflowName,status,conclusion,databaseId)"
+            summary="$(printf '%s' "$runs" | jq -r --argjson names "$names_json" '
+              [ .[] | select(.workflowName as $n | $names | index($n)) ]
+              | group_by(.workflowName)
+              | map(sort_by(.databaseId) | last)
+              | [length,
+                 ([.[] | select(.status != "completed")] | length),
+                 ([.[] | select(.status == "completed" and .conclusion != "success")] | length)]
+              | @tsv')"
+            IFS=$'\t' read -r total pending failed <<< "$summary"
+            echo "CI runs for $SHA: triggered=$total pending=$pending failed=$failed"
+
+            if [ "$failed" -gt 0 ]; then
+              printf '%s' "$runs" | jq -r --argjson names "$names_json" '
+                [ .[] | select(.workflowName as $n | $names | index($n)) ]
+                | group_by(.workflowName)
+                | map(sort_by(.databaseId) | last)
+                | .[] | select(.status == "completed" and .conclusion != "success")
+                | "FAILED: \(.workflowName) (\(.conclusion))"'
+              echo "::error::CI failed for $SHA; deploy blocked."
+              exit 1
+            fi
+
+            if [ "$total" -eq 0 ]; then
+              echo "No path-filtered CI workflow ran for $SHA (docs-only change); nothing to block."
+              exit 0
+            fi
+
+            if [ "$pending" -eq 0 ]; then
+              echo "All triggered CI workflows succeeded for $SHA."
+              exit 0
+            fi
+
+            if [ "$SECONDS" -ge "$deadline" ]; then
+              echo "::error::Timed out waiting for CI runs of $SHA."
+              exit 1
+            fi
+
+            sleep 20
+          done
+
+  # ── Deploy on the owner's machine through a self-hosted runner ─────────────
+  deploy:
+    name: Deploy on owner machine (self-hosted)
+    needs: [build-push, verify-ci]
+    if: github.ref == 'refs/heads/main'
+    runs-on: [self-hosted, echora]
+    timeout-minutes: 40
     environment:
       name: production
+    permissions:
+      contents: read
+      packages: read
     env:
-      DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
-      DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
-      DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
-      DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
-      DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
-      DEPLOY_HEALTH_URL: ${{ secrets.DEPLOY_HEALTH_URL }}
+      HEALTH_URL: ${{ secrets.HEALTH_URL }}
+      DEPLOY_DIR: ${{ vars.DEPLOY_DIR }}
     steps:
-      - name: Detect deployment target
-        id: target
+      - name: Checkout deploy scripts
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+
+      - name: Sync deploy directory
+        shell: bash
         run: |
-          if [ -z "${DEPLOY_HOST}" ] || [ -z "${DEPLOY_SSH_KEY}" ]; then
-            echo "enabled=false" >> "$GITHUB_OUTPUT"
-            echo "::notice title=Deploy skipped::DEPLOY_HOST/DEPLOY_SSH_KEY chưa cấu hình; chỉ build và push image."
-          else
-            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          set -euo pipefail
+          if [ -z "${DEPLOY_DIR:-}" ]; then
+            echo "::error::DEPLOY_DIR is empty. Set the repository variable vars.DEPLOY_DIR to the deploy clone." >&2
+            exit 1
           fi
+          if [ ! -d "$DEPLOY_DIR" ]; then
+            echo "::error::DEPLOY_DIR does not exist: $DEPLOY_DIR" >&2
+            exit 1
+          fi
+          deploy_dir_posix="$(cygpath -u "$DEPLOY_DIR" 2>/dev/null || printf '%s' "$DEPLOY_DIR")"
+          if ! git -C "$deploy_dir_posix" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+            echo "::error::DEPLOY_DIR is not a git work tree: $DEPLOY_DIR" >&2
+            exit 1
+          fi
+          echo "Fetching origin in deploy clone"
+          if ! git -C "$deploy_dir_posix" fetch origin; then
+            echo "::error::git fetch origin failed in DEPLOY_DIR." >&2
+            exit 1
+          fi
+          echo "Checking out $GITHUB_SHA in deploy clone"
+          if ! checkout_output="$(git -C "$deploy_dir_posix" checkout --detach "$GITHUB_SHA" 2>&1)"; then
+            printf '%s\n' "$checkout_output" >&2
+            echo "::error::git checkout --detach $GITHUB_SHA failed. If the deploy clone has local changes, restore them first; this workflow never runs reset --hard or clean." >&2
+            exit 1
+          fi
+          printf '%s\n' "$checkout_output"
 
-      - name: Resolve image tag
-        id: meta
-        if: steps.target.outputs.enabled == 'true'
-        run: echo "tag=sha-$(echo "${GITHUB_SHA}" | cut -c1-7)" >> "$GITHUB_OUTPUT"
-
-      - name: Checkout
-        if: steps.target.outputs.enabled == 'true'
-        uses: actions/checkout@v4
-
-      - name: Set up SSH agent
-        if: steps.target.outputs.enabled == 'true'
-        uses: webfactory/ssh-agent@v0.9.0
-        with:
-          ssh-private-key: ${{ secrets.DEPLOY_SSH_KEY }}
-
-      - name: Trust remote host key
-        if: steps.target.outputs.enabled == 'true'
-        run: |
-          mkdir -p ~/.ssh
-          ssh-keyscan -p "${DEPLOY_PORT:-22}" -H "${DEPLOY_HOST}" >> ~/.ssh/known_hosts
-
-      - name: Deploy over SSH
-        if: steps.target.outputs.enabled == 'true'
+      - name: Deploy via local Docker Compose
         env:
-          IMAGE_TAG: ${{ steps.meta.outputs.tag }}
-          HEALTH_URL: ${{ secrets.DEPLOY_HEALTH_URL }}
+          GHCR_TOKEN: ${{ github.token }}
+          GHCR_ACTOR: ${{ github.actor }}
+        shell: bash
         run: |
           set -euo pipefail
-          REMOTE_HEALTH="${HEALTH_URL:-http://localhost:18080/actuator/health}"
-          ssh -p "${DEPLOY_PORT:-22}" "${DEPLOY_USER}@${DEPLOY_HOST}" \
-            "cd '${DEPLOY_PATH:-~/echora}' && git fetch --prune origin main && git reset --hard origin/main && IMAGE_TAG='${IMAGE_TAG}' HEALTH_URL='${REMOTE_HEALTH}' ECHORA_SEED_DEMO=false ADMIN_SEED_EMAIL= ADMIN_SEED_PASSWORD= SEED_TEST_USER_EMAIL= SEED_TEST_USER_PASSWORD= DEMO_PREMIUM_EMAIL= DEMO_PREMIUM_PASSWORD= bash scripts/deploy/remote-deploy.sh"
+          export IMAGE_TAG="sha-$(printf '%s' "$GITHUB_SHA" | cut -c1-7)"
+          export HEALTH_URL="${HEALTH_URL:?Environment secret secrets.HEALTH_URL is required}"
+          export DEPLOY_DIR="${DEPLOY_DIR:?Repository variable vars.DEPLOY_DIR is required}"
+          # Keep the GHCR token out of the runner's persistent docker config.
+          DOCKER_CONFIG_DIR="$(cygpath -u "$RUNNER_TEMP")/docker-config-$GITHUB_RUN_ID"
+          mkdir -p "$DOCKER_CONFIG_DIR"
+          trap 'rm -rf "$DOCKER_CONFIG_DIR"' EXIT
+          export DOCKER_CONFIG="$(cygpath -w "$DOCKER_CONFIG_DIR")"
+          printf '%s' "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_ACTOR" --password-stdin
+          bash scripts/deploy/deploy-local.sh
 
-      - name: Smoke test deployed endpoint
-        if: steps.target.outputs.enabled == 'true'
+      - name: Smoke test public URL
+        id: smoke
+        if: success()
+        shell: bash
         env:
-          HEALTH_URL: ${{ secrets.DEPLOY_HEALTH_URL }}
+          HEALTH_URL: ${{ secrets.HEALTH_URL }}
         run: |
           set -euo pipefail
-          URL="${HEALTH_URL:-http://localhost:18080/actuator/health}"
           for attempt in $(seq 1 12); do
-            if curl -fsS --max-time 10 "$URL"; then
-              echo "Smoke test OK: $URL"
+            if curl -fsS --max-time 10 -H "ngrok-skip-browser-warning: 1" "$HEALTH_URL"; then
+              echo "Smoke test OK."
               exit 0
             fi
             sleep 5
           done
-          echo "Smoke test thất bại: $URL" >&2
+          echo "Smoke test FAILED." >&2
           exit 1
 
+      - name: Write deploy summary
+        if: always()
+        shell: bash
+        env:
+          SMOKE_OUTCOME: ${{ steps.smoke.outcome }}
+          JOB_STATUS: ${{ job.status }}
+        run: |
+          {
+            echo "### CD deploy summary"
+            echo ""
+            echo "- Commit: \`$GITHUB_SHA\`"
+            echo "- Image tag: \`sha-$(printf '%s' "$GITHUB_SHA" | cut -c1-7)\`"
+            echo "- Smoke test: \`${SMOKE_OUTCOME:-not run}\`"
+            echo "- Job status: \`${JOB_STATUS}\`"
+          } >> "$GITHUB_STEP_SUMMARY"

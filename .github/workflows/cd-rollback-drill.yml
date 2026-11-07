@@ -1,0 +1,92 @@
+name: CD rollback drill (manual)
+
+# Chạy tay sau khi đã có ít nhất một lần deploy xanh.
+# Mục đích: deploy một tag không tồn tại để chứng minh deploy-local.sh
+# pull thất bại rồi rollback về tag trong .deployed-image-tag và health check lại.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: read
+
+concurrency:
+  group: cd-rollback-drill
+  cancel-in-progress: false
+
+jobs:
+  drill:
+    name: Deploy missing tag and verify rollback
+    if: github.ref == 'refs/heads/main'
+    runs-on: [self-hosted, echora]
+    timeout-minutes: 20
+    environment:
+      name: production
+    env:
+      HEALTH_URL: ${{ secrets.HEALTH_URL }}
+      DEPLOY_DIR: ${{ vars.DEPLOY_DIR }}
+    steps:
+      - name: Checkout deploy scripts
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+
+      - name: Sync deploy directory
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -z "${DEPLOY_DIR:-}" ]; then
+            echo "::error::DEPLOY_DIR is empty. Set the repository variable vars.DEPLOY_DIR to the deploy clone." >&2
+            exit 1
+          fi
+          if [ ! -d "$DEPLOY_DIR" ]; then
+            echo "::error::DEPLOY_DIR does not exist: $DEPLOY_DIR" >&2
+            exit 1
+          fi
+          deploy_dir_posix="$(cygpath -u "$DEPLOY_DIR" 2>/dev/null || printf '%s' "$DEPLOY_DIR")"
+          if ! git -C "$deploy_dir_posix" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+            echo "::error::DEPLOY_DIR is not a git work tree: $DEPLOY_DIR" >&2
+            exit 1
+          fi
+          echo "Fetching origin in deploy clone"
+          if ! git -C "$deploy_dir_posix" fetch origin; then
+            echo "::error::git fetch origin failed in DEPLOY_DIR." >&2
+            exit 1
+          fi
+          echo "Checking out $GITHUB_SHA in deploy clone"
+          if ! checkout_output="$(git -C "$deploy_dir_posix" checkout --detach "$GITHUB_SHA" 2>&1)"; then
+            printf '%s\n' "$checkout_output" >&2
+            echo "::error::git checkout --detach $GITHUB_SHA failed. If the deploy clone has local changes, restore them first; this workflow never runs reset --hard or clean." >&2
+            exit 1
+          fi
+          printf '%s\n' "$checkout_output"
+
+      - name: Deploy missing tag to trigger rollback
+        shell: bash
+        env:
+          GHCR_TOKEN: ${{ github.token }}
+          GHCR_ACTOR: ${{ github.actor }}
+        run: |
+          set -euo pipefail
+          export IMAGE_TAG="sha-0000000"
+          export HEALTH_URL="${HEALTH_URL:?Environment secret secrets.HEALTH_URL is required}"
+          export DEPLOY_DIR="${DEPLOY_DIR:?Repository variable vars.DEPLOY_DIR is required}"
+          # Keep the GHCR token out of the runner's persistent docker config.
+          DOCKER_CONFIG_DIR="$(cygpath -u "$RUNNER_TEMP")/docker-config-$GITHUB_RUN_ID"
+          mkdir -p "$DOCKER_CONFIG_DIR"
+          trap 'rm -rf "$DOCKER_CONFIG_DIR"' EXIT
+          export DOCKER_CONFIG="$(cygpath -w "$DOCKER_CONFIG_DIR")"
+          printf '%s' "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_ACTOR" --password-stdin
+          bash scripts/deploy/deploy-local.sh
+
+      - name: Drill summary
+        if: always()
+        shell: bash
+        env:
+          JOB_STATUS: ${{ job.status }}
+        run: |
+          {
+            echo "### CD rollback drill"
+            echo ""
+            echo "- Tag cố tình deploy: \`sha-0000000\` (không tồn tại)"
+            echo "- Kỳ vọng: pull thất bại, script rollback về \`.deployed-image-tag\`, health check xanh"
+            echo "- Job status: \`${JOB_STATUS}\` (failure là kết quả mong đợi của drill)"
+          } >> "$GITHUB_STEP_SUMMARY"
