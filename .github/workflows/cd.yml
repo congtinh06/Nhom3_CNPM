@@ -164,11 +164,41 @@ jobs:
       contents: read
       packages: read
     env:
-      HEALTH_URL: ${{ vars.HEALTH_URL }}
+      HEALTH_URL: ${{ secrets.HEALTH_URL }}
       DEPLOY_DIR: ${{ vars.DEPLOY_DIR }}
     steps:
       - name: Checkout deploy scripts
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+
+      - name: Sync deploy directory
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -z "${DEPLOY_DIR:-}" ]; then
+            echo "::error::DEPLOY_DIR is empty. Set the repository variable vars.DEPLOY_DIR to the deploy clone." >&2
+            exit 1
+          fi
+          if [ ! -d "$DEPLOY_DIR" ]; then
+            echo "::error::DEPLOY_DIR does not exist: $DEPLOY_DIR" >&2
+            exit 1
+          fi
+          deploy_dir_posix="$(cygpath -u "$DEPLOY_DIR" 2>/dev/null || printf '%s' "$DEPLOY_DIR")"
+          if ! git -C "$deploy_dir_posix" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+            echo "::error::DEPLOY_DIR is not a git work tree: $DEPLOY_DIR" >&2
+            exit 1
+          fi
+          echo "Fetching origin in deploy clone"
+          if ! git -C "$deploy_dir_posix" fetch origin; then
+            echo "::error::git fetch origin failed in DEPLOY_DIR." >&2
+            exit 1
+          fi
+          echo "Checking out $GITHUB_SHA in deploy clone"
+          if ! checkout_output="$(git -C "$deploy_dir_posix" checkout --detach "$GITHUB_SHA" 2>&1)"; then
+            printf '%s\n' "$checkout_output" >&2
+            echo "::error::git checkout --detach $GITHUB_SHA failed. If the deploy clone has local changes, restore them first; this workflow never runs reset --hard or clean." >&2
+            exit 1
+          fi
+          printf '%s\n' "$checkout_output"
 
       - name: Deploy via local Docker Compose
         env:
@@ -178,11 +208,13 @@ jobs:
         run: |
           set -euo pipefail
           export IMAGE_TAG="sha-$(printf '%s' "$GITHUB_SHA" | cut -c1-7)"
-          export HEALTH_URL="${HEALTH_URL:?Repository variable vars.HEALTH_URL is required}"
-          export DEPLOY_DIR="${DEPLOY_DIR:-$GITHUB_WORKSPACE}"
+          export HEALTH_URL="${HEALTH_URL:?Environment secret secrets.HEALTH_URL is required}"
+          export DEPLOY_DIR="${DEPLOY_DIR:?Repository variable vars.DEPLOY_DIR is required}"
           # Keep the GHCR token out of the runner's persistent docker config.
-          export DOCKER_CONFIG="$(mktemp -d)"
-          trap 'rm -rf "$DOCKER_CONFIG"' EXIT
+          DOCKER_CONFIG_DIR="$(cygpath -u "$RUNNER_TEMP")/docker-config-$GITHUB_RUN_ID"
+          mkdir -p "$DOCKER_CONFIG_DIR"
+          trap 'rm -rf "$DOCKER_CONFIG_DIR"' EXIT
+          export DOCKER_CONFIG="$(cygpath -w "$DOCKER_CONFIG_DIR")"
           printf '%s' "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_ACTOR" --password-stdin
           bash scripts/deploy/deploy-local.sh
 
@@ -191,17 +223,17 @@ jobs:
         if: success()
         shell: bash
         env:
-          HEALTH_URL: ${{ vars.HEALTH_URL }}
+          HEALTH_URL: ${{ secrets.HEALTH_URL }}
         run: |
           set -euo pipefail
           for attempt in $(seq 1 12); do
-            if curl -fsS --max-time 10 "$HEALTH_URL"; then
-              echo "Smoke test OK: $HEALTH_URL"
+            if curl -fsS --max-time 10 -H "ngrok-skip-browser-warning: 1" "$HEALTH_URL"; then
+              echo "Smoke test OK."
               exit 0
             fi
             sleep 5
           done
-          echo "Smoke test FAILED: $HEALTH_URL" >&2
+          echo "Smoke test FAILED." >&2
           exit 1
 
       - name: Write deploy summary
@@ -216,8 +248,6 @@ jobs:
             echo ""
             echo "- Commit: \`$GITHUB_SHA\`"
             echo "- Image tag: \`sha-$(printf '%s' "$GITHUB_SHA" | cut -c1-7)\`"
-            echo "- Deploy dir: \`${DEPLOY_DIR:-$GITHUB_WORKSPACE}\`"
-            echo "- Health URL: \`${HEALTH_URL:-not configured}\`"
             echo "- Smoke test: \`${SMOKE_OUTCOME:-not run}\`"
             echo "- Job status: \`${JOB_STATUS}\`"
           } >> "$GITHUB_STEP_SUMMARY"
