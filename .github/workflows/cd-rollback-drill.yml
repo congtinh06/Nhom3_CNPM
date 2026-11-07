@@ -1,0 +1,58 @@
+name: CD rollback drill (manual)
+
+# Chạy tay sau khi đã có ít nhất một lần deploy xanh.
+# Mục đích: deploy một tag không tồn tại để chứng minh deploy-local.sh
+# pull thất bại rồi rollback về tag trong .deployed-image-tag và health check lại.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: read
+
+concurrency:
+  group: cd-rollback-drill
+  cancel-in-progress: false
+
+jobs:
+  drill:
+    name: Deploy missing tag and verify rollback
+    if: github.ref == 'refs/heads/main'
+    runs-on: [self-hosted, echora]
+    timeout-minutes: 20
+    environment:
+      name: production
+    steps:
+      - name: Checkout deploy scripts
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+
+      - name: Deploy missing tag to trigger rollback
+        shell: bash
+        env:
+          HEALTH_URL: ${{ vars.HEALTH_URL }}
+          DEPLOY_DIR: ${{ vars.DEPLOY_DIR }}
+          GHCR_TOKEN: ${{ github.token }}
+          GHCR_ACTOR: ${{ github.actor }}
+        run: |
+          set -euo pipefail
+          export IMAGE_TAG="sha-0000000"
+          export HEALTH_URL="${HEALTH_URL:?Repository variable vars.HEALTH_URL is required}"
+          export DEPLOY_DIR="${DEPLOY_DIR:-$GITHUB_WORKSPACE}"
+          export DOCKER_CONFIG="$(mktemp -d)"
+          trap 'rm -rf "$DOCKER_CONFIG"' EXIT
+          printf '%s' "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_ACTOR" --password-stdin
+          bash scripts/deploy/deploy-local.sh
+
+      - name: Drill summary
+        if: always()
+        shell: bash
+        env:
+          JOB_STATUS: ${{ job.status }}
+        run: |
+          {
+            echo "### CD rollback drill"
+            echo ""
+            echo "- Tag cố tình deploy: \`sha-0000000\` (không tồn tại)"
+            echo "- Kỳ vọng: pull thất bại, script rollback về \`.deployed-image-tag\`, health check xanh"
+            echo "- Job status: \`${JOB_STATUS}\` (failure là kết quả mong đợi của drill)"
+          } >> "$GITHUB_STEP_SUMMARY"
