@@ -1,5 +1,4 @@
 import React, { useRef, useEffect, useMemo } from 'react';
-import { Lock } from 'lucide-react';
 import { GeoPoi, getNarration } from '../../pages/NearbyPage';
 import { SupportedLanguage } from '../../types';
 import { SortedPoiItem } from './PoiList';
@@ -17,6 +16,10 @@ interface PoiReadingSectionProps {
   isCurrent: boolean;
   playbackStatus?: PlaybackStatus;
   duration?: number;
+  effectiveTime?: number;
+  totalDuration?: number;
+  hasUserSeeked?: boolean;
+  onSeek?: (poiId: string, timeSec: number) => void;
   activeSentenceIndex?: number | null;
   activeCharOffset?: number | null;
   activeCharLength?: number;
@@ -31,6 +34,63 @@ interface PoiReadingSectionProps {
   listenBtnText?: string;
   pauseBtnText?: string;
   resumeBtnText?: string;
+}
+
+interface SentenceToken {
+  text: string;
+  trailingSpace: string;
+  localStart: number;
+  localEnd: number;
+}
+
+interface IndexedSentence extends SentenceToken {
+  globalIdx: number;
+  pIdx: number;
+  globalStart: number;
+  globalEnd: number;
+}
+
+const formatChapterClock = (seconds: number): string => {
+  if (!Number.isFinite(seconds) || seconds < 0) return '0:00';
+  const whole = Math.floor(seconds);
+  return `${Math.floor(whole / 60)}:${String(whole % 60).padStart(2, '0')}`;
+};
+
+function splitIntoSentenceTokens(text: string): SentenceToken[] {
+  if (!text) return [];
+  const tokens: SentenceToken[] = [];
+  const regex = /(?:[^.!?。！？]|\.(?=\S))+(?:[.!?。！？]+['"”’)\]]*)?(\s*)/g;
+  let cursor = 0;
+  let match: RegExpExecArray | null;
+
+  while ((match = regex.exec(text)) !== null) {
+    const fullMatch = match[0];
+    if (!fullMatch) break;
+    const prefix = match.index > cursor ? text.slice(cursor, match.index) : '';
+    const trailingSpace = match[1] ?? '';
+    const body = fullMatch.slice(0, fullMatch.length - trailingSpace.length);
+    const coreText = prefix + body;
+    const localStart = cursor;
+    const localEnd = localStart + coreText.length;
+    tokens.push({
+      text: coreText,
+      trailingSpace,
+      localStart,
+      localEnd,
+    });
+    cursor = match.index + fullMatch.length;
+  }
+
+  if (cursor < text.length) {
+    tokens.push({
+      text: text.slice(cursor),
+      trailingSpace: '',
+      localStart: cursor,
+      localEnd: text.length,
+    });
+  }
+
+  return tokens;
 }
 
 const CONTENT_LOCK_COPY: Record<
@@ -69,6 +129,10 @@ export const PoiReadingSection: React.FC<PoiReadingSectionProps> = ({
   onUnlockContent,
   isPlaying,
   isCurrent,
+  effectiveTime,
+  totalDuration,
+  hasUserSeeked = false,
+  onSeek,
   activeCharOffset = null,
   activeCharLength = 0,
   syncMode = 'boundary',
@@ -83,12 +147,16 @@ export const PoiReadingSection: React.FC<PoiReadingSectionProps> = ({
   const currentWordRef = useRef<HTMLSpanElement | null>(null);
   const lastUserScrollTimeRef = useRef<number>(0);
 
+  const isPanelMode = totalDuration !== undefined;
+  const resolvedTime = effectiveTime ?? 0;
+  const resolvedTotalDuration = totalDuration ?? 0;
+
   const displayName = getPoiName(poi);
   const isNameFallback = !poi.name[currentLang] && currentLang !== 'vi';
 
   // Reading section is "read more" content, based strictly on the full layer:
-  // If narration.full exists (vi, en): render paragraphs.
-  // If narration.full does not exist (ja, ko): do not render the reading body at all.
+  // If narration.full exists (vi, en, ja, ko): render paragraphs.
+  // If narration.full does not exist: do not render the reading body at all.
   const fullParagraphs = getNarration(poi, currentLang, 'full');
   const showReadingBody = Boolean(fullParagraphs && fullParagraphs.length > 0);
 
@@ -99,8 +167,9 @@ export const PoiReadingSection: React.FC<PoiReadingSectionProps> = ({
     [poi, currentLang, fullParagraphs, showReadingBody]
   );
 
-  // Tiêu đề chap hiển thị ở đoạn đầu tiên của từng phân đoạn bài thuyết minh.
+  // Tiêu đề chap hiển thị ở đoạn đầu tiên của từng phân đoạn bài thuyết minh (chỉ dùng cho chế độ độc lập).
   const chapterTitleBySection = useMemo(() => {
+    if (isPanelMode) return null;
     const chapterBlocks = poi.narration?.chapters?.[currentLang];
     if (!chapterBlocks || chapterBlocks.length === 0) return null;
     const map = new Map<number, string>();
@@ -114,7 +183,67 @@ export const PoiReadingSection: React.FC<PoiReadingSectionProps> = ({
       if (sectionIndex >= sections.length) break;
     }
     return map.size > 0 ? map : null;
-  }, [poi, currentLang, sections]);
+  }, [isPanelMode, poi, currentLang, sections]);
+
+  // 1d. Chapters list (only if data exists in poi.narration.chapters[currentLang])
+  const chapterItems = useMemo(() => {
+    const rawBlocks = poi.narration?.chapters?.[currentLang];
+    if (!rawBlocks || rawBlocks.length === 0) return [];
+
+    const validBlocks = rawBlocks.filter((b) => Boolean(b.title && b.title.trim()));
+    if (validBlocks.length === 0) return [];
+
+    const totalBlockChars = rawBlocks.reduce(
+      (sum, b) => sum + (b.paras || []).reduce((pSum, p) => pSum + p.length + 1, 0),
+      0
+    );
+
+    let charCursor = 0;
+    const items: Array<{ title: string; startSec: number }> = [];
+
+    rawBlocks.forEach((block, idx) => {
+      const explicitStart = (block as { startSec?: number }).startSec;
+      const startSec =
+        typeof explicitStart === 'number' && Number.isFinite(explicitStart) && explicitStart >= 0
+          ? Math.floor(explicitStart)
+          : totalBlockChars > 0 && resolvedTotalDuration > 0
+          ? Math.floor((charCursor / totalBlockChars) * resolvedTotalDuration)
+          : resolvedTotalDuration > 0
+          ? Math.floor((resolvedTotalDuration * idx) / rawBlocks.length)
+          : 0;
+
+      if (block.title && block.title.trim()) {
+        items.push({ title: block.title.trim(), startSec });
+      }
+      charCursor += (block.paras || []).reduce((pSum, p) => pSum + p.length + 1, 0);
+    });
+
+    return items;
+  }, [poi, currentLang, resolvedTotalDuration]);
+
+  // 1e. "Điều nên biết" table (only if data exists in poi.tips[currentLang])
+  const tipItems = useMemo(() => {
+    const rawTips = (
+      poi as unknown as {
+        tips?: Partial<
+          Record<SupportedLanguage, Array<{ label: string; value: string } | [string, string]>>
+        >;
+      }
+    ).tips?.[currentLang];
+    if (!Array.isArray(rawTips) || rawTips.length === 0) return [];
+
+    return rawTips
+      .map((entry) => {
+        if (Array.isArray(entry)) {
+          return { label: String(entry[0] ?? '').trim(), value: String(entry[1] ?? '').trim() };
+        }
+        if (entry && typeof entry === 'object') {
+          return { label: String(entry.label ?? '').trim(), value: String(entry.value ?? '').trim() };
+        }
+        return { label: '', value: '' };
+      })
+      .filter((item) => item.label.length > 0 && item.value.length > 0);
+  }, [poi, currentLang]);
 
   // Track user manual scrolling with 3-second lockout window
   useEffect(() => {
@@ -146,6 +275,33 @@ export const PoiReadingSection: React.FC<PoiReadingSectionProps> = ({
     });
   }, [sections]);
 
+  const sentenceStructure = useMemo(() => {
+    let globalIdx = 0;
+    const byParagraph: IndexedSentence[][] = [];
+    const flat: IndexedSentence[] = [];
+
+    paragraphRanges.forEach((pRange, pIdx) => {
+      const tokens = splitIntoSentenceTokens(pRange.text);
+      const indexed: IndexedSentence[] = tokens.map((tok) => {
+        const item: IndexedSentence = {
+          ...tok,
+          globalIdx: globalIdx++,
+          pIdx,
+          globalStart: pRange.start + tok.localStart,
+          globalEnd: pRange.start + tok.localEnd,
+        };
+        flat.push(item);
+        return item;
+      });
+      byParagraph.push(indexed);
+    });
+
+    const totalEndChar =
+      paragraphRanges.length > 0 ? paragraphRanges[paragraphRanges.length - 1]!.end : 0;
+
+    return { byParagraph, flat, totalEndChar };
+  }, [paragraphRanges]);
+
   const sectionRefs = useRef<Array<HTMLElement | null>>([]);
 
   const isReadingActive =
@@ -154,13 +310,54 @@ export const PoiReadingSection: React.FC<PoiReadingSectionProps> = ({
     audioSourceType === 'speech' &&
     activeCharOffset !== null;
 
+  const isLiveTranscript = isPanelMode && ((isCurrent && isPlaying) || resolvedTime > 0);
+
+  const activeGlobalSentenceIndex = useMemo(() => {
+    if (!isLiveTranscript || sentenceStructure.flat.length === 0) return -1;
+
+    if (!hasUserSeeked && isReadingActive && activeCharOffset !== null) {
+      const match = sentenceStructure.flat.find(
+        (s) =>
+          activeCharOffset >= s.globalStart &&
+          activeCharOffset <= s.globalEnd + s.trailingSpace.length
+      );
+      if (match) return match.globalIdx;
+    }
+
+    if (resolvedTotalDuration > 0 && sentenceStructure.totalEndChar > 0) {
+      const ratio = Math.min(0.9999, Math.max(0, resolvedTime / resolvedTotalDuration));
+      const targetChar = ratio * sentenceStructure.totalEndChar;
+      const match = sentenceStructure.flat.find(
+        (s) => targetChar >= s.globalStart && targetChar <= s.globalEnd + s.trailingSpace.length
+      );
+      if (match) return match.globalIdx;
+      return Math.min(
+        sentenceStructure.flat.length - 1,
+        Math.floor(ratio * sentenceStructure.flat.length)
+      );
+    }
+
+    return 0;
+  }, [
+    isLiveTranscript,
+    sentenceStructure,
+    hasUserSeeked,
+    isReadingActive,
+    activeCharOffset,
+    resolvedTime,
+    resolvedTotalDuration,
+  ]);
+
   // Which section currently contains the spoken word (for the active highlight).
   const activeSectionIndex = useMemo(() => {
+    if (isPanelMode && activeGlobalSentenceIndex >= 0) {
+      return sentenceStructure.flat[activeGlobalSentenceIndex]?.pIdx ?? -1;
+    }
     if (!isReadingActive || activeCharOffset === null) return -1;
     return paragraphRanges.findIndex(
       (range) => activeCharOffset >= range.start && activeCharOffset <= range.end
     );
-  }, [isReadingActive, activeCharOffset, paragraphRanges]);
+  }, [isPanelMode, activeGlobalSentenceIndex, sentenceStructure, isReadingActive, activeCharOffset, paragraphRanges]);
 
   // Middle-band scroll: only when the current word leaves the middle band
   useEffect(() => {
@@ -194,8 +391,8 @@ export const PoiReadingSection: React.FC<PoiReadingSectionProps> = ({
     }
   }, [isReadingActive, activeCharOffset]);
 
-  // Facts row: Address and distance
-  const rawAddress = (poi as any).address;
+  // Facts row: Address and distance (standalone fallback only; omitted in open-stop panel)
+  const rawAddress = (poi as unknown as { address?: Record<string, string> | string }).address;
   const addressVal =
     typeof rawAddress === 'object' && rawAddress !== null
       ? rawAddress[currentLang] || rawAddress.vi
@@ -203,7 +400,7 @@ export const PoiReadingSection: React.FC<PoiReadingSectionProps> = ({
       ? rawAddress
       : null;
   const hasDistance = Boolean(formattedDist);
-  const hasFacts = Boolean(addressVal || hasDistance);
+  const hasFacts = !isPanelMode && Boolean(addressVal || hasDistance);
 
   const addressLabel =
     currentLang === 'vi'
@@ -226,14 +423,90 @@ export const PoiReadingSection: React.FC<PoiReadingSectionProps> = ({
   const prevLabel = prevItem
     ? t(currentLang, 'prevStop', { name: getPoiName(prevItem.poi) })
     : t(currentLang, 'prevBtn');
+  const prevDisplayText = prevItem ? getPoiName(prevItem.poi) : t(currentLang, 'prevBtn');
   const nextLabel = nextItem
     ? t(currentLang, 'nextStop', { name: getPoiName(nextItem.poi) })
     : t(currentLang, 'nextBtn');
 
-  const renderParagraphText = (pRange: { start: number; end: number; text: string }) => {
+  const renderPanelSentenceContent = (sentence: IndexedSentence, isCurSentence: boolean) => {
+    const wordLen = Math.max(1, activeCharLength || 1);
+    const containsSpeechWord =
+      isReadingActive &&
+      activeCharOffset !== null &&
+      activeCharOffset >= sentence.globalStart &&
+      activeCharOffset < sentence.globalEnd;
+
+    if (containsSpeechWord && activeCharOffset !== null) {
+      const localStart = Math.max(0, activeCharOffset - sentence.globalStart);
+      const localEnd = Math.min(
+        sentence.text.length,
+        Math.max(localStart + 1, localStart + wordLen)
+      );
+      const before = sentence.text.slice(0, localStart);
+      const current = sentence.text.slice(localStart, localEnd);
+      const after = sentence.text.slice(localEnd);
+      return (
+        <>
+          {before}
+          <span ref={currentWordRef} className="reading-segment-current">
+            {current}
+          </span>
+          {after}
+        </>
+      );
+    }
+
+    // Fallback when activeCharOffset lands on trailing/inter-paragraph whitespace
+    if (
+      isCurSentence &&
+      isReadingActive &&
+      activeCharOffset !== null &&
+      !sentenceStructure.flat.some(
+        (s) => activeCharOffset >= s.globalStart && activeCharOffset < s.globalEnd
+      ) &&
+      sentence.text.length > 0
+    ) {
+      const spaceIdx = sentence.text.indexOf(' ');
+      const endIdx = spaceIdx > 0 ? spaceIdx : Math.min(sentence.text.length, wordLen);
+      return (
+        <>
+          <span ref={currentWordRef} className="reading-segment-current">
+            {sentence.text.slice(0, endIdx)}
+          </span>
+          {sentence.text.slice(endIdx)}
+        </>
+      );
+    }
+
+    return sentence.text;
+  };
+
+  const renderParagraphText = (
+    pRange: { start: number; end: number; text: string },
+    pIdx: number
+  ) => {
     const paraText = pRange.text;
 
-    // When idle or not reading, render plain text with no segment spans (uniform --fb-text-primary)
+    if (isPanelMode) {
+      const paraSentences = sentenceStructure.byParagraph[pIdx] || [];
+      return (
+        <p className="reading-paragraph">
+          {paraSentences.map((sentence) => {
+            const isCur = isLiveTranscript && sentence.globalIdx === activeGlobalSentenceIndex;
+            return (
+              <React.Fragment key={sentence.globalIdx}>
+                <span className={`sn${isCur ? ' cur' : ''}`}>
+                  {renderPanelSentenceContent(sentence, isCur)}
+                </span>
+                {sentence.trailingSpace}
+              </React.Fragment>
+            );
+          })}
+        </p>
+      );
+    }
+
+    // Standalone mode: when idle or not reading, render plain text with no segment spans
     if (!isReadingActive || activeCharOffset === null) {
       return <p className="reading-paragraph">{paraText}</p>;
     }
@@ -304,9 +577,6 @@ export const PoiReadingSection: React.FC<PoiReadingSectionProps> = ({
 
           {isContentLocked && (
             <div className="poi-content-lock" role="region" aria-live="polite">
-              <span className="poi-content-lock-icon" aria-hidden="true">
-                <Lock size={22} strokeWidth={1.8} />
-              </span>
               <strong>{CONTENT_LOCK_COPY[currentLang].title}</strong>
               <p lang={currentLang}>{CONTENT_LOCK_COPY[currentLang].description}</p>
               {onUnlockContent && (
@@ -317,9 +587,15 @@ export const PoiReadingSection: React.FC<PoiReadingSectionProps> = ({
             </div>
           )}
 
-          {/* Reading body: rendered only when the full narration layer exists for the current language */}
+          {/* c. Transcript: sentence-level dimming + soft accent marker while playing or after seeking */}
           {showReadingBody && !isContentLocked && (
-            <div className="reading-body-flow" lang={currentLang} data-sync={syncMode}>
+            <div
+              className={`reading-body-flow${isPanelMode ? ' tr' : ''}${
+                isLiveTranscript ? ' live' : ''
+              }`}
+              lang={currentLang}
+              data-sync={syncMode}
+            >
               {sections.map((_section, pIdx) => {
                 const pRange = paragraphRanges[pIdx];
                 if (!pRange) return null;
@@ -339,14 +615,43 @@ export const PoiReadingSection: React.FC<PoiReadingSectionProps> = ({
                         {chapterTitle}
                       </h4>
                     )}
-                    {renderParagraphText(pRange)}
+                    {renderParagraphText(pRange, pIdx)}
                   </div>
                 );
               })}
             </div>
           )}
 
-          {/* Optional facts (distance, address) */}
+          {/* d. Chapters list (rendered ONLY when chapter data exists) */}
+          {!isContentLocked && chapterItems.length > 0 && (
+            <div className="chs">
+              {chapterItems.map((ch, idx) => (
+                <button
+                  key={`${ch.startSec}-${idx}`}
+                  type="button"
+                  className="chb"
+                  onClick={() => onSeek?.(poi.id, ch.startSec)}
+                >
+                  <span>{formatChapterClock(ch.startSec)}</span>
+                  {ch.title}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* e. "Điều nên biết" table (rendered ONLY when tips data exists) */}
+          {!isContentLocked && tipItems.length > 0 && (
+            <dl className="tp" aria-label={t(currentLang, 'tipsHeading')}>
+              {tipItems.map((tip, idx) => (
+                <div key={idx}>
+                  <dt>{tip.label}</dt>
+                  <dd>{tip.value}</dd>
+                </div>
+              ))}
+            </dl>
+          )}
+
+          {/* Optional facts (standalone mode only) */}
           {hasFacts && (
             <dl className="chapter-facts-row reading-facts-row">
               {addressVal && (
@@ -364,38 +669,27 @@ export const PoiReadingSection: React.FC<PoiReadingSectionProps> = ({
             </dl>
           )}
 
-          {/* Bottom Navigation: ONE line Next link, drop Previous button and its box */}
-          <nav className="reading-nav-row" aria-label="Điều hướng các điểm dừng">
+          {/* g. Prev/Next row under a 1px divider */}
+          <nav className="nx reading-nav-row" aria-label="Điều hướng các điểm dừng">
             <button
               type="button"
-              className="panel-nav-btn btn-prev sr-only"
+              className="lnk pv panel-nav-btn btn-prev"
               disabled={!prevItem}
               onClick={() => prevItem && onSelectPoi(prevItem.poi.id)}
               aria-label={prevLabel}
             >
-              <span className="nav-btn-text">{prevLabel}</span>
+              <span className="nav-btn-text">{prevDisplayText}</span>
             </button>
 
-            {nextItem && (
-              <button
-                type="button"
-                className="panel-nav-btn btn-next"
-                onClick={() => onSelectPoi(nextItem.poi.id)}
-                aria-label={nextLabel}
-              >
-                <span className="nav-btn-text">{nextLabel}</span>
-              </button>
-            )}
-            {!nextItem && (
-              <button
-                type="button"
-                className="panel-nav-btn btn-next sr-only"
-                disabled
-                aria-hidden="true"
-              >
-                <span className="nav-btn-text">{nextLabel}</span>
-              </button>
-            )}
+            <button
+              type="button"
+              className="lnk nt panel-nav-btn btn-next"
+              disabled={!nextItem}
+              onClick={() => nextItem && onSelectPoi(nextItem.poi.id)}
+              aria-label={nextLabel}
+            >
+              <span className="nav-btn-text">{nextLabel}</span>
+            </button>
           </nav>
         </div>
       </div>

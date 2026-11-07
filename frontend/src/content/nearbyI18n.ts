@@ -150,7 +150,85 @@ export type NearbyKey =
   | 'shopViewAll'
   | 'shopEmptyDesc'
   | 'shopTitle'
-  | 'shopSub';
+  | 'shopSub'
+  | 'heroCtaPlay'
+  | 'heroCtaMap'
+  | 'mapPanelTitle'
+  | 'mapPanelSub'
+  | 'mapStateReady'
+  | 'mapStatePlaying'
+  | 'mapStateAuto'
+  | 'legendStop'
+  | 'legendActive'
+  | 'legendRoute'
+  | 'faqTitle'
+  | 'faqQ1'
+  | 'faqA1'
+  | 'faqQ2'
+  | 'faqA2'
+  | 'faqQ3'
+  | 'faqA3'
+  | 'faqQ4'
+  | 'faqA4'
+  | 'heroDisplayTitle'
+  | 'heroDisplaySub'
+  | 'factDistanceLabel'
+  | 'factDistanceFallback'
+  | 'factListenTimeLabel'
+  | 'factListenTimeVal'
+  | 'factLanguagesLabel'
+  | 'factLanguagesVal'
+  | 'factHeardLabel'
+  | 'waveformAria'
+  | 'tipsHeading'
+  | 'listenThisStop'
+  | 'onPhoneBtn'
+  | 'itineraryTitle'
+  | 'itineraryHalfDay'
+  | 'itineraryFullDay'
+  | 'how1Title'
+  | 'how1Desc'
+  | 'how2Title'
+  | 'how2Desc'
+  | 'how3Title'
+  | 'how3Desc'
+  | 'toastAutoOn'
+  | 'toastAutoOff'
+  | 'toastLocating'
+  | 'toastAddedToCart'
+  | 'playerPlayingStop'
+  | 'playerStopPosition'
+  | 'playerSelectToStart'
+  | 'shopNavAria'
+  | 'shopPrevAria'
+  | 'shopNextAria'
+  | 'heroCtaFirst'
+  | 'heroCtaContinue'
+  | 'heroCtaReplay'
+  | 'viewFullRoute'
+  | 'mapRouteStops'
+  | 'mapRouteDistance'
+  | 'hideMapBtn'
+  | 'showMapBtn'
+  | 'stopSouvenirsLink'
+  | 'rewind10Aria'
+  | 'forward10Aria'
+  | 'playbackSpeedAria'
+  | 'audioLoadError'
+  | 'premiumPlanPlain'
+  | 'itineraryHalfDesc'
+  | 'itineraryHalf1'
+  | 'itineraryHalf2'
+  | 'itineraryHalf3'
+  | 'itineraryHalf4'
+  | 'itineraryFullDesc'
+  | 'itineraryFull1'
+  | 'itineraryFull2'
+  | 'itineraryFull3'
+  | 'itineraryFull4'
+  | 'itineraryFull5'
+  | 'itineraryFull6'
+  | 'itineraryFull7';
 
 export const NATIVE_LANG_NAMES: Record<SupportedLanguage, string> = {
   vi: 'Tiếng Việt',
@@ -184,7 +262,7 @@ export const NEARBY_DICTIONARY: Record<SupportedLanguage, Record<NearbyKey, stri
     statProgressTitle: 'Đã nghe {listened}/{total} điểm trong hành trình',
     toolbarAriaLabel: 'Bảng điều khiển tour',
     languageSelectLabel: 'Ngôn ngữ',
-    autoNarration: 'Thuyết minh tự động',
+    autoNarration: 'Tự động phát',
     myLocation: 'Vị trí của tôi',
     simMode: 'Giả lập vị trí',
     simModeActive: 'Đang giả lập',
@@ -254,6 +332,88 @@ export const NEARBY_DICTIONARY: Record<SupportedLanguage, Record<NearbyKey, stri
     shopEmptyDesc: 'Chưa có sản phẩm quà lưu niệm nào ở đây, ghé cửa hàng trực tuyến để xem đầy đủ.',
     shopTitle: 'Mang một chút Sài Gòn về nhà',
     shopSub: 'Quà lưu niệm & đặc sản gắn với từng điểm dừng.',
+    heroCtaPlay: 'Nghe điểm đầu tiên',
+    heroCtaMap: 'Xem bản đồ',
+    mapPanelTitle: 'Lộ trình 7 điểm',
+    mapPanelSub: '14 km - 14 phút nghe',
+    mapStateReady: 'Sẵn sàng',
+    mapStatePlaying: 'Đang phát',
+    mapStateAuto: 'Tự động',
+    legendStop: 'Điểm dừng',
+    legendActive: 'Đang chọn',
+    legendRoute: 'Lộ trình gợi ý',
+    faqTitle: 'Câu hỏi thường gặp',
+    faqQ1: 'Tôi có cần cài ứng dụng không?',
+    faqA1:
+      'Không. Bạn mở trang web trên điện thoại, hoặc quét mã QR ở từng điểm để nghe ngay.',
+    faqQ2: 'Thuyết minh tự động hoạt động thế nào?',
+    faqA2:
+      'Khi bạn bật tính năng và cho phép định vị, trang sẽ tự phát thuyết minh lúc bạn đến gần một điểm dừng.',
+    faqQ3: 'Ngôn ngữ nào miễn phí?',
+    faqA3: 'Tiếng Việt miễn phí. Tiếng Anh, Nhật, Hàn mở bằng gói Premium.',
+    faqQ4: 'Tôi có phải đi đúng thứ tự không?',
+    faqA4:
+      'Không. Thứ tự trên danh sách chỉ là gợi ý lộ trình, bạn nghe điểm nào trước cũng được.',
+    heroDisplayTitle: 'Bảy điểm dừng quanh trung tâm Sài Gòn',
+    heroDisplaySub:
+      'Đeo tai nghe vào và đi. Mỗi điểm có một đoạn thuyết minh ngắn, nghe được bằng bốn ngôn ngữ. Bật tự động, máy sẽ phát khi bạn đến gần.',
+    factDistanceLabel: 'Quãng đường',
+    factDistanceFallback: 'Khoảng 14 km',
+    factListenTimeLabel: 'Tổng thời gian nghe',
+    factListenTimeVal: '{minutes} phút',
+    factLanguagesLabel: 'Ngôn ngữ',
+    factLanguagesVal: 'Việt, Anh, Nhật, Hàn',
+    factHeardLabel: 'Bạn đã nghe',
+    waveformAria: 'Tiến trình đoạn thuyết minh',
+    tipsHeading: 'Điều nên biết',
+    listenThisStop: 'Nghe điểm này',
+    onPhoneBtn: 'Trên điện thoại',
+    itineraryTitle: 'Đi bao lâu thì vừa?',
+    itineraryHalfDay: 'Nửa ngày',
+    itineraryFullDay: 'Cả ngày',
+    how1Title: 'Bấm nghe hoặc quét mã',
+    how1Desc: 'Nghe ngay trên trang, hoặc quét QR để nghe trên điện thoại và đi tay không.',
+    how2Title: 'Để máy tự phát',
+    how2Desc: 'Bật tự động phát, đi tới gần điểm nào thì thuyết minh điểm đó bắt đầu.',
+    how3Title: 'Nghe bằng tiếng của bạn',
+    how3Desc: 'Tiếng Việt miễn phí. Tiếng Anh, Nhật, Hàn mở bằng gói Premium.',
+    toastAutoOn: 'Sẽ tự phát khi bạn đến gần một điểm',
+    toastAutoOff: 'Đã tắt tự động phát',
+    toastLocating: 'Đang xác định vị trí của bạn…',
+    toastAddedToCart: 'Đã thêm {name} vào giỏ hàng',
+    playerPlayingStop: 'Đang phát - điểm {current}/{total}',
+    playerStopPosition: 'Điểm {current}/{total}',
+    playerSelectToStart: 'Chọn một điểm để bắt đầu',
+    shopNavAria: 'Điều hướng sản phẩm',
+    shopPrevAria: 'Xem sản phẩm trước',
+    shopNextAria: 'Xem sản phẩm kế tiếp',
+    heroCtaFirst: 'Nghe điểm đầu tiên',
+    heroCtaContinue: 'Nghe tiếp: {name}',
+    heroCtaReplay: 'Nghe lại từ đầu',
+    viewFullRoute: 'Xem toàn bộ lộ trình',
+    mapRouteStops: 'Lộ trình {count} điểm',
+    mapRouteDistance: '14 km',
+    hideMapBtn: 'Ẩn bản đồ',
+    showMapBtn: 'Hiện bản đồ',
+    stopSouvenirsLink: 'Quà gắn với điểm này',
+    rewind10Aria: 'Lùi 10 giây',
+    forward10Aria: 'Tua tới 10 giây',
+    playbackSpeedAria: 'Tốc độ phát {rate}x',
+    audioLoadError: 'Không tải được âm thanh cho điểm này.',
+    premiumPlanPlain: 'Mở bằng gói Premium',
+    itineraryHalfDesc: 'Khoảng 4 giờ, gom các điểm ở trung tâm, chủ yếu đi bộ.',
+    itineraryHalf1: 'Nhà thờ Đức Bà Sài Gòn',
+    itineraryHalf2: 'Bưu điện Trung tâm Sài Gòn',
+    itineraryHalf3: 'Dinh Độc Lập',
+    itineraryHalf4: 'Chợ Bến Thành',
+    itineraryFullDesc: 'Khoảng 8 giờ, đủ bảy điểm, có đoạn đi xe buýt.',
+    itineraryFull1: 'Bảo tàng Chứng tích Chiến tranh',
+    itineraryFull2: 'Nhà thờ Đức Bà Sài Gòn',
+    itineraryFull3: 'Chùa Bà Thiên Hậu',
+    itineraryFull4: 'Cầu Ba Son',
+    itineraryFull5: 'Bưu điện Trung tâm Sài Gòn',
+    itineraryFull6: 'Dinh Độc Lập',
+    itineraryFull7: 'Chợ Bến Thành',
     noPoiSelected: 'Chưa chọn điểm nào',
     clickToStart: 'Bấm Phát ở một điểm để bắt đầu.',
     playingInLang: 'Đang phát bằng {lang}',
@@ -339,7 +499,7 @@ export const NEARBY_DICTIONARY: Record<SupportedLanguage, Record<NearbyKey, stri
     statProgressTitle: 'Listened to {listened}/{total} tour stops',
     toolbarAriaLabel: 'Tour control bar',
     languageSelectLabel: 'Language',
-    autoNarration: 'Auto narration',
+    autoNarration: 'Auto-play',
     myLocation: 'My location',
     simMode: 'Simulate location',
     simModeActive: 'Simulating',
@@ -409,6 +569,88 @@ export const NEARBY_DICTIONARY: Record<SupportedLanguage, Record<NearbyKey, stri
     shopEmptyDesc: 'No souvenirs stocked here yet. Browse the full shop instead.',
     shopTitle: 'Take a little Saigon home',
     shopSub: 'Souvenirs & local specialties tied to each stop.',
+    heroCtaPlay: 'Play the first stop',
+    heroCtaMap: 'View map',
+    mapPanelTitle: '7-stop route',
+    mapPanelSub: '14 km - 14 min of audio',
+    mapStateReady: 'Ready',
+    mapStatePlaying: 'Playing',
+    mapStateAuto: 'Auto',
+    legendStop: 'Stop',
+    legendActive: 'Selected',
+    legendRoute: 'Suggested route',
+    faqTitle: 'Frequently asked questions',
+    faqQ1: 'Do I need to install an app?',
+    faqA1:
+      'No. Open the website on your phone, or scan the QR code at each stop to listen right away.',
+    faqQ2: 'How does auto narration work?',
+    faqA2:
+      'Turn it on and allow location access, and the page will play narration when you come near a stop.',
+    faqQ3: 'Which languages are free?',
+    faqA3: 'Vietnamese is free. English, Japanese and Korean require Premium.',
+    faqQ4: 'Do I have to follow the order?',
+    faqA4:
+      'No. The list order is only a suggested route; you can start with any stop.',
+    heroDisplayTitle: 'Seven stops around central Saigon',
+    heroDisplaySub:
+      'Put on your headphones and walk. Each stop has a short audio guide in four languages. Turn on auto narration and it plays as you arrive.',
+    factDistanceLabel: 'Route distance',
+    factDistanceFallback: 'About 14 km',
+    factListenTimeLabel: 'Total listening time',
+    factListenTimeVal: '{minutes} min',
+    factLanguagesLabel: 'Languages',
+    factLanguagesVal: 'Vietnamese, English, Japanese, Korean',
+    factHeardLabel: 'Listened',
+    waveformAria: 'Narration progress',
+    tipsHeading: 'Good to know',
+    listenThisStop: 'Play this stop',
+    onPhoneBtn: 'On phone',
+    itineraryTitle: 'How long should you plan?',
+    itineraryHalfDay: 'Half day',
+    itineraryFullDay: 'Full day',
+    how1Title: 'Tap play or scan QR',
+    how1Desc: 'Listen right on the page, or scan the QR code to listen hands-free on your phone.',
+    how2Title: 'Let it play automatically',
+    how2Desc: 'Turn on auto narration and each stop begins playing as you walk nearby.',
+    how3Title: 'Listen in your language',
+    how3Desc: 'Vietnamese is free. English, Japanese, and Korean unlock with Premium.',
+    toastAutoOn: 'Will play automatically when you approach a stop',
+    toastAutoOff: 'Auto narration turned off',
+    toastLocating: 'Locating your position…',
+    toastAddedToCart: 'Added {name} to cart',
+    playerPlayingStop: 'Playing - stop {current}/{total}',
+    playerStopPosition: 'Stop {current}/{total}',
+    playerSelectToStart: 'Select a stop to begin',
+    shopNavAria: 'Product navigation',
+    shopPrevAria: 'Previous products',
+    shopNextAria: 'Next products',
+    heroCtaFirst: 'Play the first stop',
+    heroCtaContinue: 'Continue: {name}',
+    heroCtaReplay: 'Replay from the beginning',
+    viewFullRoute: 'View full route',
+    mapRouteStops: '{count}-stop route',
+    mapRouteDistance: '14 km',
+    hideMapBtn: 'Hide map',
+    showMapBtn: 'Show map',
+    stopSouvenirsLink: 'Souvenirs from this stop',
+    rewind10Aria: 'Rewind 10 seconds',
+    forward10Aria: 'Forward 10 seconds',
+    playbackSpeedAria: 'Playback speed {rate}x',
+    audioLoadError: 'Could not load audio for this stop.',
+    premiumPlanPlain: 'Unlock with Premium',
+    itineraryHalfDesc: 'About 4 hours, grouping central stops, mostly on foot.',
+    itineraryHalf1: 'Notre-Dame Cathedral of Saigon',
+    itineraryHalf2: 'Saigon Central Post Office',
+    itineraryHalf3: 'Independence Palace',
+    itineraryHalf4: 'Ben Thanh Market',
+    itineraryFullDesc: 'About 8 hours, all seven stops, with a short bus ride.',
+    itineraryFull1: 'War Remnants Museum',
+    itineraryFull2: 'Notre-Dame Cathedral of Saigon',
+    itineraryFull3: 'Thien Hau Temple',
+    itineraryFull4: 'Ba Son Bridge',
+    itineraryFull5: 'Saigon Central Post Office',
+    itineraryFull6: 'Independence Palace',
+    itineraryFull7: 'Ben Thanh Market',
     noPoiSelected: 'No attraction selected',
     clickToStart: 'Click Play on any landmark to start playback.',
     playingInLang: 'Playing in {lang}',
@@ -495,7 +737,7 @@ export const NEARBY_DICTIONARY: Record<SupportedLanguage, Record<NearbyKey, stri
     statProgressTitle: '전체 {total}개 중 {listened}개 명소 청취 완료',
     toolbarAriaLabel: '투어 제어 모음',
     languageSelectLabel: '언어',
-    autoNarration: '자동 해설',
+    autoNarration: '자동 재생',
     myLocation: '내 위치',
     simMode: '위치 시뮬레이션',
     simModeActive: '시뮬레이션 중',
@@ -565,6 +807,87 @@ export const NEARBY_DICTIONARY: Record<SupportedLanguage, Record<NearbyKey, stri
     shopEmptyDesc: '아직 이곳에 기념품이 없어요. 온라인 스토어에서 확인해 보세요.',
     shopTitle: '사이공의 한 조각을 집으로',
     shopSub: '각 정류장과 연결된 기념품 & 지역 특산품.',
+    heroCtaPlay: '첫 번째 명소 듣기',
+    heroCtaMap: '지도 보기',
+    mapPanelTitle: '7개 코스',
+    mapPanelSub: '14km - 14분 분량',
+    mapStateReady: '준비됨',
+    mapStatePlaying: '재생 중',
+    mapStateAuto: '자동',
+    legendStop: '정류장',
+    legendActive: '선택됨',
+    legendRoute: '추천 경로',
+    faqTitle: '자주 묻는 질문',
+    faqQ1: '앱을 설치해야 하나요?',
+    faqA1:
+      '아니요. 휴대폰에서 웹사이트를 열거나 각 명소의 QR 코드를 스캔하면 바로 들을 수 있습니다.',
+    faqQ2: '자동 해설은 어떻게 작동하나요?',
+    faqA2:
+      '기능을 켜고 위치 접근을 허용하면 명소 근처에 도착했을 때 자동으로 해설이 재생됩니다.',
+    faqQ3: '어떤 언어가 무료인가요?',
+    faqA3: '베트남어는 무료입니다. 영어, 일본어, 한국어는 프리미엄에서 이용할 수 있습니다.',
+    faqQ4: '순서대로 가야 하나요?',
+    faqA4: '아니요. 목록 순서는 추천 경로일 뿐이며 원하는 명소부터 들을 수 있습니다.',
+    heroDisplayTitle: '사이공 중심부의 7개 명소',
+    heroDisplaySub:
+      '이어폰을 끼고 걸어보세요. 각 명소마다 4개 언어로 제공되는 짧은 오디오 해설이 있습니다. 자동 재생을 켜면 근처에 다가갈 때 자동으로 시작됩니다.',
+    factDistanceLabel: '총 이동 거리',
+    factDistanceFallback: '약 14 km',
+    factListenTimeLabel: '총 청취 시간',
+    factListenTimeVal: '{minutes}분',
+    factLanguagesLabel: '지원 언어',
+    factLanguagesVal: '베트남어, 영어, 일본어, 한국어',
+    factHeardLabel: '청취 완료',
+    waveformAria: '해설 진행률',
+    tipsHeading: '알아두면 좋은 점',
+    listenThisStop: '이 명소 듣기',
+    onPhoneBtn: '휴대폰에서',
+    itineraryTitle: '얼마나 걸릴까요?',
+    itineraryHalfDay: '반나절',
+    itineraryFullDay: '하루 종일',
+    how1Title: '눌러서 듣거나 QR 스캔',
+    how1Desc: '페이지에서 바로 듣거나 QR 코드를 스캔해 휴대폰으로 가볍게 이동하며 들으세요.',
+    how2Title: '가까이 가면 자동 재생',
+    how2Desc: '자동 재생을 켜 두면 명소 근처에 다가갈 때 해당 해설이 시작됩니다.',
+    how3Title: '내 언어로 듣기',
+    how3Desc: '베트남어는 무료입니다. 영어, 일본어, 한국어는 Premium으로 열 수 있습니다.',
+    toastAutoOn: '명소에 가까워지면 자동으로 재생됩니다',
+    toastAutoOff: '자동 재생이 꺼졌습니다',
+    toastLocating: '현재 위치를 확인하는 중…',
+    toastAddedToCart: '장바구니에 {name} 추가됨',
+    playerPlayingStop: '재생 중 - {current}/{total}번째 명소',
+    playerStopPosition: '{current}/{total}번째 명소',
+    playerSelectToStart: '시작할 명소를 선택하세요',
+    shopNavAria: '상품 탐색',
+    shopPrevAria: '이전 상품 보기',
+    shopNextAria: '다음 상품 보기',
+    heroCtaFirst: '첫 번째 명소 듣기',
+    heroCtaContinue: '이어서 듣기: {name}',
+    heroCtaReplay: '처음부터 다시 듣기',
+    viewFullRoute: '전체 경로 보기',
+    mapRouteStops: '{count}개 명소 경로',
+    mapRouteDistance: '14 km',
+    hideMapBtn: '지도 숨기기',
+    showMapBtn: '지도 보기',
+    stopSouvenirsLink: '이 명소와 연결된 기념품',
+    rewind10Aria: '10초 뒤로',
+    forward10Aria: '10초 앞으로',
+    playbackSpeedAria: '재생 속도 {rate}x',
+    audioLoadError: '이 명소의 오디오를 불러올 수 없습니다.',
+    premiumPlanPlain: 'Premium 플랜으로 이용',
+    itineraryHalfDesc: '약 4시간, 도심 중심 명소 위주로 도보 이동.',
+    itineraryHalf1: '사이공 노트르담 대성당',
+    itineraryHalf2: '사이공 중앙 우체국',
+    itineraryHalf3: '통일궁',
+    itineraryHalf4: '벤탄 시장',
+    itineraryFullDesc: '약 8시간, 7개 명소 전체 코스, 일부 구간 버스 이동.',
+    itineraryFull1: '전쟁기념관',
+    itineraryFull2: '사이공 노트르담 대성당',
+    itineraryFull3: '티엔하우 사원',
+    itineraryFull4: '바손 대교',
+    itineraryFull5: '사이공 중앙 우체국',
+    itineraryFull6: '통일궁',
+    itineraryFull7: '벤탄 시장',
     noPoiSelected: '선택된 명소 없음',
     clickToStart: '명소의 재생 버튼을 눌러 시작하세요.',
     playingInLang: '{lang} 오디오 재생 중',
@@ -650,7 +973,7 @@ export const NEARBY_DICTIONARY: Record<SupportedLanguage, Record<NearbyKey, stri
     statProgressTitle: '全{total}か所のうち{listened}か所を聴取済み',
     toolbarAriaLabel: 'ツアーコントロールバー',
     languageSelectLabel: '言語',
-    autoNarration: '自動ガイド',
+    autoNarration: '自動再生',
     myLocation: '現在地',
     simMode: '位置シミュレーション',
     simModeActive: 'シミュレーション中',
@@ -720,6 +1043,87 @@ export const NEARBY_DICTIONARY: Record<SupportedLanguage, Record<NearbyKey, stri
     shopEmptyDesc: 'まだお土産が揃っていません。オンラインショップをご覧ください。',
     shopTitle: 'サイゴンのかけらを持ち帰ろう',
     shopSub: '各スポットと結びついたお土産＆名物。',
+    heroCtaPlay: '最初のスポットを聴く',
+    heroCtaMap: '地図を見る',
+    mapPanelTitle: '7スポットのルート',
+    mapPanelSub: '14km・14分の音声',
+    mapStateReady: '準備完了',
+    mapStatePlaying: '再生中',
+    mapStateAuto: '自動',
+    legendStop: 'スポット',
+    legendActive: '選択中',
+    legendRoute: 'おすすめルート',
+    faqTitle: 'よくある質問',
+    faqQ1: 'アプリのインストールは必要ですか？',
+    faqA1:
+      'いいえ。スマートフォンでウェブサイトを開くか、各スポットのQRコードを読み取ればすぐに聴けます。',
+    faqQ2: '自動解説はどう動きますか？',
+    faqA2:
+      '機能をオンにして位置情報を許可すると、スポットに近づいたときに自動で解説が再生されます。',
+    faqQ3: '無料の言語はどれですか？',
+    faqA3: 'ベトナム語は無料です。英語・日本語・韓国語はプレミアムで利用できます。',
+    faqQ4: '順番どおりに回る必要がありますか？',
+    faqA4: 'いいえ。リストの順番はおすすめルートで、どのスポットから聴いてもかまいません。',
+    heroDisplayTitle: 'サイゴン中心部をめぐる7つのスポット',
+    heroDisplaySub:
+      'イヤホンをつけて歩きましょう。各スポットには4言語対応の短い音声ガイドがあり、自動再生をオンにすると近づいたときに始まります。',
+    factDistanceLabel: 'ルート距離',
+    factDistanceFallback: '約14 km',
+    factListenTimeLabel: '合計再生時間',
+    factListenTimeVal: '{minutes}分',
+    factLanguagesLabel: '対応言語',
+    factLanguagesVal: 'ベトナム語・英語・日本語・韓国語',
+    factHeardLabel: '再生済み',
+    waveformAria: 'ガイドの再生位置',
+    tipsHeading: '知っておきたいこと',
+    listenThisStop: 'このスポットを聴く',
+    onPhoneBtn: 'スマホで',
+    itineraryTitle: '所要時間の目安',
+    itineraryHalfDay: '半日コース',
+    itineraryFullDay: '1日コース',
+    how1Title: '再生ボタンまたはQRスキャン',
+    how1Desc: 'ページ上でそのまま聴くか、QRコードを読み取ってスマートフォンで手ぶらで聴けます。',
+    how2Title: '近づくと自動再生',
+    how2Desc: '自動再生をオンにすると、スポットに近づいたときに解説が始まります。',
+    how3Title: 'あなたの言語で聴く',
+    how3Desc: 'ベトナム語は無料。英語・日本語・韓国語はPremiumでご利用いただけます。',
+    toastAutoOn: 'スポットに近づくと自動再生します',
+    toastAutoOff: '自動再生をオフにしました',
+    toastLocating: '現在地を取得しています…',
+    toastAddedToCart: '{name}をカートに追加しました',
+    playerPlayingStop: '再生中・スポット {current}/{total}',
+    playerStopPosition: 'スポット {current}/{total}',
+    playerSelectToStart: 'スポットを選択して開始',
+    shopNavAria: '商品の移動',
+    shopPrevAria: '前の商品を見る',
+    shopNextAria: '次の商品を見る',
+    heroCtaFirst: '最初のスポットを聴く',
+    heroCtaContinue: '続きを聴く: {name}',
+    heroCtaReplay: '最初からもう一度聴く',
+    viewFullRoute: 'ルート全体を表示',
+    mapRouteStops: '{count}スポットのルート',
+    mapRouteDistance: '14 km',
+    hideMapBtn: '地図を隠す',
+    showMapBtn: '地図を表示',
+    stopSouvenirsLink: 'このスポットのお土産',
+    rewind10Aria: '10秒戻す',
+    forward10Aria: '10秒進める',
+    playbackSpeedAria: '再生速度 {rate}倍',
+    audioLoadError: 'このスポットの音声を読み込めませんでした。',
+    premiumPlanPlain: 'Premiumプランで解放',
+    itineraryHalfDesc: '約4時間、中心部のスポットを主に徒歩で巡ります。',
+    itineraryHalf1: 'サイゴン大教会',
+    itineraryHalf2: 'サイゴン中央郵便局',
+    itineraryHalf3: '統一会堂',
+    itineraryHalf4: 'ベンタイン市場',
+    itineraryFullDesc: '約8時間、一部バス移動を含めて全7スポットを巡ります。',
+    itineraryFull1: '戦争証跡博物館',
+    itineraryFull2: 'サイゴン大教会',
+    itineraryFull3: 'ティエンハウ廟',
+    itineraryFull4: 'バーソン橋',
+    itineraryFull5: 'サイゴン中央郵便局',
+    itineraryFull6: '統一会堂',
+    itineraryFull7: 'ベンタイン市場',
     noPoiSelected: 'スポット未選択',
     clickToStart: 'スポットの再生ボタンを押して開始してください。',
     playingInLang: '{lang}で再生中',

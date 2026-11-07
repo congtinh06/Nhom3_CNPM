@@ -223,6 +223,7 @@ export const Header: React.FC = () => {
       className={headerClasses}
       onFocus={() => setIsHidden(false)}
     >
+      <div className="hd-inner">
       {/* 1. Trái: Logo */}
       <div className="hd-left">
         <b
@@ -459,6 +460,7 @@ export const Header: React.FC = () => {
             <Menu size={22} strokeWidth={1.75} aria-hidden="true" />
           )}
         </button>
+      </div>
       </div>
 
       {/* 4. Panel Mobile (< 900px) */}

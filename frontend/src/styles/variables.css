@@ -5,6 +5,11 @@
   --white: #ffffff;
   --page: #f1ece2;
   --ink: #1c1410;
+  --accent: #0E5B53;
+  --accent-hover: #093F39;
+  --accent-on-dark: #6FD4C5;
+  --surface-dark: #1C1916;
+  --font-serif-brand: 'Fraunces', Georgia, 'Times New Roman', serif;
   --nav-font-size: 14px;
   box-sizing: border-box;
   padding-top: env(safe-area-inset-top, 0px);

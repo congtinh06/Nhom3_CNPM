@@ -261,6 +261,8 @@ services:
       JAVA_TOOL_OPTIONS: "-Xms128m -Xmx256m"
       DB_URL: jdbc:sqlserver://mssql:1433;databaseName=echora_auth_db;encrypt=true;trustServerCertificate=true
       DB_USERNAME: ${AUTH_DB_USER:-auth_user}
+      # Reverse proxy tin cay (IP hoac CIDR) de chi doc X-Forwarded-For khi peer dang tin.
+      TRUSTED_PROXIES: ${TRUSTED_PROXIES:-}
       DB_PASSWORD: ${AUTH_DB_PASSWORD:?AUTH_DB_PASSWORD is required in .env}
       # Bắt buộc: secret >= 32 ký tự. Để trống thì service không khởi động được (fail-closed).
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required in .env}
@@ -314,6 +316,8 @@ services:
       JAVA_TOOL_OPTIONS: "-Xms128m -Xmx256m"
       DB_URL: jdbc:sqlserver://mssql:1433;databaseName=echora_order_db;encrypt=true;trustServerCertificate=true
       DB_USERNAME: ${ORDER_DB_USER:-order_user}
+      # Reverse proxy tin cay (IP hoac CIDR) de chi doc X-Forwarded-For khi peer dang tin.
+      TRUSTED_PROXIES: ${TRUSTED_PROXIES:-}
       DB_PASSWORD: ${ORDER_DB_PASSWORD:?ORDER_DB_PASSWORD is required in .env}
       INTERNAL_API_KEY: ${INTERNAL_API_KEY:?INTERNAL_API_KEY is required in .env}
       CONTENT_SERVICE_URL: http://content-service:8085

@@ -10,6 +10,7 @@ import com.echora.auth.dto.UserResponse;
 import com.echora.auth.exception.GlobalExceptionHandler;
 import com.echora.auth.exception.UnauthorizedException;
 import com.echora.auth.service.AuthService;
+import com.echora.auth.support.ClientIpResolver;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -40,7 +41,7 @@ class AuthControllerTest {
 
     @BeforeEach
     void setUp() {
-        AuthController controller = new AuthController(authService);
+        AuthController controller = new AuthController(authService, new ClientIpResolver());
         ReflectionTestUtils.setField(controller, "refreshCookieName", "echora_user_token");
         ReflectionTestUtils.setField(controller, "adminRefreshCookieName", "echora_admin_token");
         ReflectionTestUtils.setField(controller, "refreshCookiePath", "/api/auth");

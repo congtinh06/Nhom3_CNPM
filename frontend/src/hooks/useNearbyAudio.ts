@@ -503,6 +503,8 @@ export function useNearbyAudio({
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [currentTime, setCurrentTime] = useState<number>(0);
   const [duration, setDuration] = useState<number>(0);
+  const [playbackRate, setPlaybackRate] = useState<1 | 1.25 | 1.5>(1);
+  const [audioErrorPoiId, setAudioErrorPoiId] = useState<string | null>(null);
   const [notice, setNotice] = useState<string>('');
   const [noticeWarn, setNoticeWarn] = useState<boolean>(false);
   const [audioSourceType, setAudioSourceType] = useState<AudioSourceType>('speech');
@@ -513,6 +515,8 @@ export function useNearbyAudio({
   const [sentences, setSentences] = useState<ParsedSentence[]>([]);
 
   const requestTokenRef = useRef<number>(0);
+  const playbackRateRef = useRef<1 | 1.25 | 1.5>(1);
+  const currentPoiIdRef = useRef<string | null>(null);
   const audioElemRef = useRef<HTMLAudioElement | null>(null);
   const objectUrlRef = useRef<string | null>(null);
   const activeUtteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
@@ -693,8 +697,23 @@ export function useNearbyAudio({
     setActiveCharLength(0);
     setSyncMode('boundary');
     setCurrentId(null);
+    currentPoiIdRef.current = null;
     setCurrentTime(0);
     setDuration(0);
+  }, []);
+
+  const clearAudioError = useCallback(() => {
+    setAudioErrorPoiId(null);
+  }, []);
+
+  const cyclePlaybackRate = useCallback(() => {
+    const nextRate: 1 | 1.25 | 1.5 =
+      playbackRateRef.current === 1 ? 1.25 : playbackRateRef.current === 1.25 ? 1.5 : 1;
+    playbackRateRef.current = nextRate;
+    setPlaybackRate(nextRate);
+    if (audioElemRef.current) {
+      audioElemRef.current.playbackRate = nextRate;
+    }
   }, []);
 
   const resolveAudio = useCallback(
@@ -745,7 +764,17 @@ export function useNearbyAudio({
       startSentenceOffset: number = 0,
       isFullTextReading: boolean = false
     ) => {
-      if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+      if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
+        stopTimer();
+        setPlaybackStatus('idle');
+        setIsPlaying(false);
+        setIsLoading(false);
+        setActiveSentenceIndex(null);
+        if (currentPoiIdRef.current) {
+          setAudioErrorPoiId(currentPoiIdRef.current);
+        }
+        return;
+      }
 
       const targetLocale = SPEECH_LANG_MAP[langCode] || 'vi-VN';
 
@@ -769,6 +798,9 @@ export function useNearbyAudio({
           setActiveSentenceIndex(null);
           setNotice(resolveNoVoiceMsg(langCode));
           setNoticeWarn(true);
+          if (currentPoiIdRef.current) {
+            setAudioErrorPoiId(currentPoiIdRef.current);
+          }
           return;
         }
 
@@ -787,7 +819,7 @@ export function useNearbyAudio({
           activeUtteranceRef.current = utterance;
           utterance.lang = targetLocale; // Never left unset!
           utterance.voice = matchedVoice;
-          utterance.rate = 1;
+          utterance.rate = playbackRateRef.current;
 
           // Chỉ ghi nhận lượt bắt đầu khi máy thật sự đọc (tránh tính lượt
           // nghe cho thiết bị không có giọng đọc của ngôn ngữ này).
@@ -851,7 +883,7 @@ export function useNearbyAudio({
             if (currentId) onPoiListenedRef.current?.(currentId);
           };
 
-          utterance.onerror = () => {
+          utterance.onerror = (e: SpeechSynthesisErrorEvent) => {
             if (token !== requestTokenRef.current) return;
             logAudioDev('STOP', { sourceType: 'speech', token, reason: 'utterance_error' });
             activeSourceTypeRef.current = null;
@@ -863,6 +895,9 @@ export function useNearbyAudio({
             setActiveCharOffset(null);
             setActiveCharLength(0);
             setSyncMode('boundary');
+            if (e?.error !== 'interrupted' && e?.error !== 'canceled' && currentPoiIdRef.current) {
+              setAudioErrorPoiId(currentPoiIdRef.current);
+            }
           };
 
           logAudioDev('START', {
@@ -915,6 +950,8 @@ export function useNearbyAudio({
       requestTokenRef.current = token; // Maintain the active token for this start
 
       const triggerType = isAuto ? 'auto' : 'manual';
+      currentPoiIdRef.current = poiId;
+      setAudioErrorPoiId(null);
       setCurrentId(poiId);
       setPlaybackStatus('playing');
       setIsPlaying(true);
@@ -990,6 +1027,8 @@ export function useNearbyAudio({
         };
 
         const loadAndPlayRemote = async () => {
+          setPlaybackStatus('loading');
+          setIsLoading(true);
           try {
             const blob = await api.getAudioBlob(remotePath);
             if (token !== requestTokenRef.current) return;
@@ -1005,12 +1044,15 @@ export function useNearbyAudio({
             audioElemRef.current = audio;
             audio.src = objectUrl;
             audio.currentTime = 0;
+            audio.playbackRate = playbackRateRef.current;
 
             audio.onerror = () => {
               if (token !== requestTokenRef.current) return;
               logAudioDev('STOP', { sourceType: 'backend', stopId: poiId, token, reason: 'error' });
               console.warn('[NearbyAudio] remote audio error, falling back to speech', { poiId });
               releaseObjectUrl();
+              setIsLoading(false);
+              setPlaybackStatus('playing');
               setAudioSourceType('speech');
               speakText(chosenText, currentLang, token, 0);
             };
@@ -1073,12 +1115,14 @@ export function useNearbyAudio({
                     });
                     activeSourceTypeRef.current = 'backend';
                     setAudioSourceType('backend');
+                    setIsLoading(false);
                     setPlaybackStatus('playing');
                     setIsPlaying(true);
                     markPlaybackStarted();
                   })
                   .catch((err) => {
                     if (token !== requestTokenRef.current) return;
+                    setIsLoading(false);
                     if (err?.name === 'NotAllowedError' || err?.message?.includes('NotAllowedError')) {
                       setNotice(clickToPlayText || 'Bấm để phát');
                       setNoticeWarn(true);
@@ -1087,6 +1131,7 @@ export function useNearbyAudio({
                     } else {
                       console.warn('[NearbyAudio] remote play rejected, falling back to speech', err);
                       releaseObjectUrl();
+                      setPlaybackStatus('playing');
                       setAudioSourceType('speech');
                       speakText(chosenText, currentLang, token, 0);
                     }
@@ -1094,6 +1139,7 @@ export function useNearbyAudio({
               } else {
                 activeSourceTypeRef.current = 'backend';
                 setAudioSourceType('backend');
+                setIsLoading(false);
                 setPlaybackStatus('playing');
                 setIsPlaying(true);
                 markPlaybackStarted();
@@ -1102,12 +1148,16 @@ export function useNearbyAudio({
               if (token !== requestTokenRef.current) return;
               console.warn('[NearbyAudio] remote playback threw, falling back to speech', err);
               releaseObjectUrl();
+              setIsLoading(false);
+              setPlaybackStatus('playing');
               setAudioSourceType('speech');
               speakText(chosenText, currentLang, token, 0);
             }
           } catch (err) {
             if (token !== requestTokenRef.current) return;
             console.warn('[NearbyAudio] authenticated remote audio load failed, falling back to speech', err);
+            setIsLoading(false);
+            setPlaybackStatus('playing');
             setAudioSourceType('speech');
             speakText(chosenText, currentLang, token, 0);
           }
@@ -1124,7 +1174,7 @@ export function useNearbyAudio({
           if (token !== requestTokenRef.current) return;
           setCurrentTime((prev) => {
             if (token !== requestTokenRef.current) return prev;
-            const next = prev + 0.1;
+            const next = prev + 0.1 * playbackRateRef.current;
             if (hasFullText) {
               updateSentenceHighlight(next, estDuration);
               if (!hasBoundaryEventsRef.current) {
@@ -1292,7 +1342,7 @@ export function useNearbyAudio({
           if (resumeToken !== requestTokenRef.current) return;
           setCurrentTime((prev) => {
             if (resumeToken !== requestTokenRef.current) return prev;
-            const next = prev + 0.1;
+            const next = prev + 0.1 * playbackRateRef.current;
             if (hasFullText) {
               updateSentenceHighlight(next, duration);
               if (!hasBoundaryEventsRef.current) {
@@ -1361,6 +1411,10 @@ export function useNearbyAudio({
     isPlaying,
     currentTime,
     duration,
+    playbackRate,
+    cyclePlaybackRate,
+    audioErrorPoiId,
+    clearAudioError,
     notice,
     setNotice,
     noticeWarn,

@@ -15,6 +15,7 @@ import com.echora.auth.dto.VerifyEmailRequest;
 import com.echora.auth.exception.UnauthorizedException;
 import com.echora.auth.security.UserPrincipal;
 import com.echora.auth.service.AuthService;
+import com.echora.auth.support.ClientIpResolver;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -40,6 +41,7 @@ import java.util.List;
 public class AuthController {
 
     private final AuthService authService;
+    private final ClientIpResolver clientIpResolver;
 
     private static final String HEADER_AUTH_SCOPE = "X-Auth-Scope";
     private static final String AUTH_SCOPE_ADMIN = "admin";
@@ -64,7 +66,7 @@ public class AuthController {
     @PostMapping("/api/auth/register")
     public ResponseEntity<MessageResponse> register(@Valid @RequestBody RegisterRequest request,
                                                     HttpServletRequest httpRequest) {
-        MessageResponse response = authService.register(request, clientIp(httpRequest), userAgent(httpRequest));
+        MessageResponse response = authService.register(request, clientIpResolver.resolve(httpRequest), userAgent(httpRequest));
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
@@ -73,7 +75,7 @@ public class AuthController {
     @PostMapping("/api/auth/login")
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request,
                                               HttpServletRequest httpRequest) {
-        CookieResult result = authService.login(request, clientIp(httpRequest), userAgent(httpRequest));
+        CookieResult result = authService.login(request, clientIpResolver.resolve(httpRequest), userAgent(httpRequest));
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, refreshCookie(result, httpRequest).toString())
                 .body(result.getBody());
@@ -82,7 +84,7 @@ public class AuthController {
     @PostMapping("/api/auth/google")
     public ResponseEntity<AuthResponse> loginWithGoogle(@Valid @RequestBody GoogleLoginRequest request,
                                                         HttpServletRequest httpRequest) {
-        CookieResult result = authService.loginWithGoogle(request, clientIp(httpRequest), userAgent(httpRequest));
+        CookieResult result = authService.loginWithGoogle(request, clientIpResolver.resolve(httpRequest), userAgent(httpRequest));
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, refreshCookie(result, httpRequest).toString())
                 .body(result.getBody());
@@ -91,7 +93,7 @@ public class AuthController {
     @PostMapping("/api/auth/refresh")
     public ResponseEntity<AuthResponse> refresh(HttpServletRequest httpRequest) {
         String rawToken = readRefreshCookie(httpRequest);
-        CookieResult result = authService.refresh(rawToken, clientIp(httpRequest), userAgent(httpRequest));
+        CookieResult result = authService.refresh(rawToken, clientIpResolver.resolve(httpRequest), userAgent(httpRequest));
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, refreshCookie(result, httpRequest).toString())
                 .body(result.getBody());
@@ -125,7 +127,7 @@ public class AuthController {
     @PostMapping("/api/auth/resend-verification")
     public ResponseEntity<MessageResponse> resendVerification(@Valid @RequestBody EmailOnlyRequest request,
                                                               HttpServletRequest httpRequest) {
-        return ResponseEntity.ok(authService.resendVerification(request.getEmail(), clientIp(httpRequest)));
+        return ResponseEntity.ok(authService.resendVerification(request.getEmail(), clientIpResolver.resolve(httpRequest)));
     }
 
     // ----------------------------------------------------- FORGOT / RESET PW
@@ -133,7 +135,7 @@ public class AuthController {
     @PostMapping("/api/auth/forgot-password")
     public ResponseEntity<MessageResponse> forgotPassword(@Valid @RequestBody EmailOnlyRequest request,
                                                           HttpServletRequest httpRequest) {
-        return ResponseEntity.ok(authService.forgotPassword(request.getEmail(), clientIp(httpRequest)));
+        return ResponseEntity.ok(authService.forgotPassword(request.getEmail(), clientIpResolver.resolve(httpRequest)));
     }
 
     @PostMapping("/api/auth/reset-password")
@@ -231,17 +233,6 @@ public class AuthController {
                 .maxAge(Duration.ZERO)
                 .sameSite(refreshCookieSameSite)
                 .build();
-    }
-
-    private String clientIp(HttpServletRequest request) {
-        String forwarded = request.getHeader("X-Forwarded-For");
-        if (forwarded != null && !forwarded.isBlank()) {
-            String first = forwarded.split(",")[0].trim();
-            if (!first.isEmpty()) {
-                return first;
-            }
-        }
-        return request.getRemoteAddr();
     }
 
     private String userAgent(HttpServletRequest request) {

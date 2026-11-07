@@ -23,10 +23,14 @@ type EntitlementState = 'idle' | 'checking' | 'ready' | 'timeout';
 const POLL_INTERVAL_MS = 2000;
 const MAX_POLL_ATTEMPTS = 15;
 
-function outcomeFromQuery(value: string): PaymentOutcome {
-  if (value === 'success') return 'success';
-  if (value === 'failed') return 'failed';
-  if (value === 'cancelled') return 'cancelled';
+function outcomeFromQuery(value: string, vnpResponseCode?: string | null): PaymentOutcome {
+  const v = (value || '').toLowerCase();
+  if (v === 'success' || v === 'paid' || v === 'completed') return 'success';
+  if (v === 'failed' || v === 'fail' || v === 'error') return 'failed';
+  if (v === 'cancelled' || v === 'cancel') return 'cancelled';
+  if (vnpResponseCode === '00') return 'success';
+  if (vnpResponseCode === '24') return 'cancelled';
+  if (vnpResponseCode) return 'failed';
   return 'pending';
 }
 
@@ -43,15 +47,22 @@ export const PaymentResultPage: React.FC = () => {
   const { t } = useNavbarLanguage();
   const { refreshEntitlement } = usePremium();
 
-  const orderCode = searchParams.get('orderCode') || '';
-  const method = searchParams.get('method') || '';
-  const queryOutcome = outcomeFromQuery(searchParams.get('status') || '');
+  const vnpCode = searchParams.get('vnp_ResponseCode');
+  const orderCode =
+    searchParams.get('orderCode') ||
+    searchParams.get('vnp_TxnRef') ||
+    searchParams.get('order') ||
+    '';
+  const method =
+    searchParams.get('method') ||
+    (vnpCode ? 'VNPAY' : '');
+  const queryOutcome = outcomeFromQuery(searchParams.get('status') || '', vnpCode);
 
   const [order, setOrder] = useState<BackendOrder | null>(null);
   const [loading, setLoading] = useState(true);
   const [processingAction, setProcessingAction] = useState(false);
   const [outcome, setOutcome] = useState<PaymentOutcome>(
-    queryOutcome === 'success' ? 'pending' : queryOutcome
+    method === 'COD' ? 'success' : queryOutcome
   );
   const [orderPollExpired, setOrderPollExpired] = useState(false);
   const [entitlementState, setEntitlementState] = useState<EntitlementState>('idle');
@@ -69,16 +80,22 @@ export const PaymentResultPage: React.FC = () => {
       if (data) {
         setOutcome((current) => {
           const next = outcomeFromOrder(data);
-          if (next === 'pending' && current !== 'pending') return current;
-          return next;
+          if (queryOutcome === 'success' || current === 'success' || next === 'success') {
+            return 'success';
+          }
+          if (next !== 'pending') return next;
+          return current;
         });
       }
     } catch {
-      // The status query remains the fallback when the order cannot be loaded.
+      // Keep queryOutcome as fallback
+      if (queryOutcome !== 'pending') {
+        setOutcome(queryOutcome);
+      }
     } finally {
       setLoading(false);
     }
-  }, [orderCode]);
+  }, [orderCode, queryOutcome]);
 
   useEffect(() => {
     void loadOrder();
@@ -88,7 +105,7 @@ export const PaymentResultPage: React.FC = () => {
   const isPremiumOrder = order?.orderType === 'PREMIUM' || isPoiOrder;
 
   useEffect(() => {
-    if (!isPremiumOrder || outcome !== 'pending' || orderPollExpired) return;
+    if (outcome !== 'pending' || orderPollExpired || !orderCode) return;
 
     let cancelled = false;
     let attempts = 0;
@@ -108,7 +125,7 @@ export const PaymentResultPage: React.FC = () => {
           }
         }
       } catch {
-        // Keep polling until the 30-second window ends.
+        // Keep polling until window ends
       }
 
       if (cancelled) return;
@@ -124,7 +141,7 @@ export const PaymentResultPage: React.FC = () => {
       cancelled = true;
       if (timer) window.clearTimeout(timer);
     };
-  }, [isPremiumOrder, outcome, orderCode, orderPollExpired]);
+  }, [outcome, orderCode, orderPollExpired]);
 
   useEffect(() => {
     if (!isPremiumOrder || outcome !== 'success' || entitlementStartedRef.current) return;
@@ -572,6 +589,60 @@ export const PaymentResultPage: React.FC = () => {
                 onClick={() => navigate('/')}
               >
                 {t.home}
+              </button>
+            </div>
+          </div>
+        ) : outcome === 'pending' ? (
+          <div className="result-card result-pending">
+            <div className="result-icon-wrap gateway" aria-hidden="true">
+              <RefreshCw size={28} strokeWidth={1.8} className="spin-icon" />
+            </div>
+            <h1 className="result-title">Đang xác nhận thanh toán</h1>
+            <p className="result-subtitle">
+              Hệ thống đang kiểm tra giao dịch với cổng thanh toán. Quá trình này có thể mất vài giây.
+            </p>
+
+            <div className="result-info-box">
+              <div className="info-row">
+                <span>Mã đơn hàng:</span>
+                <b className="order-code-badge">{orderCode || 'Chưa xác định'}</b>
+              </div>
+              {order && (
+                <>
+                  <div className="info-row">
+                    <span>Tổng số tiền:</span>
+                    <b className="result-total-amount">{formatPrice(order.totalAmount)}</b>
+                  </div>
+                  <div className="info-row">
+                    <span>Phương thức:</span>
+                    <span>
+                      {order.paymentMethod === 'VIETQR'
+                        ? 'Chuyển khoản VietQR'
+                        : order.paymentMethod === 'VNPAY'
+                        ? 'Cổng thanh toán VNPAY'
+                        : 'Cổng thanh toán điện tử'}
+                    </span>
+                  </div>
+                </>
+              )}
+            </div>
+
+            <div className="result-actions-row">
+              <button
+                type="button"
+                className="result-primary-btn"
+                onClick={() => void loadOrder()}
+              >
+                <RefreshCw size={15} strokeWidth={2} aria-hidden="true" />
+                <span>Kiểm tra lại trạng thái</span>
+              </button>
+
+              <button
+                type="button"
+                className="result-secondary-btn"
+                onClick={() => navigate('/don-hang')}
+              >
+                <span>{t.shop.orderHistory}</span>
               </button>
             </div>
           </div>

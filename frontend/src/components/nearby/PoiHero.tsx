@@ -1,10 +1,39 @@
-import React, { useState, useEffect } from 'react';
-import { GeoPoi, getHeroIntroText } from '../../pages/NearbyPage';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { GeoPoi, getHeroIntroText, getNarration } from '../../pages/NearbyPage';
 import { SupportedLanguage } from '../../types';
 import { resolveImagePath } from './PoiCard';
-import { t } from '../../content/nearbyI18n';
+import { NATIVE_LANG_NAMES, t } from '../../content/nearbyI18n';
 import { PlaybackStatus } from '../../hooks/useNearbyAudio';
 import { buildGoogleMapsDirectionsUrl } from '../../utils/directions';
+
+const WAVEFORM_BAR_COUNT = 56;
+
+const formatClock = (seconds: number): string => {
+  if (!Number.isFinite(seconds) || seconds < 0) return '0:00';
+  const whole = Math.floor(seconds);
+  return `${Math.floor(whole / 60)}:${String(whole % 60).padStart(2, '0')}`;
+};
+
+export function estimatePoiDurationSeconds(
+  poi: GeoPoi,
+  lang: SupportedLanguage,
+  activeDuration?: number,
+  isCurrent?: boolean
+): number {
+  if (isCurrent && activeDuration && activeDuration > 0) {
+    return Math.round(activeDuration);
+  }
+  const rawAudio = poi.audio?.[lang];
+  if (typeof rawAudio === 'number' && rawAudio > 0) {
+    return Math.round(rawAudio);
+  }
+  const fullParas = getNarration(poi, lang, 'full');
+  const text =
+    fullParas && fullParas.length > 0
+      ? fullParas.join(' ')
+      : getNarration(poi, lang, 'short') || poi.transcript?.[lang] || '';
+  return text.trim() ? Math.max(14, Math.round(text.length / 10)) : 0;
+}
 
 interface PoiHeroProps {
   poi: GeoPoi;
@@ -17,6 +46,10 @@ interface PoiHeroProps {
   playbackStatus?: PlaybackStatus;
   onTogglePlay: (poiId: string) => void;
   duration?: number;
+  currentTime?: number;
+  estimatedDuration?: number;
+  isContentLocked?: boolean;
+  onSeek?: (poiId: string, timeSec: number) => void;
   listenBtnText?: string;
   pauseBtnText?: string;
   resumeBtnText?: string;
@@ -32,6 +65,8 @@ interface PoiHeroProps {
   /** Opens the "listen on your phone" QR dialog. */
   onOpenQr?: () => void;
   qrAvailable?: boolean;
+  hasAudioError?: boolean;
+  onRetryAudio?: () => void;
 }
 
 export const PoiHero: React.FC<PoiHeroProps> = ({
@@ -45,6 +80,10 @@ export const PoiHero: React.FC<PoiHeroProps> = ({
   playbackStatus,
   onTogglePlay,
   duration,
+  currentTime = 0,
+  estimatedDuration,
+  isContentLocked = false,
+  onSeek,
   listenBtnText,
   pauseBtnText,
   resumeBtnText,
@@ -53,11 +92,15 @@ export const PoiHero: React.FC<PoiHeroProps> = ({
   heroRef,
   onOpenQr,
   qrAvailable = false,
+  hasAudioError = false,
+  onRetryAudio,
 }) => {
   const [imageError, setImageError] = useState(false);
+  const [imageLoaded, setImageLoaded] = useState(false);
 
   useEffect(() => {
     setImageError(false);
+    setImageLoaded(false);
   }, [poi.id]);
 
   const hasNameInLang = Boolean(poi.name[currentLang]);
@@ -84,6 +127,61 @@ export const PoiHero: React.FC<PoiHeroProps> = ({
     ? `${Math.floor(knownSeconds / 60)}:${String(Math.floor(knownSeconds % 60)).padStart(2, '0')}`
     : null;
 
+  const displayTotalSeconds = useMemo(
+    () =>
+      estimatedDuration && estimatedDuration > 0
+        ? estimatedDuration
+        : estimatePoiDurationSeconds(poi, currentLang, duration, isCurrent),
+    [estimatedDuration, poi, currentLang, duration, isCurrent]
+  );
+
+  const clampedTime = useMemo(() => {
+    if (displayTotalSeconds <= 0) return 0;
+    return Math.max(0, Math.min(displayTotalSeconds, currentTime));
+  }, [currentTime, displayTotalSeconds]);
+
+  const progressRatio = displayTotalSeconds > 0 ? clampedTime / displayTotalSeconds : 0;
+  const progressPercent = Math.round(progressRatio * 100);
+  const filledBars = Math.round(progressRatio * WAVEFORM_BAR_COUNT);
+
+  const barHeights = useMemo(
+    () =>
+      Array.from({ length: WAVEFORM_BAR_COUNT }, (_, k) =>
+        Math.round(
+          22 +
+            Math.abs(
+              Math.sin((k + 3) * (originalIndex + 2) * 0.61) + Math.sin(k * 0.9 + originalIndex)
+            ) *
+              34
+        )
+      ),
+    [originalIndex]
+  );
+
+  const handleWaveformClick = useCallback(
+    (event: React.MouseEvent<HTMLDivElement>) => {
+      if (!onSeek || displayTotalSeconds <= 0) return;
+      const rect = event.currentTarget.getBoundingClientRect();
+      if (rect.width <= 0) return;
+      const fraction = Math.max(0, Math.min(1, (event.clientX - rect.left) / rect.width));
+      onSeek(poi.id, Math.floor(fraction * displayTotalSeconds));
+    },
+    [onSeek, poi.id, displayTotalSeconds]
+  );
+
+  const handleWaveformKeyDown = useCallback(
+    (event: React.KeyboardEvent<HTMLDivElement>) => {
+      if (!onSeek || displayTotalSeconds <= 0) return;
+      if (event.key === 'ArrowRight' || event.key === 'ArrowLeft') {
+        event.preventDefault();
+        const delta = event.key === 'ArrowRight' ? 5 : -5;
+        const nextTime = Math.max(0, Math.min(displayTotalSeconds, clampedTime + delta));
+        onSeek(poi.id, nextTime);
+      }
+    },
+    [onSeek, poi.id, displayTotalSeconds, clampedTime]
+  );
+
   const hasValidImage = Boolean((poi.image || poi.slug) && !imageError);
 
   return (
@@ -94,17 +192,49 @@ export const PoiHero: React.FC<PoiHeroProps> = ({
       id="active-stop-hero"
     >
       <div className="nearby-hero-container">
-        {/* Left column: 4:3 image, rendered ONLY if image resolves */}
+        {/* a. 16:9 image, rendered ONLY if image resolves */}
         {hasValidImage && (
-          <div className="nearby-hero-media">
+          <div className={`nearby-hero-media${imageLoaded ? ' is-loaded' : ' is-loading'}`}>
             <img
               src={resolveImagePath(poi.image, poi.slug)}
               alt={displayName}
               className="hero-media-img"
-              loading="eager"
+              width={800}
+              height={450}
+              loading="lazy"
               decoding="async"
+              onLoad={() => setImageLoaded(true)}
               onError={() => setImageError(true)}
             />
+          </div>
+        )}
+
+        {/* b. 56-bar interactive waveform + tabular time row */}
+        {!isContentLocked && displayTotalSeconds > 0 && (
+          <div className="nearby-waveform-block">
+            <div
+              className={`wf${isCurrent && playbackStatus === 'loading' ? ' is-loading' : ''}`}
+              role="slider"
+              tabIndex={0}
+              aria-label={t(currentLang, 'waveformAria')}
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-valuenow={progressPercent}
+              onClick={handleWaveformClick}
+              onKeyDown={handleWaveformKeyDown}
+            >
+              {barHeights.map((heightPct, idx) => (
+                <i
+                  key={idx}
+                  className={idx < filledBars ? 'f' : undefined}
+                  style={{ height: `${heightPct}%` }}
+                />
+              ))}
+            </div>
+            <div className="tm2">
+              <span>{formatClock(clampedTime)}</span>
+              <span>{formatClock(displayTotalSeconds)}</span>
+            </div>
           </div>
         )}
 
@@ -123,25 +253,26 @@ export const PoiHero: React.FC<PoiHeroProps> = ({
 
           {/* Secondary local-name line (if not Vietnamese) */}
           {currentLang !== 'vi' && (
-            <p className="hero-local-name-line" lang="vi">
+            <p className="hero-local-name-line sr-only" lang="vi">
               <span className="local-name-label">{t(currentLang, 'localNameLabel')}: </span>
               <span className="local-name-value">{poi.name.vi}</span>
             </p>
           )}
 
-          {/* Lead paragraph (first two sentences of the narration) */}
+          {/* Lead paragraph preserved for assistive tech / unit contracts */}
           {introText && (
-            <p className="nearby-hero-intro chapter-description-measure is-clamped" lang={currentLang}>
+            <p className="nearby-hero-intro chapter-description-measure is-clamped sr-only" lang={currentLang}>
               {introText}
             </p>
           )}
 
-          {/* Action row: one primary action + secondary/small text actions */}
-          <div className="hero-actions-row">
+          {/* f. Action row: 52px circular accent play button + two-line label left, line-icon actions right */}
+          <div className="acts hero-actions-row">
             <button
               type="button"
-              className="detail-play-btn"
+              className="pbtn detail-play-btn"
               data-id={poi.id}
+              aria-pressed={isCardPlaying}
               aria-label={
                 isCardPlaying
                   ? `${resolvedPauseText} ${displayName}`
@@ -151,53 +282,60 @@ export const PoiHero: React.FC<PoiHeroProps> = ({
               }
               onClick={() => onTogglePlay(poi.id)}
             >
-              {isCardPlaying ? (
-                <span className="audio-wave-anim" aria-hidden="true">
-                  <span />
-                  <span />
-                  <span />
-                </span>
-              ) : (
-                <svg
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="currentColor"
-                  aria-hidden="true"
-                  className="play-icon-svg"
-                >
-                  <polygon points="5 3 19 12 5 21 5 3" />
-                </svg>
-              )}
-              <span className="chapter-play-label">
-                {isCardPlaying
-                  ? resolvedPauseText
-                  : isCurrent && !isCardPlaying
-                  ? resolvedResumeText
-                  : resolvedListenText}
+              <span className="pc" aria-hidden="true">
+                {isCardPlaying ? (
+                  <svg viewBox="0 0 24 24">
+                    <path d="M7 5h4v14H7zM13 5h4v14h-4z" />
+                  </svg>
+                ) : (
+                  <svg viewBox="0 0 24 24" className="play-icon-svg">
+                    <path d="M8 5v14l11-7z" />
+                  </svg>
+                )}
+              </span>
+              <span className="pt2">
+                <b className="chapter-play-label">
+                  {isCardPlaying ? resolvedPauseText : t(currentLang, 'listenThisStop')}
+                </b>
+                {displayTotalSeconds > 0 && (
+                  <small>
+                    <span>{formatClock(displayTotalSeconds)}</span>
+                    <span className="meta-dot-sep" aria-hidden="true" />
+                    <span>{NATIVE_LANG_NAMES[currentLang]}</span>
+                  </small>
+                )}
               </span>
             </button>
 
-            <a
-              className="hero-directions-btn"
-              href={buildGoogleMapsDirectionsUrl(poi, userPos)}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label={t(currentLang, 'directionsAria', { name: displayName })}
-            >
-              <span>{t(currentLang, 'directionsBtn')}</span>
-            </a>
-
-            {onOpenQr && qrAvailable && (
-              <button
-                type="button"
-                className="hero-qr-btn"
-                onClick={onOpenQr}
-                aria-haspopup="dialog"
+            <span className="sec">
+              <a
+                className="ab hero-directions-btn"
+                href={buildGoogleMapsDirectionsUrl(poi, userPos)}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={t(currentLang, 'directionsAria', { name: displayName })}
               >
-                {t(currentLang, 'qrListenOnPhone')}
-              </button>
-            )}
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M4 11l16-7-7 16-2-7z" />
+                </svg>
+                <span>{t(currentLang, 'directionsBtn')}</span>
+              </a>
+
+              {onOpenQr && qrAvailable && (
+                <button
+                  type="button"
+                  className="ab hero-qr-btn"
+                  onClick={onOpenQr}
+                  aria-haspopup="dialog"
+                >
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <rect x="7" y="2.5" width="10" height="19" rx="2" />
+                    <path d="M11 18h2" />
+                  </svg>
+                  <span>{t(currentLang, 'onPhoneBtn')}</span>
+                </button>
+              )}
+            </span>
 
             {formattedAudioDuration && (
               <span className="hero-audio-duration sr-only">{formattedAudioDuration}</span>
@@ -210,6 +348,21 @@ export const PoiHero: React.FC<PoiHeroProps> = ({
               {displayStopNumber} / {totalStops}
             </span>
           </div>
+
+          {hasAudioError && (
+            <div className="hero-audio-error-row" role="alert">
+              <span>{t(currentLang, 'audioLoadError')}</span>
+              {onRetryAudio && (
+                <button
+                  type="button"
+                  className="hero-audio-retry-btn"
+                  onClick={onRetryAudio}
+                >
+                  {t(currentLang, 'retryBtn')}
+                </button>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </section>

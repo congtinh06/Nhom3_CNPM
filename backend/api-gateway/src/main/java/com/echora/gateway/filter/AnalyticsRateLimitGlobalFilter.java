@@ -19,6 +19,7 @@ import reactor.core.publisher.Mono;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -112,7 +113,8 @@ public class AnalyticsRateLimitGlobalFilter implements GlobalFilter, Ordered {
      * Resolves the identity key for the rate limiter bucket:
      * 1. Authenticated user id (from verified JWT) when present -> "user:<id>"
      * 2. Direct TCP socket IP
-     * 3. First hop of X-Forwarded-For ONLY when direct peer is in trusted-proxy list -> "ip:<first-hop>"
+     * 3. First hop of X-Forwarded-For ONLY when direct peer is in trusted-proxy list
+     *    (exact IP or CIDR entry) -> "ip:<first-hop>"
      * 4. Fall back to socket IP (untrusted clients cannot spoof headers) -> "ip:<socket-ip>"
      */
     public String resolveKey(ServerWebExchange exchange) {
@@ -194,13 +196,73 @@ public class AnalyticsRateLimitGlobalFilter implements GlobalFilter, Ordered {
         if (trustedProxiesConfig == null || trustedProxiesConfig.isBlank()) {
             return false;
         }
+        InetAddress peer = parseLiteralIp(socketIp);
         for (String proxy : trustedProxiesConfig.split(",")) {
             String trimmed = proxy.trim();
-            if (!trimmed.isEmpty() && trimmed.equalsIgnoreCase(socketIp)) {
+            if (trimmed.isEmpty()) {
+                continue;
+            }
+            if (trimmed.indexOf('/') >= 0) {
+                // Ho tro CIDR (vd: 172.24.0.0/16) de khong vo khi Docker cap lai IP container.
+                if (peer != null && matchesCidr(peer, trimmed)) {
+                    return true;
+                }
+            } else if (trimmed.equalsIgnoreCase(socketIp)) {
                 return true;
             }
         }
         return false;
+    }
+
+    /**
+     * Chi parse IP literal; khong bao gio phan giai DNS tu header/peer de tranh SSRF/treo request.
+     */
+    private InetAddress parseLiteralIp(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        try {
+            return InetAddress.getByName(value.trim());
+        } catch (Exception ex) {
+            return null;
+        }
+    }
+
+    private boolean matchesCidr(InetAddress peer, String cidr) {
+        int slash = cidr.indexOf('/');
+        try {
+            InetAddress network = InetAddress.getByName(cidr.substring(0, slash).trim());
+            int prefixLength = Integer.parseInt(cidr.substring(slash + 1).trim());
+
+            byte[] peerBytes = peer.getAddress();
+            byte[] networkBytes = network.getAddress();
+            if (peerBytes.length != networkBytes.length) {
+                return false;
+            }
+
+            int maxBits = peerBytes.length * 8;
+            if (prefixLength < 0 || prefixLength > maxBits) {
+                log.warn("Ignoring trusted proxy with invalid CIDR prefix: {}", cidr);
+                return false;
+            }
+
+            int fullBytes = prefixLength / 8;
+            for (int i = 0; i < fullBytes; i++) {
+                if (peerBytes[i] != networkBytes[i]) {
+                    return false;
+                }
+            }
+
+            int remainingBits = prefixLength % 8;
+            if (remainingBits == 0) {
+                return true;
+            }
+            int mask = (0xFF << (8 - remainingBits)) & 0xFF;
+            return (peerBytes[fullBytes] & mask) == (networkBytes[fullBytes] & mask);
+        } catch (Exception ex) {
+            log.warn("Ignoring invalid trusted proxy CIDR entry: {}", cidr);
+            return false;
+        }
     }
 
     private byte[] resolveSecretBytes(String secret) {

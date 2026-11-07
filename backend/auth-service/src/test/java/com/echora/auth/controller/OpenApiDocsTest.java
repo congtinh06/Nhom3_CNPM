@@ -40,7 +40,8 @@ class OpenApiDocsTest {
             SpringDocConfiguration.class,
             SpringDocConfigProperties.class,
             SpringDocWebMvcConfiguration.class,
-            JacksonAutoConfiguration.class
+            JacksonAutoConfiguration.class,
+            com.echora.auth.support.ClientIpResolver.class
     })
     @TestPropertySource(properties = {
             "springdoc.api-docs.enabled=true",
@@ -79,7 +80,7 @@ class OpenApiDocsTest {
             excludeAutoConfiguration = {SecurityAutoConfiguration.class, SecurityFilterAutoConfiguration.class}
     )
     @AutoConfigureMockMvc(addFilters = false)
-    @Import(GlobalExceptionHandler.class)
+    @Import({GlobalExceptionHandler.class, com.echora.auth.support.ClientIpResolver.class})
     @TestPropertySource(properties = {
             "springdoc.api-docs.enabled=false",
             "ECHORA_DOCS_ENABLED=false"

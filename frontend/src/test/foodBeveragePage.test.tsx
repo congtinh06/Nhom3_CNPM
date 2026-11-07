@@ -144,6 +144,10 @@ describe('FoodBeveragePage - trang Quà lưu niệm', () => {
       expect(screen.queryByRole('heading', { name: 'Nam châm Chợ Bến Thành' })).not.toBeInTheDocument();
     });
     expect(await screen.findByRole('heading', { name: 'Quà lưu niệm Sài Gòn' })).toBeInTheDocument();
+    // Khối câu chuyện nổi bật (.story) tự động ẩn khi chưa có sản phẩm thật
+    expect(
+      screen.queryByRole('heading', { name: 'Treo một góc Sài Gòn lên tường' })
+    ).not.toBeInTheDocument();
   });
 
   it('mở trang chi tiết khi bấm vào thẻ sản phẩm thay vì mở modal', async () => {
@@ -156,5 +160,115 @@ describe('FoodBeveragePage - trang Quà lưu niệm', () => {
 
     expect(await screen.findByText('PRODUCT DETAIL ROUTE')).toBeInTheDocument();
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  it('lọc theo bộ sưu tập gợi ý nhanh và cập nhật số lượng giỏ hàng ngay trên nút thêm', async () => {
+    vi.mocked(api.getProducts).mockResolvedValue(
+      page([
+        SOUVENIR,
+        makeProduct({
+          id: 4,
+          slug: 'tranh-dinh-doc-lap',
+          name: 'Tranh mạ vàng Dinh Độc Lập',
+          category: 'SOUVENIR',
+          poiSlug: 'dinh-doc-lap',
+          price: 180000,
+        }),
+      ])
+    );
+
+    renderPage('/am-thuc');
+    await screen.findByRole('heading', { name: 'Nam châm Chợ Bến Thành' });
+
+    const displayBtn = screen.getByRole('button', { name: /Để trưng bày/i });
+    expect(displayBtn).toHaveAttribute('aria-pressed', 'false');
+
+    fireEvent.click(displayBtn);
+    expect(displayBtn).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('heading', { name: 'Tranh mạ vàng Dinh Độc Lập' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Nam châm Chợ Bến Thành' })).not.toBeInTheDocument();
+
+    // Bấm lại lần nữa để bỏ lọc bộ sưu tập
+    fireEvent.click(displayBtn);
+    expect(displayBtn).toHaveAttribute('aria-pressed', 'false');
+    expect(await screen.findByRole('heading', { name: 'Nam châm Chợ Bến Thành' })).toBeInTheDocument();
+
+    // Thêm vào giỏ và kiểm tra nhãn "Đã thêm ×1"
+    const addButtons = screen.getAllByRole('button', { name: 'Thêm vào giỏ' });
+    fireEvent.click(addButtons[0]!);
+    expect(await screen.findByRole('button', { name: 'Đã thêm ×1' })).toBeInTheDocument();
+  });
+
+  it('hiển thị gợi ý điểm vừa nghe từ echora_listened_pois và ẩn khi chưa nghe điểm nào', async () => {
+    localStorage.setItem('echora_listened_pois', JSON.stringify(['poi-4']));
+
+    renderPage('/am-thuc');
+    await screen.findByRole('heading', { name: 'Nam châm Chợ Bến Thành' });
+
+    const hintBtn = await screen.findByRole('button', {
+      name: /Xem 1 món gắn với điểm này/i,
+    });
+    fireEvent.click(hintBtn);
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: 'Nam châm Chợ Bến Thành' })).toBeInTheDocument();
+      expect(
+        screen.queryByRole('heading', { name: 'Tranh mạ vàng Dinh Độc Lập' })
+      ).not.toBeInTheDocument();
+    });
+  });
+
+  it('hiển thị nút Xem thêm khi danh mục có hơn 8 món quà lưu niệm', async () => {
+    const tenSouvenirs = Array.from({ length: 10 }, (_, i) =>
+      makeProduct({
+        id: 10 + i,
+        slug: `qua-${i + 1}`,
+        name: `Quà lưu niệm số ${i + 1}`,
+        category: 'SOUVENIR',
+        poiSlug: 'cho-ben-thanh',
+      })
+    );
+    vi.mocked(api.getProducts).mockResolvedValue(page(tenSouvenirs));
+
+    renderPage('/am-thuc');
+    expect(await screen.findByRole('heading', { name: 'Quà lưu niệm số 1' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Quà lưu niệm số 10' })).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Xem thêm' }));
+    expect(await screen.findByRole('heading', { name: 'Quà lưu niệm số 10' })).toBeInTheDocument();
+  });
+
+  it('tìm kiếm trực tiếp không mất dấu cách tiếng Việt, hiện gợi ý live autocomplete và mở chi tiết khi chọn gợi ý', async () => {
+    renderWithRouteProbe();
+
+    await screen.findByRole('heading', { name: 'Nam châm Chợ Bến Thành' });
+
+    // Đang lọc sẵn theo Chợ Bến Thành nhưng khi gõ tìm "tranh ma " vẫn phải tự mở toàn danh mục để tìm thấy
+    fireEvent.click(screen.getByRole('radio', { name: /Chợ Bến Thành/i }));
+    expect(
+      screen.queryByRole('heading', { name: 'Tranh mạ vàng Dinh Độc Lập' })
+    ).not.toBeInTheDocument();
+
+    const searchBox = screen.getByRole('combobox', { name: /Tìm kiếm quà lưu niệm/i });
+    searchBox.focus();
+    fireEvent.change(searchBox, { target: { value: 'tranh ma ' } });
+
+    // Giữ nguyên khoảng trắng ở cuối khi đang gõ tiếng Việt
+    expect(searchBox).toHaveValue('tranh ma ');
+
+    // Lưới lọc tức thì + hiện dropdown gợi ý live autocomplete
+    expect(screen.getByRole('heading', { name: 'Tranh mạ vàng Dinh Độc Lập' })).toBeInTheDocument();
+    expect(
+      screen.queryByRole('heading', { name: 'Nam châm Chợ Bến Thành' })
+    ).not.toBeInTheDocument();
+
+    const listbox = screen.getByRole('listbox', { name: /Gợi ý quà lưu niệm/i });
+    expect(listbox).toBeInTheDocument();
+
+    // Điều hướng bàn phím ArrowDown + Enter mở thẳng trang chi tiết sản phẩm
+    fireEvent.keyDown(searchBox, { key: 'ArrowDown' });
+    fireEvent.submit(searchBox.closest('form')!);
+
+    expect(await screen.findByText('PRODUCT DETAIL ROUTE')).toBeInTheDocument();
   });
 });

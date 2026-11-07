@@ -1,12 +1,12 @@
 /* ==========================================================================
    ECHORA - MY ORDERS PAGE STYLING (Vanilla CSS)
    Aesthetic:
-   - Nền trang: #FDFBF7 (kem nhạt, bất kể dark mode)
+   - Nền trang: #F7F2E9 (kem nhạt, bất kể dark mode)
    - Header: Breadcrumb/Back link nhỏ gọn, H1 Playfair Display giống hệt checkout
    - Layout 2 cột: Cột trái danh sách (360px), Cột phải chi tiết
    - Thẻ card: Nền trắng #FFFFFF, viền mảnh #E7E5E4, bo góc 12px
-   - Item đang chọn: Viền cam #C2410C, nền đào nhạt #FFF7ED
-   - Khối thông tin: Nền đào nhạt #FFF7ED, viền #FED7AA, grid 140px 1fr
+   - Item đang chọn: Viền cam #0E5B53, nền đào nhạt #FAF7F0
+   - Khối thông tin: Nền đào nhạt #FAF7F0, viền #E6DEC8, grid 140px 1fr
    - Nút: Mua lại (secondary viền xám), Thanh toán (primary cam), Hủy (danger nhạt)
    ========================================================================== */
 
@@ -17,7 +17,7 @@
 
 .orders-page-container {
   min-height: 100vh !important;
-  background-color: #FDFBF7 !important;
+  background-color: #F7F2E9 !important;
   color: #1C1917 !important;
   font-family: "Be Vietnam Pro", -apple-system, BlinkMacSystemFont, sans-serif !important;
   padding-top: 88px !important;
@@ -53,12 +53,12 @@
 }
 
 .orders-back-link:hover {
-  color: #C2410C !important;
+  color: #0E5B53 !important;
   text-decoration: none !important;
 }
 
 .orders-page-title {
-  font-family: "Playfair Display", Georgia, serif !important;
+  font-family: "Fraunces", Georgia, serif, Georgia, serif !important;
   font-size: clamp(24px, 3.5vw, 32px) !important;
   font-weight: 700 !important;
   color: #1C1917 !important;
@@ -101,7 +101,7 @@
 }
 
 .orders-panel-heading {
-  font-family: "Playfair Display", Georgia, serif !important;
+  font-family: "Fraunces", Georgia, serif, Georgia, serif !important;
   font-size: 18px !important;
   font-weight: 700 !important;
   color: #1C1917 !important;
@@ -134,7 +134,7 @@
 }
 
 .orders-list:focus-visible {
-  outline: 2px solid #C2410C !important;
+  outline: 2px solid #0E5B53 !important;
   outline-offset: -2px !important;
   border-radius: 8px !important;
 }
@@ -175,13 +175,13 @@
 }
 
 .order-summary-item:focus-visible {
-  outline: 2px solid #C2410C !important;
+  outline: 2px solid #0E5B53 !important;
   outline-offset: 1px !important;
 }
 
 .order-summary-item.active {
-  border-color: #C2410C !important;
-  background-color: #FFF7ED !important;
+  border-color: #0E5B53 !important;
+  background-color: #FAF7F0 !important;
   box-shadow: none !important;
 }
 
@@ -196,7 +196,7 @@
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
   font-weight: 700 !important;
   font-size: 14.5px !important;
-  color: #C2410C !important;
+  color: #0E5B53 !important;
 }
 
 .order-summary-meta {
@@ -288,7 +288,7 @@
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
   font-size: 20px !important;
   font-weight: 700 !important;
-  color: #C2410C !important;
+  color: #0E5B53 !important;
   margin: 0 !important;
   text-transform: none !important;
 }
@@ -308,7 +308,7 @@
 }
 
 .order-detail-body:focus-visible {
-  outline: 2px solid #C2410C !important;
+  outline: 2px solid #0E5B53 !important;
   outline-offset: -2px !important;
 }
 
@@ -331,8 +331,8 @@
 
 /* Tinted info block */
 .order-meta-info-grid {
-  background-color: #FFF7ED !important;
-  border: 1px solid #FED7AA !important;
+  background-color: #FAF7F0 !important;
+  border: 1px solid #E6DEC8 !important;
   border-radius: 10px !important;
   padding: 16px 20px !important;
   margin-bottom: 24px !important;
@@ -384,7 +384,7 @@
 }
 
 .order-items-heading {
-  font-family: "Playfair Display", Georgia, serif !important;
+  font-family: "Fraunces", Georgia, serif, Georgia, serif !important;
   font-size: 17px !important;
   font-weight: 700 !important;
   color: #1C1917 !important;
@@ -479,7 +479,7 @@
 .total-amount {
   font-size: clamp(20px, 2.5vw, 24px) !important;
   font-weight: 700 !important;
-  color: #C2410C !important;
+  color: #0E5B53 !important;
 }
 
 /* Action Buttons */
@@ -513,7 +513,7 @@
 }
 
 .order-pay-now-btn {
-  background-color: #C2410C !important;
+  background-color: #0E5B53 !important;
   color: #FFFFFF !important;
   border: none !important;
   border-radius: 8px !important;
@@ -529,7 +529,7 @@
 }
 
 .order-pay-now-btn:hover {
-  background-color: #9A3412 !important;
+  background-color: #093F39 !important;
 }
 
 .order-cancel-btn {
@@ -586,8 +586,8 @@
   width: 56px !important;
   height: 56px !important;
   border-radius: 50% !important;
-  background-color: #FFF7ED !important;
-  color: #C2410C !important;
+  background-color: #FAF7F0 !important;
+  color: #0E5B53 !important;
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
@@ -595,7 +595,7 @@
 }
 
 .orders-empty-card h2 {
-  font-family: "Playfair Display", Georgia, serif !important;
+  font-family: "Fraunces", Georgia, serif, Georgia, serif !important;
   font-size: 22px !important;
   font-weight: 700 !important;
   color: #1C1917 !important;
@@ -611,7 +611,7 @@
 }
 
 .orders-empty-btn {
-  background-color: #C2410C !important;
+  background-color: #0E5B53 !important;
   color: #FFFFFF !important;
   border: none !important;
   border-radius: 8px !important;
@@ -625,7 +625,7 @@
 }
 
 .orders-empty-btn:hover {
-  background-color: #9A3412 !important;
+  background-color: #093F39 !important;
 }
 
 /* Modal xác nhận hủy đơn */
@@ -652,7 +652,7 @@
 }
 
 .cancel-confirm-dialog h3 {
-  font-family: "Playfair Display", Georgia, serif !important;
+  font-family: "Fraunces", Georgia, serif, Georgia, serif !important;
   font-size: 20px !important;
   font-weight: 700 !important;
   color: #1C1917 !important;

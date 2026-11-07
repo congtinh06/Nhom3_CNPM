@@ -32,11 +32,18 @@ export default defineConfig(({ mode }) => {
       port: 5173,
       host: true,
       // Cho phép mở dev server qua tunnel HTTPS (ngrok) để điện thoại quét QR.
-      allowedHosts: ['.ngrok-free.dev', '.ngrok-free.app', '.ngrok.io'],
+      allowedHosts: ['.ngrok-free.dev', '.ngrok-free.app', '.ngrok.io', '.ngrok.app'],
       proxy: {
         '/api': {
           target: 'http://localhost:18080',
           changeOrigin: true,
+          // Gỡ Origin giống frontend/nginx.conf để CORS filter của api-gateway
+          // không trả 403 khi điện thoại gọi POST /api/** qua domain HTTPS của ngrok.
+          configure: (proxy) => {
+            proxy.on('proxyReq', (proxyReq) => {
+              proxyReq.removeHeader('origin');
+            });
+          },
         },
         '/img/products': {
           target: 'http://localhost:18080',

@@ -1,18 +1,17 @@
 /* ==========================================================================
    ECHORA - PAYMENT RESULT / SUCCESS PAGE (Vanilla CSS)
    Aesthetic:
-   - Nền trang: #FDFBF7 (kem nhạt, bất kể dark mode)
-   - Thẻ card: #FFFFFF, viền mảnh #E7E5E4, bo góc 12px, shadow nhẹ
-   - Tiêu đề: Playfair Display, sentence case, màu #1C1917
-   - Khối chi tiết: Nền đào nhạt #FFF7ED, viền #FED7AA, bo góc 10px
-   - Label:value: Grid 140px 1fr, nowrap label, anywhere overflow value
-   - Nút: Cam chủ đạo #C2410C (primary), Viền xám #D6D3D1 (secondary)
+   - Nền trang: #F7F2E9 (giấy ấm, đồng bộ Quà lưu niệm)
+   - Thẻ card: #FFFFFF, viền #E6DEC8, bo góc 12px
+   - Tiêu đề: Fraunces, sentence case, màu #211D1A
+   - Khối chi tiết: Nền #FAF7F0, viền #E6DEC8, bo góc 10px
+   - Nút: Teal chủ đạo #0E5B53 (primary), Viền xám #D6D3D1 (secondary)
    ========================================================================== */
 
 .payment-result-page {
   min-height: 100vh !important;
-  background-color: #FDFBF7 !important;
-  color: #1C1917 !important;
+  background-color: #F7F2E9 !important;
+  color: #211D1A !important;
   font-family: "Be Vietnam Pro", -apple-system, BlinkMacSystemFont, sans-serif !important;
   padding-top: 88px !important;
   padding-bottom: 80px !important;
@@ -41,7 +40,7 @@
 .result-card,
 .mock-gateway-card {
   background-color: #FFFFFF !important;
-  border: 1px solid #E7E5E4 !important;
+  border: 1px solid #E6DEC8 !important;
   border-radius: 12px !important;
   padding: clamp(24px, 4vw, 36px) !important;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
@@ -73,18 +72,18 @@
 }
 
 .result-icon-wrap.gateway {
-  background-color: #FFF7ED !important;
-  border: 1px solid #FED7AA !important;
-  color: #C2410C !important;
+  background-color: #E8F2EE !important;
+  border: 1px solid #B6D5CE !important;
+  color: #0E5B53 !important;
 }
 
-/* Heading: Playfair Display, sentence case, no uppercase */
+/* Heading: Fraunces, sentence case, no uppercase */
 .result-title,
 .mock-gateway-header h2 {
-  font-family: "Playfair Display", Georgia, serif !important;
+  font-family: "Fraunces", Georgia, serif !important;
   font-size: clamp(22px, 3.5vw, 28px) !important;
-  font-weight: 700 !important;
-  color: #1C1917 !important;
+  font-weight: 600 !important;
+  color: #211D1A !important;
   margin: 0 0 8px 0 !important;
   text-transform: none !important;
   letter-spacing: -0.01em !important;
@@ -93,7 +92,7 @@
 
 .result-subtitle,
 .gateway-subtitle {
-  color: #78716C !important;
+  color: #6B645C !important;
   font-size: 14px !important;
   line-height: 1.5 !important;
   margin: 0 0 24px 0 !important;
@@ -102,8 +101,8 @@
 /* Tinted detail block */
 .result-info-box,
 .gateway-order-summary {
-  background-color: #FFF7ED !important;
-  border: 1px solid #FED7AA !important;
+  background-color: #FAF7F0 !important;
+  border: 1px solid #E6DEC8 !important;
   border-radius: 10px !important;
   padding: 16px 20px !important;
   margin-bottom: 28px !important;
@@ -122,7 +121,7 @@
   gap: 12px !important;
   align-items: baseline !important;
   padding: 4px 0 !important;
-  border-bottom: 1px dashed rgba(253, 186, 116, 0.4) !important;
+  border-bottom: 1px dashed #E6DEC8 !important;
 }
 
 .info-row:last-child,
@@ -133,7 +132,7 @@
 .info-row > span:first-child,
 .summary-row > span:first-child {
   white-space: nowrap !important;
-  color: #78716C !important;
+  color: #6B645C !important;
   font-size: 13.5px !important;
   font-weight: 500 !important;
 }
@@ -144,7 +143,7 @@
 .summary-row > b:last-child {
   overflow-wrap: anywhere !important;
   word-break: break-word !important;
-  color: #1C1917 !important;
+  color: #211D1A !important;
   font-size: 13.5px !important;
 }
 
@@ -154,7 +153,7 @@
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
   font-weight: 700 !important;
   font-size: 14.5px !important;
-  color: #C2410C !important;
+  color: #0E5B53 !important;
 }
 
 /* Total: bold and larger */
@@ -178,7 +177,7 @@
 /* Buttons */
 .result-primary-btn,
 .mock-success-btn {
-  background-color: #C2410C !important;
+  background-color: #0E5B53 !important;
   color: #FFFFFF !important;
   border: none !important;
   border-radius: 8px !important;
@@ -197,7 +196,7 @@
 
 .result-primary-btn:hover,
 .mock-success-btn:hover {
-  background-color: #9A3412 !important;
+  background-color: #093F39 !important;
 }
 
 .result-secondary-btn,
@@ -260,9 +259,9 @@
 }
 
 .result-activation-status.is-timeout {
-  border-color: #fed7aa;
-  background-color: #fff7ed;
-  color: #9a3412;
+  border-color: #FBBF24;
+  background-color: #FEF3C7;
+  color: #92400E;
 }
 
 .result-pending .result-subtitle {
@@ -275,7 +274,7 @@
 }
 
 .result-primary-btn:disabled:hover {
-  background-color: #c2410c !important;
+  background-color: #0E5B53 !important;
 }
 
 /* Loading Box */

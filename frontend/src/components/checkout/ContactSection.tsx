@@ -195,7 +195,7 @@ export function ContactSection({
     const code = e.target.value;
     const selected = districts.find((d) => d.code === code);
     onChange('districtCode', code);
-    onChange('districtName', selected ? selected.name : '');
+    onChange('districtName', selected ? selected.name : (code ? code : ''));
     onChange('wardCode', '');
     onChange('wardName', '');
   };
@@ -204,7 +204,7 @@ export function ContactSection({
     const code = e.target.value;
     const selected = wards.find((w) => w.code === code);
     onChange('wardCode', code);
-    onChange('wardName', selected ? selected.name : '');
+    onChange('wardName', selected ? selected.name : (code ? code : ''));
   };
 
   return (
