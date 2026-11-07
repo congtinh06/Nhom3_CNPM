@@ -106,8 +106,22 @@ Tài liệu mô tả các biện pháp bảo mật đang được triển khai t
 
 - [ ] Xóa toàn bộ giá trị mẫu trong `.env.example` (thay bằng `<FILL_ME>`)
 - [ ] Rotate: `JWT_SECRET`, `INTERNAL_API_KEY`, `ADMIN_X_KEY`, tất cả mật khẩu DB, `RABBITMQ_DEFAULT_PASS`
-- [ ] Thêm Vercel domain vào `FRONTEND_URLS` trong `.env`
+- [ ] Đặt đúng origin Vercel: `FRONTEND_URLS=https://nhom3-cnpm.vercel.app` (không dấu `/` cuối)
 - [ ] Thêm Vercel domain vào Google OAuth Authorized origins
-- [ ] Bật `REFRESH_COOKIE_SECURE=true` khi deploy HTTPS
+- [ ] Bật `REFRESH_COOKIE_SECURE=true` khi deploy HTTPS (overlay `docker-compose.deploy.yml` đã đặt sẵn)
 - [ ] Chuyển `Content-Security-Policy-Report-Only` thành `Content-Security-Policy` sau khi không còn lỗi report
 - [ ] Kiểm tra tunnel không còn expose sau buổi demo
+
+## 10. Giá trị production trong `docker-compose.deploy.yml`
+
+CD chạy `docker compose -f docker-compose.yml -f docker-compose.deploy.yml`, nên overlay
+thắng `.env` local cho các biến dưới đây. Không sửa `docker-compose.yml` (dev).
+
+| Biến | Giá trị production | Lý do |
+| --- | --- | --- |
+| `REFRESH_COOKIE_SECURE` | `true` | Cookie refresh chỉ gửi qua HTTPS (Vercel -> ngrok) |
+| `FRONTEND_URL` | `https://nhom3-cnpm.vercel.app` | Link xác thực email / đặt lại mật khẩu trỏ đúng frontend |
+| `FRONTEND_URLS` | `https://nhom3-cnpm.vercel.app` | CORS/CSRF chỉ cho đúng origin Vercel, không wildcard |
+
+Nếu chạy production không qua overlay, đặt `REFRESH_COOKIE_SECURE=true` trong `.env`;
+giữ `false` chỉ cho dev HTTP.

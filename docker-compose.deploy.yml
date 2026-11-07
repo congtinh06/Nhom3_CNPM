@@ -10,6 +10,12 @@ services:
       # Production: tắt mọi seed tài khoản (admin / test user / demo premium).
       # Chỉ seed demo Premium khi ECHORA_SEED_DEMO=true; mặc định false.
       ECHORA_SEED_DEMO: "false"
+      # CD chạy sau ngrok HTTPS: cookie refresh phải Secure.
+      REFRESH_COOKIE_SECURE: "true"
+      # Đúng origin frontend công khai (không dấu / cuối); dùng cho CORS/CSRF
+      # và cho link xác thực email / đặt lại mật khẩu.
+      FRONTEND_URL: "https://nhom3-cnpm.vercel.app"
+      FRONTEND_URLS: "https://nhom3-cnpm.vercel.app"
       ADMIN_SEED_EMAIL: ""
       ADMIN_SEED_PASSWORD: ""
       SEED_TEST_USER_EMAIL: ""
@@ -40,6 +46,8 @@ services:
   api-gateway:
     image: ghcr.io/${GHCR_REPO:-congtinh06/nhom3_cnpm}-api-gateway:${IMAGE_TAG:?IMAGE_TAG is required}
     environment:
+      # CORS chỉ cho phép đúng origin Vercel công khai.
+      FRONTEND_URLS: "https://nhom3-cnpm.vercel.app"
       ECHORA_DOCS_ENABLED: "false"
   frontend:
     image: ghcr.io/${GHCR_REPO:-congtinh06/nhom3_cnpm}-frontend:${IMAGE_TAG:?IMAGE_TAG is required}
