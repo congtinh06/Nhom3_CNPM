@@ -32,7 +32,7 @@
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "https://BACKEND_ORIGIN_PLACEHOLDER/api/$1",
+      "dest": "https://wolf-morse-boasting.ngrok-free.dev/api/$1",
       "transforms": [
         {
           "type": "request.headers",
@@ -46,7 +46,7 @@
     },
     {
       "src": "/img/products/(.*)",
-      "dest": "https://BACKEND_ORIGIN_PLACEHOLDER/img/products/$1",
+      "dest": "https://wolf-morse-boasting.ngrok-free.dev/img/products/$1",
       "transforms": [
         {
           "type": "request.headers",
