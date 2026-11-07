@@ -17,7 +17,7 @@
 
     <properties>
         <java.version>17</java.version>
-        <lombok.version>1.18.38</lombok.version>
+        <lombok.version>1.18.48</lombok.version>
         <resilience4j.version>2.1.0</resilience4j.version>
         <!-- Boot 3.3.4 quản lý 1.19.x, không nói chuyện được với Docker Engine 29 (MinAPI 1.44). 1.21.4 đã sửa. -->
         <testcontainers.version>1.21.4</testcontainers.version>
