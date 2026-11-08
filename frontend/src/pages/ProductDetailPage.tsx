@@ -9,7 +9,7 @@ import { useFavorites } from '../hooks/useFavorites';
 import { formatPrice } from '../utils/formatters';
 import { applySouvenirDiscount } from '../utils/pricing';
 import { defaultProducts } from '../content/defaultProducts';
-import { enrichProducts } from '../content/productAdapter';
+import { enrichProduct, enrichProducts } from '../content/productAdapter';
 import { useNavbarLanguage } from '../content/languages';
 import { getSpotName } from '../content/souvenirSpots';
 import { Product, ProductCategory } from '../types';
@@ -160,7 +160,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ category: 
     try {
       const data = await api.getProductBySlug(slug);
       if (data && data.isActive) {
-        setProduct(data);
+        setProduct(enrichProduct(data));
       } else {
         const fallback = defaultProducts.find((p) => p.slug === slug && p.isActive);
         if (fallback) {

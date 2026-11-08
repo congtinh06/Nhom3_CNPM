@@ -14,8 +14,8 @@
   --nearby-mut: #6F6254;
   --nearby-line: #DED2BF;
   --nearby-line2: #C9BAA2;
-  --nearby-acc: #0E5B53;
-  --nearby-acc-2: #093F39;
+  --nearby-acc: #C2410C;
+  --nearby-acc-2: #9A3412;
   --nearby-acc-ink: #FFFFFF;
   --nearby-warm: #B35129;
   --nearby-warm-soft: #F7E3D7;
@@ -5299,3 +5299,152 @@ body:has(.nearby-sv-root),
     display: none !important;
   }
 }
+
+/* ==========================================================================
+   17. FINAL POLISH PASS
+   Story CTA order, route stepper affordances, map toolbar density and the
+   souvenir rail's boundary states. Kept at the end so earlier layers remain
+   untouched and this pass can be reviewed (or reverted) on its own.
+   ========================================================================== */
+
+/* 17.1 Put the primary listen action directly under the waveform, before the
+   long-form narration. The story can run several screens tall, so the main
+   action should never sit below the fold. */
+.nearby-sv-root .nearby-stop-detail .acts.hero-actions-row {
+  order: 3 !important;
+  margin: 6px 0 24px !important;
+  padding-top: 0 !important;
+  border-top: 0 !important;
+}
+
+.nearby-sv-root .nearby-stop-detail .reading-body-flow,
+.nearby-sv-root .nearby-stop-detail .reading-body-fallback,
+.nearby-sv-root .nearby-stop-detail .poi-content-lock {
+  order: 4 !important;
+}
+
+.nearby-sv-root .nearby-stop-detail .chs {
+  order: 5 !important;
+}
+
+.nearby-sv-root .nearby-stop-detail .reading-nav-row {
+  order: 6 !important;
+}
+
+/* 17.2 Calmer reading rhythm: one consistent leading, a little more air
+   between paragraphs, no trailing gap before the "next stop" row. */
+.nearby-sv-root .nearby-stop-detail .reading-paragraph {
+  line-height: 1.75 !important;
+  margin-bottom: 18px !important;
+}
+
+.nearby-sv-root .nearby-stop-detail .narration-section:last-child .reading-paragraph {
+  margin-bottom: 0 !important;
+}
+
+/* 17.3 Route stepper: unobtrusive scrolling on narrow screens, with snap
+   points and no visible scrollbar. */
+.nearby-sv-root .stripw {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  overscroll-behavior-x: contain;
+}
+
+.nearby-sv-root .stripw::-webkit-scrollbar {
+  display: none !important;
+}
+
+/* The legend lives inside the horizontally scrollable rail, so pin it to the
+   left edge; otherwise it slides out of view as soon as a later stop is
+   selected and leaves an unexplained empty gap above the track. */
+.nearby-sv-root .stripw .strip-head {
+  position: sticky;
+  left: 0;
+  width: max-content;
+  max-width: 100%;
+  z-index: 2;
+}
+
+@media (max-width: 960px) {
+  .nearby-sv-root .stripw {
+    scroll-snap-type: x proximity;
+    padding-right: 12px !important;
+  }
+
+  .nearby-sv-root .strip .sd {
+    scroll-snap-align: start;
+  }
+}
+
+/* 17.4 Map toolbar: the notice stays inside the map, but never grows into a
+   screen-covering block. On phones the redundant ON/OFF chip is dropped and
+   the two controls stop wrapping onto a second line. */
+.nearby-sv-root .tools .nearby-map-status-line {
+  max-width: min(100%, 430px) !important;
+}
+
+@media (max-width: 640px) {
+  .nearby-sv-root .map {
+    height: 320px !important;
+  }
+
+  .nearby-sv-root .tools .nearby-controlbar-pill {
+    height: 36px;
+    padding: 2px 4px;
+  }
+
+  .nearby-sv-root .tools .toggle-state {
+    display: none !important;
+  }
+
+  .nearby-sv-root .tools .nearby-toggle-switch,
+  .nearby-sv-root .tools .nearby-action-btn.btn-gps {
+    padding: 0 8px;
+    font-size: 12.5px;
+  }
+
+  .nearby-sv-root .tools .nearby-action-btn.btn-gps span {
+    white-space: nowrap;
+  }
+
+  .nearby-sv-root .tools .nearby-map-status-line {
+    display: -webkit-box !important;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden !important;
+    white-space: normal !important;
+    max-width: min(100%, 330px) !important;
+    font-size: 11.5px !important;
+    line-height: 1.45 !important;
+    padding: 5px 10px !important;
+  }
+}
+
+/* 17.5 Souvenir rail: balanced header on phones and honest arrow states at
+   the start and end of the rail. */
+@media (max-width: 640px) {
+  .nearby-sv-root .shop-head {
+    align-items: flex-start;
+    gap: 14px;
+  }
+
+  .nearby-sv-root .shop-head-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .nearby-sv-root .shop .shop-more-link {
+    margin-left: auto;
+  }
+}
+
+.nearby-sv-root .shop .shop-arrow-btn:disabled,
+.nearby-sv-root .shop .shop-arrow-btn:disabled:hover {
+  opacity: 0.38;
+  cursor: default;
+  color: var(--mut) !important;
+  background: transparent !important;
+  border-color: var(--line) !important;
+  transform: none !important;
+}
+

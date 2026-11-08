@@ -230,9 +230,10 @@ const AppContent: React.FC = () => {
 
             {/* QR Scan */}
             <Route path="/qr/:token" element={<ScanPage />} />
+            <Route path="/diem/:slug" element={<ScanPage />} />
             <Route path="/quet-ma" element={<ScanPage />} />
-            {/* Trang quét QR đăng nhập mở cho cả khách: khách quét sẽ chuyển
-                máy tính sang chế độ Khách, tài khoản thật quét để chuyển phiên. */}
+            {/* Trang quét QR đăng nhập: chỉ cho tài khoản đã đăng ký + xác thực
+                email (kiểu Zalo) được quét; khách dùng mật khẩu/guest mode. */}
             <Route path="/quet-qr-dang-nhap" element={<QrLoginScanPage />} />
             <Route path="/nhan-dang-nhap" element={<QrHandoffReceivePage />} />
             <Route path="/qr-tai-khoan" element={<AccountLoginQrPage />} />

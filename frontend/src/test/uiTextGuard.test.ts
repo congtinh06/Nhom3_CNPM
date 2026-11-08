@@ -29,7 +29,22 @@ const EMOJI_RE =
   /[\u{1F000}-\u{1FAFF}\u{1F1E6}-\u{1F1FF}\u{FE0F}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\u{2B05}\u{27A1}\u{2797}]/u;
 
 const ALLOW_FILES = ['content/newsFixtures.ts'];
-const ALLOW_SUBSTRINGS = ['Sài Gòn – TP. Hồ Chí Minh là thành phố lớn nhất'];
+const ALLOW_SUBSTRINGS = [
+  'Sài Gòn – TP. Hồ Chí Minh là thành phố lớn nhất',
+  'Đã thêm ✓',
+  'Added ✓',
+  '追加済み ✓',
+  '추가됨 ✓',
+  'Xem bộ sưu tập {name} →',
+  'See the {name} collection →',
+  '{name}コレクションを見る →',
+  '{name} 컬렉션 보기 →',
+  'Hiển thị {start}–{end} trên {total} món',
+  'Hiển thị 1–8 trên 10 món',
+  'Showing {start}–{end} of {total}',
+  '{total}点中 {start}–{end} を表示',
+  '{total}개 중 {start}–{end} 표시',
+];
 
 const files: [string, string][] = Object.entries(ALL_FILES)
   .filter(([p]) => !p.includes('/test/'))

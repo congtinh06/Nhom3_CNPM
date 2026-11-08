@@ -1,0 +1,5 @@
+﻿"Mục","Nội dung"
+"Công nghệ sử dụng","Backend: Java 17, Spring Boot 3, Spring Cloud Gateway, Maven multi-module; Frontend: Vite, React, TypeScript; Infra: Docker Compose, nginx, ngrok; CI: GitHub Actions."
+"Luồng dữ liệu chính","Client -> API Gateway -> microservice (content / auth / order / analytics) -> database / RabbitMQ."
+"Cách triển khai","Docker Compose dùng Dockerfile của từng service; api-gateway build multi-stage Maven; frontend build Vite rồi serve bằng nginx."
+"Biến môi trường (chỉ ghi tên)","JWT_SECRET; INTERNAL_API_KEY; FRONTEND_URL; FRONTEND_URLS; GATEWAY_TRUSTED_PROXIES; TRUSTED_PROXIES; RATE_LIMIT_ANALYTICS_PER_MINUTE; GATEWAY_PORT; VITE_API_BASE_URL."

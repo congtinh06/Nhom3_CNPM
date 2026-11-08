@@ -1,7 +1,8 @@
-import React, { useEffect, useRef, useCallback } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Eye, X } from 'lucide-react';
+import { CheckCircle2, Eye, X } from 'lucide-react';
 import { useNavbarLanguage } from '../../content/languages';
+import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { enterGuestMode, useGuestMode } from '../../lib/guestMode';
 import { LoginForm } from './LoginForm';
@@ -22,8 +23,15 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const location = useLocation();
   const navigate = useNavigate();
   const { t } = useNavbarLanguage();
+  const { user } = useAuth();
   const { showToast } = useToast();
   const guestMode = useGuestMode();
+  const accountName = user?.fullName?.trim() || user?.email?.trim() || '';
+
+  const [loginSuccess, setLoginSuccess] = useState(false);
+
+  const redirectTimerRef = useRef<number | null>(null);
+  const closeTimerRef = useRef<number | null>(null);
 
   const overlayRef = useRef<HTMLDivElement>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -51,6 +59,17 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
   // Close handler: back or fallback
   const handleClose = useCallback(() => {
+    // Đang hiện màn hình "Đăng nhập thành công" thì không cho đóng giữa chừng.
+    if (redirectTimerRef.current) {
+      window.clearTimeout(redirectTimerRef.current);
+      redirectTimerRef.current = null;
+    }
+    if (closeTimerRef.current) {
+      window.clearTimeout(closeTimerRef.current);
+      closeTimerRef.current = null;
+    }
+    setLoginSuccess(false);
+
     if (isStandalone) {
       if (returnTarget) {
         navigate(returnTarget, { replace: true });
@@ -69,8 +88,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     }
   }, [hasBackground, returnTarget, isStandalone, navigate]);
 
-  // Login success handler
-  const handleLoginSuccess = useCallback(() => {
+  // Điều hướng sau khi xác thực xong (dùng chung cho đăng nhập và QR khách).
+  const navigateAfterAuth = useCallback(() => {
     if (returnTarget) {
       navigate(returnTarget, { replace: true });
     } else if (hasBackground && !isStandalone) {
@@ -80,13 +99,37 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     }
   }, [returnTarget, hasBackground, isStandalone, navigate]);
 
+  // Login success handler: hiện màn hình chúc mừng ngắn rồi mới chuyển trang.
+  const handleLoginSuccess = useCallback(() => {
+    setLoginSuccess(true);
+    if (redirectTimerRef.current) {
+      window.clearTimeout(redirectTimerRef.current);
+    }
+    redirectTimerRef.current = window.setTimeout(() => {
+      showToast(t.auth.loginSuccess);
+      navigateAfterAuth();
+    }, 900);
+  }, [navigateAfterAuth, showToast, t.auth.loginSuccess]);
+
+  // Dọn timer nếu modal bị unmount trước khi chuyển trang.
+  useEffect(() => {
+    return () => {
+      if (redirectTimerRef.current) {
+        window.clearTimeout(redirectTimerRef.current);
+      }
+      if (closeTimerRef.current) {
+        window.clearTimeout(closeTimerRef.current);
+      }
+    };
+  }, []);
+
   // Guest QR handler: điện thoại quét ở chế độ khách -> đánh dấu đang dùng thử
   // với tư cách Khách, đóng modal, giữ guest (KHÔNG set token nào).
   const handleGuestSuccess = useCallback(() => {
     enterGuestMode();
     showToast(t.auth.qrGuestTransferred);
-    handleLoginSuccess();
-  }, [showToast, t.auth.qrGuestTransferred, handleLoginSuccess]);
+    navigateAfterAuth();
+  }, [showToast, t.auth.qrGuestTransferred, navigateAfterAuth]);
 
   // "Tiếp tục với tư cách Khách": chọn chế độ Khách từ modal đăng nhập.
   const handleContinueAsGuest = useCallback(() => {
@@ -188,7 +231,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   return (
     <div
       ref={overlayRef}
-      className="auth-modal-overlay"
+      className={`auth-modal-overlay${isStandalone ? ' is-standalone' : ''}`}
       onClick={handleOverlayClick}
       data-testid="auth-modal-overlay"
     >
@@ -199,56 +242,68 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         aria-modal="true"
         aria-labelledby="auth-modal-title"
       >
-        <button
-          type="button"
-          className="auth-modal-close"
-          aria-label={t.auth.close}
-          onClick={handleClose}
-        >
-          <X size={18} strokeWidth={1.75} aria-hidden="true" />
-        </button>
+        {!loginSuccess && (
+          <button
+            type="button"
+            className="auth-modal-close"
+            aria-label={t.auth.close}
+            onClick={handleClose}
+          >
+            <X size={18} strokeWidth={1.75} aria-hidden="true" />
+          </button>
+        )}
 
         <div className="auth-modal-body">
-          {guestMode && (
-            <aside className="auth-guest-banner" role="note" aria-label={t.auth.guestBannerTitle}>
-              <span className="auth-guest-banner-icon" aria-hidden="true">
-                <Eye size={18} strokeWidth={1.8} />
+          {loginSuccess ? (
+            <div className="auth-success" role="status" aria-live="polite">
+              <span className="auth-success-icon" aria-hidden="true">
+                <CheckCircle2 size={40} strokeWidth={1.8} />
               </span>
-              <div className="auth-guest-banner-copy">
-                <strong>{t.auth.guestBannerTitle}</strong>
-                <p>{t.auth.guestBannerNote}</p>
-              </div>
-              <button
-                type="button"
-                className="auth-guest-banner-continue"
-                onClick={handleContinueAsGuest}
-              >
-                {t.auth.guestContinue}
-              </button>
-            </aside>
-          )}
+              <h2 id="auth-modal-title" className="auth-success-title">
+                {t.auth.loginSuccess}
+              </h2>
+              {accountName && <p className="auth-success-account">{accountName}</p>}
+              <p className="auth-success-note">{t.auth.loginSuccessRedirect}</p>
+              <span className="auth-success-bar" aria-hidden="true" />
+            </div>
+          ) : (
+            <>
+              {guestMode && (
+                <aside className="auth-guest-banner" role="note" aria-label={t.auth.guestBannerTitle}>
+                  <span className="auth-guest-banner-icon" aria-hidden="true">
+                    <Eye size={18} strokeWidth={1.8} />
+                  </span>
+                  <div className="auth-guest-banner-copy">
+                    <strong>{t.auth.guestBannerTitle}</strong>
+                    <p>{t.auth.guestBannerNote}</p>
+                  </div>
+                  <button
+                    type="button"
+                    className="auth-guest-banner-continue"
+                    onClick={handleContinueAsGuest}
+                  >
+                    {t.auth.guestContinue}
+                  </button>
+                </aside>
+              )}
 
-          {currentView === 'login' && (
-            <LoginForm
-              onSuccess={handleLoginSuccess}
-              onGuestSuccess={handleGuestSuccess}
-              onSwitchToRegister={handleSwitchToRegister}
-              onSwitchToForgot={handleSwitchToForgot}
-            />
-          )}
+              {currentView === 'login' && (
+                <LoginForm
+                  onSuccess={handleLoginSuccess}
+                  onGuestSuccess={handleGuestSuccess}
+                  onSwitchToRegister={handleSwitchToRegister}
+                  onSwitchToForgot={handleSwitchToForgot}
+                />
+              )}
 
-          {currentView === 'register' && (
-            <RegisterForm
-              onClose={handleClose}
-              onSwitchToLogin={handleSwitchToLogin}
-            />
-          )}
+              {currentView === 'register' && (
+                <RegisterForm onClose={handleClose} onSwitchToLogin={handleSwitchToLogin} />
+              )}
 
-          {currentView === 'forgot' && (
-            <ForgotPasswordForm
-              onClose={handleClose}
-              onSwitchToLogin={handleSwitchToLogin}
-            />
+              {currentView === 'forgot' && (
+                <ForgotPasswordForm onClose={handleClose} onSwitchToLogin={handleSwitchToLogin} />
+              )}
+            </>
           )}
         </div>
       </div>

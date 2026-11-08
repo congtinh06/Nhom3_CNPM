@@ -19,7 +19,6 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { QRCodeCanvas } from 'qrcode.react';
 import {
   Camera,
   Lock,
@@ -39,8 +38,6 @@ import { usePremium, buildPremiumPath, buildPoiPremiumPath } from '../context/Pr
 import { unlockAudio } from '../lib/audioUnlock';
 import { getAnalyticsSessionId } from '../lib/analytics';
 import { detectDeviceType } from '../lib/device';
-import { resolveQrBaseUrl } from '../lib/qrOrigin';
-import { useIsDesktop } from '../hooks/useIsDesktop';
 import { PoiDetail, SupportedLanguage, TriggerType } from '../types';
 import '../styles/scan.css';
 
@@ -49,18 +46,31 @@ import '../styles/scan.css';
 // the user's entitlement at play time — on-device speech must not bypass that.
 const SCAN_SPEECH_LANGS: SupportedLanguage[] = ['vi', 'en', 'ja', 'ko'];
 
+/** Extract the POI slug from a "/diem/<slug>" scan value. */
+const parseScanSlug = (raw: string): string | undefined => {
+  try {
+    const url = new URL(raw, window.location.origin);
+    const path = url.pathname.replace(/\/+$/, '');
+    const diemMatch = path.match(/^\/diem\/([^/]+)$/);
+    const slugFromPath = diemMatch?.[1];
+    if (slugFromPath) {
+      return decodeURIComponent(slugFromPath);
+    }
+  } catch {
+    // Không phải URL hợp lệ: bỏ qua.
+  }
+  return undefined;
+};
+
 export const ScanPage: React.FC = () => {
-  const { token } = useParams<{ token?: string }>();
+  const { token, slug } = useParams<{ token?: string; slug?: string }>();
   const navigate = useNavigate();
   const location = useLocation();
   const { status } = useAuth();
   const isGuest = status === 'guest';
   const { canAccessPoiLanguage } = usePremium();
-  // Trang quét mã dùng camera nên chỉ hiển thị trên điện thoại; trên PC chỉ
-  // hiện thẻ hướng dẫn kèm mã QR để mở trang bằng điện thoại.
-  const isDesktop = useIsDesktop('(min-width: 900px)');
 
-  const [inputToken, setInputToken] = useState(token || '');
+  const [inputToken, setInputToken] = useState<string>(token ?? '');
   const [poiDetail, setPoiDetail] = useState<PoiDetail | null>(null);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -80,6 +90,7 @@ export const ScanPage: React.FC = () => {
   const scanTriggerRef = useRef<TriggerType>('QR');
   const lastRecordedScanRef = useRef<string | null>(null);
   const resolvedTokenRef = useRef<string | null>(null);
+  const resolvedSlugRef = useRef<string | null>(null);
 
   const { playAudio, stopAudio, isPlaying } = useAudioPlayer();
 
@@ -108,10 +119,16 @@ export const ScanPage: React.FC = () => {
 
   const handleResolveQr = useCallback(
     (
-      qrTokenToResolve: string,
-      options?: { auto?: boolean; autoplay?: boolean; triggerType?: TriggerType }
+      rawValue: string,
+      options?: {
+        auto?: boolean;
+        autoplay?: boolean;
+        triggerType?: TriggerType;
+        slug?: string;
+      }
     ) => {
-      const trimmed = qrTokenToResolve.trim();
+      const targetSlug = options?.slug?.trim() || undefined;
+      const trimmed = (targetSlug ?? rawValue).trim();
       if (!trimmed) return;
       const isAuto = options?.auto ?? false;
       const triggerType = options?.triggerType ?? 'QR';
@@ -119,8 +136,11 @@ export const ScanPage: React.FC = () => {
       setLoading(true);
       setErrorMessage(null);
 
-      api
-        .getPoiByQr(trimmed, lang)
+      const request = targetSlug
+        ? api.getPoiBySlug(targetSlug, lang)
+        : api.getPoiByQr(trimmed, lang);
+
+      request
         .then((detail) => {
           setPoiDetail(detail);
           setExpanded(false);
@@ -194,6 +214,16 @@ export const ScanPage: React.FC = () => {
     handleResolveQr(token, { auto: true, triggerType: 'QR' });
   }, [token, handleResolveQr]);
 
+  useEffect(() => {
+    const targetSlug = slug?.trim();
+    if (!targetSlug) return;
+    // Link /diem/<slug> của QR điểm du lịch: tra cứu đúng điểm bằng slug,
+    // mở trực tiếp trang thuyết minh mà không cần đăng nhập.
+    if (resolvedSlugRef.current === targetSlug) return;
+    resolvedSlugRef.current = targetSlug;
+    handleResolveQr(targetSlug, { auto: true, triggerType: 'QR', slug: targetSlug });
+  }, [slug, handleResolveQr]);
+
   // Nếu quyền ngoại ngữ mất đi (đăng xuất, gói hết hạn) thì quay về tiếng Việt,
   // tránh giữ lại bản dịch đã tải trước đó.
   useEffect(() => {
@@ -265,10 +295,23 @@ export const ScanPage: React.FC = () => {
               clearInterval(interval);
               stopCamera();
               const val = barcodes[0].rawValue;
-              const extracted = val.includes('/qr/') ? val.split('/qr/')[1]?.split('?')[0] : val;
-              if (extracted) {
-                setInputToken(extracted);
-                handleResolveQr(extracted, { auto: true, autoplay: true, triggerType: 'QR' });
+              const extractedSlug = val.includes('/diem/')
+                ? val.split('/diem/')[1]?.split('?')[0]
+                : undefined;
+              const extractedToken = extractedSlug
+                ? undefined
+                : val.includes('/qr/')
+                  ? val.split('/qr/')[1]?.split('?')[0]
+                  : val;
+              const target = extractedSlug ?? extractedToken;
+              if (target) {
+                setInputToken(target);
+                handleResolveQr(target, {
+                  auto: true,
+                  autoplay: true,
+                  triggerType: 'QR',
+                  ...(extractedSlug ? { slug: extractedSlug } : {}),
+                });
               }
             }
           } catch {
@@ -283,9 +326,15 @@ export const ScanPage: React.FC = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (inputToken.trim()) {
-      handleResolveQr(inputToken.trim(), { triggerType: 'MANUAL' });
-    }
+    const raw = inputToken.trim();
+    if (!raw) return;
+    const targetSlug = raw.includes('/')
+      ? parseScanSlug(raw)
+      : undefined;
+    handleResolveQr(
+      raw,
+      { triggerType: 'MANUAL', ...(targetSlug ? { slug: targetSlug } : {}) }
+    );
   };
 
   const handleScanAnother = () => {
@@ -406,27 +455,6 @@ export const ScanPage: React.FC = () => {
     </header>
   );
 
-  const renderDesktopNotice = () => {
-    const scanUrl = `${resolveQrBaseUrl()}/quet-ma`;
-    return (
-      <div className="scan-desktop-notice">
-        <div className="scan-desktop-qr">
-          <QRCodeCanvas value={scanUrl} size={176} level="M" includeMargin />
-        </div>
-        <div className="scan-desktop-copy">
-          <span className="scan-eyebrow">Dành cho điện thoại</span>
-          <h2>Mở trang này trên điện thoại</h2>
-          <p>
-            Trang quét mã dùng camera nên chỉ hoạt động trên điện thoại. Mở
-            camera hoặc ứng dụng quét QR trên điện thoại và quét mã bên cạnh để
-            mở trang quét mã.
-          </p>
-          <p className="scan-desktop-url">{scanUrl}</p>
-        </div>
-      </div>
-    );
-  };
-
   const displayName = poiDetail ? poiDetail.title || poiDetail.name : '';
   const narrativeText = poiDetail ? poiDetail.description || poiDetail.summary : '';
 
@@ -463,8 +491,7 @@ export const ScanPage: React.FC = () => {
           </span>
         </div>
       )}
-      {!poiDetail &&
-        (isDesktop ? renderDesktopNotice() : renderLanding())}
+      {!poiDetail && renderLanding()}
 
       {loading && <p className="cn">Đang tải thông tin điểm du lịch từ mã QR...</p>}
 

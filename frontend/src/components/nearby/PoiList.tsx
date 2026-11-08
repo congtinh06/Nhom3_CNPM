@@ -78,6 +78,7 @@ const StopRow: React.FC<StopRowProps> = ({
       className={`nearby-stop-item${isActive ? ' is-open' : ''}${isHovered ? ' is-hovered' : ''}${
         isLocked ? ' is-locked' : ''
       }`}
+      data-poi-id={poi.id}
     >
       <button
         type="button"

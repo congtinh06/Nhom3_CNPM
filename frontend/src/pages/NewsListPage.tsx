@@ -6,7 +6,6 @@ import { useDocumentMeta } from '../hooks/useDocumentMeta';
 import { useNavbarLanguage } from '../content/languages';
 import { tNews, NewsTranslation } from '../content/newsI18n';
 import { getCategoryLabel } from '../components/news/newsFormatters';
-import { PageHero } from '../components/common/PageHero';
 import { NewsLeadStory } from '../components/news/NewsLeadStory';
 import { NewsSideItem } from '../components/news/NewsSideItem';
 import { NewsRow } from '../components/news/NewsRow';
@@ -108,15 +107,12 @@ export const NewsListPage: React.FC = () => {
 
   return (
     <div className="nl-page-root">
-      <PageHero
-        className="news-hero"
-        eyebrow=""
-        title={tNews(lang, 'pageTitle')}
-        subtitle={tNews(lang, 'pageSubtitle')}
-        imageSrc="/images/home/intro-nguyen-hue.jpg"
-        imagePosition="center"
-        imageCredit="Echora"
-      />
+      <section className="nl-header">
+        <div className="nl-header-inner">
+          <h1 className="nl-header-title">{tNews(lang, 'pageTitle')}</h1>
+          <p className="nl-header-subtitle">{tNews(lang, 'pageSubtitle')}</p>
+        </div>
+      </section>
 
       <div className="nl-body">
         <main className="nl-container" id="news-main-content">

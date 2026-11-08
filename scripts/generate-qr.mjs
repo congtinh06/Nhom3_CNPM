@@ -93,18 +93,18 @@ async function fetchPois(baseUrl) {
 }
 
 // Offline fallback: read the demo seed so QRs can be generated even when the
-// backend/tunnel is down. The qr_token is the only field the QR actually needs.
+// backend/tunnel is down. The POI slug is the stable /diem/<slug> target.
 function parseSeed(sql) {
   const pattern =
-    /N?'(POI_[A-Z0-9_]+)'\s*,\s*(?:N?'[^']*'\s*,\s*)?N?'(qr-[a-z0-9-]+)'\s*,\s*N?'([^']+)'/g;
+    /N?'(POI_[A-Z0-9_]+)'\s*,\s*N?'([^']+)'[^']*?N?'(qr-[a-z0-9-]+)'\s*,\s*N?'([^']+)'/g;
   const seen = new Set();
   const out = [];
   let match;
   while ((match = pattern.exec(sql)) !== null) {
-    const [, code, token, name] = match;
+    const [, code, slug, token, name] = match;
     if (seen.has(token)) continue;
     seen.add(token);
-    out.push({ code, token, name });
+    out.push({ code, token, slug, name });
   }
   return out;
 }
@@ -119,6 +119,7 @@ async function loadPois(baseUrl, fromSeedOnly) {
           id: poi.id,
           name: poi.name || poi.title || `POI ${poi.id}`,
           token: poi.qrToken.trim(),
+          slug: poi.slug,
           code: poi.code,
           source: 'api',
         }));
@@ -141,6 +142,7 @@ async function loadPois(baseUrl, fromSeedOnly) {
     id: index + 1,
     name: item.name,
     token: item.token,
+    slug: item.slug,
     code: item.code,
     source: 'seed',
   }));
@@ -237,7 +239,7 @@ async function main() {
   for (const poi of pois) {
     const name = poi.name || poi.title || `POI ${poi.id}`;
     const token = poi.token;
-    const qrContent = buildPlaceQrContent(baseUrl, token);
+    const qrContent = buildPlaceQrContent(baseUrl, token, poi.slug);
     const pngName = `${poi.id}-${slugify(name)}.png`;
 
     await QRCode.toFile(path.join(outputDir, pngName), qrContent, {

@@ -14,8 +14,8 @@
 }
 
 .features h2 {
-  font-family: Anton, Impact, 'Arial Narrow', sans-serif;
-  text-transform: uppercase;
+  font-family: 'Fraunces', Georgia, 'Times New Roman', serif;
+  text-transform: none;
   font-weight: 400;
   line-height: 1.05;
   font-size: clamp(34px, 5.2vw, 60px);
@@ -43,16 +43,16 @@
 
 .feat-card {
   background: #f8f3e8;
-  border: 1px solid rgba(138, 47, 18, 0.16);
+  border: 1px solid var(--line, #DED2BF);
   border-radius: 12px;
   padding: 24px 20px;
   transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
 }
 
 .feat-card:hover {
-  transform: translateY(-4px);
-  border-color: rgba(138, 47, 18, 0.34);
-  box-shadow: 0 14px 30px -18px rgba(28, 20, 16, 0.45);
+  transform: none;
+  border-color: var(--acc, #C2410C);
+  box-shadow: none;
 }
 
 .feat-icon {
@@ -62,7 +62,7 @@
   align-items: center;
   justify-content: center;
   border-radius: 10px;
-  background: rgba(138, 47, 18, 0.1);
+  background: rgba(194, 65, 12, 0.08);
   color: var(--brown);
   margin-bottom: 14px;
 }
@@ -94,8 +94,8 @@
 }
 
 .faq h2 {
-  font-family: Anton, Impact, 'Arial Narrow', sans-serif;
-  text-transform: uppercase;
+  font-family: 'Fraunces', Georgia, 'Times New Roman', serif;
+  text-transform: none;
   font-weight: 400;
   line-height: 1.05;
   font-size: clamp(34px, 5.2vw, 60px);
@@ -117,20 +117,20 @@
 
 .faq-item {
   background: #ffffff;
-  border: 1px solid rgba(138, 47, 18, 0.18);
+  border: 1px solid var(--line, #DED2BF);
   border-radius: 10px;
   overflow: hidden;
   transition: border-color 0.25s ease, box-shadow 0.25s ease;
 }
 
 .faq-item:hover {
-  border-color: rgba(138, 47, 18, 0.34);
-  box-shadow: 0 10px 24px -20px rgba(28, 20, 16, 0.5);
+  border-color: var(--acc, #C2410C);
+  box-shadow: none;
 }
 
 .faq-item[open] {
-  border-color: rgba(138, 47, 18, 0.42);
-  box-shadow: 0 14px 32px -22px rgba(138, 47, 18, 0.55);
+  border-color: var(--acc, #C2410C);
+  box-shadow: none;
 }
 
 .faq-q {
@@ -229,8 +229,8 @@
 }
 
 .cta-inner h2 {
-  font-family: Anton, Impact, 'Arial Narrow', sans-serif;
-  text-transform: uppercase;
+  font-family: 'Fraunces', Georgia, 'Times New Roman', serif;
+  text-transform: none;
   font-weight: 400;
   line-height: 1.05;
   font-size: clamp(34px, 5.2vw, 60px);
@@ -273,8 +273,8 @@
 }
 
 .home-news-section .home-news-title {
-  font-family: Anton, Impact, 'Arial Narrow', sans-serif;
-  text-transform: uppercase;
+  font-family: 'Fraunces', Georgia, 'Times New Roman', serif;
+  text-transform: none;
   font-weight: 400;
   letter-spacing: 0.02em;
   font-size: clamp(34px, 5.2vw, 60px);
@@ -305,7 +305,7 @@
 .pl-card:hover,
 .pl-card:focus-visible {
   transform: translateY(-6px);
-  box-shadow: 0 22px 40px -24px rgba(0, 0, 0, 0.85);
+  box-shadow: none;
 }
 
 .pl-card:hover .ph img,

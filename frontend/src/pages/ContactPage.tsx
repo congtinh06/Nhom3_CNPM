@@ -283,7 +283,7 @@ export const ContactPage: React.FC = () => {
                       aria-expanded={showOptional}
                       onClick={() => setShowOptional((v) => !v)}
                     >
-                      <span className="contact-toggle-plus">{showOptional ? '−' : '+'}</span>
+                      <span className="contact-toggle-plus">{showOptional ? '-' : '+'}</span>
                       <span>{showOptional ? 'Ẩn số điện thoại' : 'Thêm số điện thoại (không bắt buộc)'}</span>
                     </button>
 

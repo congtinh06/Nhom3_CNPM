@@ -45,6 +45,8 @@ export type SouvenirI18nKey =
   | 'sortPriceDesc'
   | 'favAddAria'
   | 'favRemoveAria'
+  | 'quickAdd'
+  | 'addedOk'
   | 'addToCart'
   | 'addedCount'
   | 'outOfStock'
@@ -75,7 +77,35 @@ export type SouvenirI18nKey =
   | 'faqA4'
   | 'ctaTitle'
   | 'ctaDesc'
-  | 'ctaBtn';
+  | 'ctaBtn'
+  | 'showingRange'
+  | 'pagerLabel'
+  | 'prevPage'
+  | 'nextPage'
+  | 'editorialTitle'
+  | 'editorialP1'
+  | 'editorialP2'
+  | 'editorialCta'
+  | 'destiTitle'
+  | 'destiCount'
+  | 'destiCta'
+  | 'waysTitle'
+  | 'waysDisplayTitle'
+  | 'waysDisplayP1'
+  | 'waysDisplayP2'
+  | 'waysTravelTitle'
+  | 'waysTravelP1'
+  | 'waysTravelP2'
+  | 'waysGiftTitle'
+  | 'waysGiftP1'
+  | 'waysGiftP2'
+  | 'faqQ5'
+  | 'faqA5'
+  | 'faqQ6'
+  | 'faqA6'
+  | 'closingTitle'
+  | 'closingDesc'
+  | 'closingBtn';
 
 const VI_SOUVENIR_DICTIONARY: Record<SouvenirI18nKey, string> = {
   pageTitle: 'Echora - Quà lưu niệm Sài Gòn',
@@ -123,6 +153,8 @@ const VI_SOUVENIR_DICTIONARY: Record<SouvenirI18nKey, string> = {
   sortPriceDesc: 'Giá giảm dần',
   favAddAria: 'Yêu thích {name}',
   favRemoveAria: 'Bỏ yêu thích {name}',
+  quickAdd: 'Thêm nhanh',
+  addedOk: 'Đã thêm ✓',
   addToCart: 'Thêm vào giỏ',
   addedCount: 'Đã thêm ×{count}',
   outOfStock: 'Tạm hết',
@@ -161,6 +193,37 @@ const VI_SOUVENIR_DICTIONARY: Record<SouvenirI18nKey, string> = {
   ctaTitle: 'Chưa biết chọn món nào?',
   ctaDesc: 'Nghe một điểm dừng trước, rồi quay lại chọn món gắn với điểm đó.',
   ctaBtn: 'Đi tới Điểm du lịch',
+  showingRange: 'Hiển thị {start}–{end} trên {total} món',
+  pagerLabel: 'Phân trang',
+  prevPage: 'Trước',
+  nextPage: 'Sau',
+  editorialTitle: 'Một góc Sài Gòn giữa hành trình',
+  editorialP1:
+    'Một món quà nhỏ, một góc phố, một khoảnh khắc bạn sẽ nhớ trước khi rời đi.',
+  editorialP2:
+    'Chọn theo điểm vừa nghe, mỗi bộ sưu tập là một mảnh ghép của hành trình đó.',
+  editorialCta: 'Xem bộ sưu tập {name} →',
+  destiTitle: 'Chọn theo điểm đã đi',
+  destiCount: '{count} món',
+  destiCta: 'Xem quà',
+  waysTitle: 'Cách chọn quà',
+  waysDisplayTitle: 'Để trưng bày',
+  waysDisplayP1: 'Treo gọn trong phòng, để câu chuyện điểm dừng được kể lại bằng hình ảnh.',
+  waysDisplayP2: 'Phù hợp cho người ở lại nhà hoặc mang về ngôi nhà mới.',
+  waysTravelTitle: 'Mang về vali',
+  waysTravelP1: 'Vỏ bìa cứng, túi zip, quà nhỏ nhưng đủ lớn để nhớ.',
+  waysTravelP2: 'Cho hành trình dài hoặc tặng người ở xa.',
+  waysGiftTitle: 'Tặng',
+  waysGiftP1: 'Quà giới hạn theo món, ghi rõ món quà trên tờ quà.',
+  waysGiftP2: 'Tặng cùng voucher nghe giới thiệu.',
+  faqQ5: 'Tôi muốn tặng quà cho người khác, có cần tạo đơn riêng không?',
+  faqA5: 'Không bắt buộc. Bạn chọn món quà rồi nhập email người nhận ở bước thanh toán.',
+  faqQ6: 'Giao quà sau khi thanh toán mất bao lâu?',
+  faqA6: 'Thường 3-7 ngày tùy điểm đến. Nếu có quầy bán trực tiếp thì có thể nhận ngay.',
+  closingTitle: 'Cần thêm cảm hứng trước khi chọn quà?',
+  closingDesc:
+    'Nghe một điểm dừng nữa, hoặc để chúng tôi gợi ý món quà phù hợp với hành trình của bạn.',
+  closingBtn: 'Đọc tin tức',
 };
 
 export const SOUVENIR_DICTIONARY: Record<
@@ -214,6 +277,8 @@ export const SOUVENIR_DICTIONARY: Record<
     sortPriceDesc: 'Price: high to low',
     favAddAria: 'Save {name}',
     favRemoveAria: 'Remove {name} from saved',
+    quickAdd: 'Quick add',
+    addedOk: 'Added ✓',
     addToCart: 'Add to cart',
     addedCount: 'Added ×{count}',
     outOfStock: 'Sold out',
@@ -251,6 +316,34 @@ export const SOUVENIR_DICTIONARY: Record<
     ctaTitle: 'Not sure what to pick yet?',
     ctaDesc: 'Listen to a stop first, then come back to choose a keepsake tied to that place.',
     ctaBtn: 'Go to Attractions',
+    showingRange: 'Showing {start}–{end} of {total}',
+    pagerLabel: 'Pagination',
+    prevPage: 'Previous',
+    nextPage: 'Next',
+    editorialTitle: 'A corner of Saigon between journeys',
+    editorialP1: 'One small keepsake, one street corner, one moment you will remember before leaving.',
+    editorialP2: 'Choose from a stop you just heard, each collection is a piece of that journey.',
+    editorialCta: 'See the {name} collection →',
+    destiTitle: 'Choose by the places you visited',
+    destiCount: '{count} items',
+    destiCta: 'See the gifts',
+    waysTitle: 'How to choose a keepsake',
+    waysDisplayTitle: 'For display',
+    waysDisplayP1: 'Hang it lightly at home so the story of the stop comes alive again.',
+    waysDisplayP2: 'Good for staying at home or moving into a new space.',
+    waysTravelTitle: 'For travel',
+    waysTravelP1: 'Rigid case and zip pouch, small but big enough to remember.',
+    waysTravelP2: 'For long trips or gifts to faraway friends.',
+    waysGiftTitle: 'As a gift',
+    waysGiftP1: 'Gift editions limited to the piece, noted on the gift card.',
+    waysGiftP2: 'Pair it with a listening voucher for the stop.',
+    faqQ5: 'Do I need a separate order to send a gift?',
+    faqA5: 'No. Pick the keepsake and add the recipient email at checkout.',
+    faqQ6: 'How long does delivery take after payment?',
+    faqA6: 'Usually 3-7 days depending on the stop. Some stops have counters for pickup.',
+    closingTitle: 'Need a little more inspiration before choosing?',
+    closingDesc: 'Listen to one more stop, or let us suggest a keepsake for your journey.',
+    closingBtn: 'Read the news',
   },
   ja: {
     pageTitle: 'Echora - サイゴンのお土産',
@@ -267,9 +360,39 @@ export const SOUVENIR_DICTIONARY: Record<
     addToCart: 'カートに追加',
     addedCount: '追加済み ×{count}',
     outOfStock: '在庫切れ',
+    quickAdd: 'クイック追加',
+    addedOk: '追加済み ✓',
     loadMore: 'もっと見る',
     faqTitle: 'よくある質問',
     ctaBtn: '観光スポットへ',
+    showingRange: '{total}点中 {start}–{end} を表示',
+    pagerLabel: 'ページネーション',
+    prevPage: '前へ',
+    nextPage: '次へ',
+    editorialTitle: '旅の合間に流れるサゴンの片隅',
+    editorialP1: '小さなお土産、一つの路地、そして旅の前に忘れそうな瞬間。',
+    editorialP2: '最近訪れた場所から選ぶ。各コレクションはその旅の一片。',
+    editorialCta: '{name}コレクションを見る →',
+    destiTitle: '訪れた場所で選ぶ',
+    destiCount: '{count}点',
+    destiCta: 'ギフトを見る',
+    waysTitle: 'お土産の選び方',
+    waysDisplayTitle: '展示用',
+    waysDisplayP1: '家にそっと飾って、stop の物語を映し出す。',
+    waysDisplayP2: '自宅にいる場合や新しい暮らしの場へ送る場合に。',
+    waysTravelTitle: '持ち運び用',
+    waysTravelP1: '硬いケースとジッパー付きポーチ、小さくても忘れ物には十分。',
+    waysTravelP2: '長い旅や遠くへ送るギフトに。',
+    waysGiftTitle: 'ギフト用',
+    waysGiftP1: '作品ごとに限定のギフト版、ギフトカードに明記。',
+    waysGiftP2: 'stop のリスニング招待と合わせて。',
+    faqQ5: 'ギフト用に別の注文が必要ですか？',
+    faqA5: '不要です。ギフトを選んでチェックアウトで受取人のメールを入れてください。',
+    faqQ6: '支払い後、配送までどのくらいかかりますか？',
+    faqA6: '通常3-7日です。対象 stop によっては受け取り窓口があります。',
+    closingTitle: '選ぶ前にもう少しインスピレーションが欲しいですか？',
+    closingDesc: 'stop をもう一つ聴いてみるか、旅に合うお土産を提案してください。',
+    closingBtn: 'ニュースを読む',
   },
   ko: {
     pageTitle: 'Echora - 사이공 기념품',
@@ -286,9 +409,39 @@ export const SOUVENIR_DICTIONARY: Record<
     addToCart: '장바구니 담기',
     addedCount: '담김 ×{count}',
     outOfStock: '일시 품절',
+    quickAdd: '빠르게 추가',
+    addedOk: '추가됨 ✓',
     loadMore: '더 보기',
     faqTitle: '자주 묻는 질문',
     ctaBtn: '관광 명소로 이동',
+    showingRange: '{total}개 중 {start}–{end} 표시',
+    pagerLabel: '페이지네이션',
+    prevPage: '이전',
+    nextPage: '다음',
+    editorialTitle: '여정 사이의 사이공 한 조각',
+    editorialP1: '작은 기념품 한 개, 길고요, 그리고 떠나기 전에 잊을 만한 순간.',
+    editorialP2: '최근 들은 지점에서 선택하세요, 각 컬렉션은 그 여정의 조각입니다.',
+    editorialCta: '{name} 컬렉션 보기 →',
+    destiTitle: '다녀온 장소로 골라',
+    destiCount: '{count}개',
+    destiCta: '선물 보기',
+    waysTitle: '기념품 고르는 법',
+    waysDisplayTitle: '전시용',
+    waysDisplayP1: '집에 조용히 걸고, 지점의 이야기를 다시 살리세요.',
+    waysDisplayP2: '거주 중이거나 새 공간으로 옮길 때 좋아요.',
+    waysTravelTitle: '여행용',
+    waysTravelP1: '단단한 케이스와 지퍼 파우치, 작아도 기억에는 충분해요.',
+    waysTravelP2: '긴 여행이나 먼 친구에게 선물할 때. 잘 맞아요.',
+    waysGiftTitle: '선물용',
+    waysGiftP1: '작품별 한정 선물판, 선물 카드에 명시.',
+    waysGiftP2: '지점의 리스닝 초대와 함께.',
+    faqQ5: '선물용으로 별도 주문이 필요한가요?',
+    faqA5: '필요 없어요. 선물을 고르고 결제에서 받는 사람 이메일을 넣으세요.',
+    faqQ6: '결제 후 배송은 얼마나 걸리나요?',
+    faqA6: '보통 3-7일이에요. 지점에 따라 셀프픽업도 있어요.',
+    closingTitle: '선택하기 전에 마음에 더 좋은 영감이 필요한가요?',
+    closingDesc: '한 곳을 더 들어보거나, 여행에 맞는 기념품을 제안해 드릴게요.',
+    closingBtn: '뉴스 읽기',
   },
 };
 

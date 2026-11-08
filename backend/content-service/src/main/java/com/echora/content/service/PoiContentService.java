@@ -42,9 +42,13 @@ public interface PoiContentService {
 
     PoiDetailDto getPoiByQrToken(String qrToken, String lang);
 
+    PoiDetailDto getPoiBySlug(String slug, String lang);
+
     PoiInternalQrDto getInternalPoiByQrToken(String qrToken);
 
     java.util.Optional<Long> findPoiIdByQrToken(String qrToken);
+
+    java.util.Optional<Long> findPoiIdBySlug(String slug);
 
     List<PoiBoundingBoxDto> getPoisInBoundingBox(Long zoneId, BigDecimal minLat, BigDecimal maxLat, BigDecimal minLng, BigDecimal maxLng);
 

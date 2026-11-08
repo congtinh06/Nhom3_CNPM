@@ -318,9 +318,21 @@ export const QrLoginPanel: React.FC<QrLoginPanelProps> = ({ onSuccess, onGuestSu
             <p className="auth-qr-status">
               {isScanned ? t.auth.qrScanned : t.auth.qrWaiting}
             </p>
-            <p className="auth-qr-countdown" aria-live="polite">
-              {secondsLeft}s
-            </p>
+            {secondsLeft > 0 ? (
+              <p className="auth-qr-countdown" aria-live="polite">
+                {secondsLeft}s
+              </p>
+            ) : (
+              <button
+                type="button"
+                className="auth-qr-refresh"
+                onClick={() => void createSession()}
+                disabled={loading}
+              >
+                <RefreshCw size={15} aria-hidden="true" />
+                <span>{t.auth.qrRefresh}</span>
+              </button>
+            )}
           </>
         )}
 

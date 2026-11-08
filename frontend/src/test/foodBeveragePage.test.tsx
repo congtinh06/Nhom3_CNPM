@@ -150,7 +150,7 @@ describe('FoodBeveragePage - trang Quà lưu niệm', () => {
     ).not.toBeInTheDocument();
   });
 
-  it('mở trang chi tiết khi bấm vào thẻ sản phẩm thay vì mở modal', async () => {
+  it('mở quick view modal khi bấm vào thẻ sản phẩm thay vì chuyển trang chi tiết', async () => {
     renderWithRouteProbe();
 
     const card = await screen.findByRole('button', {
@@ -158,8 +158,8 @@ describe('FoodBeveragePage - trang Quà lưu niệm', () => {
     });
     fireEvent.click(card);
 
-    expect(await screen.findByText('PRODUCT DETAIL ROUTE')).toBeInTheDocument();
-    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(await screen.findByRole('dialog')).toBeInTheDocument();
+    expect(screen.queryByText('PRODUCT DETAIL ROUTE')).not.toBeInTheDocument();
   });
 
   it('lọc theo bộ sưu tập gợi ý nhanh và cập nhật số lượng giỏ hàng ngay trên nút thêm', async () => {
@@ -193,10 +193,10 @@ describe('FoodBeveragePage - trang Quà lưu niệm', () => {
     expect(displayBtn).toHaveAttribute('aria-pressed', 'false');
     expect(await screen.findByRole('heading', { name: 'Nam châm Chợ Bến Thành' })).toBeInTheDocument();
 
-    // Thêm vào giỏ và kiểm tra nhãn "Đã thêm ×1"
-    const addButtons = screen.getAllByRole('button', { name: 'Thêm vào giỏ' });
-    fireEvent.click(addButtons[0]!);
-    expect(await screen.findByRole('button', { name: 'Đã thêm ×1' })).toBeInTheDocument();
+    // Thêm nhanh và kiểm tra nhãn "Thêm nhanh" -> "Đã thêm ✓"
+    const quickAddButtons = screen.getAllByRole('button', { name: /Thêm nhanh/i });
+    fireEvent.click(quickAddButtons[0]!);
+    expect(await screen.findByRole('button', { name: 'Đã thêm ✓' })).toBeInTheDocument();
   });
 
   it('hiển thị gợi ý điểm vừa nghe từ echora_listened_pois và ẩn khi chưa nghe điểm nào', async () => {
@@ -218,7 +218,7 @@ describe('FoodBeveragePage - trang Quà lưu niệm', () => {
     });
   });
 
-  it('hiển thị nút Xem thêm khi danh mục có hơn 8 món quà lưu niệm', async () => {
+  it('hiển thị phân trang số khi danh mục có hơn 8 món quà lưu niệm', async () => {
     const tenSouvenirs = Array.from({ length: 10 }, (_, i) =>
       makeProduct({
         id: 10 + i,
@@ -232,10 +232,13 @@ describe('FoodBeveragePage - trang Quà lưu niệm', () => {
 
     renderPage('/am-thuc');
     expect(await screen.findByRole('heading', { name: 'Quà lưu niệm số 1' })).toBeInTheDocument();
-    expect(screen.queryByRole('heading', { name: 'Quà lưu niệm số 10' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Quà lưu niệm số 9' })).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Xem thêm' }));
-    expect(await screen.findByRole('heading', { name: 'Quà lưu niệm số 10' })).toBeInTheDocument();
+    // 8 món đầu: trang 1 / 2
+    expect(screen.getByText('Hiển thị 1–8 trên 10 món')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: '2' }));
+    expect(await screen.findByRole('heading', { name: 'Quà lưu niệm số 9' })).toBeInTheDocument();
   });
 
   it('tìm kiếm trực tiếp không mất dấu cách tiếng Việt, hiện gợi ý live autocomplete và mở chi tiết khi chọn gợi ý', async () => {

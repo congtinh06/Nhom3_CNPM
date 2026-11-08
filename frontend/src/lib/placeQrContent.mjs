@@ -14,16 +14,22 @@ export function normalizeQrBaseUrl(baseUrl) {
 }
 
 /**
- * Build the URL encoded in a POI QR code. ScanPage parses the token back out of
- * the "/qr/<token>" segment, so the shape must stay: <baseUrl>/qr/<token>.
+ * Build the URL encoded in a POI's QR code.
+ *
+ * Mỗi điểm có link riêng dạng <baseUrl>/diem/<slug>, nên nội dung mã QR dùng slug
+ * của POI. Giữ fallback sang token (/qr/<token>) cho dữ liệu chưa có slug.
  * @param {string | null | undefined} baseUrl
  * @param {string | null | undefined} qrToken
+ * @param {string | null | undefined} slug
  * @returns {string}
  */
-export function buildPlaceQrContent(baseUrl, qrToken) {
+export function buildPlaceQrContent(baseUrl, qrToken, slug) {
   const token = String(qrToken ?? '').trim();
-  if (!token) return '';
+  const targetSlug = String(slug ?? '').trim();
+  if (!targetSlug && !token) return '';
   const prefix = normalizeQrBaseUrl(baseUrl);
-  const path = `/qr/${encodeURIComponent(token)}`;
+  const path = targetSlug
+    ? `/diem/${encodeURIComponent(targetSlug)}`
+    : `/qr/${encodeURIComponent(token)}`;
   return prefix ? `${prefix}${path}` : path;
 }

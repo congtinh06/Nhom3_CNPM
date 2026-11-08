@@ -28,6 +28,8 @@ public interface PoiRepository extends JpaRepository<Poi, Long> {
 
     Optional<Poi> findByCode(String code);
 
+    Optional<Poi> findBySlug(String slug);
+
     boolean existsByRouteIdAndStopOrder(Long routeId, Integer stopOrder);
 
     long countByRouteId(Long routeId);

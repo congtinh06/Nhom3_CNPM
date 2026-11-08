@@ -71,6 +71,14 @@ public class PoiController {
         return ResponseEntity.ok(poiContentService.getPoiByQrToken(qrToken, lang));
     }
 
+    @GetMapping("/api/content/pois/slug/{slug}")
+    public ResponseEntity<PoiDetailDto> getPoiBySlug(
+            @PathVariable String slug,
+            @RequestParam(defaultValue = "vi")
+            @Pattern(regexp = "vi|en|ja|ko", message = "lang must be one of: vi, en, ja, ko") String lang) {
+        return ResponseEntity.ok(poiContentService.getPoiBySlug(slug, lang));
+    }
+
     @Hidden
     @GetMapping("/api/content/internal/pois/bounding-box")
     public ResponseEntity<List<PoiBoundingBoxDto>> getPoisInBoundingBox(

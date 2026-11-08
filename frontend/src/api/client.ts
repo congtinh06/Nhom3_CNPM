@@ -137,6 +137,14 @@ export const api = {
     return response.data;
   },
 
+  getPoiBySlug: async (slug: string, lang: string = 'vi', signal?: AbortSignal): Promise<PoiDetail> => {
+    const response = await apiClient.get<PoiDetail>(`/api/content/pois/slug/${encodeURIComponent(slug)}`, {
+      params: { lang },
+      signal,
+    });
+    return response.data;
+  },
+
   getPoiByQr: async (qrToken: string, lang: string = 'vi', signal?: AbortSignal): Promise<PoiDetail> => {
     const response = await apiClient.get<PoiDetail>(`/api/content/pois/qr/${encodeURIComponent(qrToken)}`, {
       params: { lang },

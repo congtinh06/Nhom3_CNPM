@@ -111,22 +111,13 @@ describe('UserMenu', () => {
     expect(accountLink).toHaveAttribute('href', '/tai-khoan');
   });
 
-  it('liên kết quét QR điểm du lịch trỏ tới đúng route', async () => {
+  it('liên kết đăng nhập nhanh trên điện thoại không còn hiển thị', async () => {
     renderUserMenu();
 
     await openMenu();
-    const scanQrLink = screen.getByRole('menuitem', { name: 'Quét mã điểm du lịch' });
-    expect(scanQrLink).toHaveAttribute('href', '/quet-ma');
-  });
-
-  it('liên kết đăng nhập nhanh trên điện thoại trỏ tới đúng route', async () => {
-    renderUserMenu();
-
-    await openMenu();
-    const phoneLoginLink = screen.getByRole('menuitem', {
-      name: 'Đăng nhập nhanh trên điện thoại',
-    });
-    expect(phoneLoginLink).toHaveAttribute('href', '/qr-tai-khoan');
+    expect(
+      screen.queryByRole('menuitem', { name: 'Đăng nhập thiết bị khác bằng QR' })
+    ).not.toBeInTheDocument();
   });
 
   it('di chuyển focus giữa các mục bằng phím mũi tên', async () => {
@@ -135,10 +126,6 @@ describe('UserMenu', () => {
     const trigger = await openMenu();
     const accountLink = screen.getByRole('menuitem', { name: 'Tài khoản của tôi' });
     const ordersLink = screen.getByRole('menuitem', { name: 'Đơn hàng của tôi' });
-    const scanQrLink = screen.getByRole('menuitem', { name: 'Quét mã điểm du lịch' });
-    const phoneLoginLink = screen.getByRole('menuitem', {
-      name: 'Đăng nhập nhanh trên điện thoại',
-    });
     const signOutBtn = screen.getByRole('menuitem', { name: 'Đăng xuất' });
 
     fireEvent.keyDown(trigger, { key: 'ArrowDown' });
@@ -148,21 +135,9 @@ describe('UserMenu', () => {
     expect(ordersLink).toHaveFocus();
 
     fireEvent.keyDown(ordersLink, { key: 'ArrowDown' });
-    expect(scanQrLink).toHaveFocus();
-
-    fireEvent.keyDown(scanQrLink, { key: 'ArrowDown' });
-    expect(phoneLoginLink).toHaveFocus();
-
-    fireEvent.keyDown(phoneLoginLink, { key: 'ArrowDown' });
     expect(signOutBtn).toHaveFocus();
 
     fireEvent.keyDown(signOutBtn, { key: 'ArrowUp' });
-    expect(phoneLoginLink).toHaveFocus();
-
-    fireEvent.keyDown(phoneLoginLink, { key: 'ArrowUp' });
-    expect(scanQrLink).toHaveFocus();
-
-    fireEvent.keyDown(scanQrLink, { key: 'ArrowUp' });
     expect(ordersLink).toHaveFocus();
   });
 });

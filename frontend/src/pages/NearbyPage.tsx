@@ -373,6 +373,19 @@ export const NearbyPage: React.FC = () => {
     setIsSouvenirDragging(false);
   };
 
+  const [souvenirNav, setSouvenirNav] = useState({ canPrev: false, canNext: false });
+
+  const syncSouvenirNav = useCallback(() => {
+    const el = souvenirCarouselRef.current;
+    if (!el) return;
+    const maxScroll = el.scrollWidth - el.clientWidth;
+    const canPrev = el.scrollLeft > 4;
+    const canNext = maxScroll > 4 && el.scrollLeft < maxScroll - 4;
+    setSouvenirNav((prev) =>
+      prev.canPrev === canPrev && prev.canNext === canNext ? prev : { canPrev, canNext }
+    );
+  }, []);
+
   const handleScrollSouvenir = (direction: 'left' | 'right') => {
     if (!souvenirCarouselRef.current) return;
     const scrollAmount = direction === 'left' ? -280 : 280;
@@ -795,18 +808,36 @@ export const NearbyPage: React.FC = () => {
     return null;
   }, [gpsError, userPos, sortedPois, currentLang, getPoiName]);
 
-  const scrollHeroIntoView = useCallback(() => {
-    if (!heroRef.current) return;
-    const rect = heroRef.current.getBoundingClientRect();
-    if (rect.top < 64 || rect.top > window.innerHeight) {
-      const prefersReducedMotion =
-        typeof window !== 'undefined' &&
-        window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      heroRef.current.scrollIntoView({
+  // The open story lives inside an accordion panel flattened with
+  // `display: contents`, so its inner hero has no layout box to scroll to.
+  // Scroll the stop row instead, once the 250ms accordion swap has settled, so
+  // the newly opened story lands just below the fixed header.
+  const scrollActiveStopIntoView = useCallback((poiId: string) => {
+    const prefersReducedMotion =
+      typeof window !== 'undefined' &&
+      typeof window.matchMedia === 'function' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    window.setTimeout(() => {
+      const escapedId =
+        typeof CSS !== 'undefined' && typeof CSS.escape === 'function'
+          ? CSS.escape(poiId)
+          : poiId;
+      const el = document.querySelector<HTMLElement>(
+        `.nearby-stop-item[data-poi-id="${escapedId}"]`
+      );
+      if (!el) return;
+
+      const rect = el.getBoundingClientRect();
+      const headerOffset = 76;
+      const alreadyInView = rect.top >= headerOffset && rect.top <= window.innerHeight * 0.6;
+      if (alreadyInView) return;
+
+      el.scrollIntoView({
         behavior: prefersReducedMotion ? 'auto' : 'smooth',
         block: 'start',
       });
-    }
+    }, 280);
   }, []);
 
   const handleExplicitSelectPoi = useCallback(
@@ -824,11 +855,43 @@ export const NearbyPage: React.FC = () => {
       }
 
       if (shouldScroll) {
-        scrollHeroIntoView();
+        scrollActiveStopIntoView(poiId);
       }
     },
-    [pois, scrollHeroIntoView]
+    [pois, scrollActiveStopIntoView]
   );
+
+  // On phones the route strip scrolls horizontally without visible scrollbar,
+  // so a deep link (or a stop picked from elsewhere) can leave the active step
+  // off-screen. Nudge only the strip, never the page, when that happens.
+  useEffect(() => {
+    if (!effectiveActiveId || typeof window === 'undefined') return;
+    const timer = window.setTimeout(() => {
+      const wrap = document.querySelector<HTMLElement>('.nearby-sv-root .stripw');
+      const step = wrap?.querySelector<HTMLElement>('.strip .sd[aria-current="step"]');
+      if (!wrap || !step) return;
+      if (wrap.scrollWidth <= wrap.clientWidth + 2) return;
+
+      const wrapRect = wrap.getBoundingClientRect();
+      const stepRect = step.getBoundingClientRect();
+      const pad = 16;
+      let delta = 0;
+      if (stepRect.left < wrapRect.left + pad) {
+        delta = stepRect.left - wrapRect.left - pad;
+      } else if (stepRect.right > wrapRect.right - pad) {
+        delta = stepRect.right - wrapRect.right + pad;
+      }
+      if (delta === 0 || typeof wrap.scrollBy !== 'function') return;
+      const prefersReducedMotion =
+        typeof window.matchMedia === 'function' &&
+        window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      wrap.scrollBy({
+        left: delta,
+        behavior: prefersReducedMotion ? 'auto' : 'smooth',
+      });
+    }, 140);
+    return () => window.clearTimeout(timer);
+  }, [effectiveActiveId]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -1100,6 +1163,23 @@ export const NearbyPage: React.FC = () => {
   const { carouselProducts: souvenirProducts } = useNearbySouvenirs();
   const { isFavorite, toggleFavorite } = useFavorites();
 
+  // Keep the souvenir arrows honest: no "previous" at the start, no "next" at
+  // the end, and no arrows at all when every card already fits on screen.
+  useEffect(() => {
+    syncSouvenirNav();
+    const carousel = souvenirCarouselRef.current;
+    const observer =
+      typeof ResizeObserver !== 'undefined' && carousel
+        ? new ResizeObserver(syncSouvenirNav)
+        : null;
+    if (carousel && observer) observer.observe(carousel);
+    window.addEventListener('resize', syncSouvenirNav);
+    return () => {
+      observer?.disconnect();
+      window.removeEventListener('resize', syncSouvenirNav);
+    };
+  }, [souvenirProducts, syncSouvenirNav]);
+
   const handleAddSouvenirToCart = useCallback(
     (product: Product) => {
       if (!product.isActive) return;
@@ -1296,6 +1376,7 @@ export const NearbyPage: React.FC = () => {
                   key={item.poi.id}
                   type="button"
                   className={`sd ${isItemListened ? 'heard' : ''} ${isItemActive ? 'on' : ''}`}
+                  aria-current={isItemActive ? 'step' : undefined}
                   onClick={() => handleExplicitSelectPoi(item.poi.id, true)}
                 >
                   {item.stopNumber ?? idx + 1}. {getPoiName(item.poi)}
@@ -1491,6 +1572,7 @@ export const NearbyPage: React.FC = () => {
                   className="shop-arrow-btn prev"
                   onClick={() => handleScrollSouvenir('left')}
                   aria-label={t(currentLang, 'shopPrevAria')}
+                  disabled={!souvenirNav.canPrev}
                 >
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" width="16" height="16" aria-hidden="true">
                     <path d="M15 18l-6-6 6-6" />
@@ -1501,6 +1583,7 @@ export const NearbyPage: React.FC = () => {
                   className="shop-arrow-btn next"
                   onClick={() => handleScrollSouvenir('right')}
                   aria-label={t(currentLang, 'shopNextAria')}
+                  disabled={!souvenirNav.canNext}
                 >
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" width="16" height="16" aria-hidden="true">
                     <path d="M9 18l6-6-6-6" />
@@ -1537,6 +1620,7 @@ export const NearbyPage: React.FC = () => {
               className={`goods goods-carousel ${isSouvenirDragging ? 'is-dragging' : ''}`}
               id="goods"
               ref={souvenirCarouselRef}
+              onScroll={syncSouvenirNav}
               onMouseDown={handleSouvenirMouseDown}
               onMouseMove={handleSouvenirMouseMove}
               onMouseUp={handleSouvenirMouseUpOrLeave}

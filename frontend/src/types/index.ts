@@ -238,6 +238,7 @@ export interface Product {
   portion?: string;
   hasDrinkOptions?: boolean;
   imagePath: string;
+  secondImagePath?: string;
   poiId?: number | null;
   poiSlug?: string | null;
   isActive: boolean;

@@ -343,57 +343,57 @@ IF NOT EXISTS (SELECT 1 FROM dbo.products WHERE slug = 'tranh-theu-nha-tho-duc-b
     INSERT INTO dbo.products (slug, name, category, short_description, description, price, image_path, poi_id, is_active, sort_order)
     VALUES ('tranh-theu-nha-tho-duc-ba', N'Tranh thêu tay Nhà thờ Đức Bà', 'SOUVENIR',
     N'Tranh thêu tay hình Nhà thờ Đức Bà với từng đường kim mũi chỉ tinh xảo.',
-    N'Bức tranh thêu tay tái hiện Nhà thờ Đức Bà Sài Gòn với hai tháp chuông và hàng cây xanh mát. Người thợ dùng nhiều sắc chỉ để làm nổi khối kiến trúc gạch hồng đặc trưng. Khung tranh gỗ chắc chắn, phù hợp treo phòng khách hoặc làm quà tặng mang giá trị thủ công.',
-    260000, '/images/souvenirs/tranh-nha-tho-duc-ba.jpg', (SELECT id FROM dbo.poi WHERE code = 'POI_DUC_BA_01'), 1, 7);
+    N'Tác phẩm thủ công truyền thống được các nghệ nhân thêu tay hàng chục giờ đồng hồ từ sợi chỉ tơ bóng trên nền vải lụa tơ tằm. Bức tranh tái hiện sắc nét hai tháp chuông vươn cao, tường gạch Marseille đỏ hồng cổ kính và tượng Đức Mẹ Hòa Bình uy nghiêm giữa vườn hoa. Đường nét thêu chuyển màu mượt mà tạo chiều sâu thị giác chân thực. Đóng khung gỗ thông kèm kính bảo vệ cao cấp.',
+    260000, '/images/souvenirs/tranh-theu.jpg', (SELECT id FROM dbo.poi WHERE code = 'POI_DUC_BA_01'), 1, 7);
 
 IF NOT EXISTS (SELECT 1 FROM dbo.products WHERE slug = 'tranh-ma-vang-nha-tho-duc-ba')
     INSERT INTO dbo.products (slug, name, category, short_description, description, price, image_path, poi_id, is_active, sort_order)
     VALUES ('tranh-ma-vang-nha-tho-duc-ba', N'Tranh mạ vàng Nhà thờ Đức Bà', 'SOUVENIR',
     N'Tranh mạ vàng ánh kim hình Nhà thờ Đức Bà, quà tặng trang trọng.',
-    N'Hình ảnh Nhà thờ Đức Bà được in trên nền kim loại và mạ vàng tạo hiệu ứng sáng bóng sang trọng. Khung gỗ kèm lớp mica giúp bức tranh bền màu và dễ vệ sinh. Món quà lưu niệm này phù hợp cho cả trưng bày lẫn biếu tặng.',
+    N'Bức tranh kỷ niệm danh thắng Nhà thờ Đức Bà Sài Gòn được chế tác bằng lá kim loại mạ vàng 24K công nghệ điện phân tinh xảo. Các chi tiết hoa văn vòm cửa Roman, tháp chuông Gothic và đồng hồ cổ đều được khắc họa sắc nét với độ sáng bóng lấp lánh. Khung gỗ cao cấp chống mối mọt, phủ sơn nâu trầm cổ điển, là tặng phẩm sang trọng cho du khách trong và ngoài nước.',
     190000, '/images/souvenirs/tranh-nha-tho-duc-ba.jpg', (SELECT id FROM dbo.poi WHERE code = 'POI_DUC_BA_01'), 1, 8);
 
 IF NOT EXISTS (SELECT 1 FROM dbo.products WHERE slug = 'nam-cham-nha-tho-duc-ba')
     INSERT INTO dbo.products (slug, name, category, short_description, description, price, image_path, poi_id, is_active, sort_order)
     VALUES ('nam-cham-nha-tho-duc-ba', N'Nam châm Nhà thờ Đức Bà', 'SOUVENIR',
-    N'Nam châm tủ lạnh hình Nhà thờ Đức Bà, nhỏ gọn và dễ thương.',
-    N'Nam châm ép nổi hình Nhà thờ Đức Bà với màu gạch hồng nổi bật, gắn chắc trên tủ lạnh hoặc bảng từ. Món quà nhỏ gọn, dễ mang theo và phù hợp để tặng nhiều người. Sản phẩm là cách gọn gàng để lưu giữ kỷ niệm về biểu tượng của Sài Gòn.',
+    N'Nam châm Nhà thờ Đức Bà, nhỏ gọn và dễ thương.',
+    N'Nam châm tủ lạnh lưu niệm tạo hình khối kiến trúc Nhà thờ Đức Bà với tông màu gạch nung đỏ rực rỡ đặc trưng. Chế tác từ kim loại đúc nguyên khối phủ men epoxy bóng bảo vệ, chống trầy xước và bay màu. Nam châm sau lưng hút mạnh mẽ, giữ chắc giấy ghi chú trên tủ lạnh hoặc bảng thông tin gia đình.',
     30000, '/images/souvenirs/nam-cham.jpg', (SELECT id FROM dbo.poi WHERE code = 'POI_DUC_BA_01'), 1, 9);
 
 IF NOT EXISTS (SELECT 1 FROM dbo.products WHERE slug = 'buu-thiep-nha-tho-duc-ba')
     INSERT INTO dbo.products (slug, name, category, short_description, description, price, image_path, poi_id, is_active, sort_order)
     VALUES ('buu-thiep-nha-tho-duc-ba', N'Bưu thiếp Nhà thờ Đức Bà', 'SOUVENIR',
     N'Bưu thiếp in hình Nhà thờ Đức Bà với góc chụp đẹp.',
-    N'Tấm bưu thiếp in hình Nhà thờ Đức Bà với bố cục trang nhã và màu sắc trung thực. Mặt sau có chỗ viết lời nhắn và dán tem để gửi đi. Món quà lưu niệm giản dị nhưng giàu cảm xúc cho người nhận.',
-    25000, '/images/souvenirs/buu-thiep.jpg', (SELECT id FROM dbo.poi WHERE code = 'POI_DUC_BA_01'), 1, 10);
+    N'Bưu thiếp nghệ thuật tái hiện góc nhìn kinh điển của Nhà thờ Chính tòa Đức Bà Sài Gòn từ quảng trường Công xã Paris. Sử dụng công nghệ in offset sắc nét trên giấy mỹ thuật nhập khẩu có vân nhẹ, màu sắc trầm ấm hoài niệm. Thích hợp làm quà tặng lưu niệm bưu chính, viết thư tay gửi người thân yêu hoặc ép khung nhỏ trang trí góc bàn học tập.',
+    25000, '/images/souvenirs/buu-thiep-duc-ba.jpg', (SELECT id FROM dbo.poi WHERE code = 'POI_DUC_BA_01'), 1, 10);
 
 IF NOT EXISTS (SELECT 1 FROM dbo.products WHERE slug = 'chuoi-hat-go-my-nghe')
     INSERT INTO dbo.products (slug, name, category, short_description, description, price, image_path, poi_id, is_active, sort_order)
     VALUES ('chuoi-hat-go-my-nghe', N'Chuỗi hạt gỗ mỹ nghệ', 'SOUVENIR',
     N'Chuỗi hạt gỗ mỹ nghệ chạm khắc tinh tế, hợp làm quà tặng.',
-    N'Chuỗi hạt được tiện và chạm khắc thủ công từ gỗ, mỗi hạt đều mịn và thơm nhẹ mùi gỗ tự nhiên. Sản phẩm mang nét mộc mạc của làng nghề truyền thống Việt Nam. Thích hợp đeo trang trí, treo xe hoặc làm quà tặng cho người lớn tuổi.',
+    N'Chuỗi tràng hạt 108 hạt được tiện tròn và đánh bóng thủ công từ gỗ bách xanh tự nhiên, mang hương thơm mộc dịu nhẹ giúp tinh thần thư thái, an yên. Từng hạt gỗ đều đặn, vân gỗ tự nhiên nổi bật, xâu bằng dây dù siêu bền có khả năng co giãn linh hoạt. Phù hợp để lần hạt tĩnh tâm, đeo tay như vòng phong thủy may mắn hoặc treo xe hơi cầu bình an trong mọi chuyến đi.',
     65000, '/images/souvenirs/chuoi-hat-go.jpg', (SELECT id FROM dbo.poi WHERE code = 'POI_DUC_BA_01'), 1, 11);
 
 IF NOT EXISTS (SELECT 1 FROM dbo.products WHERE slug = 'tem-suu-tam-sai-gon')
     INSERT INTO dbo.products (slug, name, category, short_description, description, price, image_path, poi_id, is_active, sort_order)
     VALUES ('tem-suu-tam-sai-gon', N'Bộ tem sưu tầm Sài Gòn', 'SOUVENIR',
     N'Bộ tem in hình các danh thắng Sài Gòn dành cho người sưu tầm.',
-    N'Bộ tem giới thiệu hình ảnh các công trình và danh thắng nổi tiếng của Sài Gòn như Bưu điện Trung tâm, Nhà thờ Đức Bà và Chợ Bến Thành. Tem được in màu sắc nét trên giấy tốt, giữ được độ mới theo thời gian. Đây là món quà tinh tế cho người yêu thích sưu tầm và văn hóa bưu chính.',
-    50000, '/images/souvenirs/buu-thiep.jpg', (SELECT id FROM dbo.poi WHERE code = 'POI_BUU_DIEN_01'), 1, 12);
+    N'Bộ sưu tập tem bưu chính phát hành đặc biệt giới thiệu các công trình kiến trúc di sản tiêu biểu của TP. Hồ Chí Minh: Bưu điện Trung tâm, Nhà hát Thành phố, Bến Nhà Rồng và Chợ Bến Thành. Tem nguyên bản có răng cưa sắc nét, bảo quản trong bìa mica trong suốt chống ẩm và bụi bẩn. Món quà văn hóa vô giá cho những người say mê nghệ thuật thư tín và sưu tầm tem bưu hoa.',
+    50000, '/images/souvenirs/tem-suu-tam.jpg', (SELECT id FROM dbo.poi WHERE code = 'POI_BUU_DIEN_01'), 1, 12);
 
 IF NOT EXISTS (SELECT 1 FROM dbo.products WHERE slug = 'buu-thiep-retro-sai-gon')
     INSERT INTO dbo.products (slug, name, category, short_description, description, price, image_path, poi_id, is_active, sort_order)
     VALUES ('buu-thiep-retro-sai-gon', N'Bưu thiếp retro Sài Gòn xưa', 'SOUVENIR',
     N'Bưu thiếp phong cách retro in hình Sài Gòn xưa.',
-    N'Bộ bưu thiếp mang phong cách hoài cổ tái hiện nhịp sống Sài Gòn những thập niên trước qua gam màu ấm. Hình ảnh đường phố, xe cộ và các công trình kiến trúc cũ được in sắc nét trên giấy mờ. Món quà phù hợp cho người yêu thích nét cổ điển và ký ức về một Sài Gòn xưa.',
-    30000, '/images/souvenirs/buu-thiep.jpg', (SELECT id FROM dbo.poi WHERE code = 'POI_BUU_DIEN_01'), 1, 13);
+    N'Bộ bưu thiếp phục dựng từ những tấm ảnh tư liệu quý chụp Sài Gòn đầu thế kỷ XX: bến Bạch Đằng, đường Catinat (Đồng Khởi), xe thổ mộ và các tiệm quán xưa cũ. Tông màu ngả vàng sepia hoài cổ in trên giấy kraft định lượng cao tạo cảm giác chân thật và xúc cảm lắng đọng về ký ức Hòn ngọc Viễn Đông một thời.',
+    30000, '/images/souvenirs/buu-thiep-retro.jpg', (SELECT id FROM dbo.poi WHERE code = 'POI_BUU_DIEN_01'), 1, 13);
 
 IF NOT EXISTS (SELECT 1 FROM dbo.products WHERE slug = 'moc-khoa-buu-dien')
     INSERT INTO dbo.products (slug, name, category, short_description, description, price, image_path, poi_id, is_active, sort_order)
     VALUES ('moc-khoa-buu-dien', N'Móc khóa Bưu điện Trung tâm', 'SOUVENIR',
     N'Móc khóa hình Bưu điện Trung tâm Sài Gòn, món quà nhỏ gọn.',
-    N'Móc khóa in hình Bưu điện Trung tâm với thiết kế nhỏ gọn, gắn kèm khoen kim loại chắc chắn. Sản phẩm dễ mang theo và có thể dùng treo chìa khóa, balo hoặc làm quà tặng số đông. Một món lưu niệm dễ thương lưu giữ kỷ niệm nơi tòa nhà bưu chính cổ kính.',
-    25000, '/images/souvenirs/tranh-buu-dien.jpg', (SELECT id FROM dbo.poi WHERE code = 'POI_BUU_DIEN_01'), 1, 14);
+    N'Móc khóa kim loại đúc nổi hình mái vòm và mặt tiền màu vàng đất đặc trưng của Bưu điện Trung tâm Sài Gòn do kiến trúc sư Gustave Eiffel tham gia thiết kế. Móc khóa trang bị khoen xoay 360 độ bằng thép không gỉ sáng bóng, cầm đầm tay, bền bỉ khi treo chìa khóa xe máy, khóa nhà hoặc trang trí balo túi xách.',
+    25000, '/images/souvenirs/moc-khoa.jpg', (SELECT id FROM dbo.poi WHERE code = 'POI_BUU_DIEN_01'), 1, 14);
 
 IF NOT EXISTS (SELECT 1 FROM dbo.products WHERE slug = 'tranh-ma-vang-buu-dien')
     INSERT INTO dbo.products (slug, name, category, short_description, description, price, image_path, poi_id, is_active, sort_order)
@@ -518,8 +518,8 @@ IF NOT EXISTS (SELECT 1 FROM dbo.products WHERE slug = 'nam-cham-bao-tang')
     INSERT INTO dbo.products (slug, name, category, short_description, description, price, image_path, poi_id, is_active, sort_order)
     VALUES ('nam-cham-bao-tang', N'Nam châm Bảo tàng Chứng tích Chiến tranh', 'SOUVENIR',
     N'Nam châm tủ lạnh in hình Bảo tàng Chứng tích Chiến tranh.',
-    N'Nam châm ép nổi tái hiện mặt tiền Bảo tàng Chứng tích Chiến tranh với màu sắc trang nghiêm. Sản phẩm gắn chắc trên bề mặt kim loại và dễ mang theo. Món lưu niệm nhỏ nhắc nhớ một địa chỉ mang nhiều giá trị lịch sử và hòa bình.',
-    30000, '/images/souvenirs/nam-cham.jpg', (SELECT id FROM dbo.poi WHERE code = 'POI_BAO_TANG_CHUNG_TICH_01'), 1, 32);
+    N'Nam châm lưu niệm đúc nổi hình khối mặt tiền Bảo tàng Chứng tích Chiến tranh - một trong những điểm đến thu hút du khách quốc tế hàng đầu tại Việt Nam. Sản phẩm mang thông điệp gìn giữ ký ức lịch sử và trân trọng giá trị hòa bình, gắn chắc chắn trên mọi bề mặt kim loại.',
+    30000, '/images/souvenirs/tranh-bao-tang.jpg', (SELECT id FROM dbo.poi WHERE code = 'POI_BAO_TANG_CHUNG_TICH_01'), 1, 32);
 
 IF NOT EXISTS (SELECT 1 FROM dbo.products WHERE slug = 'nhang-thom-chua-ba')
     INSERT INTO dbo.products (slug, name, category, short_description, description, price, image_path, poi_id, is_active, sort_order)

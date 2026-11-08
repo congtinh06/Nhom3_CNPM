@@ -41,12 +41,18 @@ export const Header: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const [isLangOpen, setIsLangOpen] = useState(false);
+  const [cartBumpCount, setCartBumpCount] = useState(0);
 
   const langTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const clearDropdownTimers = useCallback(() => {
     if (langTimerRef.current) clearTimeout(langTimerRef.current);
   }, []);
+
+  // Thay đổi số lượng giỏ hàng -> hiệu ứng nảy badge (1 -> 1.15 -> 1)
+  useEffect(() => {
+    setCartBumpCount((prev) => prev + 1);
+  }, [totalCount]);
 
   const handleLangEnter = () => {
     if (langTimerRef.current) clearTimeout(langTimerRef.current);
@@ -399,7 +405,7 @@ export const Header: React.FC = () => {
         >
           <ShoppingBag size={20} strokeWidth={1.75} aria-hidden="true" />
           {totalCount > 0 && (
-            <span id="cc" className="cart-badge">
+            <span key={cartBumpCount} id="cc" className="cart-badge">
               {totalCount}
             </span>
           )}
@@ -622,6 +628,17 @@ export const Header: React.FC = () => {
                   <span className="mobile-user-name">{displayName}</span>
                 </div>
                 <div className="mobile-user-links">
+                  <a
+                    href="/quet-ma"
+                    className="mobile-sub-item"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      closeAllMenus();
+                      navigate('/quet-ma');
+                    }}
+                  >
+                    <span>{t.scanPoiQr}</span>
+                  </a>
                   <a
                     href="/don-hang"
                     className="mobile-sub-item"

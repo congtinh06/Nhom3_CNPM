@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { ChevronDown, LogOut, ScanLine, ShieldCheck, ShoppingBag, Smartphone, User } from 'lucide-react';
+import { ChevronDown, LogOut, ShieldCheck, ShoppingBag, User } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useNavbarLanguage } from '../../content/languages';
 import { useAccountI18n } from '../account/accountI18n';
@@ -105,18 +105,6 @@ export const UserMenu: React.FC = () => {
     navigate('/don-hang');
   };
 
-  const handleScanQrClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
-    e.preventDefault();
-    setIsOpen(false);
-    navigate('/quet-ma');
-  };
-
-  const handlePhoneLoginClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
-    e.preventDefault();
-    setIsOpen(false);
-    navigate('/qr-tai-khoan');
-  };
-
   const handleAdminClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
     e.preventDefault();
     setIsOpen(false);
@@ -188,36 +176,10 @@ export const UserMenu: React.FC = () => {
             <span>{t.auth.myOrders}</span>
           </a>
 
-          <a
-            ref={(el) => {
-              itemRefs.current[2] = el;
-            }}
-            href="/quet-ma"
-            role="menuitem"
-            className="um-item"
-            onClick={handleScanQrClick}
-          >
-            <ScanLine size={15} strokeWidth={1.9} aria-hidden="true" className="gm-action-icon" />
-            <span>{t.scanPoiQr}</span>
-          </a>
-
-          <a
-            ref={(el) => {
-              itemRefs.current[3] = el;
-            }}
-            href="/qr-tai-khoan"
-            role="menuitem"
-            className="um-item"
-            onClick={handlePhoneLoginClick}
-          >
-            <Smartphone size={15} strokeWidth={1.9} aria-hidden="true" className="gm-action-icon" />
-            <span>{t.auth.qrHandoffTitle}</span>
-          </a>
-
           {isAdmin && (
             <a
               ref={(el) => {
-                itemRefs.current[4] = el;
+                itemRefs.current[2] = el;
               }}
               href="/quan-tri"
               role="menuitem"
@@ -234,11 +196,11 @@ export const UserMenu: React.FC = () => {
           <button
             ref={(el) => {
               if (isAdmin) {
-                itemRefs.current[5] = el;
-                itemRefs.current.length = 6;
+                itemRefs.current[3] = el;
+                itemRefs.current.length = 4;
               } else {
-                itemRefs.current[4] = el;
-                itemRefs.current.length = 5;
+                itemRefs.current[2] = el;
+                itemRefs.current.length = 3;
               }
             }}
             type="button"
