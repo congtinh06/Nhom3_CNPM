@@ -91,6 +91,7 @@ jobs:
       - name: Poll CI workflow runs for this SHA
         env:
           GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
           SHA: ${{ github.sha }}
         run: |
           set -euo pipefail
