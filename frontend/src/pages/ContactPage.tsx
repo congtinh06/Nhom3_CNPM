@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { MapPin, PhoneCall, Mail, Clock, CheckCircle2 } from 'lucide-react';
-import { PageHero } from '../components/common/PageHero';
 import { submitFeedback } from '../services/feedbackService';
 import { useDocumentMeta } from '../hooks/useDocumentMeta';
 import { ContactMap } from '../components/contact/ContactMap';
@@ -35,6 +34,7 @@ export const ContactPage: React.FC = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
+  const [topic, setTopic] = useState('Hỗ trợ sử dụng thuyết minh');
   const [message, setMessage] = useState('');
   const [showOptional, setShowOptional] = useState(false);
   const [touched, setTouched] = useState<Record<string, boolean>>({});
@@ -65,6 +65,7 @@ export const ContactPage: React.FC = () => {
     setName('');
     setEmail('');
     setPhone('');
+    setTopic('Hỗ trợ sử dụng thuyết minh');
     setMessage('');
     setShowOptional(false);
     setTouched({});
@@ -83,7 +84,11 @@ export const ContactPage: React.FC = () => {
     }
     setSubmitAttempted(true);
 
-    const lines = [message.trim()];
+    const lines: string[] = [];
+    if (topic && topic !== 'Khác') {
+      lines.push(`Chủ đề: ${topic}`);
+    }
+    lines.push(message.trim());
     if (phone.trim()) lines.push(`SĐT: ${phone.trim()}`);
 
     setIsSubmitting(true);
@@ -104,16 +109,15 @@ export const ContactPage: React.FC = () => {
 
   return (
     <div className="contact-page-root">
-      <PageHero
-        className="contact-hero"
-        eyebrow=""
-        title="Liên hệ"
-        subtitle="Gọi điện, gửi email hoặc để lại tin nhắn cho Echora."
-        imageSrc="/images/pois/buu-dien-trung-tam.jpg"
-        imagePosition="center"
-      />
+      <div className="contact-wrap">
+        <header className="contact-head">
+          <h1 className="contact-head-title">Liên hệ</h1>
+          <p className="contact-head-subtitle">
+            Bạn cần hỗ trợ khi nghe thuyết minh, muốn hỏi về đơn hàng quà lưu niệm, hay muốn góp ý cho Echora? Chúng tôi lắng nghe bạn.
+          </p>
+        </header>
 
-      <main className="contact-container">
+        <main className="contact-container">
         <div className="contact-grid">
           {/* Cột trái: Thông tin liên hệ & Bản đồ */}
           <div className="contact-info-col">
@@ -306,6 +310,25 @@ export const ContactPage: React.FC = () => {
                     )}
                   </div>
 
+                  {/* Chủ đề */}
+                  <div className="contact-field">
+                    <label htmlFor="contact-topic" className="contact-label">
+                      Chủ đề
+                    </label>
+                    <select
+                      id="contact-topic"
+                      name="topic"
+                      className="contact-input contact-select"
+                      value={topic}
+                      onChange={(e) => setTopic(e.target.value)}
+                    >
+                      <option value="Hỗ trợ sử dụng thuyết minh">Hỗ trợ sử dụng thuyết minh</option>
+                      <option value="Quà lưu niệm và đơn hàng">Quà lưu niệm và đơn hàng</option>
+                      <option value="Hợp tác hoặc góp ý">Hợp tác hoặc góp ý</option>
+                      <option value="Khác">Khác</option>
+                    </select>
+                  </div>
+
                   {/* Nội dung */}
                   <div className="contact-field">
                     <div className="contact-label-row">
@@ -365,7 +388,142 @@ export const ContactPage: React.FC = () => {
             </section>
           </div>
         </div>
+
+        {/* 3 Thẻ Hướng dẫn & Lưu ý */}
+        <section className="contact-help-section" aria-label="Hướng dẫn liên hệ">
+          <div className="contact-help-grid">
+            <div className="contact-help-card">
+              <h3 className="contact-help-title">Sử dụng thuyết minh</h3>
+              <p className="contact-help-text">
+                Chọn ngôn ngữ, bật tự động phát hoặc quét mã QR ở từng điểm tham quan.
+              </p>
+            </div>
+            <div className="contact-help-card">
+              <h3 className="contact-help-title">Đơn hàng quà lưu niệm</h3>
+              <p className="contact-help-text">
+                Ghi mã đơn hàng vào nội dung tin nhắn để chúng tôi kiểm tra nhanh hơn.
+              </p>
+            </div>
+            <div className="contact-help-card">
+              <h3 className="contact-help-title">Hợp tác và góp ý</h3>
+              <p className="contact-help-text">
+                Chọn chủ đề "Hợp tác hoặc góp ý" trong biểu mẫu, chúng tôi rất muốn lắng nghe bạn.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* Sự cố thường gặp khi nghe */}
+        <section className="contact-fix-section" aria-labelledby="contact-fix-heading">
+          <h2 id="contact-fix-heading" className="contact-section-title">
+            Sự cố thường gặp khi nghe
+          </h2>
+          <div className="contact-fix-grid">
+            <div className="contact-fix-card">
+              <h3 className="contact-fix-title">Không nghe thấy âm thanh</h3>
+              <p className="contact-fix-text">
+                Kiểm tra âm lượng, tai nghe và chế độ im lặng của điện thoại, rồi thử bấm phát lại.
+              </p>
+            </div>
+            <div className="contact-fix-card">
+              <h3 className="contact-fix-title">Thuyết minh không tự phát</h3>
+              <p className="contact-fix-text">
+                Hãy bật "Tự động phát" và cho phép trình duyệt truy cập vị trí. Bạn vẫn bấm nghe thủ công được.
+              </p>
+            </div>
+            <div className="contact-fix-card">
+              <h3 className="contact-fix-title">Không đổi được ngôn ngữ</h3>
+              <p className="contact-fix-text">
+                Ngôn ngữ có biểu tượng khóa cần gói Premium. Tiếng Việt luôn dùng được miễn phí.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* Để chúng tôi hỗ trợ nhanh hơn */}
+        <section className="contact-aid-section" aria-labelledby="contact-aid-heading">
+          <h2 id="contact-aid-heading" className="contact-section-title">
+            Để chúng tôi hỗ trợ nhanh hơn
+          </h2>
+          <p className="contact-section-desc">
+            Khi nhắn về một sự cố, hãy cho biết vài thông tin sau.
+          </p>
+          <ol className="contact-aid-list">
+            <li className="contact-aid-item">
+              <span className="contact-aid-item-num">1</span>
+              <strong className="contact-aid-label">Điểm dừng</strong>
+              <span className="contact-aid-desc">Bạn đang nghe hoặc đang xem điểm nào.</span>
+            </li>
+            <li className="contact-aid-item">
+              <span className="contact-aid-item-num">2</span>
+              <strong className="contact-aid-label">Ngôn ngữ</strong>
+              <span className="contact-aid-desc">Ngôn ngữ thuyết minh bạn đang chọn.</span>
+            </li>
+            <li className="contact-aid-item">
+              <span className="contact-aid-item-num">3</span>
+              <strong className="contact-aid-label">Thiết bị</strong>
+              <span className="contact-aid-desc">Loại điện thoại và trình duyệt bạn đang dùng.</span>
+            </li>
+            <li className="contact-aid-item">
+              <span className="contact-aid-item-num">4</span>
+              <strong className="contact-aid-label">Ảnh chụp màn hình</strong>
+              <span className="contact-aid-desc">Nếu có, ảnh giúp chúng tôi hiểu vấn đề nhanh hơn.</span>
+            </li>
+          </ol>
+        </section>
+
+        {/* Câu hỏi thường gặp */}
+        <section className="contact-faq-section" aria-labelledby="contact-faq-heading">
+          <div className="contact-faq-layout">
+            <div className="contact-faq-header">
+              <h2 id="contact-faq-heading" className="contact-section-title">
+                Câu hỏi thường gặp
+              </h2>
+              <p className="contact-section-desc">
+                Giải đáp nhanh các thắc mắc phổ biến về trải nghiệm thuyết minh và quà lưu niệm.
+              </p>
+            </div>
+            <div className="contact-faq-list">
+              <details className="contact-faq-item">
+                <summary className="contact-faq-summary">
+                  <span>Echora hỗ trợ những ngôn ngữ nào?</span>
+                </summary>
+                <div className="contact-faq-content">
+                  <p>Tiếng Việt miễn phí. Tiếng Anh, Nhật, Hàn mở bằng gói Premium.</p>
+                </div>
+              </details>
+
+              <details className="contact-faq-item">
+                <summary className="contact-faq-summary">
+                  <span>Tôi có thể ghé trực tiếp không?</span>
+                </summary>
+                <div className="contact-faq-content">
+                  <p>Bạn có thể ghé địa chỉ ở trên trong giờ làm việc, từ 8h đến 23h.</p>
+                </div>
+              </details>
+
+              <details className="contact-faq-item">
+                <summary className="contact-faq-summary">
+                  <span>Tôi cần hỗ trợ về một đơn hàng?</span>
+                </summary>
+                <div className="contact-faq-content">
+                  <p>Hãy ghi mã đơn hàng vào tin nhắn, chúng tôi sẽ kiểm tra giúp bạn.</p>
+                </div>
+              </details>
+
+              <details className="contact-faq-item">
+                <summary className="contact-faq-summary">
+                  <span>Tôi muốn góp ý về nội dung thuyết minh?</span>
+                </summary>
+                <div className="contact-faq-content">
+                  <p>Rất hoan nghênh. Chọn chủ đề góp ý và cho chúng tôi biết điểm dừng bạn muốn nói tới.</p>
+                </div>
+              </details>
+            </div>
+          </div>
+        </section>
       </main>
+      </div>
     </div>
   );
 };

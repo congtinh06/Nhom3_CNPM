@@ -89,6 +89,15 @@ export type SouvenirI18nKey =
   | 'destiTitle'
   | 'destiCount'
   | 'destiCta'
+  | 'setsTitle'
+  | 'set1Title'
+  | 'set1Desc'
+  | 'set2Title'
+  | 'set2Desc'
+  | 'set3Title'
+  | 'set3Desc'
+  | 'setAdd'
+  | 'setAdded'
   | 'waysTitle'
   | 'waysDisplayTitle'
   | 'waysDisplayP1'
@@ -206,6 +215,15 @@ const VI_SOUVENIR_DICTIONARY: Record<SouvenirI18nKey, string> = {
   destiTitle: 'Chọn theo điểm đã đi',
   destiCount: '{count} món',
   destiCta: 'Xem quà',
+  setsTitle: 'Bộ quà gợi ý',
+  set1Title: 'Nhỏ gọn cho cả nhóm',
+  set1Desc: 'Dễ xếp vào vali, chia được cho nhiều người.',
+  set2Title: 'Để trưng bày',
+  set2Desc: 'Hai món lấy điểm làm điểm nhấn cho góc làm việc.',
+  set3Title: 'Một ngày ở Chợ Bến Thành',
+  set3Desc: 'Nón lá, cà phê và trà, đủ cho một buổi sáng đi chợ.',
+  setAdd: 'Thêm cả bộ',
+  setAdded: 'Đã thêm {count} món quà vào giỏ hàng',
   waysTitle: 'Cách chọn quà',
   waysDisplayTitle: 'Để trưng bày',
   waysDisplayP1: 'Treo gọn trong phòng, để câu chuyện điểm dừng được kể lại bằng hình ảnh.',
@@ -327,6 +345,15 @@ export const SOUVENIR_DICTIONARY: Record<
     destiTitle: 'Choose by the places you visited',
     destiCount: '{count} items',
     destiCta: 'See the gifts',
+    setsTitle: 'Suggested gift sets',
+    set1Title: 'Light for the whole group',
+    set1Desc: 'Easy to pack, can be split among several people.',
+    set2Title: 'For display',
+    set2Desc: 'Two pieces built around one stop, made for a desk corner.',
+    set3Title: 'A day in Ben Thanh market',
+    set3Desc: 'Conical hat, drip coffee, and lotus tea, enough for one market morning.',
+    setAdd: 'Add the set',
+    setAdded: 'Added {count} keepsakes to cart',
     waysTitle: 'How to choose a keepsake',
     waysDisplayTitle: 'For display',
     waysDisplayP1: 'Hang it lightly at home so the story of the stop comes alive again.',
@@ -376,6 +403,15 @@ export const SOUVENIR_DICTIONARY: Record<
     destiTitle: '訪れた場所で選ぶ',
     destiCount: '{count}点',
     destiCta: 'ギフトを見る',
+    setsTitle: 'おすすめのギフトセット',
+    set1Title: '小さなグループへ',
+    set1Desc: '荷物に優しく、複数人に分けられる。',
+    set2Title: '展示用の2点セット',
+    set2Desc: '1つのスポットを軸にした2点セット。',
+    set3Title: '麦わら帽子と朝',
+    set3Desc: 'コーヒーとセージティーと麦わら帽子で、市場の朝。',
+    setAdd: 'セットを追加',
+    setAdded: '{count}点をカートに追加しました',
     waysTitle: 'お土産の選び方',
     waysDisplayTitle: '展示用',
     waysDisplayP1: '家にそっと飾って、stop の物語を映し出す。',
@@ -425,6 +461,15 @@ export const SOUVENIR_DICTIONARY: Record<
     destiTitle: '다녀온 장소로 골라',
     destiCount: '{count}개',
     destiCta: '선물 보기',
+    setsTitle: '추천 기념품 세트',
+    set1Title: '가족과 친구를 위한',
+    set1Desc: '가볍게 포장해서 여러 명에게 나눠 줄 수 있어요.',
+    set2Title: '전시용 세트',
+    set2Desc: '한 지점을 중심으로 만든 두 가지 기념품 세트예요.',
+    set3Title: '쇼핑 시장 하루',
+    set3Desc: '모자, 커피, 차 세트로 아침을 여행처럼 보내요.',
+    setAdd: '세트 추가',
+    setAdded: '{count}개의 기념품을 장바구니에 담았어요',
     waysTitle: '기념품 고르는 법',
     waysDisplayTitle: '전시용',
     waysDisplayP1: '집에 조용히 걸고, 지점의 이야기를 다시 살리세요.',

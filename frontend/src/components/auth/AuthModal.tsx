@@ -163,15 +163,22 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     navigate('/quen-mat-khau', { state: location.state, replace: true });
   }, [isStandalone, location.state, navigate]);
 
-  // Lock body scroll and save active element
+  // Lock body scroll and save active element (with scrollbar compensation to prevent layout jump)
   useEffect(() => {
     lastActiveElementRef.current = document.activeElement as HTMLElement | null;
 
     const originalOverflow = document.body.style.overflow;
+    const originalPaddingRight = document.body.style.paddingRight;
+    const scrollBarWidth = window.innerWidth - document.documentElement.clientWidth;
+
+    if (scrollBarWidth > 0) {
+      document.body.style.paddingRight = `${scrollBarWidth}px`;
+    }
     document.body.style.overflow = 'hidden';
 
     return () => {
       document.body.style.overflow = originalOverflow;
+      document.body.style.paddingRight = originalPaddingRight;
       if (lastActiveElementRef.current && typeof lastActiveElementRef.current.focus === 'function') {
         try {
           lastActiveElementRef.current.focus();
@@ -270,13 +277,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             <>
               {guestMode && (
                 <aside className="auth-guest-banner" role="note" aria-label={t.auth.guestBannerTitle}>
-                  <span className="auth-guest-banner-icon" aria-hidden="true">
-                    <Eye size={18} strokeWidth={1.8} />
-                  </span>
-                  <div className="auth-guest-banner-copy">
-                    <strong>{t.auth.guestBannerTitle}</strong>
-                    <p>{t.auth.guestBannerNote}</p>
+                  <div className="auth-guest-banner-header">
+                    <span className="auth-guest-banner-icon" aria-hidden="true">
+                      <Eye size={17} strokeWidth={2} />
+                    </span>
+                    <strong className="auth-guest-banner-title">{t.auth.guestBannerTitle}</strong>
                   </div>
+                  <p className="auth-guest-banner-text">{t.auth.guestBannerNote}</p>
                   <button
                     type="button"
                     className="auth-guest-banner-continue"

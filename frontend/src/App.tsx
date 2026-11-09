@@ -53,8 +53,9 @@ const NewsListPage = lazy(() => import('./pages/NewsListPage'));
 const NewsDetailPage = lazy(() => import('./pages/NewsDetailPage'));
 
 const PoiRedirect: React.FC = () => {
-  const { slug } = useParams<{ slug: string }>();
-  return <Navigate to={slug ? `/diem-du-lich?stop=${slug}` : '/diem-du-lich'} replace />;
+  const { slug, token } = useParams<{ slug?: string; token?: string }>();
+  const target = slug || token;
+  return <Navigate to={target ? `/diem-du-lich?stop=${encodeURIComponent(target)}` : '/diem-du-lich'} replace />;
 };
 
 // Legacy souvenir URLs now forward into the "Quà lưu niệm" page at /am-thuc.
@@ -228,9 +229,9 @@ const AppContent: React.FC = () => {
               }
             />
 
-            {/* QR Scan */}
-            <Route path="/qr/:token" element={<ScanPage />} />
-            <Route path="/diem/:slug" element={<ScanPage />} />
+            {/* QR Scan & Shortcuts */}
+            <Route path="/qr/:token" element={<PoiRedirect />} />
+            <Route path="/diem/:slug" element={<PoiRedirect />} />
             <Route path="/quet-ma" element={<ScanPage />} />
             {/* Trang quét QR đăng nhập: chỉ cho tài khoản đã đăng ký + xác thực
                 email (kiểu Zalo) được quét; khách dùng mật khẩu/guest mode. */}

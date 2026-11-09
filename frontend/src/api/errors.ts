@@ -7,7 +7,7 @@ export interface NormalizedApiError {
   isAborted: boolean;
 }
 
-export function normalizeApiError(error: unknown): NormalizedApiError {
+export function normalizeApiError(error: unknown, _unused?: boolean): NormalizedApiError {
   if (typeof error === 'object' && error !== null && 'name' in error && (error as { name: string }).name === 'CanceledError') {
     return {
       status: 0,

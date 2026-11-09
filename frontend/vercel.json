@@ -66,7 +66,7 @@
       "dest": "/index.html"
     },
     {
-      "src": "/(van-hoa|culture|kham-pha|explore|diem-du-lich|thuyet-minh|gan-toi|am-thuc|thuc-uong|am-thuc-thuc-uong|qua-luu-niem|tin-tuc|huong-dan|lien-he|chinh-sach-quyen-rieng-tu|nang-cap|thanh-toan|don-hang|qr|quet-ma|quet-qr-dang-nhap|nhan-dang-nhap|qr-tai-khoan|dat-lai-mat-khau|xac-thuc-email|tai-khoan|quan-tri|dang-nhap|dang-ky|quen-mat-khau)(/.*)?",
+      "src": "/(van-hoa|culture|kham-pha|explore|diem-du-lich|diem|thuyet-minh|gan-toi|am-thuc|thuc-uong|am-thuc-thuc-uong|qua-luu-niem|tin-tuc|huong-dan|lien-he|chinh-sach-quyen-rieng-tu|nang-cap|thanh-toan|don-hang|qr|quet-ma|quet-qr-dang-nhap|nhan-dang-nhap|qr-tai-khoan|dat-lai-mat-khau|xac-thuc-email|tai-khoan|quan-tri|dang-nhap|dang-ky|quen-mat-khau)(/.*)?",
       "dest": "/index.html"
     },
     {

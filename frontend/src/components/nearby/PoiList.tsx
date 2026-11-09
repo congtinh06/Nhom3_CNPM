@@ -29,6 +29,8 @@ export interface PoiListProps {
   details?: ReactNode;
   activeSentenceIndex?: number | null;
   duration?: number;
+  /** Preformatted listening duration per stop id, shown beside the category. */
+  durationById?: Record<string, string>;
   onSelectPoi: (poiId: string) => void;
   onHoverPoi?: (poiId: string | null) => void;
   onTogglePlay?: (poiId: string) => void;
@@ -54,6 +56,7 @@ interface StopRowProps {
   onSelect: (id: string) => void;
   onHover?: (id: string, hovered: boolean) => void;
   details?: ReactNode;
+  durationText?: string;
 }
 
 const StopRow: React.FC<StopRowProps> = ({
@@ -68,6 +71,7 @@ const StopRow: React.FC<StopRowProps> = ({
   onSelect,
   onHover,
   details,
+  durationText,
 }) => {
   const { poi, originalIndex, stopNumber } = item;
   const poiName = getPoiName(poi);
@@ -77,14 +81,14 @@ const StopRow: React.FC<StopRowProps> = ({
     <li
       className={`nearby-stop-item${isActive ? ' is-open' : ''}${isHovered ? ' is-hovered' : ''}${
         isLocked ? ' is-locked' : ''
-      }`}
+      }${isListened ? ' is-listened' : ''}`}
       data-poi-id={poi.id}
     >
       <button
         type="button"
         className={`nearby-stop-row${isActive ? ' is-active' : ''}${isHovered ? ' is-hovered' : ''}${
           isLocked ? ' is-locked' : ''
-        }`}
+        }${isListened ? ' is-listened' : ''}`}
         aria-current={isActive ? 'true' : undefined}
         aria-expanded={isActive}
         onClick={() => onSelect(poi.id)}
@@ -112,7 +116,10 @@ const StopRow: React.FC<StopRowProps> = ({
         </span>
         <div className="stop-row-info">
           <span className="stop-row-name">{poiName}</span>
-          <span className="stop-row-category">{poiCategory}</span>
+          <span className="stop-row-meta">
+            <span className="stop-row-category">{poiCategory}</span>
+            {durationText && <span className="stop-row-duration">{durationText}</span>}
+          </span>
         </div>
         <span className="stop-row-status">
           {isLocked && (
@@ -154,6 +161,7 @@ const PoiListComponent: React.FC<PoiListProps> = ({
   listTitle,
   sortNoteText,
   details,
+  durationById,
   onSelectPoi,
   onHoverPoi,
   getPoiName,
@@ -164,7 +172,9 @@ const PoiListComponent: React.FC<PoiListProps> = ({
     (window as any).__nearbyPerf.rendersPoiList++;
   }
 
-  const effectiveActiveId = activePoiId || selectedPoiId || sortedPois[0]?.poi.id;
+  // No implicit first-row fallback: a null active id means every accordion is
+  // collapsed, which is what lets the visitor close the open stop again.
+  const effectiveActiveId = activePoiId || selectedPoiId;
 
   const handleSelect = useCallback(
     (id: string) => {
@@ -215,6 +225,7 @@ const PoiListComponent: React.FC<PoiListProps> = ({
                 onSelect={handleSelect}
                 onHover={handleHover}
                 details={isItemActive ? details : null}
+                durationText={durationById?.[item.poi.id]}
               />
             );
           })}

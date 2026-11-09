@@ -750,8 +750,13 @@ export function useNearbyAudio({
     []
   );
 
-  const checkListenedProgress = useCallback((poiId: string, currentT: number) => {
-    if (currentT >= 5) {
+  const checkListenedProgress = useCallback((poiId: string, currentT: number, totalDuration?: number) => {
+    // Chỉ đánh dấu điểm khi nghe xong hoặc nghe gần hết (>= 85% thời lượng)
+    if (totalDuration && totalDuration > 0) {
+      if (currentT >= totalDuration * 0.85) {
+        onPoiListenedRef.current?.(poiId);
+      }
+    } else if (currentT >= 30) {
       onPoiListenedRef.current?.(poiId);
     }
   }, []);
@@ -1068,7 +1073,7 @@ export function useNearbyAudio({
               if (token !== requestTokenRef.current) return;
               setCurrentTime(audio.currentTime);
               setActiveSentenceIndex(null);
-              checkListenedProgress(poiId, audio.currentTime);
+              checkListenedProgress(poiId, audio.currentTime, audio.duration);
               // Một số trình duyệt mobile không bắn "ended" khi tab bị ẩn;
               // coi như hoàn tất khi đã phát gần hết file.
               if (
@@ -1189,7 +1194,7 @@ export function useNearbyAudio({
               setActiveCharOffset(null);
               setActiveCharLength(0);
             }
-            checkListenedProgress(poiId, next);
+            checkListenedProgress(poiId, next, estDuration);
             if (next >= estDuration) {
               stopTimer();
               stopWatchdog();
@@ -1357,7 +1362,7 @@ export function useNearbyAudio({
               setActiveCharOffset(null);
               setActiveCharLength(0);
             }
-            checkListenedProgress(currentId, next);
+            checkListenedProgress(currentId, next, duration);
             if (next >= duration) {
               stopTimer();
               stopWatchdog();

@@ -18,6 +18,7 @@ import {
 import { AuthScope, tokenStore, notifyLoggedOut } from './tokenStore';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
+const IS_DEV = import.meta.env.DEV;
 
 export const apiClient = axios.create({
   baseURL: BASE_URL,
@@ -61,6 +62,10 @@ apiClient.interceptors.response.use(
     const config = error.config as RetriableConfig | undefined;
     const status = error.response?.status;
     const url = config?.url ?? '';
+    // Detect ngrok tunnel and add skip browser warning header for dev
+    if (IS_DEV && config?.headers) {
+      config.headers['ngrok-skip-browser-warning'] = 'true';
+    }
     const isSelfRefreshing = NO_REFRESH_PATHS.some((path) => url.includes(path));
     const scope = scopeFromConfig(config);
 

@@ -147,8 +147,14 @@ export function useAutoNarration({
 
   // Unified pipeline to apply position
   const applyPosition = useCallback(
-    (lat: number, lng: number) => {
-      setUserPos({ lat, lng });
+    (lat: number, lng: number, accuracy?: number) => {
+      setUserPos({
+        lat,
+        lng,
+        ...(typeof accuracy === 'number' && Number.isFinite(accuracy) && accuracy > 0
+          ? { accuracy }
+          : {}),
+      });
       setGpsError('');
       checkAutoTrigger(lat, lng);
     },
@@ -185,7 +191,7 @@ export function useAutoNarration({
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         setIsRequestingGps(false);
-          applyPosition(pos.coords.latitude, pos.coords.longitude);
+        applyPosition(pos.coords.latitude, pos.coords.longitude, pos.coords.accuracy);
       },
       (err) => {
         setIsRequestingGps(false);
@@ -221,7 +227,7 @@ export function useAutoNarration({
       clearGpsWatch();
       watchIdRef.current = navigator.geolocation.watchPosition(
         (pos) => {
-        applyPosition(pos.coords.latitude, pos.coords.longitude);
+          applyPosition(pos.coords.latitude, pos.coords.longitude, pos.coords.accuracy);
         },
         (err) => {
           if (err.code === 1) {

@@ -48,39 +48,49 @@
   --c-border-hover: #FB923C;
 }
 
-/* --- Hero Banner --- */
-.contact-page-root .contact-hero {
-  min-height: clamp(220px, 30vh, 320px);
-  padding: 88px 0 32px;
+/* --- Wrap & Editorial Header (Synchronized with Điểm du lịch & Quà lưu niệm) --- */
+.contact-page-root {
+  padding-top: 80px;
 }
 
-.contact-page-root .contact-hero .page-hero-top-row {
-  display: none;
+.contact-wrap {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 0 24px;
+  box-sizing: border-box;
 }
 
-.contact-page-root .contact-hero .page-hero-title {
+.contact-head {
+  padding: 32px 0 24px;
+  border-bottom: 1px solid var(--c-border, #DED2BF);
+  margin-bottom: 36px;
+}
+
+.contact-head-title {
   font-family: var(--c-serif);
-  text-transform: none;
-  letter-spacing: -0.02em;
-  font-size: clamp(32px, 4.2vw, 48px);
+  font-size: clamp(34px, 4vw, 52px);
   font-weight: 500;
   line-height: 1.15;
-  margin-bottom: 10px;
+  letter-spacing: -0.02em;
+  color: var(--c-ink, #201B16);
+  margin: 0 0 10px 0;
+  text-transform: none !important;
 }
 
-.contact-page-root .contact-hero .page-hero-subtitle {
+.contact-head-subtitle {
   font-family: var(--c-sans);
-  font-size: clamp(15px, 1.5vw, 17px);
-  max-width: 620px;
-  opacity: 0.92;
-  color: var(--c-muted);
+  font-size: clamp(15px, 1.6vw, 17px);
+  line-height: 1.5;
+  color: var(--c-muted, #6F6254);
+  max-width: 58ch;
+  margin: 0;
 }
 
 /* --- Container --- */
 .contact-page-root .contact-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 40px 24px 80px;
+  max-width: 100%;
+  margin: 0;
+  padding: 0 0 80px;
   box-sizing: border-box;
 }
 
@@ -496,6 +506,214 @@
   background: #FEF2F2;
 }
 
+/* Select field styling */
+.contact-page-root .contact-select {
+  cursor: pointer;
+  appearance: auto;
+  padding: 10px 0;
+  font-family: inherit;
+  font-size: 15px;
+  background-color: transparent;
+  color: var(--c-ink);
+  border: 0;
+  border-bottom: 1px solid var(--c-border);
+  border-radius: 0;
+  width: 100%;
+}
+.contact-page-root .contact-select:focus-visible {
+  outline: none;
+  border-bottom-color: var(--c-accent);
+  box-shadow: 0 1px 0 var(--c-accent);
+}
+
+/* 3 Help Cards (Section .help) */
+.contact-page-root .contact-help-section {
+  margin-top: 64px;
+  border-top: 1px solid var(--c-border);
+  padding-top: 24px;
+}
+
+.contact-page-root .contact-help-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0;
+}
+
+.contact-page-root .contact-help-card {
+  padding: 24px 28px 0 0;
+}
+
+.contact-page-root .contact-help-card + .contact-help-card {
+  padding-left: 28px;
+  border-left: 1px solid var(--c-border);
+}
+
+.contact-page-root .contact-help-title {
+  font-family: var(--c-serif);
+  font-size: 19px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--c-ink);
+  margin-bottom: 8px;
+}
+
+.contact-page-root .contact-help-text {
+  font-size: 14.5px;
+  color: var(--c-muted);
+  line-height: 1.6;
+  max-width: 36ch;
+}
+
+/* Fix section (Sự cố thường gặp khi nghe) */
+.contact-page-root .contact-fix-section {
+  margin-top: 64px;
+  border-top: 1px solid var(--c-border);
+  padding-top: 36px;
+}
+
+.contact-page-root .contact-fix-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  margin-top: 24px;
+  border-top: 1px solid var(--c-border);
+}
+
+.contact-page-root .contact-fix-card {
+  padding: 24px 28px 0 0;
+}
+
+.contact-page-root .contact-fix-card + .contact-fix-card {
+  padding-left: 28px;
+  border-left: 1px solid var(--c-border);
+}
+
+.contact-page-root .contact-fix-title {
+  font-family: var(--c-serif);
+  font-size: 19px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--c-ink);
+  margin-bottom: 8px;
+}
+
+.contact-page-root .contact-fix-text {
+  font-size: 14.5px;
+  color: var(--c-muted);
+  line-height: 1.6;
+  max-width: 36ch;
+}
+
+/* Aid section (Để chúng tôi hỗ trợ nhanh hơn) */
+.contact-page-root .contact-aid-section {
+  margin-top: 64px;
+  border-top: 1px solid var(--c-border);
+  padding-top: 36px;
+}
+
+.contact-page-root .contact-aid-list {
+  list-style: none;
+  padding: 0;
+  margin-top: 20px;
+  border-top: 1px solid var(--c-border);
+}
+
+.contact-page-root .contact-aid-item {
+  display: grid;
+  grid-template-columns: 32px 180px 1fr;
+  gap: 16px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--c-border);
+  align-items: baseline;
+}
+
+.contact-page-root .contact-aid-item-num {
+  font-family: var(--c-serif);
+  color: var(--c-muted);
+  font-size: 15px;
+}
+
+.contact-page-root .contact-aid-label {
+  font-weight: 600;
+  color: var(--c-ink);
+  font-size: 15px;
+}
+
+.contact-page-root .contact-aid-desc {
+  color: var(--c-muted);
+  font-size: 14.5px;
+}
+
+/* FAQ Accordion section */
+.contact-page-root .contact-faq-section {
+  margin-top: 64px;
+  border-top: 1px solid var(--c-border);
+  padding-top: 36px;
+}
+
+.contact-page-root .contact-faq-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 0.75fr) minmax(0, 1.25fr);
+  gap: 48px;
+  align-items: start;
+}
+
+.contact-page-root .contact-faq-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.contact-page-root .contact-faq-item {
+  border-bottom: 1px solid var(--c-border);
+}
+
+.contact-page-root .contact-faq-item:first-of-type {
+  border-top: 1px solid var(--c-border);
+}
+
+.contact-page-root .contact-faq-summary {
+  list-style: none;
+  cursor: pointer;
+  padding: 16px 0;
+  font-weight: 500;
+  font-size: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  min-height: 52px;
+  color: var(--c-ink);
+  transition: color 0.15s ease;
+}
+
+.contact-page-root .contact-faq-summary::-webkit-details-marker {
+  display: none;
+}
+
+.contact-page-root .contact-faq-summary::after {
+  content: "+";
+  color: var(--c-accent);
+  font-size: 20px;
+  line-height: 1;
+  font-weight: 400;
+  transition: transform 0.2s ease;
+}
+
+.contact-page-root .contact-faq-item[open] .contact-faq-summary::after {
+  content: "–";
+}
+
+.contact-page-root .contact-faq-summary:hover {
+  color: var(--c-accent);
+}
+
+.contact-page-root .contact-faq-content {
+  padding: 0 0 18px;
+  color: var(--c-muted);
+  font-size: 15px;
+  line-height: 1.65;
+  max-width: 60ch;
+}
+
 /* --- Responsive Adjustments --- */
 @media (max-width: 960px) {
   .contact-page-root .contact-grid {
@@ -505,6 +723,25 @@
 
   .contact-page-root .contact-map-wrapper {
     height: 300px;
+  }
+
+  .contact-page-root .contact-help-grid,
+  .contact-page-root .contact-fix-grid {
+    grid-template-columns: 1fr;
+  }
+  .contact-page-root .contact-help-card,
+  .contact-page-root .contact-fix-card {
+    padding: 20px 0;
+    border-bottom: 1px solid var(--c-border);
+  }
+  .contact-page-root .contact-help-card + .contact-help-card,
+  .contact-page-root .contact-fix-card + .contact-fix-card {
+    padding-left: 0;
+    border-left: 0;
+  }
+  .contact-page-root .contact-faq-layout {
+    grid-template-columns: 1fr;
+    gap: 28px;
   }
 }
 
@@ -527,5 +764,13 @@
 
   .contact-page-root .contact-map-wrapper {
     height: 250px;
+  }
+
+  .contact-page-root .contact-aid-item {
+    grid-template-columns: 24px 1fr;
+    gap: 4px 12px;
+  }
+  .contact-page-root .contact-aid-desc {
+    grid-column: 2;
   }
 }

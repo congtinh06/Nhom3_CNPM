@@ -39,8 +39,8 @@ export const NewsSideItem: React.FC<NewsSideItemProps> = ({ item, lang = 'vi' })
               alt={item.coverImageAlt || item.title}
               className="nl-side-img"
               loading="lazy"
-              width="120"
-              height="90"
+              width="104"
+              height="78"
               onError={() => setImageError(true)}
             />
           ) : (

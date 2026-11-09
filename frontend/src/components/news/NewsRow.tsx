@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { NewsItem, NEWS_CATEGORIES } from '../../types/domain';
+import { NewsItem } from '../../types/domain';
 import { SupportedLanguage } from '../../types';
 import { formatNewsDate, formatReadingTime, getCategoryLabel } from './newsFormatters';
 import { NewsMeta } from './NewsMeta';
@@ -15,7 +15,6 @@ export const NewsRow: React.FC<NewsRowProps> = ({ item, lang = 'vi' }) => {
   const [imageError, setImageError] = useState(false);
   const imageUrl = item.thumbnail || item.coverImageUrl;
   const categoryLabel = getCategoryLabel(item.category, lang);
-  const categoryMeta = NEWS_CATEGORIES[item.category] || NEWS_CATEGORIES['diem-den'];
   const formattedDate = formatNewsDate(item.publishedAt, lang);
   const readingTime = formatReadingTime(item.readingTime || item.readingMinutes || 3, lang);
 
@@ -38,12 +37,12 @@ export const NewsRow: React.FC<NewsRowProps> = ({ item, lang = 'vi' }) => {
           )}
         </div>
         <div className="nl-row-body">
+          <span className="nl-row-cat">{categoryLabel}</span>
           <h3 className="nl-row-title">{item.title}</h3>
           {(item.excerpt || item.summary) && (
             <p className="nl-row-excerpt">{item.excerpt || item.summary}</p>
           )}
           <NewsMeta
-            category={{ label: categoryLabel, color: categoryMeta.hex }}
             publishedAt={item.publishedAt}
             formattedDate={formattedDate}
             readingTime={readingTime}

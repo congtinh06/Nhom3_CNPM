@@ -46,20 +46,109 @@ import '../styles/scan.css';
 // the user's entitlement at play time — on-device speech must not bypass that.
 const SCAN_SPEECH_LANGS: SupportedLanguage[] = ['vi', 'en', 'ja', 'ko'];
 
-/** Extract the POI slug from a "/diem/<slug>" scan value. */
-const parseScanSlug = (raw: string): string | undefined => {
+/** Ánh xạ hai chiều giữa slug và qrToken để fallback tức thì khi quét QR trên di động */
+const POI_SLUG_TOKEN_MAP: Record<string, string> = {
+  'dinh-doc-lap': 'qr-dinh-doc-lap-01',
+  'nha-tho-duc-ba': 'qr-duc-ba-01',
+  'buu-dien-trung-tam': 'qr-buu-dien-01',
+  'cho-ben-thanh': 'qr-ben-thanh-01',
+  'bao-tang-chung-tich-chien-tranh': 'qr-bao-tang-chung-tich-01',
+  'chua-ba-thien-hau': 'qr-thien-hau-01',
+  'cau-ba-son': 'qr-ba-son-01',
+};
+
+const POI_TOKEN_SLUG_MAP: Record<string, string> = {
+  'qr-dinh-doc-lap-01': 'dinh-doc-lap',
+  'qr-duc-ba-01': 'nha-tho-duc-ba',
+  'qr-buu-dien-01': 'buu-dien-trung-tam',
+  'qr-ben-thanh-01': 'cho-ben-thanh',
+  'qr-bao-tang-chung-tich-01': 'bao-tang-chung-tich-chien-tranh',
+  'qr-thien-hau-01': 'chua-ba-thien-hau',
+  'qr-ba-son-01': 'cau-ba-son',
+};
+
+/** Phân tích thông minh chuỗi quét hoặc URL thành slug / token */
+const parseScanInput = (
+  raw: string
+): { slug?: string; token?: string; cleanValue: string } => {
+  const trimmed = raw.trim();
+  if (!trimmed) return { cleanValue: '' };
+
   try {
-    const url = new URL(raw, window.location.origin);
+    const url = new URL(trimmed, window.location.origin);
+    const stopParam =
+      url.searchParams.get('stop') ||
+      url.searchParams.get('poi') ||
+      url.searchParams.get('slug');
+    if (stopParam) {
+      const decoded = decodeURIComponent(stopParam).trim();
+      if (decoded.startsWith('qr-')) {
+        return {
+          token: decoded,
+          cleanValue: decoded,
+        };
+      }
+      return {
+        slug: decoded,
+        cleanValue: decoded,
+      };
+    }
+
     const path = url.pathname.replace(/\/+$/, '');
-    const diemMatch = path.match(/^\/diem\/([^/]+)$/);
-    const slugFromPath = diemMatch?.[1];
-    if (slugFromPath) {
-      return decodeURIComponent(slugFromPath);
+    const diemMatch = path.match(/^\/(?:diem|diem-du-lich)\/([^/?#]+)/);
+    if (diemMatch?.[1]) {
+      const slug = decodeURIComponent(diemMatch[1]);
+      return { slug, cleanValue: slug };
+    }
+    const qrMatch = path.match(/^\/qr\/([^/?#]+)/);
+    if (qrMatch?.[1]) {
+      const token = decodeURIComponent(qrMatch[1]);
+      return { token, cleanValue: token };
     }
   } catch {
-    // Không phải URL hợp lệ: bỏ qua.
+    // Không phải URL hợp lệ: tiếp tục xử lý chuỗi thường
   }
-  return undefined;
+
+  if (trimmed.includes('stop=')) {
+    const stopMatch = trimmed.match(/[?&]stop=([^&#]+)/);
+    if (stopMatch?.[1]) {
+      const decoded = decodeURIComponent(stopMatch[1]);
+      if (decoded.startsWith('qr-')) {
+        return { token: decoded, cleanValue: decoded };
+      }
+      return { slug: decoded, cleanValue: decoded };
+    }
+  }
+
+  if (trimmed.includes('/diem/') || trimmed.includes('/diem-du-lich/')) {
+    const slugPart = trimmed.split(/\/(?:diem|diem-du-lich)\//)[1]?.split(/[?#/]/)[0];
+    if (slugPart) {
+      const slug = decodeURIComponent(slugPart);
+      return { slug, cleanValue: slug };
+    }
+  }
+
+  if (trimmed.includes('/qr/')) {
+    const tokenPart = trimmed.split('/qr/')[1]?.split(/[?#/]/)[0];
+    if (tokenPart) {
+      const token = decodeURIComponent(tokenPart);
+      return { token, cleanValue: token };
+    }
+  }
+
+  if (trimmed.startsWith('qr-')) {
+    return { token: trimmed, cleanValue: trimmed };
+  }
+
+  if (POI_SLUG_TOKEN_MAP[trimmed]) {
+    return { slug: trimmed, cleanValue: trimmed };
+  }
+
+  if (POI_TOKEN_SLUG_MAP[trimmed]) {
+    return { token: trimmed, cleanValue: trimmed };
+  }
+
+  return { cleanValue: trimmed };
 };
 
 export const ScanPage: React.FC = () => {
@@ -127,20 +216,63 @@ export const ScanPage: React.FC = () => {
         slug?: string;
       }
     ) => {
-      const targetSlug = options?.slug?.trim() || undefined;
-      const trimmed = (targetSlug ?? rawValue).trim();
-      if (!trimmed) return;
+      const parsed = parseScanInput(rawValue);
+      const targetSlug = options?.slug?.trim() || parsed.slug;
+      const targetToken = parsed.token;
+      const cleanVal = parsed.cleanValue || (targetSlug ?? targetToken ?? rawValue).trim();
+      if (!cleanVal && !targetSlug && !targetToken) return;
+
       const isAuto = options?.auto ?? false;
       const triggerType = options?.triggerType ?? 'QR';
 
       setLoading(true);
       setErrorMessage(null);
 
-      const request = targetSlug
-        ? api.getPoiBySlug(targetSlug, lang)
-        : api.getPoiByQr(trimmed, lang);
+      const fetchWithFallback = async (): Promise<PoiDetail> => {
+        if (targetToken && !options?.slug) {
+          try {
+            return await api.getPoiByQr(targetToken, lang);
+          } catch (err: unknown) {
+            const norm = normalizeApiError(err);
+            if (norm.status === 404) {
+              const mappedSlug = POI_TOKEN_SLUG_MAP[targetToken];
+              if (mappedSlug) {
+                return await api.getPoiBySlug(mappedSlug, lang);
+              }
+              return await api.getPoiBySlug(targetToken, lang);
+            }
+            throw err;
+          }
+        }
 
-      request
+        if (targetSlug) {
+          try {
+            return await api.getPoiBySlug(targetSlug, lang);
+          } catch (err: unknown) {
+            const norm = normalizeApiError(err);
+            if (norm.status === 404) {
+              const mappedToken = POI_SLUG_TOKEN_MAP[targetSlug] || targetToken;
+              if (mappedToken) {
+                return await api.getPoiByQr(mappedToken, lang);
+              }
+              return await api.getPoiByQr(targetSlug, lang);
+            }
+            throw err;
+          }
+        }
+
+        try {
+          return await api.getPoiByQr(cleanVal, lang);
+        } catch (err: unknown) {
+          const norm = normalizeApiError(err);
+          if (norm.status === 404) {
+            return await api.getPoiBySlug(cleanVal, lang);
+          }
+          throw err;
+        }
+      };
+
+      fetchWithFallback()
         .then((detail) => {
           setPoiDetail(detail);
           setExpanded(false);
@@ -295,23 +427,11 @@ export const ScanPage: React.FC = () => {
               clearInterval(interval);
               stopCamera();
               const val = barcodes[0].rawValue;
-              const extractedSlug = val.includes('/diem/')
-                ? val.split('/diem/')[1]?.split('?')[0]
-                : undefined;
-              const extractedToken = extractedSlug
-                ? undefined
-                : val.includes('/qr/')
-                  ? val.split('/qr/')[1]?.split('?')[0]
-                  : val;
-              const target = extractedSlug ?? extractedToken;
+              const parsed = parseScanInput(val);
+              const target = parsed.slug ?? parsed.token ?? parsed.cleanValue;
               if (target) {
-                setInputToken(target);
-                handleResolveQr(target, {
-                  auto: true,
-                  autoplay: true,
-                  triggerType: 'QR',
-                  ...(extractedSlug ? { slug: extractedSlug } : {}),
-                });
+                navigate(`/diem-du-lich?stop=${encodeURIComponent(target)}`);
+                return;
               }
             }
           } catch {
@@ -328,12 +448,15 @@ export const ScanPage: React.FC = () => {
     e.preventDefault();
     const raw = inputToken.trim();
     if (!raw) return;
-    const targetSlug = raw.includes('/')
-      ? parseScanSlug(raw)
-      : undefined;
+    const parsed = parseScanInput(raw);
+    const target = parsed.slug ?? parsed.token ?? parsed.cleanValue;
+    if (target) {
+      navigate(`/diem-du-lich?stop=${encodeURIComponent(target)}`);
+      return;
+    }
     handleResolveQr(
-      raw,
-      { triggerType: 'MANUAL', ...(targetSlug ? { slug: targetSlug } : {}) }
+      target,
+      { triggerType: 'MANUAL', ...(parsed.slug ? { slug: parsed.slug } : {}) }
     );
   };
 
@@ -657,9 +780,13 @@ export const ScanPage: React.FC = () => {
                 <button
                   type="button"
                   className="tb"
-                  onClick={() => navigate('/diem-du-lich')}
+                  onClick={() =>
+                    navigate(
+                      `/diem-du-lich?stop=${encodeURIComponent(poiDetail.slug || poiDetail.qrToken || String(poiDetail.id))}`
+                    )
+                  }
                 >
-                  Xem trên bản đồ
+                  Xem trên bản đồ & Lộ trình đầy đủ
                 </button>
               </div>
             </div>

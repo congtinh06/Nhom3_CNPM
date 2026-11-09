@@ -115,7 +115,7 @@ export const QrLoginScanPage: React.FC = () => {
         setScanInfo(result);
         setPhase('confirm');
       } catch (err) {
-        setError(normalizeApiError(err).message);
+        setError(normalizeApiError(err, true).message);
         setPhase('idle');
       } finally {
         setBusy(false);

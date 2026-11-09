@@ -12,8 +12,8 @@
   padding-bottom: 72px;
   box-sizing: border-box;
   -webkit-font-smoothing: antialiased;
-  --fb-accent: #C2410C;
-  --fb-accent-hover: #9A3412;
+  --fb-accent: #0F5C52;
+  --fb-accent-hover: #0a4039;
   --fb-border: #D9D5CB;
   --fb-surface: #FFFFFF;
   --fb-text-primary: #211D1A;
@@ -23,7 +23,7 @@
 [data-theme="dark"] .nd-page-root {
   background-color: #1B1816;
   color: #F1EDE6;
-  --fb-accent: #FB923C;
+  --fb-accent: #4DB8A2;
   --fb-accent-hover: #3AA38E;
   --fb-border: #3A3531;
   --fb-surface: #26221F;
@@ -55,7 +55,7 @@
 .nd-article-col {
   flex: 1;
   min-width: 0;
-  max-width: 760px;
+  max-width: 68ch;
 }
 
 .nd-layout.is-centered .nd-article-col {
@@ -176,7 +176,7 @@
   aspect-ratio: 16 / 9;
   background-color: var(--fb-border, #E7E5E4);
   overflow: hidden;
-  border-radius: 0;
+  border-radius: 10px;
 }
 
 .nd-hero-img {
@@ -184,14 +184,14 @@
   height: 100%;
   object-fit: cover;
   display: block;
-  border-radius: 0;
+  border-radius: 10px;
 }
 
 .nd-hero-placeholder {
   width: 100%;
   height: 100%;
   background-color: var(--fb-border, #E7E5E4);
-  border-radius: 0;
+  border-radius: 10px;
 }
 
 .nd-hero-caption {
@@ -459,8 +459,20 @@
 
 .nd-related-list {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 24px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 28px;
+}
+
+@media (max-width: 960px) {
+  .nd-related-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .nd-related-list {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* --------------------------------------------------------------------------

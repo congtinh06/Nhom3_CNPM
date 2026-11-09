@@ -50,6 +50,33 @@ interface IndexedSentence extends SentenceToken {
   globalEnd: number;
 }
 
+const computeSentenceStartSeconds = (
+  sentence: { localStart: number; text: string },
+  pIdx: number,
+  readingSections: Array<{ startSeconds: number; text: string }>,
+  totalDuration: number
+): number => {
+  const section = readingSections[pIdx];
+  const sectionStart = section?.startSeconds ?? 0;
+  const nextSection = readingSections[pIdx + 1];
+  const sectionEnd =
+    nextSection && nextSection.startSeconds > sectionStart
+      ? nextSection.startSeconds
+      : totalDuration > 0
+      ? totalDuration
+      : sectionStart;
+  const sectionLen = Math.max(1, (readingSections[pIdx]?.text ?? '').length || 1);
+  const span = Math.max(0, sectionEnd - sectionStart);
+  const ratio = Math.min(1, Math.max(0, sentence.localStart / sectionLen));
+  let start = sectionStart + ratio * span;
+  if (totalDuration > 0) {
+    start = Math.max(0, Math.min(totalDuration - 1, Math.floor(start)));
+  } else {
+    start = Math.max(0, Math.floor(start));
+  }
+  return start;
+};
+
 const formatChapterClock = (seconds: number): string => {
   if (!Number.isFinite(seconds) || seconds < 0) return '0:00';
   const whole = Math.floor(seconds);
@@ -167,59 +194,46 @@ export const PoiReadingSection: React.FC<PoiReadingSectionProps> = ({
     [poi, currentLang, fullParagraphs, showReadingBody]
   );
 
-  // Tiêu đề chap hiển thị ở đoạn đầu tiên của từng phân đoạn bài thuyết minh (chỉ dùng cho chế độ độc lập).
-  const chapterTitleBySection = useMemo(() => {
-    if (isPanelMode) return null;
-    const chapterBlocks = poi.narration?.chapters?.[currentLang];
-    if (!chapterBlocks || chapterBlocks.length === 0) return null;
-    const map = new Map<number, string>();
+  // Chapter metadata (title + optional real startSec) for each transcript section.
+  // Available in both standalone and open-stop panel modes so headings/times match.
+  const chapterMetaBySection = useMemo(() => {
+    const chapterBlocks = (poi as any).narration?.chapters?.[currentLang];
+    if (!Array.isArray(chapterBlocks) || chapterBlocks.length === 0) return null;
+    const map = new Map<number, { title: string; startSec?: number }>();
     let sectionIndex = 0;
     for (const block of chapterBlocks) {
-      for (let i = 0; i < block.paras.length; i++) {
+      const parasCount =
+        Array.isArray(block?.paras) && block.paras.length > 0
+          ? block.paras.length
+          : 1;
+      const title = (block?.title ?? block?.name ?? '').toString().trim();
+      const rawStart = block?.startSec ?? block?.startSeconds ?? block?.startTime;
+      const startSec =
+        typeof rawStart === 'number' && Number.isFinite(rawStart) && rawStart >= 0
+          ? rawStart
+          : undefined;
+      for (let i = 0; i < parasCount; i++) {
         if (sectionIndex >= sections.length) break;
-        if (block.title && !map.has(sectionIndex)) map.set(sectionIndex, block.title);
+        if (title && !map.has(sectionIndex)) {
+          map.set(sectionIndex, { title, startSec: i === 0 ? startSec : undefined });
+        } else if (!map.has(sectionIndex) && startSec !== undefined && i === 0) {
+          map.set(sectionIndex, { title: '', startSec });
+        }
         sectionIndex++;
       }
       if (sectionIndex >= sections.length) break;
     }
     return map.size > 0 ? map : null;
-  }, [isPanelMode, poi, currentLang, sections]);
+  }, [poi, currentLang, sections]);
 
-  // 1d. Chapters list (only if data exists in poi.narration.chapters[currentLang])
-  const chapterItems = useMemo(() => {
-    const rawBlocks = poi.narration?.chapters?.[currentLang];
-    if (!rawBlocks || rawBlocks.length === 0) return [];
-
-    const validBlocks = rawBlocks.filter((b) => Boolean(b.title && b.title.trim()));
-    if (validBlocks.length === 0) return [];
-
-    const totalBlockChars = rawBlocks.reduce(
-      (sum, b) => sum + (b.paras || []).reduce((pSum, p) => pSum + p.length + 1, 0),
-      0
-    );
-
-    let charCursor = 0;
-    const items: Array<{ title: string; startSec: number }> = [];
-
-    rawBlocks.forEach((block, idx) => {
-      const explicitStart = (block as { startSec?: number }).startSec;
-      const startSec =
-        typeof explicitStart === 'number' && Number.isFinite(explicitStart) && explicitStart >= 0
-          ? Math.floor(explicitStart)
-          : totalBlockChars > 0 && resolvedTotalDuration > 0
-          ? Math.floor((charCursor / totalBlockChars) * resolvedTotalDuration)
-          : resolvedTotalDuration > 0
-          ? Math.floor((resolvedTotalDuration * idx) / rawBlocks.length)
-          : 0;
-
-      if (block.title && block.title.trim()) {
-        items.push({ title: block.title.trim(), startSec });
-      }
-      charCursor += (block.paras || []).reduce((pSum, p) => pSum + p.length + 1, 0);
+  const chapterTitleBySection = useMemo(() => {
+    if (!chapterMetaBySection) return null;
+    const map = new Map<number, string>();
+    chapterMetaBySection.forEach((meta, idx) => {
+      if (meta.title) map.set(idx, meta.title);
     });
-
-    return items;
-  }, [poi, currentLang, resolvedTotalDuration]);
+    return map.size > 0 ? map : null;
+  }, [chapterMetaBySection]);
 
   // 1e. "Điều nên biết" table (only if data exists in poi.tips[currentLang])
   const tipItems = useMemo(() => {
@@ -302,6 +316,31 @@ export const PoiReadingSection: React.FC<PoiReadingSectionProps> = ({
     return { byParagraph, flat, totalEndChar };
   }, [paragraphRanges]);
 
+  // ONE source of truth for timing: each transcript section = { title, startSeconds, text }.
+  // Real chapter startSec is used when present; otherwise section starts are derived
+  // proportionally to the character count of each section's text. Clamped to [0, duration-1].
+  const readingSections = useMemo(() => {
+    const totalChars = sentenceStructure.totalEndChar;
+    const dur = resolvedTotalDuration;
+    return sections.map((section, idx) => {
+      const range = paragraphRanges[idx];
+      const meta = chapterMetaBySection?.get(idx);
+      let start = 0;
+      if (dur > 0) {
+        if (typeof meta?.startSec === 'number' && Number.isFinite(meta.startSec)) {
+          start = Math.floor(meta.startSec);
+        } else if (totalChars > 0 && range) {
+          start = Math.floor((range.start / totalChars) * dur);
+        } else {
+          start = Math.floor((dur * idx) / Math.max(1, sections.length));
+        }
+        start = Math.max(0, Math.min(dur - 1, start));
+      }
+      const title = meta?.title || chapterTitleBySection?.get(idx) || '';
+      return { title, startSeconds: start, text: section.text };
+    });
+  }, [sections, paragraphRanges, sentenceStructure, resolvedTotalDuration, chapterMetaBySection, chapterTitleBySection]);
+
   const sectionRefs = useRef<Array<HTMLElement | null>>([]);
 
   const isReadingActive =
@@ -374,12 +413,8 @@ export const PoiReadingSection: React.FC<PoiReadingSectionProps> = ({
     const rect = el.getBoundingClientRect();
     const vh = window.innerHeight || 800;
 
-    // Middle band: between 25% and 75% of viewport, accounting for sticky header (~70px) and bottom bar (~90px)
-    const bandTop = Math.max(90, vh * 0.25);
-    const bandBottom = Math.min(vh - 110, vh * 0.75);
-
-    // Only scroll if the word has left the middle band
-    if (rect.top < bandTop || rect.bottom > bandBottom) {
+    // Only scroll if the active sentence has left the viewport
+    if (rect.top < 0 || rect.bottom > vh) {
       const prefersReducedMotion =
         typeof window.matchMedia === 'function' &&
         window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -389,7 +424,7 @@ export const PoiReadingSection: React.FC<PoiReadingSectionProps> = ({
         behavior: prefersReducedMotion ? 'auto' : 'smooth',
       });
     }
-  }, [isReadingActive, activeCharOffset]);
+  }, [isReadingActive, activeCharOffset, activeGlobalSentenceIndex]);
 
   // Facts row: Address and distance (standalone fallback only; omitted in open-stop panel)
   const rawAddress = (poi as unknown as { address?: Record<string, string> | string }).address;
@@ -493,11 +528,26 @@ export const PoiReadingSection: React.FC<PoiReadingSectionProps> = ({
         <p className="reading-paragraph">
           {paraSentences.map((sentence) => {
             const isCur = isLiveTranscript && sentence.globalIdx === activeGlobalSentenceIndex;
+            const sentenceStart = computeSentenceStartSeconds(
+              sentence,
+              pIdx,
+              readingSections,
+              resolvedTotalDuration
+            );
             return (
               <React.Fragment key={sentence.globalIdx}>
-                <span className={`sn${isCur ? ' cur' : ''}`}>
+                <button
+                  type="button"
+                  className={`sn${isCur ? ' cur' : ''}`}
+                  onClick={() => {
+                    if (onSeek && resolvedTotalDuration > 0) {
+                      onSeek(poi.id, sentenceStart);
+                    }
+                  }}
+                  aria-current={isCur ? 'true' : undefined}
+                >
                   {renderPanelSentenceContent(sentence, isCur)}
-                </span>
+                </button>
                 {sentence.trailingSpace}
               </React.Fragment>
             );
@@ -600,7 +650,9 @@ export const PoiReadingSection: React.FC<PoiReadingSectionProps> = ({
                 const pRange = paragraphRanges[pIdx];
                 if (!pRange) return null;
                 const isActiveSection = pIdx === activeSectionIndex;
-                const chapterTitle = chapterTitleBySection?.get(pIdx);
+                const sectionMeta = readingSections[pIdx];
+                const sectionStart = sectionMeta?.startSeconds ?? 0;
+                const sectionTitle = sectionMeta?.title ?? '';
 
                 return (
                   <div
@@ -610,10 +662,23 @@ export const PoiReadingSection: React.FC<PoiReadingSectionProps> = ({
                     }}
                     className={`narration-section${isActiveSection ? ' is-active' : ''}`}
                   >
-                    {chapterTitle && (
-                      <h4 className="reading-chapter-title" lang={currentLang}>
-                        {chapterTitle}
-                      </h4>
+                    {resolvedTotalDuration > 0 && onSeek && (
+                      <button
+                        type="button"
+                        className="narration-section-heading"
+                        onClick={() => onSeek(poi.id, sectionStart)}
+                        aria-label={t(currentLang, 'segmentTimeAria', {
+                          time: formatChapterClock(sectionStart),
+                          title: sectionTitle,
+                        })}
+                      >
+                        <span className="narration-section-time">
+                          {formatChapterClock(sectionStart)}
+                        </span>
+                        {sectionTitle ? (
+                          <span className="narration-section-title">{sectionTitle}</span>
+                        ) : null}
+                      </button>
                     )}
                     {renderParagraphText(pRange, pIdx)}
                   </div>
@@ -622,20 +687,26 @@ export const PoiReadingSection: React.FC<PoiReadingSectionProps> = ({
             </div>
           )}
 
-          {/* d. Chapters list (rendered ONLY when chapter data exists) */}
-          {!isContentLocked && chapterItems.length > 0 && (
+
+          {/* Compact quick-jump index generated from the same sections/times */}
+          {!isContentLocked && readingSections.length > 0 && onSeek && resolvedTotalDuration > 0 && (
             <div className="chs">
-              {chapterItems.map((ch, idx) => (
-                <button
-                  key={`${ch.startSec}-${idx}`}
-                  type="button"
-                  className="chb"
-                  onClick={() => onSeek?.(poi.id, ch.startSec)}
-                >
-                  <span>{formatChapterClock(ch.startSec)}</span>
-                  {ch.title}
-                </button>
-              ))}
+              {readingSections.map((sec, idx) => {
+                const preview =
+                  sec.title ||
+                  sec.text.slice(0, 48).trim() + (sec.text.length > 48 ? '…' : '');
+                return (
+                  <button
+                    key={`${sec.startSeconds}-${idx}`}
+                    type="button"
+                    className="chb"
+                    onClick={() => onSeek(poi.id, sec.startSeconds)}
+                  >
+                    <span>{formatChapterClock(sec.startSeconds)}</span>
+                    {preview}
+                  </button>
+                );
+              })}
             </div>
           )}
 

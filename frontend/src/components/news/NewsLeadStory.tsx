@@ -18,7 +18,9 @@ export const NewsLeadStory: React.FC<NewsLeadStoryProps> = ({ item, lang = 'vi' 
   const categoryMeta = NEWS_CATEGORIES[item.category] || NEWS_CATEGORIES['diem-den'];
   const formattedDate = formatNewsDate(item.publishedAt, lang);
   const readingTime = formatReadingTime(item.readingTime || item.readingMinutes || 3, lang);
-  const captionText = item.source ? item.source : item.imageCredit ? `Ảnh: ${item.imageCredit}` : '';
+  const captionText = item.imageCredit
+    ? `Ảnh: ${item.imageCredit}`
+    : (item.source && item.source.trim().toLowerCase() !== 'echora' ? item.source : '');
 
   return (
     <article className="nl-lead-card" data-testid="news-lead-story">

@@ -172,7 +172,8 @@ describe('PremiumPage', () => {
     expect(screen.getAllByText('Dinh Độc Lập').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Bảo tàng Chứng tích Chiến tranh').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Gói Premium').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('100.000đ')).toHaveLength(7);
+    expect(container.querySelectorAll('.premium-poi-price')).toHaveLength(7);
+    expect(screen.getAllByText('100.000đ')).toHaveLength(8);
     expect(container.querySelectorAll('.premium-poi-media-lock')).toHaveLength(7);
     expect(
       screen.queryByRole('button', { name: /Xem video & nghe thuyết minh/ })

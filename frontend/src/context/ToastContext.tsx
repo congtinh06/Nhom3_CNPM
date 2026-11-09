@@ -18,7 +18,7 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     timerRef.current = window.setTimeout(() => {
       setMessage(null);
       timerRef.current = null;
-    }, 3000);
+    }, 6000);
   }, []);
 
   return (

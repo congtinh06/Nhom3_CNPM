@@ -8,13 +8,15 @@
  * - Hai cột chính: Danh sách điểm dừng dạng accordion (chi tiết mở ngay dưới
  *   điểm đang chọn) + Bản đồ Google Maps dính (sticky)
  * - Khối hướng dẫn "How it works" 3 cột
+ * - Khối "Một câu chuyện, bốn ngôn ngữ" (cùng một thuyết minh, 4 ngôn ngữ)
+ * - Khối "Chuẩn bị trước khi đi"
  * - Cửa hàng quà lưu niệm "Mang một chút Sài Gòn về nhà" kết nối trực tiếp giỏ hàng
  * - Một thanh phát audio cố định ở chân trang (luôn hiển thị)
  * ============================================================================
  */
 
 import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Lock, ShoppingBag } from 'lucide-react';
 import nearbyPoisData from '../content/nearbyPois.json';
 import { api } from '../api/client';
@@ -34,6 +36,8 @@ import {
   formatDistance,
   formatDistanceRounded,
   NEARBY_DICTIONARY,
+  NATIVE_LANG_NAMES,
+  type NearbyKey,
 } from '../content/nearbyI18n';
 
 // Components
@@ -54,6 +58,18 @@ import { ProductCard } from '../components/food/ProductCard';
 import { Product } from '../types';
 import '../styles/souvenir.css';
 import '../styles/nearby.css';
+
+// "Một câu chuyện, bốn ngôn ngữ": cùng một đoạn thuyết minh, mỗi ngôn ngữ một dòng
+const LANGUAGE_SHOWCASE_SAMPLES: Array<{
+  code: SupportedLanguage;
+  key: NearbyKey;
+  free: boolean;
+}> = [
+  { code: 'vi', key: 'languageSampleVi', free: true },
+  { code: 'en', key: 'languageSampleEn', free: false },
+  { code: 'ja', key: 'languageSampleJa', free: false },
+  { code: 'ko', key: 'languageSampleKo', free: false },
+];
 
 export interface NarrationChapterBlock {
   title: string;
@@ -139,6 +155,83 @@ export function getHeroIntroText(poi: GeoPoi, lang: SupportedLanguage): string {
 }
 
 export { NEARBY_DICTIONARY };
+
+const POI_TOKEN_SLUG_MAP: Record<string, string> = {
+  'qr-dinh-doc-lap-01': 'dinh-doc-lap',
+  'qr-duc-ba-01': 'nha-tho-duc-ba',
+  'qr-buu-dien-01': 'buu-dien-trung-tam',
+  'qr-ben-thanh-01': 'cho-ben-thanh',
+  'qr-bao-tang-chung-tich-01': 'bao-tang-chung-tich-chien-tranh',
+  'qr-thien-hau-01': 'chua-ba-thien-hau',
+  'qr-ba-son-01': 'cau-ba-son',
+};
+
+const POI_SLUG_TOKEN_MAP: Record<string, string> = {
+  'dinh-doc-lap': 'qr-dinh-doc-lap-01',
+  'nha-tho-duc-ba': 'qr-duc-ba-01',
+  'buu-dien-trung-tam': 'qr-buu-dien-01',
+  'cho-ben-thanh': 'qr-ben-thanh-01',
+  'bao-tang-chung-tich-chien-tranh': 'qr-bao-tang-chung-tich-01',
+  'chua-ba-thien-hau': 'qr-thien-hau-01',
+  'cau-ba-son': 'qr-ba-son-01',
+};
+
+export function findPoiByQuery(pois: GeoPoi[], query?: string | null): GeoPoi | undefined {
+  if (!query) return undefined;
+  const q = query.trim().toLowerCase();
+  if (!q) return undefined;
+
+  // 1. Khớp chính xác slug
+  const bySlug = pois.find((p) => p.slug && p.slug.toLowerCase() === q);
+  if (bySlug) return bySlug;
+
+  // 2. Khớp chính xác qrToken
+  const byToken = pois.find((p) => p.qrToken && p.qrToken.toLowerCase() === q);
+  if (byToken) return byToken;
+
+  // 3. Khớp qua token -> slug map
+  const mappedSlug = POI_TOKEN_SLUG_MAP[q];
+  if (mappedSlug) {
+    const byMappedSlug = pois.find((p) => p.slug && p.slug.toLowerCase() === mappedSlug);
+    if (byMappedSlug) return byMappedSlug;
+  }
+
+  // 4. Khớp qua slug -> token map
+  const mappedToken = POI_SLUG_TOKEN_MAP[q];
+  if (mappedToken) {
+    const byMappedToken = pois.find((p) => p.qrToken && p.qrToken.toLowerCase() === mappedToken);
+    if (byMappedToken) return byMappedToken;
+  }
+
+  // 5. Khớp chính xác id
+  const byId = pois.find((p) => p.id && p.id.toLowerCase() === q);
+  if (byId) return byId;
+
+  // 6. Khớp numericId
+  if (/^\d+$/.test(q)) {
+    const num = Number(q);
+    const byNum = pois.find((p) => p.numericId === num);
+    if (byNum) return byNum;
+  }
+
+  // 7. Khớp 'poi-X'
+  const poiMatch = q.match(/^poi-(\d+)$/);
+  if (poiMatch) {
+    const num = Number(poiMatch[1]);
+    const byNum = pois.find((p) => p.numericId === num);
+    if (byNum) return byNum;
+  }
+
+  // 8. Khớp tên địa điểm
+  const byName = pois.find((p) =>
+    Object.values(p.name || {}).some(
+      (n) => n && n.toLowerCase().trim() === q
+    )
+  );
+  if (byName) return byName;
+
+  return undefined;
+}
 
 const PREMIUM_GATE_COPY: Record<
   SupportedLanguage,
@@ -336,6 +429,7 @@ function useNearbySouvenirs(): SouvenirsData {
 export const NearbyPage: React.FC = () => {
   const { lang, changeLanguage } = useNavbarLanguage();
   const navigate = useNavigate();
+  const location = useLocation();
   const { canAccessLanguage, canAccessPoi, canAccessPoiLanguage, refreshEntitlement } =
     usePremium();
   const auth = useAuthOptional();
@@ -344,9 +438,6 @@ export const NearbyPage: React.FC = () => {
   const { addToCart } = useCartOptional();
   const currentLang = (lang as SupportedLanguage) || 'vi';
   const isLanguageLocked = !canAccessLanguage(currentLang);
-
-  const [toastText, setToastText] = useState<string | null>(null);
-  const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Souvenir Carousel drag-to-scroll & arrow navigation
   const souvenirCarouselRef = useRef<HTMLDivElement>(null);
@@ -395,11 +486,6 @@ export const NearbyPage: React.FC = () => {
   const triggerToast = useCallback(
     (msg: string) => {
       showToast(msg);
-      setToastText(msg);
-      if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
-      toastTimerRef.current = setTimeout(() => {
-        setToastText(null);
-      }, 2500);
     },
     [showToast]
   );
@@ -536,6 +622,9 @@ export const NearbyPage: React.FC = () => {
 
   const [flyToUserToken, setFlyToUserToken] = useState<number>(0);
   const gpsToastShownRef = useRef<boolean>(false);
+  const gpsIntentRef = useRef<boolean>(false);
+  const [collapsedPoiId, setCollapsedPoiId] = useState<string | null>(null);
+  const [isPlayerHidden, setIsPlayerHidden] = useState<boolean>(false);
   const [isAutoEnabled, setIsAutoEnabled] = useState<boolean>(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -647,6 +736,13 @@ export const NearbyPage: React.FC = () => {
   // then slides up once a stop starts loading or playing.
   const hasAudioSession =
     Boolean(currentId) || isPlaying || playbackStatus === 'loading' || isPaused;
+  const isPlayerOpen = hasAudioSession && !isPlayerHidden;
+
+  // A newly started stop should always bring the player back into view, even
+  // if the visitor dismissed it for the previous stop.
+  useEffect(() => {
+    if (currentId) setIsPlayerHidden(false);
+  }, [currentId]);
 
   const {
     userPos,
@@ -761,7 +857,22 @@ export const NearbyPage: React.FC = () => {
     return list;
   }, [pois, userPos, tourNumberById]);
 
-  const effectiveActiveId = activeId || selectedId || (sortedPois[0]?.poi.id ?? pois[0]?.id ?? null);
+  const queryPoi = useMemo(() => {
+    if (typeof window === 'undefined') return null;
+    const params = new URLSearchParams(location.search || window.location.search);
+    const query =
+      params.get('stop') ||
+      params.get('poi') ||
+      params.get('slug') ||
+      params.get('token');
+    return query ? findPoiByQuery(pois, query) : null;
+  }, [pois, location.search]);
+
+  const effectiveActiveId =
+    activeId ||
+    selectedId ||
+    queryPoi?.id ||
+    (sortedPois[0]?.poi.id ?? pois[0]?.id ?? null);
 
 
 
@@ -778,6 +889,29 @@ export const NearbyPage: React.FC = () => {
   const nextItem =
     activeIndex >= 0 && activeIndex < sortedPois.length - 1 ? (sortedPois[activeIndex + 1] ?? null) : null;
 
+  // Duration label for each stop row, so the list mimics the guided-tour mockup.
+  const durationById = useMemo(() => {
+    const map: Record<string, string> = {};
+    for (const poi of pois) {
+      const seconds = estimatePoiDurationSeconds(
+        poi,
+        currentLang,
+        duration,
+        currentId === poi.id
+      );
+      if (seconds > 0) map[poi.id] = fmtTime(seconds);
+    }
+    return map;
+  }, [pois, currentLang, duration, currentId]);
+
+  // The list is the only surface that can collapse the open stop; map/stepper
+  // selections keep the story open.
+  const isListRowOpen = Boolean(
+    effectiveActiveId && collapsedPoiId !== effectiveActiveId
+  );
+  const listSelectedId = isListRowOpen ? selectedId : null;
+  const listActiveId = isListRowOpen ? effectiveActiveId : null;
+
   const activeSelectedPoi = useMemo(
     () => activeSortedItem?.poi || pois.find((p) => p.id === (currentId || selectedId || activeId || effectiveActiveId)) || null,
     [activeSortedItem, pois, currentId, selectedId, activeId, effectiveActiveId]
@@ -793,6 +927,8 @@ export const NearbyPage: React.FC = () => {
     const nearest = sortedPois[0];
     if (nearest && typeof nearest.dist === 'number') {
       const isFar = nearest.dist > 3000;
+      const triggerRadius = nearest.poi.triggerRadius ?? 60;
+      const isInsideRadius = nearest.dist <= triggerRadius;
       const formattedD = formatDistance(nearest.dist, currentLang);
       const suffixHtml = t(currentLang, 'nearestSuffix', {
         name: getPoiName(nearest.poi),
@@ -801,12 +937,49 @@ export const NearbyPage: React.FC = () => {
       return (
         <span>
           <span dangerouslySetInnerHTML={{ __html: suffixHtml }} />{' '}
+          <span className={`nearby-status-zone${isInsideRadius ? ' is-inside' : ''}`}>
+            {isInsideRadius
+              ? t(currentLang, 'inZoneBadge')
+              : t(currentLang, 'gpsOutsideRadiusNotice')}
+          </span>
           {isFar ? <span style={{ opacity: 0.85 }}>{t(currentLang, 'farNotice')}</span> : null}
         </span>
       );
     }
     return null;
   }, [gpsError, userPos, sortedPois, currentLang, getPoiName]);
+
+  // After an explicit "My location" tap: if the visitor is inside the nearest
+  // stop radius, start that stop once even when automatic narration is off.
+  // Outside the radius the status line explains that listening is manual.
+  useEffect(() => {
+    if (!userPos || !gpsIntentRef.current) return;
+    gpsIntentRef.current = false;
+
+    let nearest: GeoPoi | null = null;
+    let nearestDist = Infinity;
+    for (const poi of pois) {
+      const dist = haversine(userPos.lat, userPos.lng, poi.lat, poi.lng);
+      if (dist < nearestDist) {
+        nearestDist = dist;
+        nearest = poi;
+      }
+    }
+    if (!nearest) return;
+
+    const triggerRadius = nearest.triggerRadius ?? 60;
+    if (
+      nearestDist <= triggerRadius &&
+      !isAutoEnabled &&
+      !isPlaying &&
+      !isLoading &&
+      currentId !== nearest.id
+    ) {
+      setSelectedId(nearest.id);
+      setActiveId(nearest.id);
+      playPoi(nearest.id, true);
+    }
+  }, [userPos, pois, isAutoEnabled, isPlaying, isLoading, currentId, playPoi]);
 
   // The open story lives inside an accordion panel flattened with
   // `display: contents`, so its inner hero has no layout box to scroll to.
@@ -843,6 +1016,7 @@ export const NearbyPage: React.FC = () => {
   const handleExplicitSelectPoi = useCallback(
     (poiId: string, shouldScroll = false) => {
       setIsQrOpen(false);
+      setCollapsedPoiId(null);
       setSelectedId(poiId);
       setActiveId(poiId);
 
@@ -859,6 +1033,30 @@ export const NearbyPage: React.FC = () => {
       }
     },
     [pois, scrollActiveStopIntoView]
+  );
+
+  // List rows behave as a real accordion: clicking the open row collapses it,
+  // clicking any other row opens that stop. Map markers and the stepper use
+  // handleExplicitSelectPoi so they always force the picked stop open.
+  const handleToggleSelectPoi = useCallback(
+    (poiId: string) => {
+      const isCurrentlyOpen =
+        effectiveActiveId === poiId && collapsedPoiId !== poiId;
+      if (isCurrentlyOpen) {
+        setCollapsedPoiId(poiId);
+        return;
+      }
+      setCollapsedPoiId(null);
+      handleExplicitSelectPoi(poiId, true);
+    },
+    [effectiveActiveId, collapsedPoiId, handleExplicitSelectPoi]
+  );
+
+  const handleMapSelectPoi = useCallback(
+    (poiId: string) => {
+      handleExplicitSelectPoi(poiId, true);
+    },
+    [handleExplicitSelectPoi]
   );
 
   // On phones the route strip scrolls horizontally without visible scrollbar,
@@ -894,22 +1092,21 @@ export const NearbyPage: React.FC = () => {
   }, [effectiveActiveId]);
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const stopParam = params.get('stop');
-    const poiParam = params.get('poi');
-    const numericParam = poiParam && /^\d+$/.test(poiParam) ? Number(poiParam) : null;
+    const params = new URLSearchParams(location.search || window.location.search);
+    const stopParam =
+      params.get('stop') ||
+      params.get('poi') ||
+      params.get('slug') ||
+      params.get('token');
+    if (!stopParam || pois.length === 0) return;
 
-    const matched = stopParam
-      ? pois.find((p) => p.slug === stopParam || p.id === stopParam)
-      : numericParam !== null
-        ? pois.find((p) => p.numericId === numericParam)
-        : undefined;
-
+    const matched = findPoiByQuery(pois, stopParam);
     if (matched) {
       setSelectedId(matched.id);
       setActiveId(matched.id);
+      scrollActiveStopIntoView(matched.id);
     }
-  }, [pois]);
+  }, [pois, location.search, scrollActiveStopIntoView]);
 
   const handleTogglePlayPoi = useCallback(
     (poiId: string) => {
@@ -1041,6 +1238,11 @@ export const NearbyPage: React.FC = () => {
         setActiveId(poiId);
       }
 
+      // Start playback for the target stop when it is not the current one
+      if (currentId !== poiId) {
+        playPoi(poiId, false);
+      }
+
       if (currentId === poiId && (audioSourceType === 'backend' || audioSourceType === 'static')) {
         try {
           const audioEl = getSharedAudio();
@@ -1067,6 +1269,7 @@ export const NearbyPage: React.FC = () => {
       effectiveActiveId,
       audioSourceType,
       currentTime,
+      playPoi,
     ]
   );
 
@@ -1190,15 +1393,23 @@ export const NearbyPage: React.FC = () => {
     [addToCart, currentLang, triggerToast]
   );
 
-  // Stepper timeline fill calculation
-  const listenedIndices = useMemo(() => {
-    return sortedPois
-      .map((item, idx) => (heardPoiIds.includes(item.poi.id) ? idx : -1))
-      .filter((idx) => idx >= 0);
+  // Stepper timeline fill calculation: chỉ nối vạch cam cho các điểm liên tục đã nghe từ đầu tuyến
+  const consecutiveListenedCount = useMemo(() => {
+    let count = 0;
+    for (const item of sortedPois) {
+      if (heardPoiIds.includes(item.poi.id)) {
+        count++;
+      } else {
+        break;
+      }
+    }
+    return count;
   }, [sortedPois, heardPoiIds]);
 
-  const maxListenedIndex = listenedIndices.length > 0 ? Math.max(...listenedIndices) : -1;
-  const sfillWidth = maxListenedIndex >= 0 ? `${((maxListenedIndex + 1) / Math.max(1, sortedPois.length)) * 100}%` : '0%';
+  const sfillWidth =
+    consecutiveListenedCount > 0
+      ? `${(consecutiveListenedCount / Math.max(1, sortedPois.length)) * 100}%`
+      : '0%';
 
   const playerTotalSeconds = activeStopDuration > 0 ? activeStopDuration : duration || 120;
   const activeProgressPercent =
@@ -1379,8 +1590,16 @@ export const NearbyPage: React.FC = () => {
                   aria-current={isItemActive ? 'step' : undefined}
                   onClick={() => handleExplicitSelectPoi(item.poi.id, true)}
                 >
-                  {item.stopNumber ?? idx + 1}. {getPoiName(item.poi)}
-                  {routeLegText && <small>{routeLegText}</small>}
+                  <span className="sd-text">
+                    {item.stopNumber ?? idx + 1}. {getPoiName(item.poi)}
+                  </span>
+                  {isItemListened ? (
+                    <span className="sd-badge-heard">
+                      {currentLang === 'vi' ? 'Đã trải qua' : currentLang === 'en' ? 'Visited' : 'Đã nghe'}
+                    </span>
+                  ) : routeLegText ? (
+                    <small>{routeLegText}</small>
+                  ) : null}
                 </button>
               );
             })}
@@ -1393,8 +1612,8 @@ export const NearbyPage: React.FC = () => {
           <aside className="nearby-stops-column" aria-label={t(currentLang, 'chaptersAriaLabel')}>
             <PoiList
               sortedPois={sortedPois}
-              selectedPoiId={selectedId}
-              activePoiId={effectiveActiveId}
+              selectedPoiId={listSelectedId}
+              activePoiId={listActiveId}
               hoveredPoiId={hoveredId}
               currentPlayingId={currentId}
               isPlaying={isPlaying}
@@ -1406,6 +1625,7 @@ export const NearbyPage: React.FC = () => {
               sortNoteText={userPos ? t(currentLang, 'sortNearest') : t(currentLang, 'sortTour')}
               activeSentenceIndex={activeSentenceIndex}
               duration={duration}
+              durationById={durationById}
               details={
                 activeSortedItem ? (
                   <>
@@ -1478,7 +1698,7 @@ export const NearbyPage: React.FC = () => {
                   </>
                 ) : null
               }
-              onSelectPoi={handleExplicitSelectPoi}
+              onSelectPoi={handleToggleSelectPoi}
               onHoverPoi={setHoveredId}
               onTogglePlay={handleTogglePlayPoi}
               getPoiName={getPoiName}
@@ -1508,7 +1728,7 @@ export const NearbyPage: React.FC = () => {
                 radius={activeSelectedPoi?.triggerRadius ?? 60}
                 isAutoEnabled={isAutoEnabled}
                 listenedPoiIds={heardPoiIds}
-                onSelectPoi={(id) => handleExplicitSelectPoi(id, true)}
+                onSelectPoi={handleMapSelectPoi}
                 onHoverPoi={setHoveredId}
                 onTogglePlay={handleTogglePlayPoi}
                 getPoiName={getPoiName}
@@ -1545,6 +1765,8 @@ export const NearbyPage: React.FC = () => {
                     triggerToast(t(currentLang, nextVal ? 'toastAutoOn' : 'toastAutoOff'));
                   }}
                   onRequestGps={() => {
+                    gpsIntentRef.current = true;
+                    gpsToastShownRef.current = false;
                     setFlyToUserToken((n) => n + 1);
                     requestGps();
                     triggerToast(t(currentLang, 'toastLocating'));
@@ -1558,7 +1780,83 @@ export const NearbyPage: React.FC = () => {
           </div>
         </div>
 
-        {/* 4. SOUVENIR SHOP SECTION */}
+        {/* 4. ITINERARIES ("Đi bao lâu thì vừa?") - rendered ONLY when itinerary data exists */}
+        {itineraryColumns.length > 0 && (
+          <section className="plan" aria-labelledby="nearbyPlanTitle">
+            <h2 id="nearbyPlanTitle">{t(currentLang, 'itineraryTitle')}</h2>
+            <div className="pc2">
+              {itineraryColumns.map((col, idx) => (
+                <div key={idx}>
+                  <h3>{col.heading}</h3>
+                  {col.summary && <p>{col.summary}</p>}
+                  <ol>
+                    {col.stops.map((stopTitle, sIdx) => (
+                      <li key={sIdx}>{stopTitle}</li>
+                    ))}
+                  </ol>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* 5. HOW IT WORKS SECTION (3 hairline columns) */}
+        <section className="how">
+          <div>
+            <h3>{t(currentLang, 'how1Title')}</h3>
+            <p>{t(currentLang, 'how1Desc')}</p>
+          </div>
+          <div>
+            <h3>{t(currentLang, 'how2Title')}</h3>
+            <p>{t(currentLang, 'how2Desc')}</p>
+          </div>
+          <div>
+            <h3>{t(currentLang, 'how3Title')}</h3>
+            <p>{t(currentLang, 'how3Desc')}</p>
+          </div>
+        </section>
+
+        {/* 6. LANGUAGE SHOWCASE: "Một câu chuyện, bốn ngôn ngữ" */}
+        <section className="lg" aria-labelledby="nearbyLangTitle">
+          <div>
+            <h2 id="nearbyLangTitle">{t(currentLang, 'languageShowcaseTitle')}</h2>
+            <p className="lgp">{t(currentLang, 'languageShowcaseSub')}</p>
+          </div>
+          <div className="lr">
+            {LANGUAGE_SHOWCASE_SAMPLES.map((row) => (
+              <div key={row.code}>
+                <b>{NATIVE_LANG_NAMES[row.code]}</b>
+                <span lang={row.code}>{t(row.code, row.key)}</span>
+                <small>{row.free ? t(currentLang, 'languageFree') : t(currentLang, 'languagePremium')}</small>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* 7. PREPARATION: "Chuẩn bị trước khi đi" */}
+        <section className="prep" aria-labelledby="nearbyPrepTitle">
+          <h2 id="nearbyPrepTitle">{t(currentLang, 'prepTitle')}</h2>
+          <div className="pr4">
+            <div>
+              <h3>{t(currentLang, 'prep1Title')}</h3>
+              <p>{t(currentLang, 'prep1Desc')}</p>
+            </div>
+            <div>
+              <h3>{t(currentLang, 'prep2Title')}</h3>
+              <p>{t(currentLang, 'prep2Desc')}</p>
+            </div>
+            <div>
+              <h3>{t(currentLang, 'prep3Title')}</h3>
+              <p>{t(currentLang, 'prep3Desc')}</p>
+            </div>
+            <div>
+              <h3>{t(currentLang, 'prep4Title')}</h3>
+              <p>{t(currentLang, 'prep4Desc')}</p>
+            </div>
+          </div>
+        </section>
+
+        {/* 8. SOUVENIR SHOP SECTION (last on the page, after the preparation step) */}
         <section className="shop" aria-labelledby="shopT">
           <div className="shop-head">
             <div>
@@ -1641,72 +1939,34 @@ export const NearbyPage: React.FC = () => {
           )}
         </section>
 
-        {/* 5a. ITINERARIES ("Đi bao lâu thì vừa?") - rendered ONLY when itinerary data exists */}
-        {itineraryColumns.length > 0 && (
-          <section className="plan" aria-labelledby="nearbyPlanTitle">
-            <h2 id="nearbyPlanTitle">{t(currentLang, 'itineraryTitle')}</h2>
-            <div className="pc2">
-              {itineraryColumns.map((col, idx) => (
-                <div key={idx}>
-                  <h3>{col.heading}</h3>
-                  {col.summary && <p>{col.summary}</p>}
-                  <ol>
-                    {col.stops.map((stopTitle, sIdx) => (
-                      <li key={sIdx}>{stopTitle}</li>
-                    ))}
-                  </ol>
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* 5b. HOW IT WORKS SECTION (below souvenir area, 3 hairline columns) */}
-        <section className="how">
-          <div>
-            <h3>{t(currentLang, 'how1Title')}</h3>
-            <p>{t(currentLang, 'how1Desc')}</p>
-          </div>
-          <div>
-            <h3>{t(currentLang, 'how2Title')}</h3>
-            <p>{t(currentLang, 'how2Desc')}</p>
-          </div>
-          <div>
-            <h3>{t(currentLang, 'how3Title')}</h3>
-            <p>{t(currentLang, 'how3Desc')}</p>
-          </div>
-        </section>
-
-        {/* 5c. FAQ SECTION (native <details>/<summary>, +/- indicator, 52px min height) */}
-        <section className="nearby-faq faq" aria-labelledby="nearbyFaqTitle">
-          <h2 id="nearbyFaqTitle">{t(currentLang, 'faqTitle')}</h2>
-          <div className="nearby-faq-list">
-            <details>
-              <summary>{t(currentLang, 'faqQ1')}</summary>
-              <p>{t(currentLang, 'faqA1')}</p>
-            </details>
-            <details>
-              <summary>{t(currentLang, 'faqQ2')}</summary>
-              <p>{t(currentLang, 'faqA2')}</p>
-            </details>
-            <details>
-              <summary>{t(currentLang, 'faqQ3')}</summary>
-              <p>{t(currentLang, 'faqA3')}</p>
-            </details>
-            <details>
-              <summary>{t(currentLang, 'faqQ4')}</summary>
-              <p>{t(currentLang, 'faqA4')}</p>
-            </details>
-          </div>
-        </section>
       </div>
 
       {/* 6. FIXED BOTTOM AUDIO PLAYER BAR (APPEARS WHEN PLAYBACK STARTS) */}
       <footer
         id="nearby-player"
-        className={`pl player nearby-sticky-player-bar${hasAudioSession ? ' is-open' : ''}`}
+        className={`pl player nearby-sticky-player-bar${isPlayerOpen ? ' is-open' : ''}`}
         aria-label={t(currentLang, 'playerAriaLabel')}
       >
+        <button
+          type="button"
+          className="player-close-btn"
+          aria-label={t(currentLang, 'playerCloseAria')}
+          title={t(currentLang, 'playerCloseAria')}
+          onClick={() => setIsPlayerHidden(true)}
+        >
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+        </button>
         <div
           className="bar"
           id="seek"
@@ -1904,6 +2164,20 @@ export const NearbyPage: React.FC = () => {
         </div>
       </footer>
 
+      {hasAudioSession && isPlayerHidden && (
+        <button
+          type="button"
+          className="player-fab is-playing"
+          aria-label={t(currentLang, 'playerFabAria')}
+          title={t(currentLang, 'playerFabAria')}
+          onClick={() => setIsPlayerHidden(false)}
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M8 5v14l11-7z" />
+          </svg>
+        </button>
+      )}
+
       {isQrOpen && activeSelectedPoi && (
         <PoiQrDialog
           poi={activeSelectedPoi}
@@ -1913,10 +2187,6 @@ export const NearbyPage: React.FC = () => {
         />
       )}
 
-      {/* FLOATING TOAST NOTIFICATION */}
-      <div className={`toast ${toastText ? 'show' : ''}`} id="toast" role="status">
-        {toastText}
-      </div>
     </div>
   );
 };
