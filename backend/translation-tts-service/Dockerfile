@@ -10,11 +10,17 @@ RUN mvn -B clean package -DskipTests
 # Stage 2: Runtime (chay bang user khong phai root)
 FROM eclipse-temurin:17-jre-jammy
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    python3 \
-    python3-venv \
-    wget \
-    ca-certificates \
+# Runner/CI co the khong resolve duoc *.ubuntu.com -> doi sang mirror kernel.org
+# (cung noi dung Ubuntu archive) va retry 3 lan truoc khi bo cuoc.
+RUN sed -i -E 's#https?://(archive|security)\.ubuntu\.com/ubuntu#https://mirrors.edge.kernel.org/ubuntu#g' /etc/apt/sources.list \
+    && ( for attempt in 1 2 3; do \
+           apt-get update \
+           && apt-get install -y --no-install-recommends python3 python3-venv wget ca-certificates \
+           && exit 0; \
+           echo "apt attempt ${attempt} failed; retrying in 10s"; \
+           sleep 10; \
+         done; \
+         exit 1 ) \
     && rm -rf /var/lib/apt/lists/*
 
 RUN python3 -m venv /opt/venv
