@@ -7,8 +7,6 @@ import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 
 @Entity
 @Table(name = "products")
@@ -78,9 +76,6 @@ public class Product {
     @Builder.Default
     private LocalDateTime updatedAt = LocalDateTime.now();
 
-    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
-    @Builder.Default
-    private List<ProductTranslation> translations = new ArrayList<>();
 
     @PreUpdate
     public void preUpdate() {
