@@ -13,7 +13,7 @@ public final class ProductSpecification {
 
     private ProductSpecification() {}
 
-    public static Specification<Product> filter(ProductFilterRequest request, List<Long> targetCategoryIds) {
+    public static Specification<Product> filter(ProductFilterRequest request) {
         return (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
 
@@ -37,12 +37,8 @@ public final class ProductSpecification {
                 predicates.add(cb.or(nameMatch, descMatch));
             }
 
-            // 5. Lọc theo danh mục (category entity theo ID bao gồm cả cây con nếu có)
-            if (targetCategoryIds != null && !targetCategoryIds.isEmpty()) {
-                predicates.add(root.get("categoryEntity").get("id").in(targetCategoryIds));
-            } else if (request.getCategoryId() != null) {
-                predicates.add(cb.equal(root.get("categoryEntity").get("id"), request.getCategoryId()));
-            } else if (request.getCategory() != null) {
+            // 5. Lọc theo danh mục enum
+            if (request.getCategory() != null) {
                 predicates.add(cb.equal(root.get("category"), request.getCategory()));
             }
 
@@ -61,5 +57,9 @@ public final class ProductSpecification {
 
             return cb.and(predicates.toArray(new Predicate[0]));
         };
+    }
+
+    public static Specification<Product> filter(ProductFilterRequest request, List<Long> targetCategoryIds) {
+        return filter(request);
     }
 }

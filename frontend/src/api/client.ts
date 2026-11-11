@@ -238,7 +238,6 @@ export const api = {
   getProducts: async (
     params?: {
       category?: ProductCategory;
-      categoryId?: number;
       poiSlug?: string;
       keyword?: string;
       search?: string;

@@ -2,6 +2,7 @@ package com.echora.content.repository;
 
 import com.echora.content.dto.ProductFilterRequest;
 import com.echora.content.entity.Product;
+import com.echora.content.model.ProductCategory;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.Expression;
@@ -60,7 +61,7 @@ class ProductSpecificationTest {
     @Test
     @DisplayName("filter: luôn loại sản phẩm chưa gắn điểm du lịch (poi IS NOT NULL)")
     void filter_AlwaysExcludesUnlinkedProducts() {
-        Specification<Product> spec = ProductSpecification.filter(new ProductFilterRequest(), null);
+        Specification<Product> spec = ProductSpecification.filter(new ProductFilterRequest());
 
         spec.toPredicate(root, query, cb);
 
@@ -78,10 +79,27 @@ class ProductSpecificationTest {
                 .poiSlug("chua-ba-thien-hau")
                 .build();
 
-        Specification<Product> spec = ProductSpecification.filter(request, null);
+        Specification<Product> spec = ProductSpecification.filter(request);
         spec.toPredicate(root, query, cb);
 
         verify(cb).isNotNull(poiPath);
         verify(cb).equal(poiSlugPath, "chua-ba-thien-hau");
+    }
+
+    @Test
+    @DisplayName("filter: có category enum -> thêm điều kiện lọc theo ProductCategory")
+    void filter_WithCategory_AddsCategoryEqualityPredicate() {
+        Path<Object> categoryPath = mock(Path.class);
+        when(root.get("category")).thenReturn((Path) categoryPath);
+        when(cb.equal(any(Expression.class), any(Object.class))).thenReturn(predicate);
+
+        ProductFilterRequest request = ProductFilterRequest.builder()
+                .category(ProductCategory.SOUVENIR)
+                .build();
+
+        Specification<Product> spec = ProductSpecification.filter(request);
+        spec.toPredicate(root, query, cb);
+
+        verify(cb).equal(categoryPath, ProductCategory.SOUVENIR);
     }
 }

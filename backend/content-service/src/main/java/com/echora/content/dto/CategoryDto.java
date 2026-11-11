@@ -16,7 +16,6 @@ public class CategoryDto {
     private String nameVi;
     private String nameEn;
     private String iconUrl;
-    private Long parentId;
     @Builder.Default
     private List<CategoryDto> children = new ArrayList<>();
 }
