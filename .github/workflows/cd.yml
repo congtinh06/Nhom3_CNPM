@@ -82,18 +82,25 @@ jobs:
   # Backend CI workflows use path filters, so a workflow with no run for this
   # SHA is not a failure. This job polls the workflow runs of the commit, keeps
   # the latest attempt per workflow, and fails if any completed run is not green.
-  # A SHA with no run at all is only treated as docs-only after a grace period.
+  # A SHA with no run at all is only treated as docs-only after a grace period,
+  # and only if the pushed commits touch no path that any CI workflow watches.
   verify-ci:
     name: Verify CI for this commit
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
+      - name: Checkout (full history for changed-file detection)
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          fetch-depth: 0
+
       - name: Poll CI workflow runs for this SHA
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
           SHA: ${{ github.sha }}
+          BASE_SHA: ${{ github.event.before }}
         run: |
           set -euo pipefail
           workflows=(
@@ -108,6 +115,39 @@ jobs:
             "Config & Environment Check"
           )
           names_json="$(printf '%s\n' "${workflows[@]}" | jq -R . | jq -s -c .)"
+
+          # Path filters copied from .github/workflows/*.yml. They are only used
+          # by the docs-only decision below: if the push touches a path that some
+          # CI workflow watches but no run exists for the SHA, the trigger is late
+          # or broken, and the deploy must be blocked instead of passing silently.
+          # Keep in sync with the paths: blocks of the CI workflows.
+          filter_for_file() {
+            case "$1" in
+              frontend/*|.github/workflows/frontend-ci.yml) echo "Frontend CI" ;;
+              backend/auth-service/*|.github/workflows/auth-service.yml) echo "Auth Service CI" ;;
+              backend/content-service/*|.github/workflows/content-service.yml) echo "Content Service CI" ;;
+              backend/location-service/*|.github/workflows/location-service.yml) echo "Location Service CI" ;;
+              backend/translation-tts-service/*|.github/workflows/translation-tts-service.yml) echo "Translation TTS Service CI" ;;
+              backend/analytics-service/*|.github/workflows/analytics-service.yml) echo "Analytics Service CI" ;;
+              backend/api-gateway/*|.github/workflows/api-gateway.yml) echo "API Gateway Service CI" ;;
+              backend/order-service/*|.github/workflows/order-service.yml) echo "Order Service CI" ;;
+              .env.example|docker-compose*.yml|scripts/*|.github/workflows/config-check.yml) echo "Config & Environment Check" ;;
+            esac
+          }
+
+          # Files changed by this push. BASE_SHA is the ref before the push; when
+          # it is unusable (new ref, rewritten history) fall back to the tip commit
+          # against its first parent, which is the right diff for a merge commit.
+          changed_files() {
+            local base="${BASE_SHA:-}"
+            local zero="0000000000000000000000000000000000000000"
+            if [ -n "$base" ] && [ "$base" != "$zero" ] && git cat-file -e "${base}^{commit}" 2>/dev/null; then
+              git -c core.quotepath=off diff --name-only -z "$base" "$SHA"
+            else
+              git -c core.quotepath=off show --name-only --pretty=format: --first-parent -z "$SHA"
+            fi
+          }
+
           deadline=$((SECONDS + 1500))
           # A run can take a few seconds to appear after the push, so "no run for
           # this SHA" is only accepted as docs-only after this many seconds of
@@ -147,6 +187,36 @@ jobs:
               fi
               elapsed_zero=$((SECONDS - zero_since))
               if [ "$elapsed_zero" -ge "$grace_seconds" ]; then
+                changed_list="$(mktemp)"
+                if ! changed_files > "$changed_list"; then
+                  rm -f "$changed_list"
+                  echo "::error::Cannot list changed files for $SHA (base: ${BASE_SHA:-none}); refusing to treat it as docs-only."
+                  exit 1
+                fi
+
+                matches=""
+                match_count=0
+                while IFS= read -r -d '' file; do
+                  [ -n "$file" ] || continue
+                  watched="$(filter_for_file "$file")"
+                  if [ -n "$watched" ]; then
+                    match_count=$((match_count + 1))
+                    if [ "$match_count" -le 10 ]; then
+                      matches="${matches}${watched}: ${file}"$'\n'
+                    fi
+                  fi
+                done < "$changed_list"
+                rm -f "$changed_list"
+
+                if [ "$match_count" -gt 0 ]; then
+                  printf '%s' "$matches"
+                  if [ "$match_count" -gt 10 ]; then
+                    echo "... and $((match_count - 10)) more changed file(s) matching CI path filters"
+                  fi
+                  echo "::error::No CI run for $SHA after ${elapsed_zero}s, but the push touches CI-monitored paths; refusing to treat it as docs-only."
+                  exit 1
+                fi
+
                 echo "No path-filtered CI workflow ran for $SHA after ${elapsed_zero}s (docs-only change); nothing to block."
                 exit 0
               fi
