@@ -80,7 +80,7 @@ public interface PoiRepository extends JpaRepository<Poi, Long> {
             "WHERE (:zoneId IS NULL OR z.id = :zoneId) " +
             "AND (:routeId IS NULL OR r.id = :routeId) " +
             "AND (:status IS NULL OR p.status = :status) " +
-            "AND (:searchPattern IS NULL OR LOWER(p.name) LIKE :searchPattern) " +
+            "AND (:searchPattern IS NULL OR p.name LIKE :searchPattern) " +
             "AND (:audioStatus IS NULL OR EXISTS (SELECT 1 FROM PoiTranslation t WHERE t.poi = p AND t.audioStatus = :audioStatus)) " +
             "AND (" +
             "  :overallStatus IS NULL " +
@@ -104,7 +104,7 @@ public interface PoiRepository extends JpaRepository<Poi, Long> {
             "WHERE (:zoneId IS NULL OR p.zone.id = :zoneId) " +
             "AND (:routeId IS NULL OR p.route.id = :routeId) " +
             "AND (:status IS NULL OR p.status = :status) " +
-            "AND (:searchPattern IS NULL OR LOWER(p.name) LIKE :searchPattern) " +
+            "AND (:searchPattern IS NULL OR p.name LIKE :searchPattern) " +
             "AND (:audioStatus IS NULL OR EXISTS (SELECT 1 FROM PoiTranslation t WHERE t.poi = p AND t.audioStatus = :audioStatus)) " +
             "AND (" +
             "  :overallStatus IS NULL " +

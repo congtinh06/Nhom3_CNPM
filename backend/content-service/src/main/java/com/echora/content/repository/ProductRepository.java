@@ -26,7 +26,7 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
     @EntityGraph(attributePaths = {"poi"})
     @Query("SELECT p FROM Product p WHERE p.isActive = true " +
            "AND (:category IS NULL OR p.category = :category) " +
-           "AND (:searchPattern IS NULL OR LOWER(p.name) LIKE :searchPattern)")
+           "AND (:searchPattern IS NULL OR p.name LIKE :searchPattern)")
     Page<Product> findActiveProducts(
             @Param("category") ProductCategory category,
             @Param("searchPattern") String searchPattern,
@@ -35,7 +35,7 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
     @EntityGraph(attributePaths = {"poi"})
     @Query("SELECT p FROM Product p WHERE " +
            "(:category IS NULL OR p.category = :category) " +
-           "AND (:searchPattern IS NULL OR LOWER(p.name) LIKE :searchPattern) " +
+           "AND (:searchPattern IS NULL OR p.name LIKE :searchPattern) " +
            "AND (:isActive IS NULL OR p.isActive = :isActive)")
     Page<Product> findAdminProducts(
             @Param("category") ProductCategory category,

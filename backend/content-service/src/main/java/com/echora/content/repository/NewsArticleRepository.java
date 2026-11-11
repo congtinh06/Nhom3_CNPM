@@ -15,8 +15,8 @@ public interface NewsArticleRepository extends JpaRepository<NewsArticle, Long> 
 
     @Query("SELECT n FROM NewsArticle n WHERE n.isActive = true " +
            "AND (:category IS NULL OR n.category = :category) " +
-           "AND (:search IS NULL OR LOWER(n.title) LIKE LOWER(CONCAT('%', :search, '%')) " +
-           "OR LOWER(n.summary) LIKE LOWER(CONCAT('%', :search, '%')))")
+           "AND (:search IS NULL OR n.title LIKE CONCAT('%', :search, '%') " +
+           "OR n.summary LIKE CONCAT('%', :search, '%'))")
     Page<NewsArticle> findActiveNews(
             @Param("category") String category,
             @Param("search") String search,
@@ -24,8 +24,8 @@ public interface NewsArticleRepository extends JpaRepository<NewsArticle, Long> 
 
     @Query("SELECT n FROM NewsArticle n WHERE " +
            "(:category IS NULL OR n.category = :category) " +
-           "AND (:search IS NULL OR LOWER(n.title) LIKE LOWER(CONCAT('%', :search, '%')) " +
-           "OR LOWER(n.summary) LIKE LOWER(CONCAT('%', :search, '%'))) " +
+           "AND (:search IS NULL OR n.title LIKE CONCAT('%', :search, '%') " +
+           "OR n.summary LIKE CONCAT('%', :search, '%')) " +
            "AND (:isActive IS NULL OR n.isActive = :isActive)")
     Page<NewsArticle> findAdminNews(
             @Param("category") String category,

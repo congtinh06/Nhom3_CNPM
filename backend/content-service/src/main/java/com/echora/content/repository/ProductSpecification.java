@@ -32,8 +32,8 @@ public final class ProductSpecification {
             // 4. Lọc theo từ khóa tìm kiếm (name hoặc shortDescription)
             if (request.getKeyword() != null && !request.getKeyword().isBlank()) {
                 String searchPattern = "%" + request.getKeyword().trim().toLowerCase() + "%";
-                Predicate nameMatch = cb.like(cb.lower(root.get("name")), searchPattern);
-                Predicate descMatch = cb.like(cb.lower(root.get("shortDescription")), searchPattern);
+                Predicate nameMatch = cb.like(root.get("name"), searchPattern);
+                Predicate descMatch = cb.like(root.get("shortDescription"), searchPattern);
                 predicates.add(cb.or(nameMatch, descMatch));
             }
 

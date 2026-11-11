@@ -447,8 +447,8 @@ public class OrderService {
         if (StringUtils.hasText(search)) {
             String pattern = "%" + escapeLike(search.trim().toLowerCase(Locale.ROOT)) + "%";
             spec = spec.and((root, query, cb) -> cb.or(
-                    cb.like(cb.lower(root.get("orderCode")), pattern, '\\'),
-                    cb.like(cb.lower(root.get("receiverName")), pattern, '\\'),
+                    cb.like(root.get("orderCode"), pattern, '\\'),
+                    cb.like(root.get("receiverName"), pattern, '\\'),
                     cb.like(root.get("phone"), pattern, '\\')));
         }
 

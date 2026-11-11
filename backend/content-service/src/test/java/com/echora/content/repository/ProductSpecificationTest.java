@@ -102,4 +102,26 @@ class ProductSpecificationTest {
 
         verify(cb).equal(categoryPath, ProductCategory.SOUVENIR);
     }
+
+    @Test
+    @DisplayName("filter: có keyword -> tạo LIKE trực tiếp không bọc LOWER (dựa collation CI)")
+    void filter_WithKeyword_AddsLikeWithoutLower() {
+        Path<String> namePath = mock(Path.class);
+        Path<String> shortDescPath = mock(Path.class);
+        when(root.get("name")).thenReturn((Path) namePath);
+        when(root.get("shortDescription")).thenReturn((Path) shortDescPath);
+        when(cb.like(any(Expression.class), any(String.class))).thenReturn(predicate);
+        when(cb.or(any(Predicate.class), any(Predicate.class))).thenReturn(predicate);
+
+        ProductFilterRequest request = ProductFilterRequest.builder()
+                .keyword("  Bánh Tráng  ")
+                .build();
+
+        Specification<Product> spec = ProductSpecification.filter(request);
+        spec.toPredicate(root, query, cb);
+
+        verify(cb, never()).lower(any());
+        verify(cb).like(namePath, "%bánh tráng%");
+        verify(cb).like(shortDescPath, "%bánh tráng%");
+    }
 }
