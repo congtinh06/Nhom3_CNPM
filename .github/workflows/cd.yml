@@ -21,6 +21,10 @@ jobs:
   # ── Matrix build: one job per service Dockerfile ────────────────────────────
   build-push:
     needs: [verify-ci]
+    # On main, verify-ci must be green before any image is pushed. On a v* tag
+    # verify-ci is intentionally skipped (CI runs only on main), so build-push
+    # must still run; a cancelled or failed verify-ci never lets it through.
+    if: ${{ !cancelled() && (needs.verify-ci.result == 'success' || (startsWith(github.ref, 'refs/tags/v') && needs.verify-ci.result == 'skipped')) }}
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     strategy:
