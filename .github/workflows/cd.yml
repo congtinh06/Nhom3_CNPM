@@ -82,6 +82,7 @@ jobs:
   # Backend CI workflows use path filters, so a workflow with no run for this
   # SHA is not a failure. This job polls the workflow runs of the commit, keeps
   # the latest attempt per workflow, and fails if any completed run is not green.
+  # A SHA with no run at all is only treated as docs-only after a grace period.
   verify-ci:
     name: Verify CI for this commit
     if: github.ref == 'refs/heads/main'
@@ -108,6 +109,11 @@ jobs:
           )
           names_json="$(printf '%s\n' "${workflows[@]}" | jq -R . | jq -s -c .)"
           deadline=$((SECONDS + 1500))
+          # A run can take a few seconds to appear after the push, so "no run for
+          # this SHA" is only accepted as docs-only after this many seconds of
+          # uninterrupted zero. Any run seen in between resets the grace period.
+          grace_seconds=90
+          zero_since=""
 
           while true; do
             runs="$(gh run list --commit "$SHA" --limit 100 \
@@ -135,11 +141,23 @@ jobs:
             fi
 
             if [ "$total" -eq 0 ]; then
-              echo "No path-filtered CI workflow ran for $SHA (docs-only change); nothing to block."
-              exit 0
+              if [ -z "$zero_since" ]; then
+                zero_since=$SECONDS
+                echo "No CI run found yet for $SHA; waiting ${grace_seconds}s before treating it as docs-only."
+              fi
+              elapsed_zero=$((SECONDS - zero_since))
+              if [ "$elapsed_zero" -ge "$grace_seconds" ]; then
+                echo "No path-filtered CI workflow ran for $SHA after ${elapsed_zero}s (docs-only change); nothing to block."
+                exit 0
+              fi
+            else
+              if [ -n "$zero_since" ]; then
+                echo "CI runs for $SHA appeared after $((SECONDS - zero_since))s; leaving grace period."
+              fi
+              zero_since=""
             fi
 
-            if [ "$pending" -eq 0 ]; then
+            if [ "$total" -gt 0 ] && [ "$pending" -eq 0 ]; then
               echo "All triggered CI workflows succeeded for $SHA."
               exit 0
             fi
