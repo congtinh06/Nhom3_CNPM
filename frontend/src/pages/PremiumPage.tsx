@@ -862,7 +862,7 @@ export const PremiumPage: React.FC = () => {
               const retailTotal = n * DEFAULT_POI_PRICE;
               const diff = retailTotal - PREMIUM_PRICE;
               const isComboBetter = retailTotal >= PREMIUM_PRICE;
-              let suggestion = '';
+              let suggestion: string;
               if (retailTotal < PREMIUM_PRICE) {
                 suggestion = lang === 'en' ? 'Single purchase is best' : lang === 'ja' ? '個別購入がお得です' : lang === 'ko' ? '개별 구매가 합리적입니다' : 'Mua lẻ là hợp lý';
               } else if (retailTotal === PREMIUM_PRICE) {
