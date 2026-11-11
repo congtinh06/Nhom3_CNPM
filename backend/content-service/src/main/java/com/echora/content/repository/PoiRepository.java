@@ -3,6 +3,7 @@ package com.echora.content.repository;
 import com.echora.content.entity.Poi;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -18,8 +19,10 @@ import java.util.Optional;
 @Repository
 public interface PoiRepository extends JpaRepository<Poi, Long> {
 
+    @EntityGraph(attributePaths = {"zone", "category", "route"})
     List<Poi> findByZoneIdAndStatus(Long zoneId, String status);
 
+    @EntityGraph(attributePaths = {"zone", "category", "route"})
     List<Poi> findByStatus(String status);
 
     List<Poi> findByPublishStatus(String publishStatus);

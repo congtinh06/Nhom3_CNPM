@@ -4,6 +4,8 @@ import com.echora.content.entity.Product;
 import com.echora.content.model.ProductCategory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
@@ -17,6 +19,11 @@ import java.util.Optional;
 @Repository
 public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpecificationExecutor<Product> {
 
+    @Override
+    @EntityGraph(attributePaths = {"poi"})
+    Page<Product> findAll(Specification<Product> spec, Pageable pageable);
+
+    @EntityGraph(attributePaths = {"poi"})
     @Query("SELECT p FROM Product p WHERE p.isActive = true " +
            "AND (:category IS NULL OR p.category = :category) " +
            "AND (:searchPattern IS NULL OR LOWER(p.name) LIKE :searchPattern)")
@@ -25,6 +32,7 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
             @Param("searchPattern") String searchPattern,
             Pageable pageable);
 
+    @EntityGraph(attributePaths = {"poi"})
     @Query("SELECT p FROM Product p WHERE " +
            "(:category IS NULL OR p.category = :category) " +
            "AND (:searchPattern IS NULL OR LOWER(p.name) LIKE :searchPattern) " +
@@ -35,6 +43,7 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
             @Param("isActive") Boolean isActive,
             Pageable pageable);
 
+    @EntityGraph(attributePaths = {"poi"})
     Optional<Product> findBySlugAndIsActiveTrue(String slug);
 
     Optional<Product> findBySlug(String slug);
