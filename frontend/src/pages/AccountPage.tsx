@@ -4,6 +4,7 @@ import {
   CalendarDays,
   Crown,
   LogOut,
+  MessageCircle,
   ShieldCheck,
   ShoppingBag,
   SlidersHorizontal,
@@ -17,11 +18,12 @@ import { AccountOrders } from '../components/account/AccountOrders';
 import { AccountSecurity } from '../components/account/AccountSecurity';
 import { AccountPreferences } from '../components/account/AccountPreferences';
 import { AccountPremium } from '../components/account/AccountPremium';
+import { AccountFeedback } from '../components/account/AccountFeedback';
 import { useAccountI18n } from '../components/account/accountI18n';
 import { formatAccountDate } from '../components/account/accountFormatters';
 import '../styles/account.css';
 
-const VALID_TABS = ['profile', 'orders', 'security', 'preferences', 'premium'] as const;
+const VALID_TABS = ['profile', 'orders', 'feedback', 'security', 'preferences', 'premium'] as const;
 type TabId = (typeof VALID_TABS)[number];
 
 function isValidTab(id: string): id is TabId {
@@ -74,6 +76,7 @@ export const AccountPage: React.FC = () => {
     () => [
       { id: 'profile' as const, label: t.navProfile, icon: UserRound },
       { id: 'orders' as const, label: t.navOrders, icon: ShoppingBag },
+      { id: 'feedback' as const, label: 'Tin nhắn hỗ trợ', icon: MessageCircle },
       { id: 'security' as const, label: t.navSecurity, icon: ShieldCheck },
       { id: 'preferences' as const, label: t.navPreferences, icon: SlidersHorizontal },
       { id: 'premium' as const, label: t.navPremium, icon: Crown },
@@ -210,6 +213,7 @@ export const AccountPage: React.FC = () => {
           <div className="ac-main">
             {active === 'profile' && <AccountProfile />}
             {active === 'orders' && <AccountOrders />}
+            {active === 'feedback' && <AccountFeedback />}
             {active === 'security' && <AccountSecurity />}
             {active === 'preferences' && <AccountPreferences />}
             {active === 'premium' && <AccountPremium />}

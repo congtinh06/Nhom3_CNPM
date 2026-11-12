@@ -37,6 +37,7 @@ public class UserAuthGlobalFilter implements GlobalFilter, Ordered {
     private static final String CONTENT_GUIDE_PATH = "/api/content/pois/guide";
     private static final String CONTENT_QR_PREFIX = "/api/content/pois/qr/";
     private static final String AUDIO_PREFIX = "/api/tts/audio/";
+    private static final String FEEDBACK_ACCOUNT_PATH = "/api/feedback/me";
     private static final String BEARER_PREFIX = "Bearer ";
     private static final int MIN_SECRET_LENGTH = 32;
     private static final int MAX_TOKEN_LENGTH = 8192;
@@ -69,7 +70,8 @@ public class UserAuthGlobalFilter implements GlobalFilter, Ordered {
         if (HttpMethod.OPTIONS.equals(method)) {
             return chain.filter(exchange);
         }
-        boolean tokenRequired = isProtectedOrderPath(path) || isAudioPath(path);
+        boolean tokenRequired = isProtectedOrderPath(path) || isAudioPath(path)
+                || FEEDBACK_ACCOUNT_PATH.equals(path) || (path != null && path.matches("^/api/feedback/[^/]+/claim$"));
         if (!tokenRequired && !isContentEntitlementPath(path)) {
             return chain.filter(exchange);
         }

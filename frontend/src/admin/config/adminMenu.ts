@@ -127,6 +127,7 @@ export const ADMIN_MENU: AdminMenuGroup[] = [
         icon: 'news',
         children: [
           { id: 'news-articles', label: 'Bài viết', path: '/quan-tri/tin-tuc' },
+          { id: 'feedback-inbox', label: 'Liên hệ khách hàng', path: '/quan-tri/lien-he' },
           { id: 'news-topics', label: 'Chuyên mục', isUpcoming: true },
         ],
       },

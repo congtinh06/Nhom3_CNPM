@@ -92,6 +92,7 @@ const NewsListPage = lazy(() =>
 const NewsFormPage = lazy(() =>
   import('./pages/NewsFormPage').then((m) => ({ default: m.NewsFormPage }))
 );
+const FeedbackInboxPage = lazy(() => import('./pages/FeedbackInboxPage'));
 
 // [Người dùng] Danh sách tài khoản người dùng trong hệ thống
 const UserListPage = lazy(() =>
@@ -180,6 +181,7 @@ export const AdminRoutes: React.FC = () => {
           <Route path="tin-tuc" element={<NewsListPage />} />
           <Route path="tin-tuc/moi" element={<NewsFormPage />} />
           <Route path="tin-tuc/:id" element={<NewsFormPage />} />
+          <Route path="lien-he" element={<FeedbackInboxPage />} />
 
           {/* [Người dùng] Quản lý tài khoản: Danh sách người dùng, Chi tiết theo ID */}
           <Route path="nguoi-dung" element={<UserListPage />} />

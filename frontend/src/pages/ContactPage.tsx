@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { MapPin, PhoneCall, Mail, Clock, CheckCircle2 } from 'lucide-react';
-import { submitFeedback } from '../services/feedbackService';
+import { getFeedbackThread, loadFeedbackCredentials, saveFeedbackCredentials, submitFeedback, FeedbackThread } from '../services/feedbackService';
 import { useDocumentMeta } from '../hooks/useDocumentMeta';
 import { ContactMap } from '../components/contact/ContactMap';
 import { siteContact } from '../content/staticSections';
@@ -42,6 +42,19 @@ export const ContactPage: React.FC = () => {
   const [submitError, setSubmitError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSent, setIsSent] = useState(false);
+  const [thread, setThread] = useState<FeedbackThread | null>(null);
+  const [savedTicket] = useState(loadFeedbackCredentials);
+
+  useEffect(() => {
+    if (!savedTicket) return;
+    let active = true;
+    const refresh = async () => {
+      try { const data = await getFeedbackThread(savedTicket.ticket, savedTicket.accessToken); if (active) setThread(data); } catch { /* keep last known reply during transient offline periods */ }
+    };
+    void refresh();
+    const timer = window.setInterval(refresh, 4000);
+    return () => { active = false; window.clearInterval(timer); };
+  }, [savedTicket]);
 
   const messageLength = message.trim().length;
 
@@ -93,11 +106,15 @@ export const ContactPage: React.FC = () => {
 
     setIsSubmitting(true);
     try {
-      await submitFeedback({
+      const result = await submitFeedback({
         name: name.trim(),
         email: email.trim(),
         message: lines.join('\n'),
       });
+      if (result.ticket && result.accessToken) {
+        saveFeedbackCredentials(result.ticket, result.accessToken);
+        setThread(await getFeedbackThread(result.ticket, result.accessToken));
+      }
       resetForm();
       setIsSent(true);
     } catch {
@@ -219,8 +236,13 @@ export const ContactPage: React.FC = () => {
                   </div>
                   <h3 className="contact-success-title">Cảm ơn bạn đã gửi liên hệ!</h3>
                   <p className="contact-success-text">
-                    Tin nhắn của bạn đã được tiếp nhận. Đội ngũ Echora sẽ phản hồi qua email hoặc số điện thoại của bạn sớm nhất có thể.
+                    Tin nhắn đã được tiếp nhận. Bạn có thể xem phản hồi tại đây hoặc trong mục Tin nhắn hỗ trợ sau khi đăng nhập bằng trình duyệt này.
                   </p>
+                  {thread && <div className="contact-status-box" aria-live="polite">
+                    <strong>Mã theo dõi: {thread.ticket}</strong>
+                    <p>Hội thoại sẽ tự cập nhật khi đội ngũ Echora phản hồi.</p>
+                    {thread.messages.map((item) => <p key={item.id}><b>{item.sender === 'ADMIN' ? 'Echora' : 'Bạn'}:</b> {item.content}</p>)}
+                  </div>}
                   <button type="button" className="contact-submit-btn" onClick={resetForm}>
                     Gửi tin nhắn khác
                   </button>
