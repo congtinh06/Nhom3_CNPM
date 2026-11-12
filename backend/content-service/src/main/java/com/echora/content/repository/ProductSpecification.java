@@ -8,6 +8,7 @@ import org.springframework.data.jpa.domain.Specification;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 public final class ProductSpecification {
 
@@ -31,7 +32,7 @@ public final class ProductSpecification {
 
             // 4. Lọc theo từ khóa tìm kiếm (name hoặc shortDescription)
             if (request.getKeyword() != null && !request.getKeyword().isBlank()) {
-                String searchPattern = "%" + request.getKeyword().trim().toLowerCase() + "%";
+                String searchPattern = "%" + request.getKeyword().trim().toLowerCase(Locale.ROOT) + "%";
                 Predicate nameMatch = cb.like(root.get("name"), searchPattern);
                 Predicate descMatch = cb.like(root.get("shortDescription"), searchPattern);
                 predicates.add(cb.or(nameMatch, descMatch));
