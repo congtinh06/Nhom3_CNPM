@@ -7,6 +7,14 @@ import { SupportedLanguage } from '../../types';
 
 export { resolveQrBaseUrl } from '../../lib/qrOrigin';
 
+type BuildPlaceQrContentFn = (
+  baseUrl: string,
+  qrToken: string,
+  slug?: string | null
+) => string;
+
+const buildPlaceQrContentTyped = buildPlaceQrContent as unknown as BuildPlaceQrContentFn;
+
 export interface PlaceQRPoi {
   qrToken?: string | null;
   slug?: string | null;
@@ -37,7 +45,8 @@ export function isQrAvailable(poi?: PlaceQRPoi | null): boolean {
 /** Full URL encoded in a POI's QR code (empty string when unavailable). */
 export function buildPoiQrUrl(poi?: PlaceQRPoi | null): string {
   if (!isQrAvailable(poi)) return '';
-  return buildPlaceQrContent(resolveQrBaseUrl(), poi?.qrToken);
+  const slug = poi?.slug?.trim();
+  return buildPlaceQrContentTyped(resolveQrBaseUrl(), poi?.qrToken ?? '', slug);
 }
 
 function slugifyName(value: string): string {

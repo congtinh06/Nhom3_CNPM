@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import {
   CheckCircle,
@@ -14,7 +14,6 @@ import { usePremium } from '../context/PremiumContext';
 import { useNavbarLanguage } from '../content/languages';
 import { formatPrice } from '../utils/formatters';
 import { BackendOrder } from '../types';
-import { Stepper } from '../components/checkout/Stepper';
 import '../styles/paymentResult.css';
 
 type PaymentOutcome = 'pending' | 'success' | 'failed' | 'cancelled';
@@ -41,6 +40,37 @@ function outcomeFromOrder(order: BackendOrder): PaymentOutcome {
   return 'pending';
 }
 
+function padZero(num: number): string {
+  return num < 10 ? `0${num}` : `${num}`;
+}
+
+function formatOrderTime(dateObj: Date): string {
+  const hours = padZero(dateObj.getHours());
+  const minutes = padZero(dateObj.getMinutes());
+  const day = padZero(dateObj.getDate());
+  const month = padZero(dateObj.getMonth() + 1);
+  const year = dateObj.getFullYear();
+  return `${hours}:${minutes}, ${day}/${month}/${year}`;
+}
+
+function formatShortTime(dateObj: Date): string {
+  const hours = padZero(dateObj.getHours());
+  const minutes = padZero(dateObj.getMinutes());
+  const day = padZero(dateObj.getDate());
+  const month = padZero(dateObj.getMonth() + 1);
+  return `${day}/${month}, ${hours}:${minutes}`;
+}
+
+function formatEstimatedDelivery(dateObj: Date): string {
+  const start = new Date(dateObj.getTime() + 3 * 24 * 60 * 60 * 1000);
+  const end = new Date(dateObj.getTime() + 5 * 24 * 60 * 60 * 1000);
+  const startDay = padZero(start.getDate());
+  const endDay = padZero(end.getDate());
+  const endMonth = padZero(end.getMonth() + 1);
+  const endYear = end.getFullYear();
+  return `${startDay} - ${endDay}/${endMonth}/${endYear}`;
+}
+
 export const PaymentResultPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -61,6 +91,7 @@ export const PaymentResultPage: React.FC = () => {
   const [order, setOrder] = useState<BackendOrder | null>(null);
   const [loading, setLoading] = useState(true);
   const [processingAction, setProcessingAction] = useState(false);
+  const [copied, setCopied] = useState(false);
   const [outcome, setOutcome] = useState<PaymentOutcome>(
     method === 'COD' ? 'success' : queryOutcome
   );
@@ -88,7 +119,6 @@ export const PaymentResultPage: React.FC = () => {
         });
       }
     } catch {
-      // Keep queryOutcome as fallback
       if (queryOutcome !== 'pending') {
         setOutcome(queryOutcome);
       }
@@ -125,7 +155,7 @@ export const PaymentResultPage: React.FC = () => {
           }
         }
       } catch {
-        // Keep polling until window ends
+        // Keep polling
       }
 
       if (cancelled) return;
@@ -148,6 +178,7 @@ export const PaymentResultPage: React.FC = () => {
 
     entitlementStartedRef.current = true;
     setEntitlementState('checking');
+
     let cancelled = false;
     let attempts = 0;
     let timer: number | undefined;
@@ -180,13 +211,13 @@ export const PaymentResultPage: React.FC = () => {
             try {
               await refreshEntitlement();
             } catch {
-              // The account is already Premium; the token will refresh on the next request.
+              // Token refreshes on next call
             }
             return;
           }
         }
       } catch {
-        // The transaction may still be propagating through the entitlement API.
+        // Transaction propagation
       }
 
       if (cancelled) return;
@@ -218,10 +249,36 @@ export const PaymentResultPage: React.FC = () => {
     }
   };
 
+  const handleCopyOrderCode = useCallback(() => {
+    const code = orderCode || order?.orderCode || '';
+    if (!code) return;
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        void navigator.clipboard.writeText(code);
+      }
+    } catch {
+      // Fallback
+    }
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }, [orderCode, order?.orderCode]);
+
+  const orderDateObj = useMemo(() => {
+    if (order?.createdAt) {
+      const d = new Date(order.createdAt);
+      if (!isNaN(d.getTime())) return d;
+    }
+    return new Date();
+  }, [order?.createdAt]);
+
+  const formattedOrderTime = useMemo(() => formatOrderTime(orderDateObj), [orderDateObj]);
+  const formattedShortDate = useMemo(() => formatShortTime(orderDateObj), [orderDateObj]);
+  const estimatedDelivery = useMemo(() => formatEstimatedDelivery(orderDateObj), [orderDateObj]);
+
   if (loading) {
     return (
       <div className="payment-result-page">
-        <div className="payment-result-container">
+        <div className="wrap">
           <div className="result-loading-box">
             <RefreshCw size={28} strokeWidth={1.75} className="spin-icon" aria-hidden="true" />
             <p>Đang kiểm tra kết quả đơn hàng...</p>
@@ -231,16 +288,24 @@ export const PaymentResultPage: React.FC = () => {
     );
   }
 
+  // Premium / POI unlocks flow
   if (isPremiumOrder) {
     const isFailure = outcome === 'failed' || outcome === 'cancelled' || orderPollExpired;
     const isSuccess = outcome === 'success';
-    
     const entitlementReady = entitlementState === 'ready';
     const entitlementTimedOut = entitlementState === 'timeout';
 
     return (
       <div className="payment-result-page">
-        <div className="payment-result-container">
+        <div className="wrap">
+          <div className="payment-steps">
+            <span>Giỏ hàng</span>
+            <i aria-hidden="true" />
+            <span>Thanh toán</span>
+            <i aria-hidden="true" />
+            <b>Hoàn tất</b>
+          </div>
+
           {isSuccess ? (
             <div className="result-card result-success">
               <div className="result-icon-wrap success" aria-hidden="true">
@@ -449,16 +514,20 @@ export const PaymentResultPage: React.FC = () => {
     );
   }
 
+  // Mock Gateway Sandbox mode
   const isMockAwaiting = method === 'MOCK_GATEWAY' && outcome === 'pending';
+  if (isMockAwaiting) {
+    return (
+      <div className="payment-result-page">
+        <div className="wrap">
+          <div className="payment-steps">
+            <span>Giỏ hàng</span>
+            <i aria-hidden="true" />
+            <span>Thanh toán</span>
+            <i aria-hidden="true" />
+            <b>Hoàn tất</b>
+          </div>
 
-  return (
-    <div className="payment-result-page">
-      <div className="payment-result-container">
-        <div className="payment-result-stepper-wrap">
-          <Stepper currentStep={3} allCompleted={outcome === 'success' || method === 'COD'} />
-        </div>
-
-        {isMockAwaiting ? (
           <div className="mock-gateway-card">
             <div className="mock-gateway-header">
               <div className="result-icon-wrap gateway" aria-hidden="true">
@@ -528,138 +597,39 @@ export const PaymentResultPage: React.FC = () => {
               </div>
             </div>
           </div>
-        ) : outcome === 'success' || method === 'COD' ? (
-          <div className="result-card result-success">
-            <div className="result-icon-wrap success" aria-hidden="true">
-              <CheckCircle size={32} strokeWidth={2.2} />
-            </div>
-            <h1 className="result-title">
-              {method === 'COD' ? 'Đặt hàng thành công!' : t.shop.paymentSuccess}
-            </h1>
-            <p className="result-subtitle">
-              {method === 'COD'
-                ? 'Đơn hàng của bạn đã được ghi nhận. Chúng tôi sẽ liên hệ và giao hàng sớm nhất.'
-                : 'Khoản thanh toán của bạn đã được đối soát thành công.'}
-            </p>
+        </div>
+      </div>
+    );
+  }
 
-            <div className="result-info-box">
-              <div className="info-row">
-                <span>Mã đơn hàng:</span>
-                <b className="order-code-badge">{orderCode}</b>
-              </div>
-              {order && (
-                <>
-                  <div className="info-row">
-                    <span>Tổng số tiền:</span>
-                    <b className="result-total-amount">{formatPrice(order.totalAmount)}</b>
-                  </div>
-                  <div className="info-row">
-                    <span>Phương thức:</span>
-                    <span>
-                      {order.paymentMethod === 'COD'
-                        ? 'Thanh toán tiền mặt khi nhận hàng'
-                        : order.paymentMethod === 'VIETQR'
-                        ? 'Chuyển khoản VietQR'
-                        : order.paymentMethod === 'VNPAY'
-                        ? 'Cổng thanh toán VNPAY'
-                        : 'Cổng thanh toán điện tử'}
-                    </span>
-                  </div>
-                  <div className="info-row">
-                    <span>Địa chỉ giao hàng:</span>
-                    <span>{order.address}</span>
-                  </div>
-                </>
-              )}
-            </div>
-
-            <div className="result-actions-row">
-              <button
-                type="button"
-                className="result-primary-btn"
-                onClick={() => navigate('/don-hang')}
-              >
-                <span>{t.shop.orderHistory}</span>
-                <ArrowRight size={15} strokeWidth={2} aria-hidden="true" />
-              </button>
-
-              <button
-                type="button"
-                className="result-secondary-btn"
-                onClick={() => navigate('/')}
-              >
-                {t.home}
-              </button>
-            </div>
+  // Failed / Cancelled state for general orders
+  if (outcome === 'failed' || outcome === 'cancelled') {
+    return (
+      <div className="payment-result-page">
+        <div className="wrap">
+          <div className="payment-steps">
+            <span>Giỏ hàng</span>
+            <i aria-hidden="true" />
+            <span>Thanh toán</span>
+            <i aria-hidden="true" />
+            <b>Hoàn tất</b>
           </div>
-        ) : outcome === 'pending' ? (
-          <div className="result-card result-pending">
-            <div className="result-icon-wrap gateway" aria-hidden="true">
-              <RefreshCw size={28} strokeWidth={1.8} className="spin-icon" />
-            </div>
-            <h1 className="result-title">Đang xác nhận thanh toán</h1>
-            <p className="result-subtitle">
-              Hệ thống đang kiểm tra giao dịch với cổng thanh toán. Quá trình này có thể mất vài giây.
-            </p>
 
-            <div className="result-info-box">
-              <div className="info-row">
-                <span>Mã đơn hàng:</span>
-                <b className="order-code-badge">{orderCode || 'Chưa xác định'}</b>
-              </div>
-              {order && (
-                <>
-                  <div className="info-row">
-                    <span>Tổng số tiền:</span>
-                    <b className="result-total-amount">{formatPrice(order.totalAmount)}</b>
-                  </div>
-                  <div className="info-row">
-                    <span>Phương thức:</span>
-                    <span>
-                      {order.paymentMethod === 'VIETQR'
-                        ? 'Chuyển khoản VietQR'
-                        : order.paymentMethod === 'VNPAY'
-                        ? 'Cổng thanh toán VNPAY'
-                        : 'Cổng thanh toán điện tử'}
-                    </span>
-                  </div>
-                </>
-              )}
-            </div>
-
-            <div className="result-actions-row">
-              <button
-                type="button"
-                className="result-primary-btn"
-                onClick={() => void loadOrder()}
-              >
-                <RefreshCw size={15} strokeWidth={2} aria-hidden="true" />
-                <span>Kiểm tra lại trạng thái</span>
-              </button>
-
-              <button
-                type="button"
-                className="result-secondary-btn"
-                onClick={() => navigate('/don-hang')}
-              >
-                <span>{t.shop.orderHistory}</span>
-              </button>
-            </div>
-          </div>
-        ) : (
           <div className="result-card result-failed">
             <div className="result-icon-wrap failed" aria-hidden="true">
               <XCircle size={32} strokeWidth={2.2} />
             </div>
             <h1 className="result-title">{t.shop.paymentFailed}</h1>
             <p className="result-subtitle">
-              Giao dịch thanh toán chưa thể hoàn tất. Đơn hàng của bạn vẫn được lưu ở trạng thái chờ thanh toán.
+              {outcome === 'cancelled'
+                ? 'Giao dịch đã được hủy theo yêu cầu của bạn.'
+                : 'Giao dịch thanh toán chưa thể hoàn tất. Đơn hàng của bạn vẫn được lưu ở trạng thái chờ thanh toán.'}
             </p>
 
             <div className="result-info-box">
               <div className="info-row">
                 <span>Mã đơn hàng:</span>
-                <b className="order-code-badge">{orderCode}</b>
+                <b className="order-code-badge">{orderCode || order?.orderCode}</b>
               </div>
               {order && (
                 <div className="info-row">
@@ -694,8 +664,240 @@ export const PaymentResultPage: React.FC = () => {
               </button>
             </div>
           </div>
-        )}
+        </div>
       </div>
+    );
+  }
+
+  // Determine timeline active classes
+  const statusUpper = (order?.status || '').toUpperCase();
+  const isPaidOrProcessing = statusUpper === 'PAID' || statusUpper === 'CONFIRMED' || statusUpper === 'PROCESSING';
+  const isShipping = statusUpper === 'SHIPPING' || statusUpper === 'DELIVERING';
+  const isDelivered = statusUpper === 'DELIVERED' || statusUpper === 'COMPLETED';
+
+  const step2Class = isDelivered || isShipping || isPaidOrProcessing ? 'd' : 'c';
+  const step3Class = isDelivered || isShipping ? 'd' : isPaidOrProcessing ? 'c' : '';
+  const step4Class = isDelivered ? 'd' : isShipping ? 'c' : '';
+  const step5Class = isDelivered ? 'd' : '';
+
+  const receiverName = order?.receiverName || 'bạn';
+  const displayOrderCode = orderCode || order?.orderCode || 'SV-20261107-1580';
+  const items = order?.items || [];
+  const itemsCount = items.length > 0 ? items.length : 1;
+  const subtotal = order?.subtotal ?? order?.totalAmount ?? 0;
+  const totalAmount = order?.totalAmount ?? 0;
+
+  return (
+    <div className="payment-result-page">
+      <main className="wrap">
+        <div className="payment-steps">
+          <span>Giỏ hàng</span>
+          <i aria-hidden="true" />
+          <span>Thanh toán</span>
+          <i aria-hidden="true" />
+          <b>Hoàn tất</b>
+        </div>
+
+        <h1 className="payment-result-h1">
+          {order?.receiverName
+            ? `Cảm ơn ${order.receiverName}, đơn hàng đã được ghi nhận`
+            : `Cảm ơn ${receiverName}, đơn hàng đã được ghi nhận`}
+        </h1>
+
+        <p className="payment-result-meta">
+          <span>
+            Mã đơn hàng <b>{displayOrderCode}</b>
+          </span>
+          <span className="meta-sep" aria-hidden="true" />
+          <button
+            type="button"
+            className="payment-copy-btn"
+            id="cp"
+            onClick={handleCopyOrderCode}
+          >
+            {copied ? 'Đã sao chép' : 'Sao chép'}
+          </button>
+          <span className="meta-sep" aria-hidden="true" />
+          <span>Đặt lúc {formattedOrderTime}</span>
+          <br />
+          <span className="meta-note">
+            Chúng tôi sẽ liên hệ xác nhận trước khi giao hàng.
+          </span>
+        </p>
+
+        <div className="payment-result-two">
+          <div>
+            {/* Section 1: Tiến trình đơn hàng */}
+            <section className="payment-sec">
+              <div className="payment-eta">
+                <h2>Tiến trình đơn hàng</h2>
+                <span>
+                  Dự kiến giao: <b>{estimatedDelivery}</b>
+                </span>
+              </div>
+              <div className="payment-tl">
+                <div className="d">
+                  Đã đặt hàng
+                  <small>{formattedShortDate}</small>
+                </div>
+                <div className={step2Class}>Chờ xác nhận</div>
+                <div className={step3Class}>Đóng gói</div>
+                <div className={step4Class}>Đang giao</div>
+                <div className={step5Class}>Đã nhận</div>
+              </div>
+            </section>
+
+            {/* Section 2: Sản phẩm */}
+            <section className="payment-sec">
+              <h2>Sản phẩm ({itemsCount})</h2>
+              {items.length > 0 ? (
+                items.map((item, idx) => (
+                  <div className="payment-it" key={item.productId ?? idx}>
+                    <div className="payment-th">
+                      {item.imagePath ? (
+                        <img
+                          src={item.imagePath}
+                          alt={item.productName}
+                          loading="lazy"
+                        />
+                      ) : (
+                        <svg
+                          viewBox="0 0 320 200"
+                          preserveAspectRatio="xMidYMid slice"
+                          aria-hidden="true"
+                        >
+                          <circle cx="262" cy="52" r="16" fill="var(--pr-acc, #C2410C)" />
+                          <g
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="3"
+                            strokeLinejoin="round"
+                            transform="translate(0 10)"
+                          >
+                            <path d="M60 150V108H260V150M80 108V84H240V108M110 84V62H210V84M130 150v-24h60v24" />
+                          </g>
+                        </svg>
+                      )}
+                    </div>
+                    <div>
+                      <div className="payment-it-nm">
+                        {item.productName}
+                      </div>
+                      <small>
+                        Số lượng: {item.quantity}
+                        <span className="meta-sep" aria-hidden="true" />
+                        {formatPrice(item.unitPrice)}
+                      </small>
+                    </div>
+                    <b>{formatPrice(item.quantity * item.unitPrice)}</b>
+                  </div>
+                ))
+              ) : (
+                <div className="payment-it">
+                  <div className="payment-th">
+                    <svg
+                      viewBox="0 0 320 200"
+                      preserveAspectRatio="xMidYMid slice"
+                      aria-hidden="true"
+                    >
+                      <circle cx="262" cy="52" r="16" fill="var(--pr-acc, #C2410C)" />
+                      <g
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="3"
+                        strokeLinejoin="round"
+                        transform="translate(0 10)"
+                      >
+                        <path d="M60 150V108H260V150M80 108V84H240V108M110 84V62H210V84M130 150v-24h60v24" />
+                      </g>
+                    </svg>
+                  </div>
+                  <div>
+                    <div className="payment-it-nm">
+                      {order?.note || 'Quà lưu niệm Sài Gòn'}
+                    </div>
+                    <small>Số lượng: 1</small>
+                  </div>
+                  <b>{formatPrice(totalAmount)}</b>
+                </div>
+              )}
+            </section>
+
+            {/* Section 3: Giao hàng */}
+            <section className="payment-sec">
+              <h2>Giao hàng</h2>
+              <dl className="payment-kv">
+                <div>
+                  <dt>Người nhận</dt>
+                  <dd>{order?.receiverName || 'Công Tính'}</dd>
+                </div>
+                <div>
+                  <dt>Số điện thoại</dt>
+                  <dd>{order?.phone || '0346 358 399'}</dd>
+                </div>
+                <div>
+                  <dt>Địa chỉ</dt>
+                  <dd>
+                    {order?.address ||
+                      '12 Nguyễn Huệ, Phường Bến Nghé, Quận 1, Thành phố Hồ Chí Minh'}
+                  </dd>
+                </div>
+              </dl>
+            </section>
+          </div>
+
+          {/* Right Column: Tóm tắt */}
+          <aside className="payment-sum">
+            <section className="payment-sec payment-sum-sec">
+              <h2>Tóm tắt</h2>
+              <div className="payment-row">
+                <span>Tạm tính</span>
+                <span>{formatPrice(subtotal)}</span>
+              </div>
+              <div className="payment-row">
+                <span>Phí giao hàng</span>
+                <span>Miễn phí</span>
+              </div>
+              <div className="payment-row payment-row-total">
+                <span>Tổng cộng</span>
+                <b>{formatPrice(totalAmount)}</b>
+              </div>
+              <p className="payment-pay-method">
+                {order?.paymentMethod === 'COD'
+                  ? 'Thanh toán tiền mặt khi nhận hàng'
+                  : order?.paymentMethod === 'VIETQR'
+                  ? 'Chuyển khoản VietQR'
+                  : order?.paymentMethod === 'VNPAY'
+                  ? 'Cổng thanh toán VNPAY'
+                  : 'Thanh toán tiền mặt khi nhận hàng'}
+              </p>
+              <div className="payment-acts">
+                <button
+                  type="button"
+                  className="payment-go-btn"
+                  onClick={() => navigate('/don-hang')}
+                >
+                  Xem đơn hàng của tôi
+                </button>
+                <button
+                  type="button"
+                  className="payment-link-arr"
+                  onClick={() => navigate('/am-thuc')}
+                >
+                  Tiếp tục xem quà
+                </button>
+                <button
+                  type="button"
+                  className="payment-link-arr"
+                  onClick={() => navigate('/lien-he')}
+                >
+                  Cần hỗ trợ? Liên hệ chúng tôi
+                </button>
+              </div>
+            </section>
+          </aside>
+        </div>
+      </main>
     </div>
   );
 };

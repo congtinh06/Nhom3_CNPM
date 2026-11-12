@@ -138,6 +138,8 @@ export type NearbyKey =
   | 'simStopBtn'
   | 'simInvalidCoord'
   | 'gpsLocatedToast'
+  | 'gpsOutsideRadiusNotice'
+  | 'segmentTimeAria'
   | 'autoStatusOff'
   | 'autoStateOn'
   | 'autoStateOff'
@@ -192,6 +194,23 @@ export type NearbyKey =
   | 'how2Desc'
   | 'how3Title'
   | 'how3Desc'
+  | 'languageShowcaseTitle'
+  | 'languageShowcaseSub'
+  | 'languageSampleVi'
+  | 'languageSampleEn'
+  | 'languageSampleJa'
+  | 'languageSampleKo'
+  | 'languageFree'
+  | 'languagePremium'
+  | 'prepTitle'
+  | 'prep1Title'
+  | 'prep1Desc'
+  | 'prep2Title'
+  | 'prep2Desc'
+  | 'prep3Title'
+  | 'prep3Desc'
+  | 'prep4Title'
+  | 'prep4Desc'
   | 'toastAutoOn'
   | 'toastAutoOff'
   | 'toastLocating'
@@ -377,6 +396,31 @@ export const NEARBY_DICTIONARY: Record<SupportedLanguage, Record<NearbyKey, stri
     how2Desc: 'Bật tự động phát, đi tới gần điểm nào thì thuyết minh điểm đó bắt đầu.',
     how3Title: 'Nghe bằng tiếng của bạn',
     how3Desc: 'Tiếng Việt miễn phí. Tiếng Anh, Nhật, Hàn mở bằng gói Premium.',
+    languageShowcaseTitle: 'Một câu chuyện, bốn ngôn ngữ',
+    languageShowcaseSub:
+      'Cùng một đoạn thuyết minh về Nhà thờ Đức Bà, nghe bằng ngôn ngữ bạn chọn ngay trên thanh phát.',
+    languageSampleVi: 'Nhà thờ được xây từ năm 1863 đến 1880, trong thời kỳ Pháp thuộc.',
+    languageSampleEn:
+      'The cathedral was built between 1863 and 1880, during the French colonial period.',
+    languageSampleJa:
+      '大聖堂は、フランス統治時代の1863年から1880年にかけて建設されました。',
+    languageSampleKo:
+      '대성당은 프랑스 식민지 시기인 1863년부터 1880년에 걸쳐 지어졌습니다.',
+    languageFree: 'Miễn phí',
+    languagePremium: 'Premium',
+    prepTitle: 'Chuẩn bị trước khi đi',
+    prep1Title: 'Mang tai nghe',
+    prep1Desc:
+      'Mỗi người nghe riêng, không làm phiền xung quanh, nhất là ở nơi trang nghiêm như chùa và bảo tàng.',
+    prep2Title: 'Bật định vị',
+    prep2Desc:
+      'Để thuyết minh tự phát khi bạn đến gần điểm dừng. Không bật thì bạn vẫn bấm nghe thủ công được.',
+    prep3Title: 'Sạc đủ pin',
+    prep3Desc:
+      'Vừa nghe vừa xem bản đồ cả buổi khá tốn pin, nên mang theo sạc dự phòng.',
+    prep4Title: 'Đi chậm, nghe trọn',
+    prep4Desc:
+      'Mỗi đoạn dài khoảng 2 đến 3 phút. Hãy dừng lại ở điểm đó để vừa nghe vừa nhìn.',
     toastAutoOn: 'Sẽ tự phát khi bạn đến gần một điểm',
     toastAutoOff: 'Đã tắt tự động phát',
     toastLocating: 'Đang xác định vị trí của bạn…',
@@ -474,6 +518,8 @@ export const NEARBY_DICTIONARY: Record<SupportedLanguage, Record<NearbyKey, stri
     simStopBtn: 'Tắt giả lập',
     simInvalidCoord: 'Toạ độ không hợp lệ.',
     gpsLocatedToast: 'Đã xác định vị trí. Điểm gần nhất: {name}, cách {dist}.',
+    gpsOutsideRadiusNotice: 'Bạn đang ngoài vùng tự động. Bấm nghe để nghe thủ công.',
+    segmentTimeAria: 'Nghe từ {time}, {title}',
     autoStatusOff: 'Thuyết minh tự động đang tắt.',
     autoStateOn: 'Bật',
     autoStateOff: 'Tắt',
@@ -614,6 +660,31 @@ export const NEARBY_DICTIONARY: Record<SupportedLanguage, Record<NearbyKey, stri
     how2Desc: 'Turn on auto narration and each stop begins playing as you walk nearby.',
     how3Title: 'Listen in your language',
     how3Desc: 'Vietnamese is free. English, Japanese, and Korean unlock with Premium.',
+    languageShowcaseTitle: 'One story, four languages',
+    languageShowcaseSub:
+      'The same narration about Notre-Dame Cathedral, heard in the language you choose on the player.',
+    languageSampleVi: 'Nhà thờ được xây từ năm 1863 đến 1880, trong thời kỳ Pháp thuộc.',
+    languageSampleEn:
+      'The cathedral was built between 1863 and 1880, during the French colonial period.',
+    languageSampleJa:
+      '大聖堂は、フランス統治時代の1863年から1880年にかけて建設されました。',
+    languageSampleKo:
+      '대성당은 프랑스 식민지 시기인 1863년부터 1880년에 걸쳐 지어졌습니다.',
+    languageFree: 'Free',
+    languagePremium: 'Premium',
+    prepTitle: 'Before you go',
+    prep1Title: 'Bring earphones',
+    prep1Desc:
+      'Everyone listens privately without disturbing others, especially in quiet places such as temples and museums.',
+    prep2Title: 'Turn on location',
+    prep2Desc:
+      'Let the narration play automatically as you approach a stop. If location is off, you can still tap play manually.',
+    prep3Title: 'Charge your battery',
+    prep3Desc:
+      'Listening and following the map all morning uses battery, so bring a power bank.',
+    prep4Title: 'Walk slowly, listen fully',
+    prep4Desc:
+      'Each segment lasts about 2 to 3 minutes. Pause at the stop to listen and look around.',
     toastAutoOn: 'Will play automatically when you approach a stop',
     toastAutoOff: 'Auto narration turned off',
     toastLocating: 'Locating your position…',
@@ -711,6 +782,8 @@ export const NEARBY_DICTIONARY: Record<SupportedLanguage, Record<NearbyKey, stri
     simStopBtn: 'Stop simulation',
     simInvalidCoord: 'Invalid coordinates.',
     gpsLocatedToast: 'Location found. Nearest spot: {name}, {dist} away.',
+    gpsOutsideRadiusNotice: 'You are outside the automatic zone. Tap play to listen manually.',
+    segmentTimeAria: 'Listen from {time}, {title}',
     autoStatusOff: 'Auto narration is off.',
     autoStateOn: 'On',
     autoStateOff: 'Off',
@@ -851,6 +924,31 @@ export const NEARBY_DICTIONARY: Record<SupportedLanguage, Record<NearbyKey, stri
     how2Desc: '자동 재생을 켜 두면 명소 근처에 다가갈 때 해당 해설이 시작됩니다.',
     how3Title: '내 언어로 듣기',
     how3Desc: '베트남어는 무료입니다. 영어, 일본어, 한국어는 Premium으로 열 수 있습니다.',
+    languageShowcaseTitle: '하나의 이야기, 네 가지 언어',
+    languageShowcaseSub:
+      '노트르담 대성당에 대한 같은 해설을 플레이어에서 선택한 언어로 들어 보세요.',
+    languageSampleVi: 'Nhà thờ được xây từ năm 1863 đến 1880, trong thời kỳ Pháp thuộc.',
+    languageSampleEn:
+      'The cathedral was built between 1863 and 1880, during the French colonial period.',
+    languageSampleJa:
+      '大聖堂は、フランス統治時代の1863年から1880年にかけて建設されました。',
+    languageSampleKo:
+      '대성당은 프랑스 식민지 시기인 1863년부터 1880년에 걸쳐 지어졌습니다.',
+    languageFree: '무료',
+    languagePremium: 'Premium',
+    prepTitle: '떠나기 전 준비',
+    prep1Title: '이어폰 챙기기',
+    prep1Desc:
+      '각자 조용히 들을 수 있어 주변에 방해가 되지 않습니다. 사찰과 박물관처럼 조용한 곳에서는 특히 중요합니다.',
+    prep2Title: '위치 켜기',
+    prep2Desc:
+      '명소에 가까워지면 해설이 자동으로 재생됩니다. 위치를 켜지 않아도 직접 눌러 들을 수 있습니다.',
+    prep3Title: '배터리 충전',
+    prep3Desc:
+      '해설을 들으며 지도를 오래 보면 배터리가 빨리 줄어듭니다. 보조 배터리를 챙기세요.',
+    prep4Title: '천천히, 끝까지 듣기',
+    prep4Desc:
+      '각 구간은 약 2분에서 3분입니다. 명소에 잠시 멈춰 서서 듣고 둘러보세요.',
     toastAutoOn: '명소에 가까워지면 자동으로 재생됩니다',
     toastAutoOff: '자동 재생이 꺼졌습니다',
     toastLocating: '현재 위치를 확인하는 중…',
@@ -947,6 +1045,8 @@ export const NEARBY_DICTIONARY: Record<SupportedLanguage, Record<NearbyKey, stri
     simStopBtn: '시뮬레이션 끄기',
     simInvalidCoord: '좌표가 올바르지 않습니다.',
     gpsLocatedToast: '위치 확인 완료. 가장 가까운 명소: {name}, {dist} 거리.',
+    gpsOutsideRadiusNotice: '자동 해설 구역 밖입니다. 직접 재생을 눌러 들을 수 있습니다.',
+    segmentTimeAria: '{time}부터 듣기, {title}',
     autoStatusOff: '자동 해설이 꺼져 있습니다.',
     autoStateOn: '켜짐',
     autoStateOff: '꺼짐',
@@ -1087,6 +1187,31 @@ export const NEARBY_DICTIONARY: Record<SupportedLanguage, Record<NearbyKey, stri
     how2Desc: '自動再生をオンにすると、スポットに近づいたときに解説が始まります。',
     how3Title: 'あなたの言語で聴く',
     how3Desc: 'ベトナム語は無料。英語・日本語・韓国語はPremiumでご利用いただけます。',
+    languageShowcaseTitle: 'ひとつの物語、四つの言語',
+    languageShowcaseSub:
+      'ノートルダム大聖堂についての同じ解説を、プレーヤーで選んだ言語で聴けます。',
+    languageSampleVi: 'Nhà thờ được xây từ năm 1863 đến 1880, trong thời kỳ Pháp thuộc.',
+    languageSampleEn:
+      'The cathedral was built between 1863 and 1880, during the French colonial period.',
+    languageSampleJa:
+      '大聖堂は、フランス統治時代の1863年から1880年にかけて建設されました。',
+    languageSampleKo:
+      '대성당은 프랑스 식민지 시기인 1863년부터 1880년에 걸쳐 지어졌습니다.',
+    languageFree: '無料',
+    languagePremium: 'Premium',
+    prepTitle: '出発前の準備',
+    prep1Title: 'イヤホンを持参',
+    prep1Desc:
+      'それぞれが静かに聴けるので周囲に迷惑をかけません。寺や博物館など静かな場所では特に大切です。',
+    prep2Title: '位置情報をオンに',
+    prep2Desc:
+      'スポットに近づくと解説が自動で再生されます。オンにしなくても手動で再生できます。',
+    prep3Title: 'バッテリーを充電',
+    prep3Desc:
+      '解説を聴きながら地図を見続けると電池を消耗します。モバイルバッテリーを持参してください。',
+    prep4Title: 'ゆっくり最後まで聴く',
+    prep4Desc:
+      '各区間は約2分から3分です。スポットで立ち止まり、聴きながら景色を楽しんでください。',
     toastAutoOn: 'スポットに近づくと自動再生します',
     toastAutoOff: '自動再生をオフにしました',
     toastLocating: '現在地を取得しています…',
@@ -1183,6 +1308,8 @@ export const NEARBY_DICTIONARY: Record<SupportedLanguage, Record<NearbyKey, stri
     simStopBtn: 'シミュレーションを停止',
     simInvalidCoord: '座標が正しくありません。',
     gpsLocatedToast: '位置を取得しました。最寄りのスポット: {name}（{dist}）。',
+    gpsOutsideRadiusNotice: '自動ガイドの範囲外です。再生を押すと手動で聴けます。',
+    segmentTimeAria: '{time}から再生, {title}',
     autoStatusOff: '自動ガイドはオフです。',
     autoStateOn: 'オン',
     autoStateOff: 'オフ',

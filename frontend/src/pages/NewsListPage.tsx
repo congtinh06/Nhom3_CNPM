@@ -1,12 +1,11 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
-import { RefreshCw } from 'lucide-react';
+import { Link, useSearchParams } from 'react-router-dom';
+import { RefreshCw, Search, X } from 'lucide-react';
 import { useNewsListQuery } from '../api/news';
 import { useDocumentMeta } from '../hooks/useDocumentMeta';
 import { useNavbarLanguage } from '../content/languages';
 import { tNews, NewsTranslation } from '../content/newsI18n';
 import { getCategoryLabel } from '../components/news/newsFormatters';
-import { PageHero } from '../components/common/PageHero';
 import { NewsLeadStory } from '../components/news/NewsLeadStory';
 import { NewsSideItem } from '../components/news/NewsSideItem';
 import { NewsRow } from '../components/news/NewsRow';
@@ -28,6 +27,19 @@ const CATEGORY_OPTIONS: CategoryFilterOption[] = [
   { key: 've-dep', i18nKey: 'categoryVeDep' },
 ];
 
+const STOPS = [
+  { name: 'Bảo tàng Chứng tích Chiến tranh', slug: 'bao-tang-chung-tich-chien-tranh' },
+  { name: 'Nhà thờ Đức Bà Sài Gòn', slug: 'nha-tho-duc-ba' },
+  { name: 'Chùa Bà Thiên Hậu', slug: 'chua-ba-thien-hau' },
+  { name: 'Cầu Ba Son', slug: 'cau-ba-son' },
+  { name: 'Bưu điện Trung tâm Sài Gòn', slug: 'buu-dien-trung-tam' },
+  { name: 'Dinh Độc Lập', slug: 'dinh-doc-lap' },
+  { name: 'Chợ Bến Thành', slug: 'cho-ben-thanh' },
+];
+
+const norm = (str: string) =>
+  str.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd');
+
 export const NewsListPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const { lang } = useNavbarLanguage();
@@ -39,12 +51,20 @@ export const NewsListPage: React.FC = () => {
 
   const categoryParam = searchParams.get('c') || searchParams.get('category') || 'all';
   const poiParam = searchParams.get('poi') || '';
+  const searchParam = searchParams.get('q') || '';
 
-  const [visibleFeedCount, setVisibleFeedCount] = useState(FEED_PAGE_SIZE);
+  const [searchQuery, setSearchQuery] = useState(searchParam);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [subscribeEmail, setSubscribeEmail] = useState('');
+  const [isSubscribed, setIsSubscribed] = useState(false);
 
   useEffect(() => {
-    setVisibleFeedCount(FEED_PAGE_SIZE);
-  }, [categoryParam, poiParam]);
+    setSearchQuery(searchParams.get('q') || '');
+  }, [searchParams]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [categoryParam, poiParam, searchParam]);
 
   const {
     displayedData,
@@ -60,6 +80,16 @@ export const NewsListPage: React.FC = () => {
 
   const allItems = useMemo(() => displayedData?.items ?? [], [displayedData]);
 
+  const categoryCounts = useMemo(() => {
+    const counts: Record<string, number> = { all: allItems.length };
+    for (const opt of CATEGORY_OPTIONS) {
+      if (opt.key !== 'all') {
+        counts[opt.key] = allItems.filter((it) => it.category === opt.key).length;
+      }
+    }
+    return counts;
+  }, [allItems]);
+
   const filteredItems = useMemo(() => {
     let list = allItems;
     if (categoryParam !== 'all') {
@@ -68,8 +98,15 @@ export const NewsListPage: React.FC = () => {
     if (poiParam) {
       list = list.filter((item) => item.relatedPoiSlugs?.includes(poiParam));
     }
+    if (searchQuery.trim()) {
+      const qNorm = norm(searchQuery.trim());
+      list = list.filter((item) => {
+        const fullText = `${item.title} ${item.summary || ''} ${item.excerpt || ''}`;
+        return norm(fullText).includes(qNorm);
+      });
+    }
     return list;
-  }, [allItems, categoryParam, poiParam]);
+  }, [allItems, categoryParam, poiParam, searchQuery]);
 
   const sortedFilteredItems = useMemo(() => {
     return [...filteredItems].sort((a, b) => {
@@ -91,8 +128,44 @@ export const NewsListPage: React.FC = () => {
     setSearchParams(nextParams);
   };
 
+  const handleSearchChange = (val: string) => {
+    setSearchQuery(val);
+    const nextParams = new URLSearchParams(searchParams);
+    if (val.trim()) {
+      nextParams.set('q', val.trim());
+    } else {
+      nextParams.delete('q');
+    }
+    setSearchParams(nextParams);
+  };
+
+  const handleClearSearch = () => {
+    handleSearchChange('');
+  };
+
+  const handleSelectPoi = (slug: string) => {
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.set('poi', slug);
+    nextParams.delete('c');
+    nextParams.delete('category');
+    setSearchParams(nextParams);
+    const mainEl = document.getElementById('news-main-content');
+    if (mainEl) {
+      mainEl.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
   const handleClearFilters = () => {
     setSearchParams({});
+    setSearchQuery('');
+  };
+
+  const handleSubscribe = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (subscribeEmail.trim()) {
+      setIsSubscribed(true);
+      setSubscribeEmail('');
+    }
   };
 
   const activeCategoryLabel = useMemo(() => {
@@ -103,61 +176,88 @@ export const NewsListPage: React.FC = () => {
   const heroArticle = sortedFilteredItems[0] || null;
   const sideArticles = sortedFilteredItems.slice(1, 4);
   const feedAll = sortedFilteredItems.slice(4);
-  const feedArticles = feedAll.slice(0, visibleFeedCount);
-  const hasMoreFeed = feedAll.length > feedArticles.length;
+  const totalPages = Math.ceil(feedAll.length / FEED_PAGE_SIZE);
+  const feedArticles = feedAll.slice((currentPage - 1) * FEED_PAGE_SIZE, currentPage * FEED_PAGE_SIZE);
 
   return (
     <div className="nl-page-root">
-      <PageHero
-        className="news-hero"
-        eyebrow=""
-        title={tNews(lang, 'pageTitle')}
-        subtitle={tNews(lang, 'pageSubtitle')}
-        imageSrc="/images/home/intro-nguyen-hue.jpg"
-        imagePosition="center"
-        imageCredit="Echora"
-      />
-
-      <div className="nl-body">
-        <main className="nl-container" id="news-main-content">
-          {hasNewArticles && (
-          <div className="nl-freshness-row">
-            <button
-              type="button"
-              className="nl-freshness-btn"
-              onClick={applyNewArticles}
-              aria-label="Tải lại danh sách với bài viết mới"
-            >
-              <RefreshCw size={13} className="nl-freshness-icon" />
-              <span>{tNews(lang, 'newPill')}</span>
-            </button>
+      <div className="nl-wrap">
+        <header className="nl-header">
+          <div className="nl-header-inner">
+            <h1 className="nl-header-title">{tNews(lang, 'pageTitle')}</h1>
+            <p className="nl-header-subtitle">{tNews(lang, 'pageSubtitle')}</p>
           </div>
-        )}
-
-        <nav className="nl-nav" aria-label="Lọc theo chuyên mục tin tức">
-          <div className="nl-tabs-row">
-            {CATEGORY_OPTIONS.map((opt) => {
-              const isActive = categoryParam === opt.key;
-              return (
+          <div className="nl-header-search">
+            <label htmlFor="news-search-input" className="sr-only">
+              Tìm bài viết
+            </label>
+            <div className="nl-search-box">
+              <Search size={18} className="nl-search-icon" aria-hidden="true" />
+              <input
+                id="news-search-input"
+                type="search"
+                className="nl-search-input"
+                placeholder="Tìm bài viết…"
+                autoComplete="off"
+                value={searchQuery}
+                onChange={(e) => handleSearchChange(e.target.value)}
+              />
+              {searchQuery && (
                 <button
-                  key={opt.key}
                   type="button"
-                  aria-pressed={isActive}
-                  className={`nl-tab ${isActive ? 'is-active' : ''}`}
-                  onClick={() => handleSelectCategory(opt.key)}
+                  className="nl-search-clear"
+                  onClick={handleClearSearch}
+                  aria-label="Xóa tìm kiếm"
                 >
-                  {tNews(lang, opt.i18nKey)}
+                  <X size={16} />
                 </button>
-              );
-            })}
+              )}
+            </div>
           </div>
-        </nav>
+        </header>
 
-        {(categoryParam !== 'all' || poiParam) && (
+        <main className="nl-main" id="news-main-content">
+          {hasNewArticles && (
+            <div className="nl-freshness-row">
+              <button
+                type="button"
+                className="nl-freshness-btn"
+                onClick={applyNewArticles}
+                aria-label="Tải lại danh sách với bài viết mới"
+              >
+                <RefreshCw size={13} className="nl-freshness-icon" />
+                <span>{tNews(lang, 'newPill')}</span>
+              </button>
+            </div>
+          )}
+
+          <nav className="nl-nav" aria-label="Lọc theo chuyên mục tin tức">
+            <div className="nl-tabs-row">
+              {CATEGORY_OPTIONS.map((opt) => {
+                const isActive = categoryParam === opt.key;
+                const count = categoryCounts[opt.key] ?? 0;
+                return (
+                  <button
+                    key={opt.key}
+                    type="button"
+                    aria-pressed={isActive}
+                    className={`nl-tab ${isActive ? 'is-active' : ''}`}
+                    onClick={() => handleSelectCategory(opt.key)}
+                  >
+                    <span>{tNews(lang, opt.i18nKey)}</span>
+                    <span className="nl-tab-count">{count}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </nav>
+
+        {(categoryParam !== 'all' || poiParam || searchQuery) && (
           <div className="nl-filter-status">
             <span>
               Đang lọc theo: <strong>{activeCategoryLabel}</strong>
-              {poiParam ? ` (#${poiParam})` : ''} ({sortedFilteredItems.length} bài viết)
+              {poiParam ? ` (#${poiParam})` : ''}
+              {searchQuery ? ` ("${searchQuery}")` : ''} ({sortedFilteredItems.length} bài viết)
             </span>
             <button
               type="button"
@@ -231,7 +331,7 @@ export const NewsListPage: React.FC = () => {
         )}
 
         {!isLoading && !isError && feedArticles.length > 0 && (
-          <section className="nl-feed-section" aria-label="Danh sách bài viết">
+          <section id="news-feed-section" className="nl-feed-section" aria-label="Danh sách bài viết">
             <div className="nl-feed-header">
               <h2 className="nl-feed-title">Mới nhất</h2>
             </div>
@@ -240,19 +340,146 @@ export const NewsListPage: React.FC = () => {
                 <NewsRow key={item.id} item={item} lang={lang} />
               ))}
             </div>
-            {hasMoreFeed && (
-              <div className="nl-more-wrap">
+            {totalPages > 1 && (
+              <nav className="nl-pagination" aria-label="Phân trang bài viết">
                 <button
                   type="button"
-                  className="nl-more-btn"
-                  onClick={() => setVisibleFeedCount((c) => c + FEED_PAGE_SIZE)}
+                  className="nl-page-btn"
+                  disabled={currentPage === 1}
+                  onClick={() => {
+                    setCurrentPage((p) => Math.max(1, p - 1));
+                    document.getElementById('news-feed-section')?.scrollIntoView({ behavior: 'smooth' });
+                  }}
                 >
-                  Xem thêm bài viết
+                  Trước
                 </button>
-              </div>
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+                  <button
+                    key={p}
+                    type="button"
+                    className={`nl-page-num${p === currentPage ? ' is-active' : ''}`}
+                    aria-current={p === currentPage ? 'page' : undefined}
+                    onClick={() => {
+                      setCurrentPage(p);
+                      document.getElementById('news-feed-section')?.scrollIntoView({ behavior: 'smooth' });
+                    }}
+                  >
+                    {p}
+                  </button>
+                ))}
+                <button
+                  type="button"
+                  className="nl-page-btn"
+                  disabled={currentPage === totalPages}
+                  onClick={() => {
+                    setCurrentPage((p) => Math.min(totalPages, p + 1));
+                    document.getElementById('news-feed-section')?.scrollIntoView({ behavior: 'smooth' });
+                  }}
+                >
+                  Sau
+                </button>
+              </nav>
             )}
           </section>
         )}
+
+        {/* Section: Đọc theo điểm dừng */}
+        <section className="nl-stops-section" aria-labelledby="nl-stops-heading">
+          <div className="nl-stops-header">
+            <h2 id="nl-stops-heading" className="nl-stops-title">
+              Đọc theo điểm dừng
+            </h2>
+            <p className="nl-stops-desc">
+              Mỗi điểm trong hành trình có bài viết đi kèm. Đọc trước khi đi, hoặc nghe thuyết minh ngay tại chỗ.
+            </p>
+          </div>
+          <div className="nl-stops-list">
+            {STOPS.map((stop, index) => {
+              const stopCount = allItems.filter(
+                (a) =>
+                  a.relatedPoiSlugs?.includes(stop.slug) ||
+                  norm(a.title + ' ' + (a.summary || '')).includes(norm(stop.name))
+              ).length;
+              return (
+                <div key={stop.slug} className="nl-stop-row">
+                  <div className="nl-stop-info">
+                    <strong className="nl-stop-name">
+                      {index + 1}. {stop.name}
+                    </strong>
+                    <span className="nl-stop-count">
+                      {stopCount > 0 ? `${stopCount} bài viết` : 'Sắp có bài'}
+                    </span>
+                  </div>
+                  <div className="nl-stop-actions">
+                    {stopCount > 0 && (
+                      <button
+                        type="button"
+                        className="nl-stop-read-btn"
+                        onClick={() => handleSelectPoi(stop.slug)}
+                      >
+                        Đọc bài
+                      </button>
+                    )}
+                    <Link to={`/nearby?poi=${stop.slug}`} className="nl-stop-audio-link">
+                      Nghe thuyết minh
+                    </Link>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+
+        {/* Section: Nhận bài mới mỗi tuần */}
+        <section className="nl-sub-section" aria-labelledby="nl-sub-heading">
+          <div className="nl-sub-content">
+            <h2 id="nl-sub-heading" className="nl-sub-title">
+              Nhận bài mới mỗi tuần
+            </h2>
+            <p className="nl-sub-desc">
+              Câu chuyện di sản và mẹo khám phá Sài Gòn, gửi thẳng vào hộp thư của bạn.
+            </p>
+          </div>
+          <form className="nl-sub-form" onSubmit={handleSubscribe}>
+            <label htmlFor="nl-sub-email" className="nl-sub-label">
+              Email của bạn
+            </label>
+            <div className="nl-sub-input-row">
+              <input
+                id="nl-sub-email"
+                type="email"
+                required
+                placeholder="ban@vidu.com"
+                className="nl-sub-input"
+                value={subscribeEmail}
+                onChange={(e) => setSubscribeEmail(e.target.value)}
+              />
+              <button type="submit" className="nl-sub-btn">
+                Đăng ký
+              </button>
+            </div>
+            {isSubscribed && (
+              <p className="nl-sub-success" role="status">
+                Cảm ơn bạn, chúng tôi đã ghi nhận email.
+              </p>
+            )}
+          </form>
+        </section>
+
+        {/* Section: Muốn nghe thay vì đọc? */}
+        <section className="nl-cta-section" aria-labelledby="nl-cta-heading">
+          <div className="nl-cta-content">
+            <h2 id="nl-cta-heading" className="nl-cta-title">
+              Muốn nghe thay vì đọc?
+            </h2>
+            <p className="nl-cta-desc">
+              Mỗi điểm dừng có một đoạn thuyết minh ngắn, nghe được bằng bốn ngôn ngữ.
+            </p>
+          </div>
+          <Link to="/nearby" className="nl-cta-btn">
+            Đi tới Điểm du lịch
+          </Link>
+        </section>
         </main>
       </div>
     </div>

@@ -20,7 +20,7 @@ public interface ZoneRepository extends JpaRepository<Zone, Long> {
     // Danh sách khu vực cho admin: lọc theo trạng thái + tìm theo tên/mã, phân trang phía server.
     @Query("SELECT z FROM Zone z " +
            "WHERE (:active IS NULL OR z.isActive = :active) " +
-           "AND (:searchPattern IS NULL OR LOWER(z.name) LIKE :searchPattern OR LOWER(z.code) LIKE :searchPattern)")
+           "AND (:searchPattern IS NULL OR z.name LIKE :searchPattern OR z.code LIKE :searchPattern)")
     Page<Zone> searchAdminZones(
             @Param("active") Boolean active,
             @Param("searchPattern") String searchPattern,

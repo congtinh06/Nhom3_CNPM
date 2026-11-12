@@ -91,7 +91,7 @@ jobs:
         run: npm run build
 
       - name: Install Playwright Chromium
-        run: npx playwright install --with-deps chromium
+        run: npx playwright install chromium
 
       - name: Smoke Test Production Preview
         run: npm run smoke:preview

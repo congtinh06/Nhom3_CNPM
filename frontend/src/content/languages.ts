@@ -210,6 +210,7 @@ export interface NavTranslation {
     rememberPassword: string;
     close: string;
     loginSuccess: string;
+    loginSuccessRedirect: string;
     checkEmailTitle: string;
     checkEmailNotice: string;
     resendVerification: string;
@@ -276,6 +277,7 @@ export interface NavTranslation {
   closeMenu: string;
   scanQrDesktop: string;
   scanPoiQr: string;
+  scanLoginQr: string;
   shop: ShopTranslation;
 }
 
@@ -339,6 +341,7 @@ export const NAV_TRANSLATIONS: Record<SupportedLanguage, NavTranslation> = {
       rememberPassword: 'Nhớ mật khẩu?',
       close: 'Đóng',
       loginSuccess: 'Đăng nhập thành công',
+      loginSuccessRedirect: 'Đang chuyển hướng…',
       checkEmailTitle: 'Kiểm tra email',
       checkEmailNotice: 'Vui lòng kiểm tra email để xác thực tài khoản.',
       resendVerification: 'Gửi lại email',
@@ -348,7 +351,8 @@ export const NAV_TRANSLATIONS: Record<SupportedLanguage, NavTranslation> = {
       hidePassword: 'Ẩn mật khẩu',
       forgotNote: 'Nhập email đã đăng ký. Chúng tôi sẽ gửi liên kết đặt lại mật khẩu cho bạn.',
       qrTitle: 'Đăng nhập bằng QR',
-      qrSubtitle: 'Mở trang web trên điện thoại và quét mã để đăng nhập nhanh.',
+      qrSubtitle:
+        'Mở web trên điện thoại đã đăng nhập, vào menu và chọn Quét mã đăng nhập.',
       qrSecureNote: 'Chỉ tài khoản đã xác thực mới có thể quét mã.',
       qrWaiting: 'Đang chờ quét mã…',
       qrScanned: 'Đã quét. Xác nhận trên điện thoại của bạn.',
@@ -389,7 +393,7 @@ export const NAV_TRANSLATIONS: Record<SupportedLanguage, NavTranslation> = {
       guestContinue: 'Tiếp tục với tư cách Khách',
       qrRealAccountHint: 'Tài khoản thật của bạn:',
       qrAlreadySignedIn: 'Thiết bị này đã đăng nhập. Không cần tạo mã QR mới.',
-      qrHandoffTitle: 'Đăng nhập nhanh trên điện thoại',
+      qrHandoffTitle: 'Đăng nhập thiết bị khác bằng QR',
       qrHandoffNote: 'Quét mã này bằng camera điện thoại để đăng nhập cùng tài khoản. Chỉ dùng cho thiết bị của bạn.',
       qrHandoffDone: 'Điện thoại đã đăng nhập cùng tài khoản.',
       qrHandoffReceiveTitle: 'Nhận đăng nhập từ máy tính',
@@ -411,6 +415,7 @@ export const NAV_TRANSLATIONS: Record<SupportedLanguage, NavTranslation> = {
     closeMenu: 'Đóng menu',
     scanQrDesktop: 'Quét mã QR trên máy tính',
     scanPoiQr: 'Quét mã điểm du lịch',
+    scanLoginQr: 'Quét mã đăng nhập',
     shop: {
       foodTitle: 'Ẩm thực Sài Gòn',
       foodSubtitle: 'Hương vị đường phố và các món ngon đặc trưng Sài thành',
@@ -612,6 +617,7 @@ export const NAV_TRANSLATIONS: Record<SupportedLanguage, NavTranslation> = {
       rememberPassword: 'Remember password?',
       close: 'Close',
       loginSuccess: 'Signed in successfully',
+      loginSuccessRedirect: 'Redirecting…',
       checkEmailTitle: 'Check your email',
       checkEmailNotice: 'Please check your email to verify your account.',
       resendVerification: 'Resend email',
@@ -621,7 +627,8 @@ export const NAV_TRANSLATIONS: Record<SupportedLanguage, NavTranslation> = {
       hidePassword: 'Hide password',
       forgotNote: 'Enter your registered email and we will send you a reset link.',
       qrTitle: 'Sign in with QR',
-      qrSubtitle: 'Open the website on your phone and scan to sign in faster.',
+      qrSubtitle:
+        'Open the website on your signed-in phone, open the menu and choose Scan login code.',
       qrSecureNote: 'Only verified accounts can scan the code.',
       qrWaiting: 'Waiting for scan…',
       qrScanned: 'Scanned. Confirm on your phone.',
@@ -663,7 +670,7 @@ export const NAV_TRANSLATIONS: Record<SupportedLanguage, NavTranslation> = {
       guestContinue: 'Continue as Guest',
       qrRealAccountHint: 'Your real account:',
       qrAlreadySignedIn: 'This device is already signed in. No new QR code is needed.',
-      qrHandoffTitle: 'Sign in quickly on your phone',
+      qrHandoffTitle: 'Sign in on another device with QR',
       qrHandoffNote: 'Scan this code with your phone camera to sign in with the same account. Use it only on your own devices.',
       qrHandoffDone: 'Your phone is now signed in with the same account.',
       qrHandoffReceiveTitle: 'Receive sign-in from computer',
@@ -685,6 +692,7 @@ export const NAV_TRANSLATIONS: Record<SupportedLanguage, NavTranslation> = {
     closeMenu: 'Close menu',
     scanQrDesktop: 'QR Code Login',
     scanPoiQr: 'Scan place QR',
+    scanLoginQr: 'Scan login QR',
     shop: {
       foodTitle: 'Saigon Cuisine',
       foodSubtitle: 'Street flavors and signature delicacies of Saigon',
@@ -886,6 +894,7 @@ export const NAV_TRANSLATIONS: Record<SupportedLanguage, NavTranslation> = {
       rememberPassword: 'パスワードを覚えていますか？',
       close: '閉じる',
       loginSuccess: 'ログインに成功しました',
+      loginSuccessRedirect: 'リダイレクトしています…',
       checkEmailTitle: 'メールをご確認ください',
       checkEmailNotice: 'アカウント確認用のメールを送信しました。',
       resendVerification: 'メールを再送',
@@ -895,7 +904,8 @@ export const NAV_TRANSLATIONS: Record<SupportedLanguage, NavTranslation> = {
       hidePassword: 'パスワードを非表示',
       forgotNote: 'ご登録のメールアドレスを入力してください。再設定リンクをお送りします。',
       qrTitle: 'QRコードでログイン',
-      qrSubtitle: 'スマートフォンのアプリでコードを読み取り、すばやくログインできます。',
+      qrSubtitle:
+        'ログイン済みのスマートフォンでサイトを開き、メニューから「ログインQRをスキャン」を選んでください。',
       qrSecureNote: '認証済みのアカウントのみ読み取りできます。',
       qrWaiting: 'コードの読み取りを待っています…',
       qrScanned: '読み取りました。スマートフォンで確認してください。',
@@ -936,7 +946,7 @@ export const NAV_TRANSLATIONS: Record<SupportedLanguage, NavTranslation> = {
       guestContinue: 'ゲストとして続ける',
       qrRealAccountHint: 'あなたの本アカウント:',
       qrAlreadySignedIn: 'この端末はすでにログインしています。新しいQRコードは必要ありません。',
-      qrHandoffTitle: 'スマートフォンですばやくログイン',
+      qrHandoffTitle: 'QRで別の端末にログイン',
       qrHandoffNote: 'スマートフォンのカメラでこのコードを読み取ると、同じアカウントでログインします。自分の端末でのみ使用してください。',
       qrHandoffDone: 'スマートフォンが同じアカウントでログインしました。',
       qrHandoffReceiveTitle: 'パソコンからログインを受け取る',
@@ -958,6 +968,7 @@ export const NAV_TRANSLATIONS: Record<SupportedLanguage, NavTranslation> = {
     closeMenu: 'メニューを閉じる',
     scanQrDesktop: 'QRコードログイン',
     scanPoiQr: '観光地QRを読み取る',
+    scanLoginQr: 'ログインQRをスキャン',
     shop: {
       foodTitle: 'サイゴングルメ',
       foodSubtitle: '街角の屋台料理と伝統の味わい',
@@ -1159,6 +1170,7 @@ export const NAV_TRANSLATIONS: Record<SupportedLanguage, NavTranslation> = {
       rememberPassword: '비밀번호가 기억나셨나요?',
       close: '닫기',
       loginSuccess: '로그인되었습니다',
+      loginSuccessRedirect: '이동 중…',
       checkEmailTitle: '이메일을 확인하세요',
       checkEmailNotice: '계정 인증을 위한 이메일을 확인해 주세요.',
       resendVerification: '이메일 재전송',
@@ -1168,7 +1180,8 @@ export const NAV_TRANSLATIONS: Record<SupportedLanguage, NavTranslation> = {
       hidePassword: '비밀번호 숨기기',
       forgotNote: '가입하신 이메일을 입력하시면 비밀번호 재설정 링크를 보내드립니다.',
       qrTitle: 'QR 코드로 로그인',
-      qrSubtitle: '휴대폰 앱으로 코드를 스캔하면 빠르게 로그인할 수 있습니다.',
+      qrSubtitle:
+        '로그인된 휴대폰에서 웹을 열고 메뉴에서 "로그인 QR 스캔"을 선택하세요.',
       qrSecureNote: '인증된 계정만 스캔할 수 있습니다.',
       qrWaiting: '코드 스캔을 기다리는 중…',
       qrScanned: '스캔되었습니다. 휴대폰에서 확인해 주세요.',
@@ -1208,7 +1221,7 @@ export const NAV_TRANSLATIONS: Record<SupportedLanguage, NavTranslation> = {
       guestContinue: '게스트로 계속하기',
       qrRealAccountHint: '실제 계정:',
       qrAlreadySignedIn: '이 기기는 이미 로그인되어 있습니다. 새 QR 코드가 필요하지 않습니다.',
-      qrHandoffTitle: '휴대폰에서 빠르게 로그인',
+      qrHandoffTitle: 'QR로 다른 기기 로그인',
       qrHandoffNote: '휴대폰 카메라로 이 코드를 스캔하면 같은 계정으로 로그인됩니다. 본인 기기에서만 사용하세요.',
       qrHandoffDone: '휴대폰이 같은 계정으로 로그인되었습니다.',
       qrHandoffReceiveTitle: '컴퓨터에서 로그인 받기',
@@ -1230,6 +1243,7 @@ export const NAV_TRANSLATIONS: Record<SupportedLanguage, NavTranslation> = {
     closeMenu: '메뉴 닫기',
     scanQrDesktop: 'QR 코드 로그인',
     scanPoiQr: '관광지 QR 스캔',
+    scanLoginQr: '로그인 QR 스캔',
     shop: {
       foodTitle: '사이공 미식',
       foodSubtitle: '거리의 풍미와 사이공 대표 맛집 요리',

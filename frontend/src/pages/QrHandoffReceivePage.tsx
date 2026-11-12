@@ -63,7 +63,7 @@ export const QrHandoffReceivePage: React.FC = () => {
       finishedRef.current = true;
       setPhase('success');
     } catch (err) {
-      setError(normalizeApiError(err).message || t.auth.qrError);
+      setError(normalizeApiError(err, true).message || t.auth.qrError);
       setPhase('error');
     }
   }, [completeQrLogin, sessionId, exchangeToken, t.auth.qrError]);

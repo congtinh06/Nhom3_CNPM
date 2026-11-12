@@ -26,11 +26,11 @@ public interface RouteRepository extends JpaRepository<Route, Long> {
     @Query(value = "SELECT r FROM Route r JOIN FETCH r.zone z " +
            "WHERE (:zoneId IS NULL OR z.id = :zoneId) " +
            "AND (:status IS NULL OR r.status = :status) " +
-           "AND (:searchPattern IS NULL OR LOWER(r.name) LIKE :searchPattern)",
+           "AND (:searchPattern IS NULL OR r.name LIKE :searchPattern)",
            countQuery = "SELECT COUNT(r) FROM Route r " +
            "WHERE (:zoneId IS NULL OR r.zone.id = :zoneId) " +
            "AND (:status IS NULL OR r.status = :status) " +
-           "AND (:searchPattern IS NULL OR LOWER(r.name) LIKE :searchPattern)")
+           "AND (:searchPattern IS NULL OR r.name LIKE :searchPattern)")
     Page<Route> searchAdminRoutes(
             @Param("zoneId") Long zoneId,
             @Param("status") String status,

@@ -16,9 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.echora.content.entity.Category;
 import com.echora.content.entity.Poi;
-import com.echora.content.repository.CategoryRepository;
 import com.echora.content.repository.PoiRepository;
 import com.echora.content.repository.ProductSpecification;
 import org.springframework.data.domain.PageRequest;
@@ -31,7 +29,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -50,7 +47,6 @@ public class ProductServiceImpl implements ProductService {
     private static final long MAX_IMAGE_BYTES = 2 * 1024 * 1024; // 2MB
 
     private final ProductRepository productRepository;
-    private final CategoryRepository categoryRepository;
     private final PoiRepository poiRepository;
 
     @Value("${app.product.upload-dir:uploads/products}")
@@ -59,18 +55,6 @@ public class ProductServiceImpl implements ProductService {
     @Override
     @Transactional(readOnly = true)
     public Page<ProductDto> getActiveProducts(ProductFilterRequest request) {
-        List<Long> targetCategoryIds = null;
-        if (request.getCategoryId() != null) {
-            targetCategoryIds = new ArrayList<>();
-            targetCategoryIds.add(request.getCategoryId());
-            List<Category> subCategories = categoryRepository.findByParentId(request.getCategoryId());
-            if (subCategories != null && !subCategories.isEmpty()) {
-                for (Category sub : subCategories) {
-                    targetCategoryIds.add(sub.getId());
-                }
-            }
-        }
-
         Sort sort = switch (request.getSortBy() != null ? request.getSortBy() : "popular") {
             case "price-asc" -> Sort.by(Sort.Direction.ASC, "price");
             case "price-desc" -> Sort.by(Sort.Direction.DESC, "price");
@@ -83,7 +67,7 @@ public class ProductServiceImpl implements ProductService {
         int pageSize = request.getSize() != null && request.getSize() > 0 ? request.getSize() : 12;
         Pageable pageable = PageRequest.of(pageNumber, pageSize, sort);
 
-        Specification<Product> spec = ProductSpecification.filter(request, targetCategoryIds);
+        Specification<Product> spec = ProductSpecification.filter(request);
         return productRepository.findAll(spec, pageable).map(ProductDto::fromEntity);
     }
 

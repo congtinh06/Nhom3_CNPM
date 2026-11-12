@@ -41,4 +41,9 @@ Nguồn & giấy phép (Wikimedia Commons / Wikipedia):
 - sach-lich-su.jpg — "Book of Wei and Old History of the Five Dynasties" — CC0. https://commons.wikimedia.org/wiki/File:Book_of_Wei_and_Old_History_of_the_Five_Dynasties_(55372007695).jpg
 - tranh-co-dong.jpg — "50 Đồng – Việt Minh (1948-49, Propaganda leaflet) North Vietnam" by The Việt Minh — Public domain. https://commons.wikimedia.org/wiki/File:50_%C4%90%E1%BB%93ng_-_Vi%E1%BB%87t_Minh_(1948-49,_Propaganda_leaflet)_North_Vietnam_02.jpg
 - vong-tay-da.jpg — "Malachite Beads and Bracelet (Russia, 19 c.)" by shakko — CC BY-SA 3.0. https://commons.wikimedia.org/wiki/File:Malachite_Beads_and_Bracelet_(Russia,_19_c.).jpg
+- tem-suu-tam.jpg — "Vietnam Stamp Tranh Dan Gian" — Public domain / Commons. https://commons.wikimedia.org/wiki/File:Vietnam_Stamp_Tranh_Dan_Gian.jpg
+- moc-khoa.jpg — "Keychain.jpg" by Sergei S. Scurfield — CC BY-SA 3.0. https://commons.wikimedia.org/wiki/File:Keychain.jpg
+- buu-thiep-retro.jpg — "Saigon - Les Quais.jpg" (1905 vintage postcard) — Public domain. https://commons.wikimedia.org/wiki/File:Saigon_-_Les_Quais.jpg
+- buu-thiep-duc-ba.jpg — "La Cathedrale de Saigon.jpg" (vintage postcard) — Public domain. https://commons.wikimedia.org/wiki/File:La_Cath%C3%A9drale_de_Saigon.jpg
+- tranh-theu.jpg — "Silk embroidery with Tree of Life motif from Vietnam" — CC BY-SA 4.0. https://commons.wikimedia.org/wiki/File:Silk_embroidery_with_Tree_of_Life_motif_from_Vietnam.JPG
 

@@ -1,0 +1,1069 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#F7F2E9">
+<meta name="description" content="Bảy điểm dừng quanh trung tâm Sài Gòn, thuyết minh tự động bằng bốn ngôn ngữ.">
+<title>Echora – Điểm du lịch Sài Gòn</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Be+Vietnam+Pro:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+ color-scheme:light;
+ --bg:#F7F2E9;--bg-soft:#EFE7D9;--surface:#FFFCF6;--surface-2:#F3ECDF;
+ --ink:#201B16;--ink-soft:#4A4138;--muted:#6F6254;--line:#DED2BF;--line-strong:#C9BAA2;
+ --accent:#0E5B53;--accent-strong:#093F39;--accent-soft:#DBEBE5;--accent-ink:#fff;
+ --warm:#B35129;--warm-soft:#F7E3D7;--gold:#A47D2C;
+ --map:#E9E2D2;--map-block:#DFD4C0;--road:#FBF7EE;--water:#BCD4D2;--water-2:#A9C7C5;--park:#CCD9BE;
+ --player-bg:#17130F;--player-ink:#F7F1E7;--player-muted:rgba(247,241,231,.62);
+ --shadow-sm:0 1px 2px rgba(32,27,22,.06),0 2px 8px rgba(32,27,22,.05);
+ --shadow-md:0 10px 28px -12px rgba(32,27,22,.28);
+ --shadow-lg:0 28px 70px -24px rgba(32,27,22,.4);
+ --serif:'Fraunces',Georgia,'Times New Roman',serif;
+ --sans:'Be Vietnam Pro',system-ui,-apple-system,'Segoe UI',sans-serif;
+ --r:10px;--r-sm:8px;--r-lg:18px;
+}
+@media (prefers-color-scheme:dark){
+ :root:not([data-theme="light"]){
+  color-scheme:dark;
+  --bg:#12100E;--bg-soft:#1A1714;--surface:#1F1B17;--surface-2:#262119;
+  --ink:#F5EEE3;--ink-soft:#DED4C7;--muted:#A99C8D;--line:#3A322A;--line-strong:#4C4238;
+  --accent:#5CC0B0;--accent-strong:#7FD3C4;--accent-soft:#1C3733;--accent-ink:#0E1A17;
+  --warm:#E9835B;--warm-soft:#38251D;--gold:#D8B36A;
+  --map:#211D19;--map-block:#2A251F;--road:#35302A;--water:#223634;--water-2:#1B2C2B;--park:#26311F;
+  --player-bg:#1E1A16;--player-ink:#F7F1E7;--player-muted:rgba(247,241,231,.6);
+  --shadow-sm:0 1px 2px rgba(0,0,0,.4),0 2px 8px rgba(0,0,0,.3);
+  --shadow-md:0 12px 30px -14px rgba(0,0,0,.7);
+  --shadow-lg:0 30px 70px -26px rgba(0,0,0,.8);
+ }
+}
+:root[data-theme="dark"]{
+ color-scheme:dark;
+ --bg:#12100E;--bg-soft:#1A1714;--surface:#1F1B17;--surface-2:#262119;
+ --ink:#F5EEE3;--ink-soft:#DED4C7;--muted:#A99C8D;--line:#3A322A;--line-strong:#4C4238;
+ --accent:#5CC0B0;--accent-strong:#7FD3C4;--accent-soft:#1C3733;--accent-ink:#0E1A17;
+ --warm:#E9835B;--warm-soft:#38251D;--gold:#D8B36A;
+ --map:#211D19;--map-block:#2A251F;--road:#35302A;--water:#223634;--water-2:#1B2C2B;--park:#26311F;
+ --player-bg:#1E1A16;--player-ink:#F7F1E7;--player-muted:rgba(247,241,231,.6);
+ --shadow-sm:0 1px 2px rgba(0,0,0,.4),0 2px 8px rgba(0,0,0,.3);
+ --shadow-md:0 12px 30px -14px rgba(0,0,0,.7);
+ --shadow-lg:0 30px 70px -26px rgba(0,0,0,.8);
+}
+*{box-sizing:border-box;margin:0}
+html{scroll-padding-top:88px;scrollbar-gutter:stable}
+body{background:var(--bg);color:var(--ink);font:400 16px/1.65 var(--sans);padding-bottom:calc(104px + env(safe-area-inset-bottom,0px));-webkit-font-smoothing:antialiased}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:-1;background:radial-gradient(1000px 520px at 82% -8%,var(--accent-soft) 0%,transparent 62%),radial-gradient(760px 420px at -6% 8%,var(--warm-soft) 0%,transparent 58%)}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+a{color:inherit}
+img,svg{display:block}
+h1,h2,h3{text-wrap:balance}
+::selection{background:var(--accent);color:var(--accent-ink)}
+:focus-visible{outline:2px solid var(--warm);outline-offset:3px;border-radius:6px}
+.skip{position:fixed;left:16px;top:-60px;z-index:100;background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:8px;text-decoration:none;transition:top .2s}
+.skip:focus{top:12px}
+.wrap{max-width:1240px;margin:0 auto;padding:0 24px}
+.hide{display:inline}
+
+.site-head{position:sticky;top:0;z-index:30;background:color-mix(in srgb,var(--bg) 86%,transparent);backdrop-filter:blur(14px);border-bottom:1px solid transparent;transition:border-color .25s,box-shadow .25s}
+.site-head.scrolled{border-color:var(--line);box-shadow:0 10px 30px -24px rgba(32,27,22,.6)}
+.site-head .wrap{display:flex;align-items:center;gap:26px;height:66px}
+.logo{font:600 24px var(--serif);letter-spacing:-.02em;text-decoration:none;display:inline-flex;align-items:baseline}
+.logo i{color:var(--warm);font-style:normal}
+nav{display:flex;gap:24px;font-size:14.5px;color:var(--muted);margin-right:auto}
+nav a{text-decoration:none;padding:6px 0;border-bottom:2px solid transparent;transition:color .2s,border-color .2s}
+nav a:hover{color:var(--ink)}
+nav a[aria-current]{color:var(--ink);border-color:var(--accent)}
+.head-actions{display:flex;align-items:center;gap:14px;font-size:14px}
+.head-actions a{text-decoration:none;color:var(--muted);transition:color .2s}
+.head-actions a:hover{color:var(--ink)}
+.icon-btn{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;color:var(--ink-soft);border:1px solid var(--line);transition:background .2s,color .2s,transform .2s}
+.icon-btn:hover{background:var(--surface-2);color:var(--ink);transform:rotate(-8deg)}
+.icon-btn svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.cart-pill{color:var(--muted);white-space:nowrap;padding:5px 10px;border-radius:999px;border:1px solid transparent;transition:.25s}
+.cart-pill b{color:var(--ink);font-weight:600}
+.cart-pill.has-items{background:var(--warm-soft);border-color:color-mix(in srgb,var(--warm) 30%,transparent);color:var(--warm)}
+.cart-pill.has-items b{color:var(--warm)}
+.cart-pill.bump{animation:bump .4s}
+@keyframes bump{0%,100%{transform:scale(1)}35%{transform:scale(1.12)}}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;min-height:46px;padding:0 20px;border-radius:999px;font-size:15px;font-weight:500;text-decoration:none;transition:transform .2s,background .2s,box-shadow .2s,color .2s}
+.btn:active{transform:translateY(1px)}
+.btn-solid{background:var(--ink);color:var(--bg);padding:0 17px;min-height:40px;font-size:14px}
+.btn-solid:hover{background:var(--accent);color:var(--accent-ink)}
+.btn-primary{background:var(--accent);color:var(--accent-ink);box-shadow:0 12px 24px -14px var(--accent)}
+.btn-primary:hover{background:var(--accent-strong);box-shadow:0 16px 30px -14px var(--accent)}
+.btn-ghost{border:1px solid var(--line-strong);color:var(--ink);background:color-mix(in srgb,var(--surface) 60%,transparent)}
+.btn-ghost:hover{background:var(--surface);border-color:var(--ink)}
+
+.hero{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,.8fr);gap:56px;align-items:end;padding:52px 0 34px}
+.eyebrow{display:inline-flex;align-items:center;gap:9px;font-size:12.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin-bottom:16px}
+.eyebrow span{width:7px;height:7px;border-radius:50%;background:var(--warm);box-shadow:0 0 0 4px var(--warm-soft)}
+h1{font:500 clamp(30px,4.7vw,54px)/1.1 var(--serif);letter-spacing:-.025em;max-width:17ch}
+h1 em{font-style:italic;color:var(--accent)}
+.lede{color:var(--muted);max-width:54ch;margin-top:16px;font-size:16.5px}
+.hero-cta{display:flex;flex-wrap:wrap;gap:12px;margin-top:26px}
+.facts{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden;box-shadow:var(--shadow-sm)}
+.facts div{background:var(--surface);padding:17px 18px 15px}
+.facts dt{font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.facts dd{margin:5px 0 0;font:500 17px/1.3 var(--serif);letter-spacing:-.01em}
+.facts dd.accent{color:var(--accent)}
+
+.stripw{margin:6px 0 42px}
+.strip-head{display:flex;justify-content:space-between;align-items:center;gap:12px;font-size:12.5px;color:var(--muted);letter-spacing:.04em;text-transform:uppercase;margin-bottom:8px}
+.strip-head b{color:var(--accent);font-weight:600;letter-spacing:0;text-transform:none;font-size:13px}
+.stripw{overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:thin}
+.strip{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));position:relative;min-width:760px;padding-top:6px}
+.strip::before{content:"";position:absolute;left:0;right:0;top:12px;height:2px;background:var(--line)}
+#sfill{position:absolute;left:0;top:12px;height:2px;width:0;background:linear-gradient(90deg,var(--accent),var(--warm));transition:width .5s cubic-bezier(.2,.7,.2,1)}
+.sd{position:relative;display:block;text-align:left;padding:30px 14px 6px 0;font-size:13.5px;line-height:1.4;color:var(--muted);transition:color .2s}
+.sd::before{content:"";position:absolute;left:0;top:6px;width:13px;height:13px;border-radius:50%;background:var(--surface);border:2px solid var(--line);transition:background .2s,border-color .2s,box-shadow .2s}
+.sd.heard::before{background:var(--accent);border-color:var(--accent)}
+.sd.on{color:var(--ink)}
+.sd.on::before{background:var(--accent);border-color:var(--accent);box-shadow:0 0 0 5px var(--accent-soft)}
+.sd small{display:block;font-size:11.5px;color:var(--muted);font-weight:400;margin-top:3px;letter-spacing:.01em}
+.sd:hover{color:var(--ink)}
+.sd:hover::before{border-color:var(--accent)}
+
+.main{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.02fr);gap:48px;align-items:start}
+.list{list-style:none;padding:0;border-top:1px solid var(--line)}
+.item{border-bottom:1px solid var(--line);scroll-margin-top:90px;transition:background .3s}
+.item.on{background:linear-gradient(90deg,var(--accent-soft),transparent 72%)}
+.row{width:100%;display:grid;grid-template-columns:36px 82px minmax(0,1fr) auto;gap:16px;align-items:center;padding:18px 12px 18px 4px;text-align:left;border-radius:var(--r);transition:background .2s}
+.item:not(.on) .row:hover{background:var(--surface-2)}
+.dot{position:relative;width:34px;height:34px;border-radius:50%;border:1.5px solid var(--line);display:grid;place-items:center;font-size:13px;font-weight:600;color:var(--muted);background:var(--surface);transition:.2s}
+.dot .chk{display:none;width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.item.heard:not(.on) .dot{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.item.heard:not(.on) .dot .num{display:none}
+.item.heard:not(.on) .dot .chk{display:block}
+.item.on .dot{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.th{position:relative;width:82px;height:64px;border-radius:10px;overflow:hidden;display:block;box-shadow:var(--shadow-sm);background:var(--surface-2)}
+.th svg{position:absolute;inset:0;width:100%;height:100%}
+.rowtxt{min-width:0}
+.nm{display:block;font:500 20px/1.3 var(--serif);letter-spacing:-.01em}
+.ct{display:block;font-size:13.5px;color:var(--muted);margin-top:2px}
+.ct .sep{margin:0 7px;opacity:.55}
+.tz{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-size:14px;color:var(--muted);margin-top:5px;max-width:52ch}
+.item.on .tz{display:none}
+.st{display:flex;align-items:center;gap:10px;font-size:12.5px;color:var(--muted);white-space:nowrap}
+.stt:not(:empty){padding:4px 9px;border-radius:999px;background:var(--accent-soft);color:var(--accent)}
+.eq{display:none;gap:2px;align-items:flex-end;height:14px}
+.eq span{width:3px;height:100%;background:var(--warm);border-radius:1px;transform-origin:bottom;animation:eq 1s ease-in-out infinite}
+.eq span:nth-child(2){animation-delay:.2s}
+.eq span:nth-child(3){animation-delay:.4s}
+.item.playing .eq{display:flex}
+.item.playing .stt{background:var(--warm-soft);color:var(--warm)}
+@keyframes eq{0%,100%{transform:scaleY(.3)}50%{transform:scaleY(1)}}
+.chev{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;transition:transform .3s}
+.item.on .chev{transform:rotate(180deg)}
+.panel{display:grid;grid-template-rows:0fr;transition:grid-template-rows .38s cubic-bezier(.2,.7,.2,1)}
+.item.on .panel{grid-template-rows:1fr}
+.panel>div{overflow:hidden}
+.pin{padding:2px 12px 28px 56px}
+.ph{position:relative;aspect-ratio:16/9;border-radius:14px;overflow:hidden;margin-bottom:16px;box-shadow:var(--shadow-md);background:var(--surface-2)}
+.ph svg{position:absolute;inset:0;width:100%;height:100%}
+.ph-tag{position:absolute;left:14px;top:14px;background:rgba(20,16,12,.5);backdrop-filter:blur(6px);color:#fff;font-size:11.5px;letter-spacing:.04em;padding:5px 11px;border-radius:999px}
+.ph-note{position:absolute;right:12px;bottom:10px;font-size:11.5px;color:rgba(255,255,255,.82)}
+.wf{display:flex;align-items:center;gap:3px;height:56px;cursor:pointer;margin:2px 0 4px;touch-action:none}
+.wf i{flex:1;min-width:2px;max-width:6px;background:var(--line);border-radius:3px;transition:background .18s}
+.wf i.f{background:var(--accent)}
+.tm2{display:flex;justify-content:space-between;font-size:12.5px;color:var(--muted);font-variant-numeric:tabular-nums;margin-bottom:16px}
+.tr{max-width:62ch;color:var(--ink-soft);transition:opacity .3s}
+.tr .sn{transition:background .35s,color .35s;border-radius:3px}
+.tr.live .sn{opacity:.42}
+.tr.live .sn.cur{opacity:1;color:var(--ink);background:linear-gradient(transparent 64%,var(--accent-soft) 0)}
+.chs{margin:18px 0 20px;border-top:1px solid var(--line)}
+.chb{display:flex;align-items:center;gap:14px;width:100%;text-align:left;padding:11px 0;border-bottom:1px solid var(--line);font-size:15px;min-height:44px;transition:color .2s,background .2s}
+.chb .cht{flex:none;width:42px;color:var(--muted);font-size:12.5px;font-variant-numeric:tabular-nums}
+.chb:hover{color:var(--accent);background:var(--surface-2)}
+.tp{margin:0 0 6px}
+.tp div{display:flex;justify-content:space-between;gap:24px;padding:11px 0;border-bottom:1px solid var(--line);font-size:14.5px}
+.tp dt{flex:none;color:var(--muted)}
+.tp dd{margin:0;text-align:right}
+.acts{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px 24px;margin-top:20px}
+.pbtn{display:inline-flex;align-items:center;gap:13px;padding:5px 16px 5px 5px;border-radius:999px;min-height:56px;text-align:left;background:var(--surface);border:1px solid var(--line);transition:box-shadow .2s,background .2s}
+.pbtn:hover{box-shadow:var(--shadow-sm);background:var(--surface-2)}
+.pc{flex:none;width:46px;height:46px;border-radius:50%;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center}
+.pc svg{width:20px;height:20px;fill:currentColor;grid-area:1/1}
+.pc .pa{display:none}
+.item.playing .pc .pl2{display:none}
+.item.playing .pc .pa{display:block}
+.pt2 b{display:block;font-weight:600;font-size:15.5px;line-height:1.25}
+.pt2 .b{display:none}
+.item.playing .pt2 .a{display:none}
+.item.playing .pt2 .b{display:inline}
+.pt2 small{display:block;font-size:12.5px;color:var(--muted);margin-top:1px;font-variant-numeric:tabular-nums}
+.sec{display:flex;gap:4px;margin-left:auto}
+.ab{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 12px;border-radius:10px;font-size:14px;color:var(--ink-soft);transition:background .2s,color .2s}
+.ab svg{width:18px;height:18px;fill:none;stroke:var(--accent);stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.ab:hover{background:var(--surface-2);color:var(--ink)}
+.nx{display:flex;justify-content:space-between;gap:16px;border-top:1px solid var(--line);margin-top:18px;padding-top:6px;flex-wrap:wrap}
+.nx .lnk{display:inline-flex;align-items:center;gap:8px;min-height:44px;font-size:14px;color:var(--muted);text-decoration:none;transition:color .2s}
+.nx .lnk:hover{color:var(--ink)}
+.nx .lnk.pv::before{content:"←"}
+.nx .lnk.nt::after{content:"→";color:var(--warm)}
+
+.mapcol{position:sticky;top:86px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:14px;box-shadow:var(--shadow-sm)}
+.map-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:2px 2px 12px}
+.map-title{display:block;font:500 16px var(--serif)}
+.map-sub{display:block;color:var(--muted);font-size:12.5px;margin-top:2px}
+.map-state{white-space:nowrap;font-size:11.5px;letter-spacing:.04em;text-transform:uppercase;color:var(--accent);background:var(--accent-soft);padding:5px 10px;border-radius:999px}
+.map{position:relative;border-radius:12px;overflow:hidden;height:min(600px,calc(100vh - 252px));min-height:420px;background:var(--map)}
+.map>svg{width:100%;height:100%}
+.pt{cursor:pointer}
+.pt .hit{fill:transparent}
+.pt .core{fill:var(--surface);stroke:var(--ink);stroke-width:1.5;transition:.2s}
+.pt text{font:600 11px var(--sans);fill:var(--ink);text-anchor:middle;dominant-baseline:central;pointer-events:none}
+.pt .lb{font:500 13px var(--sans);fill:var(--ink);text-anchor:start;opacity:0;paint-order:stroke;stroke:var(--surface);stroke-width:4px;transition:opacity .2s}
+.pt:hover .lb,.pt.on .lb{opacity:1}
+.pt.on .core{fill:var(--accent);stroke:var(--accent)}
+.pt.on text:not(.lb){fill:var(--accent-ink)}
+.pt .pulse{fill:var(--accent);opacity:0;transform-box:fill-box;transform-origin:center}
+.pt.on .pulse{animation:pulse 2.4s ease-out infinite}
+@keyframes pulse{0%{transform:scale(.55);opacity:.3}70%{transform:scale(1.7);opacity:0}100%{opacity:0}}
+.map .route{fill:none;stroke:var(--accent);stroke-width:3;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:1 9;animation:flow 24s linear infinite}
+.map .halo{fill:none;stroke:var(--surface);stroke-width:8;stroke-linecap:round;stroke-linejoin:round;opacity:.92}
+@keyframes flow{to{stroke-dashoffset:-200}}
+.tools{position:absolute;left:12px;right:12px;bottom:12px;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.chip{display:inline-flex;align-items:center;gap:10px;min-height:42px;padding:8px 13px;border-radius:999px;font-size:13px;background:color-mix(in srgb,var(--surface) 88%,transparent);backdrop-filter:blur(10px);border:1px solid var(--line);box-shadow:var(--shadow-sm);color:var(--ink-soft);transition:background .2s,color .2s}
+.chip:hover{background:var(--surface);color:var(--ink)}
+.chip-label.short{display:none}
+.sw{position:relative;width:34px;height:20px;border-radius:999px;background:var(--line-strong);transition:background .2s}
+.sw::after{content:"";position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:var(--surface);box-shadow:0 0 0 1px rgba(0,0,0,.12);transition:left .2s}
+[aria-checked="true"] .sw{background:var(--accent)}
+[aria-checked="true"] .sw::after{left:16px}
+.map-legend{display:flex;flex-wrap:wrap;gap:8px 18px;padding:12px 2px 2px;font-size:12.5px;color:var(--muted)}
+.lg{display:inline-flex;align-items:center;gap:7px}
+.lg i{width:10px;height:10px;border-radius:50%;flex:none}
+.lg .d1{background:var(--surface);border:1.5px solid var(--ink)}
+.lg .d2{background:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.lg .d3{background:transparent;border:1.5px dashed var(--accent)}
+
+.plan,.shop,.faq{margin-top:88px;padding-top:44px;border-top:1px solid var(--line)}
+.plan h2,.shop h2,.faq h2{font:500 clamp(24px,3.1vw,34px)/1.2 var(--serif);letter-spacing:-.015em}
+.plan>p,.shop>p{color:var(--muted);margin-top:8px;max-width:56ch}
+.pc2{display:grid;grid-template-columns:1fr 1fr;gap:22px;margin-top:28px}
+.plan-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:24px;transition:box-shadow .25s,transform .25s}
+.plan-card:hover{box-shadow:var(--shadow-md);transform:translateY(-2px)}
+.plan-card .kicker{font-size:11.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--warm)}
+.plan-card h3{font:500 22px/1.25 var(--serif);margin-top:6px}
+.plan-card p{color:var(--muted);font-size:14.5px;margin-top:6px}
+.plan-card ol{list-style:none;padding:0;margin:16px 0 0;border-top:1px solid var(--line);counter-reset:n}
+.plan-card li{counter-increment:n;display:flex;gap:14px;align-items:baseline;padding:11px 0;border-bottom:1px solid var(--line);font-size:15px}
+.plan-card li::before{content:counter(n,decimal-leading-zero);flex:none;width:22px;color:var(--muted);font-size:12.5px;font-variant-numeric:tabular-nums}
+.how{margin-top:64px;display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid var(--line)}
+.how div{padding:28px 26px 0 0}
+.how div+div{padding-left:26px;border-left:1px solid var(--line)}
+.how .num{font-size:12px;letter-spacing:.1em;color:var(--warm)}
+.how h3{font:500 20px/1.3 var(--serif);margin-top:8px}
+.how p{color:var(--muted);font-size:14.5px;margin-top:6px;max-width:38ch}
+
+.goods{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:30px}
+.good{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:12px;transition:transform .25s,box-shadow .25s}
+.good:hover{transform:translateY(-3px);box-shadow:var(--shadow-md)}
+.good .ph{aspect-ratio:4/5;margin-bottom:14px}
+.good h3{font:500 19px/1.3 var(--serif);padding:0 4px}
+.good p{font-size:14px;color:var(--muted);margin-top:4px;padding:0 4px}
+.buy{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:14px;padding:0 4px 4px}
+.buy b{font-size:16px;font-weight:600;font-variant-numeric:tabular-nums}
+.add{white-space:nowrap;border:1px solid var(--ink);border-radius:999px;padding:9px 15px;font-size:13.5px;min-height:42px;transition:.2s}
+.add:hover{background:var(--ink);color:var(--bg)}
+.add.done{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.faq{display:grid;grid-template-columns:minmax(0,.7fr) minmax(0,1.3fr);gap:48px}
+details{border-bottom:1px solid var(--line)}
+details:first-of-type{border-top:1px solid var(--line)}
+summary{display:flex;justify-content:space-between;align-items:center;gap:16px;min-height:52px;padding:16px 0;font-weight:500;cursor:pointer;list-style:none}
+summary::-webkit-details-marker{display:none}
+summary::after{content:"+";color:var(--muted);font-size:22px;line-height:1;transition:transform .2s}
+details[open] summary::after{content:"–"}
+details p{color:var(--muted);padding:0 0 18px;max-width:58ch}
+
+.site-foot{margin-top:80px;border-top:1px solid var(--line);background:var(--bg-soft);padding:44px 0 26px}
+.fg{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:32px}
+.fg h4{font-size:13px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
+.fg a{display:block;color:var(--ink-soft);text-decoration:none;font-size:14px;padding:5px 0;transition:color .2s}
+.fg a:hover{color:var(--accent)}
+.fg p{color:var(--muted);font-size:14px;max-width:34ch;margin-top:10px}
+.cp{margin-top:34px;padding-top:18px;border-top:1px solid var(--line);font-size:13px;color:var(--muted)}
+
+.pl{position:fixed;left:0;right:0;bottom:0;z-index:40;background:var(--player-bg);color:var(--player-ink);box-shadow:0 -14px 44px -16px rgba(0,0,0,.5);padding-bottom:env(safe-area-inset-bottom,0px)}
+.bar{position:relative;height:5px;background:rgba(255,255,255,.14);cursor:pointer;touch-action:none}
+.bar b{position:absolute;inset:0 auto 0 0;width:0;background:linear-gradient(90deg,var(--accent),var(--warm));transition:width .1s linear}
+.bar .knob{position:absolute;top:50%;left:0;width:13px;height:13px;border-radius:50%;background:#fff;transform:translate(-50%,-50%);box-shadow:0 0 0 3px rgba(255,255,255,.18);opacity:0;transition:opacity .2s}
+.bar:hover .knob,.bar:focus-visible .knob{opacity:1}
+.pl .wrap{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:20px;align-items:center;height:86px}
+.now{display:flex;align-items:center;gap:14px;min-width:0}
+.now .th{flex:none;width:52px;height:52px;border-radius:10px;box-shadow:none}
+.now-txt{min-width:0}
+.now small{display:block;font-size:11.5px;color:var(--player-muted);letter-spacing:.04em}
+.now strong{display:block;font:500 17px/1.3 var(--serif);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ctl{display:flex;align-items:center;gap:4px}
+.ib{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;transition:background .2s}
+.ib:hover{background:rgba(255,255,255,.12)}
+.ib svg{width:20px;height:20px;fill:currentColor}
+.pp{width:52px;height:52px;margin:0 4px;background:var(--accent);color:var(--accent-ink);transition:background .2s,transform .2s}
+.pp:hover{background:var(--accent-strong);transform:scale(1.04)}
+.pp svg{width:22px;height:22px}
+.tm{margin-left:10px;min-width:88px;text-align:center;font-size:12.5px;color:var(--player-muted);font-variant-numeric:tabular-nums}
+.lang{justify-self:end;display:flex;border:1px solid rgba(255,255,255,.22);border-radius:10px;overflow:hidden}
+.lang button{height:38px;padding:0 13px;font-size:13px;font-weight:500;color:var(--player-ink);opacity:.85;transition:background .2s,color .2s}
+.lang button[aria-pressed="true"]{background:var(--player-ink);color:var(--player-bg);opacity:1}
+.lang button.lock{opacity:.48}
+.lang button svg{width:11px;height:11px;margin-left:5px;fill:none;stroke:currentColor;stroke-width:2;vertical-align:-1px}
+
+.toast{position:fixed;left:50%;bottom:calc(112px + env(safe-area-inset-bottom,0px));z-index:50;max-width:90vw;transform:translate(-50%,12px);background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:12px;padding:11px 17px;font-size:14px;box-shadow:var(--shadow-lg);opacity:0;pointer-events:none;transition:opacity .25s,transform .25s}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+.reveal{opacity:0;transform:translateY(14px);transition:opacity .6s ease,transform .6s ease}
+.reveal.in{opacity:1;transform:none}
+
+@media (max-width:1080px){
+ .hero{gap:36px}
+ .main{gap:32px}
+}
+@media (max-width:960px){
+ .hero{grid-template-columns:1fr;align-items:start;gap:28px;padding-top:36px}
+ .main{grid-template-columns:1fr;gap:28px}
+ .mapcol{position:static;order:-1}
+ .map{height:330px;min-height:0}
+ nav{display:none}
+ .how{grid-template-columns:1fr}
+ .how div,.how div+div{padding:20px 0;border-left:0;border-bottom:1px solid var(--line)}
+ .pc2,.faq{grid-template-columns:1fr;gap:24px}
+ .fg{grid-template-columns:1fr 1fr}
+ .goods{grid-template-columns:repeat(3,72%);overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:10px;gap:16px}
+ .good{scroll-snap-align:start}
+}
+@media (max-width:640px){
+ .wrap{padding:0 16px}
+ .site-head .wrap{height:58px;gap:12px}
+ .head-actions .hide,.head-actions .login{display:none}
+ .hero{padding-top:30px;padding-bottom:24px}
+ .lede{font-size:15.5px}
+ .pin{padding-left:0}
+ .row{grid-template-columns:30px 56px minmax(0,1fr) auto;gap:10px;padding-right:4px}
+ .th{width:56px;height:56px}
+ .nm{font-size:17px}
+ .tz{display:none}
+ .stt{display:none}
+ .sec{margin-left:0;width:100%}
+ .acts{gap:10px}
+ .pl .wrap{grid-template-columns:1fr auto;height:auto;padding:10px 0;gap:8px 12px}
+ .lang{grid-column:1/-1;justify-self:stretch}
+ .lang button{flex:1}
+ .tm{display:none}
+ body{padding-bottom:calc(160px + env(safe-area-inset-bottom,0px))}
+ .toast{bottom:calc(172px + env(safe-area-inset-bottom,0px))}
+ .strip{min-width:640px}
+ .sd{padding-right:10px;font-size:13px}
+ .sd small{font-size:11px}
+ .facts div{padding:14px 14px 12px}
+ .facts dd{font-size:15.5px}
+ .goods{grid-template-columns:repeat(3,80%)}
+ .tools{flex-wrap:nowrap;gap:6px}
+ .chip{font-size:12px;padding:7px 10px;min-height:38px}
+ .chip-label.long{display:none}
+ .chip-label.short{display:inline}
+}
+@media (max-width:400px){
+ .stt{display:none}
+ .head-actions{gap:8px}
+ .logo{font-size:21px}
+}
+@media (prefers-reduced-motion:reduce){
+ *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+ .reveal{opacity:1;transform:none}
+ html{scroll-behavior:auto}
+}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Bỏ qua điều hướng</a>
+<header class="site-head">
+ <div class="wrap">
+  <a class="logo" href="#">Echora<i>.</i></a>
+  <nav aria-label="Chính">
+   <a href="#">Trang chủ</a>
+   <a href="#" aria-current="page">Điểm du lịch</a>
+   <a href="#shopT">Quà lưu niệm</a>
+   <a href="#">Tin tức</a>
+   <a href="#">Liên hệ</a>
+  </nav>
+  <div class="head-actions">
+   <button class="icon-btn" id="theme" type="button" aria-label="Chuyển giao diện"></button>
+   <span class="cart-pill" id="cart">Giỏ hàng <b>0</b></span>
+   <a class="login hide" href="#">Đăng nhập</a>
+   <button class="btn btn-solid" type="button">Đăng ký</button>
+  </div>
+ </div>
+</header>
+
+<main id="main">
+ <div class="wrap">
+  <section class="hero reveal">
+   <div>
+    <p class="eyebrow"><span></span>Bộ thuyết minh · Trung tâm Sài Gòn</p>
+    <h1>Bảy điểm dừng quanh <em>trung tâm Sài Gòn</em></h1>
+    <p class="lede">Đeo tai nghe và đi. Mỗi điểm có một đoạn thuyết minh ngắn bằng bốn ngôn ngữ. Bật tự động, máy sẽ phát khi bạn đến gần.</p>
+    <div class="hero-cta">
+     <button class="btn btn-primary" type="button" data-go="0">Nghe điểm đầu tiên</button>
+     <a class="btn btn-ghost" href="#map">Xem bản đồ</a>
+    </div>
+   </div>
+   <dl class="facts">
+    <div><dt>Quãng đường</dt><dd>Khoảng 14 km</dd></div>
+    <div><dt>Tổng thời gian nghe</dt><dd>18 phút</dd></div>
+    <div><dt>Ngôn ngữ</dt><dd>Việt, Anh, Nhật, Hàn</dd></div>
+    <div><dt>Bạn đã nghe</dt><dd class="accent" id="heardTxt">0/7</dd></div>
+   </dl>
+  </section>
+
+  <div class="stripw reveal">
+   <div class="strip-head"><span>Lộ trình gợi ý</span><b id="progressLabel">0/7 điểm</b></div>
+   <div class="strip" id="strip"><i id="sfill"></i></div>
+  </div>
+
+  <div class="main">
+   <section aria-label="Danh sách điểm dừng">
+    <ol class="list" id="list"></ol>
+   </section>
+   <aside class="mapcol" id="map">
+    <div class="map-head">
+     <div><span class="map-title">Lộ trình 7 điểm</span><span class="map-sub">14 km · 18 phút nghe</span></div>
+     <span class="map-state" id="mapState">Sẵn sàng</span>
+    </div>
+    <div class="map">
+     <svg viewBox="0 0 560 600" preserveAspectRatio="xMidYMid slice" role="img" aria-labelledby="mapTitle">
+      <title id="mapTitle">Bản đồ lộ trình bảy điểm dừng quanh trung tâm Sài Gòn</title>
+      <defs>
+       <linearGradient id="waterG" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="var(--water)"/>
+        <stop offset="1" stop-color="var(--water-2)"/>
+       </linearGradient>
+      </defs>
+      <rect width="560" height="600" fill="var(--map)"/>
+      <path d="M470 -20 C 520 120, 440 220, 500 330 S 470 520, 520 640" fill="none" stroke="url(#waterG)" stroke-width="70"/>
+      <g fill="var(--map-block)" opacity=".72">
+       <rect x="34" y="30" width="74" height="52" rx="7"/>
+       <rect x="132" y="24" width="82" height="62" rx="7"/>
+       <rect x="252" y="52" width="70" height="48" rx="7"/>
+       <rect x="352" y="34" width="82" height="76" rx="7"/>
+       <rect x="296" y="150" width="94" height="62" rx="7"/>
+       <rect x="58" y="214" width="84" height="58" rx="7"/>
+       <rect x="352" y="258" width="72" height="82" rx="7"/>
+       <rect x="278" y="336" width="62" height="52" rx="7"/>
+       <rect x="118" y="470" width="86" height="62" rx="7"/>
+       <rect x="330" y="470" width="106" height="72" rx="7"/>
+       <rect x="404" y="186" width="52" height="60" rx="7"/>
+      </g>
+      <g fill="var(--park)">
+       <rect x="212" y="326" width="100" height="76" rx="12"/>
+       <rect x="52" y="424" width="110" height="78" rx="12"/>
+      </g>
+      <g stroke="var(--road)" stroke-width="10" fill="none" stroke-linecap="round">
+       <path d="M-10 120 L 600 260"/>
+       <path d="M-10 300 L 600 420"/>
+       <path d="M60 -10 L 220 620"/>
+       <path d="M180 -10 L 420 620"/>
+       <path d="M-10 520 L 600 500"/>
+       <path d="M330 -10 L 400 620"/>
+      </g>
+      <text transform="translate(514 318) rotate(80)" fill="var(--muted)" font-size="12" letter-spacing="4" font-family="var(--sans)" opacity=".7">SÔNG SÀI GÒN</text>
+      <text x="107" y="470" text-anchor="middle" fill="var(--muted)" font-size="10.5" opacity=".85" font-family="var(--sans)">Công viên</text>
+      <polyline class="halo" id="halo"/>
+      <polyline class="route" id="route"/>
+      <g id="pts"></g>
+      <g transform="translate(506 56)">
+       <circle r="21" fill="var(--surface)" opacity=".78"/>
+       <path d="M0 -11 L5 7 L0 3 L-5 7 Z" fill="var(--warm)"/>
+       <text y="-27" text-anchor="middle" font-size="10" fill="var(--muted)" font-family="var(--sans)">N</text>
+      </g>
+     </svg>
+     <div class="tools">
+      <button class="chip" id="auto" type="button" role="switch" aria-checked="false"><span class="sw"></span><span class="chip-label long">Tự động phát khi đến gần</span><span class="chip-label short">Tự động phát</span></button>
+      <button class="chip" id="loc" type="button">Vị trí của tôi</button>
+     </div>
+    </div>
+    <div class="map-legend">
+     <span class="lg"><i class="d1"></i>Điểm dừng</span>
+     <span class="lg"><i class="d2"></i>Đang chọn</span>
+     <span class="lg"><i class="d3"></i>Lộ trình gợi ý</span>
+    </div>
+   </aside>
+  </div>
+  <section class="plan reveal">
+   <h2>Đi bao lâu thì vừa?</h2>
+   <p>Hai gợi ý lịch trình, chọn theo quỹ thời gian bạn có.</p>
+   <div class="pc2">
+    <article class="plan-card">
+     <span class="kicker">Khoảng 4 giờ</span>
+     <h3>Nửa ngày</h3>
+     <p>Gom các điểm ở trung tâm, chủ yếu đi bộ.</p>
+     <ol>
+      <li>Nhà thờ Đức Bà Sài Gòn</li>
+      <li>Bưu điện Trung tâm Sài Gòn</li>
+      <li>Dinh Độc Lập</li>
+      <li>Chợ Bến Thành</li>
+     </ol>
+    </article>
+    <article class="plan-card">
+     <span class="kicker">Khoảng 8 giờ</span>
+     <h3>Cả ngày</h3>
+     <p>Đủ bảy điểm, có đoạn đi xe buýt giữa các cụm.</p>
+     <ol>
+      <li>Bảo tàng Chứng tích Chiến tranh</li>
+      <li>Nhà thờ Đức Bà Sài Gòn</li>
+      <li>Chùa Bà Thiên Hậu</li>
+      <li>Cầu Ba Son</li>
+      <li>Bưu điện Trung tâm Sài Gòn</li>
+      <li>Dinh Độc Lập</li>
+      <li>Chợ Bến Thành</li>
+     </ol>
+    </article>
+   </div>
+  </section>
+
+  <section class="how reveal">
+   <div><span class="num">01</span><h3>Bấm nghe hoặc quét mã</h3><p>Nghe ngay trên trang, hoặc quét QR để nghe trên điện thoại và đi tay không.</p></div>
+   <div><span class="num">02</span><h3>Để máy tự phát</h3><p>Bật tự động phát, đi tới gần điểm nào thì thuyết minh điểm đó bắt đầu.</p></div>
+   <div><span class="num">03</span><h3>Nghe bằng tiếng của bạn</h3><p>Tiếng Việt miễn phí. Tiếng Anh, Nhật, Hàn mở bằng gói Premium.</p></div>
+  </section>
+
+  <section class="shop reveal" aria-labelledby="shopT">
+   <h2 id="shopT">Mang một chút Sài Gòn về nhà</h2>
+   <p>Những món nhỏ do người địa phương chọn, bán ngay tại các điểm dừng.</p>
+   <div class="goods" id="goods"></div>
+  </section>
+
+  <section class="faq reveal">
+   <h2>Câu hỏi thường gặp</h2>
+   <div>
+    <details name="faq"><summary>Tôi có cần cài ứng dụng không?</summary><p>Không. Bạn mở trang web trên điện thoại, hoặc quét mã QR ở từng điểm để nghe ngay.</p></details>
+    <details name="faq"><summary>Thuyết minh tự động hoạt động thế nào?</summary><p>Khi bạn bật tính năng và cho phép định vị, trang sẽ tự phát thuyết minh lúc bạn đến gần một điểm dừng.</p></details>
+    <details name="faq"><summary>Ngôn ngữ nào miễn phí?</summary><p>Tiếng Việt miễn phí. Tiếng Anh, Nhật, Hàn mở bằng gói Premium.</p></details>
+    <details name="faq"><summary>Tôi có phải đi đúng thứ tự không?</summary><p>Không. Thứ tự trên danh sách chỉ là gợi ý lộ trình, bạn nghe điểm nào trước cũng được.</p></details>
+   </div>
+  </section>
+
+ </div>
+</main>
+<footer class="site-foot">
+ <div class="wrap">
+  <div class="fg">
+   <div>
+    <a class="logo" href="#">Echora<i>.</i></a>
+    <p>Thuyết minh tự động đa ngôn ngữ cho những chuyến đi bộ quanh Sài Gòn.</p>
+   </div>
+   <div>
+    <h4>Khám phá</h4>
+    <a href="#">Điểm du lịch</a>
+    <a href="#shopT">Quà lưu niệm</a>
+    <a href="#">Tin tức</a>
+   </div>
+   <div>
+    <h4>Hỗ trợ</h4>
+    <a href="#">Cách sử dụng</a>
+    <a href="#">Gói Premium</a>
+    <a href="#">Liên hệ</a>
+   </div>
+   <div>
+    <h4>Ngôn ngữ</h4>
+    <a href="#">Tiếng Việt</a>
+    <a href="#">English</a>
+    <a href="#">日本語 · 한국어</a>
+   </div>
+  </div>
+  <div class="cp">© 2026 Echora · Sài Gòn</div>
+ </div>
+</footer>
+
+<footer class="pl" aria-label="Trình phát thuyết minh">
+ <div class="bar" id="seek" role="slider" tabindex="0" aria-label="Tiến trình thuyết minh" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-valuetext="0:00">
+  <b id="fill"></b><span class="knob" id="knob"></span>
+ </div>
+ <div class="wrap">
+  <div class="now">
+   <span class="th" id="nowTh"></span>
+   <div class="now-txt"><small id="nowSub">Chưa phát</small><strong id="nowName">Chọn một điểm để bắt đầu</strong></div>
+  </div>
+  <div class="ctl">
+   <button class="ib" id="prev" type="button" aria-label="Điểm trước"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 5h2v14H6zM20 5v14L9 12z"/></svg></button>
+   <button class="ib pp" id="pp" type="button" aria-label="Phát" aria-pressed="false"><svg viewBox="0 0 24 24" id="ppi" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg></button>
+   <button class="ib" id="next" type="button" aria-label="Điểm sau"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 5h2v14h-2zM4 5v14l11-7z"/></svg></button>
+   <span class="tm" id="tm">0:00 / 0:00</span>
+  </div>
+  <div class="lang" id="lang" role="group" aria-label="Ngôn ngữ thuyết minh"></div>
+ </div>
+</footer>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+const S=[{"n": "Bảo tàng Chứng tích Chiến tranh", "c": "Di tích lịch sử", "x": 150, "y": 170, "d": 180, "h": [24, 200, 60], "t": "Bảo tàng nằm trên đường Võ Văn Tần, thành lập vào tháng chín năm 1975 và mang tên như hiện nay từ năm 1995. Mục đích của bảo tàng là lưu giữ hình ảnh, tư liệu và hiện vật về chiến tranh Việt Nam, để người xem hiểu rõ hơn về những mất mát mà chiến tranh gây ra. Ở sân trước, bạn sẽ thấy máy bay, xe tăng, pháo và nhiều loại bom đạn được trưng bày ngoài trời. Bên trong, các tầng trưng bày ảnh và hiện vật theo từng chủ đề, trong đó có phần nói về hậu quả của chất độc da cam. Đây là nơi nên đến với tâm thế trầm lắng, và bạn có thể dừng lại nghỉ bất cứ lúc nào.", "tp": [["Nên dành", "1,5 – 2 giờ"], ["Thời điểm", "Sáng sớm, ít đông hơn"], ["Lưu ý", "Có hình ảnh nặng nề, cân nhắc nếu đi cùng trẻ nhỏ"]], "ch": ["Lịch sử bảo tàng", "Sân trưng bày ngoài trời", "Các phòng trong nhà"]}, {"n": "Nhà thờ Đức Bà Sài Gòn", "c": "Kiến trúc và nghệ thuật", "x": 250, "y": 240, "d": 150, "h": [8, 15, 80], "t": "Nhà thờ được xây từ năm 1863 đến 1880, trong thời kỳ Pháp thuộc, và là một trong những công trình tiêu biểu nhất của trung tâm thành phố. Tường gạch đỏ không phủ vữa nên màu gạch giữ nguyên qua nhiều thập kỷ. Hai tháp chuông cao vút nhìn từ xa đã thấy, còn phía trước quảng trường có tượng Đức Mẹ. Góc quảng trường là chỗ ngắm toàn cảnh đẹp nhất, nhất là lúc nắng chiều. Đối diện nhà thờ là Bưu điện Trung tâm, nên bạn có thể ghé tiếp ngay sau đó.", "tp": [["Nên dành", "30 – 45 phút"], ["Thời điểm", "Chiều muộn, nắng dịu"], ["Lưu ý", "Công trình có thể đang trùng tu, nên kiểm tra trước khi đến"]], "ch": ["Công trình và thời xây dựng", "Gạch đỏ và hai tháp chuông", "Góc ngắm quảng trường"]}, {"n": "Chùa Bà Thiên Hậu", "c": "Tín ngưỡng và tôn giáo", "x": 190, "y": 350, "d": 140, "h": [2, 70, 30], "t": "Chùa Bà Thiên Hậu nằm ở Chợ Lớn, khu phố của cộng đồng người Hoa ở Sài Gòn, thờ bà Thiên Hậu, vị nữ thần che chở cho người đi biển. Điều nhiều người nhớ nhất là những vòng nhang xoắn lớn treo kín trên trần, khói hương quyện cùng ánh sáng len qua mái ngói. Mái chùa nhiều tầng được trang trí bằng các tượng gốm nhỏ kể lại những điển tích xưa. Người đến cầu bình an, cầu buôn bán thuận lợi thường thắp nhang rồi viết lời nguyện vào giấy treo cạnh vòng nhang. Hãy bước nhẹ và nói khẽ, vì đây vẫn là nơi sinh hoạt tín ngưỡng của người dân.", "tp": [["Nên dành", "30 – 40 phút"], ["Thời điểm", "Buổi sáng, hương khói nhiều"], ["Lưu ý", "Ăn mặc kín đáo, nói khẽ"]], "ch": ["Người Hoa ở Chợ Lớn", "Vòng nhang và mái ngói", "Cách viếng chùa"]}, {"n": "Cầu Ba Son", "c": "Kiến trúc và nghệ thuật", "x": 450, "y": 190, "d": 130, "h": [200, 30, 60], "t": "Cầu Ba Son là cây cầu dây văng nối hai bờ sông Sài Gòn, đưa người đi từ trung tâm sang khu Thủ Thiêm. Tên cầu lấy từ xưởng Ba Son, nơi từng đóng và sửa chữa tàu bên bờ sông với lịch sử hàng trăm năm. Từ trên cầu hoặc công viên ven sông, bạn nhìn được cả dãy nhà cao tầng phía bờ bên kia. Thời điểm đẹp nhất là lúc hoàng hôn, khi bầu trời đổi màu và đèn trên cầu bắt đầu sáng. Đây là điểm dừng thoáng nhất của hành trình, thích hợp để nghỉ chân trước khi quay lại trung tâm.", "tp": [["Nên dành", "30 phút"], ["Thời điểm", "Hoàng hôn"], ["Lưu ý", "Mang theo nước, ven sông ít bóng mát"]], "ch": ["Xưởng Ba Son xưa", "Cây cầu hôm nay", "Ngắm hoàng hôn"]}, {"n": "Bưu điện Trung tâm Sài Gòn", "c": "Kiến trúc và nghệ thuật", "x": 330, "y": 300, "d": 150, "h": [45, 50, 50], "t": "Bưu điện Trung tâm được xây từ năm 1886 đến 1891 theo phong cách kiến trúc Pháp, và đến nay vẫn là một bưu điện đang hoạt động. Sảnh chính có mái vòm cao, khung sắt và những ô cửa sổ lớn đón ánh sáng tự nhiên. Trên tường là các tấm bản đồ cổ vẽ Sài Gòn và vùng phụ cận từ nhiều thập kỷ trước, rất đáng dừng lại xem kỹ. Ở cuối sảnh có chân dung Chủ tịch Hồ Chí Minh, hai bên là các quầy giao dịch kiểu cũ. Bạn có thể viết một tấm bưu thiếp và gửi đi ngay tại đây.", "tp": [["Nên dành", "30 phút"], ["Thời điểm", "Giờ hành chính, đủ quầy mở"], ["Lưu ý", "Đi cùng Nhà thờ Đức Bà cho tiện"]], "ch": ["Một công trình còn sống", "Sảnh chính và bản đồ cổ", "Gửi một tấm bưu thiếp"]}, {"n": "Dinh Độc Lập", "c": "Di tích lịch sử", "x": 260, "y": 410, "d": 170, "h": [160, 25, 45], "t": "Dinh Độc Lập do kiến trúc sư Ngô Viết Thụ thiết kế và hoàn thành năm 1966, từng là nơi làm việc của chính quyền Việt Nam Cộng hòa. Ngày 30 tháng 4 năm 1975, xe tăng húc đổ cổng dinh, đánh dấu sự kiện kết thúc chiến tranh, và nơi đây từ đó trở thành di tích lịch sử. Bên trong, bạn đi qua phòng khánh tiết, phòng họp nội các và phòng làm việc của tổng thống. Tầng hầm giữ nguyên hệ thống chỉ huy và bản đồ quân sự thời chiến. Mặt tiền với những ô lam che nắng kiểu hiện đại cũng là một điểm nhấn kiến trúc đáng chú ý.", "tp": [["Nên dành", "1 – 1,5 giờ"], ["Thời điểm", "Sáng, trước khi nắng gắt"], ["Lưu ý", "Kiểm tra giờ mở cửa và giờ nghỉ trưa"]], "ch": ["Kiến trúc sư và công trình", "Ngày 30 tháng 4 năm 1975", "Phòng họp và tầng hầm"]}, {"n": "Chợ Bến Thành", "c": "Đời sống thường ngày", "x": 390, "y": 460, "d": 140, "h": [30, 60, 45], "t": "Chợ Bến Thành khai trương năm 1914, với tòa nhà cổng chính và tháp đồng hồ đã trở thành một trong những hình ảnh quen thuộc nhất của thành phố. Bên trong là rất nhiều quầy bán đồ thủ công, vải vóc, cà phê, trái cây sấy và đủ loại quà lưu niệm. Buổi sáng chợ đông người mua bán, còn buổi tối khu ăn uống quanh chợ mới nhộn nhịp. Khi mua đồ, hãy hỏi giá trước và thoải mái trả giá, đó là cách mua bán quen thuộc ở đây. Đây là điểm dừng cuối thích hợp để chọn quà mang về.", "tp": [["Nên dành", "1 giờ"], ["Thời điểm", "Sáng để đi chợ, tối để ăn"], ["Lưu ý", "Hỏi giá trước khi mua"]], "ch": ["Tòa chợ năm 1914", "Đi chợ buổi sáng", "Mua quà và trả giá"]}];
+const G=[{n:"Tranh cổ động Việt Nam",d:"Tranh phong cách cũ, đậm dấu ấn lịch sử.",p:"120.000đ",h:20},{n:"Sách lịch sử Sài Gòn",d:"Sách ảnh về lịch sử và con người Sài Gòn.",p:"95.000đ",h:150},{n:"Huy hiệu lưu niệm",d:"Huy hiệu ghim với biểu tượng Sài Gòn.",p:"20.000đ",h:200}];
+const L=[["VI",0],["EN",1],["JA",1],["KO",1]];
+const D=[
+'<path d="M50 150V92H270V150M50 92L80 72H240L270 92M100 112H220M100 128H220M118 150l36-14 36 14M154 136v-14"/>',
+'<path d="M92 150V82l14-52 14 52v68M200 150V82l14-52 14 52v68M120 150V104H200V150M146 104V88h28v16"/><circle cx="160" cy="126" r="9"/>',
+'<path d="M80 150V116H240V150M58 116c22 0 32-12 42-22h120c10 10 20 22 42 22M96 94c14 0 24-10 32-20h64c8 10 18 20 32 20M130 74c10-6 20-14 30-26 10 12 20 20 30 26"/>',
+'<path d="M200 150V28M200 40L40 150M200 62L96 150M200 84L146 150M200 40L300 150M200 62L268 150M200 84L246 150"/>',
+'<path d="M50 150V96H270V150M50 96L160 58 270 96M100 150V118a14 14 0 0128 0V150M146 150V118a14 14 0 0128 0V150M192 150V118a14 14 0 0128 0V150"/><circle cx="160" cy="80" r="9"/>',
+'<path d="M50 150V110H270V150M70 110V82H250V110M96 82V60H224V82M110 150V110M160 150V110M210 150V110"/>',
+'<path d="M60 150V112H260V150M130 112V82H190V112M144 82V52h32V82M160 52V30M142 150v-20h36v20"/><circle cx="160" cy="66" r="6"/>',
+'<rect x="112" y="26" width="96" height="124"/><path d="M126 52h68M126 66h44"/><circle cx="160" cy="108" r="16"/>',
+'<path d="M90 142H230V68H90zM90 105H230M112 142V68"/>',
+'<circle cx="160" cy="90" r="32"/><circle cx="160" cy="90" r="12"/>'];
+const DS=["Điểm xuất phát","0,9 km · 12 phút đi bộ","3,4 km · xe buýt","4,6 km · xe buýt","2,3 km · xe buýt","1,2 km · 15 phút đi bộ","1,6 km · 20 phút đi bộ"];
+const $ = (sel, root = document) => root.querySelector(sel);
+const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
+const fmt = (s) => Math.floor(s / 60) + ':' + String(Math.floor(s % 60)).padStart(2, '0');
+const KEY = 'echora.tour.';
+const store = {
+  get(key, fallback) {
+    try {
+      const raw = localStorage.getItem(KEY + key);
+      return raw === null ? fallback : JSON.parse(raw);
+    } catch {
+      return fallback;
+    }
+  },
+  set(key, value) {
+    try {
+      localStorage.setItem(KEY + key, JSON.stringify(value));
+    } catch {}
+  },
+};
+
+let cur = 0;
+let playing = false;
+let t = 0;
+let dragging = false;
+let autoPlay = Boolean(store.get('auto', false));
+let cart = Number(store.get('cart', 0)) || 0;
+let language = store.get('language', 'VI');
+const heard = new Set(
+  (store.get('heard', []) || []).filter((n) => Number.isInteger(n) && n >= 0 && n < S.length)
+);
+
+const ICON = {
+  sun: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>',
+  moon: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8.5 8.5 0 019.5 4a8.5 8.5 0 1010.5 10.5z"/></svg>',
+  play: '<svg class="pl2" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>',
+  pause: '<svg class="pa" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg>',
+  pin: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11l16-7-7 16-2-7z"/></svg>',
+  qr: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="2.5" width="10" height="19" rx="2"/><path d="M11 18h2"/></svg>',
+  lock: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/></svg>',
+  check: '<svg class="chk" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7"/></svg>',
+};
+
+const PALETTES = [
+  ['#0E5B53', '#63BFAD'],
+  ['#7A3524', '#D07A4E'],
+  ['#3C4666', '#8FA2C9'],
+  ['#6A5622', '#CBA33F'],
+  ['#4E2A3D', '#B27C97'],
+  ['#2E4A3B', '#84AE93'],
+  ['#463A66', '#9A89C0'],
+  ['#7A3B2E', '#C98C6A'],
+  ['#24535E', '#72A9B4'],
+  ['#5A3A1E', '#C08A4A'],
+];
+let artSeq = 0;
+
+function art(index) {
+  const [from, to] = PALETTES[index % PALETTES.length];
+  const id = 'ag' + ++artSeq;
+  return '<svg viewBox="0 0 320 180" preserveAspectRatio="xMidYMid slice" aria-hidden="true">' +
+    '<defs><linearGradient id="' + id + '" x1="0" y1="0" x2="1" y2="1">' +
+    '<stop offset="0" stop-color="' + from + '"/><stop offset=".58" stop-color="' + to + '"/>' +
+    '<stop offset="1" stop-color="' + from + '"/></linearGradient></defs>' +
+    '<rect width="320" height="180" fill="url(#' + id + ')"/>' +
+    '<circle cx="264" cy="32" r="70" fill="#fff" opacity=".07"/>' +
+    '<circle cx="264" cy="32" r="28" fill="#fff" opacity=".1"/>' +
+    '<g fill="none" stroke="#fff" stroke-opacity=".72" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round">' +
+    '<path d="M10 152H310" opacity=".3"/>' + (D[index % D.length] || D[0]) + '</g></svg>';
+}
+
+const bars = (i) => Array.from({ length: 56 }, (_, k) => {
+  const height = Math.round(22 + Math.abs(Math.sin((k + 3) * (i + 2) * 0.61) + Math.sin(k * 0.9 + i)) * 34);
+  return '<i style="height:' + height + '%"></i>';
+}).join('');
+
+const sentences = (text) => text.split(/(?<=\.)\s+/);
+const firstSentence = (text) => sentences(text)[0];
+
+function render() {
+  $('#list').innerHTML = S.map((s, i) =>
+    '<li class="item" id="i' + i + '">' +
+    '<button class="row" type="button" data-i="' + i + '" aria-expanded="false" aria-controls="p' + i + '">' +
+    '<span class="dot"><span class="num">' + (i + 1) + '</span>' + ICON.check + '</span>' +
+    '<span class="th">' + art(i) + '</span>' +
+    '<span class="rowtxt"><span class="nm">' + s.n + '</span>' +
+    '<span class="ct">' + s.c + '<span class="sep">·</span>nghe ' + fmt(s.d) + ' phút</span>' +
+    '<span class="tz">' + firstSentence(s.t) + '</span></span>' +
+    '<span class="st"><span class="eq" aria-hidden="true"><span></span><span></span><span></span></span>' +
+    '<span class="stt"></span><svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></span>' +
+    '</button>' +
+    '<div class="panel" id="p' + i + '"><div><div class="pin">' +
+    '<div class="ph">' + art(i) + '<span class="ph-tag">' + s.c + '</span><span class="ph-note">Ảnh minh họa</span></div>' +
+    '<div class="wf" data-w="' + i + '" role="slider" tabindex="0" aria-label="Tiến trình thuyết minh ' + s.n + '" aria-valuemin="0" aria-valuemax="' + s.d + '" aria-valuenow="0">' + bars(i) + '</div>' +
+    '<div class="tm2"><span>0:00</span><span>' + fmt(s.d) + '</span></div>' +
+    '<p class="tr">' + sentences(s.t).map((x) => '<span class="sn">' + x + ' </span>').join('') + '</p>' +
+    '<div class="chs">' + s.ch.map((c, k) =>
+      '<button class="chb" type="button" data-ch="' + i + ':' + k + '"><span class="cht">' + fmt(Math.floor(s.d * k / 3)) + '</span><span>' + c + '</span></button>'
+    ).join('') + '</div>' +
+    '<dl class="tp">' + s.tp.map(([k, v]) => '<div><dt>' + k + '</dt><dd>' + v + '</dd></div>').join('') + '</dl>' +
+    '<div class="acts">' +
+    '<button class="pbtn" type="button" data-go="' + i + '"><span class="pc">' + ICON.play + ICON.pause + '</span>' +
+    '<span class="pt2"><b><span class="a">Nghe điểm này</span><span class="b">Tạm dừng</span></b><small>' + fmt(s.d) + ' · Tiếng Việt</small></span></button>' +
+    '<span class="sec"><button class="ab" type="button" data-t="Đang mở chỉ đường tới ' + s.n + '">' + ICON.pin + 'Chỉ đường</button>' +
+    '<button class="ab" type="button" data-t="Đã tạo mã QR cho điểm này">' + ICON.qr + 'Trên điện thoại</button></span></div>' +
+    '<div class="nx">' + (i > 0 ? '<button class="lnk pv" type="button" data-n="' + (i - 1) + '">' + S[i - 1].n + '</button>' : '<span></span>') +
+    (i < S.length - 1 ? '<button class="lnk nt" type="button" data-n="' + (i + 1) + '">' + S[i + 1].n + '</button>' : '<span></span>') +
+    '</div></div></div></div></li>'
+  ).join('');
+
+  $('#pts').innerHTML = S.map((s, i) =>
+    '<g class="pt" data-i="' + i + '" tabindex="0" role="button" aria-label="Điểm ' + (i + 1) + ': ' + s.n + '">' +
+    '<circle class="hit" cx="' + s.x + '" cy="' + s.y + '" r="26"/>' +
+    '<circle class="pulse" cx="' + s.x + '" cy="' + s.y + '" r="20"/>' +
+    '<circle class="core" cx="' + s.x + '" cy="' + s.y + '" r="13"/>' +
+    '<text x="' + s.x + '" y="' + s.y + '">' + (i + 1) + '</text>' +
+    '<text class="lb" x="' + (s.x + 22) + '" y="' + s.y + '">' + s.n + '</text></g>'
+  ).join('');
+
+  $('#strip').insertAdjacentHTML('beforeend', S.map((s, i) =>
+    '<button class="sd" type="button" data-i="' + i + '">' + s.n + '<small>' + DS[i] + '</small></button>'
+  ).join(''));
+
+  ['#route', '#halo'].forEach((sel) => $(sel).setAttribute('points', S.map((s) => s.x + ',' + s.y).join(' ')));
+
+  $('#goods').innerHTML = G.map((g, gi) =>
+    '<article class="good"><div class="ph">' + art(7 + gi) + '<span class="ph-tag">Lưu niệm</span></div>' +
+    '<h3>' + g.n + '</h3><p>' + g.d + '</p><div class="buy"><b>' + g.p + '</b>' +
+    '<button class="add" type="button" data-add="' + gi + '">Thêm vào giỏ</button></div></article>'
+  ).join('');
+
+  $('#lang').innerHTML = L.map(([code, locked]) =>
+    '<button type="button" data-l="' + code + '" aria-pressed="' + (code === language) + '" class="' + (locked ? 'lock' : '') + '">' +
+    code + (locked ? ICON.lock : '') + '</button>'
+  ).join('');
+}
+function paint() {
+  const ratio = Math.min(1, t / S[cur].d);
+  const item = document.getElementById('i' + cur);
+  if (item) {
+    const wave = $$('.wf i', item);
+    const filled = Math.round(ratio * wave.length);
+    wave.forEach((bar, k) => bar.classList.toggle('f', k < filled));
+    const waveEl = $('.wf', item);
+    if (waveEl) waveEl.setAttribute('aria-valuenow', String(t));
+    const timer = $('.tm2 span', item);
+    if (timer) timer.textContent = fmt(t);
+    const nodes = $$('.sn', item);
+    if (nodes.length) {
+      const active = Math.min(nodes.length - 1, Math.floor(ratio * nodes.length));
+      const live = playing || t > 0;
+      $('.tr', item).classList.toggle('live', live);
+      nodes.forEach((node, k) => node.classList.toggle('cur', live && k === active));
+    }
+  }
+  $$('.item').forEach((el, i) => {
+    if (i !== cur) {
+      const tr = $('.tr', el);
+      if (tr) tr.classList.remove('live');
+    }
+  });
+  const pct = ratio * 100;
+  $('#fill').style.width = pct + '%';
+  $('#knob').style.left = pct + '%';
+  const seek = $('#seek');
+  seek.setAttribute('aria-valuenow', String(Math.round(pct)));
+  seek.setAttribute('aria-valuetext', fmt(t) + ' trên ' + fmt(S[cur].d));
+  $('#tm').textContent = fmt(t) + ' / ' + fmt(S[cur].d);
+}
+
+function sync(open = true) {
+  $$('.item').forEach((el, i) => {
+    const isCur = i === cur;
+    const expanded = isCur && open;
+    el.classList.toggle('on', expanded);
+    el.classList.toggle('playing', isCur && playing);
+    el.classList.toggle('heard', heard.has(i) && !expanded);
+    $('.row', el).setAttribute('aria-expanded', String(expanded));
+    $('.stt', el).textContent = isCur && playing ? 'Đang phát' : heard.has(i) ? 'Đã nghe' : '';
+    const playBtn = $('.pbtn', el);
+    if (playBtn) playBtn.setAttribute('aria-label', isCur && playing ? 'Tạm dừng ' + S[i].n : 'Nghe ' + S[i].n);
+  });
+  $$('.pt').forEach((el, i) => el.classList.toggle('on', i === cur));
+  const points = $$('.pt');
+  if (points[cur]) points[cur].parentNode.appendChild(points[cur]);
+  $('#nowName').textContent = S[cur].n;
+  $('#nowTh').innerHTML = art(cur);
+  $('#nowSub').textContent = playing
+    ? 'Đang phát · ' + (cur + 1) + '/' + S.length
+    : 'Điểm ' + (cur + 1) + '/' + S.length;
+  $('#ppi').innerHTML = playing
+    ? '<path d="M7 5h4v14H7zM13 5h4v14h-4z"/>'
+    : '<path d="M8 5v14l11-7z"/>';
+  $('#pp').setAttribute('aria-pressed', String(playing));
+  $('#pp').setAttribute('aria-label', playing ? 'Tạm dừng' : 'Phát');
+  $('#heardTxt').textContent = heard.size + '/' + S.length;
+  $('#progressLabel').textContent = heard.size + '/' + S.length + ' điểm';
+  $('#sfill').style.width = (heard.size / S.length) * 100 + '%';
+  $$('.sd').forEach((el, i) => {
+    el.classList.toggle('heard', heard.has(i));
+    el.classList.toggle('on', i === cur);
+  });
+  $('#auto').setAttribute('aria-checked', String(autoPlay));
+  $('#mapState').textContent = playing ? 'Đang phát' : autoPlay ? 'Tự động' : 'Sẵn sàng';
+  paint();
+}
+
+function tick(noAdvance) {
+  if (!noAdvance && playing) {
+    t += 1;
+    if (t >= S[cur].d) {
+      heard.add(cur);
+      store.set('heard', [...heard]);
+      t = 0;
+      if (cur < S.length - 1) cur += 1;
+      else playing = false;
+      sync();
+      return;
+    }
+  }
+  paint();
+}
+
+function select(i, play) {
+  if (i !== cur) t = 0;
+  cur = i;
+  if (play !== undefined) playing = play;
+  sync();
+  const item = document.getElementById('i' + i);
+  if (item) item.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+}
+
+function updateCart(animate) {
+  const el = $('#cart');
+  el.innerHTML = 'Giỏ hàng <b>' + cart + '</b>';
+  el.classList.toggle('has-items', cart > 0);
+  if (animate) {
+    el.classList.remove('bump');
+    void el.offsetWidth;
+    el.classList.add('bump');
+  }
+}
+
+function toast(message) {
+  const el = $('#toast');
+  el.textContent = message;
+  el.classList.add('show');
+  clearTimeout(el.t);
+  el.t = setTimeout(() => el.classList.remove('show'), 2400);
+}
+
+function seekInWave(wave, clientX) {
+  const i = Number(wave.dataset.w);
+  const rect = wave.getBoundingClientRect();
+  const ratio = Math.min(1, Math.max(0, (clientX - rect.left) / rect.width));
+  cur = i;
+  t = Math.min(S[i].d - 1, Math.round(ratio * S[i].d));
+  sync();
+}
+
+document.addEventListener('click', (event) => {
+  const go = event.target.closest('[data-go]');
+  const row = event.target.closest('.row');
+  const marker = event.target.closest('.pt, .sd');
+  const action = event.target.closest('[data-t]');
+  const lang = event.target.closest('[data-l]');
+  const add = event.target.closest('[data-add]');
+  const chapter = event.target.closest('[data-ch]');
+  const nav = event.target.closest('[data-n]');
+  const wave = event.target.closest('.wf');
+
+  if (go) {
+    const i = Number(go.dataset.go);
+    if (i === cur && playing) {
+      playing = false;
+      sync();
+    } else {
+      select(i, true);
+    }
+    return;
+  }
+  if (row) {
+    const i = Number(row.dataset.i);
+    if (i === cur && row.parentElement.classList.contains('on')) sync(false);
+    else select(i);
+    return;
+  }
+  if (marker) {
+    select(Number(marker.dataset.i));
+    return;
+  }
+  if (chapter) {
+    const [i, k] = chapter.dataset.ch.split(':').map(Number);
+    cur = i;
+    t = Math.floor((S[i].d * k) / 3);
+    sync();
+    return;
+  }
+  if (nav) {
+    select(Number(nav.dataset.n));
+    return;
+  }
+  if (wave) {
+    seekInWave(wave, event.clientX);
+    return;
+  }
+  if (action) {
+    toast(action.dataset.t);
+    return;
+  }
+  if (lang) {
+    if (lang.classList.contains('lock')) {
+      toast('Ngôn ngữ này cần gói Premium');
+    } else {
+      language = lang.dataset.l;
+      store.set('language', language);
+      sync();
+    }
+    return;
+  }
+  if (add) {
+    cart += 1;
+    store.set('cart', cart);
+    updateCart(true);
+    add.textContent = 'Đã thêm';
+    add.classList.add('done');
+    toast('Đã thêm "' + G[Number(add.dataset.add)].n + '" vào giỏ');
+  }
+});
+
+document.addEventListener('keydown', (event) => {
+  const target = event.target;
+  if (!(target instanceof Element)) return;
+
+  const marker = target.closest('.pt');
+  if (marker && (event.key === 'Enter' || event.key === ' ')) {
+    event.preventDefault();
+    select(Number(marker.dataset.i));
+    return;
+  }
+
+  const wave = target.closest('.wf');
+  if (wave && ['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) {
+    event.preventDefault();
+    cur = Number(wave.dataset.w);
+    const duration = S[cur].d;
+    if (event.key === 'Home') t = 0;
+    else if (event.key === 'End') t = duration - 1;
+    else t = Math.max(0, Math.min(duration - 1, t + (event.key === 'ArrowRight' ? 5 : -5)));
+    sync();
+    return;
+  }
+
+  if (target.id === 'seek' && ['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) {
+    event.preventDefault();
+    const duration = S[cur].d;
+    if (event.key === 'Home') t = 0;
+    else if (event.key === 'End') t = duration - 1;
+    else t = Math.max(0, Math.min(duration - 1, t + (event.key === 'ArrowRight' ? 5 : -5)));
+    tick(true);
+    return;
+  }
+
+  if (event.key === ' ' && target === document.body) {
+    event.preventDefault();
+    playing = !playing;
+    sync();
+  }
+});
+
+const seek = $('#seek');
+const seekTo = (clientX) => {
+  const rect = seek.getBoundingClientRect();
+  const ratio = Math.min(1, Math.max(0, (clientX - rect.left) / rect.width));
+  t = Math.min(S[cur].d, Math.round(ratio * S[cur].d));
+  paint();
+};
+seek.addEventListener('pointerdown', (event) => {
+  dragging = true;
+  seek.setPointerCapture(event.pointerId);
+  seekTo(event.clientX);
+});
+seek.addEventListener('pointermove', (event) => {
+  if (dragging) seekTo(event.clientX);
+});
+seek.addEventListener('pointerup', () => {
+  dragging = false;
+});
+seek.addEventListener('pointercancel', () => {
+  dragging = false;
+});
+
+$('#pp').addEventListener('click', () => {
+  playing = !playing;
+  sync();
+});
+$('#prev').addEventListener('click', () => select(Math.max(0, cur - 1)));
+$('#next').addEventListener('click', () => select(Math.min(S.length - 1, cur + 1)));
+$('#auto').addEventListener('click', () => {
+  autoPlay = !autoPlay;
+  store.set('auto', autoPlay);
+  sync();
+  toast(autoPlay ? 'Tự động phát đã bật. Máy sẽ phát khi bạn đến gần một điểm.' : 'Đã tắt tự động phát.');
+});
+$('#loc').addEventListener('click', () => toast('Đang xác định vị trí của bạn…'));
+
+const themeBtn = $('#theme');
+function applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.setAttribute('content', theme === 'dark' ? '#12100E' : '#F7F2E9');
+  themeBtn.innerHTML = theme === 'dark' ? ICON.sun : ICON.moon;
+  themeBtn.setAttribute('aria-label', theme === 'dark' ? 'Chuyển sang giao diện sáng' : 'Chuyển sang giao diện tối');
+}
+const savedTheme = store.get('theme', null);
+const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+applyTheme(savedTheme === 'dark' || savedTheme === 'light' ? savedTheme : prefersDark ? 'dark' : 'light');
+themeBtn.addEventListener('click', () => {
+  const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+  store.set('theme', next);
+  applyTheme(next);
+});
+
+const header = $('.site-head');
+const onScroll = () => header.classList.toggle('scrolled', window.scrollY > 8);
+window.addEventListener('scroll', onScroll, { passive: true });
+onScroll();
+
+function revealSections() {
+  const targets = $$('.reveal');
+  const reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (!('IntersectionObserver' in window) || reduced) {
+    targets.forEach((el) => el.classList.add('in'));
+    return;
+  }
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('in');
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { rootMargin: '0px 0px -8% 0px', threshold: 0.05 });
+  targets.forEach((el) => observer.observe(el));
+}
+
+render();
+updateCart(false);
+sync();
+setInterval(() => tick(), 1000);
+revealSections();
+
+
+</script>
+</body>
+</html>

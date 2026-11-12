@@ -13,17 +13,33 @@ export function normalizeQrBaseUrl(baseUrl) {
   return String(baseUrl ?? '').trim().replace(/\/+$/, '');
 }
 
+/** Ánh xạ mã token sang slug chuẩn của 7 điểm du lịch */
+const TOKEN_TO_SLUG = {
+  'qr-dinh-doc-lap-01': 'dinh-doc-lap',
+  'qr-duc-ba-01': 'nha-tho-duc-ba',
+  'qr-buu-dien-01': 'buu-dien-trung-tam',
+  'qr-ben-thanh-01': 'cho-ben-thanh',
+  'qr-bao-tang-chung-tich-01': 'bao-tang-chung-tich-chien-tranh',
+  'qr-thien-hau-01': 'chua-ba-thien-hau',
+  'qr-ba-son-01': 'cau-ba-son',
+};
+
 /**
- * Build the URL encoded in a POI QR code. ScanPage parses the token back out of
- * the "/qr/<token>" segment, so the shape must stay: <baseUrl>/qr/<token>.
+ * Build the URL encoded in a POI's QR code.
+ *
+ * Quét mã QR dẫn trực tiếp vào giao diện web đầy đủ của điểm tham quan (/diem-du-lich?stop=<slug>),
+ * hiển thị bản đồ tương tác, thanh nghe âm thanh, lộ trình gợi ý và bài thuyết minh.
  * @param {string | null | undefined} baseUrl
  * @param {string | null | undefined} qrToken
+ * @param {string | null | undefined} slug
  * @returns {string}
  */
-export function buildPlaceQrContent(baseUrl, qrToken) {
+export function buildPlaceQrContent(baseUrl, qrToken, slug) {
   const token = String(qrToken ?? '').trim();
-  if (!token) return '';
+  const explicitSlug = String(slug ?? '').trim();
+  const targetSlug = explicitSlug || TOKEN_TO_SLUG[token] || token;
+  if (!targetSlug) return '';
   const prefix = normalizeQrBaseUrl(baseUrl);
-  const path = `/qr/${encodeURIComponent(token)}`;
+  const path = `/diem-du-lich?stop=${encodeURIComponent(targetSlug)}`;
   return prefix ? `${prefix}${path}` : path;
 }

@@ -20,7 +20,7 @@ public interface AnalyticsPresenceRepository extends JpaRepository<AnalyticsPres
     @Modifying
     @Transactional
     @Query(value = """
-            MERGE dbo.analytics_presence AS target
+            MERGE dbo.analytics_presence WITH (HOLDLOCK) AS target
             USING (SELECT :sessionId AS session_id) AS source
             ON target.session_id = source.session_id
             WHEN MATCHED THEN

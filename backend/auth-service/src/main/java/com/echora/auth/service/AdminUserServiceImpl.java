@@ -75,8 +75,8 @@ public class AdminUserServiceImpl implements AdminUserService {
             if (normalizedSearch != null) {
                 String like = "%" + normalizedSearch + "%";
                 predicates.add(cb.or(
-                        cb.like(cb.lower(root.get("email")), like),
-                        cb.like(cb.lower(root.get("fullName")), like)));
+                        cb.like(root.get("email"), like),
+                        cb.like(root.get("fullName"), like)));
             }
             if (roleFilter != null) {
                 predicates.add(cb.equal(root.get("role"), roleFilter));

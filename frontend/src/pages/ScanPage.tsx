@@ -19,7 +19,6 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { QRCodeCanvas } from 'qrcode.react';
 import {
   Camera,
   Lock,
@@ -39,8 +38,6 @@ import { usePremium, buildPremiumPath, buildPoiPremiumPath } from '../context/Pr
 import { unlockAudio } from '../lib/audioUnlock';
 import { getAnalyticsSessionId } from '../lib/analytics';
 import { detectDeviceType } from '../lib/device';
-import { resolveQrBaseUrl } from '../lib/qrOrigin';
-import { useIsDesktop } from '../hooks/useIsDesktop';
 import { PoiDetail, SupportedLanguage, TriggerType } from '../types';
 import '../styles/scan.css';
 
@@ -49,18 +46,120 @@ import '../styles/scan.css';
 // the user's entitlement at play time — on-device speech must not bypass that.
 const SCAN_SPEECH_LANGS: SupportedLanguage[] = ['vi', 'en', 'ja', 'ko'];
 
+/** Ánh xạ hai chiều giữa slug và qrToken để fallback tức thì khi quét QR trên di động */
+const POI_SLUG_TOKEN_MAP: Record<string, string> = {
+  'dinh-doc-lap': 'qr-dinh-doc-lap-01',
+  'nha-tho-duc-ba': 'qr-duc-ba-01',
+  'buu-dien-trung-tam': 'qr-buu-dien-01',
+  'cho-ben-thanh': 'qr-ben-thanh-01',
+  'bao-tang-chung-tich-chien-tranh': 'qr-bao-tang-chung-tich-01',
+  'chua-ba-thien-hau': 'qr-thien-hau-01',
+  'cau-ba-son': 'qr-ba-son-01',
+};
+
+const POI_TOKEN_SLUG_MAP: Record<string, string> = {
+  'qr-dinh-doc-lap-01': 'dinh-doc-lap',
+  'qr-duc-ba-01': 'nha-tho-duc-ba',
+  'qr-buu-dien-01': 'buu-dien-trung-tam',
+  'qr-ben-thanh-01': 'cho-ben-thanh',
+  'qr-bao-tang-chung-tich-01': 'bao-tang-chung-tich-chien-tranh',
+  'qr-thien-hau-01': 'chua-ba-thien-hau',
+  'qr-ba-son-01': 'cau-ba-son',
+};
+
+/** Phân tích thông minh chuỗi quét hoặc URL thành slug / token */
+const parseScanInput = (
+  raw: string
+): { slug?: string; token?: string; cleanValue: string } => {
+  const trimmed = raw.trim();
+  if (!trimmed) return { cleanValue: '' };
+
+  try {
+    const url = new URL(trimmed, window.location.origin);
+    const stopParam =
+      url.searchParams.get('stop') ||
+      url.searchParams.get('poi') ||
+      url.searchParams.get('slug');
+    if (stopParam) {
+      const decoded = decodeURIComponent(stopParam).trim();
+      if (decoded.startsWith('qr-')) {
+        return {
+          token: decoded,
+          cleanValue: decoded,
+        };
+      }
+      return {
+        slug: decoded,
+        cleanValue: decoded,
+      };
+    }
+
+    const path = url.pathname.replace(/\/+$/, '');
+    const diemMatch = path.match(/^\/(?:diem|diem-du-lich)\/([^/?#]+)/);
+    if (diemMatch?.[1]) {
+      const slug = decodeURIComponent(diemMatch[1]);
+      return { slug, cleanValue: slug };
+    }
+    const qrMatch = path.match(/^\/qr\/([^/?#]+)/);
+    if (qrMatch?.[1]) {
+      const token = decodeURIComponent(qrMatch[1]);
+      return { token, cleanValue: token };
+    }
+  } catch {
+    // Không phải URL hợp lệ: tiếp tục xử lý chuỗi thường
+  }
+
+  if (trimmed.includes('stop=')) {
+    const stopMatch = trimmed.match(/[?&]stop=([^&#]+)/);
+    if (stopMatch?.[1]) {
+      const decoded = decodeURIComponent(stopMatch[1]);
+      if (decoded.startsWith('qr-')) {
+        return { token: decoded, cleanValue: decoded };
+      }
+      return { slug: decoded, cleanValue: decoded };
+    }
+  }
+
+  if (trimmed.includes('/diem/') || trimmed.includes('/diem-du-lich/')) {
+    const slugPart = trimmed.split(/\/(?:diem|diem-du-lich)\//)[1]?.split(/[?#/]/)[0];
+    if (slugPart) {
+      const slug = decodeURIComponent(slugPart);
+      return { slug, cleanValue: slug };
+    }
+  }
+
+  if (trimmed.includes('/qr/')) {
+    const tokenPart = trimmed.split('/qr/')[1]?.split(/[?#/]/)[0];
+    if (tokenPart) {
+      const token = decodeURIComponent(tokenPart);
+      return { token, cleanValue: token };
+    }
+  }
+
+  if (trimmed.startsWith('qr-')) {
+    return { token: trimmed, cleanValue: trimmed };
+  }
+
+  if (POI_SLUG_TOKEN_MAP[trimmed]) {
+    return { slug: trimmed, cleanValue: trimmed };
+  }
+
+  if (POI_TOKEN_SLUG_MAP[trimmed]) {
+    return { token: trimmed, cleanValue: trimmed };
+  }
+
+  return { cleanValue: trimmed };
+};
+
 export const ScanPage: React.FC = () => {
-  const { token } = useParams<{ token?: string }>();
+  const { token, slug } = useParams<{ token?: string; slug?: string }>();
   const navigate = useNavigate();
   const location = useLocation();
   const { status } = useAuth();
   const isGuest = status === 'guest';
   const { canAccessPoiLanguage } = usePremium();
-  // Trang quét mã dùng camera nên chỉ hiển thị trên điện thoại; trên PC chỉ
-  // hiện thẻ hướng dẫn kèm mã QR để mở trang bằng điện thoại.
-  const isDesktop = useIsDesktop('(min-width: 900px)');
 
-  const [inputToken, setInputToken] = useState(token || '');
+  const [inputToken, setInputToken] = useState<string>(token ?? '');
   const [poiDetail, setPoiDetail] = useState<PoiDetail | null>(null);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -80,6 +179,7 @@ export const ScanPage: React.FC = () => {
   const scanTriggerRef = useRef<TriggerType>('QR');
   const lastRecordedScanRef = useRef<string | null>(null);
   const resolvedTokenRef = useRef<string | null>(null);
+  const resolvedSlugRef = useRef<string | null>(null);
 
   const { playAudio, stopAudio, isPlaying } = useAudioPlayer();
 
@@ -108,19 +208,71 @@ export const ScanPage: React.FC = () => {
 
   const handleResolveQr = useCallback(
     (
-      qrTokenToResolve: string,
-      options?: { auto?: boolean; autoplay?: boolean; triggerType?: TriggerType }
+      rawValue: string,
+      options?: {
+        auto?: boolean;
+        autoplay?: boolean;
+        triggerType?: TriggerType;
+        slug?: string;
+      }
     ) => {
-      const trimmed = qrTokenToResolve.trim();
-      if (!trimmed) return;
+      const parsed = parseScanInput(rawValue);
+      const targetSlug = options?.slug?.trim() || parsed.slug;
+      const targetToken = parsed.token;
+      const cleanVal = parsed.cleanValue || (targetSlug ?? targetToken ?? rawValue).trim();
+      if (!cleanVal && !targetSlug && !targetToken) return;
+
       const isAuto = options?.auto ?? false;
       const triggerType = options?.triggerType ?? 'QR';
 
       setLoading(true);
       setErrorMessage(null);
 
-      api
-        .getPoiByQr(trimmed, lang)
+      const fetchWithFallback = async (): Promise<PoiDetail> => {
+        if (targetToken && !options?.slug) {
+          try {
+            return await api.getPoiByQr(targetToken, lang);
+          } catch (err: unknown) {
+            const norm = normalizeApiError(err);
+            if (norm.status === 404) {
+              const mappedSlug = POI_TOKEN_SLUG_MAP[targetToken];
+              if (mappedSlug) {
+                return await api.getPoiBySlug(mappedSlug, lang);
+              }
+              return await api.getPoiBySlug(targetToken, lang);
+            }
+            throw err;
+          }
+        }
+
+        if (targetSlug) {
+          try {
+            return await api.getPoiBySlug(targetSlug, lang);
+          } catch (err: unknown) {
+            const norm = normalizeApiError(err);
+            if (norm.status === 404) {
+              const mappedToken = POI_SLUG_TOKEN_MAP[targetSlug] || targetToken;
+              if (mappedToken) {
+                return await api.getPoiByQr(mappedToken, lang);
+              }
+              return await api.getPoiByQr(targetSlug, lang);
+            }
+            throw err;
+          }
+        }
+
+        try {
+          return await api.getPoiByQr(cleanVal, lang);
+        } catch (err: unknown) {
+          const norm = normalizeApiError(err);
+          if (norm.status === 404) {
+            return await api.getPoiBySlug(cleanVal, lang);
+          }
+          throw err;
+        }
+      };
+
+      fetchWithFallback()
         .then((detail) => {
           setPoiDetail(detail);
           setExpanded(false);
@@ -194,6 +346,16 @@ export const ScanPage: React.FC = () => {
     handleResolveQr(token, { auto: true, triggerType: 'QR' });
   }, [token, handleResolveQr]);
 
+  useEffect(() => {
+    const targetSlug = slug?.trim();
+    if (!targetSlug) return;
+    // Link /diem/<slug> của QR điểm du lịch: tra cứu đúng điểm bằng slug,
+    // mở trực tiếp trang thuyết minh mà không cần đăng nhập.
+    if (resolvedSlugRef.current === targetSlug) return;
+    resolvedSlugRef.current = targetSlug;
+    handleResolveQr(targetSlug, { auto: true, triggerType: 'QR', slug: targetSlug });
+  }, [slug, handleResolveQr]);
+
   // Nếu quyền ngoại ngữ mất đi (đăng xuất, gói hết hạn) thì quay về tiếng Việt,
   // tránh giữ lại bản dịch đã tải trước đó.
   useEffect(() => {
@@ -265,10 +427,11 @@ export const ScanPage: React.FC = () => {
               clearInterval(interval);
               stopCamera();
               const val = barcodes[0].rawValue;
-              const extracted = val.includes('/qr/') ? val.split('/qr/')[1]?.split('?')[0] : val;
-              if (extracted) {
-                setInputToken(extracted);
-                handleResolveQr(extracted, { auto: true, autoplay: true, triggerType: 'QR' });
+              const parsed = parseScanInput(val);
+              const target = parsed.slug ?? parsed.token ?? parsed.cleanValue;
+              if (target) {
+                navigate(`/diem-du-lich?stop=${encodeURIComponent(target)}`);
+                return;
               }
             }
           } catch {
@@ -283,9 +446,18 @@ export const ScanPage: React.FC = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (inputToken.trim()) {
-      handleResolveQr(inputToken.trim(), { triggerType: 'MANUAL' });
+    const raw = inputToken.trim();
+    if (!raw) return;
+    const parsed = parseScanInput(raw);
+    const target = parsed.slug ?? parsed.token ?? parsed.cleanValue;
+    if (target) {
+      navigate(`/diem-du-lich?stop=${encodeURIComponent(target)}`);
+      return;
     }
+    handleResolveQr(
+      target,
+      { triggerType: 'MANUAL', ...(parsed.slug ? { slug: parsed.slug } : {}) }
+    );
   };
 
   const handleScanAnother = () => {
@@ -406,27 +578,6 @@ export const ScanPage: React.FC = () => {
     </header>
   );
 
-  const renderDesktopNotice = () => {
-    const scanUrl = `${resolveQrBaseUrl()}/quet-ma`;
-    return (
-      <div className="scan-desktop-notice">
-        <div className="scan-desktop-qr">
-          <QRCodeCanvas value={scanUrl} size={176} level="M" includeMargin />
-        </div>
-        <div className="scan-desktop-copy">
-          <span className="scan-eyebrow">Dành cho điện thoại</span>
-          <h2>Mở trang này trên điện thoại</h2>
-          <p>
-            Trang quét mã dùng camera nên chỉ hoạt động trên điện thoại. Mở
-            camera hoặc ứng dụng quét QR trên điện thoại và quét mã bên cạnh để
-            mở trang quét mã.
-          </p>
-          <p className="scan-desktop-url">{scanUrl}</p>
-        </div>
-      </div>
-    );
-  };
-
   const displayName = poiDetail ? poiDetail.title || poiDetail.name : '';
   const narrativeText = poiDetail ? poiDetail.description || poiDetail.summary : '';
 
@@ -463,8 +614,7 @@ export const ScanPage: React.FC = () => {
           </span>
         </div>
       )}
-      {!poiDetail &&
-        (isDesktop ? renderDesktopNotice() : renderLanding())}
+      {!poiDetail && renderLanding()}
 
       {loading && <p className="cn">Đang tải thông tin điểm du lịch từ mã QR...</p>}
 
@@ -630,9 +780,13 @@ export const ScanPage: React.FC = () => {
                 <button
                   type="button"
                   className="tb"
-                  onClick={() => navigate('/diem-du-lich')}
+                  onClick={() =>
+                    navigate(
+                      `/diem-du-lich?stop=${encodeURIComponent(poiDetail.slug || poiDetail.qrToken || String(poiDetail.id))}`
+                    )
+                  }
                 >
-                  Xem trên bản đồ
+                  Xem trên bản đồ & Lộ trình đầy đủ
                 </button>
               </div>
             </div>

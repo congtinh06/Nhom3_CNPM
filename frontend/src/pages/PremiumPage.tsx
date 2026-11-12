@@ -21,7 +21,6 @@ import {
 } from '../services/orderService';
 import { formatPrice, formatDateTime } from '../utils/formatters';
 import { api } from '../api/client';
-import { HERO_CONFIG } from '../config/heroImages';
 import { PoiGuide, SupportedLanguage } from '../types';
 import { resolveImagePath } from '../components/nearby/PoiCard';
 import '../styles/premium.css';
@@ -376,6 +375,23 @@ export const PremiumPage: React.FC = () => {
     return poiGuides.length * PREMIUM_LANGUAGES.length;
   }, [poiGuides]);
 
+  const totalPoiStops = poiGuides?.length || 7;
+  const totalVideoCount = totalPoiStops;
+  const totalNarrationCount = narrationCount || (totalPoiStops * PREMIUM_LANGUAGES.length);
+
+  const mutedSummary = useMemo(() => {
+    if (lang === 'en') {
+      return `Each stop includes ${PREMIUM_LANGUAGES.length} narrations (English, Japanese, Korean) and 1 intro video. ${totalPoiStops} stops total ${totalNarrationCount} narrations and ${totalVideoCount} videos.`;
+    }
+    if (lang === 'ja') {
+      return `各スポットに3つのナレーション（英語・日本語・韓国語）と1つの紹介動画。${totalPoiStops}スポットで計${totalNarrationCount}のナレーションと${totalVideoCount}の動画。`;
+    }
+    if (lang === 'ko') {
+      return `각 장소마다 3개의 해설(영어, 일본어, 한국어)과 1개의 소개 영상. ${totalPoiStops}개 장소 총 ${totalNarrationCount}개 해설 및 ${totalVideoCount}개 영상.`;
+    }
+    return `Mỗi điểm có ${PREMIUM_LANGUAGES.length} bản thuyết minh (tiếng Anh, Nhật, Hàn) và 1 video giới thiệu. ${totalPoiStops} điểm là ${totalNarrationCount} bản thuyết minh và ${totalVideoCount} video.`;
+  }, [lang, totalPoiStops, totalNarrationCount, totalVideoCount]);
+
   const values = {
     count: hasGuideData ? narrationCount : '…',
     poiCount: hasGuideData ? poiGuides?.length ?? 0 : '…',
@@ -497,33 +513,17 @@ export const PremiumPage: React.FC = () => {
 
   return (
     <div className="premium-page">
-      <section className="premium-hero" aria-labelledby="premium-page-title">
-        <img
-          className="premium-hero-image"
-          src={HERO_CONFIG.diemDuLich.src}
-          alt=""
-          style={{ objectPosition: HERO_CONFIG.diemDuLich.position }}
-          loading="eager"
-          decoding="async"
-        />
-        <div className="premium-hero-overlay" aria-hidden="true" />
+      <div className="premium-wrap">
+        <header className="premium-head" aria-labelledby="premium-page-title">
+          <button type="button" className="premium-back-btn" onClick={handleBackToTour}>
+            <ArrowLeft size={15} strokeWidth={1.8} aria-hidden="true" />
+            <span>{copy.backToTour}</span>
+          </button>
+          <h1 id="premium-page-title" className="premium-head-title">{copy.title}</h1>
+          <p className="premium-head-subtitle">{copy.subtitle}</p>
+        </header>
 
-        <div className="premium-hero-inner">
-          <div className="premium-hero-top">
-            <button type="button" className="premium-back-link" onClick={handleBackToTour}>
-              <ArrowLeft size={15} strokeWidth={1.8} aria-hidden="true" />
-              <span>{copy.backToTour}</span>
-            </button>
-          </div>
-
-          <div className="premium-hero-copy">
-            <h1 id="premium-page-title">{copy.title}</h1>
-            <p className="premium-hero-subtitle">{copy.subtitle}</p>
-          </div>
-        </div>
-      </section>
-
-      <main className="premium-shell">
+        <main className="premium-shell">
         {requestedLanguage && (
           <p className="premium-request-note" role="status">
             {copy.requestedLanguageNote} <strong>{LANGUAGE_NAMES[requestedLanguage]}</strong>
@@ -607,6 +607,7 @@ export const PremiumPage: React.FC = () => {
           <div className="premium-section-head">
             <h2 id="premium-plan-title">{copy.benefitsTitle}</h2>
             <p className="premium-lead">{copy.benefitsSubtitle}</p>
+            <p className="premium-plan-data-note">{mutedSummary}</p>
           </div>
 
           <div className={`premium-offer premium-plan-card${isPremium ? ' is-active' : ''}${isPremiumPending ? ' is-pending' : ''}`}>
@@ -772,6 +773,191 @@ export const PremiumPage: React.FC = () => {
               )}
 
               <p className="premium-secure-note">{copy.secureNote}</p>
+            </div>
+          </div>
+        </section>
+
+        {/* 1. So sánh Miễn phí và Premium */}
+        <section className="premium-hairline-section premium-comparison-section" aria-labelledby="premium-compare-title">
+          <h2 id="premium-compare-title" className="premium-serif-section-title">
+            {lang === 'en'
+              ? 'Free vs Premium comparison'
+              : lang === 'ja'
+              ? '無料とPremiumの比較'
+              : lang === 'ko'
+              ? '무료와 Premium 비교'
+              : 'So sánh Miễn phí và Premium'}
+          </h2>
+          <div className="premium-hairline-table premium-compare-table" role="table">
+            <div className="premium-table-row is-head" role="row">
+              <span role="columnheader"></span>
+              <span role="columnheader">{copy.freeBadge || 'Miễn phí'}</span>
+              <span role="columnheader">Premium</span>
+            </div>
+            <div className="premium-table-row" role="row">
+              <span role="cell">
+                {lang === 'en' ? 'Vietnamese narration' : lang === 'ja' ? 'ベトナム語ナレーション' : lang === 'ko' ? '베트남어 해설' : 'Thuyết minh tiếng Việt'}
+              </span>
+              <span role="cell" className="is-ok">{lang === 'en' ? 'Yes' : lang === 'ja' ? 'あり' : lang === 'ko' ? '있음' : 'Có'}</span>
+              <span role="cell" className="is-ok">{lang === 'en' ? 'Yes' : lang === 'ja' ? 'あり' : lang === 'ko' ? '있음' : 'Có'}</span>
+            </div>
+            <div className="premium-table-row" role="row">
+              <span role="cell">
+                {lang === 'en' ? 'English, Japanese, Korean narration' : lang === 'ja' ? '英語・日本語・韓国語ナレーション' : lang === 'ko' ? '영어, 일본어, 한국어 해설' : 'Thuyết minh tiếng Anh, Nhật, Hàn'}
+              </span>
+              <span role="cell" className="is-no">{lang === 'en' ? 'No' : lang === 'ja' ? 'なし' : lang === 'ko' ? '없음' : 'Không'}</span>
+              <span role="cell" className="is-ok">{lang === 'en' ? 'Yes' : lang === 'ja' ? 'あり' : lang === 'ko' ? '있음' : 'Có'}</span>
+            </div>
+            <div className="premium-table-row" role="row">
+              <span role="cell">
+                {lang === 'en' ? 'Intro video for each stop' : lang === 'ja' ? '各スポットの紹介動画' : lang === 'ko' ? '각 장소 소개 영상' : 'Video giới thiệu từng điểm'}
+              </span>
+              <span role="cell" className="is-no">{lang === 'en' ? 'No' : lang === 'ja' ? 'なし' : lang === 'ko' ? '없음' : 'Không'}</span>
+              <span role="cell" className="is-ok">{lang === 'en' ? 'Yes' : lang === 'ja' ? 'あり' : lang === 'ko' ? '있음' : 'Có'}</span>
+            </div>
+            <div className="premium-table-row" role="row">
+              <span role="cell">
+                {lang === 'en' ? 'On-site QR code scanning' : lang === 'ja' ? '現地QRコード読み取り' : lang === 'ko' ? '현장 QR 코드 스캔' : 'Quét mã QR tại điểm'}
+              </span>
+              <span role="cell" className="is-ok">{lang === 'en' ? 'Yes' : lang === 'ja' ? 'あり' : lang === 'ko' ? '있음' : 'Có'}</span>
+              <span role="cell" className="is-ok">{lang === 'en' ? 'Yes' : lang === 'ja' ? 'あり' : lang === 'ko' ? '있음' : 'Có'}</span>
+            </div>
+            <div className="premium-table-row" role="row">
+              <span role="cell">
+                {lang === 'en' ? '10% souvenir discount' : lang === 'ja' ? 'お土産10%割引' : lang === 'ko' ? '기념품 10% 할인' : 'Giảm 10% quà lưu niệm'}
+              </span>
+              <span role="cell" className="is-no">{lang === 'en' ? 'No' : lang === 'ja' ? 'なし' : lang === 'ko' ? '없음' : 'Không'}</span>
+              <span role="cell" className="is-ok">{lang === 'en' ? 'Yes' : lang === 'ja' ? 'あり' : lang === 'ko' ? '있음' : 'Có'}</span>
+            </div>
+          </div>
+        </section>
+
+        {/* 2. Chọn gói nào cho chuyến đi của bạn? */}
+        <section className="premium-hairline-section premium-choice-section" aria-labelledby="premium-choice-title">
+          <h2 id="premium-choice-title" className="premium-serif-section-title">
+            {lang === 'en'
+              ? 'Which option fits your journey?'
+              : lang === 'ja'
+              ? '旅行に最適なプランは？'
+              : lang === 'ko'
+              ? '어떤 패키지가 여행에 알맞을까요?'
+              : 'Chọn gói nào cho chuyến đi của bạn?'}
+          </h2>
+          <p className="premium-lead">
+            {lang === 'en'
+              ? `The number of stops you plan to visit determines the best value. The combo includes all ${totalPoiStops} stops for ${formatPrice(PREMIUM_PRICE)}.`
+              : lang === 'ja'
+              ? `訪問予定のスポット数によってお得なプランが決まります。コンボなら全${totalPoiStops}スポットで${formatPrice(PREMIUM_PRICE)}です。`
+              : lang === 'ko'
+              ? `방문할 장소 수에 따라 가장 합리적인 선택이 달라집니다. 콤보는 ${totalPoiStops}개 전체 장소를 ${formatPrice(PREMIUM_PRICE)}에 제공합니다.`
+              : `Số điểm bạn định đi quyết định gói nào có lợi hơn. Combo gồm đủ ${totalPoiStops} điểm với giá ${formatPrice(PREMIUM_PRICE)}.`}
+          </p>
+          <div className="premium-hairline-table premium-choice-table" role="table">
+            <div className="premium-table-row is-head" role="row">
+              <span role="columnheader">{lang === 'en' ? 'Stops' : lang === 'ja' ? 'スポット数' : lang === 'ko' ? '방문 장소' : 'Số điểm đi'}</span>
+              <span role="columnheader">{lang === 'en' ? 'Single' : lang === 'ja' ? '個別購入' : lang === 'ko' ? '개별 구매' : 'Mua lẻ'}</span>
+              <span role="columnheader">{lang === 'en' ? 'Recommendation' : lang === 'ja' ? 'おすすめ' : lang === 'ko' ? '추천' : 'Gợi ý'}</span>
+            </div>
+            {Array.from({ length: totalPoiStops }, (_, i) => i + 1).map((n) => {
+              const retailTotal = n * DEFAULT_POI_PRICE;
+              const diff = retailTotal - PREMIUM_PRICE;
+              const isComboBetter = retailTotal >= PREMIUM_PRICE;
+              let suggestion: string;
+              if (retailTotal < PREMIUM_PRICE) {
+                suggestion = lang === 'en' ? 'Single purchase is best' : lang === 'ja' ? '個別購入がお得です' : lang === 'ko' ? '개별 구매가 합리적입니다' : 'Mua lẻ là hợp lý';
+              } else if (retailTotal === PREMIUM_PRICE) {
+                suggestion = lang === 'en'
+                  ? `Combo has the same price but includes all ${totalPoiStops} stops`
+                  : lang === 'ja'
+                  ? `同額で全${totalPoiStops}スポットが利用できるコンボがおすすめ`
+                  : lang === 'ko'
+                  ? `동일 가격에 ${totalPoiStops}개 장소가 모두 포함된 콤보 추천`
+                  : `Combo cùng giá nhưng có đủ ${totalPoiStops} điểm`;
+              } else {
+                suggestion = lang === 'en'
+                  ? `Choose combo to save ${formatPrice(diff)}`
+                  : lang === 'ja'
+                  ? `コンボを選ぶと${formatPrice(diff)}お得`
+                  : lang === 'ko'
+                  ? `콤보 선택 시 ${formatPrice(diff)} 절약`
+                  : `Nên chọn combo, tiết kiệm ${formatPrice(diff)}`;
+              }
+
+              return (
+                <div
+                  key={n}
+                  className={`premium-table-row${isComboBetter ? ' is-best' : ''}`}
+                  role="row"
+                >
+                  <span role="cell">
+                    {lang === 'en' ? `${n} ${n === 1 ? 'stop' : 'stops'}` : lang === 'ja' ? `${n}スポット` : lang === 'ko' ? `${n}개 장소` : `${n} điểm`}
+                  </span>
+                  <span role="cell">{formatPrice(retailTotal)}</span>
+                  <span role="cell" className={isComboBetter ? 'is-highlight' : ''}>{suggestion}</span>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+
+        {/* 3. Nghe thử ngôn ngữ trước khi mua */}
+        <section className="premium-hairline-section premium-sample-section" aria-labelledby="premium-sample-title">
+          <div className="premium-sample-intro">
+            <h2 id="premium-sample-title" className="premium-serif-section-title">
+              {lang === 'en'
+                ? 'Preview languages before purchase'
+                : lang === 'ja'
+                ? '購入前に言語を試聴'
+                : lang === 'ko'
+                ? '구매 전 언어 미리보기'
+                : 'Nghe thử ngôn ngữ trước khi mua'}
+            </h2>
+            <p className="premium-lead">
+              {lang === 'en'
+                ? 'The same sentence about Notre Dame Cathedral in four languages. Vietnamese is free, other three are Premium.'
+                : lang === 'ja'
+                ? 'サイゴン大聖堂に関する同じ文章の4言語比較。ベトナム語は無料、他3言語はPremium対象です。'
+                : lang === 'ko'
+                ? '노트르담 대성당에 관한 동일 문장의 4개 국어 비교. 베트남어는 무료이며, 나머지 3개 언어는 Premium 대상입니다.'
+                : 'Cùng một câu về Nhà thờ Đức Bà ở bốn ngôn ngữ. Tiếng Việt miễn phí, ba ngôn ngữ còn lại thuộc Premium.'}
+            </p>
+          </div>
+          <div className="premium-sample-list">
+            <div className="premium-sample-row">
+              <b className="premium-sample-lang">Tiếng Việt</b>
+              <span lang="vi" className="premium-sample-text">
+                Nhà thờ được xây từ năm 1863 đến 1880, trong thời kỳ Pháp thuộc.
+              </span>
+              <small className="premium-sample-tag is-free">
+                {copy.freeBadge || 'Miễn phí'}
+              </small>
+            </div>
+            <div className="premium-sample-row">
+              <b className="premium-sample-lang">English</b>
+              <span lang="en" className="premium-sample-text">
+                The cathedral was built between 1863 and 1880, during the French colonial period.
+              </span>
+              <small className="premium-sample-tag is-locked">
+                Premium
+              </small>
+            </div>
+            <div className="premium-sample-row">
+              <b className="premium-sample-lang">日本語</b>
+              <span lang="ja" className="premium-sample-text">
+                大聖堂は、フランス統治時代の1863年から1880年にかけて建設されました。
+              </span>
+              <small className="premium-sample-tag is-locked">
+                Premium
+              </small>
+            </div>
+            <div className="premium-sample-row">
+              <b className="premium-sample-lang">한국어</b>
+              <span lang="ko" className="premium-sample-text">
+                대성당은 프랑스 식민지 시기인 1863년부터 1880년에 걸쳐 지어졌습니다.
+              </span>
+              <small className="premium-sample-tag is-locked">
+                Premium
+              </small>
             </div>
           </div>
         </section>
@@ -1068,6 +1254,7 @@ export const PremiumPage: React.FC = () => {
           )}
         </section>
       </main>
+      </div>
     </div>
   );
 };

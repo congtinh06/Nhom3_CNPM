@@ -3,6 +3,10 @@ package com.echora.auth.repository;
 import com.echora.auth.entity.QrLoginSession;
 import com.echora.auth.entity.QrLoginStatus;
 import jakarta.persistence.LockModeType;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Lock;
@@ -19,6 +23,10 @@ import java.util.UUID;
 @Repository
 public interface QrLoginSessionRepository
         extends JpaRepository<QrLoginSession, UUID>, JpaSpecificationExecutor<QrLoginSession> {
+
+    @Override
+    @EntityGraph(attributePaths = {"user"})
+    Page<QrLoginSession> findAll(Specification<QrLoginSession> spec, Pageable pageable);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     Optional<QrLoginSession> findByQrTokenHash(String qrTokenHash);

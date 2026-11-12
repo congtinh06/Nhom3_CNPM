@@ -50,17 +50,13 @@ describe('ContactPage Component', () => {
     });
   };
 
-  it('renders the hero with local photo, title and subtitle', () => {
+  it('renders the editorial header with title and subtitle', () => {
     renderContactPage();
 
     expect(screen.getByRole('heading', { level: 1, name: /Liên hệ/i })).toBeInTheDocument();
     expect(
-      screen.getByText(/Gọi điện, gửi email hoặc để lại tin nhắn cho Echora\./i)
+      screen.getByText(/Bạn cần hỗ trợ khi nghe thuyết minh/i)
     ).toBeInTheDocument();
-
-    const heroImg = document.querySelector<HTMLImageElement>('.contact-hero .page-hero-img');
-    expect(heroImg).not.toBeNull();
-    expect(heroImg?.getAttribute('src')).toBe('/images/pois/buu-dien-trung-tam.jpg');
   });
 
   it('lists each contact detail once as links and plain facts', () => {

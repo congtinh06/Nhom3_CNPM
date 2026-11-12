@@ -35,6 +35,7 @@ public class EntitlementFilter extends OncePerRequestFilter {
     private static final String POIS_PREFIX = "/api/content/pois/";
     private static final String GUIDE_PATH = "/api/content/pois/guide";
     private static final String QR_PREFIX = "/api/content/pois/qr/";
+    private static final String POI_SLUG_PREFIX = "/api/content/pois/slug/";
     private static final String PREMIUM_REQUIRED_MESSAGE =
             "Ngôn ngữ này yêu cầu gói Premium đang hoạt động.";
     private static final String POI_LOCKED_MESSAGE =
@@ -86,6 +87,11 @@ public class EntitlementFilter extends OncePerRequestFilter {
             return true;
         }
         if (id.equals("qr") || id.startsWith("qr/")) {
+            return false;
+        }
+        if (id.startsWith("slug/")) {
+            // Link /diem/<slug> của QR điểm du lịch: tra cứu theo slug, vẫn phải
+            // tuân qua kiểm tra ngoại ngữ Premium của filter bên dưới.
             return false;
         }
         return !id.chars().allMatch(Character::isDigit);
@@ -175,6 +181,13 @@ public class EntitlementFilter extends OncePerRequestFilter {
             return poiContentService.findPoiIdByQrToken(qrToken).orElse(null);
         }
         String id = path.substring(POIS_PREFIX.length());
+        if (id.startsWith("slug/")) {
+            String slug = id.substring("slug/".length());
+            if (isBlank(slug) || slug.contains("/")) {
+                return null;
+            }
+            return poiContentService.findPoiIdBySlug(slug).orElse(null);
+        }
         try {
             return Long.valueOf(id.trim());
         } catch (NumberFormatException ex) {

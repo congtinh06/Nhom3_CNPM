@@ -370,6 +370,13 @@ public class PoiContentServiceImpl implements PoiContentService {
     }
 
     @Override
+    public PoiDetailDto getPoiBySlug(String slug, String lang) {
+        Poi poi = poiRepository.findBySlug(slug)
+                .orElseThrow(() -> new ResourceNotFoundException("POI not found with slug: " + slug));
+        return resolveDetailDto(poi, lang);
+    }
+
+    @Override
     public PoiInternalQrDto getInternalPoiByQrToken(String qrToken) {
         Poi poi = poiRepository.findByQrToken(qrToken)
                 .orElseThrow(() -> new ResourceNotFoundException("POI not found with QR token: " + qrToken));
@@ -396,6 +403,15 @@ public class PoiContentServiceImpl implements PoiContentService {
             return java.util.Optional.empty();
         }
         return poiRepository.findByQrToken(qrToken).map(Poi::getId);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public java.util.Optional<Long> findPoiIdBySlug(String slug) {
+        if (slug == null || slug.isBlank()) {
+            return java.util.Optional.empty();
+        }
+        return poiRepository.findBySlug(slug).map(Poi::getId);
     }
 
     @Override

@@ -37,14 +37,21 @@ export const OsmTileLayer: React.FC<OsmTileLayerProps> = ({
   const consecutiveErrorsRef = useRef<number>(0);
   const lastRetryRef = useRef<number>(retryTrigger);
 
+  // Keep the latest callbacks in a ref so an unstable inline callback from the
+  // parent can never rebuild the tile layer (which caused map flicker).
+  const schematicCallbacksRef = useRef({ onEnterSchematic, onExitSchematic });
+  useEffect(() => {
+    schematicCallbacksRef.current = { onEnterSchematic, onExitSchematic };
+  }, [onEnterSchematic, onExitSchematic]);
+
   useEffect(() => {
     if (retryTrigger !== lastRetryRef.current) {
       lastRetryRef.current = retryTrigger;
       consecutiveErrorsRef.current = 0;
       setProviderIndex(0);
-      onExitSchematic();
+      schematicCallbacksRef.current.onExitSchematic();
     }
-  }, [retryTrigger, onExitSchematic]);
+  }, [retryTrigger]);
 
   useEffect(() => {
     const currentProvider: TileProviderConfig =
@@ -86,7 +93,7 @@ export const OsmTileLayer: React.FC<OsmTileLayerProps> = ({
           consecutiveErrorsRef.current = 0;
           setProviderIndex(nextIndex);
         } else {
-          onEnterSchematic();
+          schematicCallbacksRef.current.onEnterSchematic();
         }
       }
     };
@@ -94,7 +101,7 @@ export const OsmTileLayer: React.FC<OsmTileLayerProps> = ({
     const handleTileLoad = () => {
       consecutiveErrorsRef.current = 0;
       saveWorkingProvider(currentProvider.key);
-      onExitSchematic();
+      schematicCallbacksRef.current.onExitSchematic();
     };
 
     layer.on('tileerror', handleTileError);
@@ -113,7 +120,7 @@ export const OsmTileLayer: React.FC<OsmTileLayerProps> = ({
         tileLayerRef.current = null;
       }
     };
-  }, [map, providerIndex, retryTrigger, providers, onEnterSchematic, onExitSchematic]);
+  }, [map, providerIndex, retryTrigger, providers]);
 
   return null;
 };

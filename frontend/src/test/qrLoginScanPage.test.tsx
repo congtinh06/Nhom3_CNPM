@@ -98,39 +98,43 @@ describe('QrLoginScanPage', () => {
     vi.mocked(authApi.refresh).mockRejectedValue({ response: { status: 401 } });
   });
 
-  it('khách quét mã sẽ ghi nhận phiên khách và hiển thị thông báo chế độ Khách', async () => {
+  it('khách quét mã sẽ bị chặn: mã QR đăng nhập chỉ cho tài khoản đã đăng ký', async () => {
     vi.mocked(authApi.refresh).mockRejectedValue({ response: { status: 401 } });
-    vi.mocked(authApi.guestScanQrLogin).mockResolvedValue({
-      ...QR_SCAN_RESULT,
-      status: 'GUEST_APPROVED',
-    });
 
     renderPage();
 
-    // Đợi AuthContext kết thúc bootstrap (khách) rồi mới submit token thủ công.
-    expect(await screen.findByText(/Bạn chưa có tài khoản/i)).toBeInTheDocument();
-    await submitManualToken('tok-guest-1');
+    // Đợi AuthContext kết thúc bootstrap (khách): chỉ hiện lời nhắc đăng nhập,
+    // không mở camera và không có ô nhập mã.
+    expect(
+      await screen.findByText(/Bạn cần đăng nhập trên thiết bị này trước khi quét mã/i)
+    ).toBeInTheDocument();
+    expect(screen.queryByLabelText(/hoặc nhập mã QR/i)).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /^Đăng nhập$/i })).toBeInTheDocument();
 
-    await waitFor(() => expect(authApi.guestScanQrLogin).toHaveBeenCalledWith('tok-guest-1'));
-    expect(await screen.findByText('Đã chuyển sang chế độ Khách')).toBeInTheDocument();
+    // Khách không được chuyển sang chế độ Khách cho luồng QR đăng nhập.
+    expect(authApi.guestScanQrLogin).not.toHaveBeenCalled();
     expect(authApi.scanQrLogin).not.toHaveBeenCalled();
+    expect(authApi.approveQrLogin).not.toHaveBeenCalled();
   });
 
   it('mã quét là URL đầy đủ sẽ được tách đúng token trước khi gửi API', async () => {
-    vi.mocked(authApi.refresh).mockRejectedValue({ response: { status: 401 } });
-    vi.mocked(authApi.guestScanQrLogin).mockResolvedValue({
-      ...QR_SCAN_RESULT,
-      status: 'GUEST_APPROVED',
+    vi.mocked(authApi.refresh).mockResolvedValue({
+      accessToken: 'access.token',
+      expiresIn: 900,
+      tokenType: 'Bearer',
+      user: USER,
     });
+    vi.mocked(authApi.scanQrLogin).mockResolvedValue(QR_SCAN_RESULT);
 
     renderPage();
 
-    expect(await screen.findByText(/Bạn chưa có tài khoản/i)).toBeInTheDocument();
-    await submitManualToken('http://localhost:5173/quet-qr-dang-nhap?t=tok-guest-url');
-
     await waitFor(() =>
-      expect(authApi.guestScanQrLogin).toHaveBeenCalledWith('tok-guest-url')
+      expect(document.querySelector('[data-auth-status="authenticated"]')).toBeTruthy()
     );
+    await submitManualToken('http://localhost:5173/quet-qr-dang-nhap?t=tok-url-1');
+
+    await waitFor(() => expect(authApi.scanQrLogin).toHaveBeenCalledWith('tok-url-1'));
+    expect(authApi.guestScanQrLogin).not.toHaveBeenCalled();
   });
 
   it('tài khoản thật đã xác thực email quét mã sẽ tới màn hình xác nhận rồi duyệt', async () => {
@@ -263,7 +267,7 @@ describe('QrLoginPanel - chế độ khách', () => {
 
     // Máy đã đăng nhập: hiện QR tài khoản để điện thoại quét, không tạo QR đăng nhập thường.
     expect(
-      await screen.findByRole('heading', { name: 'Đăng nhập nhanh trên điện thoại' })
+      await screen.findByRole('heading', { name: 'Đăng nhập thiết bị khác bằng QR' })
     ).toBeInTheDocument();
     await waitFor(() => expect(authApi.approveQrLogin).toHaveBeenCalledWith('handoff-raw'));
     expect(authApi.scanQrLogin).toHaveBeenCalledWith('handoff-raw');

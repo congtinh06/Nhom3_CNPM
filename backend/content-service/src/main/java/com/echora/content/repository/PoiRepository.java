@@ -3,6 +3,7 @@ package com.echora.content.repository;
 import com.echora.content.entity.Poi;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -18,8 +19,10 @@ import java.util.Optional;
 @Repository
 public interface PoiRepository extends JpaRepository<Poi, Long> {
 
+    @EntityGraph(attributePaths = {"zone", "category", "route"})
     List<Poi> findByZoneIdAndStatus(Long zoneId, String status);
 
+    @EntityGraph(attributePaths = {"zone", "category", "route"})
     List<Poi> findByStatus(String status);
 
     List<Poi> findByPublishStatus(String publishStatus);
@@ -27,6 +30,8 @@ public interface PoiRepository extends JpaRepository<Poi, Long> {
     Optional<Poi> findByQrToken(String qrToken);
 
     Optional<Poi> findByCode(String code);
+
+    Optional<Poi> findBySlug(String slug);
 
     boolean existsByRouteIdAndStopOrder(Long routeId, Integer stopOrder);
 
@@ -75,7 +80,7 @@ public interface PoiRepository extends JpaRepository<Poi, Long> {
             "WHERE (:zoneId IS NULL OR z.id = :zoneId) " +
             "AND (:routeId IS NULL OR r.id = :routeId) " +
             "AND (:status IS NULL OR p.status = :status) " +
-            "AND (:searchPattern IS NULL OR LOWER(p.name) LIKE :searchPattern) " +
+            "AND (:searchPattern IS NULL OR p.name LIKE :searchPattern) " +
             "AND (:audioStatus IS NULL OR EXISTS (SELECT 1 FROM PoiTranslation t WHERE t.poi = p AND t.audioStatus = :audioStatus)) " +
             "AND (" +
             "  :overallStatus IS NULL " +
@@ -99,7 +104,7 @@ public interface PoiRepository extends JpaRepository<Poi, Long> {
             "WHERE (:zoneId IS NULL OR p.zone.id = :zoneId) " +
             "AND (:routeId IS NULL OR p.route.id = :routeId) " +
             "AND (:status IS NULL OR p.status = :status) " +
-            "AND (:searchPattern IS NULL OR LOWER(p.name) LIKE :searchPattern) " +
+            "AND (:searchPattern IS NULL OR p.name LIKE :searchPattern) " +
             "AND (:audioStatus IS NULL OR EXISTS (SELECT 1 FROM PoiTranslation t WHERE t.poi = p AND t.audioStatus = :audioStatus)) " +
             "AND (" +
             "  :overallStatus IS NULL " +

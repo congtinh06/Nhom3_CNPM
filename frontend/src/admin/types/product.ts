@@ -9,7 +9,6 @@ export interface Product {
   description?: string | null;
   price: number;
   imagePath?: string | null;
-  categoryId?: number | null;
   rating?: number;
   reviewsCount?: number;
   poiId?: number | null;

@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Echora – Điểm du lịch Sài Gòn</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Be+Vietnam+Pro:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#F3F2EE;--bg2:#E9E7E0;--ink:#211D1A;--mut:#6B645C;--line:#D9D5CB;--acc:#0F5C52;--acc-ink:#fff;--map:#E4E2DA;--road:#F8F7F3;--water:#C9D6D8;--park:#CFD9C3;
+--serif:'Fraunces',Georgia,'Times New Roman',serif;--sans:'Be Vietnam Pro',system-ui,-apple-system,'Segoe UI',sans-serif;--r:10px}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1B1816;--bg2:#26221F;--ink:#F1EDE6;--mut:#A39B91;--line:#3A3531;--acc:#4DB8A2;--acc-ink:#0D1B18;--map:#2A2623;--road:#37322E;--water:#2F3D40;--park:#2F3A2C}}
+:root[data-theme="dark"]{--bg:#1B1816;--bg2:#26221F;--ink:#F1EDE6;--mut:#A39B91;--line:#3A3531;--acc:#4DB8A2;--acc-ink:#0D1B18;--map:#2A2623;--road:#37322E;--water:#2F3D40;--park:#2F3A2C}
+*{box-sizing:border-box;margin:0}
+:root{padding-top:env(safe-area-inset-top,0px)}
+html{scroll-padding-top:80px}
+body{background:var(--bg);color:var(--ink);font:400 16px/1.6 var(--sans);padding-bottom:calc(92px + env(safe-area-inset-bottom,0px))}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+:focus-visible{outline:2px solid var(--acc);outline-offset:2px;border-radius:4px}
+.wrap{max-width:1240px;margin:0 auto;padding:0 24px}
+header{position:sticky;top:0;z-index:20;background:var(--bg);border-bottom:1px solid var(--line)}
+header .wrap{display:flex;align-items:center;gap:28px;height:64px}
+.logo{font:600 24px var(--serif);letter-spacing:-.01em}
+nav{display:flex;gap:22px;font-size:15px;color:var(--mut);margin-right:auto}
+nav a{color:inherit;text-decoration:none;padding:6px 0}
+nav a[aria-current]{color:var(--ink);border-bottom:2px solid var(--acc)}
+.hr{display:flex;align-items:center;gap:16px;font-size:14px}
+.btn-solid{background:var(--ink);color:var(--bg);padding:8px 16px;border-radius:var(--r);font-weight:500}
+.hero{padding:44px 0 28px}
+h1{font:500 clamp(30px,4.6vw,52px)/1.12 var(--serif);letter-spacing:-.02em;max-width:18ch}
+.hero p{color:var(--mut);max-width:56ch;margin-top:14px}
+.prog{display:flex;align-items:center;gap:12px;margin-top:22px;font-size:14px;color:var(--mut)}
+.prog i{display:block;width:140px;height:3px;background:var(--line);border-radius:2px;overflow:hidden}
+.prog b{display:block;height:100%;width:0;background:var(--acc);transition:width .4s}
+.main{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);gap:48px;align-items:start}
+.list{list-style:none;padding:0;border-top:1px solid var(--line)}
+.item{border-bottom:1px solid var(--line);position:relative}
+.item>button.row{width:100%;display:grid;grid-template-columns:36px 1fr auto;gap:14px;align-items:center;padding:18px 0;text-align:left}
+.dot{width:30px;height:30px;border-radius:50%;border:1.5px solid var(--line);display:grid;place-items:center;font-size:13px;font-weight:600;color:var(--mut);background:var(--bg);transition:.2s}
+.item.heard .dot{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+.item.on .dot{background:var(--acc);border-color:var(--acc);color:var(--acc-ink)}
+.nm{font:500 20px/1.25 var(--serif)}
+.ct{font-size:13.5px;color:var(--mut)}
+.st{font-size:13px;color:var(--mut);display:flex;align-items:center;gap:8px}
+.eq{display:none;gap:2px;align-items:flex-end;height:14px}
+.eq span{width:3px;background:var(--acc);height:100%;animation:eq 1s ease-in-out infinite;transform-origin:bottom}
+.eq span:nth-child(2){animation-delay:.2s}.eq span:nth-child(3){animation-delay:.4s}
+.item.playing .eq{display:flex}
+@keyframes eq{0%,100%{transform:scaleY(.3)}50%{transform:scaleY(1)}}
+.panel{display:grid;grid-template-rows:0fr;transition:grid-template-rows .3s ease-out}
+.item.on .panel{grid-template-rows:1fr}
+.panel>div{overflow:hidden}
+.pin{padding:0 0 24px 50px}
+.ph{aspect-ratio:16/9;border-radius:var(--r);position:relative;overflow:hidden;margin-bottom:16px}
+.ph svg{position:absolute;inset:0;width:100%;height:100%}
+.ph span{position:absolute;left:12px;bottom:10px;font-size:12px;color:#fff;opacity:.85}
+.pin p{max-width:60ch;color:var(--ink);opacity:.88}
+.acts{display:flex;flex-wrap:wrap;align-items:center;gap:8px 20px;margin-top:18px}
+.go{background:var(--acc);color:var(--acc-ink);padding:10px 20px;border-radius:var(--r);font-weight:500;min-height:44px}
+.lnk{font-size:14px;color:var(--mut);text-decoration:underline;text-underline-offset:3px;min-height:44px;padding:0 2px}
+.lnk:hover{color:var(--ink)}
+.mapcol{position:sticky;top:84px}
+.map{position:relative;border-radius:14px;overflow:hidden;background:var(--map);height:min(640px,calc(100vh - 190px));min-height:420px;border:1px solid var(--line)}
+.map svg{width:100%;height:100%;display:block}
+.pt{cursor:pointer}
+.pt circle{fill:var(--bg);stroke:var(--ink);stroke-width:1.5;transition:.2s}
+.pt text{font:600 11px var(--sans);fill:var(--ink);text-anchor:middle;dominant-baseline:central;pointer-events:none}
+.pt.on circle{fill:var(--acc);stroke:var(--acc);r:15}
+.pt.on text{fill:var(--acc-ink)}
+.pt .lb{font:500 13px var(--sans);fill:var(--ink);text-anchor:start;opacity:0;paint-order:stroke;stroke:var(--map);stroke-width:4px}
+.pt.on .lb,.pt:hover .lb{opacity:1}
+.tools{position:absolute;left:12px;right:12px;bottom:12px;display:flex;gap:8px;justify-content:space-between;flex-wrap:wrap}
+.chip{background:var(--bg);border:1px solid var(--line);border-radius:var(--r);padding:8px 12px;font-size:14px;display:flex;align-items:center;gap:10px;min-height:44px}
+.sw{width:34px;height:20px;border-radius:10px;background:var(--line);position:relative;transition:.2s}
+.sw::after{content:"";position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:var(--bg);box-shadow:0 0 0 1px rgba(0,0,0,.15);transition:.2s}
+[aria-checked="true"] .sw{background:var(--acc)}
+[aria-checked="true"] .sw::after{left:16px}
+.shop{margin-top:72px;padding-top:36px;border-top:1px solid var(--line)}
+.shop h2{font:500 clamp(24px,3vw,32px)/1.2 var(--serif);letter-spacing:-.01em}
+.shop>p{color:var(--mut);margin-top:6px}
+.goods{display:grid;grid-template-columns:repeat(3,1fr);gap:28px;margin-top:28px}
+.good .ph{aspect-ratio:4/5;margin-bottom:12px}
+.good h3{font:500 18px var(--serif)}
+.good p{font-size:14px;color:var(--mut);margin-top:2px}
+.buy{display:flex;justify-content:space-between;align-items:center;margin-top:10px}
+.buy b{font-weight:600}
+.add{border:1px solid var(--ink);border-radius:var(--r);padding:8px 14px;font-size:14px;min-height:44px;transition:.2s}
+.add:hover,.add.done{background:var(--ink);color:var(--bg)}
+footer.pl{position:fixed;left:0;right:0;bottom:0;z-index:30;background:var(--ink);color:var(--bg);padding-bottom:env(safe-area-inset-bottom,0px)}
+.pl .bar{height:3px;background:rgba(255,255,255,.18);cursor:pointer;position:relative}
+.pl .bar b{position:absolute;inset:0 auto 0 0;width:0;background:var(--acc)}
+.pl .wrap{display:grid;grid-template-columns:1fr auto 1fr;gap:20px;align-items:center;height:84px}
+.now small{display:block;font-size:12.5px;opacity:.65}
+.now strong{font:500 17px/1.3 var(--serif);display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ctl{display:flex;align-items:center;gap:6px}
+.ib{width:44px;height:44px;display:grid;place-items:center;border-radius:50%}
+.ib:hover{background:rgba(255,255,255,.1)}
+.ib svg{width:20px;height:20px;fill:currentColor}
+.pp{background:var(--bg);color:var(--ink);width:52px;height:52px}
+.pp:hover{background:var(--bg)}
+.lang{justify-self:end;display:flex;border:1px solid rgba(255,255,255,.28);border-radius:var(--r);overflow:hidden}
+.lang button{padding:0 14px;height:40px;font-size:14px;font-weight:500;opacity:.9}
+.lang button[aria-pressed="true"]{background:var(--bg);color:var(--ink)}
+.lang button.lock{opacity:.5}
+.lang button svg{width:11px;height:11px;margin-left:5px;fill:none;stroke:currentColor;stroke-width:2;vertical-align:-1px}
+.tm{font-size:12.5px;opacity:.65;margin:0 8px;font-variant-numeric:tabular-nums;min-width:84px;text-align:center}
+.toast{position:fixed;left:50%;bottom:calc(104px + env(safe-area-inset-bottom,0px));transform:translate(-50%,12px);background:var(--bg);color:var(--ink);border:1px solid var(--line);padding:10px 16px;border-radius:var(--r);font-size:14px;opacity:0;pointer-events:none;transition:.25s;z-index:40;max-width:90vw}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+.hero{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);gap:48px;align-items:center}
+.hv{aspect-ratio:5/4;border-radius:14px;overflow:hidden;position:relative}
+.hv svg{width:100%;height:100%;display:block}
+.hv span{position:absolute;left:16px;bottom:14px;color:#fff;font-size:13.5px;opacity:.9}
+.th{width:76px;height:56px;border-radius:8px;overflow:hidden;position:relative;display:block}
+.th svg{position:absolute;inset:0;width:100%;height:100%}
+.item>button.row{grid-template-columns:30px 76px 1fr auto}
+.tz{font-size:14px;color:var(--mut);margin-top:4px;max-width:52ch;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.item.on .tz{display:none}
+.how{margin-top:72px;display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid var(--line)}
+.how div{padding:28px 28px 0 0}.how div+div{padding-left:28px;border-left:1px solid var(--line)}
+.how h3{font:500 20px var(--serif)}.how p{color:var(--mut);font-size:15px;margin-top:6px;max-width:40ch}
+footer.site{margin-top:80px;border-top:1px solid var(--line);padding:40px 0 24px}
+.fg{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:32px}
+.fg h4{font:600 14px var(--sans);margin-bottom:8px}
+.fg a{display:block;color:var(--mut);text-decoration:none;font-size:14px;padding:5px 0}
+.fg p{color:var(--mut);font-size:14px;max-width:34ch;margin-top:8px}
+.cp{margin-top:32px;font-size:13px;color:var(--mut)}
+.hero{grid-template-columns:minmax(0,1.25fr) minmax(0,.75fr);align-items:end}
+.facts{border-top:1px solid var(--line)}
+.facts div{display:flex;justify-content:space-between;gap:16px;padding:13px 0;border-bottom:1px solid var(--line);font-size:15px}
+.facts dt{color:var(--mut)}.facts dd{font-weight:500;text-align:right;margin:0}
+.stripw{overflow-x:auto;margin:8px 0 44px}
+.strip{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));position:relative;min-width:760px}
+.strip::before{content:"";position:absolute;left:0;right:0;top:6px;height:2px;background:var(--line)}
+.strip i{position:absolute;left:0;top:6px;height:2px;width:0;background:var(--acc);transition:width .4s}
+.sd{position:relative;text-align:left;padding:24px 12px 4px 0;font-size:13.5px;line-height:1.4;color:var(--mut);align-self:start}
+.sd::before{content:"";position:absolute;left:0;top:0;width:14px;height:14px;border-radius:50%;background:var(--bg);border:2px solid var(--line);transition:.2s}
+.sd.heard::before{background:var(--acc);border-color:var(--acc)}
+.sd.on{color:var(--ink);font-weight:500}
+.sd.on::before{background:var(--acc);border-color:var(--acc);transform:scale(1.3)}
+.sd:hover{color:var(--ink)}
+.hv,.prog{display:none}
+.ph,.th{background:var(--bg2);color:var(--ink)}
+.ph span{color:var(--mut);opacity:1}
+footer.pl{background:var(--bg2);color:var(--ink);border-top:1px solid var(--line)}
+.pl .bar{background:var(--line)}
+.pp,.pp:hover{background:var(--ink);color:var(--bg)}
+.ib:hover{background:var(--line)}
+.lang{border-color:var(--line)}
+.lang button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.now{display:flex;align-items:center;gap:14px;min-width:0}.now>div{min-width:0}
+.now .th{width:52px;height:52px;flex:none;border-radius:8px}
+.item:hover:not(.on)>.row .nm{color:var(--acc)}
+html{scrollbar-gutter:stable}
+.wf{display:flex;align-items:center;gap:3px;height:56px;cursor:pointer;margin:2px 0 4px}
+.wf i{flex:1;min-width:2px;max-width:6px;background:var(--line);border-radius:2px;transition:background .2s}
+.wf i.f{background:var(--acc)}
+.tm2{display:flex;justify-content:space-between;font-size:13px;color:var(--mut);font-variant-numeric:tabular-nums;margin-bottom:16px}
+.tr{max-width:62ch}.sn{transition:opacity .3s}
+.tr.live .sn{opacity:.45}.tr.live .sn.cur{opacity:1;background:linear-gradient(transparent 62%,color-mix(in srgb,var(--acc) 25%,transparent) 0)}
+.acts{display:flex;flex-wrap:wrap;align-items:center;gap:4px 28px;margin-top:20px}
+.acts .lnk{font-size:15px;color:var(--ink);text-decoration:none;display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0}
+.acts .lnk::after{content:"→";color:var(--acc);transition:transform .2s}
+.acts .lnk:hover{color:var(--acc)}.acts .lnk:hover::after{transform:translateX(3px)}
+.nx{display:flex;justify-content:space-between;gap:16px;border-top:1px solid var(--line);margin-top:20px;padding-top:4px;flex-wrap:wrap}
+.nx .lnk{font-size:14px;color:var(--mut);text-decoration:none;display:inline-flex;gap:8px;align-items:center;min-height:44px;padding:0}
+.nx .lnk.pv::before{content:"←"}.nx .lnk.nt::after{content:"→";color:var(--acc)}
+.nx .lnk:hover{color:var(--ink)}
+.sd small{display:block;font-size:12.5px;font-weight:400;color:var(--mut);margin-top:2px}
+.acts{justify-content:space-between;gap:12px 24px;margin-top:22px}
+.pbtn{display:inline-flex;align-items:center;gap:14px;padding:4px 10px 4px 4px;border-radius:40px;min-height:56px;text-align:left}
+.pc{width:52px;height:52px;border-radius:50%;background:var(--acc);color:var(--acc-ink);display:grid;place-items:center;transition:filter .2s}
+.pc svg{width:22px;height:22px;fill:currentColor;grid-area:1/1}
+.pc .pa{display:none}.item.playing .pc .pl2{display:none}.item.playing .pc .pa{display:block}
+.pbtn:hover .pc{filter:brightness(1.1)}
+.pt2 b{display:block;font-weight:600;font-size:16px;line-height:1.25}
+.pt2 .b{display:none}.item.playing .pt2 .a{display:none}.item.playing .pt2 .b{display:inline}
+.pt2 small{display:block;font-size:13px;color:var(--mut);margin-top:1px;font-variant-numeric:tabular-nums}
+.sec{display:flex;gap:2px;margin-left:auto}
+.ab{display:inline-flex;align-items:center;gap:8px;font-size:14.5px;color:var(--ink);min-height:44px;padding:0 12px;border-radius:var(--r);transition:background .2s}
+.ab svg{width:18px;height:18px;fill:none;stroke:var(--mut);stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.ab:hover{background:var(--bg2)}
+@media (max-width:640px){.sec{margin-left:-12px;width:100%}}
+.chs{margin:4px 0 20px;border-top:1px solid var(--line)}
+.chb{display:flex;gap:16px;align-items:center;width:100%;text-align:left;padding:8px 0;border-bottom:1px solid var(--line);font-size:15px;min-height:44px;transition:color .2s}
+.chb span{width:40px;color:var(--mut);font-variant-numeric:tabular-nums;font-size:13px}.chb:hover{color:var(--acc)}
+.tp{margin:0 0 4px}.tp div{display:flex;justify-content:space-between;gap:24px;padding:10px 0;border-bottom:1px solid var(--line);font-size:14.5px}
+.tp dt{color:var(--mut);flex:none}.tp dd{text-align:right;margin:0}
+.plan,.faq{margin-top:88px;padding-top:40px;border-top:1px solid var(--line)}
+.plan h2,.faq h2{font:500 clamp(24px,3vw,34px)/1.2 var(--serif);letter-spacing:-.01em}
+.pc2{display:grid;grid-template-columns:1fr 1fr;gap:56px;margin-top:28px}
+.pc2 h3{font:500 22px var(--serif)}.pc2 p{color:var(--mut);margin:4px 0 14px}
+.pc2 ol{list-style:none;padding:0;border-top:1px solid var(--line);counter-reset:n}
+.pc2 li{counter-increment:n;padding:11px 0;border-bottom:1px solid var(--line);display:flex;gap:14px}
+.pc2 li::before{content:counter(n);color:var(--mut);width:16px;font-size:14px}
+.faq{display:grid;grid-template-columns:minmax(0,.7fr) minmax(0,1.3fr);gap:56px}
+details{border-bottom:1px solid var(--line)}details:first-of-type{border-top:1px solid var(--line)}
+summary{list-style:none;cursor:pointer;padding:14px 0;font-weight:500;display:flex;justify-content:space-between;gap:16px;min-height:52px;align-items:center}
+summary::-webkit-details-marker{display:none}summary::after{content:"+";color:var(--mut);font-size:22px;line-height:1}
+details[open] summary::after{content:"–"}details p{color:var(--mut);padding:0 0 18px;max-width:58ch}
+.map{height:min(620px,calc(100vh - 250px));min-height:380px}
+.mcap{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;font-size:14px;color:var(--mut)}
+.lnk2{color:var(--ink);text-decoration:underline;text-underline-offset:3px;min-height:44px;padding:0 2px}.lnk2:hover{color:var(--acc)}
+.mnote{margin-top:10px;font-size:14px;color:var(--mut)}
+.tools{justify-content:flex-start}
+.bar2{display:flex;background:var(--bg);border:1px solid var(--line);border-radius:var(--r)}
+.bar2 button{display:flex;align-items:center;gap:10px;padding:0 14px;min-height:44px;font-size:14px}
+.bar2 button+button{border-left:1px solid var(--line)}
+.pt circle{fill:var(--ink);stroke:var(--bg);stroke-width:2.5;transition:fill .2s}
+.pt text{font:600 11px var(--sans);fill:var(--bg);text-anchor:middle;dominant-baseline:central;pointer-events:none}
+.pt .lb{fill:var(--ink);font:500 12px var(--sans);opacity:0;paint-order:stroke;stroke:var(--map);stroke-width:4px}
+#msvg.all .pt .lb{opacity:1}#msvg.all #sel .tg{display:none}
+.pt.hd circle{fill:var(--bg);stroke:var(--ink);stroke-width:2}.pt.hd text:not(.lb){fill:var(--ink)}
+.pt:hover circle{fill:var(--acc)}.pt:hover text:not(.lb){fill:var(--acc-ink)}
+#sel .rg{fill:none;stroke:var(--acc);stroke-width:1.5;opacity:.45}
+#sel .bg2{fill:var(--acc);stroke:var(--bg);stroke-width:3}
+#sel .nn{font:600 14px var(--sans);fill:var(--acc-ink);text-anchor:middle;dominant-baseline:central}
+#sel .tg rect{fill:var(--bg);stroke:var(--line)}
+#sel .tt{font:500 13px var(--sans);fill:var(--ink);dominant-baseline:central}
+.sg{stroke:var(--mut);stroke-width:2;stroke-dasharray:2 7;stroke-linecap:round;opacity:.65}
+.sg.h{stroke:var(--acc);stroke-dasharray:none;stroke-width:3;opacity:1}
+.strip .sg2{width:calc(100%/7);opacity:0;transition:opacity .3s}.strip .sg2.h{opacity:1}
+.hcta{display:flex;align-items:center;gap:24px;margin-top:22px;flex-wrap:wrap}
+.pb2{background:var(--acc);color:var(--acc-ink);padding:12px 22px;border-radius:var(--r);font-weight:500;min-height:48px;text-align:left}
+.pb2:hover{filter:brightness(1.1)}
+@media (max-width:960px){.pc2,.faq{grid-template-columns:1fr;gap:28px}}
+@media (max-width:960px){.hero{grid-template-columns:1fr}}
+@media (max-width:960px){.hero{grid-template-columns:1fr;gap:24px}.hv{aspect-ratio:16/9}.how{grid-template-columns:1fr}.how div,.how div+div{padding:20px 0;border-left:0;border-bottom:1px solid var(--line)}.fg{grid-template-columns:1fr 1fr}}
+@media (max-width:640px){.item>button.row{grid-template-columns:28px 56px 1fr auto;gap:10px}.th{width:56px;height:56px}.tz{display:none}}
+@media (max-width:960px){
+ .main{grid-template-columns:1fr;gap:28px}
+ .mapcol{position:static;order:-1}
+ .map{height:300px;min-height:0}
+ nav{display:none}.hr .hide{display:none}
+ .goods{grid-template-columns:repeat(3,70%);overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:8px;gap:16px}
+ .good{scroll-snap-align:start}
+}
+@media (max-width:640px){
+ .wrap{padding:0 16px}
+ .pin{padding-left:0}
+ .pl .wrap{grid-template-columns:1fr auto;height:auto;padding-top:10px;padding-bottom:10px;gap:8px 12px}
+ .lang{grid-column:1/-1;justify-self:stretch}.lang button{flex:1}
+ .tm{display:none}
+ body{padding-bottom:calc(150px + env(safe-area-inset-bottom,0px))}
+ .toast{bottom:calc(164px + env(safe-area-inset-bottom,0px))}
+ .hero{padding-top:28px}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<header><div class="wrap">
+ <div class="logo">Echora</div>
+ <nav aria-label="Chính"><a href="#">Trang chủ</a><a href="#" aria-current="page">Điểm du lịch</a><a href="#">Quà lưu niệm</a><a href="#">Tin tức</a><a href="#">Liên hệ</a></nav>
+ <div class="hr"><span class="hide">Tiếng Việt</span><span id="cart" class="hide">Giỏ hàng (0)</span><a class="hide" href="#" style="color:inherit">Đăng nhập</a><button class="btn-solid">Đăng ký</button></div>
+</div></header>
+
+<div class="wrap">
+ <section class="hero"><div class="ht">
+  <h1>Bảy điểm dừng quanh trung tâm Sài Gòn</h1>
+  <p>Đeo tai nghe vào và đi. Mỗi điểm có một đoạn thuyết minh ngắn, nghe được bằng bốn ngôn ngữ. Bật tự động, máy sẽ phát khi bạn đến gần.</p>
+  <div class="hcta"><button class="pb2" id="hcta">Nghe điểm đầu tiên</button><button class="lnk2" id="gomap">Xem bản đồ</button></div>
+  </div><dl class="facts"><div><dt>Quãng đường</dt><dd>Khoảng 14 km</dd></div><div><dt>Tổng thời gian nghe</dt><dd>18 phút</dd></div><div><dt>Ngôn ngữ</dt><dd>Việt, Anh, Nhật, Hàn</dd></div><div><dt>Bạn đã nghe</dt><dd id="heardTxt">0/7</dd></div></dl>
+ </section>
+ <div class="stripw"><div class="strip" id="strip"></div></div>
+
+ <div class="main">
+  <ol class="list" id="list"></ol>
+  <div class="mapcol">
+   <div class="mcap"><span>Lộ trình 7 điểm · 14 km</span><button class="lnk2" id="fit">Xem cả tuyến</button></div>
+   <div class="map">
+    <svg id="msvg" viewBox="60 90 440 440" preserveAspectRatio="xMidYMid slice" role="group" aria-label="Bản đồ lộ trình bảy điểm">
+     <path d="M470 -20 C 520 120, 440 220, 500 330 S 470 520, 520 640" fill="none" stroke="var(--water)" stroke-width="64"/>
+     <rect x="215" y="330" width="95" height="70" rx="10" fill="var(--park)"/>
+     <g stroke="var(--road)" stroke-width="9" fill="none" stroke-linecap="round"><path d="M-10 120 L 600 260"/><path d="M-10 300 L 600 420"/><path d="M60 -10 L 220 620"/><path d="M180 -10 L 420 620"/><path d="M-10 520 L 600 500"/><path d="M330 -10 L 400 620"/></g>
+     <g fill="var(--mut)" font-family="var(--sans)" opacity=".75"><text transform="translate(514 318) rotate(80)" font-size="12" letter-spacing="4">SÔNG SÀI GÒN</text><text x="262" y="372" text-anchor="middle" font-size="11">Công viên</text><text x="300" y="150" font-size="11" letter-spacing="3">QUẬN 1</text><text x="82" y="398" font-size="11" letter-spacing="3">CHỢ LỚN</text></g>
+     <g id="segs"></g><g id="pts"></g>
+     <g id="me" style="display:none"><circle cx="285" cy="335" r="15" fill="var(--ink)" opacity=".18"/><circle cx="285" cy="335" r="7" fill="var(--ink)" stroke="var(--bg)" stroke-width="3"/></g>
+     <g id="sel" pointer-events="none"><circle class="rg" r="25"/><circle class="bg2" r="17"/><text class="nn"></text><g class="tg"><rect rx="8"/><text class="tt"></text></g></g>
+    </svg>
+    <div class="tools"><div class="bar2"><button role="switch" aria-checked="false" id="auto"><span class="sw"></span>Tự động phát</button><button id="loc">Vị trí của tôi</button></div></div>
+   </div>
+   <p class="mnote" id="mnote">Chưa có vị trí của bạn. Danh sách xếp theo thứ tự tour, vẫn nghe được ngay.</p>
+  </div>
+ </div>
+
+ <section class="plan"><h2>Đi bao lâu thì vừa?</h2><div class="pc2"><div><h3>Nửa ngày</h3><p>Khoảng 4 giờ, gom các điểm ở trung tâm, chủ yếu đi bộ.</p><ol><li>Nhà thờ Đức Bà Sài Gòn</li><li>Bưu điện Trung tâm Sài Gòn</li><li>Dinh Độc Lập</li><li>Chợ Bến Thành</li></ol></div><div><h3>Cả ngày</h3><p>Khoảng 8 giờ, đủ bảy điểm, có đoạn đi xe buýt.</p><ol><li>Bảo tàng Chứng tích Chiến tranh</li><li>Nhà thờ Đức Bà Sài Gòn</li><li>Chùa Bà Thiên Hậu</li><li>Cầu Ba Son</li><li>Bưu điện Trung tâm Sài Gòn</li><li>Dinh Độc Lập</li><li>Chợ Bến Thành</li></ol></div></div></section>
+ <section class="how"><div><h3>Bấm nghe hoặc quét mã</h3><p>Nghe ngay trên trang, hoặc quét QR để nghe trên điện thoại và đi tay không.</p></div><div><h3>Để máy tự phát</h3><p>Bật tự động phát, đi tới gần điểm nào thì thuyết minh điểm đó bắt đầu.</p></div><div><h3>Nghe bằng tiếng của bạn</h3><p>Tiếng Việt miễn phí. Tiếng Anh, Nhật, Hàn mở bằng gói Premium.</p></div></section>
+ <section class="shop" aria-labelledby="shopT">
+  <h2 id="shopT">Mang một chút Sài Gòn về nhà</h2>
+  <p>Những món nhỏ do người địa phương chọn, bán ngay tại các điểm dừng.</p>
+  <div class="goods" id="goods"></div>
+ </section>
+ <section class="faq"><h2>Câu hỏi thường gặp</h2><div>
+  <details><summary>Tôi có cần cài ứng dụng không?</summary><p>Không. Bạn mở trang web trên điện thoại, hoặc quét mã QR ở từng điểm để nghe ngay.</p></details>
+  <details><summary>Thuyết minh tự động hoạt động thế nào?</summary><p>Khi bạn bật tính năng và cho phép định vị, trang sẽ tự phát thuyết minh lúc bạn đến gần một điểm dừng.</p></details>
+  <details><summary>Ngôn ngữ nào miễn phí?</summary><p>Tiếng Việt miễn phí. Tiếng Anh, Nhật, Hàn mở bằng gói Premium.</p></details>
+  <details><summary>Tôi có phải đi đúng thứ tự không?</summary><p>Không. Thứ tự trên danh sách chỉ là gợi ý lộ trình, bạn nghe điểm nào trước cũng được.</p></details>
+ </div></section>
+</div>
+
+<footer class="site"><div class="wrap"><div class="fg"><div><div class="logo">Echora</div><p>Thuyết minh tự động đa ngôn ngữ cho những chuyến đi bộ quanh Sài Gòn.</p></div><div><h4>Khám phá</h4><a href="#">Điểm du lịch</a><a href="#">Quà lưu niệm</a><a href="#">Tin tức</a></div><div><h4>Hỗ trợ</h4><a href="#">Cách sử dụng</a><a href="#">Gói Premium</a><a href="#">Liên hệ</a></div><div><h4>Ngôn ngữ</h4><a href="#">Tiếng Việt</a><a href="#">English</a><a href="#">日本語 · 한국어</a></div></div><div class="cp">© 2026 Echora</div></div></footer>
+<footer class="pl" aria-label="Trình phát">
+ <div class="bar" id="seek" role="slider" aria-label="Tiến trình" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" tabindex="0"><b id="fill"></b></div>
+ <div class="wrap">
+  <div class="now"><span class="th" id="nowTh"></span><div><small id="nowSub">Chưa phát</small><strong id="nowName">Chọn một điểm để bắt đầu</strong></div></div>
+  <div class="ctl">
+   <button class="ib" id="prev" aria-label="Điểm trước"><svg viewBox="0 0 24 24"><path d="M6 5h2v14H6zM20 5v14L9 12z"/></svg></button>
+   <button class="ib pp" id="pp" aria-label="Phát" aria-pressed="false"><svg viewBox="0 0 24 24" id="ppi"><path d="M8 5v14l11-7z"/></svg></button>
+   <button class="ib" id="next" aria-label="Điểm sau"><svg viewBox="0 0 24 24"><path d="M16 5h2v14h-2zM4 5v14l11-7z"/></svg></button>
+   <span class="tm" id="tm">0:00 / 0:00</span>
+  </div>
+  <div class="lang" id="lang" role="group" aria-label="Ngôn ngữ thuyết minh"></div>
+ </div>
+</footer>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+const S=[{"n": "Bảo tàng Chứng tích Chiến tranh", "c": "Di tích lịch sử", "x": 150, "y": 170, "d": 180, "h": [24, 200, 60], "t": "Bảo tàng nằm trên đường Võ Văn Tần, thành lập vào tháng chín năm 1975 và mang tên như hiện nay từ năm 1995. Mục đích của bảo tàng là lưu giữ hình ảnh, tư liệu và hiện vật về chiến tranh Việt Nam, để người xem hiểu rõ hơn về những mất mát mà chiến tranh gây ra. Ở sân trước, bạn sẽ thấy máy bay, xe tăng, pháo và nhiều loại bom đạn được trưng bày ngoài trời. Bên trong, các tầng trưng bày ảnh và hiện vật theo từng chủ đề, trong đó có phần nói về hậu quả của chất độc da cam. Đây là nơi nên đến với tâm thế trầm lắng, và bạn có thể dừng lại nghỉ bất cứ lúc nào.", "tp": [["Nên dành", "1,5 – 2 giờ"], ["Thời điểm", "Sáng sớm, ít đông hơn"], ["Lưu ý", "Có hình ảnh nặng nề, cân nhắc nếu đi cùng trẻ nhỏ"]], "ch": ["Lịch sử bảo tàng", "Sân trưng bày ngoài trời", "Các phòng trong nhà"]}, {"n": "Nhà thờ Đức Bà Sài Gòn", "c": "Kiến trúc và nghệ thuật", "x": 250, "y": 240, "d": 150, "h": [8, 15, 80], "t": "Nhà thờ được xây từ năm 1863 đến 1880, trong thời kỳ Pháp thuộc, và là một trong những công trình tiêu biểu nhất của trung tâm thành phố. Tường gạch đỏ không phủ vữa nên màu gạch giữ nguyên qua nhiều thập kỷ. Hai tháp chuông cao vút nhìn từ xa đã thấy, còn phía trước quảng trường có tượng Đức Mẹ. Góc quảng trường là chỗ ngắm toàn cảnh đẹp nhất, nhất là lúc nắng chiều. Đối diện nhà thờ là Bưu điện Trung tâm, nên bạn có thể ghé tiếp ngay sau đó.", "tp": [["Nên dành", "30 – 45 phút"], ["Thời điểm", "Chiều muộn, nắng dịu"], ["Lưu ý", "Công trình có thể đang trùng tu, nên kiểm tra trước khi đến"]], "ch": ["Công trình và thời xây dựng", "Gạch đỏ và hai tháp chuông", "Góc ngắm quảng trường"]}, {"n": "Chùa Bà Thiên Hậu", "c": "Tín ngưỡng và tôn giáo", "x": 190, "y": 350, "d": 140, "h": [2, 70, 30], "t": "Chùa Bà Thiên Hậu nằm ở Chợ Lớn, khu phố của cộng đồng người Hoa ở Sài Gòn, thờ bà Thiên Hậu, vị nữ thần che chở cho người đi biển. Điều nhiều người nhớ nhất là những vòng nhang xoắn lớn treo kín trên trần, khói hương quyện cùng ánh sáng len qua mái ngói. Mái chùa nhiều tầng được trang trí bằng các tượng gốm nhỏ kể lại những điển tích xưa. Người đến cầu bình an, cầu buôn bán thuận lợi thường thắp nhang rồi viết lời nguyện vào giấy treo cạnh vòng nhang. Hãy bước nhẹ và nói khẽ, vì đây vẫn là nơi sinh hoạt tín ngưỡng của người dân.", "tp": [["Nên dành", "30 – 40 phút"], ["Thời điểm", "Buổi sáng, hương khói nhiều"], ["Lưu ý", "Ăn mặc kín đáo, nói khẽ"]], "ch": ["Người Hoa ở Chợ Lớn", "Vòng nhang và mái ngói", "Cách viếng chùa"]}, {"n": "Cầu Ba Son", "c": "Kiến trúc và nghệ thuật", "x": 450, "y": 190, "d": 130, "h": [200, 30, 60], "t": "Cầu Ba Son là cây cầu dây văng nối hai bờ sông Sài Gòn, đưa người đi từ trung tâm sang khu Thủ Thiêm. Tên cầu lấy từ xưởng Ba Son, nơi từng đóng và sửa chữa tàu bên bờ sông với lịch sử hàng trăm năm. Từ trên cầu hoặc công viên ven sông, bạn nhìn được cả dãy nhà cao tầng phía bờ bên kia. Thời điểm đẹp nhất là lúc hoàng hôn, khi bầu trời đổi màu và đèn trên cầu bắt đầu sáng. Đây là điểm dừng thoáng nhất của hành trình, thích hợp để nghỉ chân trước khi quay lại trung tâm.", "tp": [["Nên dành", "30 phút"], ["Thời điểm", "Hoàng hôn"], ["Lưu ý", "Mang theo nước, ven sông ít bóng mát"]], "ch": ["Xưởng Ba Son xưa", "Cây cầu hôm nay", "Ngắm hoàng hôn"]}, {"n": "Bưu điện Trung tâm Sài Gòn", "c": "Kiến trúc và nghệ thuật", "x": 330, "y": 300, "d": 150, "h": [45, 50, 50], "t": "Bưu điện Trung tâm được xây từ năm 1886 đến 1891 theo phong cách kiến trúc Pháp, và đến nay vẫn là một bưu điện đang hoạt động. Sảnh chính có mái vòm cao, khung sắt và những ô cửa sổ lớn đón ánh sáng tự nhiên. Trên tường là các tấm bản đồ cổ vẽ Sài Gòn và vùng phụ cận từ nhiều thập kỷ trước, rất đáng dừng lại xem kỹ. Ở cuối sảnh có chân dung Chủ tịch Hồ Chí Minh, hai bên là các quầy giao dịch kiểu cũ. Bạn có thể viết một tấm bưu thiếp và gửi đi ngay tại đây.", "tp": [["Nên dành", "30 phút"], ["Thời điểm", "Giờ hành chính, đủ quầy mở"], ["Lưu ý", "Đi cùng Nhà thờ Đức Bà cho tiện"]], "ch": ["Một công trình còn sống", "Sảnh chính và bản đồ cổ", "Gửi một tấm bưu thiếp"]}, {"n": "Dinh Độc Lập", "c": "Di tích lịch sử", "x": 260, "y": 410, "d": 170, "h": [160, 25, 45], "t": "Dinh Độc Lập do kiến trúc sư Ngô Viết Thụ thiết kế và hoàn thành năm 1966, từng là nơi làm việc của chính quyền Việt Nam Cộng hòa. Ngày 30 tháng 4 năm 1975, xe tăng húc đổ cổng dinh, đánh dấu sự kiện kết thúc chiến tranh, và nơi đây từ đó trở thành di tích lịch sử. Bên trong, bạn đi qua phòng khánh tiết, phòng họp nội các và phòng làm việc của tổng thống. Tầng hầm giữ nguyên hệ thống chỉ huy và bản đồ quân sự thời chiến. Mặt tiền với những ô lam che nắng kiểu hiện đại cũng là một điểm nhấn kiến trúc đáng chú ý.", "tp": [["Nên dành", "1 – 1,5 giờ"], ["Thời điểm", "Sáng, trước khi nắng gắt"], ["Lưu ý", "Kiểm tra giờ mở cửa và giờ nghỉ trưa"]], "ch": ["Kiến trúc sư và công trình", "Ngày 30 tháng 4 năm 1975", "Phòng họp và tầng hầm"]}, {"n": "Chợ Bến Thành", "c": "Đời sống thường ngày", "x": 390, "y": 460, "d": 140, "h": [30, 60, 45], "t": "Chợ Bến Thành khai trương năm 1914, với tòa nhà cổng chính và tháp đồng hồ đã trở thành một trong những hình ảnh quen thuộc nhất của thành phố. Bên trong là rất nhiều quầy bán đồ thủ công, vải vóc, cà phê, trái cây sấy và đủ loại quà lưu niệm. Buổi sáng chợ đông người mua bán, còn buổi tối khu ăn uống quanh chợ mới nhộn nhịp. Khi mua đồ, hãy hỏi giá trước và thoải mái trả giá, đó là cách mua bán quen thuộc ở đây. Đây là điểm dừng cuối thích hợp để chọn quà mang về.", "tp": [["Nên dành", "1 giờ"], ["Thời điểm", "Sáng để đi chợ, tối để ăn"], ["Lưu ý", "Hỏi giá trước khi mua"]], "ch": ["Tòa chợ năm 1914", "Đi chợ buổi sáng", "Mua quà và trả giá"]}];
+const G=[{n:"Tranh cổ động Việt Nam",d:"Tranh phong cách cũ, đậm dấu ấn lịch sử.",p:"120.000đ",h:20},{n:"Sách lịch sử Sài Gòn",d:"Sách ảnh về lịch sử và con người Sài Gòn.",p:"95.000đ",h:150},{n:"Huy hiệu lưu niệm",d:"Huy hiệu ghim với biểu tượng Sài Gòn.",p:"20.000đ",h:200}];
+const L=[["VI",0],["EN",1],["JA",1],["KO",1]];
+const $=s=>document.querySelector(s);
+const fmt=s=>Math.floor(s/60)+":"+String(Math.floor(s%60)).padStart(2,"0");
+let cur=0,playing=false,t=0,heard=new Set([4,5]),timer,cart=0;
+const D=[
+'<path d="M50 150V92H270V150M50 92L80 72H240L270 92M100 112H220M100 128H220M118 150l36-14 36 14M154 136v-14"/>',
+'<path d="M92 150V82l14-52 14 52v68M200 150V82l14-52 14 52v68M120 150V104H200V150M146 104V88h28v16"/><circle cx="160" cy="126" r="9"/>',
+'<path d="M80 150V116H240V150M58 116c22 0 32-12 42-22h120c10 10 20 22 42 22M96 94c14 0 24-10 32-20h64c8 10 18 20 32 20M130 74c10-6 20-14 30-26 10 12 20 20 30 26"/>',
+'<path d="M200 150V28M200 40L40 150M200 62L96 150M200 84L146 150M200 40L300 150M200 62L268 150M200 84L246 150"/>',
+'<path d="M50 150V96H270V150M50 96L160 58 270 96M100 150V118a14 14 0 0128 0V150M146 150V118a14 14 0 0128 0V150M192 150V118a14 14 0 0128 0V150"/><circle cx="160" cy="80" r="9"/>',
+'<path d="M50 150V110H270V150M70 110V82H250V110M96 82V60H224V82M110 150V110M160 150V110M210 150V110"/>',
+'<path d="M60 150V112H260V150M130 112V82H190V112M144 82V52h32V82M160 52V30M142 150v-20h36v20"/><circle cx="160" cy="66" r="6"/>',
+'<rect x="112" y="26" width="96" height="124"/><path d="M126 52h68M126 66h44"/><circle cx="160" cy="108" r="16"/>',
+'<path d="M90 142H230V68H90zM90 105H230M112 142V68"/>',
+'<circle cx="160" cy="90" r="32"/><circle cx="160" cy="90" r="12"/>'];
+const art=(h,w)=>{const k=typeof w==="string"?+w.slice(1):w;return `<svg viewBox="0 0 320 180" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><circle cx="252" cy="48" r="18" fill="var(--acc)"/><g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"><path d="M10 150H310" opacity=".5"/>${D[k]}</g></svg>`};
+const DS=["Điểm xuất phát","0,9 km · 12 phút đi bộ","3,4 km · xe buýt","4,6 km · xe buýt","2,3 km · xe buýt","1,2 km · 15 phút đi bộ","1,6 km · 20 phút đi bộ"];
+const bars=i=>Array.from({length:56},(_,k)=>`<i style="height:${Math.round(22+Math.abs(Math.sin((k+3)*(i+2)*.61)+Math.sin(k*.9+i))*34)}%"></i>`).join("");
+function render(){
+ $("#list").innerHTML=S.map((s,i)=>`<li class="item" id="i${i}"><button class="row" aria-expanded="false" data-i="${i}"><span class="dot">${i+1}</span><span class="th">${art(s.h[0],"t"+i)}</span><span><div class="nm">${s.n}</div><div class="ct">${s.c}, nghe ${fmt(s.d)} phút</div><div class="tz">${s.t.split(/(?<=\.)\s/)[0]}</div></span><span class="st"><span class="eq" aria-hidden="true"><span></span><span></span><span></span></span><span class="stt"></span></span></button><div class="panel"><div><div class="pin"><div class="ph">${art(s.h[0],i)}<span>Ảnh minh họa, thay bằng ảnh thật</span></div><div class="wf" data-w="${i}" role="slider" tabindex="0" aria-label="Tiến trình đoạn thuyết minh">${bars(i)}</div><div class="tm2"><span>0:00</span><span>${fmt(s.d)}</span></div><p class="tr">${s.t.split(/(?<=\.)\s+/).map(x=>`<span class="sn">${x} </span>`).join("")}</p><div class="chs">${s.ch.map((c,k)=>`<button class="chb" data-ch="${i}:${k}"><span>${fmt(Math.floor(s.d*k/3))}</span>${c}</button>`).join("")}</div><dl class="tp">${s.tp.map(x=>`<div><dt>${x[0]}</dt><dd>${x[1]}</dd></div>`).join("")}</dl><div class="acts"><button class="pbtn" data-go="${i}" aria-label="Nghe ${s.n}"><span class="pc"><svg class="pl2" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg><svg class="pa" viewBox="0 0 24 24"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg></span><span class="pt2"><b><span class="a">Nghe điểm này</span><span class="b">Tạm dừng</span></b><small>${fmt(s.d)} · Tiếng Việt</small></span></button><span class="sec"><button class="ab" data-t="Đang mở chỉ đường tới ${s.n}"><svg viewBox="0 0 24 24"><path d="M4 11l16-7-7 16-2-7z"/></svg>Chỉ đường</button><button class="ab" data-t="Đã tạo mã QR cho điểm này"><svg viewBox="0 0 24 24"><rect x="7" y="2.5" width="10" height="19" rx="2"/><path d="M11 18h2"/></svg>Trên điện thoại</button></span></div><div class="nx">${i>0?`<button class="lnk pv" data-n="${i-1}">${S[i-1].n}</button>`:"<span></span>"}${i<6?`<button class="lnk nt" data-n="${i+1}">Tiếp theo: ${S[i+1].n}</button>`:""}</div></div></div></div></li>`).join("");
+ $("#pts").innerHTML=S.map((s,i)=>`<g class="pt" data-i="${i}" tabindex="0" role="button" aria-label="${i+1}. ${s.n}"><circle cx="${s.x}" cy="${s.y}" r="13"/><text x="${s.x}" y="${s.y}">${i+1}</text><text class="lb" x="${s.x+(s.x>330?-22:22)}" y="${s.y}" style="text-anchor:${s.x>330?"end":"start"}">${s.n}</text></g>`).join("");
+ $("#segs").innerHTML=S.slice(0,-1).map((s,i)=>`<line class="sg" x1="${s.x}" y1="${s.y}" x2="${S[i+1].x}" y2="${S[i+1].y}"/>`).join("");
+ $("#strip").insertAdjacentHTML("beforeend",S.map((s,i)=>`<button class="sd" data-i="${i}">${s.n}<small>${DS[i]}</small></button>`).join(""));
+  $("#goods").innerHTML=G.map((g,gi)=>`<article class="good"><div class="ph">${art(0,7+gi)}</div><h3>${g.n}</h3><p>${g.d}</p><div class="buy"><b>${g.p}</b><button class="add">Thêm vào giỏ</button></div></article>`).join("");
+ $("#lang").innerHTML=L.map(([c,k])=>`<button data-l="${c}" aria-pressed="${c=="VI"}" class="${k?"lock":""}">${c}${k?'<svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/></svg>':""}</button>`).join("");
+}
+let nxt=0;
+function mapUpdate(){const s=S[cur],sel=$("#sel");
+ document.querySelectorAll(".pt").forEach((e,i)=>{e.classList.toggle("hd",heard.has(i));e.style.visibility=i===cur?"hidden":"visible"});
+ document.querySelectorAll(".sg").forEach((e,i)=>e.classList.toggle("h",heard.has(i)&&heard.has(i+1)));
+ sel.setAttribute("transform",`translate(${s.x} ${s.y})`);sel.querySelector(".nn").textContent=cur+1;
+ const tt=sel.querySelector(".tt"),r=sel.querySelector("rect"),lf=s.x>330;tt.textContent=s.n;tt.setAttribute("x",lf?-34:34);tt.style.textAnchor=lf?"end":"start";
+ const b=tt.getBBox();r.setAttribute("x",b.x-10);r.setAttribute("y",b.y-6);r.setAttribute("width",b.width+20);r.setAttribute("height",b.height+12);
+ nxt=[0,1,2,3,4,5,6].find(i=>!heard.has(i));if(nxt===undefined)nxt=0;
+ $("#hcta").textContent=heard.size===0?"Nghe điểm đầu tiên":heard.size===7?"Nghe lại từ đầu":"Nghe tiếp: "+S[nxt].n}
+function sync(open){
+ document.querySelectorAll(".item").forEach((e,i)=>{
+  e.classList.toggle("on",i===cur&&open!==false);
+  e.classList.toggle("playing",i===cur&&playing);
+  e.classList.toggle("heard",heard.has(i)&&i!==cur);
+  e.querySelector(".row").setAttribute("aria-expanded",i===cur&&open!==false);
+  e.querySelector(".stt").textContent=i===cur&&playing?"Đang phát":heard.has(i)?"Đã nghe":"";
+ });
+ mapUpdate();
+ $("#nowName").textContent=S[cur].n;$("#nowTh").innerHTML=art(0,cur);
+ $("#nowSub").textContent=playing?"Đang phát · điểm "+(cur+1)+"/7":"Điểm "+(cur+1)+"/7";
+ $("#pp").setAttribute("aria-pressed",playing);$("#pp").setAttribute("aria-label",playing?"Tạm dừng":"Phát");
+ $("#ppi").innerHTML=playing?'<path d="M7 5h4v14H7zM13 5h4v14h-4z"/>':'<path d="M8 5v14l11-7z"/>';
+ $("#heardTxt").textContent=heard.size+"/7";document.querySelectorAll(".sd").forEach((e,i)=>{e.classList.toggle("heard",heard.has(i));e.classList.toggle("on",i===cur)});if(!document.querySelector(".sg2"))$("#strip").insertAdjacentHTML("afterbegin",Array.from({length:6},(_,i)=>`<i class="sg2" style="left:${i/7*100}%"></i>`).join(""));document.querySelectorAll(".sg2").forEach((e,i)=>e.classList.toggle("h",heard.has(i)&&heard.has(i+1)));
+ tick(true);
+}
+function tick(noadv){
+ const d=S[cur].d;
+ if(!noadv&&playing){t++;if(t>=d){heard.add(cur);t=0;if(cur<6){cur++;}else playing=false;sync();return}}
+ $("#fill").style.width=t/d*100+"%";$("#seek").setAttribute("aria-valuenow",Math.round(t/d*100));$("#tm").textContent=fmt(t)+" / "+fmt(d);paint();
+}
+function paint(){const it=document.getElementById("i"+cur);if(!it)return;const f=t/S[cur].d;
+ const bs=it.querySelectorAll(".wf i"),n=Math.round(f*bs.length);bs.forEach((b,k)=>b.classList.toggle("f",k<n));
+ const tt=it.querySelector(".tm2 span");if(tt)tt.textContent=fmt(t);
+ const sn=it.querySelectorAll(".sn"),c=Math.min(sn.length-1,Math.floor(f*sn.length)),live=playing||t>0;
+ it.querySelector(".tr").classList.toggle("live",live);sn.forEach((x,k)=>x.classList.toggle("cur",live&&k===c));
+ document.querySelectorAll(".item:not(#i"+cur+") .tr.live").forEach(e=>e.classList.remove("live"))}
+function select(i,play){
+ if(i!==cur)t=0;cur=i;if(play!==undefined)playing=play;sync();
+ document.getElementById("i"+i).scrollIntoView({block:"nearest",behavior:"smooth"});
+}
+function toast(m){const e=$("#toast");e.textContent=m;e.classList.add("show");clearTimeout(e._t);e._t=setTimeout(()=>e.classList.remove("show"),2200)}
+render();timer=setInterval(()=>tick(),1000);sync();
+document.addEventListener("click",e=>{
+ const r=e.target.closest(".row"),pt=e.target.closest(".pt,.sd"),go=e.target.closest("[data-go]"),tt=e.target.closest("[data-t]"),lg=e.target.closest("[data-l]"),ad=e.target.closest(".add");
+ if(go){const gi=+go.dataset.go;if(gi===cur&&playing){playing=false;sync()}else select(gi,true)}
+ else if(r){const i=+r.dataset.i;if(i===cur&&r.parentNode.classList.contains("on"))sync(false);else select(i)}
+ else if(pt)select(+pt.dataset.i);
+ if(tt)toast(tt.dataset.t);
+ if(lg&&lg.classList.contains("lock"))toast("Ngôn ngữ này cần gói Premium");
+ if(ad){cart++;$("#cart").textContent="Giỏ hàng ("+cart+")";ad.textContent="Đã thêm";ad.classList.add("done")}
+});
+document.addEventListener("keydown",e=>{if(e.key==="Enter"&&e.target.classList.contains("pt"))select(+e.target.dataset.i)});
+document.addEventListener("click",e=>{const c=e.target.closest("[data-ch]");if(c){const[i,k]=c.dataset.ch.split(":").map(Number);cur=i;t=Math.floor(S[i].d*k/3);sync()}});
+$("#pp").onclick=()=>{playing=!playing;sync()};
+$("#prev").onclick=()=>select(Math.max(0,cur-1));
+$("#next").onclick=()=>select(Math.min(6,cur+1));
+$("#seek").onclick=e=>{const b=e.currentTarget.getBoundingClientRect();t=Math.floor((e.clientX-b.left)/b.width*S[cur].d);tick(true)};
+$("#auto").onclick=e=>{const c=e.currentTarget;const v=c.getAttribute("aria-checked")!=="true";c.setAttribute("aria-checked",v);toast(v?"Sẽ tự phát khi bạn đến gần một điểm":"Đã tắt tự động phát")};
+$("#loc").onclick=()=>{toast("Đã xác định vị trí của bạn");$("#me").style.display="block";$("#mnote").style.display="none"};
+$("#fit").onclick=e=>{const a=$("#msvg").classList.toggle("all");e.target.textContent=a?"Ẩn tên điểm":"Xem cả tuyến"};
+$("#hcta").onclick=()=>select(nxt,true);
+$("#gomap").onclick=()=>$(".mapcol").scrollIntoView({behavior:"smooth",block:"center"});
+document.addEventListener("click",e=>{const n=e.target.closest("[data-n]");if(n){select(+n.dataset.n);return}
+ const w=e.target.closest(".wf");if(w){const i=+w.dataset.w,b=w.getBoundingClientRect();cur=i;t=Math.floor((e.clientX-b.left)/b.width*S[i].d);sync()}});
+document.addEventListener("keydown",e=>{const w=e.target.closest&&e.target.closest(".wf");if(w&&(e.key==="ArrowRight"||e.key==="ArrowLeft")){const i=+w.dataset.w;cur=i;t=Math.max(0,Math.min(S[i].d-1,t+(e.key==="ArrowRight"?5:-5)));sync()}});
+</script>
+</body>
+</html>

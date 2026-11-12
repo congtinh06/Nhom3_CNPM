@@ -303,9 +303,9 @@
 }
 
 /* ==========================================================================
-   ECHORA – QUÀ LƯU NIỆM SÀI GÒN (UNIFIED WITH ĐIỂM DU LỊCH WARM PAPER + TEAL)
+   ECHORA – QUÀ LƯU NIỆM SÀI GÒN (UNIFIED WITH ĐIỂM DU LỊCH WARM PAPER + ORANGE)
    Reference structure/spacing: improve/echora-qua-luu-niem.html
-   Color & typography tokens: NearbyPage (--nearby-* / teal #0E5B53, Fraunces + Be Vietnam Pro)
+   Color & typography tokens: NearbyPage (--nearby-* / orange #C2410C, Fraunces + Be Vietnam Pro)
    ========================================================================== */
 
 html:has(.souvenir-sv-root),
@@ -324,8 +324,8 @@ body:has(.souvenir-sv-root) {
   --mut: #6F6254;
   --line: #DED2BF;
   --line2: #C9BAA2;
-  --acc: #0E5B53;
-  --acc-2: #093F39;
+  --acc: #C2410C;
+  --acc-2: #9A3412;
   --acc-ink: #FFFFFF;
   --serif: 'Fraunces', Georgia, 'Times New Roman', serif;
   --sans: 'Be Vietnam Pro', system-ui, -apple-system, 'Segoe UI', sans-serif;
@@ -449,16 +449,15 @@ body:has(.souvenir-sv-root) {
   align-items: center;
   gap: 10px;
   background: var(--surface);
-  border: 1px solid var(--line2);
-  border-radius: var(--r);
-  padding: 4px 5px 4px 14px;
+  border: 0;
+  border-bottom: 2px solid var(--line);
+  border-radius: 0;
+  padding: 4px 0;
   min-height: 48px;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .souvenir-sv-root .sr-box:focus-within {
-  border-color: var(--acc);
-  box-shadow: 0 0 0 3px rgba(14, 91, 83, 0.14);
+  border-bottom-color: var(--acc);
 }
 
 .souvenir-sv-root .sr-icon {
@@ -504,19 +503,23 @@ body:has(.souvenir-sv-root) {
 }
 
 .souvenir-sv-root .sr-submit {
-  background: var(--acc);
-  color: var(--acc-ink);
-  padding: 0 16px;
-  min-height: 38px;
-  border-radius: 8px;
+  background: none;
+  border: 0;
+  border-radius: 0;
+  color: var(--acc);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  padding: 0 2px;
+  min-height: 44px;
   font-size: 14px;
   font-weight: 500;
   flex-shrink: 0;
-  transition: background-color 0.2s ease;
+  transition: color 0.2s ease;
 }
 
 .souvenir-sv-root .sr-submit:hover {
-  background: var(--acc-2);
+  color: var(--acc-2);
+  background: none;
 }
 
 /* Live Autocomplete Dropdown */
@@ -590,7 +593,7 @@ body:has(.souvenir-sv-root) {
 }
 
 .souvenir-sv-root .sr-hl {
-  background: rgba(14, 91, 83, 0.14);
+  background: rgba(194, 65, 12, 0.14);
   color: var(--acc);
   font-weight: 600;
   padding: 0 1px;
@@ -730,6 +733,8 @@ body.header-hidden .souvenir-sv-root .tabs-w {
   overflow-x: auto;
   border-bottom: 1px solid var(--line);
   scrollbar-width: none;
+  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 16px, #000 calc(100% - 16px), transparent 100%);
+  mask-image: linear-gradient(to right, transparent 0, #000 16px, #000 calc(100% - 16px), transparent 100%);
 }
 
 .souvenir-sv-root .tabs::-webkit-scrollbar {
@@ -845,6 +850,11 @@ body.header-hidden .souvenir-sv-root .tabs-w {
   }
 }
 
+/* Catalog region: sticky tabs chỉ bám trong khu vực này */
+.souvenir-sv-root .catalog {
+  scroll-margin-top: 80px;
+}
+
 .souvenir-sv-root .grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -853,32 +863,28 @@ body.header-hidden .souvenir-sv-root .tabs-w {
 
 .souvenir-sv-root .good {
   min-width: 0;
-  animation: souvenirCardIn 0.4s ease-out both;
-  animation-delay: var(--d, 0ms);
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity 450ms ease-out, transform 450ms ease-out;
+  transition-delay: var(--d, 0ms);
 }
 
-@keyframes souvenirCardIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-}
-
-.souvenir-sv-root .good:first-child {
-  grid-column: span 2;
-}
-
-.souvenir-sv-root .good:first-child .ph {
-  aspect-ratio: 8 / 5;
+.souvenir-sv-root .good.is-in {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 .souvenir-sv-root .ph {
   position: relative;
   aspect-ratio: 4 / 5;
-  background: var(--bg2);
+  background: #ece9e2;
   color: var(--ink);
-  border-radius: var(--r);
+  border-radius: 8px;
   overflow: hidden;
+}
+
+.souvenir-sv-root[data-theme='dark'] .ph {
+  background: #26221f;
 }
 
 .souvenir-sv-root .ph img,
@@ -888,11 +894,45 @@ body.header-hidden .souvenir-sv-root .tabs-w {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 0.45s cubic-bezier(0.2, 0.8, 0.2, 1);
+  object-position: center;
+  transition: transform 600ms ease-out, opacity 600ms ease-out;
 }
 
-.souvenir-sv-root .good:hover .ph img {
+.souvenir-sv-root .ph img.ph-ph {
+  opacity: 0;
+}
+
+.souvenir-sv-root .good:hover .ph img,
+.souvenir-sv-root .good:focus-within .ph img {
   transform: scale(1.03);
+}
+
+.souvenir-sv-root .good:hover .ph img.ph-ph,
+.souvenir-sv-root .good:focus-within .ph img.ph-ph {
+  opacity: 1;
+  transform: scale(1.03);
+}
+
+.souvenir-sv-root .good:focus-within .ph img:not(.ph-ph) {
+  transform: scale(1.015);
+}
+
+/* Skeleton shimmer giữ tỷ lệ khung hình cố định -> không layout shift */
+.souvenir-sv-root .ph-skeleton {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(100deg, #efe8da 40%, #f7f2e9 50%, #efe8da 60%);
+  background-size: 200% 100%;
+  animation: phShimmer 1.4s linear infinite;
+}
+
+@keyframes phShimmer {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
 }
 
 .souvenir-sv-root .open {
@@ -945,9 +985,20 @@ body.header-hidden .souvenir-sv-root .tabs-w {
 }
 
 .souvenir-sv-root .good h3 {
-  font: 500 19px / 1.3 var(--serif) !important;
-  margin-top: 14px;
+  font-family: var(--sans) !important;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.35;
+  margin-top: 12px;
   min-width: 0;
+}
+
+.souvenir-sv-root .good .good-name {
+  font-family: var(--sans) !important;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.35;
+  min-height: 40px;
 }
 
 .souvenir-sv-root .ttl {
@@ -960,74 +1011,104 @@ body.header-hidden .souvenir-sv-root .tabs-w {
   -webkit-box-orient: vertical;
   overflow: hidden;
   overflow-wrap: anywhere;
-  transition: color 0.18s ease;
+  transition: color 180ms ease;
 }
 
 .souvenir-sv-root .ttl:hover {
   color: var(--acc);
 }
 
-.souvenir-sv-root .good p {
+.souvenir-sv-root .good-dest {
   margin: 4px 0 0;
-  font-size: 14px;
+  font-size: 13px;
   color: var(--mut);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
-.souvenir-sv-root .buy {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 10px;
-  margin-top: 6px;
-  flex-wrap: wrap;
+.souvenir-sv-root .good .good-price {
+  margin: 6px 0 0;
+  font-size: 15px;
+  color: var(--ink);
 }
 
-.souvenir-sv-root .buy-price {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 6px;
-}
-
-.souvenir-sv-root .buy b {
+.souvenir-sv-root .good .good-price b {
   font-weight: 600;
   color: var(--ink);
   font-variant-numeric: tabular-nums;
 }
 
-.souvenir-sv-root .old-price {
+.souvenir-sv-root .good .old-price {
   font-size: 12.5px;
   color: var(--mut);
   font-variant-numeric: tabular-nums;
 }
 
-.souvenir-sv-root .add {
-  font-size: 14px;
-  text-decoration: underline;
-  text-underline-offset: 4px;
-  padding: 0 2px;
+/* Quick add: full-width bar từ dưới ảnh lên trên, trên touch là nút "+" 44px */
+.souvenir-sv-root .good .qa {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 3;
+  transform: translateY(103%);
+  transition: transform 280ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.souvenir-sv-root .good:hover .qa,
+.souvenir-sv-root .good:focus-within .qa {
+  transform: translateY(0);
+}
+
+.souvenir-sv-root .qa-btn {
+  width: 100%;
   min-height: 44px;
+  background: var(--bg);
+  border: 0;
+  border-top: 1px solid var(--line);
+  border-radius: 0;
   color: var(--ink);
-  white-space: nowrap;
-}
-
-.souvenir-sv-root .add:hover:not(:disabled) {
-  color: var(--acc);
-}
-
-.souvenir-sv-root .add.on {
-  color: var(--acc);
+  font-family: var(--sans);
+  font-size: 14px;
   font-weight: 500;
-  text-decoration: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.souvenir-sv-root .add:disabled {
-  color: var(--mut);
-  text-decoration: none;
-  opacity: 0.65;
-  cursor: default;
+.souvenir-sv-root .qa-btn-label {
+  line-height: 1;
+}
+
+@media (hover: none) {
+  .souvenir-sv-root .good .qa {
+    position: absolute;
+    top: auto;
+    left: auto;
+    right: 10px;
+    bottom: 10px;
+    width: 44px;
+    height: 44px;
+    min-height: 44px;
+    transform: none;
+    border-radius: 50%;
+    overflow: visible;
+  }
+
+  .souvenir-sv-root .qa-btn {
+    width: 44px;
+    height: 44px;
+    min-height: 44px;
+    border-radius: 50%;
+    background: var(--acc);
+    border: 0;
+    color: var(--acc-ink);
+    padding: 0;
+  }
+
+  .souvenir-sv-root .qa-btn::before {
+    content: var(--qa-plus, '+');
+    font-size: 20px;
+    line-height: 1;
+  }
 }
 
 /* Progressive Load More & Empty State */
@@ -1069,14 +1150,220 @@ body.header-hidden .souvenir-sv-root .tabs-w {
   padding: 0 2px;
 }
 
-/* 7. Story Highlight (.story) */
+/* 7. EDITORIAL BLOCK (xen giữa các hàng của lưới) */
+.souvenir-sv-root .editorial {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  gap: 40px;
+  align-items: center;
+  margin: 48px 0;
+  padding: 32px 0;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+
+.souvenir-sv-root .editorial-ph {
+  aspect-ratio: 16 / 7;
+  border-radius: 8px;
+}
+
+.souvenir-sv-root .editorial-in h2 {
+  font: 500 clamp(24px, 3vw, 34px) / 1.2 var(--serif) !important;
+  letter-spacing: -0.01em;
+}
+
+.souvenir-sv-root .editorial-in p {
+  margin: 12px 0 0;
+  color: var(--mut);
+  font-size: 14.5px;
+  line-height: 1.6;
+  max-width: 52ch;
+}
+
+/* 7b. LOWER: CHỌN THEO ĐIỂM ĐÃ ĐI (hairline rows) */
+.souvenir-sv-root .desti {
+  margin-top: 72px;
+  padding-top: 40px;
+  border-top: 1px solid var(--line);
+}
+
+.souvenir-sv-root .desti h2 {
+  font: 500 clamp(24px, 3vw, 34px) / 1.2 var(--serif) !important;
+  letter-spacing: -0.01em;
+}
+
+.souvenir-sv-root .desti-list {
+  margin-top: 8px;
+  border-top: 1px solid var(--line);
+}
+
+.souvenir-sv-root .desti-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 20px 0;
+  border-bottom: 1px solid var(--line);
+  min-height: 44px;
+  flex-wrap: wrap;
+}
+
+.souvenir-sv-root .desti-row h3 {
+  font: 500 20px / 1.3 var(--serif) !important;
+}
+
+.souvenir-sv-root .desti-row p {
+  margin: 4px 0 0;
+  font-size: 14px;
+  color: var(--mut);
+}
+
+/* 7c. GIFT SETS: "Bộ quà gợi ý" (.sets / .s3) */
+.souvenir-sv-root .sets {
+  margin-top: 72px;
+  padding-top: 40px;
+  border-top: 1px solid var(--line);
+}
+
+.souvenir-sv-root .sets h2 {
+  font: 500 clamp(24px, 3vw, 34px) / 1.2 var(--serif) !important;
+  letter-spacing: -0.01em;
+  margin-bottom: 24px;
+}
+
+.souvenir-sv-root .sets-list {
+  margin-top: 8px;
+  border-top: 1px solid var(--line);
+}
+
+.souvenir-sv-root .s3 {
+  display: grid;
+  grid-template-columns: 1.1fr 1.5fr auto;
+  gap: 24px;
+  align-items: center;
+  padding: 20px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.souvenir-sv-root .s3:first-of-type {
+  border-top: 1px solid var(--line);
+}
+
+.souvenir-sv-root .s3 h3 {
+  font: 500 22px / 1.2 var(--serif) !important;
+}
+
+.souvenir-sv-root .s3 p {
+  color: var(--mut);
+  font-size: 15px;
+  line-height: 1.6;
+  margin: 2px 0 0;
+}
+
+.souvenir-sv-root .s3 .it2 {
+  color: var(--mut);
+  font-size: 15px;
+  line-height: 1.7;
+}
+
+.souvenir-sv-root .s3 .sp {
+  text-align: right;
+}
+
+.souvenir-sv-root .s3 .sp b {
+  display: block;
+  font-size: 18px;
+}
+
+.souvenir-sv-root .arr {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--ink);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  font-weight: 500;
+  min-height: 44px;
+  margin-top: 18px;
+  text-align: left;
+}
+
+.souvenir-sv-root .arr::after {
+  content: ' \2192';
+  display: inline-block;
+  color: var(--acc);
+}
+
+.souvenir-sv-root .arr:hover {
+  color: var(--acc);
+}
+
+/* 7d. PAGINATION "Trước 1 2 3 4 5 Sau" */
+.souvenir-sv-root .pager {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin: 56px 0 0;
+}
+
+.souvenir-sv-root .pager-btn {
+  font-family: var(--sans);
+  font-size: 14px;
+  color: var(--mut);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  padding: 10px 8px;
+  min-height: 44px;
+  min-width: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.souvenir-sv-root .pager-btn:hover:not(:disabled) {
+  color: var(--acc);
+}
+
+.souvenir-sv-root .pager-btn:disabled {
+  color: var(--line2);
+  text-decoration: none;
+  cursor: default;
+}
+
+.souvenir-sv-root .pager-num {
+  font-family: var(--sans);
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--mut);
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.souvenir-sv-root .pager-num:hover {
+  color: var(--ink);
+}
+
+.souvenir-sv-root .pager-num.is-current {
+  color: var(--ink);
+  text-decoration: underline;
+  text-underline-offset: 8px;
+  text-decoration-thickness: 2px;
+}
+
+/* 7e. STORY HIGHLIGHT (.story) */
 .souvenir-sv-root .story {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 56px;
   align-items: center;
-  margin-top: 96px;
-  padding-top: 48px;
+  margin-top: 72px;
+  padding-top: 40px;
   border-top: 1px solid var(--line);
 }
 
@@ -1117,7 +1404,7 @@ body.header-hidden .souvenir-sv-root .tabs-w {
 .souvenir-sv-root .info {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  margin-top: 88px;
+  margin-top: 72px;
   border-top: 1px solid var(--line);
 }
 
@@ -1154,7 +1441,7 @@ body.header-hidden .souvenir-sv-root .tabs-w {
   display: grid;
   grid-template-columns: minmax(0, 0.7fr) minmax(0, 1.3fr);
   gap: 56px;
-  margin-top: 88px;
+  margin-top: 72px;
   padding-top: 40px;
   border-top: 1px solid var(--line);
   background: transparent !important;
@@ -1211,7 +1498,7 @@ body.header-hidden .souvenir-sv-root .tabs-w {
   justify-content: space-between;
   align-items: center;
   gap: 32px;
-  margin-top: 88px;
+  margin-top: 72px;
   padding: 40px 0 0;
   border-top: 1px solid var(--line);
   flex-wrap: wrap;
@@ -1242,7 +1529,14 @@ body.header-hidden .souvenir-sv-root .tabs-w {
   color: var(--acc-ink) !important;
 }
 
-/* Responsive Breakpoints (960px, 640px, 390px) */
+/* Responsive Breakpoints (1100px, 700px, 640px, 390px) */
+@media (max-width: 1100px) {
+  .souvenir-sv-root .grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 40px 28px;
+  }
+}
+
 @media (max-width: 960px) {
   .souvenir-sv-root .head {
     grid-template-columns: 1fr;
@@ -1253,15 +1547,21 @@ body.header-hidden .souvenir-sv-root .tabs-w {
     font-size: 17px;
   }
 
-  .souvenir-sv-root .grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 32px 16px;
-  }
-
-  .souvenir-sv-root .story,
-  .souvenir-sv-root .faq {
+  .souvenir-sv-root .story {
     grid-template-columns: 1fr;
     gap: 28px;
+  }
+
+  .souvenir-sv-root .s3 {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .souvenir-sv-root .s3 .sp {
+    text-align: left;
+    display: flex;
+    align-items: center;
+    gap: 20px;
   }
 
   .souvenir-sv-root .info {
@@ -1273,6 +1573,13 @@ body.header-hidden .souvenir-sv-root .tabs-w {
     padding: 20px 0;
     border-left: 0;
     border-bottom: 1px solid var(--line);
+  }
+}
+
+@media (max-width: 700px) {
+  .souvenir-sv-root .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 32px 16px;
   }
 }
 
@@ -1308,7 +1615,31 @@ body.header-hidden .souvenir-sv-root .tabs-w {
   }
 
   .souvenir-sv-root .good h3 {
-    font-size: 17px !important;
+    font-size: 14px !important;
+  }
+
+  .souvenir-sv-root .desti,
+  .souvenir-sv-root .sets,
+  .souvenir-sv-root .info,
+  .souvenir-sv-root .faq,
+  .souvenir-sv-root .cta {
+    margin-top: 56px;
+    padding-top: 32px;
+  }
+
+  .souvenir-sv-root .editorial {
+    margin: 40px 0;
+    padding: 28px 0;
+    gap: 24px;
+  }
+
+  .souvenir-sv-root .desti-row {
+    padding: 14px 0;
+    gap: 12px;
+  }
+
+  .souvenir-sv-root .ways-grid {
+    gap: 28px;
   }
 }
 
@@ -1316,6 +1647,12 @@ body.header-hidden .souvenir-sv-root .tabs-w {
   .souvenir-sv-root .good,
   .souvenir-sv-root .souvenir-spin {
     animation: none !important;
+  }
+
+  .souvenir-sv-root .good {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
   }
 
   .souvenir-sv-root *,
@@ -1667,7 +2004,7 @@ body.header-hidden .souvenir-sv-root .tabs-w {
 }
 
 .product-detail-sv .detail-discount-tag {
-  background: rgba(14, 91, 83, 0.1);
+  background: rgba(194, 65, 12, 0.1);
   color: var(--acc);
   font-size: 12.5px;
   font-weight: 600;

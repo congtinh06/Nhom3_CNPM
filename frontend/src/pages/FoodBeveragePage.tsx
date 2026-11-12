@@ -3,6 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { RefreshCw, Search, X } from 'lucide-react';
 import nearbyPoisData from '../content/nearbyPois.json';
 import { enrichProducts } from '../content/productAdapter';
+import { defaultProducts } from '../content/defaultProducts';
 import { api } from '../api/client';
 import { Product } from '../types';
 import { PriceRangeFilter, SortOptionKey } from '../types/productFilter';
@@ -13,7 +14,7 @@ import { useFavorites } from '../hooks/useFavorites';
 import { useProductFilters } from '../hooks/useProductFilters';
 import { useNavbarLanguage } from '../content/languages';
 import { SOUVENIR_SPOTS, getSpotName } from '../content/souvenirSpots';
-import { st } from '../content/souvenirI18n';
+import { st, type SouvenirI18nKey } from '../content/souvenirI18n';
 import { formatPrice } from '../utils/formatters';
 import { applySouvenirDiscount, isSouvenirDiscountEligible } from '../utils/pricing';
 import '../styles/souvenir.css';
@@ -23,6 +24,14 @@ const MAX_AUTOCOMPLETE_ITEMS = 6;
 
 type CollectionKey = 'under-100k' | 'display' | 'pocket';
 type ArtKind = 'frame' | 'model' | 'magnet' | 'card' | 'hat' | 'cup' | 'tea' | 'book';
+
+interface GiftSet {
+  id: string;
+  titleKey: SouvenirI18nKey;
+  descKey: SouvenirI18nKey;
+  items: Product[];
+  total: number;
+}
 
 /**
  * Chuẩn hóa chuỗi tiếng Việt (bỏ dấu NFD, chuyển đ/Đ -> d, chữ thường)
@@ -234,47 +243,92 @@ const SuggestionThumb: React.FC<{ product: Product }> = ({ product }) => {
 interface SouvenirGridCardProps {
   product: Product;
   index: number;
-  cartQty: number;
   isFavorited: boolean;
   effectivePrice: number;
   hasDiscount: boolean;
   lang: ReturnType<typeof useNavbarLanguage>['lang'];
+  justAdded: boolean;
   onToggleFavorite: (id: number) => void;
   onAddToCart: (product: Product, e: React.MouseEvent) => void;
-  onSelect: (product: Product) => void;
   onQuickView: (product: Product) => void;
 }
 
 const SouvenirGridCard: React.FC<SouvenirGridCardProps> = ({
   product,
   index,
-  cartQty,
   isFavorited,
   effectivePrice,
   hasDiscount,
   lang,
+  justAdded,
   onToggleFavorite,
   onAddToCart,
-  onSelect,
   onQuickView,
 }) => {
   const [imageError, setImageError] = useState(false);
+  const [imgLoaded, setImgLoaded] = useState(false);
   const isOutOfStock = !product.isActive;
   const artKind = useMemo(() => detectArtKind(product), [product]);
+  const hasSecondImage = Boolean(product.secondImagePath);
+
+  const cardRef = useRef<HTMLElement | null>(null);
+  const [isInView, setIsInView] = useState(false);
+
+  useEffect(() => {
+    const el = cardRef.current;
+    if (!el) return;
+    if (typeof IntersectionObserver === 'undefined') {
+      // Fallback cho môi trường không hỗ trợ (jsdom / trình duyệt cũ)
+      setIsInView(true);
+      return;
+    }
+    if (typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
+      setIsInView(true);
+      return;
+    }
+    const io = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setIsInView(true);
+            io.disconnect();
+          }
+        });
+      },
+      { threshold: 0.12 }
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
 
   return (
     <article
-      className={`good ${isOutOfStock ? 'is-out' : ''}`}
-      style={{ '--d': `${Math.min(index, 11) * 40}ms` } as React.CSSProperties}
+      ref={cardRef}
+      className={`good ${isOutOfStock ? 'is-out' : ''} ${isInView ? 'is-in' : ''}`}
+      style={{ '--d': `${Math.min(index, 11) * 60}ms` } as React.CSSProperties}
     >
       <div className="ph">
         {product.imagePath && !imageError ? (
-          <img
-            src={product.imagePath}
-            alt={product.name}
-            loading="lazy"
-            onError={() => setImageError(true)}
-          />
+          <>
+            <img
+              src={product.imagePath}
+              alt={product.name}
+              loading="lazy"
+              onLoad={() => setImgLoaded(true)}
+              onError={() => setImageError(true)}
+            />
+            {hasSecondImage && (
+              <img
+                src={product.secondImagePath}
+                alt=""
+                loading="lazy"
+                onLoad={() => setImgLoaded(true)}
+                onError={() => setImgLoaded(true)}
+                className="ph-ph"
+              />
+            )}
+            {!imgLoaded && <div className="ph-skeleton" aria-hidden="true" />}
+          </>
         ) : (
           <SouvenirLineArt kind={artKind} />
         )}
@@ -305,35 +359,33 @@ const SouvenirGridCard: React.FC<SouvenirGridCardProps> = ({
             <path d="M12 20s-7-4.4-7-10a4 4 0 017-2.6A4 4 0 0119 10c0 5.6-7 10-7 10z" />
           </svg>
         </button>
+
+        {!isOutOfStock && (
+          <div className="qa">
+            <button
+              type="button"
+              className="qa-btn"
+              style={{ '--qa-plus': justAdded ? '\u2713' : '+' } as React.CSSProperties}
+              onClick={(e) => onAddToCart(product, e)}
+            >
+              <span className="qa-btn-label">{justAdded ? st(lang, 'addedOk') : st(lang, 'quickAdd')}</span>
+            </button>
+          </div>
+        )}
       </div>
 
-      <h3>
-        <button type="button" className="ttl" onClick={() => onSelect(product)}>
+      <h3 className="good-name">
+        <button type="button" className="ttl" onClick={() => onQuickView(product)}>
           {product.name}
         </button>
       </h3>
 
-      {product.shortDescription && <p>{product.shortDescription}</p>}
+      <p className="good-dest">{getSpotName(product.poiSlug, lang)}</p>
 
-      <div className="buy">
-        <span className="buy-price">
-          <b>{formatPrice(effectivePrice)}</b>
-          {hasDiscount && <del className="old-price">{formatPrice(product.price)}</del>}
-        </span>
-
-        <button
-          type="button"
-          className={`add ${cartQty > 0 ? 'on' : ''}`}
-          disabled={isOutOfStock}
-          onClick={(e) => onAddToCart(product, e)}
-        >
-          {isOutOfStock
-            ? st(lang, 'outOfStock')
-            : cartQty > 0
-              ? st(lang, 'addedCount', { count: cartQty })
-              : st(lang, 'addToCart')}
-        </button>
-      </div>
+      <p className="good-price">
+        <b>{formatPrice(effectivePrice)}</b>
+        {hasDiscount && <del className="old-price">{formatPrice(product.price)}</del>}
+      </p>
     </article>
   );
 };
@@ -341,7 +393,7 @@ const SouvenirGridCard: React.FC<SouvenirGridCardProps> = ({
 export const FoodBeveragePage: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { cart, addToCart, openCart } = useCart();
+  const { addToCart, openCart } = useCart();
   const { isPremium, hasAnyPurchase } = usePremium();
   const { showToast } = useToast();
   const { isFavorite, toggleFavorite } = useFavorites();
@@ -355,6 +407,7 @@ export const FoodBeveragePage: React.FC = () => {
     handleChangeFilter,
     handleSortChange,
     handleResetFilters,
+    handlePageChange,
     isAnyFilterActive,
   } = useProductFilters();
 
@@ -363,7 +416,6 @@ export const FoodBeveragePage: React.FC = () => {
   const [isAutocompleteOpen, setIsAutocompleteOpen] = useState<boolean>(false);
   const [highlightedIndex, setHighlightedIndex] = useState<number>(-1);
   const [activeCollection, setActiveCollection] = useState<CollectionKey | null>(null);
-  const [visibleCount, setVisibleCount] = useState<number>(ITEMS_PER_PAGE);
   const [storyImgError, setStoryImgError] = useState<boolean>(false);
 
   // Quick View Modal State
@@ -444,7 +496,8 @@ export const FoodBeveragePage: React.FC = () => {
       })
       .catch(() => {
         if (cancelled) return;
-        setApiProducts([]);
+        const fallback = defaultProducts.filter((p) => p.category === 'SOUVENIR');
+        setApiProducts(fallback);
       })
       .finally(() => {
         if (!cancelled) setIsLoading(false);
@@ -524,16 +577,7 @@ export const FoodBeveragePage: React.FC = () => {
   }, [lang, searchInput, souvenirProducts]);
 
   // Reset số món đang mở mỗi khi đổi bộ lọc, từ khóa hoặc bộ sưu tập
-  useEffect(() => {
-    setVisibleCount(ITEMS_PER_PAGE);
-  }, [
-    searchInput,
-    filters.spot,
-    filters.priceRange,
-    filters.rating,
-    filters.sortBy,
-    activeCollection,
-  ]);
+  // (phân trang mặc định về trang 1 qua handlePageChange / handleChangeFilter)
 
   // Điểm vừa nghe gần nhất (đọc từ localStorage echora_listened_pois, chỉ hiện khi có quà thật)
   const recentListenedSpot = useMemo<{ slug: string; count: number } | null>(() => {
@@ -685,29 +729,106 @@ export const FoodBeveragePage: React.FC = () => {
     souvenirProducts,
   ]);
 
+  const currentPage = Math.max(1, filters.page);
   const visibleProducts = useMemo(
-    () => filteredProducts.slice(0, visibleCount),
-    [filteredProducts, visibleCount]
+    () => filteredProducts.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE),
+    [filteredProducts, currentPage]
   );
 
-  const remainingCount = Math.max(0, filteredProducts.length - visibleProducts.length);
-
-  // Sản phẩm nổi bật cho phần câu chuyện bên dưới (chỉ hiển thị khi có dữ liệu thực từ API)
+  // Sản phẩm cho khối câu chuyện "Treo một góc Sài Gòn lên tường" (một tác phẩm theo điểm dừng)
   const featuredStoryProduct = useMemo<Product | null>(() => {
-    if (souvenirProducts.length === 0) return null;
-    return (
-      souvenirProducts.find((item) => {
-        const hay = normalizeVietnamese(`${item.name} ${item.slug}`);
-        return hay.includes('tranh') || hay.includes('frame');
-      }) ??
-      souvenirProducts[0] ??
-      null
+    if (filteredProducts.length === 0) return null;
+    const visibleIds = new Set(visibleProducts.map((item) => item.id));
+    const outsider = filteredProducts.find((item) => !visibleIds.has(item.id));
+    const story = filteredProducts.find((item) => {
+      const hay = normalizeVietnamese(`${item.name} ${item.slug}`);
+      return hay.includes('tranh') || hay.includes('frame');
+    });
+    return outsider ?? story ?? filteredProducts[0] ?? null;
+  }, [filteredProducts, visibleProducts]);
+
+  // Bộ quà gợi ý (gift sets): chia danh mục thành ba bộ theo loại món và điểm dừng
+  const giftSets = useMemo<GiftSet[]>(() => {
+    const pick = (items: Product[], count: number): Product[] =>
+      items.filter((item) => item.isActive).slice(0, count);
+
+    const pocketItems = pick(
+      filteredProducts.filter((item) => {
+        const kind = detectArtKind(item);
+        return kind === 'magnet' || kind === 'card';
+      }),
+      4
     );
-  }, [souvenirProducts]);
+    const displayItems = pick(
+      filteredProducts.filter((item) => {
+        const kind = detectArtKind(item);
+        return (
+          (kind === 'frame' || kind === 'model') &&
+          (!item.poiSlug || item.poiSlug === 'dinh-doc-lap')
+        );
+      }),
+      2
+    );
+    const marketItems = pick(
+      filteredProducts.filter((item) => {
+        const kind = detectArtKind(item);
+        return (
+          (kind === 'hat' || kind === 'cup' || kind === 'tea') &&
+          (!item.poiSlug || item.poiSlug === 'cho-ben-thanh')
+        );
+      }),
+      3
+    );
+
+    const candidates: Array<{
+      id: string;
+      titleKey: SouvenirI18nKey;
+      descKey: SouvenirI18nKey;
+      items: Product[];
+    }> = [
+      { id: 'set-pocket', titleKey: 'set1Title', descKey: 'set1Desc', items: pocketItems },
+      { id: 'set-display', titleKey: 'set2Title', descKey: 'set2Desc', items: displayItems },
+      { id: 'set-market', titleKey: 'set3Title', descKey: 'set3Desc', items: marketItems },
+    ];
+
+    const sets: GiftSet[] = [];
+    for (const candidate of candidates) {
+      const items = candidate.items;
+      if (items.length === 0) continue;
+      sets.push({
+        id: candidate.id,
+        titleKey: candidate.titleKey,
+        descKey: candidate.descKey,
+        items,
+        total: items.reduce(
+          (sum, item) => sum + applySouvenirDiscount(item.price, isDiscountEligible, item.category),
+          0
+        ),
+      });
+    }
+    return sets;
+  }, [filteredProducts, isDiscountEligible]);
+
+  // Danh sách số trang cho phân trang "Trước 1 2 3 4 5 Sau"
+  const pageNumbers = useMemo(() => {
+    const total = Math.max(1, Math.ceil(filteredProducts.length / ITEMS_PER_PAGE));
+    const start = Math.max(1, Math.min(currentPage - 2, total - 4));
+    const end = Math.min(total, start + 4);
+    const nums: number[] = [];
+    for (let n = start; n <= end; n += 1) nums.push(n);
+    return { nums, total };
+  }, [currentPage, filteredProducts.length]);
 
   useEffect(() => {
     setStoryImgError(false);
   }, [featuredStoryProduct?.id]);
+
+  // Cuộn lên đầu lưới khi chuyển trang
+  useEffect(() => {
+    if (currentPage > 1) {
+      catalogAnchorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [currentPage]);
 
   const handleAddToCart = useCallback(
     (product: Product, e?: React.MouseEvent) => {
@@ -718,6 +839,53 @@ export const FoodBeveragePage: React.FC = () => {
       (window as unknown as { __pop?: () => void }).__pop?.();
     },
     [addToCart, lang, showToast]
+  );
+
+  // Quick add trên thẻ: "Thêm nhanh" -> "Đã thêm ✓" trong 1.5s
+  const [justAddedId, setJustAddedId] = useState<number | null>(null);
+  const justAddedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (justAddedTimerRef.current) {
+        clearTimeout(justAddedTimerRef.current);
+      }
+    };
+  }, []);
+
+  const handleQuickAdd = useCallback(
+    (product: Product, e?: React.MouseEvent) => {
+      handleAddToCart(product, e);
+      setJustAddedId(product.id);
+      if (justAddedTimerRef.current) {
+        clearTimeout(justAddedTimerRef.current);
+      }
+      justAddedTimerRef.current = setTimeout(() => setJustAddedId(null), 1500);
+    },
+    [handleAddToCart]
+  );
+
+  // "Thêm cả bộ" của bộ quà: thêm lần lượt từng món vào giỏ rồi mở giỏ hàng
+  const handleAddSet = useCallback(
+    (set: GiftSet) => {
+      for (const item of set.items) {
+        addToCart(item, 1);
+      }
+      showToast(st(lang, 'setAdded', { count: set.items.length }));
+      (window as unknown as { __pop?: () => void }).__pop?.();
+    },
+    [addToCart, lang, showToast]
+  );
+
+  // Nút "Xem bộ sưu tập <điểm>" của dòng ".desti": gộp bộ sưu tập về điểm đó rồi cuộn lên lưới
+  const handleEditorialCta = useCallback(
+    (poiSlug?: string | null) => {
+      setActiveCollection(null);
+      setIgnoreSpotWhileTyping(false);
+      handleChangeFilter('spot', poiSlug ?? 'all');
+      catalogAnchorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    },
+    [handleChangeFilter]
   );
 
   const stopQuickViewAudio = useCallback(() => {
@@ -937,6 +1105,17 @@ export const FoodBeveragePage: React.FC = () => {
           <div>
             <h1>{st(lang, 'heroTitle')}</h1>
             <p>{st(lang, 'heroSub')}</p>
+            {recentListenedSpot && (
+              <p className="hint">
+                {st(lang, 'hintPrefix')} <b>{getSpotName(recentListenedSpot.slug, lang)}</b>.{' '}
+                <button
+                  type="button"
+                  onClick={() => handleChangeFilter('spot', recentListenedSpot.slug)}
+                >
+                  {st(lang, 'hintAction', { count: recentListenedSpot.count })}
+                </button>
+              </p>
+            )}
           </div>
 
           <div className="sr" ref={searchContainerRef}>
@@ -1078,18 +1257,7 @@ export const FoodBeveragePage: React.FC = () => {
           </div>
         </section>
 
-        {/* 2. RECENTLY LISTENED STOP HINT (ONLY IF REAL LISTENED DATA EXISTS) */}
-        {recentListenedSpot && filters.spot !== recentListenedSpot.slug && (
-          <p className="hint">
-            {st(lang, 'hintPrefix')} <b>{getSpotName(recentListenedSpot.slug, lang)}</b>.{' '}
-            <button
-              type="button"
-              onClick={() => handleChangeFilter('spot', recentListenedSpot.slug)}
-            >
-              {st(lang, 'hintAction', { count: recentListenedSpot.count })}
-            </button>
-          </p>
-        )}
+        {/* 2. (Live suggestions now render inside the search header above) */}
 
         {/* 3. CURATED COLLECTIONS (3 HAIRLINE COLUMNS) */}
         {souvenirProducts.length > 0 && (
@@ -1121,8 +1289,10 @@ export const FoodBeveragePage: React.FC = () => {
           </div>
         )}
 
-        {/* 4. STICKY DESTINATION STRIP */}
-        <div className="tabs-w" ref={catalogAnchorRef}>
+        {/* Catalog region: sticky tabs chỉ bám trong khu vực này */}
+        <div className="catalog">
+          {/* 4. STICKY DESTINATION STRIP */}
+          <div className="tabs-w">
           <div className="tabs" role="radiogroup" aria-label={st(lang, 'spotGroupAria')}>
             <button
               type="button"
@@ -1162,8 +1332,9 @@ export const FoodBeveragePage: React.FC = () => {
               {isLoading
                 ? st(lang, 'loading')
                 : filteredProducts.length > 0
-                  ? st(lang, 'showingCount', {
-                      shown: visibleProducts.length,
+                  ? st(lang, 'showingRange', {
+                      start: (currentPage - 1) * ITEMS_PER_PAGE + 1,
+                      end: Math.min(currentPage * ITEMS_PER_PAGE, filteredProducts.length),
                       total: filteredProducts.length,
                     })
                   : st(lang, 'noItemsCount')}
@@ -1217,7 +1388,7 @@ export const FoodBeveragePage: React.FC = () => {
           </div>
         ) : visibleProducts.length > 0 ? (
           <>
-            <div className="grid" id="grid">
+            <div className="grid" id="grid" ref={catalogAnchorRef}>
               {visibleProducts.map((product, idx) => {
                 const hasDiscount = isSouvenirDiscountEligible(
                   isDiscountEligible,
@@ -1228,36 +1399,54 @@ export const FoodBeveragePage: React.FC = () => {
                   isDiscountEligible,
                   product.category
                 );
+
                 return (
                   <SouvenirGridCard
                     key={product.id}
                     product={product}
                     index={idx}
-                    cartQty={cart[product.id] ?? 0}
                     isFavorited={isFavorite(product.id)}
                     effectivePrice={effectivePrice}
                     hasDiscount={hasDiscount}
                     lang={lang}
+                    justAdded={justAddedId === product.id}
                     onToggleFavorite={toggleFavorite}
-                    onAddToCart={handleAddToCart}
-                    onSelect={handleSelectProduct}
+                    onAddToCart={handleQuickAdd}
                     onQuickView={handleOpenQuickView}
                   />
                 );
               })}
             </div>
 
-            {remainingCount > 0 && (
-              <div className="more" id="more">
-                {st(lang, 'moreRemaining', { count: remainingCount })}
+            <div className="pager" aria-label={st(lang, 'pagerLabel')}>
+              <button
+                type="button"
+                className="pager-btn"
+                disabled={currentPage <= 1}
+                onClick={() => handlePageChange(currentPage - 1)}
+              >
+                {st(lang, 'prevPage')}
+              </button>
+              {pageNumbers.nums.map((n) => (
                 <button
+                  key={n}
                   type="button"
-                  onClick={() => setVisibleCount((prev) => prev + ITEMS_PER_PAGE)}
+                  className={`pager-num ${n === currentPage ? 'is-current' : ''}`}
+                  aria-current={n === currentPage ? 'page' : undefined}
+                  onClick={() => handlePageChange(n)}
                 >
-                  {st(lang, 'loadMore')}
+                  {n}
                 </button>
-              </div>
-            )}
+              ))}
+              <button
+                type="button"
+                className="pager-btn"
+                disabled={currentPage >= pageNumbers.total}
+                onClick={() => handlePageChange(currentPage + 1)}
+              >
+                {st(lang, 'nextPage')}
+              </button>
+            </div>
           </>
         ) : (
           <div className="grid">
@@ -1275,20 +1464,73 @@ export const FoodBeveragePage: React.FC = () => {
             </div>
           </div>
         )}
+        </div>
 
-        {/* 7. EDITORIAL STORY HIGHLIGHT (ONLY WHEN REAL CATALOG DATA EXISTS) */}
+        {/* 7. LOWER: CHỌN THEO ĐIỂM ĐÃ ĐI (hairline rows, no cards) */}
+        {souvenirProducts.length > 0 && (
+          <section className="desti" aria-labelledby="souvenirDestiTitle">
+            <h2 id="souvenirDestiTitle">{st(lang, 'destiTitle')}</h2>
+            <div className="desti-list">
+              {spotTabs
+                .filter((tab) => tab.count > 0)
+                .map((tab) => (
+                  <div className="desti-row" key={tab.slug}>
+                    <div className="desti-row-main">
+                      <h3>{tab.label}</h3>
+                      <p>{st(lang, 'destiCount', { count: tab.count })}</p>
+                    </div>
+                    <button
+                      type="button"
+                      className="lnk"
+                      onClick={() => handleEditorialCta(tab.slug)}
+                    >
+                      {st(lang, 'destiCta')}
+                    </button>
+                  </div>
+                ))}
+            </div>
+          </section>
+        )}
+
+        {/* 9. GIFT SETS: "Bộ quà gợi ý" - dynamic sets built from catalog products */}
+        {giftSets.length > 0 && (
+          <section className="sets" aria-labelledby="souvenirSetsTitle">
+            <h2 id="souvenirSetsTitle">{st(lang, 'setsTitle')}</h2>
+            <div className="sets-list">
+              {giftSets.map((set) => (
+                <div className="s3" key={set.id}>
+                  <div>
+                    <h3>{st(lang, set.titleKey)}</h3>
+                    <p>{st(lang, set.descKey)}</p>
+                  </div>
+                  <div className="it2">{set.items.map((item) => item.name).join(', ')}</div>
+                  <div className="sp">
+                    <b>{formatPrice(set.total)}</b>
+                    <button
+                      type="button"
+                      className="arr"
+                      onClick={() => handleAddSet(set)}
+                    >
+                      {st(lang, 'setAdd')}
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* 10. STORY: "Treo một góc Sài Gòn lên tường" */}
         {featuredStoryProduct && (
           <section className="story" aria-labelledby="souvenirStoryTitle">
-            <div
-              className="ph story-ph"
-              onClick={() => handleSelectProduct(featuredStoryProduct)}
-            >
+            <div className="ph story-ph">
               {featuredStoryProduct.imagePath && !storyImgError ? (
                 <img
                   src={featuredStoryProduct.imagePath}
                   alt={featuredStoryProduct.name}
                   loading="lazy"
                   onError={() => setStoryImgError(true)}
+                  onClick={() => handleOpenDetailPage(featuredStoryProduct)}
                 />
               ) : (
                 <SouvenirLineArt kind={detectArtKind(featuredStoryProduct)} />
@@ -1301,7 +1543,7 @@ export const FoodBeveragePage: React.FC = () => {
               <button
                 type="button"
                 className="lnk"
-                onClick={() => handleSelectProduct(featuredStoryProduct)}
+                onClick={() => handleOpenDetailPage(featuredStoryProduct)}
               >
                 {st(lang, 'storyCta', { name: featuredStoryProduct.name })}
               </button>
@@ -1309,7 +1551,7 @@ export const FoodBeveragePage: React.FC = () => {
           </section>
         )}
 
-        {/* 8. THREE-COLUMN HAIRLINE INFO STRIP */}
+        {/* 11. LOWER: CHẤT LIỆU VÀ BẢO QUẢN / GIAO TIẾN / ĐỔI TRẢ (hairline columns) */}
         <section className="info">
           <div>
             <h3>{st(lang, 'info1Title')}</h3>
@@ -1325,41 +1567,18 @@ export const FoodBeveragePage: React.FC = () => {
           </div>
         </section>
 
-        {/* 9. NATIVE <details>/<summary> FAQ */}
-        <section className="faq" aria-labelledby="souvenirFaqTitle">
-          <h2 id="souvenirFaqTitle">{st(lang, 'faqTitle')}</h2>
+        {/* 12. CLOSING BLOCK: "Cần thêm cảm hứng trước khi chọn quà?" -> Đọc tin tức */}
+        <section className="cta closing" aria-labelledby="souvenirClosingTitle">
           <div>
-            <details>
-              <summary>{st(lang, 'faqQ1')}</summary>
-              <p>{st(lang, 'faqA1')}</p>
-            </details>
-            <details>
-              <summary>{st(lang, 'faqQ2')}</summary>
-              <p>{st(lang, 'faqA2')}</p>
-            </details>
-            <details>
-              <summary>{st(lang, 'faqQ3')}</summary>
-              <p>{st(lang, 'faqA3')}</p>
-            </details>
-            <details>
-              <summary>{st(lang, 'faqQ4')}</summary>
-              <p>{st(lang, 'faqA4')}</p>
-            </details>
+            <h2 id="souvenirClosingTitle">{st(lang, 'closingTitle')}</h2>
+            <p>{st(lang, 'closingDesc')}</p>
           </div>
-        </section>
-
-        {/* 10. BOTTOM HAIRLINE CTA TO ATTRACTIONS */}
-        <section className="cta" aria-labelledby="souvenirCtaTitle">
-          <div>
-            <h2 id="souvenirCtaTitle">{st(lang, 'ctaTitle')}</h2>
-            <p>{st(lang, 'ctaDesc')}</p>
-          </div>
-          <Link className="go" to="/diem-du-lich">
-            {st(lang, 'ctaBtn')}
+          <Link className="go" to="/tin-tuc">
+            {st(lang, 'closingBtn')}
           </Link>
         </section>
 
-        {/* 11. QUICK VIEW MODAL DIALOG (#qv) */}
+        {/* 13. QUICK VIEW MODAL DIALOG (#qv) */}
         {quickViewProduct && (
           <dialog
             id="qv"

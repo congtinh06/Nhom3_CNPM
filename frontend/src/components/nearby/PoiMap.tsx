@@ -1,5 +1,5 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react';
-import { MapContainer, Marker, Popup, Circle, useMap } from 'react-leaflet';
+import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
+import { MapContainer, Marker, Popup, Circle, Polyline, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { SupportedLanguage } from '../../types';
@@ -233,9 +233,14 @@ const MapController: React.FC<MapControllerProps> = ({
 interface UserAutoCenterProps {
   userPos: PositionState | null;
   centerOnUserToken: number;
+  focusPoi?: GeoPoi | null;
 }
 
-const UserAutoCenter: React.FC<UserAutoCenterProps> = ({ userPos, centerOnUserToken }) => {
+const UserAutoCenter: React.FC<UserAutoCenterProps> = ({
+  userPos,
+  centerOnUserToken,
+  focusPoi = null,
+}) => {
   const map = useMap();
   const lastCenteredTokenRef = useRef<number>(0);
 
@@ -245,8 +250,18 @@ const UserAutoCenter: React.FC<UserAutoCenterProps> = ({ userPos, centerOnUserTo
     lastCenteredTokenRef.current = centerOnUserToken;
     try {
       if (typeof map?.stop === 'function') map.stop();
+      // Fit both the visitor and the target stop so the route and the real
+      // distance are visible together after tapping "My location".
+      if (focusPoi && typeof map?.fitBounds === 'function') {
+        const bounds = L.latLngBounds([
+          [userPos.lat, userPos.lng],
+          [focusPoi.lat, focusPoi.lng],
+        ]);
+        map.fitBounds(bounds, { padding: [56, 56], maxZoom: 16 });
+        return;
+      }
       if (typeof (map as any)?.flyTo === 'function') {
-        (map.flyTo as any)([userPos.lat, userPos.lng], 16, { duration: 0.8 });
+        (map as any).flyTo([userPos.lat, userPos.lng], 16, { duration: 0.8 });
       } else if (typeof map?.setView === 'function') {
         map.setView([userPos.lat, userPos.lng], 16);
       }
@@ -255,7 +270,7 @@ const UserAutoCenter: React.FC<UserAutoCenterProps> = ({ userPos, centerOnUserTo
         map.setView([userPos.lat, userPos.lng], 16);
       }
     }
-  }, [centerOnUserToken, userPos, map]);
+  }, [centerOnUserToken, userPos, focusPoi, map]);
 
   return null;
 };
@@ -309,6 +324,153 @@ const FloatingMapControls: React.FC<FloatingControlsProps> = ({ currentLang }) =
   );
 };
 
+// Stable, module-level callbacks: an inline arrow here would rebuild the tile
+// layer on every render and make the map flicker.
+const NOOP = () => {};
+
+const USER_DOT_ICON = L.divIcon({
+  className: 'nearby-user-dot-wrapper',
+  html: `
+    <div class="user-position-node">
+      <div class="user-pulse-ring"></div>
+      <div class="user-blue-dot"></div>
+    </div>
+  `,
+  iconSize: [24, 24],
+  iconAnchor: [12, 12],
+});
+
+// Create Custom Numbered Markers 1-7
+// - 26px circle, ink background, 2px page-color border, number centered
+// - Selected: 34px, accent background, highest z-index
+// - Heard: lighter tint of ink. Number always visible, no badge on top
+// - Label: full name, one line, nowrap, no max-width, above marker, page-color background
+const createMarkerIcon = (
+  num: number,
+  name: string,
+  isActive: boolean,
+  isHovered: boolean,
+  isCurPlaying: boolean,
+  isListened: boolean
+) => {
+  const activeClass = isActive ? 'is-selected' : '';
+  const hoveredClass = isHovered ? 'is-hovered' : '';
+  const playingClass = isCurPlaying ? 'is-playing' : '';
+  const listenedClass = isListened ? 'is-heard' : '';
+
+  // The label is always in the DOM and revealed by CSS hover/active state.
+  // Keeping the icon markup stable is what prevents the Leaflet marker from
+  // being rebuilt under the pointer (which used to cause hover flicker).
+  return L.divIcon({
+    className: 'nearby-marker-pin-wrapper',
+    html: `
+      <div class="nearby-gmap-marker-container ${activeClass} ${hoveredClass} ${playingClass} ${listenedClass}">
+        <div class="nearby-gmap-marker-label">${name}${isListened ? ' - Đã trải qua' : ''}</div>
+        <div class="nearby-gmap-marker-circle">
+          <span class="nearby-gmap-marker-num">${num}</span>
+          ${isListened ? '<span class="nearby-gmap-marker-check" aria-hidden="true"></span>' : ''}
+        </div>
+      </div>
+    `,
+    iconSize: [34, 34],
+    iconAnchor: [17, 17],
+  });
+};
+
+interface PoiMarkerProps {
+  poi: GeoPoi;
+  index: number;
+  isActive: boolean;
+  isHovered: boolean;
+  currentPlayingId: string | null;
+  isPlaying: boolean;
+  isPaused: boolean;
+  isListened: boolean;
+  userPos: PositionState | null;
+  onSelectPoi: (poiId: string) => void;
+  onTogglePlay: (poiId: string) => void;
+  getPoiName: (poi: GeoPoi) => string;
+  listenBtnText: string;
+  pauseBtnText: string;
+  resumeBtnText?: string;
+  currentLang: SupportedLanguage;
+}
+
+const PoiMarkerComponent: React.FC<PoiMarkerProps> = ({
+  poi,
+  index,
+  isActive,
+  isHovered,
+  currentPlayingId,
+  isPlaying,
+  isPaused,
+  isListened,
+  userPos,
+  onSelectPoi,
+  onTogglePlay,
+  getPoiName,
+  listenBtnText,
+  pauseBtnText,
+  resumeBtnText,
+  currentLang,
+}) => {
+  const poiName = getPoiName(poi);
+  const isCurPlaying = poi.id === currentPlayingId && isPlaying;
+  const isCurPaused = poi.id === currentPlayingId && isPaused;
+
+  const icon = useMemo(
+    () => createMarkerIcon(index + 1, poiName, isActive, isHovered, isCurPlaying, isListened),
+    [index, poiName, isActive, isHovered, isCurPlaying, isListened]
+  );
+
+  return (
+    <Marker
+      position={[poi.lat, poi.lng]}
+      icon={icon}
+      eventHandlers={{
+        click: () => onSelectPoi(poi.id),
+      }}
+    >
+      {/* Embedded Popup for test suites & direct action */}
+      <Popup className="nearby-popup-test-container">
+        <div data-testid="leaflet-popup" className="nearby-popup-content">
+          <span className="nearby-popup-name">
+            {index + 1}. {poiName}
+          </span>
+          <button
+            type="button"
+            className="nearby-popup-play-btn"
+            aria-pressed={isCurPlaying}
+            onClick={(e) => {
+              e.stopPropagation();
+              onTogglePlay(poi.id);
+            }}
+          >
+            {isCurPlaying
+              ? pauseBtnText || t(currentLang, 'pauseBtn')
+              : isCurPaused
+              ? resumeBtnText || t(currentLang, 'resumeBtn')
+              : listenBtnText || t(currentLang, 'playBtn')}
+          </button>
+          <a
+            className="nearby-popup-directions-btn"
+            href={buildGoogleMapsDirectionsUrl(poi, userPos)}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {t(currentLang, 'directionsBtn')}
+          </a>
+        </div>
+      </Popup>
+    </Marker>
+  );
+};
+
+// Memoised so a hover change only re-renders the two affected markers instead
+// of rebuilding every Leaflet icon (which made pins flicker and glitch).
+const PoiMarker = React.memo(PoiMarkerComponent);
+
 export interface PoiMapProps {
   pois: GeoPoi[];
   selectedPoiId: string | null;
@@ -350,7 +512,6 @@ export const PoiMap: React.FC<PoiMapProps> = ({
   centerOnUserToken = 0,
   listenedPoiIds = [],
   onSelectPoi,
-  onHoverPoi,
   onTogglePlay,
   getPoiName,
   getPoiCategory,
@@ -387,39 +548,13 @@ export const PoiMap: React.FC<PoiMapProps> = ({
   const isClickedPlaying = Boolean(clickedPoi && currentPlayingId === clickedPoi.id && isPlaying);
   const isClickedPaused = Boolean(clickedPoi && currentPlayingId === clickedPoi.id && isPaused);
 
-  // Create Custom Numbered Markers 1-7
-  // - 26px circle, ink background, 2px page-color border, number centered
-  // - Selected: 34px, accent background, highest z-index
-  // - Heard: lighter tint of ink. Number always visible, no badge on top
-  // - Label: full name, one line, nowrap, no max-width, above marker, page-color background
-  const createMarkerIcon = (
-    num: number,
-    name: string,
-    isActive: boolean,
-    isHovered: boolean,
-    isCurPlaying: boolean,
-    isListened: boolean
-  ) => {
-    const activeClass = isActive ? 'is-selected' : '';
-    const hoveredClass = isHovered ? 'is-hovered' : '';
-    const playingClass = isCurPlaying ? 'is-playing' : '';
-    const listenedClass = isListened ? 'is-heard' : '';
-    const showLabel = isActive || isHovered;
-
-    return L.divIcon({
-      className: 'nearby-marker-pin-wrapper',
-      html: `
-        <div class="nearby-gmap-marker-container ${activeClass} ${hoveredClass} ${playingClass} ${listenedClass}">
-          ${showLabel ? `<div class="nearby-gmap-marker-label">${name}</div>` : ''}
-          <div class="nearby-gmap-marker-circle">
-            <span class="nearby-gmap-marker-num">${num}</span>
-          </div>
-        </div>
-      `,
-      iconSize: [34, 34],
-      iconAnchor: [17, 17],
-    });
-  };
+  const handleMarkerSelect = useCallback(
+    (poiId: string) => {
+      setMarkerClickedPoiId(poiId);
+      onSelectPoi(poiId);
+    },
+    [onSelectPoi]
+  );
 
   const handleViewFullRoute = () => {
     setFitBoundsTrigger((prev) => prev + 1);
@@ -443,8 +578,8 @@ export const PoiMap: React.FC<PoiMapProps> = ({
           {/* Tile Layer: Google Maps official roadmap tiles */}
           <OsmTileLayer
             isSchematic={false}
-            onEnterSchematic={() => {}}
-            onExitSchematic={() => {}}
+            onEnterSchematic={NOOP}
+            onExitSchematic={NOOP}
             retryTrigger={0}
             providers={TILE_PROVIDERS}
           />
@@ -461,6 +596,7 @@ export const PoiMap: React.FC<PoiMapProps> = ({
           <UserAutoCenter
             userPos={userPos}
             centerOnUserToken={centerOnUserToken}
+            focusPoi={activePoi}
           />
 
           {/* Geofence subtle tint around active stop (no border stroke lines) */}
@@ -490,90 +626,48 @@ export const PoiMap: React.FC<PoiMapProps> = ({
                   }}
                 />
               )}
-              <Marker
-                position={[userPos.lat, userPos.lng]}
-                icon={L.divIcon({
-                  className: 'nearby-user-dot-wrapper',
-                  html: `
-                    <div class="user-position-node">
-                      <div class="user-pulse-ring"></div>
-                      <div class="user-blue-dot"></div>
-                    </div>
-                  `,
-                  iconSize: [24, 24],
-                  iconAnchor: [12, 12],
-                })}
-              />
+              <Marker position={[userPos.lat, userPos.lng]} icon={USER_DOT_ICON} />
             </>
           )}
 
-          {/* Markers for all 7 stops numbered 1-7 */}
-          {pois.map((poi, idx) => {
-            const isActive = poi.id === (activePoiId || selectedPoiId);
-            const isHovered = poi.id === hoveredPoiId;
-            const isCurPlaying = poi.id === currentPlayingId && isPlaying;
-            const isCurPaused = poi.id === currentPlayingId && isPaused;
-            const isListened = listenedPoiIds.includes(poi.id);
-            const poiName = getPoiName(poi);
+          {/* Dashed walking route from the visitor to the open stop */}
+          {userPos && activePoi && (
+            <Polyline
+              positions={[
+                [userPos.lat, userPos.lng],
+                [activePoi.lat, activePoi.lng],
+              ]}
+              pathOptions={{
+                color: routeAccentColor,
+                weight: 3,
+                opacity: 0.8,
+                dashArray: '6 8',
+              }}
+            />
+          )}
 
-            return (
-              <Marker
-                key={poi.id}
-                position={[poi.lat, poi.lng]}
-                icon={createMarkerIcon(
-                  idx + 1,
-                  poiName,
-                  isActive,
-                  isHovered,
-                  isCurPlaying,
-                  isListened
-                )}
-                eventHandlers={{
-                  click: () => {
-                    setMarkerClickedPoiId(poi.id);
-                    onSelectPoi(poi.id);
-                  },
-                  mouseover: () => {
-                    if (onHoverPoi) onHoverPoi(poi.id);
-                  },
-                  mouseout: () => {
-                    if (onHoverPoi) onHoverPoi(null);
-                  },
-                }}
-              >
-                {/* Embedded Popup for test suites & direct action */}
-                <Popup className="nearby-popup-test-container">
-                  <div data-testid="leaflet-popup" className="nearby-popup-content">
-                    <span className="nearby-popup-name">{idx + 1}. {poiName}</span>
-                    <button
-                      type="button"
-                      className="nearby-popup-play-btn"
-                      aria-pressed={isCurPlaying}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onTogglePlay(poi.id);
-                      }}
-                    >
-                      {isCurPlaying
-                        ? pauseBtnText || t(currentLang, 'pauseBtn')
-                        : isCurPaused
-                        ? resumeBtnText || t(currentLang, 'resumeBtn')
-                        : listenBtnText || t(currentLang, 'playBtn')}
-                    </button>
-                    <a
-                      className="nearby-popup-directions-btn"
-                      href={buildGoogleMapsDirectionsUrl(poi, userPos)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      {t(currentLang, 'directionsBtn')}
-                    </a>
-                  </div>
-                </Popup>
-              </Marker>
-            );
-          })}
+          {/* Markers for all 7 stops numbered 1-7 */}
+          {pois.map((poi, idx) => (
+            <PoiMarker
+              key={poi.id}
+              poi={poi}
+              index={idx}
+              isActive={poi.id === (activePoiId || selectedPoiId)}
+              isHovered={poi.id === hoveredPoiId}
+              currentPlayingId={currentPlayingId}
+              isPlaying={isPlaying}
+              isPaused={isPaused}
+              isListened={listenedPoiIds.includes(poi.id)}
+              userPos={userPos}
+              onSelectPoi={handleMarkerSelect}
+              onTogglePlay={onTogglePlay}
+              getPoiName={getPoiName}
+              listenBtnText={listenBtnText}
+              pauseBtnText={pauseBtnText}
+              resumeBtnText={resumeBtnText}
+              currentLang={currentLang}
+            />
+          ))}
 
           {/* Floating Zoom Controls inside MapContainer */}
           <FloatingMapControls currentLang={currentLang} />

@@ -24,6 +24,12 @@ export function enrichProduct(product: Product): Product {
   if (!meta) return product;
   return {
     ...product,
+    shortDescription: product.shortDescription || meta.shortDescription,
+    description: product.description || meta.description,
+    imagePath:
+      product.imagePath && !product.imagePath.includes('placeholder')
+        ? product.imagePath
+        : (meta.imagePath || product.imagePath),
     subCategory: product.subCategory ?? meta.subCategory,
     oldPrice: product.oldPrice ?? meta.oldPrice,
     badge: product.badge ?? meta.badge,

@@ -1,13 +1,13 @@
 :root {
-  --cream: #fff1c7;
+  --cream: #F7F2E9;
   --brown: #8a2f12;
-  --black: #000000;
-  --white: #ffffff;
-  --page: #f1ece2;
-  --ink: #1c1410;
-  --accent: #0E5B53;
-  --accent-hover: #093F39;
-  --accent-on-dark: #6FD4C5;
+  --black: #201B16;
+  --white: #FFFCF6;
+  --page: #F7F2E9;
+  --ink: #201B16;
+  --accent: #C2410C;
+  --accent-hover: #9A3412;
+  --accent-on-dark: #FB923C;
   --surface-dark: #1C1916;
   --font-serif-brand: 'Fraunces', Georgia, 'Times New Roman', serif;
   --nav-font-size: 14px;
@@ -19,11 +19,19 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --page: #17110d;
+    --cream: #17110d;
+    --white: #1C1916;
+    --ink: #F1EDE6;
+    --black: #F1EDE6;
   }
 }
 
 :root[data-theme="dark"] {
   --page: #17110d;
+  --cream: #17110d;
+  --white: #1C1916;
+  --ink: #F1EDE6;
+  --black: #F1EDE6;
 }
 
 *,

@@ -136,7 +136,7 @@ button:focus-visible,
 input:focus-visible,
 textarea:focus-visible,
 select:focus-visible {
-  outline: 2px solid var(--accent, #0E5B53);
+  outline: 2px solid var(--accent, #C2410C);
   outline-offset: 2px;
 }
 
@@ -251,12 +251,12 @@ select:focus-visible {
 }
 
 .nav-link.active {
-  color: var(--accent-on-dark, #6FD4C5);
+  color: var(--accent-on-dark, #FB923C);
   font-weight: 600;
 }
 
 .hd :focus-visible {
-  outline: 2px solid var(--accent-on-dark, #6FD4C5);
+  outline: 2px solid var(--accent-on-dark, #FB923C);
   outline-offset: 2px;
 }
 
@@ -331,8 +331,8 @@ select:focus-visible {
 }
 
 .dropdown-item.active {
-  background: rgba(111, 212, 197, 0.14);
-  color: var(--accent-on-dark, #6FD4C5);
+  background: rgba(251, 146, 60, 0.16);
+  color: var(--accent-on-dark, #FB923C);
 }
 
 /* Explore Dropdown */
@@ -354,7 +354,7 @@ select:focus-visible {
 }
 
 .dropdown-item.active .dropdown-item-title {
-  color: var(--accent-on-dark, #6FD4C5);
+  color: var(--accent-on-dark, #FB923C);
 }
 
 .dropdown-item-desc {
@@ -449,7 +449,7 @@ select:focus-visible {
 }
 
 .lang-item.active .lang-short-tag {
-  color: var(--accent-on-dark, #6FD4C5);
+  color: var(--accent-on-dark, #FB923C);
 }
 
 .lang-item.is-locked .lang-name {
@@ -493,7 +493,7 @@ select:focus-visible {
   min-width: 17px;
   height: 17px;
   padding: 0 4px;
-  background: var(--accent, #0E5B53);
+  background: var(--accent, #C2410C);
   color: #ffffff;
   border-radius: 999px;
   font-size: 10.5px;
@@ -505,6 +505,19 @@ select:focus-visible {
   justify-content: center;
   pointer-events: none;
   box-sizing: border-box;
+  animation: cartBadgeBump 150ms ease;
+}
+
+@keyframes cartBadgeBump {
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.15);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 
 /* Premium entry */
@@ -515,23 +528,23 @@ select:focus-visible {
   width: 36px;
   height: 36px;
   padding: 0;
-  border: 1px solid rgba(111, 212, 197, 0.35);
+  border: 1px solid rgba(251, 146, 60, 0.35);
   border-radius: 50%;
-  background: rgba(14, 91, 83, 0.22);
-  color: var(--accent-on-dark, #6FD4C5);
+  background: rgba(194, 65, 12, 0.22);
+  color: var(--accent-on-dark, #FB923C);
   cursor: pointer;
   transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease;
 }
 
 .hd-premium-btn:hover {
-  border-color: var(--accent-on-dark, #6FD4C5);
-  background: rgba(14, 91, 83, 0.38);
+  border-color: var(--accent-on-dark, #FB923C);
+  background: rgba(194, 65, 12, 0.38);
   color: #ffffff;
 }
 
 .hd-premium-btn.is-active {
-  border-color: var(--accent-on-dark, #6FD4C5);
-  background: var(--accent, #0E5B53);
+  border-color: var(--accent-on-dark, #FB923C);
+  background: var(--accent, #C2410C);
   color: #ffffff;
 }
 
@@ -563,9 +576,9 @@ select:focus-visible {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: var(--accent, #0E5B53);
+  background: var(--accent, #C2410C);
   color: #ffffff;
-  border: 1px solid var(--accent, #0E5B53);
+  border: 1px solid var(--accent, #C2410C);
   border-radius: 8px;
   height: 36px;
   padding: 0 16px;
@@ -581,8 +594,8 @@ select:focus-visible {
 }
 
 .hd-register-btn:hover {
-  background: var(--accent-hover, #093F39);
-  border-color: var(--accent-hover, #093F39);
+  background: var(--accent-hover, #9A3412);
+  border-color: var(--accent-hover, #9A3412);
   color: #ffffff;
 }
 
@@ -695,8 +708,8 @@ select:focus-visible {
 }
 
 .mobile-nav-item.active {
-  color: var(--accent-on-dark, #6FD4C5);
-  background: rgba(111, 212, 197, 0.12);
+  color: var(--accent-on-dark, #FB923C);
+  background: rgba(251, 146, 60, 0.14);
 }
 
 .mobile-sub-list {
@@ -729,7 +742,7 @@ select:focus-visible {
 }
 
 .mobile-sub-item.active {
-  color: var(--accent-on-dark, #6FD4C5);
+  color: var(--accent-on-dark, #FB923C);
 }
 
 .sub-item-title {
@@ -780,14 +793,14 @@ select:focus-visible {
 }
 
 .mobile-btn-primary {
-  background: var(--accent, #0E5B53);
+  background: var(--accent, #C2410C);
   color: #ffffff;
-  border: 1px solid var(--accent, #0E5B53);
+  border: 1px solid var(--accent, #C2410C);
 }
 
 .mobile-btn-primary:hover {
-  background: var(--accent-hover, #093F39);
-  border-color: var(--accent-hover, #093F39);
+  background: var(--accent-hover, #9A3412);
+  border-color: var(--accent-hover, #9A3412);
 }
 
 .mobile-user-box {
@@ -803,7 +816,7 @@ select:focus-visible {
   padding: 6px 12px;
   font-weight: 600;
   font-size: 14px;
-  color: var(--accent-on-dark, #6FD4C5);
+  color: var(--accent-on-dark, #FB923C);
 }
 
 .mobile-user-links {
@@ -1346,8 +1359,8 @@ select:focus-visible {
 }
 
 .tb {
-  padding: 8px 14px;
-  min-height: 36px;
+  padding: 10px 16px;
+  min-height: 44px;
   border: 2px solid var(--brown);
   border-radius: 999px;
   background: transparent;
@@ -1355,7 +1368,7 @@ select:focus-visible {
   font: inherit;
   font-size: 14px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1988,15 +2001,16 @@ dialog p {
   left: auto;
   bottom: auto;
   transform: none;
-  background: #2b1108;
-  color: var(--cream);
-  padding: 10px 18px;
-  border-radius: 4px;
-  border: 1px solid rgba(255, 241, 199, 0.22);
+  background: #24150E;
+  color: #FFFDF7 !important;
+  padding: 11px 20px;
+  border-radius: 8px;
+  border: 1px solid rgba(251, 146, 60, 0.45);
   z-index: 10000;
   font-size: 13.5px;
-  font-weight: 500;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.28);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), 0 2px 6px rgba(0, 0, 0, 0.25);
   pointer-events: none;
   animation: toastFadeIn 0.2s ease-out;
 }
@@ -2055,6 +2069,7 @@ dialog p {
   max-height: calc(100vh - 32px);
   overflow-y: auto;
   overscroll-behavior: contain;
+  scrollbar-gutter: stable;
   background: #fdfaf3;
   border-radius: 8px;
   border: 1px solid rgba(138, 47, 18, 0.22);
@@ -2063,7 +2078,7 @@ dialog p {
     0 2px 6px rgba(28, 20, 16, 0.06);
   padding: 22px 24px;
   margin: auto;
-  color: var(--ink);
+  color: #201B16;
   scrollbar-width: thin;
   scrollbar-color: rgba(138, 47, 18, 0.25) transparent;
   animation: authModalFadeIn 0.18s ease-out;
@@ -2099,59 +2114,58 @@ dialog p {
 
 /* Banner "chế độ Khách" trong AuthModal */
 .auth-guest-banner {
-  display: grid;
-  grid-template-columns: 20px 1fr;
-  row-gap: 8px;
-  column-gap: 10px;
-  align-items: start;
-  margin: 0 0 14px;
-  padding: 10px 12px;
-  border: 1px solid rgba(138, 47, 18, 0.22);
-  border-radius: 6px;
-  background: rgba(214, 203, 180, 0.22);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0 0 16px;
+  padding: 12px 14px;
+  border: 1px solid rgba(194, 65, 12, 0.28);
+  border-radius: 8px;
+  background: rgba(254, 243, 199, 0.45);
+}
+
+.auth-guest-banner-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .auth-guest-banner-icon {
-  grid-column: 1;
-  grid-row: 1;
   display: inline-flex;
-  margin-top: 2px;
-  color: var(--brown, #8a2f12);
+  align-items: center;
+  justify-content: center;
+  color: #C2410C;
+  flex-shrink: 0;
 }
 
-.auth-guest-banner-copy {
-  grid-column: 2;
-  grid-row: 1;
-  min-width: 0;
-}
-
+.auth-guest-banner-title,
 .auth-guest-banner-copy strong {
-  display: block;
+  display: inline-block;
   font-size: 13.5px;
   font-weight: 700;
   line-height: 1.3;
-  color: var(--ink, #3b2416);
+  color: #7C2D12 !important;
 }
 
+.auth-guest-banner-text,
 .auth-guest-banner-copy p {
-  margin: 3px 0 0;
+  margin: 0;
   font-size: 12px;
-  line-height: 1.45;
-  color: rgba(59, 36, 22, 0.8);
+  line-height: 1.5;
+  color: #5C4A3E !important;
 }
 
 .auth-guest-banner-continue {
-  grid-column: 1 / -1;
-  grid-row: 2;
   display: flex;
   align-items: center;
   justify-content: center;
   width: 100%;
+  margin-top: 4px;
   padding: 8px 12px;
-  border: 1px solid var(--brown, #8a2f12);
-  border-radius: 4px;
+  border: 1px solid #9A3412;
+  border-radius: 6px;
   background: #ffffff;
-  color: var(--brown, #8a2f12);
+  color: #9A3412;
   font-family: inherit;
   font-size: 12.5px;
   font-weight: 600;
@@ -2162,13 +2176,13 @@ dialog p {
 }
 
 .auth-guest-banner-continue:hover {
-  background: var(--brown, #8a2f12);
+  background: #9A3412;
   color: #ffffff;
-  box-shadow: 0 2px 6px rgba(138, 47, 18, 0.2);
+  box-shadow: 0 2px 6px rgba(154, 52, 18, 0.2);
 }
 
 .auth-guest-banner-continue:focus-visible {
-  outline: 2px solid var(--brown);
+  outline: 2px solid #9A3412;
   outline-offset: 2px;
 }
 
@@ -2722,19 +2736,8 @@ dialog p {
   text-decoration: underline;
 }
 
-/* Nút quét QR hiển thị trên điện thoại trong tab QR của modal đăng nhập */
-.auth-qr-mobile-scan {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  width: 100%;
-  min-height: 40px;
-  margin: 0 0 14px;
-}
-
 /* Trên điện thoại không hiển thị mã QR (điện thoại không tự quét được màn hình
-   của chính nó); chỉ giữ nút mở camera. */
+   của chính nó); chỉ giữ phần hướng dẫn. */
 .auth-qr-mobile-hint {
   display: none;
   margin: 0 0 4px;
@@ -5334,5 +5337,305 @@ dialog p {
   .auth-modal-dialog {
     padding: 20px 16px;
     max-height: calc(100vh - 24px);
+  }
+}
+
+/* =========================================================================
+   AUTH MODAL - MOBILE BOTTOM SHEET + LOGIN SUCCESS TRANSITION
+   ========================================================================= */
+
+.auth-modal-overlay.is-standalone {
+  align-items: stretch;
+  padding: 0;
+}
+
+.auth-modal-overlay.is-standalone .auth-modal-dialog {
+  max-width: none;
+  max-height: none;
+  min-height: calc(100dvh - 0px);
+  border-left: 0;
+  border-right: 0;
+  border-bottom: 0;
+  border-radius: 0;
+  padding-top: calc(32px + env(safe-area-inset-top, 0px));
+}
+
+.auth-modal-overlay.is-closing {
+  animation: authOverlayFadeOut 0.18s ease-out forwards;
+}
+
+.auth-modal-overlay.is-closing .auth-modal-dialog {
+  animation: authDialogSheetDown 0.18s ease-out forwards;
+}
+
+@keyframes authOverlayFadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes authDialogSheetDown {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(100%);
+  }
+}
+
+.auth-success {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+  padding: 24px 6px 6px;
+  text-align: center;
+  animation: authSuccessIn 0.3s ease-out;
+}
+
+.auth-success-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  border: 2px solid rgba(92, 140, 88, 0.35);
+  background: rgba(92, 140, 88, 0.12);
+  color: #3f6b46;
+  animation: authSuccessPop 0.45s cubic-bezier(0.2, 1.4, 0.4, 1) forwards;
+}
+
+.auth-success-title {
+  margin: 12px 0 0;
+  font-size: 21px;
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--brown, #8a2f12);
+}
+
+.auth-success-account {
+  margin: 6px 0 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #4b3e34;
+  word-break: break-word;
+}
+
+.auth-success-note {
+  margin: 10px 0 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #5c4e43;
+}
+
+.auth-success-bar {
+  margin-top: 20px;
+  width: 120px;
+  height: 3px;
+  border-radius: 999px;
+  background: rgba(138, 47, 18, 0.16);
+  overflow: hidden;
+}
+
+.auth-success-bar::after {
+  content: "";
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: var(--brown, #8a2f12);
+  transform-origin: left;
+  animation: authSuccessBar 0.9s linear forwards;
+}
+
+@keyframes authSuccessIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes authSuccessPop {
+  0% {
+    transform: scale(0.6);
+    opacity: 0;
+  }
+  70% {
+    transform: scale(1.08);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes authSuccessBar {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .auth-success,
+  .auth-success *,
+  .auth-modal-overlay,
+  .auth-modal-dialog {
+    animation: none !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .auth-modal-overlay {
+    align-items: flex-end;
+    padding: 0;
+    background: rgba(28, 20, 16, 0.45);
+  }
+
+  .auth-modal-overlay.is-standalone {
+    align-items: stretch;
+    padding: 0;
+    background: var(--cream, #f5f0e6);
+  }
+
+  .auth-modal-overlay.is-standalone .auth-modal-dialog {
+    max-width: none;
+    max-height: none;
+    min-height: calc(100dvh - 0px);
+    border-left: 0;
+    border-right: 0;
+    border-bottom: 0;
+    border-radius: 0;
+    padding-top: calc(32px + env(safe-area-inset-top, 0px));
+  }
+
+  .auth-modal-overlay:not(.is-standalone) .auth-modal-dialog {
+    width: 100%;
+    max-width: none;
+    border-left: 0;
+    border-right: 0;
+    border-bottom: 0;
+    border-radius: 20px 20px 0 0;
+    max-height: calc(100vh - 0px);
+    padding: 26px 18px calc(20px + env(safe-area-inset-bottom, 0px));
+    box-shadow: 0 -12px 40px rgba(28, 20, 16, 0.22);
+  }
+
+  .auth-modal-overlay:not(.is-standalone) .auth-modal-dialog::before {
+    content: "";
+    position: absolute;
+    top: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 40px;
+    height: 4px;
+    border-radius: 999px;
+    background: rgba(138, 47, 18, 0.28);
+  }
+
+  .auth-modal-overlay:not(.is-standalone) .auth-modal-dialog > * {
+    position: relative;
+  }
+
+  .auth-modal-overlay:not(.is-standalone) .auth-modal-dialog .auth-modal-close {
+    top: 10px;
+    right: 10px;
+  }
+
+  .auth-modal-overlay:not(.is-standalone) .auth-modal-dialog .auth-modal-body {
+    padding-top: 10px;
+  }
+
+  .auth-modal-overlay:not(.is-standalone) .auth-modal-dialog .auth-modal-title {
+    font-size: 22px;
+    margin-bottom: 12px;
+  }
+
+  .auth-modal-overlay:not(.is-standalone) .auth-modal-dialog .auth-modal-intro {
+    font-size: 13px;
+    margin-bottom: 12px;
+  }
+
+  .auth-modal-overlay:not(.is-standalone) .auth-modal-dialog .auth-modal-form {
+    gap: 12px;
+  }
+
+  .auth-modal-overlay:not(.is-standalone) .auth-modal-dialog .af > span {
+    font-size: 13px;
+  }
+
+  .auth-modal-overlay:not(.is-standalone) .auth-modal-dialog .af input,
+  .auth-modal-overlay:not(.is-standalone) .auth-modal-dialog .af-input-wrap input {
+    font-size: 16px;
+    min-height: 48px;
+    border-radius: 10px;
+    padding-top: 12px;
+    padding-bottom: 12px;
+  }
+
+  .auth-modal-overlay:not(.is-standalone) .auth-modal-dialog .af-input-wrap input {
+    padding-right: 44px;
+  }
+
+  .auth-modal-overlay:not(.is-standalone) .auth-modal-dialog .af-eye {
+    width: 40px;
+    height: 40px;
+    right: 2px;
+  }
+
+  .auth-modal-overlay:not(.is-standalone) .auth-modal-dialog .af-submit {
+    width: 100%;
+    min-height: 48px;
+    border-radius: 10px;
+    font-size: 15px;
+  }
+
+  .auth-modal-overlay:not(.is-standalone) .auth-modal-dialog .auth-guest-quick-btn,
+  .auth-modal-overlay:not(.is-standalone) .auth-modal-dialog .auth-guest-alt {
+    margin-top: 12px;
+  }
+
+  .auth-modal-overlay:not(.is-standalone) .auth-modal-dialog .auth-guest-alt {
+    margin-top: 0;
+  }
+
+  .auth-modal-overlay:not(.is-standalone) .auth-modal-dialog .auth-divider {
+    padding: 12px 0;
+  }
+
+  .auth-modal-overlay:not(.is-standalone) .auth-modal-dialog .af-alt {
+    font-size: 13px;
+    padding-top: 10px;
+  }
+
+  .auth-modal-overlay:not(.is-standalone) .auth-modal-dialog .google-signin-host {
+    width: 320px;
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 640px) {
+  #ts {
+    top: auto;
+    left: 14px;
+    right: 14px;
+    bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+    width: auto;
+    max-width: none;
+    text-align: center;
+    border-radius: 999px;
+    padding: 10px 16px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
   }
 }

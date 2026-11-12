@@ -14,8 +14,8 @@
   --nearby-mut: #6F6254;
   --nearby-line: #DED2BF;
   --nearby-line2: #C9BAA2;
-  --nearby-acc: #0E5B53;
-  --nearby-acc-2: #093F39;
+  --nearby-acc: #C2410C;
+  --nearby-acc-2: #9A3412;
   --nearby-acc-ink: #FFFFFF;
   --nearby-warm: #B35129;
   --nearby-warm-soft: #F7E3D7;
@@ -49,6 +49,7 @@ body:has(.nearby-sv-root) {
   --line: var(--nearby-line);
   --line2: var(--nearby-line2);
   --acc: var(--nearby-acc);
+  --accent: var(--nearby-acc);
   --acc-2: var(--nearby-acc-2);
   --acc-ink: var(--nearby-acc-ink);
   --map: var(--nearby-map);
@@ -262,8 +263,8 @@ body:has(.nearby-sv-root) {
 }
 
 .nearby-sv-root .sd.heard::before {
-  background: var(--acc);
-  border-color: var(--acc);
+  background: var(--acc, #C2410C) !important;
+  border-color: var(--acc, #C2410C) !important;
 }
 
 .nearby-sv-root .sd.on {
@@ -271,11 +272,31 @@ body:has(.nearby-sv-root) {
   font-weight: 600;
 }
 
-.nearby-sv-root .sd.on::before {
-  background: var(--acc);
-  border: 2.5px solid var(--bg);
-  box-shadow: 0 0 0 2px var(--acc);
+.nearby-sv-root .sd.on:not(.heard)::before {
+  background: var(--bg) !important;
+  border: 2.5px solid var(--acc, #C2410C) !important;
+  box-shadow: 0 0 0 2px rgba(194, 65, 12, 0.25) !important;
   transform: none;
+}
+
+.nearby-sv-root .sd.on.heard::before {
+  background: var(--acc, #C2410C) !important;
+  border: 2px solid var(--bg) !important;
+  box-shadow: 0 0 0 2.5px var(--acc, #C2410C) !important;
+  transform: none;
+}
+
+.nearby-sv-root .sd-badge-heard {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 600;
+  color: #C2410C;
+  background: rgba(234, 88, 12, 0.12);
+  border: 1px solid rgba(234, 88, 12, 0.28);
+  border-radius: 999px;
+  padding: 1px 7px;
+  margin-top: 3px;
+  line-height: 1.3;
 }
 
 .nearby-sv-root .sd:hover {
@@ -531,14 +552,14 @@ body:has(.nearby-sv-root) {
 
 .nearby-sv-root .map {
   position: relative;
-  border-radius: 16px;
+  border-radius: 14px;
   overflow: hidden;
   background: var(--map);
   color-scheme: light;
   height: min(640px, calc(100vh - 190px));
   min-height: 440px;
-  border: none !important;
-  box-shadow: 0 4px 24px rgba(28, 20, 16, 0.08);
+  border: 1px solid var(--line, #DED2BF) !important;
+  box-shadow: 0 1px 2px rgba(28, 20, 16, 0.04);
 }
 
 /* Let the Leaflet canvas fill the card at every breakpoint. */
@@ -694,7 +715,8 @@ body:has(.nearby-sv-root) {
   text-align: center;
 }
 
-.nearby-sv-root .nearby-gmap-marker-container.is-hovered .nearby-gmap-marker-circle {
+.nearby-sv-root .nearby-gmap-marker-container.is-hovered .nearby-gmap-marker-circle,
+.nearby-sv-root .nearby-gmap-marker-container:hover .nearby-gmap-marker-circle {
   border-color: var(--nearby-acc, #D96A47);
 }
 
@@ -711,11 +733,38 @@ body:has(.nearby-sv-root) {
   font-size: 14px;
 }
 
-/* Heard: lighter tint of ink. No badge on top of the number. */
+/* Heard / Listened: đánh dấu cam đã trải qua trên bản đồ */
 .nearby-sv-root .nearby-gmap-marker-container.is-heard:not(.is-selected) .nearby-gmap-marker-circle {
-  background: #A79A86;
-  color: var(--nearby-bg, #FAF6F0);
-  border-color: var(--nearby-bg, #FAF6F0);
+  background: var(--nearby-acc, #D96A47) !important;
+  color: #FFFFFF !important;
+  border-color: var(--nearby-bg, #FAF6F0) !important;
+  box-shadow: 0 2px 10px rgba(217, 106, 71, 0.45) !important;
+}
+
+.nearby-sv-root .nearby-gmap-marker-check {
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: #C2410C;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px solid #FFFFFF;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+}
+
+.nearby-sv-root .nearby-gmap-marker-check::after {
+  content: "";
+  display: block;
+  width: 3.5px;
+  height: 6.5px;
+  border: solid #FFFFFF;
+  border-width: 0 1.5px 1.5px 0;
+  transform: rotate(45deg);
+  margin-top: -1.5px;
 }
 
 /* 5. Label: only for selected stop (and hover). Full name, one line, nowrap,
@@ -753,7 +802,8 @@ body:has(.nearby-sv-root) {
 }
 
 .nearby-sv-root .nearby-gmap-marker-container.is-selected .nearby-gmap-marker-label,
-.nearby-sv-root .nearby-gmap-marker-container.is-hovered .nearby-gmap-marker-label {
+.nearby-sv-root .nearby-gmap-marker-container.is-hovered .nearby-gmap-marker-label,
+.nearby-sv-root .nearby-gmap-marker-container:hover .nearby-gmap-marker-label {
   display: block;
 }
 
@@ -1649,6 +1699,51 @@ footer.pl .lang button svg,
   stroke-width: 2;
 }
 
+/* Close control: dismiss the bar without stopping the audio session. */
+footer.pl .wrap,
+.nearby-sticky-player-bar .wrap {
+  padding-right: 52px;
+}
+
+footer.pl .player-close-btn,
+.nearby-sticky-player-bar .player-close-btn {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 2;
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid rgba(240, 233, 221, 0.18);
+  border-radius: 50%;
+  background: rgba(240, 233, 221, 0.06);
+  color: #C8BFB0;
+  cursor: pointer;
+  transition: color 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+}
+
+footer.pl .player-close-btn:hover,
+.nearby-sticky-player-bar .player-close-btn:hover {
+  color: #F0E9DD;
+  background: rgba(240, 233, 221, 0.14);
+  border-color: rgba(240, 233, 221, 0.34);
+}
+
+footer.pl .player-close-btn svg,
+.nearby-sticky-player-bar .player-close-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+footer.pl .player-close-btn:focus-visible,
+.nearby-sticky-player-bar .player-close-btn:focus-visible {
+  outline: 2px solid #E0743D;
+  outline-offset: 2px;
+}
+
 /* ==========================================================================
    6a. FLOATING AUDIO BUTTON — reveals the bottom player
    ========================================================================== */
@@ -1772,29 +1867,10 @@ body:has(.nearby-sv-root):has(.nearby-sticky-player-bar.is-open) .ftr {
 /* ==========================================================================
    7. FLOATING TOAST NOTIFICATION (.toast)
    ========================================================================== */
+/* 7. FLOATING TOAST NOTIFICATION (.toast): Ẩn thanh cục bộ ở giữa dưới để chỉ dùng toast chuẩn góc trên phải #ts */
 .nearby-sv-root .toast,
 .toast {
-  position: fixed;
-  left: 50%;
-  bottom: calc(var(--nearby-player-h) + 20px + env(safe-area-inset-bottom, 0px));
-  transform: translate(-50%, 12px);
-  background: #191410;
-  color: #F0E9DD;
-  border: 1px solid #3B3128;
-  padding: 10px 18px;
-  border-radius: 10px;
-  font-size: 14px;
-  opacity: 0;
-  pointer-events: none;
-  transition: .25s ease;
-  z-index: 1050;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
-}
-
-.nearby-sv-root .toast.show,
-.toast.show {
-  opacity: 1;
-  transform: translate(-50%, 0);
+  display: none !important;
 }
 
 /* ==========================================================================
@@ -2056,6 +2132,33 @@ body:has(.nearby-sv-root):has(.nearby-sticky-player-bar.is-open) .ftr {
   color: var(--mut) !important;
 }
 
+.nearby-sv-root .stop-row-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.nearby-sv-root .stop-row-duration {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--nearby-sans, var(--sans));
+  font-size: 12.5px;
+  color: var(--mut, #6E6459);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.nearby-sv-root .stop-row-duration::before {
+  content: "";
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.55;
+}
+
 .nearby-sv-root .stop-row-status {
   font-size: 13px;
   color: var(--acc);
@@ -2216,9 +2319,51 @@ body:has(.nearby-sv-root):has(.nearby-sticky-player-bar.is-open) .ftr {
 .nearby-sv-root .reading-paragraph {
   margin-bottom: 14px;
   color: var(--ink) !important;
-  opacity: 0.9;
-  line-height: 1.7;
+  line-height: 1.75;
   font-size: 15.5px;
+  text-align: justify !important;
+  text-justify: inter-word !important;
+}
+
+/* Narration section heading row: time + title, whole row is a seek button. */
+.nearby-sv-root .narration-section-heading {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  width: 100%;
+  min-height: 44px;
+  padding: 8px 0;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+}
+
+.nearby-sv-root .narration-section-time {
+  color: var(--mut, #6E6459);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  font-family: var(--nearby-sans, var(--sans));
+  flex: none;
+}
+
+.nearby-sv-root .narration-section-title {
+  color: var(--ink);
+  font-size: 15px;
+  font-weight: 500;
+  font-family: var(--nearby-serif, var(--serif));
+}
+
+.nearby-sv-root .narration-section.is-active .narration-section-time {
+  color: var(--nearby-acc, #C2410C);
+}
+
+.nearby-sv-root .narration-section + .narration-section {
+  border-top: 1px solid var(--line, #DED2BF);
+  margin-top: 4px;
+  padding-top: 4px;
 }
 
 .nearby-sv-root .reading-segment-read {
@@ -2226,8 +2371,8 @@ body:has(.nearby-sv-root):has(.nearby-sticky-player-bar.is-open) .ftr {
 }
 
 .nearby-sv-root .reading-segment-current {
-  background: var(--acc);
-  color: #FFFFFF !important;
+  background: linear-gradient(transparent 62%, color-mix(in srgb, var(--accent, #C2410C) 22%, transparent) 0);
+  color: var(--ink) !important;
   border-radius: 3px;
   padding: 0 2px;
 }
@@ -2442,6 +2587,17 @@ body:has(.nearby-sv-root):has(.nearby-sticky-player-bar.is-open) .ftr {
   color: #A39B91 !important;
 }
 
+.nearby-sv-root .nearby-status-zone {
+  display: inline-block;
+  margin-left: 6px;
+  color: var(--nearby-mut, #6E6459);
+}
+
+.nearby-sv-root .nearby-status-zone.is-inside {
+  color: var(--nearby-acc, #C2410C);
+  font-weight: 600;
+}
+
 /* ==========================================================================
    11. ITERATION 3 — ACCORDION DETAIL, THREE BUTTON STYLES, QR DIALOG,
        QUIETER MAP, PERSISTENT PLAYER
@@ -2603,11 +2759,13 @@ body:has(.nearby-sv-root):has(.nearby-sticky-player-bar.is-open) .ftr {
 .nearby-sv-root .nearby-stop-detail p {
   font-family: var(--nearby-sans) !important;
   font-size: 16px !important;
-  line-height: 1.7 !important;
+  line-height: 1.75 !important;
   color: var(--nearby-ink, #1C1410) !important;
   font-weight: 400 !important;
   max-width: 62ch !important;
   margin: 0 0 16px 0 !important;
+  text-align: justify !important;
+  text-justify: inter-word !important;
 }
 
 .nearby-sv-root .nearby-stop-detail .reading-body-flow > .narration-section:first-child .reading-paragraph,
@@ -4080,18 +4238,36 @@ footer.pl.player .lang button[aria-pressed="true"] {
 }
 
 .nearby-sv-root .reading-body-flow.tr .sn {
-  transition: opacity 0.3s ease;
+  display: inline !important;
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  font: inherit !important;
+  text-align: inherit !important;
+  line-height: inherit !important;
+  cursor: pointer;
+  transition: color 0.2s ease, background 0.2s ease;
+  color: var(--ink);
 }
 
 .nearby-sv-root .reading-body-flow.tr.live .sn {
-  opacity: 0.45;
+  color: var(--muted);
 }
 
 .nearby-sv-root .reading-body-flow.tr.live .sn.cur {
-  opacity: 1;
+  color: var(--ink);
   background: linear-gradient(
     transparent 62%,
-    color-mix(in srgb, var(--acc) 25%, transparent) 0
+    color-mix(in srgb, var(--accent, #C2410C) 22%, transparent) 0
+  );
+}
+
+[data-theme="dark"] .nearby-sv-root .reading-body-flow.tr.live .sn.cur,
+.dark .nearby-sv-root .reading-body-flow.tr.live .sn.cur {
+  background: linear-gradient(
+    transparent 62%,
+    color-mix(in srgb, var(--accent, #C2410C) 32%, transparent) 0
   );
 }
 
@@ -4898,12 +5074,24 @@ body:has(.nearby-sv-root),
 }
 
 .nearby-sv-root .sd.heard::before {
-  background: var(--acc) !important;
-  border-color: var(--acc) !important;
+  background: var(--acc, #C2410C) !important;
+  border-color: var(--acc, #C2410C) !important;
 }
 
-.nearby-sv-root .sd.on::before {
-  border-color: var(--acc) !important;
+.nearby-sv-root .sd.on:not(.heard)::before {
+  background: var(--bg) !important;
+  border-color: var(--acc, #C2410C) !important;
+}
+
+.nearby-sv-root .sd.on.heard::before {
+  background: var(--acc, #C2410C) !important;
+  border-color: var(--bg) !important;
+}
+
+.nearby-sv-root .nearby-stop-item.is-listened .stop-number-badge {
+  background: var(--nearby-acc, #C2410C) !important;
+  color: #FFFFFF !important;
+  border-color: var(--nearby-acc, #C2410C) !important;
 }
 
 .nearby-sv-root .sd small {
@@ -5299,3 +5487,287 @@ body:has(.nearby-sv-root),
     display: none !important;
   }
 }
+
+/* ==========================================================================
+   17. FINAL POLISH PASS
+   Story CTA order, route stepper affordances, map toolbar density and the
+   souvenir rail's boundary states. Kept at the end so earlier layers remain
+   untouched and this pass can be reviewed (or reverted) on its own.
+   ========================================================================== */
+
+/* 17.1 Put the primary listen action directly under the waveform, before the
+   long-form narration. The story can run several screens tall, so the main
+   action should never sit below the fold. */
+.nearby-sv-root .nearby-stop-detail .acts.hero-actions-row {
+  order: 3 !important;
+  margin: 6px 0 24px !important;
+  padding-top: 0 !important;
+  border-top: 0 !important;
+}
+
+.nearby-sv-root .nearby-stop-detail .reading-body-flow,
+.nearby-sv-root .nearby-stop-detail .reading-body-fallback,
+.nearby-sv-root .nearby-stop-detail .poi-content-lock {
+  order: 4 !important;
+}
+
+.nearby-sv-root .nearby-stop-detail .chs {
+  order: 5 !important;
+}
+
+.nearby-sv-root .nearby-stop-detail .reading-nav-row {
+  order: 6 !important;
+}
+
+/* 17.2 Calmer reading rhythm: one consistent leading, a little more air
+   between paragraphs, no trailing gap before the "next stop" row. */
+.nearby-sv-root .nearby-stop-detail .reading-paragraph {
+  line-height: 1.75 !important;
+  margin-bottom: 18px !important;
+  text-align: justify !important;
+  text-justify: inter-word !important;
+}
+
+.nearby-sv-root .nearby-stop-detail .narration-section:last-child .reading-paragraph {
+  margin-bottom: 0 !important;
+}
+
+/* 17.3 Route stepper: unobtrusive scrolling on narrow screens, with snap
+   points and no visible scrollbar. */
+.nearby-sv-root .stripw {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  overscroll-behavior-x: contain;
+}
+
+.nearby-sv-root .stripw::-webkit-scrollbar {
+  display: none !important;
+}
+
+/* The legend lives inside the horizontally scrollable rail, so pin it to the
+   left edge; otherwise it slides out of view as soon as a later stop is
+   selected and leaves an unexplained empty gap above the track. */
+.nearby-sv-root .stripw .strip-head {
+  position: sticky;
+  left: 0;
+  width: max-content;
+  max-width: 100%;
+  z-index: 2;
+}
+
+@media (max-width: 960px) {
+  .nearby-sv-root .stripw {
+    scroll-snap-type: x proximity;
+    padding-right: 12px !important;
+  }
+
+  .nearby-sv-root .strip .sd {
+    scroll-snap-align: start;
+  }
+}
+
+/* 17.4 Map toolbar: the notice stays inside the map, but never grows into a
+   screen-covering block. On phones the redundant ON/OFF chip is dropped and
+   the two controls stop wrapping onto a second line. */
+.nearby-sv-root .tools .nearby-map-status-line {
+  max-width: min(100%, 430px) !important;
+}
+
+@media (max-width: 640px) {
+  .nearby-sv-root .map {
+    height: 320px !important;
+  }
+
+  .nearby-sv-root .tools .nearby-controlbar-pill {
+    height: 36px;
+    padding: 2px 4px;
+  }
+
+  .nearby-sv-root .tools .toggle-state {
+    display: none !important;
+  }
+
+  .nearby-sv-root .tools .nearby-toggle-switch,
+  .nearby-sv-root .tools .nearby-action-btn.btn-gps {
+    padding: 0 8px;
+    font-size: 12.5px;
+  }
+
+  .nearby-sv-root .tools .nearby-action-btn.btn-gps span {
+    white-space: nowrap;
+  }
+
+  .nearby-sv-root .tools .nearby-map-status-line {
+    display: -webkit-box !important;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden !important;
+    white-space: normal !important;
+    max-width: min(100%, 330px) !important;
+    font-size: 11.5px !important;
+    line-height: 1.45 !important;
+    padding: 5px 10px !important;
+  }
+}
+
+/* 17.5 Souvenir rail: balanced header on phones and honest arrow states at
+   the start and end of the rail. */
+@media (max-width: 640px) {
+  .nearby-sv-root .shop-head {
+    align-items: flex-start;
+    gap: 14px;
+  }
+
+  .nearby-sv-root .shop-head-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .nearby-sv-root .shop .shop-more-link {
+    margin-left: auto;
+  }
+}
+
+.nearby-sv-root .shop .shop-arrow-btn:disabled,
+.nearby-sv-root .shop .shop-arrow-btn:disabled:hover {
+  opacity: 0.38;
+  cursor: default;
+  color: var(--mut) !important;
+  background: transparent !important;
+  border-color: var(--line) !important;
+  transform: none !important;
+}
+
+/* Language showcase: "Một câu chuyện, bốn ngôn ngữ" - headline + narration rows */
+.nearby-sv-root .lg {
+  display: grid;
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+  gap: 56px;
+  margin-top: 64px;
+  padding-top: 40px;
+  border-top: 1px solid var(--line);
+}
+
+.nearby-sv-root .lg h2 {
+  font: 500 clamp(24px, 3vw, 34px) / 1.2 var(--serif);
+  color: var(--ink);
+  letter-spacing: -0.01em;
+}
+
+.nearby-sv-root .lgp {
+  color: var(--mut);
+  font-size: 15px;
+  line-height: 1.6;
+  margin: 10px 0 0;
+  max-width: 40ch;
+}
+
+.nearby-sv-root .lr {
+  border-top: 1px solid var(--line);
+}
+
+.nearby-sv-root .lr > div {
+  display: grid;
+  grid-template-columns: 110px minmax(0, 1fr) auto;
+  gap: 20px;
+  align-items: baseline;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.nearby-sv-root .lr > div:first-child {
+  border-top: 1px solid var(--line);
+}
+
+.nearby-sv-root .lr b {
+  font: 500 19px / 1.2 var(--serif);
+  color: var(--ink);
+}
+
+.nearby-sv-root .lr span {
+  font-size: 15px;
+  line-height: 1.7;
+  color: var(--ink);
+}
+
+.nearby-sv-root .lr small {
+  font-size: 13px;
+  color: var(--mut);
+  white-space: nowrap;
+}
+
+/* Preparation checklist: 4 columns with hairlines */
+.nearby-sv-root .prep {
+  margin-top: 64px;
+  padding-top: 40px;
+  border-top: 1px solid var(--line);
+}
+
+.nearby-sv-root .prep h2 {
+  font: 500 clamp(24px, 3vw, 34px) / 1.2 var(--serif);
+  color: var(--ink);
+  letter-spacing: -0.01em;
+}
+
+.nearby-sv-root .pr4 {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin-top: 24px;
+  border-top: 1px solid var(--line);
+}
+
+.nearby-sv-root .pr4 > div {
+  padding: 24px 24px 0 0;
+}
+
+.nearby-sv-root .pr4 > div + div {
+  padding-left: 24px;
+  border-left: 1px solid var(--line);
+}
+
+.nearby-sv-root .pr4 h3 {
+  font: 500 19px / 1.2 var(--serif);
+  color: var(--ink);
+  margin: 0;
+}
+
+.nearby-sv-root .pr4 p {
+  color: var(--mut);
+  font-size: 15px;
+  line-height: 1.5;
+  margin: 6px 0 0;
+}
+
+@media (max-width: 960px) {
+  .nearby-sv-root .lg {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 24px;
+  }
+
+  .nearby-sv-root .pr4 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .nearby-sv-root .pr4 > div,
+  .nearby-sv-root .pr4 > div + div {
+    padding: 20px 16px 0 0;
+    border-left: 0;
+  }
+}
+
+@media (max-width: 640px) {
+  .nearby-sv-root .lr > div {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 4px 16px;
+  }
+
+  .nearby-sv-root .lr span {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+
+  .nearby-sv-root .pr4 {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+

@@ -27,11 +27,8 @@ export const NewsMeta: React.FC<NewsMetaProps> = ({
     parts.push({
       key: 'cat',
       node: (
-        <span
-          className="nl-meta-cat"
-          style={category.color ? { color: category.color } : undefined}
-        >
-          {category.uppercase ? category.label.toUpperCase() : category.label}
+        <span className="nl-meta-cat">
+          {category.label}
         </span>
       ),
     });

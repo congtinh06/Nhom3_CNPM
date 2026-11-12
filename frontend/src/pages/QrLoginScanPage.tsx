@@ -4,7 +4,6 @@ import {
   AlertCircle,
   ArrowLeft,
   CheckCircle2,
-  Eye,
   Loader2,
   ScanLine,
   XCircle,
@@ -14,11 +13,10 @@ import { normalizeApiError } from '../api/errors';
 import { useAuth } from '../context/AuthContext';
 import { useToastOptional } from '../context/ToastContext';
 import { useNavbarLanguage } from '../content/languages';
-import { enterGuestMode } from '../lib/guestMode';
 import { useQrScanner } from '../hooks/useQrScanner';
 import { QrScanResponse } from '../types';
 
-type ScanPhase = 'idle' | 'confirm' | 'approving' | 'success' | 'denied' | 'guest-success';
+type ScanPhase = 'idle' | 'confirm' | 'approving' | 'success' | 'denied';
 
 const QR_LOGIN_SCAN_PATH = '/quet-qr-dang-nhap';
 const QR_HANDOFF_PATH = '/nhan-dang-nhap';
@@ -98,32 +96,32 @@ export const QrLoginScanPage: React.FC = () => {
         return;
       }
       setError(null);
+      if (authStatus === 'loading') {
+        setError(t.auth.qrLoginRequired);
+        setPhase('idle');
+        return;
+      }
+      if (authStatus !== 'authenticated' || !user) {
+        // Mã QR "đăng nhập nhanh" kiểu Zalo chỉ áp dụng cho tài khoản đã đăng ký
+        // và đã xác thực email. Thiết bị chưa đăng nhập hoặc đang ở chế độ Khách
+        // phải đăng nhập trước khi quét mã.
+        setError(t.auth.qrLoginRequired);
+        return;
+      }
       setBusy(true);
       try {
-        if (authStatus === 'guest') {
-          // Khach chua co tai khoan: danh dau phien de thiet bi A vao che do Khach.
-          await authApi.guestScanQrLogin(trimmed);
-          enterGuestMode();
-          setToken(trimmed);
-          setScanInfo(null);
-          setPhase('guest-success');
-        } else if (authStatus === 'loading') {
-          setError(t.auth.qrLoginRequired);
-          setPhase('idle');
-        } else {
-          const result = await authApi.scanQrLogin(trimmed);
-          setToken(trimmed);
-          setScanInfo(result);
-          setPhase('confirm');
-        }
+        const result = await authApi.scanQrLogin(trimmed);
+        setToken(trimmed);
+        setScanInfo(result);
+        setPhase('confirm');
       } catch (err) {
-        setError(normalizeApiError(err).message);
+        setError(normalizeApiError(err, true).message);
         setPhase('idle');
       } finally {
         setBusy(false);
       }
     },
-    [authStatus, navigate, t.auth.qrLoginRequired]
+    [authStatus, navigate, t.auth.qrLoginRequired, user]
   );
 
   // Token tu duong link (khi quet QR bang Camera dien thoai mo URL):
@@ -137,8 +135,8 @@ export const QrLoginScanPage: React.FC = () => {
     void handleToken(tokenFromUrl).finally(() => setAutoHandling(false));
   }, [tokenFromUrl, authReady, handleToken]);
 
-  // Camera trong trang: bat khi dang idle (ca khach lan tai khoan that).
-  const cameraEnabled = cameraWanted && !autoHandling && phase === 'idle' && !busy;
+  // Camera trong trang: chỉ bật khi thiết bị đã đăng nhập tài khoản thật.
+  const cameraEnabled = cameraWanted && !autoHandling && phase === 'idle' && !busy && hasRealAccount;
   const { videoRef, active, error: cameraError } = useQrScanner({
     onScan: (value) => {
       if (phase === 'idle' && !busy) {
@@ -193,34 +191,19 @@ export const QrLoginScanPage: React.FC = () => {
     }
   };
 
-  // Man hinh ket qua (Thanh cong / Tu choi / Che do khach)
-  if (phase === 'success' || phase === 'denied' || phase === 'guest-success') {
+  // Man hinh ket qua (Thanh cong / Tu choi)
+  if (phase === 'success' || phase === 'denied') {
     const success = phase === 'success';
-    const guest = phase === 'guest-success';
     return (
       <div className="auth-scan-page">
         <div className="auth-scan-card auth-scan-result">
-          {guest ? (
-            <Eye size={52} strokeWidth={1.6} className="auth-scan-result-icon is-success" />
-          ) : success ? (
+          {success ? (
             <CheckCircle2 size={52} strokeWidth={1.6} className="auth-scan-result-icon is-success" />
           ) : (
             <XCircle size={52} strokeWidth={1.6} className="auth-scan-result-icon is-denied" />
           )}
-          <h1>
-            {guest
-              ? t.auth.qrGuestSuccessTitle
-              : success
-                ? t.auth.qrSuccessTitle
-                : t.auth.qrDenied}
-          </h1>
-          <p>
-            {guest
-              ? t.auth.qrGuestSuccessNote
-              : success
-                ? t.auth.qrSuccessNote
-                : t.auth.qrScanIntro}
-          </p>
+          <h1>{success ? t.auth.qrSuccessTitle : t.auth.qrDenied}</h1>
+          <p>{success ? t.auth.qrSuccessNote : t.auth.qrScanIntro}</p>
           <Link to="/" className="tb auth-scan-home">
             {t.auth.qrBackHome}
           </Link>
@@ -292,71 +275,78 @@ export const QrLoginScanPage: React.FC = () => {
         <h1>{t.auth.qrScanTitle}</h1>
         <p className="auth-scan-intro">{t.auth.qrScanIntro}</p>
 
-        {authStatus === 'guest' && (
+        {authReady && !hasRealAccount && (
           <div className="auth-scan-role">
-            <Eye size={15} strokeWidth={2} aria-hidden="true" />
-            <span>{t.auth.qrGuestIntro}</span>
+            <AlertCircle size={15} strokeWidth={2} aria-hidden="true" />
+            <span>{t.auth.qrLoginRequired}</span>
+            <Link to="/dang-nhap" className="tb auth-scan-home">
+              {t.auth.login}
+            </Link>
           </div>
         )}
 
-        {hasRealAccount && !emailVerified && (
-          <div className="auth-scan-warn" role="alert">
-            <AlertCircle size={15} aria-hidden="true" />
-            <span>{t.auth.qrEmailNotVerified}</span>
-            <button type="button" onClick={() => void handleResendVerification()}>
-              {t.auth.qrResendVerify}
-            </button>
-          </div>
-        )}
+        {hasRealAccount && (
+          <>
+            {!emailVerified && (
+              <div className="auth-scan-warn" role="alert">
+                <AlertCircle size={15} aria-hidden="true" />
+                <span>{t.auth.qrEmailNotVerified}</span>
+                <button type="button" onClick={() => void handleResendVerification()}>
+                  {t.auth.qrResendVerify}
+                </button>
+              </div>
+            )}
 
-        <div className={`auth-scan-video${active ? ' is-active' : ''}`}>
-          <video ref={videoRef} muted playsInline aria-label={t.auth.qrScanTitle} />
-          <div className="auth-scan-frame" aria-hidden="true" />
-          {!active && (
-            <div className="auth-scan-video-placeholder">
-              {autoHandling || busy ? (
-                <Loader2 size={30} className="auth-qr-spin" aria-hidden="true" />
-              ) : (
-                <ScanLine size={34} strokeWidth={1.5} aria-hidden="true" />
+            <div className={`auth-scan-video${active ? ' is-active' : ''}`}>
+              <video ref={videoRef} muted playsInline aria-label={t.auth.qrScanTitle} />
+              <div className="auth-scan-frame" aria-hidden="true" />
+              {!active && (
+                <div className="auth-scan-video-placeholder">
+                  {autoHandling || busy ? (
+                    <Loader2 size={30} className="auth-qr-spin" aria-hidden="true" />
+                  ) : (
+                    <ScanLine size={34} strokeWidth={1.5} aria-hidden="true" />
+                  )}
+                  <span>
+                    {autoHandling || busy ? t.auth.qrWaiting : t.auth.qrOpenCamera}
+                  </span>
+                </div>
               )}
-              <span>
-                {autoHandling || busy ? t.auth.qrWaiting : t.auth.qrOpenCamera}
-              </span>
             </div>
-          )}
-        </div>
 
-        {(error || cameraError) && (
-          <p className="af-err auth-scan-error" role="alert">
-            <AlertCircle size={15} aria-hidden="true" />
-            {error ?? t.auth.qrCameraError}
-          </p>
+            {(error || cameraError) && (
+              <p className="af-err auth-scan-error" role="alert">
+                <AlertCircle size={15} aria-hidden="true" />
+                {error ?? t.auth.qrCameraError}
+              </p>
+            )}
+
+            {!active && !autoHandling && !busy && (
+              <button type="button" className="tb auth-scan-retry" onClick={restartCamera}>
+                <ScanLine size={15} aria-hidden="true" />
+                {t.auth.qrScanAgain}
+              </button>
+            )}
+
+            <form className="auth-scan-manual" onSubmit={handleManualSubmit}>
+              <label className="af" htmlFor="qr-manual-token">
+                <span>{t.auth.qrManualLabel}</span>
+                <input
+                  id="qr-manual-token"
+                  type="text"
+                  value={manualToken}
+                  onChange={(event) => setManualToken(event.target.value)}
+                  placeholder={t.auth.qrManualPlaceholder}
+                  autoComplete="off"
+                  spellCheck={false}
+                />
+              </label>
+              <button type="submit" className="tb af-submit" disabled={busy || !manualToken.trim()}>
+                {t.auth.qrManualSubmit}
+              </button>
+            </form>
+          </>
         )}
-
-        {!active && !autoHandling && !busy && (
-          <button type="button" className="tb auth-scan-retry" onClick={restartCamera}>
-            <ScanLine size={15} aria-hidden="true" />
-            {t.auth.qrScanAgain}
-          </button>
-        )}
-
-        <form className="auth-scan-manual" onSubmit={handleManualSubmit}>
-          <label className="af" htmlFor="qr-manual-token">
-            <span>{t.auth.qrManualLabel}</span>
-            <input
-              id="qr-manual-token"
-              type="text"
-              value={manualToken}
-              onChange={(event) => setManualToken(event.target.value)}
-              placeholder={t.auth.qrManualPlaceholder}
-              autoComplete="off"
-              spellCheck={false}
-            />
-          </label>
-          <button type="submit" className="tb af-submit" disabled={busy || !manualToken.trim()}>
-            {t.auth.qrManualSubmit}
-          </button>
-        </form>
 
         <p className="auth-scan-back">
           <Link to="/">

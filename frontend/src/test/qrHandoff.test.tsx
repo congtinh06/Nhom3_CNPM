@@ -155,11 +155,17 @@ describe('QrHandoffReceivePage', () => {
     expect(authApi.exchangeQrSession).not.toHaveBeenCalled();
   });
 
-  it('camera trong trang quét mã QR tài khoản sẽ chuyển sang trang nhận đăng nhập', async () => {
+  it('mã QR tài khoản mở qua đường dẫn sẽ chuyển sang trang nhận đăng nhập', async () => {
     vi.mocked(authApi.refresh).mockRejectedValue({ response: { status: 401 } });
 
+    const handoffUrl =
+      'https://affection-smokiness-watch.ngrok-free.dev/nhan-dang-nhap' +
+      '?t=handoff-raw&s=44444444-4444-4444-4444-444444444444&e=handoff-exchange';
+
     render(
-      <MemoryRouter initialEntries={['/quet-qr-dang-nhap']}>
+      <MemoryRouter
+        initialEntries={[`/quet-qr-dang-nhap?t=${encodeURIComponent(handoffUrl)}`]}
+      >
         <AuthProvider>
           <Routes>
             <Route path="/quet-qr-dang-nhap" element={<QrLoginScanPage />} />
@@ -168,16 +174,6 @@ describe('QrHandoffReceivePage', () => {
         </AuthProvider>
       </MemoryRouter>
     );
-
-    const input = await screen.findByLabelText(/hoặc nhập mã QR/i);
-    fireEvent.change(input, {
-      target: {
-        value:
-          'https://affection-smokiness-watch.ngrok-free.dev/nhan-dang-nhap' +
-          '?t=handoff-raw&s=44444444-4444-4444-4444-444444444444&e=handoff-exchange',
-      },
-    });
-    fireEvent.click(screen.getByRole('button', { name: /tiếp tục/i }));
 
     expect(
       await screen.findByRole('heading', { name: 'Nhận đăng nhập từ máy tính' })

@@ -13,7 +13,7 @@ public final class ProductSpecification {
 
     private ProductSpecification() {}
 
-    public static Specification<Product> filter(ProductFilterRequest request, List<Long> targetCategoryIds) {
+    public static Specification<Product> filter(ProductFilterRequest request) {
         return (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
 
@@ -32,17 +32,13 @@ public final class ProductSpecification {
             // 4. Lọc theo từ khóa tìm kiếm (name hoặc shortDescription)
             if (request.getKeyword() != null && !request.getKeyword().isBlank()) {
                 String searchPattern = "%" + request.getKeyword().trim().toLowerCase() + "%";
-                Predicate nameMatch = cb.like(cb.lower(root.get("name")), searchPattern);
-                Predicate descMatch = cb.like(cb.lower(root.get("shortDescription")), searchPattern);
+                Predicate nameMatch = cb.like(root.get("name"), searchPattern);
+                Predicate descMatch = cb.like(root.get("shortDescription"), searchPattern);
                 predicates.add(cb.or(nameMatch, descMatch));
             }
 
-            // 5. Lọc theo danh mục (category entity theo ID bao gồm cả cây con nếu có)
-            if (targetCategoryIds != null && !targetCategoryIds.isEmpty()) {
-                predicates.add(root.get("categoryEntity").get("id").in(targetCategoryIds));
-            } else if (request.getCategoryId() != null) {
-                predicates.add(cb.equal(root.get("categoryEntity").get("id"), request.getCategoryId()));
-            } else if (request.getCategory() != null) {
+            // 5. Lọc theo danh mục enum
+            if (request.getCategory() != null) {
                 predicates.add(cb.equal(root.get("category"), request.getCategory()));
             }
 
@@ -61,5 +57,9 @@ public final class ProductSpecification {
 
             return cb.and(predicates.toArray(new Predicate[0]));
         };
+    }
+
+    public static Specification<Product> filter(ProductFilterRequest request, List<Long> targetCategoryIds) {
+        return filter(request);
     }
 }
