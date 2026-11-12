@@ -1,5 +1,6 @@
 package com.echora.content.repository;
 
+import com.echora.content.dto.ProductDto;
 import com.echora.content.dto.ProductFilterRequest;
 import com.echora.content.entity.Category;
 import com.echora.content.entity.NewsArticle;
@@ -7,38 +8,76 @@ import com.echora.content.entity.Poi;
 import com.echora.content.entity.Product;
 import com.echora.content.entity.Zone;
 import com.echora.content.model.ProductCategory;
+import com.echora.content.service.ProductService;
+import jakarta.persistence.EntityManagerFactory;
+import org.hibernate.SessionFactory;
+import org.hibernate.cfg.AvailableSettings;
+import org.hibernate.resource.jdbc.spi.StatementInspector;
+import org.hibernate.stat.Statistics;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.orm.jpa.HibernatePropertiesCustomizer;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.boot.test.system.CapturedOutput;
+import org.springframework.boot.test.system.OutputCaptureExtension;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.transaction.support.TransactionTemplate;
 import org.testcontainers.containers.MSSQLServerContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
 
 import java.math.BigDecimal;
+import java.util.List;
+import java.util.Locale;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Kiểm chứng hành vi tìm kiếm trên SQL Server thật (collation Vietnamese_100_CI_AS)
- * sau khi bỏ LOWER() bọc cột trong NewsArticleRepository và ProductSpecification.
+ * Kiểm chứng truy vấn thật trên SQL Server (collation Vietnamese_100_CI_AS):
+ * 1. Tìm kiếm tiếng Việt có dấu không phân biệt hoa thường sau khi bỏ LOWER().
+ * 2. @EntityGraph(attributePaths = {"poi"}) cho findAll(Specification, Pageable) trên trang 20 sản phẩm
+ *    chỉ phát sinh truy vấn JOIN + COUNT mà không bắn 20 câu SELECT poi riêng lẻ (N+1).
  */
 @SpringBootTest(properties = {
         "spring.rabbitmq.listener.simple.auto-startup=false",
-        "echora.publish-retry.enabled=false"
+        "echora.publish-retry.enabled=false",
+        "spring.jpa.properties.hibernate.generate_statistics=true"
 })
 @Testcontainers
+@Import(ProductAndNewsQueryIntegrationTest.SqlCaptureConfig.class)
+@ExtendWith(OutputCaptureExtension.class)
 class ProductAndNewsQueryIntegrationTest {
 
     private static final PageRequest ONE_PAGE = PageRequest.of(0, 20);
     private static final AtomicBoolean SEEDED = new AtomicBoolean(false);
+    private static final List<String> CAPTURED_SQL = new CopyOnWriteArrayList<>();
+
+    @TestConfiguration
+    static class SqlCaptureConfig {
+        @Bean
+        HibernatePropertiesCustomizer sqlInspectorCustomizer() {
+            return props -> props.put(
+                    AvailableSettings.STATEMENT_INSPECTOR,
+                    (StatementInspector) sql -> {
+                        CAPTURED_SQL.add(sql);
+                        return sql;
+                    });
+        }
+    }
 
     @Container
     static final MSSQLServerContainer<?> MSSQL =
@@ -63,9 +102,15 @@ class ProductAndNewsQueryIntegrationTest {
     private ProductRepository productRepository;
     @Autowired
     private NewsArticleRepository newsArticleRepository;
+    @Autowired
+    private ProductService productService;
+    @Autowired
+    private EntityManagerFactory entityManagerFactory;
+    @Autowired
+    private TransactionTemplate transactionTemplate;
 
     @BeforeEach
-    void seedVietnameseSearchFixtures() {
+    void seedFixtures() {
         if (!SEEDED.compareAndSet(false, true)) {
             return;
         }
@@ -94,6 +139,34 @@ class ProductAndNewsQueryIntegrationTest {
                 .status("ACTIVE")
                 .publishStatus("PUBLISHED")
                 .build());
+
+        for (int i = 1; i <= 25; i++) {
+            String suffix = String.format("%02d", i);
+            Poi distinctPoi = poiRepository.save(Poi.builder()
+                    .zone(zone)
+                    .category(category)
+                    .code("POI_EG_" + suffix)
+                    .qrToken("QR_EG_" + suffix)
+                    .slug("poi-eg-" + suffix)
+                    .name("Điểm N+1 " + suffix)
+                    .latitude(new BigDecimal("10.7700000"))
+                    .longitude(new BigDecimal("106.7000000"))
+                    .triggerRadiusMeters(50)
+                    .status("ACTIVE")
+                    .publishStatus("PUBLISHED")
+                    .build());
+            productRepository.save(Product.builder()
+                    .slug("sp-eg-" + suffix)
+                    .name("Sản phẩm EntityGraphCheck " + suffix)
+                    .category(ProductCategory.SOUVENIR)
+                    .shortDescription("Quà lưu niệm gắn POI riêng " + suffix)
+                    .price(new BigDecimal("50000"))
+                    .reviewsCount(30 - i)
+                    .sortOrder(i)
+                    .poi(distinctPoi)
+                    .isActive(true)
+                    .build());
+        }
 
         productRepository.save(Product.builder()
                 .slug("sp-vn-banh-duc-nong")
@@ -221,5 +294,69 @@ class ProductAndNewsQueryIntegrationTest {
         assertThat(adminUpperAll.getContent())
                 .extracting(NewsArticle::getSlug)
                 .containsExactlyInAnyOrder("news-vn-kham-trai", "news-vn-kham-trai-tam-an");
+    }
+
+    @Test
+    @DisplayName("findAll(Specification, Pageable) trang 20 sản phẩm fetch sẵn POI (2 SQL: JOIN + COUNT, không 20 SELECT poi)")
+    void productRepository_FindAllPage20_FetchesPoiWithoutNPlusOne(CapturedOutput output) {
+        Statistics stats = entityManagerFactory.unwrap(SessionFactory.class).getStatistics();
+        stats.setStatisticsEnabled(true);
+
+        // 1. Kiểm tra trực tiếp ProductRepository.findAll(Specification, Pageable) trong transaction mới (L1 cache rỗng)
+        stats.clear();
+        CAPTURED_SQL.clear();
+
+        ProductFilterRequest repoRequest = ProductFilterRequest.builder()
+                .keyword("EntityGraphCheck")
+                .build();
+        Pageable repoPageable = PageRequest.of(0, 20, Sort.by(Sort.Direction.ASC, "sortOrder"));
+
+        transactionTemplate.executeWithoutResult(tx -> {
+            Page<Product> page = productRepository.findAll(ProductSpecification.filter(repoRequest), repoPageable);
+            assertThat(page.getContent()).hasSize(20);
+            assertThat(page.getTotalElements()).isEqualTo(25L);
+
+            List<String> poiSlugs = page.getContent().stream()
+                    .map(product -> product.getPoi().getSlug())
+                    .distinct()
+                    .toList();
+            assertThat(poiSlugs).hasSize(20);
+        });
+
+        assertThat(stats.getEntityFetchCount()).isZero();
+        assertThat(stats.getPrepareStatementCount()).isEqualTo(2L);
+        assertThat(CAPTURED_SQL).hasSize(2);
+        assertThat(CAPTURED_SQL)
+                .anySatisfy(sql -> assertThat(sql.toLowerCase(Locale.ROOT)).contains("join poi"))
+                .anySatisfy(sql -> assertThat(sql.toLowerCase(Locale.ROOT)).contains("count_big("))
+                .noneSatisfy(sql -> assertThat(sql.toLowerCase(Locale.ROOT)).contains("from poi"));
+
+        // 2. Kiểm tra qua ProductServiceImpl.getActiveProducts (map ProductDto::fromEntity trên 20 sản phẩm)
+        stats.clear();
+        CAPTURED_SQL.clear();
+
+        Page<ProductDto> dtoPage = productService.getActiveProducts(ProductFilterRequest.builder()
+                .keyword("EntityGraphCheck")
+                .page(0)
+                .size(20)
+                .sortBy("popular")
+                .build());
+
+        assertThat(dtoPage.getContent()).hasSize(20);
+        assertThat(dtoPage.getTotalElements()).isEqualTo(25L);
+        assertThat(dtoPage.getContent())
+                .extracting(ProductDto::getPoiId)
+                .doesNotContainNull()
+                .doesNotHaveDuplicates();
+        assertThat(dtoPage.getContent())
+                .extracting(ProductDto::getPoiSlug)
+                .doesNotContainNull()
+                .doesNotHaveDuplicates();
+        assertThat(stats.getEntityFetchCount()).isZero();
+        assertThat(stats.getPrepareStatementCount()).isEqualTo(2L);
+        assertThat(CAPTURED_SQL).hasSize(2);
+
+        // Không có cảnh báo Hibernate HHH90003004 khi phân trang với @EntityGraph trên ToOne
+        assertThat(output.getAll()).doesNotContain("HHH90003004");
     }
 }
