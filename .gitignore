@@ -70,3 +70,6 @@ qr-output/
 *.pyc
 __pycache__/
 _check_docx/
+
+# Local database backups
+backups/
