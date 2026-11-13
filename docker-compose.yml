@@ -41,7 +41,7 @@ services:
       MSSQL_PID: ${MSSQL_PID:-Developer}
       MSSQL_MEMORY_LIMIT_MB: ${MSSQL_MEMORY_LIMIT_MB:-2048}
     ports:
-      - "127.0.0.1:1433:1433"
+      - "127.0.0.1:1401:1433"
     volumes:
       - mssql-data:/var/opt/mssql
     healthcheck:
@@ -121,7 +121,7 @@ services:
     container_name: content-service
     restart: unless-stopped
     environment:
-      JAVA_TOOL_OPTIONS: "-Xms128m -Xmx256m"
+      JAVA_TOOL_OPTIONS: "-Xms256m -Xmx512m"
       DB_URL: jdbc:sqlserver://mssql:1433;databaseName=echora_content_db;encrypt=true;trustServerCertificate=true
       DB_USERNAME: ${CONTENT_DB_USER:-content_user}
       DB_PASSWORD: ${CONTENT_DB_PASSWORD:?CONTENT_DB_PASSWORD is required in .env}
