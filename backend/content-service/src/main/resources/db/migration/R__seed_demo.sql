@@ -141,7 +141,7 @@ Chợ đông nhất vào ban ngày, và buổi tối khu vực quanh chợ có t
 The market has four main gates, facing east, west, south, and north. The most famous is the south gate, with its tall clock tower, a sight seen on countless postcards. Inside, the aisles are grouped by goods: fabric and clothing, handicrafts and souvenirs, coffee, tea, dried goods, fruit, and a food area serving familiar Vietnamese dishes.
 
 The market is busiest in the daytime, and in the evening the streets around it also hold a night market. When you shop, ask for the price and bargain gently, which is a friendly part of local trading culture. Take a little time to eat a light snack right here, such as a sweet dessert soup or a small cake, to feel the rhythm of daily life in Saigon.'),
-  (N'POI_BAO_TANG_CHUNG_TICH_01', N'bao-tang-chung-tich-chien-tranh', N'qr-bao-tang-chung-tich-01', N'Bảo tàng Chứng tích Chiến tranh', 10.7792600, 106.6924700, 45, N'HISTORIC', N'/images/pois/bao-tang-chung-tich-chien-tranh.jpg',
+  (N'POI_BAO_TANG_CHUNG_TICH_01', N'bao-tang-chung-tich-chien-tranh', N'qr-bao-tang-chung-tich-01', N'Bảo tàng Chứng tích Chiến tranh', 10.7792600, 106.6924700, 45, N'HISTORIC', N'/pois/bao-tang-chung-tich-chien-tranh.jpg',
    N'Bảo tàng Chứng tích Chiến tranh', N'Bảo tàng Chứng tích Chiến tranh ghi lại những hậu quả của chiến tranh đối với con người và đất nước Việt Nam. Bảo tàng được thành lập năm một nghìn chín trăm bảy mươi lăm. Sân trước trưng bày máy bay, xe tăng và vũ khí thật, còn các phòng bên trong có nhiều hình ảnh và hiện vật về chiến tranh. Hãy dành cho nơi này một tâm thế trầm lắng. Một số hình ảnh có thể gây xúc động mạnh, nên bạn hãy cân nhắc nếu đi cùng trẻ nhỏ.', N'Bảo tàng Chứng tích Chiến tranh nằm trên đường Võ Văn Tần. Bảo tàng được thành lập vào tháng chín năm một nghìn chín trăm bảy mươi lăm, ban đầu với một tên gọi khác, và đã nhiều lần đổi tên trước khi mang tên như hiện nay vào năm một nghìn chín trăm chín mươi lăm. Mục đích của bảo tàng là lưu giữ hình ảnh, tư liệu và hiện vật về chiến tranh Việt Nam, để người xem hiểu rõ hơn về những mất mát mà chiến tranh gây ra.
 
 Ở sân trước, bạn sẽ thấy máy bay, xe tăng, pháo và nhiều loại bom đạn được trưng bày ngoài trời. Bên trong, các tầng trưng bày ảnh và hiện vật theo từng chủ đề, trong đó có phần nói về hậu quả của chất độc da cam đối với nhiều thế hệ, và một triển lãm ảnh dành cho các phóng viên đã hy sinh trong các cuộc chiến tranh ở Đông Dương.
@@ -181,7 +181,7 @@ DROP TABLE #PoiSeed;
 IF NOT EXISTS (SELECT 1 FROM dbo.poi WHERE code = 'POI_THIEN_HAU_01')
 BEGIN
     INSERT INTO dbo.poi (zone_id, category_id, code, qr_token, slug, name, latitude, longitude, trigger_radius_meters, address, thumbnail_url)
-    VALUES (@Zone2, @CatReli, 'POI_THIEN_HAU_01', 'qr-thien-hau-01', N'chua-ba-thien-hau', N'Chùa Bà Thiên Hậu (Hội quán Tuệ Thành)', 10.7538000, 106.6601000, 35, N'Số 710 Đường Nguyễn Trãi', '/images/thienhau.jpg');
+    VALUES (@Zone2, @CatReli, 'POI_THIEN_HAU_01', 'qr-thien-hau-01', N'chua-ba-thien-hau', N'Chùa Bà Thiên Hậu (Hội quán Tuệ Thành)', 10.7538000, 106.6601000, 35, N'Số 710 Đường Nguyễn Trãi', '/pois/chua-ba-thien-hau.jpg');
 
     DECLARE @PoiId4 BIGINT = SCOPE_IDENTITY();
     INSERT INTO dbo.poi_translation (poi_id, language_code, title, summary, description, historical_significance, audio_status, translation_source, updated_at)
@@ -203,7 +203,7 @@ END
 IF NOT EXISTS (SELECT 1 FROM dbo.poi WHERE code = 'POI_CAU_BA_SON_01')
 BEGIN
     INSERT INTO dbo.poi (zone_id, category_id, code, qr_token, slug, name, latitude, longitude, trigger_radius_meters, address, thumbnail_url)
-    VALUES (@Zone4, @CatArch, 'POI_CAU_BA_SON_01', 'qr-ba-son-01', N'cau-ba-son', N'Cầu Ba Son', 10.7818000, 106.7092000, 50, N'Đường Tôn Đức Thắng', '/images/bason.jpg');
+    VALUES (@Zone4, @CatArch, 'POI_CAU_BA_SON_01', 'qr-ba-son-01', N'cau-ba-son', N'Cầu Ba Son', 10.7818000, 106.7092000, 50, N'Đường Tôn Đức Thắng', '/pois/cau-ba-son.jpg');
 
     DECLARE @PoiId5 BIGINT = SCOPE_IDENTITY();
     INSERT INTO dbo.poi_translation (poi_id, language_code, title, summary, description, historical_significance, audio_status, translation_source, updated_at)
