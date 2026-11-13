@@ -9,6 +9,9 @@
   --accent-hover: #9A3412;
   --accent-on-dark: #FB923C;
   --surface-dark: #1C1916;
+  /* Accent used for section headings/links that sit on the page surface.
+     Stays brown on the cream page, lightens in dark mode for contrast. */
+  --heading-accent: #8a2f12;
   --font-serif-brand: 'Fraunces', Georgia, 'Times New Roman', serif;
   --nav-font-size: 14px;
   box-sizing: border-box;
@@ -23,6 +26,7 @@
     --white: #1C1916;
     --ink: #F1EDE6;
     --black: #F1EDE6;
+    --heading-accent: #FB923C;
   }
 }
 
@@ -32,6 +36,7 @@
   --white: #1C1916;
   --ink: #F1EDE6;
   --black: #F1EDE6;
+  --heading-accent: #FB923C;
 }
 
 *,
