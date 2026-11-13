@@ -183,13 +183,6 @@ public class PoiContentServiceImpl implements PoiContentService {
 
         Map<Long, Map<String, PoiGuideTranslationDto>> translationsByPoi = new HashMap<>();
         for (PoiTranslation t : translationRepository.findByPoiIdIn(ids)) {
-            boolean vi = "vi".equalsIgnoreCase(t.getLanguageCode());
-            if (!includePremiumTranslations && !vi) {
-                // Chưa Premium: chỉ trả ngoại ngữ của POI user đã mua lẻ, tiếng Việt luôn trả.
-                if (!purchased.contains(t.getPoi().getId())) {
-                    continue;
-                }
-            }
             translationsByPoi
                     .computeIfAbsent(t.getPoi().getId(), k -> new LinkedHashMap<>())
                     .put(t.getLanguageCode(), toGuideTranslation(t));
