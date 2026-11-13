@@ -57,6 +57,13 @@ body:has(.nl-page-root) .hd-nav-links .nav-link[href="/tin-tuc"] {
   color: #0F5C52 !important;
 }
 
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) body:has(.nl-page-root) .nav-link.active,
+  :root:not([data-theme="light"]) body:has(.nl-page-root) .hd-nav-links .nav-link[href="/tin-tuc"] {
+    color: #4DB8A2 !important;
+  }
+}
+
 body:has(.nl-page-root) .hd-premium-btn {
   border-color: rgba(15, 92, 82, 0.4) !important;
   background: rgba(15, 92, 82, 0.14) !important;
