@@ -1327,7 +1327,7 @@ body.header-hidden .souvenir-sv-root .tabs-w {
 }
 
 .souvenir-sv-root .pager-btn:disabled {
-  color: var(--line2);
+  color: var(--mut);
   text-decoration: none;
   cursor: default;
 }
@@ -2124,4 +2124,32 @@ body.header-hidden .souvenir-sv-root .tabs-w {
     grid-template-columns: 1fr;
     gap: 12px;
   }
+}
+
+/* Dark mode: flip the souvenir palette so text stays readable on dark surfaces. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .souvenir-sv-root {
+    --bg: #17110d;
+    --bg2: #1c1916;
+    --surface: #1c1916;
+    --ink: #F1EDE6;
+    --mut: #B8A89A;
+    --line: #3A322A;
+    --line2: #4A4238;
+    --acc: #FB923C;
+    --acc-2: #FDBA74;
+    --acc-ink: #17110d;
+  }
+}
+:root[data-theme="dark"] .souvenir-sv-root {
+  --bg: #17110d;
+  --bg2: #1c1916;
+  --surface: #1c1916;
+  --ink: #F1EDE6;
+  --mut: #B8A89A;
+  --line: #3A322A;
+  --line2: #4A4238;
+  --acc: #FB923C;
+  --acc-2: #FDBA74;
+  --acc-ink: #17110d;
 }
