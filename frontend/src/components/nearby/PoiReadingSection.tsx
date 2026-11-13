@@ -400,7 +400,7 @@ export const PoiReadingSection: React.FC<PoiReadingSectionProps> = ({
 
   // Middle-band scroll: only when the current word leaves the middle band
   useEffect(() => {
-    if (!isReadingActive || !currentWordRef.current) return;
+    if (!isLiveTranscript || !currentWordRef.current) return;
 
     // Check 3-second user manual scroll lockout
     if (Date.now() - lastUserScrollTimeRef.current < 3000) return;
@@ -424,7 +424,7 @@ export const PoiReadingSection: React.FC<PoiReadingSectionProps> = ({
         behavior: prefersReducedMotion ? 'auto' : 'smooth',
       });
     }
-  }, [isReadingActive, activeCharOffset, activeGlobalSentenceIndex]);
+  }, [isLiveTranscript, isReadingActive, activeCharOffset, activeGlobalSentenceIndex]);
 
   // Facts row: Address and distance (standalone fallback only; omitted in open-stop panel)
   const rawAddress = (poi as unknown as { address?: Record<string, string> | string }).address;
@@ -558,6 +558,21 @@ export const PoiReadingSection: React.FC<PoiReadingSectionProps> = ({
 
     // Standalone mode: when idle or not reading, render plain text with no segment spans
     if (!isReadingActive || activeCharOffset === null) {
+      const paraSentences = sentenceStructure.byParagraph[pIdx] || [];
+      if (isLiveTranscript && paraSentences.length > 0) {
+        return (
+          <p className="reading-paragraph">
+            {paraSentences.map((sentence) => (
+              <React.Fragment key={sentence.globalIdx}>
+                <span className={sentence.globalIdx === activeGlobalSentenceIndex ? 'transcript-live-sentence' : undefined}>
+                  {sentence.text}
+                </span>
+                {sentence.trailingSpace}
+              </React.Fragment>
+            ))}
+          </p>
+        );
+      }
       return <p className="reading-paragraph">{paraText}</p>;
     }
 

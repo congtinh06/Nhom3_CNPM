@@ -1987,6 +1987,17 @@ body:has(.nearby-sv-root):has(.nearby-sticky-player-bar.is-open) .ftr {
   }
 }
 
+/* Make the sentence currently aligned to audio unmistakable in the tour transcript. */
+.nearby-sv-root .reading-body-flow.live .sn.cur,
+.nearby-sv-root .reading-body-flow.live .transcript-live-sentence {
+  color: #24160d !important;
+  background: #ffd36b !important;
+  border-radius: 0.2em;
+  box-shadow: 0 0 0 2px #ffd36b;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+
 @keyframes riseNearby {
   from { opacity: 0; transform: translateY(18px); }
   to { opacity: 1; transform: translateY(0); }
@@ -4255,12 +4266,21 @@ footer.pl.player .lang button[aria-pressed="true"] {
   color: var(--muted);
 }
 
-.nearby-sv-root .reading-body-flow.tr.live .sn.cur {
+.reading-body-flow.live .sn.cur,
+.reading-body-flow.tr.live .sn.cur {
   color: var(--ink);
   background: linear-gradient(
     transparent 62%,
-    color-mix(in srgb, var(--accent, #C2410C) 22%, transparent) 0
+    color-mix(in srgb, var(--accent, #C2410C) 34%, transparent) 0
   );
+}
+
+.transcript-live-sentence {
+  background: linear-gradient(
+    transparent 48%,
+    color-mix(in srgb, var(--accent, #C2410C) 35%, transparent) 0
+  );
+  border-radius: 2px;
 }
 
 [data-theme="dark"] .nearby-sv-root .reading-body-flow.tr.live .sn.cur,
