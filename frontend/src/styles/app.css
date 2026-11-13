@@ -1016,7 +1016,7 @@ select:focus-visible {
 }
 
 .intro h2 {
-  color: var(--brown);
+  color: var(--heading-accent);
   font-size: clamp(40px, 6vw, 76px);
   grid-column: 1 / -1;
 }
@@ -1147,8 +1147,13 @@ select:focus-visible {
 }
 
 .food h2 {
-  color: var(--brown);
+  color: var(--heading-accent);
   font-size: clamp(44px, 7vw, 84px);
+}
+
+.food .tb {
+  border-color: var(--heading-accent);
+  color: var(--heading-accent);
 }
 
 /* 6. Drinks */
@@ -1224,7 +1229,7 @@ select:focus-visible {
 
 .pl p {
   margin: 0 auto;
-  color: #f3e7c8;
+  color: var(--cream);
 }
 
 /* 8. Places Section */
@@ -1233,7 +1238,7 @@ select:focus-visible {
 }
 
 .sp h2 {
-  color: var(--brown);
+  color: var(--heading-accent);
   font-size: clamp(44px, 7vw, 90px);
   margin-bottom: 16px;
 }
@@ -1617,11 +1622,12 @@ dialog p {
 
 /* Contact */
 .ft {
-  --ft-muted: rgba(255, 241, 199, 0.62);
+  --ft-ink: #F7F2E9;
+  --ft-muted: rgba(255, 241, 199, 0.78);
   --ft-border: rgba(255, 241, 199, 0.28);
   --ft-accent: #f0c374;
   background: var(--brown);
-  color: var(--cream);
+  color: var(--ft-ink);
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 28px;
@@ -1647,7 +1653,7 @@ dialog p {
   box-sizing: border-box;
   border: 2px solid var(--ft-border);
   background: transparent;
-  color: var(--cream);
+  color: var(--ft-ink);
   border-radius: 12px;
   padding: 11px 14px;
   font: inherit;
@@ -1679,9 +1685,9 @@ dialog p {
 
 .ft .tb {
   justify-self: start;
-  background: var(--cream);
+  background: var(--ft-ink);
   color: var(--brown);
-  border: 1px solid var(--cream);
+  border: 1px solid var(--ft-ink);
   border-radius: 4px;
   height: 40px;
   padding: 0 18px;
@@ -1710,7 +1716,7 @@ dialog p {
 }
 
 .ft li a {
-  color: var(--cream);
+  color: var(--ft-ink);
   text-decoration: none;
   transition: color 0.15s ease;
 }
@@ -2384,7 +2390,7 @@ dialog p {
   background: var(--brown);
   border: 1px solid var(--brown);
   border-radius: 4px;
-  color: var(--cream);
+  color: #F7F2E9;
   font-size: 14.5px;
   font-weight: 600;
   letter-spacing: 0.02em;
