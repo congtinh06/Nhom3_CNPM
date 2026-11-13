@@ -37,7 +37,6 @@ export const Header: React.FC = () => {
   const navigate = useNavigate();
 
   const [isScrolled, setIsScrolled] = useState(false);
-  const [isHidden, setIsHidden] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const [isLangOpen, setIsLangOpen] = useState(false);
@@ -66,7 +65,6 @@ export const Header: React.FC = () => {
     }, 250);
   };
 
-  const lastScrollY = useRef(0);
   const headerRef = useRef<HTMLElement>(null);
   const langRef = useRef<HTMLDivElement>(null);
 
@@ -85,43 +83,7 @@ export const Header: React.FC = () => {
   const handleScroll = useCallback(() => {
     const y = window.scrollY || 0;
     setIsScrolled(y > 50);
-
-    // On attractions routes (/diem-du-lich), keep header strictly visible and fixed to preserve layout stability
-    if (isAttractionsActive) {
-      setIsHidden(false);
-      lastScrollY.current = y;
-      return;
-    }
-
-    if (isMenuOpen || y < 120 || y < lastScrollY.current - 6) {
-      setIsHidden(false);
-    } else if (y > lastScrollY.current + 6) {
-      setIsHidden(true);
-    }
-
-    lastScrollY.current = y;
-  }, [isMenuOpen, isAttractionsActive]);
-
-  // Ensure header is never hidden when navigating to attractions pages
-  useEffect(() => {
-    if (isAttractionsActive) {
-      setIsHidden(false);
-    }
-  }, [isAttractionsActive]);
-
-  useEffect(() => {
-    if (isHidden) {
-      document.body.classList.add('header-hidden');
-      document.documentElement.setAttribute('data-header-hidden', 'true');
-    } else {
-      document.body.classList.remove('header-hidden');
-      document.documentElement.removeAttribute('data-header-hidden');
-    }
-    return () => {
-      document.body.classList.remove('header-hidden');
-      document.documentElement.removeAttribute('data-header-hidden');
-    };
-  }, [isHidden]);
+  }, []);
 
   useEffect(() => {
     window.addEventListener('scroll', handleScroll, { passive: true });
@@ -217,7 +179,6 @@ export const Header: React.FC = () => {
   const headerClasses = [
     'hd',
     isScrolled ? 'sc' : '',
-    isHidden ? 'hide' : '',
     !isHomePage ? 'solid' : '',
   ]
     .filter(Boolean)
@@ -227,7 +188,6 @@ export const Header: React.FC = () => {
     <header
       ref={headerRef}
       className={headerClasses}
-      onFocus={() => setIsHidden(false)}
     >
       <div className="hd-inner">
       {/* 1. Trái: Logo */}
