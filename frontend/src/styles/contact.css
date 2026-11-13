@@ -13,7 +13,7 @@
   --c-accent-border: rgba(194, 65, 12, 0.22);
   --c-ink: #201B16;
   --c-muted: #6F6254;
-  --c-muted-light: #8C847A;
+  --c-muted-light: #6F6254;
   --c-border: #DED2BF;
   --c-border-hover: #C2410C;
   --c-radius-card: 10px;
@@ -43,9 +43,26 @@
   --c-accent-border: rgba(251, 146, 60, 0.3);
   --c-ink: #F1EDE6;
   --c-muted: #A39B91;
-  --c-muted-light: #7E776E;
+  --c-muted-light: #A39B91;
   --c-border: #3A3531;
   --c-border-hover: #FB923C;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .contact-page-root {
+    --c-bg: #17110d;
+    --c-surface: #1C1916;
+    --c-surface-soft: #26221F;
+    --c-accent: #FB923C;
+    --c-accent-hover: #EA580C;
+    --c-accent-light: rgba(251, 146, 60, 0.15);
+    --c-accent-border: rgba(251, 146, 60, 0.3);
+    --c-ink: #F1EDE6;
+    --c-muted: #A39B91;
+    --c-muted-light: #A39B91;
+    --c-border: #3A3531;
+    --c-border-hover: #FB923C;
+  }
 }
 
 /* --- Wrap & Editorial Header (Synchronized with Điểm du lịch & Quà lưu niệm) --- */
@@ -204,7 +221,7 @@
 .contact-page-root .contact-fact-link {
   font-size: 14px;
   font-weight: 600;
-  color: var(--c-accent);
+  color: var(--c-accent-hover);
   text-decoration: underline;
   text-underline-offset: 3px;
   transition: color 0.15s ease;
@@ -212,6 +229,21 @@
 }
 
 .contact-page-root .contact-fact-link:hover {
+  color: var(--c-accent);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .contact-page-root .contact-fact-link {
+    color: var(--c-accent);
+  }
+  :root:not([data-theme="light"]) .contact-page-root .contact-fact-link:hover {
+    color: var(--c-accent-hover);
+  }
+}
+:root[data-theme="dark"] .contact-page-root .contact-fact-link {
+  color: var(--c-accent);
+}
+:root[data-theme="dark"] .contact-page-root .contact-fact-link:hover {
   color: var(--c-accent-hover);
 }
 
@@ -320,6 +352,15 @@
   color: #DC2626;
   font-weight: 700;
   margin-left: 2px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .contact-page-root .contact-req {
+    color: #F87171;
+  }
+}
+:root[data-theme="dark"] .contact-page-root .contact-req {
+  color: #F87171;
 }
 
 .contact-page-root .contact-input,
@@ -438,6 +479,15 @@
   transition: background-color 0.2s ease;
   margin-top: 6px;
   min-height: 48px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .contact-page-root .contact-submit-btn {
+    color: #17110d;
+  }
+}
+:root[data-theme="dark"] .contact-page-root .contact-submit-btn {
+  color: #17110d;
 }
 
 .contact-page-root .contact-submit-btn:hover:not(:disabled) {
