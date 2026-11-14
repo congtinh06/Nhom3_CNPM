@@ -78,3 +78,12 @@ _check_docx/
 
 # Local database backups
 backups/
+
+# Report / academic & design assets (internal, not part of the web app)
+img/
+docs/report/
+docs/design/
+report_fill/
+improve/
+*.xlsx
+frontend/scripts/*.png
