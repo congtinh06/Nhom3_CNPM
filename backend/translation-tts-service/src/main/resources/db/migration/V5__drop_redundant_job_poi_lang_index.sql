@@ -10,3 +10,4 @@ IF EXISTS (
 BEGIN
     DROP INDEX idx_job_poi_lang ON dbo.translation_job;
 END;
+

@@ -9,3 +9,4 @@ IF NOT EXISTS (
 BEGIN
     CREATE INDEX idx_job_poi_lang ON dbo.translation_job (poi_id, language_code);
 END;
+

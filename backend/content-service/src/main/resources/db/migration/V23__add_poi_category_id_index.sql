@@ -9,3 +9,4 @@ IF NOT EXISTS (
 BEGIN
     CREATE INDEX idx_poi_category_id ON dbo.poi (category_id);
 END;
+
