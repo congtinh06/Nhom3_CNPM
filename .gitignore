@@ -87,3 +87,6 @@ report_fill/
 improve/
 *.xlsx
 frontend/scripts/*.png
+
+# Local artifacts
+.freebuff/
