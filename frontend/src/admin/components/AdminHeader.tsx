@@ -49,7 +49,6 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
 
   useEffect(() => {
     if (import.meta.env.MODE === 'test') return;
-    let timer: number | undefined;
     const fetchRemote = async () => {
       try {
         const all = await feedbackApi.list();
@@ -59,7 +58,7 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
       }
     };
     void fetchRemote();
-    timer = window.setInterval(fetchRemote, 6000);
+    const timer = window.setInterval(fetchRemote, 6000);
     return () => {
       if (timer) window.clearInterval(timer);
     };

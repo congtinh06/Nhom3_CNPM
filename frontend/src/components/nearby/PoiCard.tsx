@@ -78,8 +78,8 @@ export const PoiCard = React.memo<PoiCardProps>(function PoiCard({
   pauseBtnText,
   resumeBtnText,
 }) {
-  if (import.meta.env.DEV && typeof window !== 'undefined' && (window as any).__nearbyPerf) {
-    (window as any).__nearbyPerf.rendersPoiCard++;
+  if (import.meta.env.DEV && typeof window !== 'undefined' && (window as { __nearbyPerf?: { rendersPoiCard: number } }).__nearbyPerf) {
+    (window as { __nearbyPerf?: { rendersPoiCard: number } }).__nearbyPerf!.rendersPoiCard++;
   }
 
   const [imageError, setImageError] = useState(false);
@@ -147,8 +147,8 @@ export const PoiCard = React.memo<PoiCardProps>(function PoiCard({
   const knownSeconds =
     isCurrent && duration && duration > 0
       ? duration
-      : (poi as any).audioDurationSeconds && (poi as any).audioDurationSeconds > 0
-      ? (poi as any).audioDurationSeconds
+      : (poi as { audioDurationSeconds?: number }).audioDurationSeconds && (poi as { audioDurationSeconds?: number }).audioDurationSeconds! > 0
+      ? (poi as { audioDurationSeconds?: number }).audioDurationSeconds
       : null;
 
   const formattedAudioDuration = knownSeconds
@@ -156,7 +156,7 @@ export const PoiCard = React.memo<PoiCardProps>(function PoiCard({
     : null;
 
   // Facts row detection: address and distance only when present
-  const rawAddress = (poi as any).address;
+  const rawAddress = (poi as { address?: string | Record<string, string> }).address;
   const addressVal =
     typeof rawAddress === 'object' && rawAddress !== null
       ? rawAddress[currentLang] || rawAddress.vi
@@ -240,8 +240,8 @@ export const PoiCard = React.memo<PoiCardProps>(function PoiCard({
                 onError={() => setImageError(true)}
               />
             </picture>
-            {(poi as any).imageCredit && (
-              <span className="chapter-media-credit">{(poi as any).imageCredit}</span>
+            {(poi as { imageCredit?: string }).imageCredit && (
+              <span className="chapter-media-credit">{(poi as { imageCredit?: string }).imageCredit}</span>
             )}
           </div>
         )}
