@@ -9,3 +9,4 @@ IF EXISTS (
 BEGIN
     DROP INDEX idx_poi_category_id ON dbo.poi;
 END;
+
