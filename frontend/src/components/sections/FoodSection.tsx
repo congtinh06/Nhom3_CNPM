@@ -8,6 +8,7 @@ interface DishPhoto {
   hue: number;
   caption: string;
   src: string;
+  slug: string;
 }
 
 const HUES = [20, 32, 10, 40, 6, 28];
@@ -30,18 +31,19 @@ export const FoodSection: React.FC = () => {
             hue: HUES[index % HUES.length] ?? 0,
             caption: item.name,
             src: item.imagePath,
+            slug: item.slug,
           }))
         );
       })
       .catch(() => {
-        // Không có món gắn với điểm đến thì ẩn cả mục.
+        // Không có món thật thì ẩn cả mục, tránh ảnh giữ chỗ.
       });
     return () => {
       cancelled = true;
     };
   }, []);
 
-  // Chỉ hiển thị khi có món thật sự gắn với một điểm đến.
+  // Chỉ hiển thị khi có món thật gắn với ảnh.
   if (photos.length === 0) return null;
 
   const top = photos.slice(0, 3);
@@ -51,7 +53,14 @@ export const FoodSection: React.FC = () => {
     <section className="s food" id="am-thuc">
       <div className="t">
         {top.map((photo, index) => (
-          <PhotoFrame key={index} hue={photo.hue} caption={photo.caption} src={photo.src} />
+          <Link
+            key={index}
+            to={`/am-thuc/${photo.slug}`}
+            className="food-link"
+            aria-label={`Xem món: ${photo.caption}`}
+          >
+            <PhotoFrame hue={photo.hue} caption={photo.caption} src={photo.src} />
+          </Link>
         ))}
       </div>
       <div className="m">
@@ -65,7 +74,14 @@ export const FoodSection: React.FC = () => {
       </div>
       <div className="b">
         {bottom.map((photo, index) => (
-          <PhotoFrame key={index} hue={photo.hue} caption={photo.caption} src={photo.src} />
+          <Link
+            key={index}
+            to={`/am-thuc/${photo.slug}`}
+            className="food-link"
+            aria-label={`Xem món: ${photo.caption}`}
+          >
+            <PhotoFrame hue={photo.hue} caption={photo.caption} src={photo.src} />
+          </Link>
         ))}
       </div>
     </section>

@@ -46,7 +46,7 @@ export const TourismTeaserSection: React.FC = () => {
   }, []);
 
   return (
-    <section className="s pl">
+    <section className="s pl" id="diem-du-lich">
       <h2>{tourismTeaserContent.title}</h2>
       <div className="four">
         {photos.map((photo, index) => (

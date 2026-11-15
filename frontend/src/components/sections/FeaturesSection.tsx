@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { useHomeI18n } from '../../content/homeI18n';
 
 const GpsIcon = () => (
@@ -35,10 +36,10 @@ const MapIcon = () => (
 export const FeaturesSection: React.FC = () => {
   const { t } = useHomeI18n();
   const features = [
-    { icon: <GpsIcon />, title: t.feat1Title, desc: t.feat1Desc },
-    { icon: <QrIcon />, title: t.feat2Title, desc: t.feat2Desc },
-    { icon: <LangIcon />, title: t.feat3Title, desc: t.feat3Desc },
-    { icon: <MapIcon />, title: t.feat4Title, desc: t.feat4Desc },
+    { icon: <GpsIcon />, title: t.feat1Title, desc: t.feat1Desc, to: '/diem-du-lich' },
+    { icon: <QrIcon />, title: t.feat2Title, desc: t.feat2Desc, to: '/quet-ma' },
+    { icon: <LangIcon />, title: t.feat3Title, desc: t.feat3Desc, to: '/huong-dan' },
+    { icon: <MapIcon />, title: t.feat4Title, desc: t.feat4Desc, to: '/diem-du-lich' },
   ];
 
   return (
@@ -47,11 +48,11 @@ export const FeaturesSection: React.FC = () => {
       <p className="home-sub">{t.featSubtitle}</p>
       <div className="feat-grid">
         {features.map((feature, i) => (
-          <article className="feat-card" key={i}>
+          <Link className="feat-card" to={feature.to} key={i}>
             <span className="feat-icon">{feature.icon}</span>
             <h3>{feature.title}</h3>
             <p>{feature.desc}</p>
-          </article>
+          </Link>
         ))}
       </div>
     </section>

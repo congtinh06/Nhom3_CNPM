@@ -9,6 +9,18 @@
   --accent-hover: #9A3412;
   --accent-on-dark: #FB923C;
   --surface-dark: #1C1916;
+
+  /* UX/UI polish tokens (senior pass) */
+  --bg-dark: #1c1816;
+  --bg-cream: #f7efdf;
+  --bg-sand: #f0e8d8;
+  --bg-white: #fffcf6;
+  --line-soft: #e4d8c6;
+  --muted: #5c4b3e;
+  --brand: #8b2e10;
+  --accent: #ff7a45;
+  --text-on-dark: #f7efdf;
+  --text-on-light: #1c1816;
   --font-serif-brand: 'Fraunces', Georgia, 'Times New Roman', serif;
   --nav-font-size: 14px;
   box-sizing: border-box;

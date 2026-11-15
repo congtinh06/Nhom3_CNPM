@@ -154,7 +154,7 @@ select:focus-visible {
   min-height: 64px;
   max-height: 64px;
   padding: env(safe-area-inset-top, 0px) 0 0;
-  background: linear-gradient(180deg, rgba(28, 25, 22, 0.78) 0%, rgba(28, 25, 22, 0.38) 65%, transparent 100%);
+  background: linear-gradient(180deg, rgba(28, 25, 22, 0.60) 0%, rgba(28, 25, 22, 0.30) 65%, transparent 100%);
   background-origin: border-box;
   color: #F5EFE6;
   text-shadow: none;
@@ -174,6 +174,11 @@ select:focus-visible {
   justify-content: space-between;
   gap: 20px;
   box-sizing: border-box;
+}
+
+/* Senior UX pass: home header shares the same content container rhythm */
+body:has(.app-main.home-route) .hd-inner {
+  max-width: 1280px;
 }
 
 .hd.sc {
@@ -942,9 +947,9 @@ select:focus-visible {
   inset: 0;
   z-index: 1;
   background: linear-gradient(
-    rgba(20, 8, 2, 0.42) 0%,
-    rgba(20, 8, 2, 0.22) 45%,
-    rgba(20, 8, 2, 0.12) 100%
+    rgba(20, 8, 2, 0.30) 0%,
+    rgba(20, 8, 2, 0.15) 45%,
+    rgba(20, 8, 2, 0.08) 100%
   );
 }
 
@@ -1009,16 +1014,23 @@ select:focus-visible {
 
 /* 2. Intro */
 .intro {
-  background: var(--white);
+  background: var(--bg-dark, #1c1816);
+  color: var(--text-on-dark, #f7efdf);
   display: grid;
   grid-template-columns: 1.15fr 0.85fr;
   gap: 24px;
+  align-items: stretch;
 }
 
 .intro h2 {
-  color: var(--brown);
+  color: #ffffff;
   font-size: clamp(40px, 6vw, 76px);
   grid-column: 1 / -1;
+  margin-bottom: 40px;
+}
+
+.intro h2 .hl {
+  color: #ff8a50;
 }
 
 .intro .l {
@@ -1034,19 +1046,87 @@ select:focus-visible {
 
 .intro .tri .ph {
   min-height: 200px;
+  border-radius: 16px;
+  background-image:
+    linear-gradient(160deg, hsl(var(--h, 20) 55% 42%), hsl(calc(var(--h, 20) + 25) 60% 24%)),
+    linear-gradient(rgba(194, 65, 12, 0.08), rgba(194, 65, 12, 0.08));
 }
 
-.intro .bar {
-  height: 22px;
-  background: var(--brown);
+.intro .tri .ph:hover img {
+  transform: scale(1.04);
+}
+
+.intro .tri .ph span {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  font-size: 14px;
+  font-weight: 600;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.45);
+  background: linear-gradient(to bottom, rgba(28, 25, 22, 0) 0%, rgba(0, 0, 0, 0.85) 60%);
 }
 
 .intro .big {
   min-height: 360px;
+  border-radius: 16px;
+  cursor: pointer;
+  height: 100%;
+}
+
+.intro .ph-link {
+  display: block;
+  border-radius: 16px;
+  text-decoration: none;
+  color: inherit;
+}
+
+.intro .ph-link:focus-visible {
+  outline: 3px solid #ff8a50;
+  outline-offset: 3px;
+}
+
+.intro .big:hover img {
+  transform: scale(1.04);
+}
+
+.intro .big span {
+  font-size: 14px;
+}
+
+.intro .bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 48px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #c2410c 0%, #9a3412 100%);
+  color: #ffffff;
+  text-decoration: none;
+  font-family: Montserrat, 'Segoe UI', Arial, sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  box-shadow: 0 6px 16px rgba(194, 65, 12, 0.25);
+}
+
+.intro .bar:hover {
+  background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%);
+  transform: translateX(4px);
+  box-shadow: 0 10px 22px rgba(194, 65, 12, 0.4);
+}
+
+.intro .bar:focus-visible {
+  outline: 3px solid #ff8a50;
+  outline-offset: 2px;
 }
 
 .intro p {
-  color: var(--ink);
+  color: #ece3d3;
+  font-size: 18px;
+  line-height: 1.7;
+  max-width: 62ch;
 }
 
 /* 3. Culture */
@@ -1079,8 +1159,8 @@ select:focus-visible {
 
 /* 4. Costume */
 .cos {
-  background: var(--black);
-  color: var(--cream);
+  background: var(--bg-cream, #f7efdf);
+  color: var(--ink);
   display: grid;
   grid-template-columns: 1.3fr 1fr;
   gap: 20px;
@@ -1089,6 +1169,16 @@ select:focus-visible {
 .cos h2 {
   font-size: clamp(40px, 6vw, 76px);
   text-align: right;
+  color: var(--brown);
+}
+
+.cos p {
+  color: #5c4b3e;
+}
+
+.cos .big,
+.cos .two .ph {
+  border-radius: 16px;
 }
 
 .cos .big {
@@ -1136,6 +1226,27 @@ select:focus-visible {
   border-radius: 0;
 }
 
+.food .food-link {
+  display: block;
+  position: relative;
+  overflow: hidden;
+  text-decoration: none;
+  color: inherit;
+}
+
+.food .food-link:focus-visible {
+  outline: 3px solid #c2410c;
+  outline-offset: -3px;
+}
+
+.food .food-link .ph img {
+  transition: transform 0.6s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+.food .food-link:hover .ph img {
+  transform: scale(1.05);
+}
+
 .food .m {
   text-align: center;
   padding: 36px clamp(16px, 5vw, 80px);
@@ -1160,6 +1271,17 @@ select:focus-visible {
 .dk h2 {
   font-size: clamp(44px, 7vw, 90px);
   margin-bottom: 20px;
+}
+
+/* Senior UX pass: headings sitting on dark bands use light ink token (AA >= 4.5:1) */
+.cul h2,
+.cul h3,
+.dk h2,
+.dk h3,
+.cta-band h2,
+.cta-band h3,
+.feat-band h2 {
+  color: var(--text-on-dark, #f7efdf);
 }
 
 .dk .g {
