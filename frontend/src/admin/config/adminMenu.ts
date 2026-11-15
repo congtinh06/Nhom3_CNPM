@@ -127,7 +127,6 @@ export const ADMIN_MENU: AdminMenuGroup[] = [
         icon: 'news',
         children: [
           { id: 'news-articles', label: 'Bài viết', path: '/quan-tri/tin-tuc' },
-          { id: 'feedback-inbox', label: 'Liên hệ khách hàng', path: '/quan-tri/lien-he' },
           { id: 'news-topics', label: 'Chuyên mục', isUpcoming: true },
         ],
       },
@@ -144,6 +143,7 @@ export const ADMIN_MENU: AdminMenuGroup[] = [
     label: 'Vận hành',
     items: [
       { id: 'orders', label: 'Đơn hàng', icon: 'orders', path: '/quan-tri/don-hang' },
+      { id: 'feedback-inbox', label: 'Hộp thư liên hệ', icon: 'feedback', path: '/quan-tri/lien-he' },
       {
         id: 'qr-analytics',
         label: 'QR & Thống kê',
@@ -161,7 +161,6 @@ export const ADMIN_MENU: AdminMenuGroup[] = [
           },
         ],
       },
-      { id: 'feedback', label: 'Góp ý', icon: 'feedback', isUpcoming: true },
     ],
   },
   {

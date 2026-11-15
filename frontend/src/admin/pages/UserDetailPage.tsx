@@ -217,13 +217,13 @@ export const UserDetailPage: React.FC = () => {
   return (
     <div className="adm-page">
       <div className="adm-page-head">
-        <div>
+        <div className="adm-page-head-main">
           <button
             type="button"
             className="adm-back-link"
             onClick={() => navigate('/quan-tri/nguoi-dung')}
           >
-            <ChevronLeft /> Quay lại danh sách người dùng
+            <ChevronLeft size={16} strokeWidth={2} /> Quay lại danh sách người dùng
           </button>
           <h1 className="adm-page-title">{user.fullName}</h1>
           <p className="adm-page-desc">{user.email}</p>

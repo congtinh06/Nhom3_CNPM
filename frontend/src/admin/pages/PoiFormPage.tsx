@@ -983,13 +983,13 @@ export const PoiFormPage: React.FC = () => {
   return (
     <div className="adm-page">
       <div className="adm-page-head">
-        <div>
+        <div className="adm-page-head-main">
           <button
             type="button"
             className="adm-back-link"
             onClick={() => handleNavigateBack('/quan-tri/diem-thuyet-minh')}
           >
-            <ChevronLeft /> Quay lại danh sách điểm thuyết minh
+            <ChevronLeft size={16} strokeWidth={2} /> Quay lại danh sách điểm thuyết minh
           </button>
           <h1 className="adm-page-title">
             {isEditMode ? 'Chỉnh sửa điểm thuyết minh' : 'Thêm điểm thuyết minh mới'}

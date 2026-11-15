@@ -362,13 +362,13 @@ export const RouteFormPage: React.FC = () => {
   return (
     <div className="adm-page">
       <div className="adm-page-head">
-        <div>
+        <div className="adm-page-head-main">
           <button
             type="button"
             className="adm-back-link"
             onClick={() => handleNavigateBack('/quan-tri/lo-trinh')}
           >
-            <ChevronLeft /> Quay lại danh sách tuyến
+            <ChevronLeft size={16} strokeWidth={2} /> Quay lại danh sách tuyến
           </button>
           <h1 className="adm-page-title">
             {isEditMode ? 'Chỉnh sửa tuyến tham quan' : 'Thêm tuyến tham quan mới'}

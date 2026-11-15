@@ -89,6 +89,7 @@ export const PaymentResultPage: React.FC = () => {
   const queryOutcome = outcomeFromQuery(searchParams.get('status') || '', vnpCode);
 
   const [order, setOrder] = useState<BackendOrder | null>(null);
+  const [orderNotFound, setOrderNotFound] = useState(false);
   const [loading, setLoading] = useState(true);
   const [processingAction, setProcessingAction] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -107,6 +108,13 @@ export const PaymentResultPage: React.FC = () => {
     setLoading(true);
     try {
       const data = await getOrderByCode(orderCode);
+      if (!data) {
+        setOrder(null);
+        setOrderNotFound(true);
+        setLoading(false);
+        return;
+      }
+      setOrderNotFound(false);
       setOrder(data);
       if (data) {
         setOutcome((current) => {
@@ -119,6 +127,7 @@ export const PaymentResultPage: React.FC = () => {
         });
       }
     } catch {
+      setOrderNotFound(true);
       if (queryOutcome !== 'pending') {
         setOutcome(queryOutcome);
       }
@@ -134,8 +143,9 @@ export const PaymentResultPage: React.FC = () => {
   const isPoiOrder = order?.orderType === 'POI';
   const isPremiumOrder = order?.orderType === 'PREMIUM' || isPoiOrder;
 
+
   useEffect(() => {
-    if (outcome !== 'pending' || orderPollExpired || !orderCode) return;
+    if (orderNotFound || outcome !== 'pending' || orderPollExpired || !orderCode) return;
 
     let cancelled = false;
     let attempts = 0;
@@ -274,6 +284,41 @@ export const PaymentResultPage: React.FC = () => {
   const formattedOrderTime = useMemo(() => formatOrderTime(orderDateObj), [orderDateObj]);
   const formattedShortDate = useMemo(() => formatShortTime(orderDateObj), [orderDateObj]);
   const estimatedDelivery = useMemo(() => formatEstimatedDelivery(orderDateObj), [orderDateObj]);
+
+  if (orderNotFound || !orderCode) {
+    return (
+      <div className="payment-result-page">
+        <div className="wrap">
+          <div className="result-card result-failed">
+            <div className="result-icon-wrap failed" aria-hidden="true">
+              <XCircle size={32} strokeWidth={2.2} />
+            </div>
+            <h1 className="result-title">Không tìm thấy đơn hàng</h1>
+            <p className="result-subtitle">
+              Mã đơn hàng <b className="order-code-badge">{orderCode || '-'}</b> không tồn tại hoặc đã bị xóa. Vui lòng kiểm tra lại hoặc xem danh sách đơn hàng của bạn.
+            </p>
+            <div className="result-actions-row">
+              <button
+                type="button"
+                className="result-primary-btn"
+                onClick={() => navigate('/don-hang')}
+              >
+                <ArrowRight size={15} strokeWidth={2} aria-hidden="true" />
+                <span>Xem đơn hàng của tôi</span>
+              </button>
+              <button
+                type="button"
+                className="result-secondary-btn"
+                onClick={() => navigate('/')}
+              >
+                {t.home}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (loading) {
     return (

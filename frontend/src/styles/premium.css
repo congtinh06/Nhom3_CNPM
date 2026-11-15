@@ -1504,3 +1504,19 @@ body:has(.premium-page) #up:hover {
     font-size: 12px;
   }
 }
+/* Tap targets 44px on mobile */
+@media (max-width: 767px) {
+  .premium-back-btn {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+  }
+  .premium-plan-perk-link {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+  }
+  .premium-poi-search-input {
+    min-height: 44px;
+  }
+}

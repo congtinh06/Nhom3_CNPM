@@ -9,34 +9,14 @@
   --accent-hover: #9A3412;
   --accent-on-dark: #FB923C;
   --surface-dark: #1C1916;
-  /* Accent used for section headings/links that sit on the page surface.
-     Stays brown on the cream page, lightens in dark mode for contrast. */
   --heading-accent: #8a2f12;
-  --font-serif-brand: 'Fraunces', Georgia, 'Times New Roman', serif;
+  --font-serif-brand: 'Fraunces', 'Playfair Display', Georgia, 'Times New Roman', serif;
+  --font-display: 'Fraunces', 'Playfair Display', Georgia, 'Times New Roman', serif;
+  --font-body: 'Be Vietnam Pro', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --nav-font-size: 14px;
   box-sizing: border-box;
   padding-top: env(safe-area-inset-top, 0px);
   padding-bottom: env(safe-area-inset-bottom, 0px);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --page: #17110d;
-    --cream: #17110d;
-    --white: #1C1916;
-    --ink: #F1EDE6;
-    --black: #F1EDE6;
-    --heading-accent: #FB923C;
-  }
-}
-
-:root[data-theme="dark"] {
-  --page: #17110d;
-  --cream: #17110d;
-  --white: #1C1916;
-  --ink: #F1EDE6;
-  --black: #F1EDE6;
-  --heading-accent: #FB923C;
 }
 
 *,

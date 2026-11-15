@@ -173,6 +173,7 @@
   font-size: 14px !important;
   text-decoration: none !important;
   transition: background 0.15s ease !important;
+  min-height: 44px !important;
 }
 
 .checkout-empty-btn:hover {
@@ -1069,3 +1070,13 @@ body:has(.checkout-page-container) #up,
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.04) !important;
 }
 
+/* Vung cham 44px cho hotline noi & nut thu lai VietQR (mobile) */
+@media (max-width: 767px) {
+  .checkout-page-container .checkout-hotline-link {
+    min-height: 44px;
+  }
+
+  .vietqr-retry {
+    min-height: 44px !important;
+  }
+}

@@ -719,3 +719,16 @@ dl.payment-kv dd {
     gap: 2px;
   }
 }
+
+/* Vung cham 44px cho nut phu trang ket qua thanh toan (mobile) */
+@media (max-width: 767px) {
+  .payment-copy-btn {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+  }
+
+  .payment-link-arr {
+    min-height: 44px;
+  }
+}

@@ -294,13 +294,13 @@ export const ZoneFormPage: React.FC = () => {
   return (
     <div className="adm-page">
       <div className="adm-page-head">
-        <div>
+        <div className="adm-page-head-main">
           <button
             type="button"
             className="adm-back-link"
             onClick={() => handleNavigateBack('/quan-tri/khu-vuc')}
           >
-            <ChevronLeft /> Quay lại danh sách khu vực
+            <ChevronLeft size={16} strokeWidth={2} /> Quay lại danh sách khu vực
           </button>
           <h1 className="adm-page-title">
             {isEditMode ? 'Chỉnh sửa khu vực' : 'Thêm khu vực mới'}

@@ -9,13 +9,13 @@ export const coverContent = {
 export const introContent = {
   title: 'Giới thiệu chung',
   photosLeft: [
-    { hue: 12, caption: 'Phố đi bộ Nguyễn Huệ', src: '/images/home/intro-nguyen-hue.jpg' },
-    { hue: 30, caption: 'Xe máy giờ cao điểm', src: '/images/home/intro-traffic.jpg' },
-    { hue: 45, caption: 'Quán cà phê vỉa hè', src: '/images/home/intro-cafe.jpg' },
+    { hue: 12, caption: 'Phố đi bộ Nguyễn Huệ', src: '/images/home/intro-nguyen-hue.jpg', link: '/tin-tuc/dinh-doc-lap-nhung-can-phong-it-nguoi-de-y' },
+    { hue: 30, caption: 'Xe máy giờ cao điểm', src: '/images/home/intro-traffic.jpg', link: '/tin-tuc/hem-sai-gon-bao-tang-song-cua-doi-song-thi-dan' },
+    { hue: 45, caption: 'Quán cà phê vỉa hè', src: '/images/home/intro-cafe.jpg', link: '/tin-tuc/ca-phe-vot-sai-gon-nep-song-dong-lai' },
   ],
   paragraph:
     'Sài Gòn – TP. Hồ Chí Minh là thành phố lớn nhất cả nước, nơi giao thoa giữa Việt, Hoa, Khmer và dấu ấn kiến trúc Pháp. Chỉ một con phố có thể vừa có ngôi chùa trăm năm, vừa có nhà thờ gạch đỏ và tòa nhà chọc trời.',
-  photoRight: { hue: 8, caption: 'Nhà thờ Đức Bà', src: '/images/pois/nha-tho-duc-ba.jpg' },
+  photoRight: { hue: 8, caption: 'Nhà thờ Đức Bà', src: '/images/pois/nha-tho-duc-ba.jpg', link: '/tin-tuc/gach-do-nha-tho-duc-ba-dieu-that-va-noi-qua' },
 };
 
 export const cultureContent = {
@@ -31,10 +31,10 @@ export const cultureContent = {
 
 export const costumeContent = {
   title: 'Trang phục truyền thống',
-  photoBig: { hue: 25, caption: 'Áo dài', src: '/images/home/costume-ao-dai.jpg' },
+  photoBig: { hue: 25, caption: 'Áo dài', src: '/images/home/costume-ao-dai.jpg', link: '/tin-tuc/ao-dai-qua-hon-100-nam' },
   photosTwo: [
-    { hue: 15, caption: 'Áo dài', src: '/images/home/costume-ao-dai-2.jpg' },
-    { hue: 38, caption: 'Áo dài', src: '/images/home/costume-ao-ba-ba.jpg' },
+    { hue: 15, caption: 'Áo dài', src: '/images/home/costume-ao-dai-2.jpg', link: '/tin-tuc/ao-dai-ao-ba-ba-hon-cot-trang-phuc-phuong-nam' },
+    { hue: 38, caption: 'Áo bà ba', src: '/images/home/costume-ao-ba-ba.jpg', link: '/tin-tuc/chiec-ao-ba-ba-va-van-hoa-nam-bo' },
   ],
   paragraph:
     'Áo dài và áo bà ba là hai hình ảnh quen thuộc của người Sài Gòn. Áo dài thường xuất hiện ở lễ Tết và dịp quan trọng, còn áo bà ba gắn với vùng sông nước Nam Bộ, giản dị và thoải mái.',

@@ -1048,6 +1048,13 @@
   }
 }
 
+/* Vung cham 44px cho dieu huong tai khoan (mobile) */
+@media (max-width: 767px) {
+  .ac-nav-link {
+    min-height: 44px;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .ac-nav-link,
   .ac-btn,

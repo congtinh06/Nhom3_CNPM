@@ -7,8 +7,9 @@ import {
   resolveAdminMenuMatch,
 } from '../config/adminMenu';
 import { BRAND_NAME } from '../brand/brand';
-import { ChevronDown } from 'lucide-react';
+import { Bell, ChevronDown } from 'lucide-react';
 import type { AdminDensity } from '../types';
+import { feedbackApi } from '../api/feedbackApi';
 
 export interface AdminHeaderProps {
   onToggleSidebar: () => void;
@@ -43,7 +44,26 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
   const { user, logout } = useAuth();
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [openFeedbackCount, setOpenFeedbackCount] = useState<number>(0);
   const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (import.meta.env.MODE === 'test') return;
+    let timer: number | undefined;
+    const fetchRemote = async () => {
+      try {
+        const all = await feedbackApi.list();
+        setOpenFeedbackCount(all.filter((t) => t.status === 'OPEN').length);
+      } catch {
+        // ignore network error
+      }
+    };
+    void fetchRemote();
+    timer = window.setInterval(fetchRemote, 6000);
+    return () => {
+      if (timer) window.clearInterval(timer);
+    };
+  }, []);
 
   const rawCrumbs = getAdminBreadcrumbs(location.pathname, location.search);
   const match = resolveAdminMenuMatch(location.pathname, location.search);
@@ -175,6 +195,53 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
             </button>
           </div>
         )}
+
+        <Link
+          to="/quan-tri/lien-he"
+          aria-label={
+            openFeedbackCount > 0
+              ? `Hộp thư liên hệ: ${openFeedbackCount} tin nhắn chờ xử lý`
+              : 'Hộp thư liên hệ khách hàng'
+          }
+          title="Hộp thư liên hệ khách hàng"
+          style={{
+            position: 'relative',
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: 44,
+            height: 44,
+            borderRadius: 8,
+            border: '1px solid #e7e5e4',
+            background: openFeedbackCount > 0 ? '#fff7ed' : '#ffffff',
+            color: openFeedbackCount > 0 ? '#c2410c' : '#44403c',
+            textDecoration: 'none',
+          }}
+        >
+          <Bell size={18} aria-hidden="true" />
+          {openFeedbackCount > 0 && (
+            <span
+              style={{
+                position: 'absolute',
+                top: -4,
+                right: -4,
+                minWidth: 18,
+                height: 18,
+                padding: '0 5px',
+                borderRadius: 999,
+                background: '#c2410c',
+                color: '#ffffff',
+                fontSize: 11,
+                fontWeight: 700,
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              {openFeedbackCount}
+            </span>
+          )}
+        </Link>
 
         <div className="adm-usermenu" ref={menuRef}>
           <button

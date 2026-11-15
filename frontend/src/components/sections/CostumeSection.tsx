@@ -11,12 +11,13 @@ export const CostumeSection: React.FC = () => {
         hue={costumeContent.photoBig.hue}
         caption={costumeContent.photoBig.caption}
         src={costumeContent.photoBig.src}
+        link={costumeContent.photoBig.link}
       />
       <div className="r">
         <h2>{costumeContent.title}</h2>
         <div className="two">
           {costumeContent.photosTwo.map((photo, index) => (
-            <PhotoFrame key={index} hue={photo.hue} caption={photo.caption} src={photo.src} />
+            <PhotoFrame key={index} hue={photo.hue} caption={photo.caption} src={photo.src} link={photo.link} />
           ))}
         </div>
       </div>

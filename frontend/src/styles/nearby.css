@@ -801,6 +801,17 @@ body:has(.nearby-sv-root) {
   border-color: var(--nearby-bg, #FAF6F0) transparent transparent transparent;
 }
 
+.nearby-sv-root .nearby-gmap-marker-container.is-label-below .nearby-gmap-marker-label {
+  bottom: auto;
+  top: calc(100% + 6px);
+}
+
+.nearby-sv-root .nearby-gmap-marker-container.is-label-below .nearby-gmap-marker-label::after {
+  top: auto;
+  bottom: 100%;
+  border-color: transparent transparent var(--nearby-bg, #FAF6F0) transparent;
+}
+
 .nearby-sv-root .nearby-gmap-marker-container.is-selected .nearby-gmap-marker-label,
 .nearby-sv-root .nearby-gmap-marker-container.is-hovered .nearby-gmap-marker-label,
 .nearby-sv-root .nearby-gmap-marker-container:hover .nearby-gmap-marker-label {
@@ -3750,14 +3761,14 @@ body:has(.nearby-sv-root):not(:has(.nearby-sticky-player-bar.is-open)) .toast {
   color: var(--acc);
 }
 
-/* Map column */
+/* Map column: seamless on the warm paper page without an artificial white outer frame */
 .nearby-sv-root .mapcol {
   top: 86px;
-  background: var(--bg2);
-  border: 1px solid var(--line);
-  border-radius: 18px;
-  padding: 14px;
-  box-shadow: 0 1px 2px rgba(32, 27, 22, .05), 0 10px 28px -20px rgba(32, 27, 22, .35);
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+  box-shadow: none !important;
   scroll-margin-top: 90px;
 }
 
@@ -3800,10 +3811,11 @@ body:has(.nearby-sv-root):not(:has(.nearby-sticky-player-bar.is-open)) .toast {
 }
 
 .nearby-sv-root .map {
-  border-radius: 12px;
-  height: min(620px, calc(100vh - 300px));
+  border-radius: 16px;
+  height: min(620px, calc(100vh - 260px));
   min-height: 420px;
-  box-shadow: inset 0 0 0 1px rgba(32, 27, 22, .06);
+  border: 1px solid rgba(201, 186, 162, 0.55) !important;
+  box-shadow: 0 12px 32px -18px rgba(32, 27, 22, 0.22);
 }
 
 .nearby-sv-root .nearby-map-legend {
@@ -4012,11 +4024,11 @@ footer.pl.player .lang button[aria-pressed="true"] {
   .nearby-sv-root .mapcol {
     position: static;
     order: -1;
-    padding: 12px;
+    padding: 0 !important;
   }
 
   .nearby-sv-root .map {
-    height: 330px;
+    height: 340px;
     min-height: 0;
   }
 
@@ -5595,12 +5607,21 @@ body:has(.nearby-sv-root),
 
 @media (max-width: 640px) {
   .nearby-sv-root .map {
-    height: 320px !important;
+    height: 340px !important;
+    border-radius: 14px;
+  }
+
+  .nearby-sv-root .tools {
+    bottom: 10px;
+  }
+
+  .nearby-sv-root .tools .nearby-sticky-controlbar {
+    gap: 5px;
   }
 
   .nearby-sv-root .tools .nearby-controlbar-pill {
-    height: 36px;
-    padding: 2px 4px;
+    height: 34px;
+    padding: 2px 5px;
   }
 
   .nearby-sv-root .tools .toggle-state {
@@ -5609,8 +5630,9 @@ body:has(.nearby-sv-root),
 
   .nearby-sv-root .tools .nearby-toggle-switch,
   .nearby-sv-root .tools .nearby-action-btn.btn-gps {
-    padding: 0 8px;
-    font-size: 12.5px;
+    padding: 0 9px;
+    font-size: 12px;
+    height: 30px;
   }
 
   .nearby-sv-root .tools .nearby-action-btn.btn-gps span {
@@ -5619,14 +5641,15 @@ body:has(.nearby-sv-root),
 
   .nearby-sv-root .tools .nearby-map-status-line {
     display: -webkit-box !important;
-    -webkit-line-clamp: 2;
+    -webkit-line-clamp: 1;
     -webkit-box-orient: vertical;
     overflow: hidden !important;
     white-space: normal !important;
-    max-width: min(100%, 330px) !important;
-    font-size: 11.5px !important;
-    line-height: 1.45 !important;
-    padding: 5px 10px !important;
+    max-width: min(100%, 310px) !important;
+    font-size: 11px !important;
+    line-height: 1.35 !important;
+    padding: 4px 10px !important;
+    background: rgba(255, 252, 246, 0.9) !important;
   }
 }
 
@@ -5791,3 +5814,165 @@ body:has(.nearby-sv-root),
   }
 }
 
+/* Mobile: vung cham to hon cho nut dieu khien ban do va khoi shop */
+@media (max-width: 767px) {
+  .nearby-sv-root .nearby-map-view-route-btn {
+    min-height: 44px;
+    padding: 0 14px;
+    font-size: 13px;
+  }
+
+  .nearby-sv-root .tools .nearby-controlbar-pill,
+  .nearby-sv-root .tools .nearby-controlbar-inner {
+    height: 50px;
+    padding: 3px 8px;
+  }
+
+  .nearby-sv-root .tools .nearby-toggle-switch,
+  .nearby-sv-root .tools .nearby-action-btn.btn-gps {
+    height: 44px;
+    padding: 0 14px;
+  }
+
+  .nearby-sv-root .shop-more-link {
+    min-height: 44px;
+  }
+
+  .nearby-sv-root .goods .editorial-add-btn,
+  .nearby-sv-root .shop .editorial-add-btn {
+    min-width: 44px;
+  }
+}
+
+/* ==========================================================================
+   11. CATEGORY FILTER PILLS IN SHOP & INLINE STOP SOUVENIR SUGGESTIONS
+   ========================================================================== */
+.nearby-sv-root .shop-cat-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 18px;
+}
+
+.nearby-sv-root .shop-cat-pill {
+  padding: 7px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--line, #DED2BF);
+  background: var(--surface, #FFFCF6);
+  color: var(--mut, #6E6459);
+  font-family: var(--sans);
+  font-size: 13.5px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease;
+}
+
+.nearby-sv-root .shop-cat-pill:hover {
+  border-color: var(--acc, #C2410C);
+  color: var(--ink, #1F1914);
+}
+
+.nearby-sv-root .shop-cat-pill.is-active {
+  background: var(--acc, #C2410C);
+  border-color: var(--acc, #C2410C);
+  color: #FFFFFF;
+}
+
+.nearby-sv-root .stop-souvenir-inline {
+  margin-top: 14px;
+  padding: 16px 20px;
+  background: var(--bg2, #EFE8DB);
+  border: 1px solid var(--line, #DED2BF);
+  border-radius: var(--r, 10px);
+}
+
+.nearby-sv-root .stop-souvenir-inline-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.nearby-sv-root .stop-souvenir-inline-head strong {
+  font: 500 15px / 1.3 var(--serif);
+  color: var(--ink, #1F1914);
+}
+
+.nearby-sv-root .stop-souvenir-inline-head a {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--acc, #C2410C);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.nearby-sv-root .stop-souvenir-inline-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 8px;
+}
+
+.nearby-sv-root .stop-souvenir-chip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+  background: var(--surface, #FFFCF6);
+  border: 1px solid var(--line, #DED2BF);
+  border-radius: 8px;
+}
+
+.nearby-sv-root .stop-souvenir-chip-main {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+  text-align: left;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+
+.nearby-sv-root .stop-souvenir-chip-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink, #1F1914);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.nearby-sv-root .stop-souvenir-chip-price {
+  font-size: 12px;
+  color: var(--acc, #C2410C);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.nearby-sv-root .stop-souvenir-chip-add {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid var(--line, #DED2BF);
+  background: var(--bg, #F7F2E9);
+  color: var(--ink, #1F1914);
+  font-size: 16px;
+  line-height: 1;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.nearby-sv-root .stop-souvenir-chip-add:hover {
+  background: var(--acc, #C2410C);
+  border-color: var(--acc, #C2410C);
+  color: #FFFFFF;
+}

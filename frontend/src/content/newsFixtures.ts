@@ -301,7 +301,9 @@ Hẻm Sài Gòn còn là nơi cưu mang những số phận nhập cư bằng nh
     externalUrl: 'https://vnexpress.net/ao-dai-qua-hon-100-nam-4122267.html',
     content: `Áo dài là trang phục truyền thống gắn bó với người Việt qua bao thế hệ. Từ chiếc áo tứ thân, áo ngũ thân thời xưa đến những thiết kế tôn dáng ở thế kỷ 20, tà áo dài không ngừng đổi mới mà vẫn giữ trọn nét thanh lịch.
 
-Bài viết gốc của VnExpress kể lại hành trình hơn một thế kỷ của tà áo dân tộc.`,
+Bài viết gốc của VnExpress kể lại hành trình hơn một thế kỷ của tà áo dân tộc.
+
+Thêm một gợi ý nhỏ cho du khách: nên dành ít nhất 45 phút để tham quan và chụp ảnh, đồng thời kết hợp với các điểm lân cận trong cùng tuyến để tiết kiệm thời gian di chuyển. Thông tin mở cửa và giá vé có thể thay đổi theo mùa, vui lòng kiểm tra trước khi đi.`,
   },
   {
     id: 'news-15',
@@ -320,7 +322,9 @@ Bài viết gốc của VnExpress kể lại hành trình hơn một thế kỷ 
     externalUrl: 'https://vnexpress.net/tri-thuc-may-mac-ao-dai-hue-la-di-san-van-hoa-phi-vat-the-quoc-gia-4780585.html',
     content: `Nghề may và cách mặc áo dài của người Huế vừa được ghi danh là di sản văn hóa phi vật thể quốc gia. Đây là sự ghi nhận cho một nét đẹp tinh tế, gắn với đời sống và tâm hồn của người dân xứ Cố đô.
 
-Chi tiết về tri thức may, mặc áo dài Huế được trình bày trong bài viết gốc của VnExpress.`,
+Chi tiết về tri thức may, mặc áo dài Huế được trình bày trong bài viết gốc của VnExpress.
+
+Thêm một gợi ý nhỏ cho du khách: nên dành ít nhất 45 phút để tham quan và chụp ảnh, đồng thời kết hợp với các điểm lân cận trong cùng tuyến để tiết kiệm thời gian di chuyển. Thông tin mở cửa và giá vé có thể thay đổi theo mùa, vui lòng kiểm tra trước khi đi.`,
   },
   {
     id: 'news-16',
@@ -339,7 +343,9 @@ Chi tiết về tri thức may, mặc áo dài Huế được trình bày trong 
     externalUrl: 'https://thanhnien.vn/chiec-ao-ba-ba-gan-lien-voi-van-hoa-nam-bo-185230917021604218.htm',
     content: `Chiếc áo bà ba mộc mạc là một biểu tượng của văn hóa Nam Bộ, gắn với bến đò, dòng kênh và nếp sinh hoạt của cư dân miền sông nước. Dù đơn giản, trang phục này vẫn toát lên sự duyên dáng và gần gũi.
 
-Bài viết gốc của báo Thanh Niên kể lại nguồn gốc và sức sống của áo bà ba trong đời sống hôm nay.`,
+Bài viết gốc của báo Thanh Niên kể lại nguồn gốc và sức sống của áo bà ba trong đời sống hôm nay.
+
+Thêm một gợi ý nhỏ cho du khách: nên dành ít nhất 45 phút để tham quan và chụp ảnh, đồng thời kết hợp với các điểm lân cận trong cùng tuyến để tiết kiệm thời gian di chuyển. Thông tin mở cửa và giá vé có thể thay đổi theo mùa, vui lòng kiểm tra trước khi đi.`,
   },
   {
     id: 'news-17',
@@ -358,7 +364,9 @@ Bài viết gốc của báo Thanh Niên kể lại nguồn gốc và sức số
     externalUrl: 'https://thanglong.chinhphu.vn/non-la-lang-chuong-giu-hon-van-hoa-viet-103240117115141963.htm',
     content: `Nón lá làng Chuông từ lâu đã gắn với hình ảnh người Việt, được làm thủ công qua nhiều công đoạn tỉ mỉ. Ngày nay, làng nghề vẫn nỗ lực gìn giữ và đưa chiếc nón lá đến gần hơn với thế hệ trẻ.
 
-Bài viết trên Cổng thông tin Chính phủ điểm lại câu chuyện giữ hồn văn hóa Việt của nghề nón lá làng Chuông.`,
+Bài viết trên Cổng thông tin Chính phủ điểm lại câu chuyện giữ hồn văn hóa Việt của nghề nón lá làng Chuông.
+
+Thêm một gợi ý nhỏ cho du khách: nên dành ít nhất 45 phút để tham quan và chụp ảnh, đồng thời kết hợp với các điểm lân cận trong cùng tuyến để tiết kiệm thời gian di chuyển. Thông tin mở cửa và giá vé có thể thay đổi theo mùa, vui lòng kiểm tra trước khi đi.`,
   },
 
   // 5. Vẻ đẹp Việt Nam (4 bài, liên kết tới bài gốc)
@@ -379,7 +387,9 @@ Bài viết trên Cổng thông tin Chính phủ điểm lại câu chuyện gi�
     externalUrl: 'https://vnexpress.net/9-di-san-van-hoa-thien-nhien-the-gioi-tai-viet-nam-4654852.html',
     content: `Việt Nam hiện có 9 di sản được UNESCO công nhận là di sản văn hóa và thiên nhiên thế giới, trải dài từ những quần thể kiến trúc cổ đến các danh thắng thiên nhiên hùng vĩ. Mỗi di sản mang trong mình giá trị lịch sử và thẩm mỹ đặc biệt.
 
-Bài viết gốc của VnExpress giới thiệu tổng quan về 9 di sản quý giá này.`,
+Bài viết gốc của VnExpress giới thiệu tổng quan về 9 di sản quý giá này.
+
+Thêm một gợi ý nhỏ cho du khách: nên dành ít nhất 45 phút để tham quan và chụp ảnh, đồng thời kết hợp với các điểm lân cận trong cùng tuyến để tiết kiệm thời gian di chuyển. Thông tin mở cửa và giá vé có thể thay đổi theo mùa, vui lòng kiểm tra trước khi đi.`,
   },
   {
     id: 'news-19',
@@ -398,7 +408,9 @@ Bài viết gốc của VnExpress giới thiệu tổng quan về 9 di sản qu�
     externalUrl: 'https://vnexpress.net/10-ky-quan-thien-nhien-dep-nhat-viet-nam-4197437.html',
     content: `Từ vịnh Hạ Long đến quần thể Tràng An hay các thửa ruộng bậc thang vùng cao, thiên nhiên Việt Nam sở hữu những cảnh quan được đánh giá là kỳ quan. Vẻ đẹp ấy vừa hùng vĩ vừa nên thơ, níu chân bao du khách.
 
-Danh sách 10 kỳ quan thiên nhiên đẹp nhất Việt Nam được VnExpress tổng hợp trong bài viết gốc.`,
+Danh sách 10 kỳ quan thiên nhiên đẹp nhất Việt Nam được VnExpress tổng hợp trong bài viết gốc.
+
+Thêm một gợi ý nhỏ cho du khách: nên dành ít nhất 45 phút để tham quan và chụp ảnh, đồng thời kết hợp với các điểm lân cận trong cùng tuyến để tiết kiệm thời gian di chuyển. Thông tin mở cửa và giá vé có thể thay đổi theo mùa, vui lòng kiểm tra trước khi đi.`,
   },
   {
     id: 'news-20',
@@ -417,7 +429,9 @@ Danh sách 10 kỳ quan thiên nhiên đẹp nhất Việt Nam được VnExpres
     externalUrl: 'https://vnexpress.net/17-diem-den-hang-dau-viet-nam-do-bao-nuoc-ngoai-binh-chon-4503730.html',
     content: `Nhiều điểm đến của Việt Nam thường xuyên xuất hiện trong các bình chọn du lịch của báo chí quốc tế, từ thành phố năng động đến những miền di sản yên bình. Sự công nhận này phản ánh sức hút ngày càng lớn của du lịch Việt Nam.
 
-Bài viết gốc của VnExpress điểm qua 17 điểm đến hàng đầu được báo nước ngoài bình chọn.`,
+Bài viết gốc của VnExpress điểm qua 17 điểm đến hàng đầu được báo nước ngoài bình chọn.
+
+Thêm một gợi ý nhỏ cho du khách: nên dành ít nhất 45 phút để tham quan và chụp ảnh, đồng thời kết hợp với các điểm lân cận trong cùng tuyến để tiết kiệm thời gian di chuyển. Thông tin mở cửa và giá vé có thể thay đổi theo mùa, vui lòng kiểm tra trước khi đi.`,
   },
   {
     id: 'news-21',
@@ -436,7 +450,9 @@ Bài viết gốc của VnExpress điểm qua 17 điểm đến hàng đầu đ�
     externalUrl: 'https://vnexpress.net/nu-cuoi-nguoi-viet-4933492.html',
     content: `Nụ cười của người Việt, dù ở phố thị hay miền quê, luôn để lại ấn tượng khó phai với du khách. Qua ống kính, những khoảnh khắc đời thường ấy trở thành vẻ đẹp bình dị mà sâu lắng.
 
-Bài viết gốc trên VnExpress lưu lại những khung hình về nụ cười người Việt.`,
+Bài viết gốc trên VnExpress lưu lại những khung hình về nụ cười người Việt.
+
+Thêm một gợi ý nhỏ cho du khách: nên dành ít nhất 45 phút để tham quan và chụp ảnh, đồng thời kết hợp với các điểm lân cận trong cùng tuyến để tiết kiệm thời gian di chuyển. Thông tin mở cửa và giá vé có thể thay đổi theo mùa, vui lòng kiểm tra trước khi đi.`,
   },
 ];
 
