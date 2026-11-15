@@ -5,8 +5,8 @@
 
 .contact-page-root {
   --c-bg: #F7F2E9;
-  --c-surface: #FFFCF6;
-  --c-surface-soft: #F3ECDF;
+  --c-surface: #FFFFFF;
+  --c-surface-soft: #FAF6EE;
   --c-accent: #C2410C;
   --c-accent-hover: #9A3412;
   --c-accent-light: rgba(194, 65, 12, 0.08);
@@ -14,7 +14,7 @@
   --c-ink: #201B16;
   --c-muted: #6F6254;
   --c-muted-light: #6F6254;
-  --c-border: #DED2BF;
+  --c-border: #E5DCCE;
   --c-border-hover: #C2410C;
   --c-radius-card: 10px;
   --c-radius-input: 0;
@@ -46,23 +46,6 @@
   --c-muted-light: #A39B91;
   --c-border: #3A3531;
   --c-border-hover: #FB923C;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) .contact-page-root {
-    --c-bg: #17110d;
-    --c-surface: #1C1916;
-    --c-surface-soft: #26221F;
-    --c-accent: #FB923C;
-    --c-accent-hover: #EA580C;
-    --c-accent-light: rgba(251, 146, 60, 0.15);
-    --c-accent-border: rgba(251, 146, 60, 0.3);
-    --c-ink: #F1EDE6;
-    --c-muted: #A39B91;
-    --c-muted-light: #A39B91;
-    --c-border: #3A3531;
-    --c-border-hover: #FB923C;
-  }
 }
 
 /* --- Wrap & Editorial Header (Synchronized with Điểm du lịch & Quà lưu niệm) --- */
@@ -232,14 +215,6 @@
   color: var(--c-accent);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) .contact-page-root .contact-fact-link {
-    color: var(--c-accent);
-  }
-  :root:not([data-theme="light"]) .contact-page-root .contact-fact-link:hover {
-    color: var(--c-accent-hover);
-  }
-}
 :root[data-theme="dark"] .contact-page-root .contact-fact-link {
   color: var(--c-accent);
 }
@@ -354,11 +329,6 @@
   margin-left: 2px;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) .contact-page-root .contact-req {
-    color: #F87171;
-  }
-}
 :root[data-theme="dark"] .contact-page-root .contact-req {
   color: #F87171;
 }
@@ -481,11 +451,6 @@
   min-height: 48px;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) .contact-page-root .contact-submit-btn {
-    color: #17110d;
-  }
-}
 :root[data-theme="dark"] .contact-page-root .contact-submit-btn {
   color: #17110d;
 }

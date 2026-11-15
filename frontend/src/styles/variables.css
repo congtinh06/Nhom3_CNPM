@@ -19,17 +19,8 @@
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --page: #17110d;
-    --cream: #17110d;
-    --white: #1C1916;
-    --ink: #F1EDE6;
-    --black: #F1EDE6;
-    --heading-accent: #FB923C;
-  }
-}
-
+/* Dark mode is disabled by default to maintain Echora's signature warm paper cream aesthetic.
+   Only explicit root[data-theme="dark"] can override it if ever toggled. */
 :root[data-theme="dark"] {
   --page: #17110d;
   --cream: #17110d;
