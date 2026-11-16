@@ -64,6 +64,10 @@ export interface AccountTranslation {
   cancel: string;
   profileUpdated: string;
   fullNameTooShort: string;
+  quickStatsOrders: string;
+  quickStatsActive: string;
+  quickStatsSpent: string;
+  recentOrdersTitle: string;
   ordersTitle: string;
   ordersDesc: string;
   ordersEmpty: string;
@@ -161,6 +165,10 @@ const ACCOUNT_TRANSLATIONS: Record<SupportedLanguage, AccountTranslation> = {
     cancel: 'Hủy',
     profileUpdated: 'Đã cập nhật thông tin cá nhân.',
     fullNameTooShort: 'Họ và tên phải có ít nhất 2 ký tự.',
+    quickStatsOrders: 'Tổng đơn hàng',
+    quickStatsActive: 'Đang xử lý',
+    quickStatsSpent: 'Tổng chi tiêu',
+    recentOrdersTitle: 'Đơn hàng gần nhất',
     ordersTitle: 'Đơn hàng gần đây',
     ordersDesc: 'Theo dõi tình trạng các đơn hàng bạn đã đặt.',
     ordersEmpty: 'Bạn chưa có đơn hàng nào.',
@@ -256,6 +264,10 @@ const ACCOUNT_TRANSLATIONS: Record<SupportedLanguage, AccountTranslation> = {
     cancel: 'Cancel',
     profileUpdated: 'Your profile has been updated.',
     fullNameTooShort: 'Full name must be at least 2 characters.',
+    quickStatsOrders: 'Total orders',
+    quickStatsActive: 'In progress',
+    quickStatsSpent: 'Total spent',
+    recentOrdersTitle: 'Latest orders',
     ordersTitle: 'Recent orders',
     ordersDesc: 'Track the status of the orders you have placed.',
     ordersEmpty: 'You have no orders yet.',
@@ -351,6 +363,10 @@ const ACCOUNT_TRANSLATIONS: Record<SupportedLanguage, AccountTranslation> = {
     cancel: 'キャンセル',
     profileUpdated: 'プロフィールを更新しました。',
     fullNameTooShort: '氏名は2文字以上で入力してください。',
+    quickStatsOrders: '注文数',
+    quickStatsActive: '処理中',
+    quickStatsSpent: '合計支出',
+    recentOrdersTitle: '最新の注文',
     ordersTitle: '最近の注文',
     ordersDesc: 'これまでにご注文いただいた内容の状況を確認できます。',
     ordersEmpty: 'まだ注文はありません。',
@@ -446,6 +462,10 @@ const ACCOUNT_TRANSLATIONS: Record<SupportedLanguage, AccountTranslation> = {
     cancel: '취소',
     profileUpdated: '프로필이 업데이트되었습니다.',
     fullNameTooShort: '이름은 2자 이상이어야 합니다.',
+    quickStatsOrders: '전체 주문',
+    quickStatsActive: '처리 중',
+    quickStatsSpent: '총 결제액',
+    recentOrdersTitle: '최근 주문',
     ordersTitle: '최근 주문',
     ordersDesc: '주문한 내역의 상태를 확인하세요.',
     ordersEmpty: '아직 주문이 없습니다.',
