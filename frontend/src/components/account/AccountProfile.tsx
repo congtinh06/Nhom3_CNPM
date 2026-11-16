@@ -10,6 +10,7 @@ import { BackendOrder } from '../../types';
 import { formatPrice } from '../../utils/formatters';
 import { StatusBadge } from '../orders/StatusBadge';
 import { AccountSection } from './AccountSection';
+import { AccountPasswordForm } from './AccountPasswordForm';
 import { useAccountI18n } from './accountI18n';
 import { formatAccountDate } from './accountFormatters';
 import { normalizeApiError } from '../../api/errors';
@@ -24,6 +25,7 @@ export const AccountProfile: React.FC = () => {
   const [fullName, setFullName] = useState('');
   const [saving, setSaving] = useState(false);
   const [profileError, setProfileError] = useState('');
+  const [passwordOpen, setPasswordOpen] = useState(false);
   const [orders, setOrders] = useState<BackendOrder[]>([]);
   const [ordersLoading, setOrdersLoading] = useState(true);
   const [ordersFailed, setOrdersFailed] = useState(false);
@@ -151,8 +153,22 @@ export const AccountProfile: React.FC = () => {
                 </div>
               </dl>
               <div className="ac-form-actions">
-                <button type="button" className="ac-btn ac-btn-ghost" onClick={() => setEditing(true)}>
+                <button
+                  type="button"
+                  className="ac-btn ac-btn-ghost"
+                  onClick={() => {
+                    setPasswordOpen(false);
+                    setEditing(true);
+                  }}
+                >
                   {t.editProfile}
+                </button>
+                <button
+                  type="button"
+                  className="ac-btn ac-btn-ghost"
+                  onClick={() => setPasswordOpen((open) => !open)}
+                >
+                  {passwordOpen ? t.closeForm : t.changePasswordAction}
                 </button>
               </div>
             </>
@@ -198,6 +214,18 @@ export const AccountProfile: React.FC = () => {
           </dl>
         </article>
         </div>
+
+        {passwordOpen && (
+          <article className="ac-card ac-password-card">
+            <header className="ac-card-head">
+              <span className="ac-card-icon" aria-hidden="true">
+                <ShieldCheck size={18} strokeWidth={1.8} />
+              </span>
+              <h3>{t.changePasswordTitle}</h3>
+            </header>
+            <AccountPasswordForm onSuccess={() => setPasswordOpen(false)} />
+          </article>
+        )}
 
         <div className="ac-stats">
           <div className="ac-stat">

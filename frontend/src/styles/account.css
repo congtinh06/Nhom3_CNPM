@@ -616,12 +616,21 @@
   margin-top: 14px;
 }
 
+.ac-password-card .ac-card-head {
+  margin-bottom: 12px;
+}
+
+.ac-password-card .ac-form {
+  max-width: 560px;
+}
+
 .ac-danger {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   gap: 10px;
   padding: 22px;
+  max-width: 640px;
 }
 
 .ac-danger h3 {

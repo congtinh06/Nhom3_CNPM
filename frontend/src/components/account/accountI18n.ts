@@ -68,6 +68,9 @@ export interface AccountTranslation {
   quickStatsActive: string;
   quickStatsSpent: string;
   recentOrdersTitle: string;
+  changePasswordAction: string;
+  changePasswordTitle: string;
+  closeForm: string;
   ordersTitle: string;
   ordersDesc: string;
   ordersEmpty: string;
@@ -169,6 +172,9 @@ const ACCOUNT_TRANSLATIONS: Record<SupportedLanguage, AccountTranslation> = {
     quickStatsActive: 'Đang xử lý',
     quickStatsSpent: 'Tổng chi tiêu',
     recentOrdersTitle: 'Đơn hàng gần nhất',
+    changePasswordAction: 'Đổi mật khẩu',
+    changePasswordTitle: 'Đổi mật khẩu',
+    closeForm: 'Đóng',
     ordersTitle: 'Đơn hàng gần đây',
     ordersDesc: 'Theo dõi tình trạng các đơn hàng bạn đã đặt.',
     ordersEmpty: 'Bạn chưa có đơn hàng nào.',
@@ -179,7 +185,7 @@ const ACCOUNT_TRANSLATIONS: Record<SupportedLanguage, AccountTranslation> = {
     orderTotal: 'Tổng tiền',
     viewAllOrders: 'Xem tất cả đơn hàng',
     securityTitle: 'Bảo mật tài khoản',
-    securityDesc: 'Đổi mật khẩu định kỳ và đăng xuất khỏi các thiết bị bạn không sử dụng.',
+    securityDesc: 'Quản lý phiên đăng nhập và đăng xuất khỏi các thiết bị bạn không sử dụng.',
     oldPassword: 'Mật khẩu hiện tại',
     newPassword: 'Mật khẩu mới',
     confirmPassword: 'Xác nhận mật khẩu mới',
@@ -268,6 +274,9 @@ const ACCOUNT_TRANSLATIONS: Record<SupportedLanguage, AccountTranslation> = {
     quickStatsActive: 'In progress',
     quickStatsSpent: 'Total spent',
     recentOrdersTitle: 'Latest orders',
+    changePasswordAction: 'Change password',
+    changePasswordTitle: 'Change password',
+    closeForm: 'Close',
     ordersTitle: 'Recent orders',
     ordersDesc: 'Track the status of the orders you have placed.',
     ordersEmpty: 'You have no orders yet.',
@@ -278,7 +287,7 @@ const ACCOUNT_TRANSLATIONS: Record<SupportedLanguage, AccountTranslation> = {
     orderTotal: 'Total',
     viewAllOrders: 'View all orders',
     securityTitle: 'Account security',
-    securityDesc: 'Change your password regularly and sign out of devices you no longer use.',
+    securityDesc: 'Manage sign-in sessions and sign out of devices you no longer use.',
     oldPassword: 'Current password',
     newPassword: 'New password',
     confirmPassword: 'Confirm new password',
@@ -367,6 +376,9 @@ const ACCOUNT_TRANSLATIONS: Record<SupportedLanguage, AccountTranslation> = {
     quickStatsActive: '処理中',
     quickStatsSpent: '合計支出',
     recentOrdersTitle: '最新の注文',
+    changePasswordAction: 'パスワードを変更',
+    changePasswordTitle: 'パスワードを変更',
+    closeForm: '閉じる',
     ordersTitle: '最近の注文',
     ordersDesc: 'これまでにご注文いただいた内容の状況を確認できます。',
     ordersEmpty: 'まだ注文はありません。',
@@ -377,7 +389,7 @@ const ACCOUNT_TRANSLATIONS: Record<SupportedLanguage, AccountTranslation> = {
     orderTotal: '合計',
     viewAllOrders: 'すべての注文を見る',
     securityTitle: 'アカウントのセキュリティ',
-    securityDesc: '定期的にパスワードを変更し、使わなくなった端末からはログアウトしてください。',
+    securityDesc: 'ログインセッションを管理し、使っていない端末からログアウトします。',
     oldPassword: '現在のパスワード',
     newPassword: '新しいパスワード',
     confirmPassword: '新しいパスワード（確認）',
@@ -466,6 +478,9 @@ const ACCOUNT_TRANSLATIONS: Record<SupportedLanguage, AccountTranslation> = {
     quickStatsActive: '처리 중',
     quickStatsSpent: '총 결제액',
     recentOrdersTitle: '최근 주문',
+    changePasswordAction: '비밀번호 변경',
+    changePasswordTitle: '비밀번호 변경',
+    closeForm: '닫기',
     ordersTitle: '최근 주문',
     ordersDesc: '주문한 내역의 상태를 확인하세요.',
     ordersEmpty: '아직 주문이 없습니다.',
@@ -476,7 +491,7 @@ const ACCOUNT_TRANSLATIONS: Record<SupportedLanguage, AccountTranslation> = {
     orderTotal: '합계',
     viewAllOrders: '모든 주문 보기',
     securityTitle: '계정 보안',
-    securityDesc: '비밀번호를 주기적으로 변경하고 더 이상 사용하지 않는 기기에서 로그아웃하세요.',
+    securityDesc: '로그인 세션을 관리하고 더 이상 사용하지 않는 기기에서 로그아웃하세요.',
     oldPassword: '현재 비밀번호',
     newPassword: '새 비밀번호',
     confirmPassword: '새 비밀번호 확인',
