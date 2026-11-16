@@ -165,7 +165,7 @@ export const AccountPage: React.FC = () => {
               </div>
               <div className="ac-identity-copy">
                 <span className="ac-identity-name">{user.fullName || user.email}</span>
-                <span className="ac-identity-email">{user.email}</span>
+                <span className="ac-identity-email" title={user.email}>{user.email}</span>
                 <span className={`ac-plan-pill${isPremium ? ' is-premium' : ''}`}>
                   {isPremium ? t.planPremium : t.planFree}
                 </span>

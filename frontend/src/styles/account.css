@@ -17,7 +17,7 @@
     linear-gradient(180deg, #fdfbf7 0%, #fbf8f3 100%);
   color: var(--ac-text);
   min-height: calc(100vh - 64px);
-  padding: 104px clamp(16px, 5vw, 48px) 72px;
+  padding: clamp(72px, 8vw, 88px) clamp(16px, 5vw, 48px) 56px;
   box-sizing: border-box;
   font-family: var(--font-body, 'Be Vietnam Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif);
   overflow-x: clip;
@@ -29,7 +29,7 @@
   justify-content: space-between;
   gap: 24px;
   max-width: 1180px;
-  margin: 0 auto 32px;
+  margin: 0 auto 20px;
 }
 
 .ac-head-copy {
@@ -94,8 +94,8 @@
 
 .ac-shell {
   display: grid;
-  grid-template-columns: 280px minmax(0, 1fr);
-  gap: 28px;
+  grid-template-columns: 268px minmax(0, 1fr);
+  gap: 24px;
   max-width: 1180px;
   margin: 0 auto;
   align-items: start;
@@ -112,11 +112,11 @@
 .ac-identity {
   display: flex;
   align-items: flex-start;
-  gap: 14px;
+  gap: 12px;
   border: 1px solid var(--ac-border);
   border-radius: var(--ac-radius-lg);
   background: var(--ac-surface);
-  padding: 20px;
+  padding: 16px;
   box-shadow: var(--ac-shadow);
 }
 
@@ -156,7 +156,10 @@
   display: block;
   font-size: 12.5px;
   color: var(--ac-text-muted);
-  word-break: break-word;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .ac-plan-pill {
@@ -261,7 +264,7 @@
 .ac-main {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 20px;
   min-width: 0;
 }
 
@@ -269,7 +272,7 @@
   border: 1px solid var(--ac-border);
   border-radius: var(--ac-radius-lg);
   background: var(--ac-surface);
-  padding: 28px;
+  padding: 22px;
   scroll-margin-top: 96px;
   box-shadow: var(--ac-shadow);
 }
@@ -290,7 +293,7 @@
 }
 
 .ac-section-desc {
-  margin: 0 0 22px;
+  margin: 0 0 14px;
   font-size: 14px;
   line-height: 1.6;
   color: var(--ac-text-muted);
@@ -300,7 +303,7 @@
   border: 1px solid #eee7df;
   border-radius: var(--ac-radius);
   background: #faf8f5;
-  padding: 20px;
+  padding: 16px;
 }
 
 .ac-card-head {
@@ -332,8 +335,8 @@
 
 .ac-profile-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 18px;
+  grid-template-columns: minmax(0, 1.6fr) minmax(240px, 0.8fr);
+  gap: 16px;
 }
 
 .ac-detail {
@@ -344,10 +347,10 @@
 
 .ac-detail-row {
   display: grid;
-  grid-template-columns: 150px minmax(0, 1fr);
+  grid-template-columns: 120px minmax(0, 1fr);
   align-items: center;
-  gap: 14px;
-  padding: 13px 0;
+  gap: 12px;
+  padding: 11px 0;
   border-bottom: 1px solid #eee7df;
 }
 
@@ -678,9 +681,9 @@
 .ac-premium-hero {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  gap: 18px 28px;
+  gap: 16px 24px;
   align-items: center;
-  padding: 24px;
+  padding: 20px;
   border: 1px solid #f0dfcb;
   border-radius: var(--ac-radius);
   background:
@@ -986,11 +989,11 @@
 @media (max-width: 1024px) {
   .ac-profile-grid,
   .ac-premium-benefit-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .ac-security-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
@@ -1005,7 +1008,7 @@
   }
 
   .ac-shell {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
     gap: 20px;
   }
 
@@ -1031,13 +1034,13 @@
   }
 
   .ac-lang {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   }
 }
 
 @media (max-width: 720px) {
   .ac-premium-hero {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .ac-premium-cta,
@@ -1058,7 +1061,7 @@
   }
 
   .ac-detail-row {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
     gap: 4px;
     padding: 12px 0;
   }
@@ -1074,7 +1077,7 @@
   }
 
   .ac-lang {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .ac-premium-facts {
