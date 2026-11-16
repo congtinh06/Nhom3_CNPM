@@ -362,6 +362,40 @@
   color: var(--ac-text-muted);
 }
 
+.ac-profile-form {
+  display: grid;
+  gap: 10px;
+}
+
+.ac-profile-form label {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ac-text);
+}
+
+.ac-profile-form input {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid var(--ac-border);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--ac-text);
+  padding: 10px 12px;
+  font: inherit;
+}
+
+.ac-profile-form input:focus {
+  outline: 2px solid color-mix(in srgb, var(--ac-accent) 35%, transparent);
+  border-color: var(--ac-accent);
+}
+
+.ac-form-note {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--ac-text-muted);
+}
+
 .ac-detail-row dd {
   margin: 0;
   display: flex;

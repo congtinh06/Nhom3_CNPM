@@ -12,6 +12,7 @@ import {
   QrScanResponse,
   RegisterPayload,
   ResetPasswordPayload,
+  UpdateProfilePayload,
 } from '../types';
 
 function scopeConfig(scope: AuthScope = 'user') {
@@ -66,6 +67,11 @@ export const authApi = {
       tokenStore.clear('user');
       throw new Error('Tài khoản ADMIN không được phép truy cập trên app người dùng.');
     }
+    return response.data;
+  },
+
+  updateProfile: async (payload: UpdateProfilePayload): Promise<AuthUser> => {
+    const response = await apiClient.put<AuthUser>('/api/auth/me/profile', payload, scopeConfig());
     return response.data;
   },
 

@@ -57,6 +57,13 @@ export interface AccountTranslation {
   resending: string;
   resent: string;
   resendFailed: string;
+  editProfile: string;
+  profileEmailNote: string;
+  saveProfile: string;
+  savingProfile: string;
+  cancel: string;
+  profileUpdated: string;
+  fullNameTooShort: string;
   ordersTitle: string;
   ordersDesc: string;
   ordersEmpty: string;
@@ -147,6 +154,13 @@ const ACCOUNT_TRANSLATIONS: Record<SupportedLanguage, AccountTranslation> = {
     resending: 'Đang gửi…',
     resent: 'Đã gửi lại email xác thực.',
     resendFailed: 'Không thể gửi lại email. Vui lòng thử lại sau.',
+    editProfile: 'Chỉnh sửa thông tin',
+    profileEmailNote: 'Email là thông tin đăng nhập nên chưa thể đổi tại đây.',
+    saveProfile: 'Lưu thay đổi',
+    savingProfile: 'Đang lưu…',
+    cancel: 'Hủy',
+    profileUpdated: 'Đã cập nhật thông tin cá nhân.',
+    fullNameTooShort: 'Họ và tên phải có ít nhất 2 ký tự.',
     ordersTitle: 'Đơn hàng gần đây',
     ordersDesc: 'Theo dõi tình trạng các đơn hàng bạn đã đặt.',
     ordersEmpty: 'Bạn chưa có đơn hàng nào.',
@@ -235,6 +249,13 @@ const ACCOUNT_TRANSLATIONS: Record<SupportedLanguage, AccountTranslation> = {
     resending: 'Sending…',
     resent: 'Verification email sent again.',
     resendFailed: 'Could not resend the email. Please try again later.',
+    editProfile: 'Edit information',
+    profileEmailNote: 'Email is your sign-in identifier, so it cannot be changed here.',
+    saveProfile: 'Save changes',
+    savingProfile: 'Saving…',
+    cancel: 'Cancel',
+    profileUpdated: 'Your profile has been updated.',
+    fullNameTooShort: 'Full name must be at least 2 characters.',
     ordersTitle: 'Recent orders',
     ordersDesc: 'Track the status of the orders you have placed.',
     ordersEmpty: 'You have no orders yet.',
@@ -323,6 +344,13 @@ const ACCOUNT_TRANSLATIONS: Record<SupportedLanguage, AccountTranslation> = {
     resending: '送信中…',
     resent: '認証メールを再送しました。',
     resendFailed: 'メールを再送できませんでした。しばらくしてからお試しください。',
+    editProfile: '情報を編集',
+    profileEmailNote: 'メールアドレスはログイン情報のため、ここでは変更できません。',
+    saveProfile: '変更を保存',
+    savingProfile: '保存中…',
+    cancel: 'キャンセル',
+    profileUpdated: 'プロフィールを更新しました。',
+    fullNameTooShort: '氏名は2文字以上で入力してください。',
     ordersTitle: '最近の注文',
     ordersDesc: 'これまでにご注文いただいた内容の状況を確認できます。',
     ordersEmpty: 'まだ注文はありません。',
@@ -411,6 +439,13 @@ const ACCOUNT_TRANSLATIONS: Record<SupportedLanguage, AccountTranslation> = {
     resending: '전송 중…',
     resent: '인증 이메일을 다시 보냈습니다.',
     resendFailed: '이메일을 다시 보낼 수 없습니다. 잠시 후 다시 시도해 주세요.',
+    editProfile: '정보 수정',
+    profileEmailNote: '이메일은 로그인 정보이므로 여기에서 변경할 수 없습니다.',
+    saveProfile: '변경 사항 저장',
+    savingProfile: '저장 중…',
+    cancel: '취소',
+    profileUpdated: '프로필이 업데이트되었습니다.',
+    fullNameTooShort: '이름은 2자 이상이어야 합니다.',
     ordersTitle: '최근 주문',
     ordersDesc: '주문한 내역의 상태를 확인하세요.',
     ordersEmpty: '아직 주문이 없습니다.',

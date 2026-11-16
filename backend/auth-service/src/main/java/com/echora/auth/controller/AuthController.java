@@ -11,6 +11,7 @@ import com.echora.auth.dto.MessageResponse;
 import com.echora.auth.dto.RegisterRequest;
 import com.echora.auth.dto.ResetPasswordRequest;
 import com.echora.auth.dto.UserResponse;
+import com.echora.auth.dto.UpdateProfileRequest;
 import com.echora.auth.dto.VerifyEmailRequest;
 import com.echora.auth.exception.UnauthorizedException;
 import com.echora.auth.security.UserPrincipal;
@@ -29,6 +30,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -156,6 +158,11 @@ public class AuthController {
     @GetMapping("/api/auth/me")
     public ResponseEntity<UserResponse> me() {
         return ResponseEntity.ok(authService.me(currentUserId()));
+    }
+
+    @PutMapping("/api/auth/me/profile")
+    public ResponseEntity<UserResponse> updateProfile(@Valid @RequestBody UpdateProfileRequest request) {
+        return ResponseEntity.ok(authService.updateProfile(currentUserId(), request));
     }
 
     // Gói Premium toàn tài khoản + các POI đã mua lẻ (dùng cho trang tài khoản & khóa chap).

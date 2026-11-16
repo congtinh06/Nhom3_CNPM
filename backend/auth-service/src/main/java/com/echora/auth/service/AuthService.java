@@ -15,6 +15,7 @@ import com.echora.auth.dto.ResetPasswordRequest;
 import com.echora.auth.dto.UserResponse;
 import com.echora.auth.dto.UserPoiEntitlementResponse;
 import com.echora.auth.dto.VerifyEmailRequest;
+import com.echora.auth.dto.UpdateProfileRequest;
 
 import java.util.List;
 
@@ -43,6 +44,8 @@ public interface AuthService {
     void changePassword(Long userId, ChangePasswordRequest request, String currentRawRefreshToken);
 
     UserResponse me(Long userId);
+
+    UserResponse updateProfile(Long userId, UpdateProfileRequest request);
 
     EntitlementResponse entitlement(Long userId);
 
