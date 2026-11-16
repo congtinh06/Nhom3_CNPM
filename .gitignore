@@ -41,6 +41,7 @@ test-results/
 
 # Environment variables
 .env
+frontend/.env
 .env.local
 .env.*.local
 .env.bak*
@@ -75,6 +76,12 @@ qr-output/
 *.pyc
 __pycache__/
 _check_docx/
+
+# Local database artifacts
+*.bak
+*.mdf
+*.ldf
+*.dumpstream
 
 # Local database backups
 backups/
