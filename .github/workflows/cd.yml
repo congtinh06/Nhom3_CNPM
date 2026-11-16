@@ -285,6 +285,11 @@ jobs:
             echo "::error::git fetch origin failed in DEPLOY_DIR." >&2
             exit 1
           fi
+          echo "Restoring any local changes before checkout"
+          if ! git -C "$deploy_dir_posix" restore --source=HEAD --staged --worktree .; then
+            echo "::error::git restore failed in DEPLOY_DIR." >&2
+            exit 1
+          fi
           echo "Checking out $GITHUB_SHA in deploy clone"
           if ! checkout_output="$(git -C "$deploy_dir_posix" checkout --detach "$GITHUB_SHA" 2>&1)"; then
             printf '%s\n' "$checkout_output" >&2
