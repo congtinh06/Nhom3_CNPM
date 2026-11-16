@@ -26,8 +26,10 @@ public class FeedbackController {
 
     @PostMapping("/api/feedback")
     @ResponseStatus(HttpStatus.CREATED)
-    public SubmitResponse submit(@Valid @RequestBody SubmitRequest request) {
-        return feedbackService.submit(request);
+    public SubmitResponse submit(
+            @Valid @RequestBody SubmitRequest request,
+            @RequestHeader(value = "X-User-Id", required = false) Long userId) {
+        return feedbackService.submit(request, userId);
     }
 
     @GetMapping("/api/feedback/{ticket}")

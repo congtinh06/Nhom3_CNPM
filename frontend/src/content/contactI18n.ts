@@ -32,6 +32,7 @@ export interface ContactTranslation {
   emailLabel: string;
   emailPlaceholder: string;
   phoneLabel: string;
+  phoneInputLabel: string;
   phonePlaceholder: string;
   subjectLabel: string;
   subjectPlaceholder: string;
@@ -46,6 +47,44 @@ export interface ContactTranslation {
   mapHeading: string;
   mapSubheading: string;
   directionsBtn: string;
+  // Extra page labels
+  addressLabel: string;
+  hoursLabel: string;
+  locationTitle: string;
+  directionsLabel: string;
+  optionalPhoneAdd: string;
+  optionalPhoneHide: string;
+  sendAnother: string;
+  helpSectionTitle: string;
+  helpGuide1Title: string;
+  helpGuide1Desc: string;
+  helpGuide2Title: string;
+  helpGuide2Desc: string;
+  helpGuide3Title: string;
+  helpGuide3Desc: string;
+  fixSectionTitle: string;
+  fix1Title: string;
+  fix1Desc: string;
+  fix2Title: string;
+  fix2Desc: string;
+  fix3Title: string;
+  fix3Desc: string;
+  aidSectionTitle: string;
+  aidSectionDesc: string;
+  aid1Label: string;
+  aid1Desc: string;
+  aid2Label: string;
+  aid2Desc: string;
+  aid3Label: string;
+  aid3Desc: string;
+  aid4Label: string;
+  aid4Desc: string;
+  errNameRequired: string;
+  errEmailRequired: string;
+  errEmailInvalid: string;
+  errMessageRequired: string;
+  errMessageMin: string;
+  errSendFailed: string;
   // FAQ
   faqHeading: string;
   faqSubheading: string;
@@ -59,39 +98,40 @@ export const CONTACT_TRANSLATIONS: Record<SupportedLanguage, ContactTranslation>
   vi: {
     eyebrow: 'HỖ TRỢ & ĐỒNG HÀNH',
     title: 'Liên hệ',
-    subtitle: 'Lắng nghe góp ý, báo lỗi thuyết minh, hỗ trợ du khách và kết nối hợp tác phát triển di sản Sài Gòn.',
-    officeTitle: 'Trung tâm Thông tin Du khách',
-    officeAddress: '02 Công xã Paris, Phường Bến Nghé, Quận 1, TP. Hồ Chí Minh',
+    subtitle: 'Bạn cần hỗ trợ khi nghe thuyết minh, có câu hỏi về điểm tham quan hay muốn gửi góp ý? Hãy để lại lời nhắn.',
+    officeTitle: 'Thông tin liên hệ',
+    officeAddress: '338 An Dương Vương, Phường 4, Quận 5, TP. Hồ Chí Minh',
     officeDesc: 'Đối diện Bưu điện Trung tâm, cách Nhà thờ Đức Bà 50 mét',
     hotlineTitle: 'Đường dây nóng du khách',
-    hotlineDesc: '1900 1234, Hỗ trợ miễn phí 24/7',
+    hotlineDesc: '0346358399',
     emailTitle: 'Hộp thư điện tử',
-    emailDesc: 'contact@echora.vn, Phản hồi trong 2-4 giờ',
+    emailDesc: 'congtinh1932006@gmail.com',
     hoursTitle: 'Thời gian phục vụ',
-    hoursDesc: '07:30 - 21:00 hàng ngày (Kể cả ngày Lễ & Tết)',
-    formHeading: 'Gửi thông điệp đến Ban quản trị',
+    hoursDesc: '8h - 23h hàng ngày',
+    formHeading: 'Gửi tin nhắn',
     formSubheading: 'Chúng tôi trân trọng mọi ý kiến đóng góp nhằm hoàn thiện trải nghiệm văn hóa cho du khách.',
     topicLabel: 'Chủ đề liên hệ',
     topicFeedback: 'Góp ý trải nghiệm tour',
     topicReportIssue: 'Báo lỗi thuyết minh / bản dịch',
     topicPartnership: 'Hợp tác truyền thông & di sản',
     topicOther: 'Câu hỏi & Vấn đề khác',
-    nameLabel: 'Họ và tên của bạn',
+    nameLabel: 'Họ và tên',
     namePlaceholder: 'Ví dụ: Nguyễn Văn An',
-    emailLabel: 'Địa chỉ Email',
+    emailLabel: 'Email',
     emailPlaceholder: 'name@example.com',
     phoneLabel: 'Số điện thoại',
+    phoneInputLabel: 'Số điện thoại (không bắt buộc)',
     phonePlaceholder: '090x xxx xxx (không bắt buộc)',
     subjectLabel: 'Tiêu đề thông điệp',
     subjectPlaceholder: '',
-    messageLabel: 'Nội dung chi tiết',
+    messageLabel: 'Nội dung',
     messagePlaceholder: '',
-    sendBtn: 'Gửi thông điệp liên hệ',
-    sendingBtn: 'Đang gửi thông điệp...',
-    successTitle: 'Gửi thành công!',
-    successNotice: 'Cảm ơn bạn đã gửi liên hệ! Ý kiến đóng góp của bạn đã được ghi nhận và chuyển tới đội ngũ chuyên trách.',
+    sendBtn: 'Gửi tin nhắn',
+    sendingBtn: 'Đang gửi…',
+    successTitle: 'Đã gửi tin nhắn thành công',
+    successNotice: 'Tin nhắn đã được gửi thành công tới quản trị viên Echora. Phản hồi sẽ xuất hiện trong mục Tin nhắn hỗ trợ tại trang thông tin tài khoản.',
     errorNotice: 'Vui lòng điền họ tên, email hợp lệ và nội dung thông điệp ít nhất 10 ký tự.',
-    mapHeading: 'Vị trí Trạm Thông tin Di sản',
+    mapHeading: 'Vị trí',
     mapSubheading: 'Tọa lạc ngay trái tim lịch sử Sài Gòn, thuận tiện cho mọi hành trình đi bộ khám phá.',
     directionsBtn: 'Xem chỉ đường trên Google Maps',
     faqHeading: 'Câu hỏi thường gặp',
@@ -116,6 +156,43 @@ export const CONTACT_TRANSLATIONS: Record<SupportedLanguage, ContactTranslation>
     ],
     trustCommitment: 'Cam kết bảo mật thông tin du khách',
     trustResponseTime: 'Thời gian phản hồi trung bình: dưới 2 giờ',
+    addressLabel: 'Địa chỉ',
+    hoursLabel: 'Thời gian làm việc',
+    locationTitle: 'Vị trí',
+    directionsLabel: 'Chỉ đường',
+    optionalPhoneAdd: 'Thêm số điện thoại (không bắt buộc)',
+    optionalPhoneHide: 'Ẩn số điện thoại',
+    sendAnother: 'Gửi tin nhắn khác',
+    helpSectionTitle: 'Hướng dẫn liên hệ',
+    helpGuide1Title: 'Sử dụng thuyết minh',
+    helpGuide1Desc: 'Chọn ngôn ngữ, bật tự động phát hoặc quét mã QR ở từng điểm tham quan.',
+    helpGuide2Title: 'Đơn hàng quà lưu niệm',
+    helpGuide2Desc: 'Ghi mã đơn hàng vào nội dung tin nhắn để chúng tôi kiểm tra nhanh hơn.',
+    helpGuide3Title: 'Hợp tác và góp ý',
+    helpGuide3Desc: 'Chọn chủ đề "Hợp tác hoặc góp ý" trong biểu mẫu, chúng tôi rất muốn lắng nghe bạn.',
+    fixSectionTitle: 'Sự cố thường gặp khi nghe',
+    fix1Title: 'Không nghe thấy âm thanh',
+    fix1Desc: 'Kiểm tra âm lượng, tai nghe và chế độ im lặng của điện thoại, rồi thử bấm phát lại.',
+    fix2Title: 'Thuyết minh không tự phát',
+    fix2Desc: 'Hãy bật "Tự động phát" và cho phép trình duyệt truy cập vị trí. Bạn vẫn bấm nghe thủ công được.',
+    fix3Title: 'Không đổi được ngôn ngữ',
+    fix3Desc: 'Ngôn ngữ có biểu tượng khóa cần gói Premium. Tiếng Việt luôn dùng được miễn phí.',
+    aidSectionTitle: 'Để chúng tôi hỗ trợ nhanh hơn',
+    aidSectionDesc: 'Khi nhắn về một sự cố, hãy cho biết vài thông tin sau.',
+    aid1Label: 'Điểm dừng',
+    aid1Desc: 'Bạn đang nghe hoặc đang xem điểm nào.',
+    aid2Label: 'Ngôn ngữ',
+    aid2Desc: 'Ngôn ngữ thuyết minh bạn đang chọn.',
+    aid3Label: 'Thiết bị',
+    aid3Desc: 'Loại điện thoại và trình duyệt bạn đang dùng.',
+    aid4Label: 'Ảnh chụp màn hình',
+    aid4Desc: 'Nếu có, ảnh giúp chúng tôi hiểu vấn đề nhanh hơn.',
+    errNameRequired: 'Vui lòng nhập họ tên.',
+    errEmailRequired: 'Vui lòng nhập email.',
+    errEmailInvalid: 'Email không hợp lệ.',
+    errMessageRequired: 'Vui lòng nhập nội dung.',
+    errMessageMin: 'Nội dung cần ít nhất 10 ký tự.',
+    errSendFailed: 'Không gửi được tin nhắn. Vui lòng thử lại.',
   },
   en: {
     eyebrow: 'SUPPORT & CONNECT',
@@ -142,6 +219,7 @@ export const CONTACT_TRANSLATIONS: Record<SupportedLanguage, ContactTranslation>
     emailLabel: 'Email Address',
     emailPlaceholder: 'name@example.com',
     phoneLabel: 'Phone Number',
+    phoneInputLabel: 'Phone Number (optional)',
     phonePlaceholder: '+84 xxx xxx xxx (optional)',
     subjectLabel: 'Message Subject',
     subjectPlaceholder: '',
@@ -149,8 +227,8 @@ export const CONTACT_TRANSLATIONS: Record<SupportedLanguage, ContactTranslation>
     messagePlaceholder: '',
     sendBtn: 'Send Message Now',
     sendingBtn: 'Sending...',
-    successTitle: 'Message Sent!',
-    successNotice: 'Thank you for reaching out! Your message has been received and forwarded to our editorial team.',
+    successTitle: 'Message sent successfully',
+    successNotice: 'Your message has been sent successfully to the Echora team. Replies will appear in Support messages in your account.',
     errorNotice: 'Please provide a valid name, email address, and a message of at least 10 characters.',
     mapHeading: 'Heritage Information Hub Location',
     mapSubheading: 'Located at the historic core of Saigon, convenient for walking heritage discovery.',
@@ -177,6 +255,43 @@ export const CONTACT_TRANSLATIONS: Record<SupportedLanguage, ContactTranslation>
     ],
     trustCommitment: 'Strict visitor privacy & data protection',
     trustResponseTime: 'Average response time: under 2 hours',
+    addressLabel: 'Address',
+    hoursLabel: 'Operating Hours',
+    locationTitle: 'Location',
+    directionsLabel: 'Directions',
+    optionalPhoneAdd: 'Add phone number (optional)',
+    optionalPhoneHide: 'Hide phone number',
+    sendAnother: 'Send another message',
+    helpSectionTitle: 'Contact Guide',
+    helpGuide1Title: 'Using Audio Guide',
+    helpGuide1Desc: 'Select language, toggle auto narration, or scan QR at each stop.',
+    helpGuide2Title: 'Souvenir Orders',
+    helpGuide2Desc: 'Note your order code in the message for faster inquiry support.',
+    helpGuide3Title: 'Partnership & Feedback',
+    helpGuide3Desc: 'Select partnership in the form; we are delighted to hear from you.',
+    fixSectionTitle: 'Common Audio Issues',
+    fix1Title: 'No Audio Heard',
+    fix1Desc: 'Check device volume, headphones, and silent mode, then press play again.',
+    fix2Title: 'Narration Does Not Autoplay',
+    fix2Desc: 'Turn on "Auto Narration" and grant GPS permission. Manual play always works.',
+    fix3Title: 'Cannot Switch Language',
+    fix3Desc: 'Languages marked with a lock icon require Premium. Vietnamese is always free.',
+    aidSectionTitle: 'For Faster Assistance',
+    aidSectionDesc: 'When describing an issue, sharing these details helps us resolve it quickly.',
+    aid1Label: 'Stop',
+    aid1Desc: 'Which landmark you are listening to or viewing.',
+    aid2Label: 'Language',
+    aid2Desc: 'The narration language currently selected.',
+    aid3Label: 'Device',
+    aid3Desc: 'Your smartphone model and browser type.',
+    aid4Label: 'Screenshot',
+    aid4Desc: 'If possible, a screenshot helps us diagnose the problem faster.',
+    errNameRequired: 'Please enter your name.',
+    errEmailRequired: 'Please enter your email.',
+    errEmailInvalid: 'Invalid email address.',
+    errMessageRequired: 'Please enter your message.',
+    errMessageMin: 'Message must be at least 10 characters.',
+    errSendFailed: 'Could not send message. Please try again.',
   },
   ja: {
     eyebrow: 'サポート＆お問い合わせ',
@@ -203,6 +318,7 @@ export const CONTACT_TRANSLATIONS: Record<SupportedLanguage, ContactTranslation>
     emailLabel: 'メールアドレス',
     emailPlaceholder: 'name@example.com',
     phoneLabel: '電話番号',
+    phoneInputLabel: '電話番号（任意）',
     phonePlaceholder: '+81 xxx xxx xxx（任意）',
     subjectLabel: '件名',
     subjectPlaceholder: '',
@@ -210,8 +326,8 @@ export const CONTACT_TRANSLATIONS: Record<SupportedLanguage, ContactTranslation>
     messagePlaceholder: '',
     sendBtn: 'メッセージを送信する',
     sendingBtn: '送信中...',
-    successTitle: '送信完了しました',
-    successNotice: 'お問い合わせありがとうございます。担当チームが確認の上、迅速にご返信いたします。',
+    successTitle: '送信が完了しました',
+    successNotice: 'メッセージはEchoraチームに送信されました。返信はアカウントの「サポートメッセージ」に表示されます。',
     errorNotice: 'お名前、有効なメールアドレス、および10文字以上のメッセージをご入力ください。',
     mapHeading: 'インフォメーションセンター所在地',
     mapSubheading: '歴史的中心地に位置し、徒歩での散策に最適なロケーションです。',
@@ -238,6 +354,43 @@ export const CONTACT_TRANSLATIONS: Record<SupportedLanguage, ContactTranslation>
     ],
     trustCommitment: '個人情報の厳正な保護',
     trustResponseTime: '平均返信時間：2時間以内',
+    addressLabel: '住所',
+    hoursLabel: '営業時間',
+    locationTitle: '所在地',
+    directionsLabel: 'ルート案内',
+    optionalPhoneAdd: '電話番号を追加（任意）',
+    optionalPhoneHide: '電話番号を非表示',
+    sendAnother: '別のメッセージを送信',
+    helpSectionTitle: 'お問い合わせガイド',
+    helpGuide1Title: '音声ガイドの利用',
+    helpGuide1Desc: '言語を選択し、自動再生をオンにするか現地QRをスキャンします。',
+    helpGuide2Title: 'お土産のご注文',
+    helpGuide2Desc: '注文コードをメッセージに記載いただくと確認がスムーズです。',
+    helpGuide3Title: '提携・ご意見',
+    helpGuide3Desc: 'フォームの「提携」をお選びください。貴重なご意見をお待ちしています。',
+    fixSectionTitle: '音声トラブルシューティング',
+    fix1Title: '音が聞こえない',
+    fix1Desc: '音量、イヤホン、マナーモードを確認し、再度再生をお試しください。',
+    fix2Title: '自動再生されない',
+    fix2Desc: '「自動音声ガイド」をオンにし、位置情報を許可してください。手動再生も可能です。',
+    fix3Title: '言語を変更できない',
+    fix3Desc: '鍵マークの言語はプレミアムが必要です。ベトナム語は無料です。',
+    aidSectionTitle: '迅速なサポートのために',
+    aidSectionDesc: 'お問い合わせの際は、以下の情報を添えていただけますと幸いです。',
+    aid1Label: 'スポット',
+    aid1Desc: '現在聴いている、または見ている名所。',
+    aid2Label: '言語',
+    aid2Desc: '選択中の音声ガイド言語。',
+    aid3Label: '端末',
+    aid3Desc: 'ご利用の携帯電話機種とブラウザ。',
+    aid4Label: '画面キャプチャ',
+    aid4Desc: '状況がわかる画像があると迅速に対応できます。',
+    errNameRequired: 'お名前を入力してください。',
+    errEmailRequired: 'メールアドレスを入力してください。',
+    errEmailInvalid: '有効なメールアドレスを入力してください。',
+    errMessageRequired: 'お問い合わせ内容を入力してください。',
+    errMessageMin: 'メッセージは10文字以上で入力してください。',
+    errSendFailed: 'メッセージを送信できませんでした。もう一度お試しください。',
   },
   ko: {
     eyebrow: '지원 및 문의',
@@ -264,6 +417,7 @@ export const CONTACT_TRANSLATIONS: Record<SupportedLanguage, ContactTranslation>
     emailLabel: '이메일 주소',
     emailPlaceholder: 'name@example.com',
     phoneLabel: '연락처',
+    phoneInputLabel: '연락처 (선택)',
     phonePlaceholder: '+82 10 xxxx xxxx (선택 사항)',
     subjectLabel: '문의 제목',
     subjectPlaceholder: '',
@@ -271,8 +425,8 @@ export const CONTACT_TRANSLATIONS: Record<SupportedLanguage, ContactTranslation>
     messagePlaceholder: '',
     sendBtn: '메시지 전송하기',
     sendingBtn: '전송 중...',
-    successTitle: '전송이 완료되었습니다!',
-    successNotice: '소중한 의견을 남겨주셔서 감사합니다. 담당 부서에서 확인 후 신속하게 답변드리겠습니다.',
+    successTitle: '메시지가 전송되었습니다',
+    successNotice: '메시지가 Echora 팀에 성공적으로 전송되었습니다. 답변은 계정의 지원 메시지에서 확인할 수 있습니다.',
     errorNotice: '성함, 올바른 이메일 주소 및 10자 이상의 메시지를 입력해 주세요.',
     mapHeading: '유산 안내 센터 위치',
     mapSubheading: '사이공의 역사적 중심지에 위치하여 도보 탐방 시 편리하게 방문하실 수 있습니다.',
@@ -299,6 +453,43 @@ export const CONTACT_TRANSLATIONS: Record<SupportedLanguage, ContactTranslation>
     ],
     trustCommitment: '이용자 개인정보 보호 원칙 준수',
     trustResponseTime: '평균 응답 소요 시간: 2시간 이내',
+    addressLabel: '주소',
+    hoursLabel: '운영 시간',
+    locationTitle: '위치',
+    directionsLabel: '길찾기',
+    optionalPhoneAdd: '연락처 추가 (선택 사항)',
+    optionalPhoneHide: '연락처 숨기기',
+    sendAnother: '다른 메시지 보내기',
+    helpSectionTitle: '문의 안내',
+    helpGuide1Title: '오디오 가이드 이용',
+    helpGuide1Desc: '언어를 선택하고 자동 재생을 켜거나 현장 QR 코드를 스캔하세요.',
+    helpGuide2Title: '기념품 주문 문의',
+    helpGuide2Desc: '주문 코드를 메시지에 기재해 주시면 더욱 신속하게 확인해 드립니다.',
+    helpGuide3Title: '제휴 및 피드백',
+    helpGuide3Desc: '양식에서 제휴/피드백을 선택해 주세요. 소중한 의견을 환영합니다.',
+    fixSectionTitle: '자주 발생하는 오디오 문제',
+    fix1Title: '소리가 들리지 않을 때',
+    fix1Desc: '기기 음량, 이어폰 연결 및 무음 모드 설정을 확인한 후 다시 재생해 보세요.',
+    fix2Title: '자동 재생이 되지 않을 때',
+    fix2Desc: '‘자동 해설’을 켜고 위치 권한을 허용해 주세요. 수동 재생도 언제든 가능합니다.',
+    fix3Title: '언어 변경이 안 될 때',
+    fix3Desc: '자물쇠 표시 언어는 프리미엄이 필요합니다. 베트남어는 항상 무료입니다.',
+    aidSectionTitle: '더 빠른 도움을 받으시려면',
+    aidSectionDesc: '문의 시 아래 정보를 함께 공유해 주시면 문제 해결이 빨라집니다.',
+    aid1Label: '명소',
+    aid1Desc: '청취 또는 확인 중인 명소 이름.',
+    aid2Label: '언어',
+    aid2Desc: '현재 선택된 오디오 해설 언어.',
+    aid3Label: '기기',
+    aid3Desc: '사용 중인 스마트폰 기종과 웹 브라우저.',
+    aid4Label: '화면 캡처',
+    aid4Desc: '캡처 화면이 있으면 문제를 더 빠르게 진단할 수 있습니다.',
+    errNameRequired: '성함을 입력해 주세요.',
+    errEmailRequired: '이메일 주소를 입력해 주세요.',
+    errEmailInvalid: '올바른 이메일 주소를 입력해 주세요.',
+    errMessageRequired: '내용을 입력해 주세요.',
+    errMessageMin: '내용은 최소 10자 이상 입력해 주세요.',
+    errSendFailed: '메시지를 전송하지 못했습니다. 다시 시도해 주세요.',
   },
 };
 

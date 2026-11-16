@@ -36,7 +36,7 @@ public class FeedbackService {
     private final SecureRandom random = new SecureRandom();
 
     @Transactional
-    public SubmitResponse submit(SubmitRequest request) {
+    public SubmitResponse submit(SubmitRequest request, Long ownerUserId) {
         String token = randomToken();
         LocalDateTime now = LocalDateTime.now();
         FeedbackThread thread = threads.save(FeedbackThread.builder()
@@ -44,6 +44,7 @@ public class FeedbackService {
                 .name(request.name().trim())
                 .email(request.email().trim().toLowerCase())
                 .tokenHash(hash(token))
+                .ownerUserId(ownerUserId)
                 .status("OPEN")
                 .createdAt(now)
                 .updatedAt(now)
@@ -54,7 +55,7 @@ public class FeedbackService {
                 .content(request.message().trim())
                 .createdAt(now)
                 .build());
-        return new SubmitResponse(true, "Tin nhắn đã được gửi. Hãy lưu mã theo dõi để xem phản hồi.", thread.getTicket(), token);
+        return new SubmitResponse(true, "Tin nhắn đã được gửi thành công tới đội ngũ Echora.", thread.getTicket(), token);
     }
 
     @Transactional(readOnly = true)

@@ -1,5 +1,4 @@
 import { apiClient } from '../api/client';
-import { tokenStore } from '../api/tokenStore';
 
 export interface FeedbackPayload {
   name: string;
@@ -38,9 +37,6 @@ export const loadFeedbackCredentials = (): { ticket: string; accessToken: string
 
 export const submitFeedback = async (payload: FeedbackPayload): Promise<{ success: boolean; message: string; ticket?: string; accessToken?: string }> => {
   const { data } = await apiClient.post('/api/feedback', payload);
-  if (tokenStore.get('user') && data.ticket && data.accessToken) {
-    try { await claimFeedbackThread(data.ticket, data.accessToken); } catch { /* guest submission remains successful; account can claim it later */ }
-  }
   return data;
 };
 

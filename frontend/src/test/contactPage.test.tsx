@@ -31,6 +31,7 @@ vi.mock('leaflet', () => ({
 describe('ContactPage Component', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    localStorage.clear();
   });
 
   const renderContactPage = () =>
@@ -148,7 +149,9 @@ describe('ContactPage Component', () => {
   it('submits valid form data and replaces the form with a confirmation state', async () => {
     const spy = vi.spyOn(feedbackService, 'submitFeedback').mockResolvedValueOnce({
       success: true,
-      message: 'Cảm ơn bạn đã gửi liên hệ!',
+      message: 'Tin nhắn đã được gửi thành công tới đội ngũ Echora.',
+      ticket: 'ticket-should-stay-hidden',
+      accessToken: 'token-should-stay-hidden',
     });
 
     renderContactPage();
@@ -166,8 +169,12 @@ describe('ContactPage Component', () => {
       })
     );
 
-    expect(await screen.findByText(/Cảm ơn bạn đã gửi liên hệ!/i)).toBeInTheDocument();
+    expect(
+      await screen.findByText(/Tin nhắn đã được gửi thành công tới quản trị viên Echora/i)
+    ).toBeInTheDocument();
     expect(screen.queryByLabelText(/Nội dung/)).toBeNull();
+    expect(screen.queryByText(/Mã theo dõi/)).toBeNull();
+    expect(screen.queryByText('ticket-should-stay-hidden')).toBeNull();
     expect(screen.getByRole('button', { name: 'Gửi tin nhắn khác' })).toBeInTheDocument();
   });
 
@@ -190,7 +197,9 @@ describe('ContactPage Component', () => {
       await pending;
     });
 
-    expect(await screen.findByText(/Cảm ơn bạn đã gửi liên hệ!/i)).toBeInTheDocument();
+    expect(
+      await screen.findByText(/Tin nhắn đã được gửi thành công tới quản trị viên Echora/i)
+    ).toBeInTheDocument();
   });
 
   it('keeps the form and reports the error when the submit fails', async () => {

@@ -132,6 +132,14 @@ vi.mock('../context/AuthContext', () => ({
     login: vi.fn(),
     logout: vi.fn(),
   }),
+  useAuthOptional: () => ({
+    user: { id: 1, email: 'test@echora.local', fullName: 'Tester', role: 'USER' },
+    isAuthenticated: true,
+    status: 'authenticated',
+    loading: false,
+    login: vi.fn(),
+    logout: vi.fn(),
+  }),
 }));
 
 const renderRoute = (pattern: string, initialPath: string, element: React.ReactElement) => {

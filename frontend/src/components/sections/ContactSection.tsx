@@ -1,22 +1,17 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { contactContent } from '../../content/staticSections';
-import { getFeedbackThread, loadFeedbackCredentials, saveFeedbackCredentials, submitFeedback, FeedbackThread } from '../../services/feedbackService';
+import { saveFeedbackCredentials, submitFeedback } from '../../services/feedbackService';
+import { useNavbarLanguage } from '../../content/languages';
+import { CONTACT_TRANSLATIONS } from '../../content/contactI18n';
 
 export const ContactSection: React.FC = () => {
+  const { lang } = useNavbarLanguage();
+  const c = CONTACT_TRANSLATIONS[lang] || CONTACT_TRANSLATIONS.vi;
+
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [message, setMessage] = useState('');
   const [statusText, setStatusText] = useState('');
-  const [thread, setThread] = useState<FeedbackThread | null>(null);
-  const [credentials] = useState(loadFeedbackCredentials);
-  useEffect(() => {
-    if (!credentials) return;
-    let active = true;
-    const refresh = async () => { try { const value = await getFeedbackThread(credentials.ticket, credentials.accessToken); if (active) setThread(value); } catch { /* retry on next poll */ } };
-    void refresh();
-    const timer = window.setInterval(refresh, 4000);
-    return () => { active = false; window.clearInterval(timer); };
-  }, [credentials]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,43 +21,51 @@ export const ContactSection: React.FC = () => {
     const trimmedMessage = message.trim();
 
     if (!trimmedName || !/^\S+@\S+\.\S+$/.test(trimmedEmail) || trimmedMessage.length < 10) {
-      setStatusText('Vui lòng nhập tên, email hợp lệ và góp ý ít nhất 10 ký tự.');
+      setStatusText(c.errorNotice);
       return;
     }
 
     try {
-    const res = await submitFeedback({
-      name: trimmedName,
-      email: trimmedEmail,
-      message: trimmedMessage,
-    });
-    if (res.ticket && res.accessToken) {
-      saveFeedbackCredentials(res.ticket, res.accessToken);
-      setThread(await getFeedbackThread(res.ticket, res.accessToken));
-    }
-    setStatusText(res.message);
-    setName('');
-    setEmail('');
-    setMessage('');
+      const res = await submitFeedback({
+        name: trimmedName,
+        email: trimmedEmail,
+        message: trimmedMessage,
+      });
+      if (res.ticket && res.accessToken) {
+        saveFeedbackCredentials(res.ticket, res.accessToken);
+      }
+      setStatusText(c.successNotice);
+      setName('');
+      setEmail('');
+      setMessage('');
     } catch {
-      setStatusText('Không gửi được tin nhắn. Vui lòng thử lại.');
+      setStatusText(c.errSendFailed);
     }
   };
+
+  const areaLabel =
+    lang === 'en'
+      ? 'Ho Chi Minh City'
+      : lang === 'ja'
+        ? 'ホーチミン市'
+        : lang === 'ko'
+          ? '호찌민시'
+          : contactContent.area;
 
   return (
     <section className="s ft" id="lien-he">
       <div>
-        <h2>{contactContent.title}</h2>
-        <p>{contactContent.paragraph}</p>
+        <h2>{c.title}</h2>
+        <p>{c.subtitle}</p>
         <ul>
           <li>
-            <b>Email</b> <a href={`mailto:${contactContent.email}`}>{contactContent.email}</a>
+            <b>{c.emailLabel}</b> <a href={`mailto:${contactContent.email}`}>{contactContent.email}</a>
           </li>
           <li>
-            <b>Điện thoại</b> <a href="tel:0900000000">{contactContent.phone}</a>
+            <b>{c.phoneLabel}</b> <a href={`tel:${contactContent.phone}`}>{contactContent.phone}</a>
           </li>
           <li>
-            <b>Khu vực</b> {contactContent.area}
+            <b>{lang === 'en' ? 'Region' : lang === 'ja' ? 'エリア' : lang === 'ko' ? '지역' : 'Khu vực'}</b> {areaLabel}
           </li>
         </ul>
       </div>
@@ -70,35 +73,34 @@ export const ContactSection: React.FC = () => {
       <form id="fm" noValidate onSubmit={handleSubmit}>
         <input
           name="nm"
-          placeholder="Tên của bạn"
-          aria-label="Tên của bạn"
+          placeholder={c.namePlaceholder || (lang === 'en' ? 'Your name' : lang === 'ja' ? 'お名前' : lang === 'ko' ? '성함' : 'Tên của bạn')}
+          aria-label={c.nameLabel}
           value={name}
           onChange={(e) => setName(e.target.value)}
         />
         <input
           name="em"
           type="email"
-          placeholder="Email"
-          aria-label="Email"
+          placeholder={c.emailPlaceholder || 'Email'}
+          aria-label={c.emailLabel}
           value={email}
           onChange={(e) => setEmail(e.target.value)}
         />
         <textarea
           name="ms"
-          placeholder="Góp ý (ít nhất 10 ký tự)"
-          aria-label="Góp ý"
+          placeholder={c.messagePlaceholder || (lang === 'en' ? 'Feedback (at least 10 characters)' : lang === 'ja' ? 'お問い合わせ内容（10文字以上）' : lang === 'ko' ? '의견 내용 (최소 10자 이상)' : 'Góp ý (ít nhất 10 ký tự)')}
+          aria-label={c.messageLabel}
           value={message}
           onChange={(e) => setMessage(e.target.value)}
         />
         <button className="tb" type="submit">
-          Gửi góp ý
+          {c.sendBtn}
         </button>
         {statusText && (
           <p id="fs" role="status">
             {statusText}
           </p>
         )}
-        {thread && <div role="log" aria-live="polite"><b>Mã theo dõi: {thread.ticket}</b><p>Đăng nhập trên trình duyệt này để xem hội thoại trong Tài khoản - Tin nhắn hỗ trợ.</p>{thread.messages.map((item) => <p key={item.id}><b>{item.sender === 'ADMIN' ? 'Echora' : 'Bạn'}:</b> {item.content}</p>)}</div>}
       </form>
     </section>
   );
