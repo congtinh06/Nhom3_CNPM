@@ -1,3 +1,5 @@
+USE echora_content_db;
+GO
 -- Update ja/ko translations with real Japanese/Korean text for all 7 POIs.
 -- Audio URLs reset to NULL; regenerate via edge-tts afterwards.
 -- Fix: Remove Vietnamese-derived words (Bến Thanh, Tue Thanh, Tong/Reunification) from ja/ko.
