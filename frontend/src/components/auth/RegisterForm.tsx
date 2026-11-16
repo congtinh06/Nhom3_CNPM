@@ -43,6 +43,10 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState<string | null>(null);
   const [resendState, setResendState] = useState<'idle' | 'busy' | 'sent'>('idle');
+  const [otp, setOtp] = useState('');
+  const [verifyingOtp, setVerifyingOtp] = useState(false);
+  const [otpSuccess, setOtpSuccess] = useState<string | null>(null);
+  const [otpError, setOtpError] = useState<string | null>(null);
 
   const fullNameInputRef = useRef<HTMLInputElement>(null);
 
@@ -81,6 +85,22 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
     } catch (err) {
       setResendState('idle');
       showToast(normalizeApiError(err).message);
+    }
+  };
+
+  const handleVerifyOtp = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (otp.trim().length !== 6 || verifyingOtp) return;
+    setVerifyingOtp(true);
+    setOtpError(null);
+    try {
+      const res = await authApi.verifyEmail(otp.trim());
+      setOtpSuccess(res.message || 'Xác thực tài khoản thành công!');
+      showToast('Xác thực tài khoản thành công!');
+    } catch (err) {
+      setOtpError(normalizeApiError(err).message);
+    } finally {
+      setVerifyingOtp(false);
     }
   };
 
@@ -123,10 +143,50 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
           {t.auth.emailLabel}: <b>{form.email.trim()}</b>
         </p>
 
-        <div className="auth-modal-actions">
+        {!otpSuccess ? (
+          <form onSubmit={handleVerifyOtp} noValidate className="auth-modal-form" style={{ marginTop: 14 }}>
+            <label className="af" htmlFor="reg-otp">
+              <span>Mã OTP xác thực (6 chữ số)</span>
+              <input
+                id="reg-otp"
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                maxLength={6}
+                value={otp}
+                onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
+                placeholder="Nhập 6 số OTP trong email"
+                autoFocus
+              />
+            </label>
+            {otpError && <p className="af-err" role="alert">{otpError}</p>}
+            <button
+              type="submit"
+              className="tb af-submit"
+              disabled={otp.length !== 6 || verifyingOtp}
+            >
+              {verifyingOtp ? 'Đang xác thực...' : 'Xác thực ngay'}
+            </button>
+          </form>
+        ) : (
+          <div style={{ margin: '14px 0', textAlign: 'center' }}>
+            <p className="auth-note" style={{ color: '#15803d', fontWeight: 600 }}>
+              {otpSuccess}
+            </p>
+            <button
+              type="button"
+              className="tb af-submit"
+              onClick={onSwitchToLogin}
+            >
+              Đăng nhập ngay
+            </button>
+          </div>
+        )}
+
+        <div className="auth-modal-actions" style={{ marginTop: 12 }}>
           <button
             type="button"
-            className="tb af-submit"
+            className="tb af-btn-secondary"
             onClick={onClose}
           >
             {t.auth.close}

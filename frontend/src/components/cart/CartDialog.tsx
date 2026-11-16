@@ -1,6 +1,7 @@
 import React, { useRef, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Minus, Plus, X } from 'lucide-react';
+import { useAuthOptional } from '../../context/AuthContext';
 import { useCart } from '../../context/CartContext';
 import { useNavbarLanguage } from '../../content/languages';
 import { getSpotName } from '../../content/souvenirSpots';
@@ -36,8 +37,11 @@ export const CartDialog: React.FC = () => {
   } = useCart();
   const { isPremium, hasAnyPurchase } = usePremium();
   const isDiscountEligible = isPremium || hasAnyPurchase;
+  const auth = useAuthOptional();
+  const isAuthenticated = auth?.isAuthenticated ?? false;
 
   const navigate = useNavigate();
+  const location = useLocation();
   const { t, lang } = useNavbarLanguage();
   const dialogRef = useRef<HTMLDialogElement>(null);
   const previouslyFocusedElement = useRef<HTMLElement | null>(null);
@@ -143,6 +147,12 @@ export const CartDialog: React.FC = () => {
 
   const handleGoToCheckout = () => {
     closeCart();
+    if (!isAuthenticated) {
+      navigate('/dang-nhap', {
+        state: { backgroundLocation: location, from: '/thanh-toan' },
+      });
+      return;
+    }
     navigate('/thanh-toan');
   };
 
@@ -320,10 +330,10 @@ export const CartDialog: React.FC = () => {
             </span>
           </div>
 
-          <p className="cd-shipping-note">
-            <span>Phí giao hàng:</span>
+          <div className="cd-shipping-note">
+            <span>Phí giao hàng</span>
             <strong>Miễn phí</strong>
-          </p>
+          </div>
 
           <button
             id="oo"

@@ -1563,7 +1563,7 @@ describe('NearbyPage - Clean Multilingual & Audio Narration Integration', () => 
       expect(utterance.text).toContain('khu hầm chỉ huy');
     });
 
-    it('auto trigger passes short text to speechSynthesis (mock)', () => {
+    it('auto trigger passes the same full text as manual playback (mock)', () => {
       const mockGeolocation = {
         getCurrentPosition: vi.fn((success) => {
           success({
@@ -1608,12 +1608,14 @@ describe('NearbyPage - Clean Multilingual & Audio Narration Integration', () => 
         fireEvent.click(gpsBtn);
       });
 
-      // Spoken via auto trigger, text is short text (not full text)
+      // Spoken via auto trigger, text is the SAME full narration as manual play
+      // (one single voice/script, so the transcript highlight stays in sync).
       expect(window.speechSynthesis.speak).toHaveBeenCalled();
       const calls = (window.speechSynthesis.speak as any).mock.calls;
       const utterance = calls[calls.length - 1][0] as SpeechSynthesisUtterance;
-      expect(utterance.text).toContain('Chào mừng bạn đến Dinh Độc Lập, nơi gắn liền với ngày thống nhất đất nước');
-      expect(utterance.text).not.toContain('Kiến trúc sư Ngô Viết Thụ thiết kế');
+      expect(utterance.text).toContain('Dinh Độc Lập nằm giữa một khu vườn rộng ở trung tâm thành phố');
+      expect(utterance.text).toContain('Kiến trúc sư Ngô Viết Thụ thiết kế');
+      expect(utterance.text).toContain('khu hầm chỉ huy');
     });
 
     it('highlighting advances across paragraph boundaries', () => {

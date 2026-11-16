@@ -57,6 +57,15 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const returnTarget = locationState?.from;
   const hasBackground = Boolean(locationState?.backgroundLocation);
 
+  const isProtectedPath = (path?: string | null): boolean => {
+    if (!path) return false;
+    return (
+      path.startsWith('/thanh-toan') ||
+      path.startsWith('/don-hang') ||
+      path.startsWith('/tai-khoan')
+    );
+  };
+
   // Close handler: back or fallback
   const handleClose = useCallback(() => {
     // Đang hiện màn hình "Đăng nhập thành công" thì không cho đóng giữa chừng.
@@ -71,20 +80,20 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     setLoginSuccess(false);
 
     if (isStandalone) {
-      if (returnTarget) {
-        navigate(returnTarget, { replace: true });
-      } else {
-        navigate('/', { replace: true });
-      }
+      navigate('/', { replace: true });
       return;
     }
 
     if (hasBackground) {
       navigate(-1);
-    } else if (returnTarget) {
+    } else if (returnTarget && !isProtectedPath(returnTarget)) {
       navigate(returnTarget, { replace: true });
     } else {
-      navigate('/', { replace: true });
+      if (window.history.length > 1) {
+        navigate(-1);
+      } else {
+        navigate('/', { replace: true });
+      }
     }
   }, [hasBackground, returnTarget, isStandalone, navigate]);
 

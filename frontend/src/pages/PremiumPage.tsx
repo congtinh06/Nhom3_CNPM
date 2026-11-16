@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { ArrowLeft, Check, ChevronDown, ExternalLink, Headphones, Loader2, Lock, Play, Search, X } from 'lucide-react';
 import { PREMIUM_COPY, formatPremiumText } from '../content/premiumI18n';
 import {
@@ -172,6 +172,7 @@ function clearPendingPremiumOrder() {
 
 export const PremiumPage: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
   const { lang, changeLanguage } = useNavbarLanguage();
   const {
@@ -410,7 +411,10 @@ export const PremiumPage: React.FC = () => {
     }
     if (!isAuthenticated) {
       navigate('/dang-nhap', {
-        state: { from: buildPremiumPath(requestedLanguage ?? undefined, returnTo) },
+        state: {
+          backgroundLocation: location,
+          from: buildPremiumPath(requestedLanguage ?? undefined, returnTo),
+        },
       });
       return;
     }
@@ -460,7 +464,10 @@ export const PremiumPage: React.FC = () => {
     }
     if (!isAuthenticated) {
       navigate('/dang-nhap', {
-        state: { from: `/nang-cap?poi=${poiId}${returnTo ? `&returnTo=${encodeURIComponent(returnTo)}` : ''}` },
+        state: {
+          backgroundLocation: location,
+          from: `/nang-cap?poi=${poiId}${returnTo ? `&returnTo=${encodeURIComponent(returnTo)}` : ''}`,
+        },
       });
       return;
     }

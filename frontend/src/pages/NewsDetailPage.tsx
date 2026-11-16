@@ -92,9 +92,9 @@ export const NewsDetailPage: React.FC = () => {
   const readingTime = formatReadingTime(article.readingTime || article.readingMinutes || 3, lang);
   const imageUrl = article.thumbnail || article.coverImageUrl;
   const captionText = article.imageCredit
-    ? `Ảnh: ${article.imageCredit}`
+    ? `${tNews(lang, 'photo')}: ${article.imageCredit}`
     : article.source
-    ? `Nguồn: ${article.source}`
+    ? `${tNews(lang, 'source')}: ${article.source}`
     : '';
 
   return (
@@ -193,7 +193,7 @@ export const NewsDetailPage: React.FC = () => {
             {/* 8. Tags: plain text line "Từ khóa:" without hashtag chips */}
             {article.tags && article.tags.length > 0 && (
               <div className="nd-tags-row">
-                <span className="nd-tags-label">Từ khóa:</span>
+                <span className="nd-tags-label">{tNews(lang, 'keywords')}:</span>
                 <span className="nd-tags-list">{article.tags.join(', ')}</span>
               </div>
             )}
@@ -224,16 +224,16 @@ export const NewsDetailPage: React.FC = () => {
                 className="nd-back-link"
               >
                 <ArrowLeft size={16} aria-hidden="true" />
-                <span>Quay lại danh sách Tin tức ({categoryMeta.label})</span>
+                <span>{tNews(lang, 'backToNewsList')} ({categoryLabel})</span>
               </Link>
             </div>
           </article>
 
           {/* 11. Sidebar "Tin mới nhất" */}
           {sidebarArticles.length > 0 && (
-            <aside className="nd-sidebar-col" aria-label="Tin mới nhất">
+            <aside className="nd-sidebar-col" aria-label={tNews(lang, 'latest')}>
               <div className="nd-sidebar-card">
-                <h2 className="nd-sidebar-title">Tin mới nhất</h2>
+                <h2 className="nd-sidebar-title">{tNews(lang, 'latest')}</h2>
                 <div className="nd-sidebar-list">
                   {sidebarArticles.map((sItem) => {
                     const sCatLabel = getCategoryLabel(sItem.category, lang);
@@ -265,8 +265,8 @@ export const NewsDetailPage: React.FC = () => {
 
         {/* 12. Related articles section */}
         {relatedArticles.length > 0 && (
-          <section className="nd-related-section" aria-label="Bài viết liên quan">
-            <h2 className="nd-related-title">Bài viết liên quan</h2>
+          <section className="nd-related-section" aria-label={tNews(lang, 'relatedArticles')}>
+            <h2 className="nd-related-title">{tNews(lang, 'relatedArticles')}</h2>
             <div className="nd-related-list">
               {relatedArticles.map((relItem) => (
                 <NewsRow key={relItem.id} item={relItem} lang={lang} />

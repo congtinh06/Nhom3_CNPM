@@ -186,4 +186,19 @@ describe('AuthModal', () => {
     expect(screen.getByText(/b@example.com/)).toBeInTheDocument();
     expect(screen.getAllByRole('button', { name: 'Đóng' }).length).toBeGreaterThanOrEqual(1);
   });
+
+  it('không điều hướng ngược về /thanh-toan khi đóng modal để tránh vòng lặp dựt', async () => {
+    render(
+      <TestModalHarness
+        historyEntries={[
+          '/',
+          { pathname: '/dang-nhap', state: { from: '/thanh-toan' } },
+        ]}
+      />
+    );
+    const closeBtn = await screen.findByRole('button', { name: 'Đóng' });
+    fireEvent.click(closeBtn);
+
+    expect(screen.getByTestId('location-path')).not.toHaveTextContent('/thanh-toan');
+  });
 });

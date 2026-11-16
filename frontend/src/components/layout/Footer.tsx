@@ -1,10 +1,14 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Phone, Mail, MapPin, Clock, ChevronUp } from 'lucide-react';
-import { footerContent, siteContact } from '../../content/staticSections';
+import { useNavbarLanguage } from '../../content/languages';
+import { getFooterContent, siteContact } from '../../content/staticSections';
 import { scrollToTopInstant } from '../../hooks/useScrollRestoration';
 
 export const Footer: React.FC = () => {
+  const { lang } = useNavbarLanguage();
+  const footer = getFooterContent(lang);
+
   const handleTopClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
     e.preventDefault();
     scrollToTopInstant(true);
@@ -15,39 +19,37 @@ export const Footer: React.FC = () => {
   };
 
   return (
-    <footer className="s ftr" aria-label="Chân trang">
+    <footer className="s ftr" aria-label="Footer">
       <div className="ftr-container">
         <div className="ftr-inner">
           <div className="ftr-brand col">
-            <div className="ftr-br">{footerContent.brand}</div>
-            <p className="ftr-tagline">
-              Nghe kể chuyện Sài Gòn qua từng điểm đến và món quà lưu niệm.
-            </p>
+            <div className="ftr-br">Echora</div>
+            <p className="ftr-tagline">{footer.tagline}</p>
           </div>
 
-          <nav className="ftr-nav col" aria-label="Liên kết nhanh">
-            <h2 className="ftr-heading">Liên kết</h2>
+          <nav className="ftr-nav col" aria-label={footer.linksHeading}>
+            <h2 className="ftr-heading">{footer.linksHeading}</h2>
             <ul className="ftr-list">
               <li>
-                <Link to="/" onClick={handleLinkClick}>Trang chủ</Link>
+                <Link to="/" onClick={handleLinkClick}>{footer.home}</Link>
               </li>
               <li>
-                <Link to="/diem-du-lich" onClick={handleLinkClick}>Điểm du lịch</Link>
+                <Link to="/diem-du-lich" onClick={handleLinkClick}>{footer.attractions}</Link>
               </li>
               <li>
-                <Link to="/am-thuc" onClick={handleLinkClick}>Quà lưu niệm</Link>
+                <Link to="/am-thuc" onClick={handleLinkClick}>{footer.souvenirs}</Link>
               </li>
               <li>
-                <Link to="/tin-tuc" onClick={handleLinkClick}>Tin tức</Link>
+                <Link to="/tin-tuc" onClick={handleLinkClick}>{footer.news}</Link>
               </li>
               <li>
-                <Link to="/lien-he" onClick={handleLinkClick}>Liên hệ</Link>
+                <Link to="/lien-he" onClick={handleLinkClick}>{footer.contact}</Link>
               </li>
             </ul>
           </nav>
 
           <div className="ftr-contact col">
-            <h2 className="ftr-heading">Liên hệ</h2>
+            <h2 className="ftr-heading">{footer.contactHeading}</h2>
             <ul className="ftr-list">
               <li className="ftr-line">
                 <MapPin size={14} aria-hidden="true" />
@@ -70,13 +72,13 @@ export const Footer: React.FC = () => {
         </div>
 
         <div className="ftr-bottom">
-          <span>{footerContent.copyright}</span>
+          <span>{footer.copyright}</span>
           <span className="ftr-bottom-links">
             <Link to="/chinh-sach-quyen-rieng-tu" onClick={handleLinkClick}>
-              Chính sách quyền riêng tư
+              {footer.privacyPolicy}
             </Link>
             <a href="#top" onClick={handleTopClick} className="ftr-top-link">
-              {footerContent.backToTop}
+              {footer.backToTop}
               <ChevronUp size={16} aria-hidden="true" />
             </a>
           </span>

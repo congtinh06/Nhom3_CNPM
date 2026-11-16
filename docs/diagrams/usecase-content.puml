@@ -1,0 +1,33 @@
+@startuml
+!theme plain
+skinparam shadowing false
+skinparam backgroundColor white
+skinparam packageStyle rectangle
+skinparam usecase {
+  BackgroundColor white
+  BorderColor #26374A
+  FontColor #172536
+}
+skinparam actor {
+  BorderColor #26374A
+  FontColor #172536
+}
+skinparam ArrowColor #52657A
+skinparam defaultFontName "Arial"
+skinparam defaultFontSize 13
+left to right direction
+
+title Use Case — G03: Quản lý nội dung du lịch
+actor "Quản trị viên" as Admin
+actor "Dịch vụ dịch / giọng nói" as AI
+
+rectangle "Echora · Quản lý nội dung du lịch" {
+  usecase "UC07\nQuản lý nội dung điểm tham quan" as UC07
+  usecase "UC08\nQuản lý khu vực và lộ trình" as UC08
+  usecase "UC09\nXuất bản thuyết minh đa ngữ" as UC09
+}
+Admin --> UC07
+Admin --> UC08
+Admin --> UC09
+AI --> UC09
+@enduml

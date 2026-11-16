@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate, Link, useLocation } from 'react-router-dom';
 import { RefreshCw, AlertCircle } from 'lucide-react';
 import { api } from '../api/client';
+import { useAuthOptional } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import { usePremium } from '../context/PremiumContext';
 import { useToast } from '../context/ToastContext';
@@ -13,7 +14,9 @@ import { enrichProduct, enrichProducts } from '../content/productAdapter';
 import { useNavbarLanguage } from '../content/languages';
 import { getSpotName } from '../content/souvenirSpots';
 import { Product, ProductCategory } from '../types';
+import { ProductCard } from '../components/food/ProductCard';
 import '../styles/souvenir.css';
+import '../styles/foodBeverage.css';
 
 type ArtKind = 'frame' | 'model' | 'magnet' | 'card' | 'hat' | 'cup' | 'tea' | 'book';
 
@@ -93,6 +96,9 @@ interface ProductDetailPageProps {
 export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ category: propCategory }) => {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
+  const auth = useAuthOptional();
+  const isAuthenticated = auth?.isAuthenticated ?? false;
   const { addToCart, openCart } = useCart();
   const { isPremium, hasAnyPurchase } = usePremium();
   const isDiscountEligible = isPremium || hasAnyPurchase;
@@ -108,45 +114,50 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ category: 
   const [imageError, setImageError] = useState(false);
   const [addedAnimation, setAddedAnimation] = useState(false);
 
-  // Audio Preview Player
-  const [isAudioPlaying, setIsAudioPlaying] = useState<boolean>(false);
-  const [audioProgress, setAudioProgress] = useState<number>(0);
-  const audioTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
   const basePath = '/am-thuc';
 
-  const stopAudio = useCallback(() => {
-    if (audioTimerRef.current) {
-      clearInterval(audioTimerRef.current);
-      audioTimerRef.current = null;
-    }
-    setIsAudioPlaying(false);
+  // Carousel drag-to-scroll & arrow navigation for related products
+  const relatedCarouselRef = useRef<HTMLDivElement>(null);
+  const [relatedNav, setRelatedNav] = useState({ canPrev: false, canNext: true });
+  const [isRelatedDragging, setIsRelatedDragging] = useState(false);
+  const [relatedStartX, setRelatedStartX] = useState(0);
+  const [relatedScrollLeft, setRelatedScrollLeft] = useState(0);
+
+  const handleRelatedMouseDown = (e: React.MouseEvent) => {
+    if (!relatedCarouselRef.current) return;
+    setIsRelatedDragging(true);
+    setRelatedStartX(e.pageX - relatedCarouselRef.current.offsetLeft);
+    setRelatedScrollLeft(relatedCarouselRef.current.scrollLeft);
+  };
+
+  const handleRelatedMouseMove = (e: React.MouseEvent) => {
+    if (!isRelatedDragging || !relatedCarouselRef.current) return;
+    e.preventDefault();
+    const x = e.pageX - relatedCarouselRef.current.offsetLeft;
+    const walk = (x - relatedStartX) * 1.5;
+    relatedCarouselRef.current.scrollLeft = relatedScrollLeft - walk;
+  };
+
+  const handleRelatedMouseUpOrLeave = () => {
+    setIsRelatedDragging(false);
+  };
+
+  const syncRelatedNav = useCallback(() => {
+    const el = relatedCarouselRef.current;
+    if (!el) return;
+    const maxScroll = el.scrollWidth - el.clientWidth;
+    const canPrev = el.scrollLeft > 4;
+    const canNext = maxScroll > 4 && el.scrollLeft < maxScroll - 4;
+    setRelatedNav((prev) =>
+      prev.canPrev === canPrev && prev.canNext === canNext ? prev : { canPrev, canNext }
+    );
   }, []);
 
-  const handleToggleAudio = useCallback(() => {
-    if (isAudioPlaying) {
-      stopAudio();
-      return;
-    }
-    setIsAudioPlaying(true);
-    audioTimerRef.current = setInterval(() => {
-      setAudioProgress((prev) => {
-        if (prev >= 100) {
-          stopAudio();
-          return 0;
-        }
-        return prev + 2.5;
-      });
-    }, 1000);
-  }, [isAudioPlaying, stopAudio]);
-
-  useEffect(() => {
-    return () => {
-      if (audioTimerRef.current) {
-        clearInterval(audioTimerRef.current);
-      }
-    };
-  }, []);
+  const handleScrollRelated = (direction: 'left' | 'right') => {
+    if (!relatedCarouselRef.current) return;
+    const scrollAmount = direction === 'left' ? -280 : 280;
+    relatedCarouselRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+  };
 
   const loadProductDetail = useCallback(async () => {
     if (!slug) return;
@@ -154,8 +165,6 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ category: 
     setError(null);
     setQuantity(1);
     setImageError(false);
-    stopAudio();
-    setAudioProgress(0);
 
     try {
       const data = await api.getProductBySlug(slug);
@@ -179,7 +188,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ category: 
     } finally {
       setLoading(false);
     }
-  }, [slug, stopAudio]);
+  }, [slug]);
 
   useEffect(() => {
     loadProductDetail();
@@ -195,7 +204,19 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ category: 
 
     let cancelled = false;
     const cat = propCategory || product.category;
-    setRelatedProducts([]);
+
+    const getFallbackList = () => {
+      const directCategoryFallbacks = defaultProducts.filter(
+        (p) => p.slug !== slug && p.category === cat && p.isActive
+      );
+      const otherFallbacks = defaultProducts.filter(
+        (p) =>
+          p.slug !== slug &&
+          p.isActive &&
+          !directCategoryFallbacks.some((d) => d.id === p.id)
+      );
+      return [...directCategoryFallbacks, ...otherFallbacks].slice(0, 8);
+    };
 
     api
       .getProducts({ category: cat, size: 200, sortBy: 'sortOrder' })
@@ -210,14 +231,23 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ category: 
             : [];
         const samePoiIds = new Set(samePoi.map((p) => p.id));
         const others = candidates.filter((p) => !samePoiIds.has(p.id));
-        setRelatedProducts([...samePoi, ...others].slice(0, 4));
+        const combined = [...samePoi, ...others];
+
+        if (combined.length >= 4) {
+          setRelatedProducts(combined.slice(0, 8));
+        } else {
+          const fallbacks = getFallbackList();
+          const combinedIds = new Set(combined.map((c) => c.id));
+          const complemented = [
+            ...combined,
+            ...fallbacks.filter((f) => !combinedIds.has(f.id)),
+          ];
+          setRelatedProducts(complemented.slice(0, 8));
+        }
       })
       .catch(() => {
         if (cancelled) return;
-        const fallback = defaultProducts
-          .filter((p) => p.slug !== slug && p.category === cat && p.isActive)
-          .slice(0, 4);
-        setRelatedProducts(fallback);
+        setRelatedProducts(getFallbackList());
       });
 
     return () => {
@@ -254,6 +284,12 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ category: 
     if (!product || !product.isActive) return;
     addToCart(product, quantity);
     (window as unknown as { __pop?: () => void }).__pop?.();
+    if (!isAuthenticated) {
+      navigate('/dang-nhap', {
+        state: { backgroundLocation: location, from: '/thanh-toan' },
+      });
+      return;
+    }
     navigate('/thanh-toan');
   };
 
@@ -263,7 +299,15 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ category: 
         <div className="wrap" style={{ padding: '120px 24px', textAlign: 'center' }}>
           <div className="souvenir-loading">
             <RefreshCw size={24} className="souvenir-spin" />
-            <span>Đang tải thông tin sản phẩm...</span>
+            <span>
+              {lang === 'en'
+                ? 'Loading product details...'
+                : lang === 'ja'
+                  ? '商品情報を読み込み中...'
+                  : lang === 'ko'
+                    ? '상품 정보를 불러오는 중...'
+                    : 'Đang tải thông tin sản phẩm...'}
+            </span>
           </div>
         </div>
       </div>
@@ -284,7 +328,13 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ category: 
             className="go"
             onClick={() => navigate(basePath)}
           >
-            Quay lại Quà lưu niệm
+            {lang === 'en'
+              ? 'Back to Souvenirs'
+              : lang === 'ja'
+                ? 'お土産一覧へ戻る'
+                : lang === 'ko'
+                  ? '기념품으로 돌아가기'
+                  : 'Quay lại Quà lưu niệm'}
           </button>
         </div>
       </div>
@@ -303,9 +353,9 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ category: 
       <div className="detail-breadcrumb">
         <div className="wrap">
           <nav aria-label="Đường dẫn phân cấp">
-            <Link to="/">Trang chủ</Link>
+            <Link to="/">{t.home}</Link>
             <span className="sep">/</span>
-            <Link to={basePath}>Quà lưu niệm</Link>
+            <Link to={basePath}>{t.food}</Link>
             <span className="sep">/</span>
             <span className="cur" aria-current="page">{product.name}</span>
           </nav>
@@ -373,25 +423,6 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ category: 
                 )}
               </div>
 
-              {/* Audio preview player */}
-              <div className="aud">
-                <button
-                  type="button"
-                  className="pl"
-                  onClick={handleToggleAudio}
-                >
-                  {isAudioPlaying
-                    ? 'Tạm dừng'
-                    : audioProgress > 0
-                      ? 'Tiếp tục nghe'
-                      : 'Nghe giới thiệu'}
-                </button>
-                <i>
-                  <b style={{ width: `${audioProgress}%` }}></b>
-                </i>
-                <span>0:40</span>
-              </div>
-
               {product.shortDescription && (
                 <p className="detail-short">{product.shortDescription}</p>
               )}
@@ -407,7 +438,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ category: 
                     type="button"
                     disabled={quantity <= 1}
                     onClick={handleDecrease}
-                    aria-label="Giảm"
+                    aria-label={lang === 'en' ? 'Decrease' : lang === 'ja' ? '減らす' : lang === 'ko' ? '감소' : 'Giảm'}
                   >
                     -
                   </button>
@@ -415,7 +446,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ category: 
                   <button
                     type="button"
                     onClick={handleIncrease}
-                    aria-label="Tăng"
+                    aria-label={lang === 'en' ? 'Increase' : lang === 'ja' ? '増やす' : lang === 'ko' ? '증가' : 'Tăng'}
                   >
                     +
                   </button>
@@ -427,7 +458,9 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ category: 
                   onClick={handleAddToCart}
                   disabled={!product.isActive}
                 >
-                  {addedAnimation ? 'Đã thêm vào giỏ' : 'Thêm vào giỏ hàng'}
+                  {addedAnimation
+                    ? (lang === 'en' ? 'Added to cart' : lang === 'ja' ? '追加済み' : lang === 'ko' ? '담김' : 'Đã thêm vào giỏ')
+                    : (lang === 'en' ? 'Add to cart' : lang === 'ja' ? 'カートに追加' : lang === 'ko' ? '장바구니 담기' : 'Thêm vào giỏ hàng')}
                 </button>
 
                 <button
@@ -436,91 +469,121 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ category: 
                   onClick={handleBuyNow}
                   disabled={!product.isActive}
                 >
-                  Mua ngay
+                  {lang === 'en' ? 'Buy now' : lang === 'ja' ? '今すぐ購入' : lang === 'ko' ? '바로 구매' : 'Mua ngay'}
                 </button>
               </div>
 
               {/* Guarantees */}
               <div className="detail-guarantees">
                 <div className="guarantee-item">
-                  <b>Gói cẩn thận</b>
-                  <span>Mỗi món được bọc riêng chống va đập</span>
+                  <b>{lang === 'en' ? 'Carefully packed' : lang === 'ja' ? '丁寧な梱包' : lang === 'ko' ? '안전한 개별 포장' : 'Gói cẩn thận'}</b>
+                  <span>{lang === 'en' ? 'Each item individually wrapped with extra protection' : lang === 'ja' ? 'すべての商品を個別に緩衝材で保護' : lang === 'ko' ? '파손 방지를 위해 개별 포장' : 'Mỗi món được bọc riêng chống va đập'}</span>
                 </div>
                 <div className="guarantee-item">
-                  <b>Giao tận nơi</b>
-                  <span>Về khách sạn hoặc nhận tại điểm</span>
+                  <b>{lang === 'en' ? 'Direct delivery' : lang === 'ja' ? 'お届け先へ配送' : lang === 'ko' ? '원하는 곳으로 직접 배송' : 'Giao tận nơi'}</b>
+                  <span>{lang === 'en' ? 'To your hotel or picked up at landmark counter' : lang === 'ja' ? 'ホテルまたは現地窓口で受け取り' : lang === 'ko' ? '호텔 배송 또는 현장 수령' : 'Về khách sạn hoặc nhận tại điểm'}</span>
                 </div>
                 <div className="guarantee-item">
-                  <b>Đổi nếu có lỗi</b>
-                  <span>Đổi món khác nếu phát hiện hư hỏng</span>
+                  <b>{lang === 'en' ? 'Hassle-free return' : lang === 'ja' ? '初期不良対応' : lang === 'ko' ? '안심 교환 보장' : 'Đổi nếu có lỗi'}</b>
+                  <span>{lang === 'en' ? 'Replaced right away if any defect is found' : lang === 'ja' ? '破損や不具合がある場合は速やかに交換' : lang === 'ko' ? '파손이나 하자 발견 시 즉시 교환' : 'Đổi món khác nếu phát hiện hư hỏng'}</span>
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Related Products */}
+        {/* Related Products Carousel (Image 2 style) */}
         {relatedProducts.length > 0 && (
-          <div className="related-section">
-            <h2 className="related-title">{t.shop.relatedSouvenirHeading}</h2>
-            <div className="grid">
-              {relatedProducts.map((relItem, idx) => {
-                const relPrice = applySouvenirDiscount(
-                  relItem.price,
-                  isDiscountEligible,
-                  relItem.category
-                );
-                return (
-                  <article
-                    key={relItem.id}
-                    className="good"
-                    style={{ '--d': `${idx * 40}ms` } as React.CSSProperties}
+          <section className="related-section" aria-labelledby="relatedTitle">
+            <div className="related-head">
+              <div className="related-head-left">
+                <h2 id="relatedTitle" className="related-title">
+                  {t.shop.relatedSouvenirHeading}
+                </h2>
+                <p>
+                  {lang === 'en'
+                    ? 'Souvenirs & local specialties tied to each destination.'
+                    : lang === 'ja'
+                      ? '各観光スポットにまつわるお土産＆名産品。'
+                      : lang === 'ko'
+                        ? '각 명소와 연결된 기념품 및 특산품.'
+                        : 'Quà lưu niệm & đặc sản gắn với từng điểm dừng.'}
+                </p>
+              </div>
+              <div className="related-head-actions">
+                <div className="related-carousel-arrows" aria-label="Điều hướng sản phẩm gợi ý">
+                  <button
+                    type="button"
+                    className="related-arrow-btn prev"
+                    onClick={() => handleScrollRelated('left')}
+                    aria-label="Xem sản phẩm trước"
+                    disabled={!relatedNav.canPrev}
                   >
-                    <div className="ph">
-                      {relItem.imagePath ? (
-                        <img
-                          src={relItem.imagePath}
-                          alt={relItem.name}
-                          loading="lazy"
-                        />
-                      ) : (
-                        <SouvenirLineArt kind={detectArtKind(relItem)} />
-                      )}
-                      <button
-                        type="button"
-                        className="open"
-                        onClick={() => navigate(`${basePath}/${relItem.slug}`)}
-                        aria-label={`Xem ${relItem.name}`}
-                      />
-                    </div>
-                    <h3>
-                      <button
-                        type="button"
-                        className="ttl"
-                        onClick={() => navigate(`${basePath}/${relItem.slug}`)}
-                      >
-                        {relItem.name}
-                      </button>
-                    </h3>
-                    {relItem.shortDescription && <p>{relItem.shortDescription}</p>}
-                    <div className="buy">
-                      <b>{formatPrice(relPrice)}</b>
-                      <button
-                        type="button"
-                        className="add"
-                        onClick={() => {
-                          addToCart(relItem, 1);
-                          showToast(`Đã thêm vào giỏ: 1 × ${relItem.name}`);
-                        }}
-                      >
-                        Thêm vào giỏ
-                      </button>
-                    </div>
-                  </article>
-                );
-              })}
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" width="16" height="16" aria-hidden="true">
+                      <path d="M15 18l-6-6 6-6" />
+                    </svg>
+                  </button>
+                  <button
+                    type="button"
+                    className="related-arrow-btn next"
+                    onClick={() => handleScrollRelated('right')}
+                    aria-label="Xem sản phẩm tiếp theo"
+                    disabled={!relatedNav.canNext}
+                  >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" width="16" height="16" aria-hidden="true">
+                      <path d="M9 18l6-6-6-6" />
+                    </svg>
+                  </button>
+                </div>
+                <Link className="related-more-link" to={basePath}>
+                  {lang === 'en'
+                    ? 'View all souvenirs'
+                    : lang === 'ja'
+                      ? 'すべてのお土産を見る'
+                      : lang === 'ko'
+                        ? '모든 기념품 보기'
+                        : 'Xem tất cả quà lưu niệm'}
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" width="16" height="16">
+                    <path d="M5 12h14" />
+                    <path d="M13 6l6 6-6 6" />
+                  </svg>
+                </Link>
+              </div>
             </div>
-          </div>
+
+            <div
+              className={`goods-carousel related-carousel ${isRelatedDragging ? 'is-dragging' : ''}`}
+              ref={relatedCarouselRef}
+              onScroll={syncRelatedNav}
+              onMouseDown={handleRelatedMouseDown}
+              onMouseMove={handleRelatedMouseMove}
+              onMouseUp={handleRelatedMouseUpOrLeave}
+              onMouseLeave={handleRelatedMouseUpOrLeave}
+            >
+              {relatedProducts.map((relItem) => (
+                <ProductCard
+                  key={relItem.id}
+                  product={relItem}
+                  isFavorited={isFavorite(relItem.id)}
+                  onToggleFavorite={toggleFavorite}
+                  onAddToCart={(p, e) => {
+                    e.stopPropagation();
+                    addToCart(p, 1);
+                    showToast(
+                      lang === 'en'
+                        ? `Added to cart: 1 × ${p.name}`
+                        : lang === 'ja'
+                          ? `カートに追加しました: 1 × ${p.name}`
+                          : lang === 'ko'
+                            ? `장바구니에 담겼습니다: 1 × ${p.name}`
+                            : `Đã thêm vào giỏ: 1 × ${p.name}`
+                    );
+                  }}
+                  onSelect={(p) => navigate(`${basePath}/${p.slug}`)}
+                />
+              ))}
+            </div>
+          </section>
         )}
       </div>
     </div>

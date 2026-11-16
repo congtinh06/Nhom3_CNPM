@@ -23,7 +23,10 @@ export const RequireAuth: React.FC<{ children: React.ReactNode }> = ({ children 
       <Navigate
         to="/dang-nhap"
         replace
-        state={{ from: `${location.pathname}${location.search}` }}
+        state={{
+          from: `${location.pathname}${location.search}`,
+          backgroundLocation: { pathname: '/', search: '', hash: '' },
+        }}
       />
     );
   }

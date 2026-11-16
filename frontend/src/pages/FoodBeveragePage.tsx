@@ -1,7 +1,6 @@
 import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { RefreshCw, Search, X } from 'lucide-react';
-import nearbyPoisData from '../content/nearbyPois.json';
 import { enrichProducts } from '../content/productAdapter';
 import { defaultProducts } from '../content/defaultProducts';
 import { api } from '../api/client';
@@ -214,12 +213,6 @@ function matchesCollection(product: Product, collection: CollectionKey, effectiv
   return POCKET_KEYWORDS.some((kw) => hay.includes(kw));
 }
 
-const staticPoiSlugById = new Map<string, string>(
-  (nearbyPoisData as Array<{ id?: string; slug?: string }>)
-    .filter((p) => p.id && p.slug)
-    .map((p) => [String(p.id), String(p.slug)])
-);
-
 const SuggestionThumb: React.FC<{ product: Product }> = ({ product }) => {
   const [failed, setFailed] = useState(false);
   if (!product.imagePath || failed) {
@@ -384,7 +377,9 @@ const SouvenirGridCard: React.FC<SouvenirGridCardProps> = ({
 
       <p className="good-price">
         <b>{formatPrice(effectivePrice)}</b>
-        {hasDiscount && <del className="old-price">{formatPrice(product.price)}</del>}
+        {hasDiscount && (
+          <del className="old-price">{formatPrice(product.price)}</del>
+        )}
       </p>
     </article>
   );
@@ -421,9 +416,6 @@ export const FoodBeveragePage: React.FC = () => {
   // Quick View Modal State
   const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
   const [quickViewQty, setQuickViewQty] = useState<number>(1);
-  const [isAudioPlaying, setIsAudioPlaying] = useState<boolean>(false);
-  const [audioProgress, setAudioProgress] = useState<number>(0);
-  const audioTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const quickViewDialogRef = useRef<HTMLDialogElement>(null);
 
   const searchContainerRef = useRef<HTMLDivElement>(null);
@@ -579,37 +571,6 @@ export const FoodBeveragePage: React.FC = () => {
   // Reset số món đang mở mỗi khi đổi bộ lọc, từ khóa hoặc bộ sưu tập
   // (phân trang mặc định về trang 1 qua handlePageChange / handleChangeFilter)
 
-  // Điểm vừa nghe gần nhất (đọc từ localStorage echora_listened_pois, chỉ hiện khi có quà thật)
-  const recentListenedSpot = useMemo<{ slug: string; count: number } | null>(() => {
-    if (typeof window === 'undefined' || souvenirProducts.length === 0) return null;
-    try {
-      const raw = localStorage.getItem('echora_listened_pois');
-      if (!raw) return null;
-      const parsed: unknown = JSON.parse(raw);
-      if (!Array.isArray(parsed) || parsed.length === 0) return null;
-
-      for (let idx = parsed.length - 1; idx >= 0; idx -= 1) {
-        const entry = String(parsed[idx] ?? '').trim();
-        if (!entry) continue;
-
-        const mappedSlug = staticPoiSlugById.get(entry) ?? entry;
-        const numericId = Number(entry);
-
-        const matched = souvenirProducts.filter(
-          (item) =>
-            (item.poiSlug && item.poiSlug === mappedSlug) ||
-            (!Number.isNaN(numericId) && item.poiId === numericId)
-        );
-        const resolvedSlug = matched[0]?.poiSlug;
-        if (resolvedSlug && matched.length > 0) {
-          return { slug: resolvedSlug, count: matched.length };
-        }
-      }
-      return null;
-    } catch {
-      return null;
-    }
-  }, [souvenirProducts]);
 
   // Danh sách tab điểm đến kèm số món thực tế
   const spotTabs = useMemo(() => {
@@ -888,23 +849,13 @@ export const FoodBeveragePage: React.FC = () => {
     [handleChangeFilter]
   );
 
-  const stopQuickViewAudio = useCallback(() => {
-    if (audioTimerRef.current) {
-      clearInterval(audioTimerRef.current);
-      audioTimerRef.current = null;
-    }
-    setIsAudioPlaying(false);
-  }, []);
-
   const closeQuickView = useCallback(() => {
-    stopQuickViewAudio();
-    setAudioProgress(0);
     if (quickViewDialogRef.current?.open) {
       quickViewDialogRef.current.close();
     }
     setQuickViewProduct(null);
     setQuickViewQty(1);
-  }, [stopQuickViewAudio]);
+  }, []);
 
   const handleOpenDetailPage = useCallback(
     (product: Product) => {
@@ -915,20 +866,15 @@ export const FoodBeveragePage: React.FC = () => {
     [navigate]
   );
 
-  const handleOpenQuickView = useCallback(
-    (product: Product) => {
-      setIsAutocompleteOpen(false);
-      setHighlightedIndex(-1);
-      stopQuickViewAudio();
-      setAudioProgress(0);
-      setQuickViewQty(1);
-      setQuickViewProduct(product);
-      setTimeout(() => {
-        quickViewDialogRef.current?.showModal();
-      }, 0);
-    },
-    [stopQuickViewAudio]
-  );
+  const handleOpenQuickView = useCallback((product: Product) => {
+    setIsAutocompleteOpen(false);
+    setHighlightedIndex(-1);
+    setQuickViewQty(1);
+    setQuickViewProduct(product);
+    setTimeout(() => {
+      quickViewDialogRef.current?.showModal();
+    }, 0);
+  }, []);
 
   const handleSelectProduct = useCallback(
     (product: Product) => {
@@ -937,23 +883,6 @@ export const FoodBeveragePage: React.FC = () => {
     [handleOpenDetailPage]
   );
 
-  const handleToggleAudio = useCallback(() => {
-    if (isAudioPlaying) {
-      stopQuickViewAudio();
-      return;
-    }
-    setIsAudioPlaying(true);
-    audioTimerRef.current = setInterval(() => {
-      setAudioProgress((prev) => {
-        if (prev >= 100) {
-          stopQuickViewAudio();
-          return 0;
-        }
-        return prev + 2.5;
-      });
-    }, 1000);
-  }, [isAudioPlaying, stopQuickViewAudio]);
-
   const handleQuickViewAddToCart = useCallback(() => {
     if (!quickViewProduct) return;
     addToCart(quickViewProduct, quickViewQty);
@@ -961,14 +890,6 @@ export const FoodBeveragePage: React.FC = () => {
     closeQuickView();
     openCart();
   }, [quickViewProduct, quickViewQty, addToCart, lang, showToast, closeQuickView, openCart]);
-
-  useEffect(() => {
-    return () => {
-      if (audioTimerRef.current) {
-        clearInterval(audioTimerRef.current);
-      }
-    };
-  }, []);
 
   const handleResetAll = useCallback(() => {
     if (urlSyncTimerRef.current) {
@@ -1105,17 +1026,6 @@ export const FoodBeveragePage: React.FC = () => {
           <div>
             <h1>{st(lang, 'heroTitle')}</h1>
             <p>{st(lang, 'heroSub')}</p>
-            {recentListenedSpot && (
-              <p className="hint">
-                {st(lang, 'hintPrefix')} <b>{getSpotName(recentListenedSpot.slug, lang)}</b>.{' '}
-                <button
-                  type="button"
-                  onClick={() => handleChangeFilter('spot', recentListenedSpot.slug)}
-                >
-                  {st(lang, 'hintAction', { count: recentListenedSpot.count })}
-                </button>
-              </p>
-            )}
           </div>
 
           <div className="sr" ref={searchContainerRef}>
@@ -1123,7 +1033,6 @@ export const FoodBeveragePage: React.FC = () => {
             <div className="sr-combo-wrap">
               <form className="sr-form" role="search" onSubmit={handleSearchSubmit}>
               <div className="sr-box">
-                <Search size={18} className="sr-icon" aria-hidden="true" />
                 <input
                   ref={searchInputRef}
                   id="souvenir-q"
@@ -1166,8 +1075,13 @@ export const FoodBeveragePage: React.FC = () => {
                     <X size={15} aria-hidden="true" />
                   </button>
                 )}
-                <button type="submit" className="sr-submit">
-                  {st(lang, 'searchBtn')}
+                <button
+                  type="submit"
+                  className="sr-submit"
+                  aria-label={st(lang, 'searchBtn')}
+                  title={st(lang, 'searchBtn')}
+                >
+                  <Search size={18} aria-hidden="true" />
                 </button>
               </div>
             </form>
@@ -1504,11 +1418,11 @@ export const FoodBeveragePage: React.FC = () => {
                     <p>{st(lang, set.descKey)}</p>
                   </div>
                   <div className="it2">{set.items.map((item) => item.name).join(', ')}</div>
-                  <div className="sp">
-                    <b>{formatPrice(set.total)}</b>
+                  <div className="s3-action">
+                    <span className="s3-price">{formatPrice(set.total)}</span>
                     <button
                       type="button"
-                      className="arr"
+                      className="set-add-btn"
                       onClick={() => handleAddSet(set)}
                     >
                       {st(lang, 'setAdd')}
@@ -1626,32 +1540,13 @@ export const FoodBeveragePage: React.FC = () => {
                   )}
                 </b>
 
-                <div className="aud">
-                  <button
-                    type="button"
-                    className="pl"
-                    id="qpl"
-                    onClick={handleToggleAudio}
-                  >
-                    {isAudioPlaying
-                      ? 'Tạm dừng'
-                      : audioProgress > 0
-                        ? 'Tiếp tục nghe'
-                        : 'Nghe giới thiệu'}
-                  </button>
-                  <i>
-                    <b id="qpb" style={{ width: `${audioProgress}%` }}></b>
-                  </i>
-                  <span>0:40</span>
-                </div>
-
                 <div className="qr">
                   <span className="stp">
                     <button
                       type="button"
                       disabled={quickViewQty <= 1}
                       onClick={() => setQuickViewQty((q) => Math.max(1, q - 1))}
-                      aria-label="Giảm"
+                      aria-label={lang === 'en' ? 'Decrease' : lang === 'ja' ? '減らす' : lang === 'ko' ? '감소' : 'Giảm'}
                     >
                       -
                     </button>
@@ -1659,7 +1554,7 @@ export const FoodBeveragePage: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => setQuickViewQty((q) => q + 1)}
-                      aria-label="Tăng"
+                      aria-label={lang === 'en' ? 'Increase' : lang === 'ja' ? '増やす' : lang === 'ko' ? '증가' : 'Tăng'}
                     >
                       +
                     </button>
@@ -1669,35 +1564,18 @@ export const FoodBeveragePage: React.FC = () => {
                     className="go"
                     onClick={handleQuickViewAddToCart}
                   >
-                    Thêm vào giỏ
+                    {st(lang, 'addToCart')}
                   </button>
                 </div>
-
-                {quickViewProduct.poiSlug && (
-                  <Link
-                    to={`/diem-du-lich?stop=${quickViewProduct.poiSlug}`}
-                    className="lk"
-                    onClick={closeQuickView}
-                  >
-                    {`Xem điểm dừng ${getSpotName(quickViewProduct.poiSlug, lang)}`}
-                  </Link>
-                )}
-                <Link
-                  to={`/am-thuc/${quickViewProduct.slug}`}
-                  className="lk"
-                  onClick={closeQuickView}
-                >
-                  Xem chi tiết sản phẩm
-                </Link>
               </div>
 
               <button
                 type="button"
                 className="x"
-                aria-label="Đóng"
+                aria-label={lang === 'en' ? 'Close' : lang === 'ja' ? '閉じる' : lang === 'ko' ? '닫기' : 'Đóng'}
                 onClick={closeQuickView}
               >
-                Đóng
+                {lang === 'en' ? 'Close' : lang === 'ja' ? '閉じる' : lang === 'ko' ? '닫기' : 'Đóng'}
               </button>
             </div>
           </dialog>

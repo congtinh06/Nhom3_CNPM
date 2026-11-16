@@ -108,8 +108,19 @@ compose() {
 
 deploy_tag() {
   local tag="$1"
-  log "Pulling image tag=$tag"
-  compose "$tag" pull || return 1
+  local pull_retries=3
+  local pull_ok=0
+  for ((attempt = 1; attempt <= pull_retries; attempt++)); do
+    log "Pulling image tag=$tag (attempt $attempt/$pull_retries)"
+    if compose "$tag" pull; then
+      pull_ok=1
+      break
+    fi
+    log "Pull attempt $attempt failed; waiting 5s before retrying..."
+    sleep 5
+  done
+  [ "$pull_ok" -eq 1 ] || return 1
+
   log "Recreating containers with tag=$tag"
   compose "$tag" up -d --no-build --remove-orphans || return 1
 }
@@ -137,13 +148,18 @@ fi
 
 PREVIOUS_TAG="$(cat "$TAG_FILE" 2>/dev/null || true)"
 
-if deploy_tag "$IMAGE_TAG" && wait_healthy; then
-  printf '%s\n' "$IMAGE_TAG" > "$TAG_FILE"
-  log "Deploy successful; wrote ${TAG_FILE}"
-  exit 0
+deploy_ok=0
+if deploy_tag "$IMAGE_TAG"; then
+  if wait_healthy; then
+    printf '%s\n' "$IMAGE_TAG" > "$TAG_FILE"
+    log "Deploy successful; wrote ${TAG_FILE}"
+    exit 0
+  else
+    log "Health check failed for tag=${IMAGE_TAG}" >&2
+  fi
+else
+  log "Deployment failed during image pull or container recreation for tag=${IMAGE_TAG}" >&2
 fi
-
-log "Health check failed for tag=${IMAGE_TAG}" >&2
 
 if [ -n "$PREVIOUS_TAG" ] && [ "$PREVIOUS_TAG" != "$IMAGE_TAG" ]; then
   log "Rolling back to tag=${PREVIOUS_TAG}" >&2

@@ -89,4 +89,12 @@ class TtsTextBuilderTest {
         assertNotNull(result);
         assertEquals("", result);
     }
+
+    @Test
+    @DisplayName("buildNarrationText: chỉ đọc description, khớp nội dung khung đọc")
+    void testBuildNarrationText_descriptionOnly() {
+        assertEquals("Mô tả chi tiết", TtsTextBuilder.buildNarrationText("  Mô tả chi tiết  "));
+        assertEquals("", TtsTextBuilder.buildNarrationText("   "));
+        assertEquals("", TtsTextBuilder.buildNarrationText(null));
+    }
 }

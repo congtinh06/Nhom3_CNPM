@@ -160,11 +160,11 @@ class PoiPipelineServiceTest {
                 viReady.getDescription().getBytes(StandardCharsets.UTF_8),
                 "vi description must be byte-for-byte equal to input");
         assertEquals("READY", viReady.getAudioStatus());
-        assertEquals(ContentHashUtils.computeHash("vi", viTitle, viSummary, viDesc, viHist), viReady.getContentHash());
+        assertEquals(ContentHashUtils.computeNarrationHash("vi", viDesc), viReady.getContentHash());
 
-        // Verify hash matches ContentHashUtils for each language
+        // Verify hash matches the narration hash (description only) for each language
         for (PoiAudioReadyEvent e : readyEvents) {
-            String expectedHash = ContentHashUtils.computeHash(e.getLanguageCode(), viTitle, viSummary, viDesc, viHist);
+            String expectedHash = ContentHashUtils.computeNarrationHash(e.getLanguageCode(), viDesc);
             assertEquals(expectedHash, e.getContentHash());
             assertEquals("READY", e.getAudioStatus());
         }
@@ -182,7 +182,7 @@ class PoiPipelineServiceTest {
     }
 
     @Test
-    @DisplayName("Authored en: dùng nguyên văn (không dịch máy), hash tính từ chính bản en, TTS đọc tiêu đề + mô tả")
+    @DisplayName("Authored en: dùng nguyên văn (không dịch máy), hash tính từ description, TTS chỉ đọc description")
     void testAuthoredLanguage_usedVerbatim() {
         String viTitle = "Dinh Độc Lập";
         String viSummary = "Tóm tắt tiếng Việt";
@@ -229,14 +229,13 @@ class PoiPipelineServiceTest {
         assertEquals(authoredDesc, enReady.getDescription());
         assertEquals("READY", enReady.getAudioStatus());
 
-        String expectedHash = ContentHashUtils.computeHash("en", authoredTitle, authoredSummary, authoredDesc, null);
+        String expectedHash = ContentHashUtils.computeNarrationHash("en", authoredDesc);
         assertEquals(expectedHash, enReady.getContentHash());
 
-        // D1-Fix Q3: TTS giờ đánh tiếng title + summary + description (+ historicalSignificance nếu có)
+        // Audio speaks exactly the description shown in the reading section.
         ArgumentCaptor<String> spokenCaptor = ArgumentCaptor.forClass(String.class);
         verify(audioStorageService).storeAudio(eq(909L), eq("en"), eq(expectedHash), spokenCaptor.capture());
-        String expectedSpoken = authoredTitle + "\n\n" + authoredSummary + "\n\n" + authoredDesc;
-        assertEquals(expectedSpoken, spokenCaptor.getValue());
+        assertEquals(authoredDesc, spokenCaptor.getValue());
     }
 
     @Test
@@ -452,7 +451,7 @@ class PoiPipelineServiceTest {
     void testForceRegenerate_reopensDoneJob_andOnlyProcessesForcedLanguage() {
         String viTitle = "Dinh Độc Lập";
         String viDesc = "Mô tả";
-        String enHash = ContentHashUtils.computeHash("en", viTitle, null, viDesc, null);
+        String enHash = ContentHashUtils.computeNarrationHash("en", viDesc);
 
         TranslationJob doneJob = TranslationJob.builder()
                 .poiId(120L).languageCode("en").contentHash(enHash)
@@ -492,7 +491,7 @@ class PoiPipelineServiceTest {
     @Test
     @DisplayName("TTS tạm lỗi được retry có giới hạn rồi publish READY, không đánh FAILED_TTS")
     void testTtsRetry_transientFailureThenSuccess() {
-        String hash = ContentHashUtils.computeHash("vi", "Tiêu đề", null, "Mô tả", null);
+        String hash = ContentHashUtils.computeNarrationHash("vi", "Mô tả");
         when(audioStorageService.storeAudio(eq(130L), eq("vi"), eq(hash), anyString()))
                 .thenThrow(new TtsExecutionException(1, "network glitch"))
                 .thenThrow(new TtsExecutionException(1, "network glitch"))
@@ -535,7 +534,7 @@ class PoiPipelineServiceTest {
         pipelineService.processPoiEvent(event);
 
         // "en" job should be FAILED_TTS, never DONE
-        String enKey = "808_en_" + ContentHashUtils.computeHash("en", "Tiêu đề", null, "Mô tả", null);
+        String enKey = "808_en_" + ContentHashUtils.computeNarrationHash("en", "Mô tả");
         TranslationJob enJob = jobStore.get(enKey);
         assertNotNull(enJob);
         assertEquals("FAILED_TTS", enJob.getStatus());

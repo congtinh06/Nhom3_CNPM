@@ -70,10 +70,13 @@ public class MailService {
 
     public void sendVerificationEmail(String to, String token) {
         String link = buildVerifyLink(token);
-        String subject = "Xác thực địa chỉ email Echora";
+        String subject = "Mã OTP xác thực tài khoản Echora: " + token;
         String body = "Xin chào,\n\n"
-                + "Vui lòng xác thực địa chỉ email của bạn bằng cách nhấn vào link sau "
-                + "(hiệu lực trong 24 giờ, dùng một lần):\n"
+                + "Cảm ơn bạn đã đăng ký tài khoản tại Echora.\n\n"
+                + "MÃ OTP XÁC THỰC CỦA BẠN LÀ:\n\n"
+                + "        " + token + "\n\n"
+                + "(Mã OTP gồm 6 chữ số, có hiệu lực trong 24 giờ. Vui lòng nhập mã này vào ô xác thực trên website để kích hoạt tài khoản).\n\n"
+                + "Hoặc bạn có thể bấm trực tiếp vào liên kết sau để kích hoạt nhanh:\n"
                 + link + "\n\n"
                 + "Nếu bạn không yêu cầu đăng ký, vui lòng bỏ qua email này.";
         send(to, subject, body, link, "xác thực email");

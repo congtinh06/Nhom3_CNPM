@@ -89,29 +89,31 @@ export const VerifyEmailPage: React.FC = () => {
               {message}
             </p>
             <p className="auth-note">
-              Token không đúng hoặc đã hết hạn. Kiểm tra lại liên kết trong email, hoặc gửi yêu
-              cầu email mới bên dưới.
+              Mã xác thực không đúng hoặc đã hết hạn. Kiểm tra lại mã OTP trong email, hoặc gửi yêu
+              cầu gửi lại mã mới bên dưới.
             </p>
           </>
         )}
 
-        <form onSubmit={handleSubmit} noValidate className="auth-modal-form">
-          <label className="af" htmlFor="verify-token">
-            <span>Token xác thực</span>
-            <input
-              id="verify-token"
-              type="text"
-              name="token"
-              required
-              value={token}
-              onChange={(e) => setToken(e.target.value)}
-              placeholder="Dán token trong email"
-            />
-          </label>
-          <button type="submit" className="tb af-submit" disabled={!token.trim()}>
-            Xác thực ngay
-          </button>
-        </form>
+        {phase !== 'success' && (
+          <form onSubmit={handleSubmit} noValidate className="auth-modal-form">
+            <label className="af" htmlFor="verify-token">
+              <span>Mã OTP xác thực</span>
+              <input
+                id="verify-token"
+                type="text"
+                name="token"
+                required
+                value={token}
+                onChange={(e) => setToken(e.target.value)}
+                placeholder="Nhập mã OTP 6 chữ số"
+              />
+            </label>
+            <button type="submit" className="tb af-submit" disabled={!token.trim()}>
+              Xác thực ngay
+            </button>
+          </form>
+        )}
 
         <p className="af-alt">Chưa nhận được email?</p>
         <form onSubmit={handleResend} noValidate className="auth-modal-form" style={{ marginTop: 12 }}>

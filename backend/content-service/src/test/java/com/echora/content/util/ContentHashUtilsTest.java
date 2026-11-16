@@ -50,4 +50,12 @@ class ContentHashUtilsTest {
         );
         assertThat(hashWhitespace).isEqualTo("e86ff203fb7b2bbb6e6f8b89ef5207559429dc40b58e117229392d20203e01f9");
     }
+
+    @Test
+    @DisplayName("computeNarrationHash: chỉ phụ thuộc language + description, khớp translation-tts-service")
+    void testNarrationHash_descriptionOnly() {
+        String hash = ContentHashUtils.computeNarrationHash("en", "  Mô tả  ");
+        assertThat(hash).isEqualTo("04cf13e6e3d82006111124487b653111718446c09ca97a80709f6eaa33829409");
+        assertThat(ContentHashUtils.computeNarrationHash("EN", "Mô tả")).isEqualTo(hash);
+    }
 }

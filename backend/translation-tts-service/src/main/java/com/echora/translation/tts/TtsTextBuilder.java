@@ -29,6 +29,14 @@ public final class TtsTextBuilder {
     }
 
     /**
+     * Builds the exact narration text rendered in the reading section.
+     * The audio must match what the user reads, so only the description is spoken.
+     */
+    public static String buildNarrationText(String description) {
+        return buildText(null, null, description, null);
+    }
+
+    /**
      * Legacy overload for backward compatibility (title + description only).
      * Deprecated: use buildText(title, summary, description, historicalSignificance) instead.
      */

@@ -2691,6 +2691,7 @@ body.header-hidden .editorial-desktop-sidebar .editorial-sidebar-card {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
+  gap: 8px;
 }
 
 .editorial-price-amount {

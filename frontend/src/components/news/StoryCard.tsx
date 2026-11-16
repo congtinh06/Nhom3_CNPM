@@ -5,6 +5,8 @@ import { NeutralImagePlaceholder } from './EncausticTilePattern';
 import { SupportedLanguage } from '../../types';
 import { NewsExternalFlag } from './NewsExternalFlag';
 import { isExternalArticle } from './NewsCardLink';
+import { getCategoryLabel, formatReadingTime } from './newsFormatters';
+import { tNews } from '../../content/newsI18n';
 import '../../styles/news.css';
 
 export type StoryCardVariant = 'grid' | 'featured' | 'sidebar' | 'large' | 'row';
@@ -59,7 +61,9 @@ export const StoryCard: React.FC<StoryCardProps> = ({
   const isSidebar = variant === 'sidebar';
 
   const imageUrl = item.thumbnail || item.coverImageUrl;
-  const captionText = item.source ? item.source : item.imageCredit ? `Ảnh: ${item.imageCredit}` : '';
+  const categoryLabel = getCategoryLabel(item.category, lang);
+  const photoPrefix = lang === 'en' ? 'Photo: ' : lang === 'ja' ? '写真: ' : lang === 'ko' ? '사진: ' : 'Ảnh: ';
+  const captionText = item.source ? item.source : item.imageCredit ? `${photoPrefix}${item.imageCredit}` : '';
 
   const isExternal = isExternalArticle(item);
 
@@ -108,12 +112,12 @@ export const StoryCard: React.FC<StoryCardProps> = ({
                 style={{ backgroundColor: categoryMeta.hex }}
                 aria-hidden="true"
               />
-              {categoryMeta.label.toUpperCase()}
+              {categoryLabel.toUpperCase()}
             </span>
-            <span className="story-read-time">{item.readingTime || item.readingMinutes || 3}P ĐỌC</span>
+            <span className="story-read-time">{formatReadingTime(item.readingTime || item.readingMinutes || 3, lang)}</span>
             {item.isNew && (
-              <span className="story-new-badge" aria-label="Bài mới trong 48 giờ">
-                MỚI
+              <span className="story-new-badge" aria-label="New">
+                {tNews(lang, 'newBadge').toUpperCase()}
               </span>
             )}
           </div>
@@ -174,16 +178,16 @@ export const StoryCard: React.FC<StoryCardProps> = ({
               style={{ backgroundColor: categoryMeta.hex }}
               aria-hidden="true"
             />
-            {categoryMeta.label.toUpperCase()}
+            {categoryLabel.toUpperCase()}
           </span>
 
           <span className="story-read-time">
-            {item.readingTime || item.readingMinutes || 3} PHÚT ĐỌC
+            {formatReadingTime(item.readingTime || item.readingMinutes || 3, lang)}
           </span>
 
           {item.isNew && (
-            <span className="story-new-badge" aria-label="Bài viết mới trong 48 giờ">
-              MỚI
+            <span className="story-new-badge" aria-label="New">
+              {tNews(lang, 'newBadge').toUpperCase()}
             </span>
           )}
         </div>

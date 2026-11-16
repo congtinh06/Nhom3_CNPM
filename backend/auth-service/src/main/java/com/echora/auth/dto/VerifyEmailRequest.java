@@ -14,6 +14,6 @@ import lombok.Setter;
 @Builder
 public class VerifyEmailRequest {
 
-    @NotBlank(message = "Token xác thực không được để trống.")
+    @NotBlank(message = "Mã xác thực không được để trống.")
     private String token;
 }

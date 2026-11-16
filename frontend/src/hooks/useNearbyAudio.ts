@@ -444,6 +444,46 @@ export function isBackendDetailForPoi(
 export type AudioSourceType = 'backend' | 'static' | 'speech';
 export type PlaybackStatus = 'idle' | 'loading' | 'playing' | 'paused';
 
+interface SpokenSentenceRange {
+  start: number;
+  end: number;
+  origStart: number;
+  origEnd: number;
+  index: number;
+}
+
+/**
+ * The spoken script spells numerals out ("năm 1975" -> "năm một nghìn..."),
+ * so boundary events report offsets in a LONGER string than the transcript we
+ * highlight. Build the sentence ranges of the spoken string and keep the
+ * matching original ranges, so an offset can be mapped back to the exact
+ * sentence (and approximate word) the voice is reading.
+ */
+function buildSpokenSentenceRanges(
+  text: string,
+  sentences: ParsedSentence[],
+  lang: SupportedLanguage,
+  indexOffset = 0
+): SpokenSentenceRange[] {
+  if (!text || sentences.length === 0) return [];
+  const spokenFull = toNarrationScript(text, lang);
+  let cursor = 0;
+  return sentences.map((sentence, offset) => {
+    const spoken = toNarrationScript(sentence.sentence, lang);
+    let start = spokenFull.indexOf(spoken, cursor);
+    if (start === -1) start = Math.min(cursor, spokenFull.length);
+    const end = start + spoken.length;
+    cursor = Math.max(cursor, end);
+    return {
+      start,
+      end,
+      origStart: sentence.start,
+      origEnd: sentence.end,
+      index: indexOffset + offset,
+    };
+  });
+}
+
 export const ENABLE_AUDIO_DEBUG = false;
 
 let globalActiveSourceCount = 0;
@@ -532,6 +572,7 @@ export function useNearbyAudio({
   const lastManualStopTimeRef = useRef<number>(0);
   const onPoiListenedRef = useRef(onPoiListened);
   const hasBoundaryEventsRef = useRef<boolean>(false);
+  const spokenSentenceRangesRef = useRef<SpokenSentenceRange[]>([]);
 
   // ------------------------------------------------------------------
   // Analytics: mỗi lượt nghe phải ghi nhận 2 sự kiện AUDIO_PLAY
@@ -846,6 +887,32 @@ export function useNearbyAudio({
             if (e.name === 'word' || e.name === 'sentence') {
               const rawIdx = e.charIndex;
               const rawLen = (e as any).charLength || 0;
+
+              // Map the offset reported in the spoken script back onto the
+              // displayed transcript so the highlighted word is the one being
+              // heard (this is the sync fix for "nghe khác, đánh dấu khác").
+              const hit = spokenSentenceRangesRef.current.find(
+                (range) => rawIdx >= range.start && rawIdx <= range.end
+              );
+              if (hit) {
+                const spokenSpan = Math.max(1, hit.end - hit.start);
+                const ratio = Math.min(
+                  1,
+                  Math.max(0, (rawIdx - hit.start) / spokenSpan)
+                );
+                const origSpan = Math.max(0, hit.origEnd - hit.origStart);
+                const origOffset = hit.origStart + Math.round(ratio * origSpan);
+                const snapped = snapToWordBoundary(
+                  currentFullTextRef.current,
+                  origOffset,
+                  langCode
+                );
+                setActiveCharOffset(snapped.charIndex);
+                setActiveCharLength(snapped.charLength);
+                setActiveSentenceIndex((prev) => (prev === hit.index ? prev : hit.index));
+                return;
+              }
+
               if (rawLen > 0) {
                 setActiveCharOffset(rawIdx);
                 setActiveCharLength(rawLen);
@@ -963,8 +1030,10 @@ export function useNearbyAudio({
       setIsLoading(false);
       setCurrentTime(0);
 
-      // Task 1: Single source of truth resolvePlayback decides what is played
-      const layer: NarrationLayer = isAuto ? 'short' : 'full';
+      // ONE narration source for both automatic and manual playback: the full
+      // script. Auto and manual must never read different texts, otherwise the
+      // transcript highlight and the heard audio drift apart.
+      const layer: NarrationLayer = 'full';
       const playback = resolvePlayback(targetPoi, currentLang, layer);
       const chosenText = playback.text;
 
@@ -974,13 +1043,18 @@ export function useNearbyAudio({
 
       const parsedSentences = splitTranscriptIntoSentences(chosenText);
       sentencesRef.current = parsedSentences;
+      spokenSentenceRangesRef.current = buildSpokenSentenceRanges(
+        chosenText,
+        parsedSentences,
+        currentLang
+      );
       setSentences(parsedSentences);
       currentTextLengthRef.current = chosenText.length;
       currentFullTextRef.current = chosenText;
 
       const estDuration = Math.max(14, Math.round(chosenText.length / 10));
       setDuration(estDuration);
-      const hasFullText = Boolean(!isAuto && getNarration(targetPoi, currentLang, 'full')?.length);
+      const hasFullText = Boolean(getNarration(targetPoi, currentLang, 'full')?.length);
       setActiveSentenceIndex(hasFullText && parsedSentences.length > 0 ? 0 : null);
       if (hasFullText) {
         const initSnap = snapToWordBoundary(chosenText, 0, currentLang);
@@ -1064,7 +1138,12 @@ export function useNearbyAudio({
 
             audio.onloadedmetadata = () => {
               if (token !== requestTokenRef.current) return;
-              if (audio.duration && !isNaN(audio.duration)) {
+              // Streamed/no-length media reports Infinity; never expose that to
+              // the UI (it rendered as "0:00 / Infinity:NaN").
+              if (
+                Number.isFinite(audio.duration) &&
+                audio.duration > 0
+              ) {
                 setDuration(Math.round(audio.duration));
               }
             };
@@ -1319,6 +1398,12 @@ export function useNearbyAudio({
         const remainingSentences = sentencesRef.current.slice(currentSentenceIdx);
         const remainingText =
           remainingSentences.map((s) => s.sentence).join(' ') || currentFullTextRef.current;
+        spokenSentenceRangesRef.current = buildSpokenSentenceRanges(
+          remainingText,
+          remainingSentences,
+          currentLang,
+          currentSentenceIdx
+        );
         const targetPoi = pois.find((p) => p.id === currentId);
         const hasFullText = Boolean(targetPoi && getNarration(targetPoi, currentLang, 'full')?.length);
 

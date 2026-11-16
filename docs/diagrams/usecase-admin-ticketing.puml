@@ -1,78 +1,29 @@
 @startuml
 !theme plain
-skinparam defaultFontName "Times New Roman"
-skinparam defaultFontSize 11
-skinparam monochrome true
 skinparam shadowing false
-skinparam roundCorner 0
+skinparam backgroundColor white
 skinparam packageStyle rectangle
-skinparam handwritten false
-skinparam ArrowColor #000000
-skinparam ActorBorderColor #000000
-skinparam ComponentBorderColor #000000
-skinparam DatabaseBorderColor #000000
-skinparam InterfaceBorderColor #000000
-skinparam ParticipantBorderColor #000000
-skinparam SequenceLifeLineBorderColor #000000
-skinparam UsecaseBorderColor #000000
-skinparam StateBorderColor #000000
-skinparam ClassBorderColor #000000
-
-title HÌNH 3.6. SƠ ĐỒ USE CASE PHÂN HỆ QUẢN TRỊ CMS & QUẦY VÉ
-
+skinparam usecase {
+  BackgroundColor white
+  BorderColor #26374A
+  FontColor #172536
+}
+skinparam actor {
+  BorderColor #26374A
+  FontColor #172536
+}
+skinparam ArrowColor #52657A
+skinparam defaultFontName "Arial"
+skinparam defaultFontSize 13
 left to right direction
 
-actor "Nhân viên quầy vé\n(Ticket Counter Staff)" as TicketStaff
-actor "Quản trị viên hệ thống\n(CMS Administrator)" as Admin
-actor "Hạ tầng Redis Cache" as Redis
-actor "Hàng đợi RabbitMQ" as RabbitMQ
+title Use Case — G05: Quản trị và thống kê
+actor "Quản trị viên" as Admin
 
-rectangle "Phân hệ Quản trị CMS & Quầy vé" {
-  package "Nghiệp vụ Quầy vé Thực địa" {
-    usecase "UC-45: Xác nhận thu tiền mặt và phát hành mã nhận quyền (Claim Code)" as UC45
-  }
-
-  package "Nghiệp vụ Quản trị Hệ thống CMS" {
-    usecase "UC-25: Đăng nhập quản trị viên CMS" as UC25
-    usecase "UC-26: Xem Dashboard tổng quan hệ thống" as UC26
-    usecase "UC-27: Xem danh sách điểm di tích (POI)" as UC27
-    usecase "UC-28: Thêm mới điểm di tích" as UC28
-    usecase "UC-29: Chỉnh sửa thông tin điểm di tích" as UC29
-    usecase "UC-30: Quản trị bản dịch đa ngữ của POI" as UC30
-    usecase "UC-31: Quản lý và xuất mã QR di sản" as UC31
-    usecase "UC-32: Xem nhật ký lỗi dịch thuật và âm thanh" as UC32
-    usecase "UC-33: Quản lý danh mục Khu vực (Zone)" as UC33
-    usecase "UC-34: Quản lý Lộ trình tham quan (Route)" as UC34
-    usecase "UC-35: Sắp xếp thứ tự trạm dừng tour" as UC35
-    usecase "UC-36: Quản lý sản phẩm quà lưu niệm" as UC36
-    usecase "UC-37: Quản trị bài viết tin tức văn hóa" as UC37
-    usecase "UC-38: Quản lý tài khoản người dùng & Phân quyền" as UC38
-    usecase "UC-39: Quản lý đơn hàng và xử lý giao hàng" as UC39
-    usecase "UC-40: Xem báo cáo thống kê tương tác QR & Audio" as UC40
-  }
+rectangle "Echora · Quản trị và thống kê" {
+  usecase "UC16\nQuản lý tài khoản người dùng" as UC16
+  usecase "UC17\nBáo cáo và thống kê" as UC17
 }
-
-TicketStaff --> UC45
-UC45 ..> Redis : <<SET shorted_code EX 900>>
-
-Admin --> UC25
-Admin --> UC26
-Admin --> UC27
-Admin --> UC28
-Admin --> UC29
-Admin --> UC30
-Admin --> UC31
-Admin --> UC32
-Admin --> UC33
-Admin --> UC34
-Admin --> UC35
-Admin --> UC36
-Admin --> UC37
-Admin --> UC38
-Admin --> UC39
-Admin --> UC40
-
-UC28 ..> RabbitMQ : <<phát poi.updated>>
-UC29 ..> RabbitMQ : <<phát poi.updated>>
-
+Admin --> UC16
+Admin --> UC17
 @enduml

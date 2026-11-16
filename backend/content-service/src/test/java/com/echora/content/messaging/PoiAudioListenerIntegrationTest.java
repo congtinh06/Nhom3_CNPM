@@ -145,12 +145,9 @@ class PoiAudioListenerIntegrationTest {
                 poiId, lang);
         if (!rows.isEmpty() && "MANUAL".equals(rows.get(0).get("translation_source"))) {
             Map<String, Object> r = rows.get(0);
-            return com.echora.content.util.ContentHashUtils.computeHash(
+            return com.echora.content.util.ContentHashUtils.computeNarrationHash(
                     lang,
-                    (String) r.get("title"),
-                    (String) r.get("summary"),
-                    (String) r.get("description"),
-                    (String) r.get("historical_significance")
+                    (String) r.get("description")
             );
         }
 
@@ -161,12 +158,9 @@ class PoiAudioListenerIntegrationTest {
             return "hash-" + lang;
         }
         Map<String, Object> r = viRows.get(0);
-        return com.echora.content.util.ContentHashUtils.computeHash(
+        return com.echora.content.util.ContentHashUtils.computeNarrationHash(
                 lang,
-                (String) r.get("title"),
-                (String) r.get("summary"),
-                (String) r.get("description"),
-                (String) r.get("historical_significance")
+                (String) r.get("description")
         );
     }
 

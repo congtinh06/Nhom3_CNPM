@@ -236,8 +236,9 @@ public class PoiAudioUpdateService {
 
     /**
      * Hash kỳ vọng để đối chiếu event.
-     * - Với ngôn ngữ có bản dịch do người viết (translation_source = MANUAL): hash tính từ chính văn bản đó.
-     * - Các ngôn ngữ còn lại (dịch máy): hash tính từ bản tiếng Việt nguồn, như quy ước cũ.
+     * Audio chỉ đọc phần description (khớp khung đọc), nên hash chỉ tính từ description.
+     * - Với ngôn ngữ có bản dịch do người viết (translation_source = MANUAL): lấy description của chính ngôn ngữ đó.
+     * - Các ngôn ngữ còn lại (dịch máy): lấy description tiếng Việt nguồn, như quy ước cũ.
      */
     private String expectedHashFor(Long poiId, String lang, PoiTranslation viTranslation) {
         PoiTranslation source = viTranslation;
@@ -247,13 +248,7 @@ public class PoiAudioUpdateService {
                 source = target;
             }
         }
-        return ContentHashUtils.computeHash(
-                lang,
-                source.getTitle(),
-                source.getSummary(),
-                source.getDescription(),
-                source.getHistoricalSignificance()
-        );
+        return ContentHashUtils.computeNarrationHash(lang, source.getDescription());
     }
 
     private Poi findPoiOrThrow(Long poiId, String eventName) {

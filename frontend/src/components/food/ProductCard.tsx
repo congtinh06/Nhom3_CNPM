@@ -4,6 +4,7 @@ import { Product } from '../../types';
 import { formatPrice } from '../../utils/formatters';
 import { usePremium } from '../../context/PremiumContext';
 import { applySouvenirDiscount, isSouvenirDiscountEligible } from '../../utils/pricing';
+import { useNavbarLanguage } from '../../content/languages';
 
 interface ProductCardProps {
   product: Product;
@@ -25,6 +26,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   neutralPlaceholder = false,
 }) => {
   const { isPremium, hasAnyPurchase } = usePremium();
+  const { lang } = useNavbarLanguage();
   const isEligible = isPremium || hasAnyPurchase;
   const [imageError, setImageError] = useState(false);
   const [justAdded, setJustAdded] = useState(false);
@@ -90,7 +92,9 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         )}
 
         {isOutOfStock && (
-          <span className="editorial-badge-rect badge-stock-out">TẠM HẾT</span>
+          <span className="editorial-badge-rect badge-stock-out">
+            {lang === 'en' ? 'SOLD OUT' : lang === 'ja' ? '在庫切れ' : lang === 'ko' ? '일시 품절' : 'TẠM HẾT'}
+          </span>
         )}
 
         {/* Heart icon: top-right, white circle bg with subtle shadow */}
@@ -151,17 +155,25 @@ export const ProductCard: React.FC<ProductCardProps> = ({
             className={`editorial-add-btn ${justAdded ? 'is-added' : ''}`}
             onClick={handleAddToCartClick}
             disabled={isOutOfStock}
-            aria-label={`Thêm ${product.name} vào giỏ hàng`}
+            aria-label={
+              lang === 'en'
+                ? `Add ${product.name} to cart`
+                : lang === 'ja'
+                  ? `${product.name}をカートに追加`
+                  : lang === 'ko'
+                    ? `${product.name} 장바구니 담기`
+                    : `Thêm ${product.name} vào giỏ hàng`
+            }
           >
             {justAdded ? (
               <>
                 <Check size={14} strokeWidth={2.5} />
-                <span>Đã thêm</span>
+                <span>{lang === 'en' ? 'Added' : lang === 'ja' ? '追加済' : lang === 'ko' ? '추가됨' : 'Đã thêm'}</span>
               </>
             ) : (
               <>
                 <Plus size={14} strokeWidth={2.2} />
-                <span>Thêm</span>
+                <span>{lang === 'en' ? 'Add' : lang === 'ja' ? '追加' : lang === 'ko' ? '담기' : 'Thêm'}</span>
               </>
             )}
           </button>

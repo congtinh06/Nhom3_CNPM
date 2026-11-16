@@ -1,0 +1,35 @@
+@startuml
+!theme plain
+skinparam shadowing false
+skinparam backgroundColor white
+skinparam packageStyle rectangle
+skinparam usecase {
+  BackgroundColor white
+  BorderColor #26374A
+  FontColor #172536
+}
+skinparam actor {
+  BorderColor #26374A
+  FontColor #172536
+}
+skinparam ArrowColor #52657A
+skinparam defaultFontName "Arial"
+skinparam defaultFontSize 13
+left to right direction
+
+title Use Case — G01: Tài khoản và truy cập
+actor "Khách / người dùng" as User
+actor "Quản trị viên" as Admin
+actor "Dịch vụ thư điện tử" as Mail
+actor "Google OAuth" as Google
+
+rectangle "Echora · Tài khoản và truy cập" {
+  usecase "UC01\nĐăng ký và xác thực tài khoản" as UC01
+  usecase "UC02\nĐăng nhập hệ thống" as UC02
+}
+User --> UC01
+Mail --> UC01
+User --> UC02
+Admin --> UC02
+Google --> UC02
+@enduml

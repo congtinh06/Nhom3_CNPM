@@ -2,10 +2,14 @@ import React, { useRef, useLayoutEffect } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import heroImg from '../../img/gioi_thieu.png';
+import { useNavbarLanguage } from '../../content/languages';
+import { getCoverContent } from '../../content/staticSections';
 
 gsap.registerPlugin(ScrollTrigger);
 
 export const CoverSection: React.FC = () => {
+  const { lang } = useNavbarLanguage();
+  const cover = getCoverContent(lang);
   const heroRef = useRef<HTMLElement>(null);
   const titleRef = useRef<HTMLHeadingElement>(null);
 
@@ -103,15 +107,15 @@ export const CoverSection: React.FC = () => {
       <div className="hero-shade" />
       <div className="hero-block">
         <div className="hero-wrap">
-          <p className="hero-kicker">VẺ ĐẸP ĐẤT NƯỚC VÀ CON NGƯỜI</p>
-          <h1 className="hero-title" ref={titleRef} aria-label="Thành Phố Hồ Chí Minh">
-            {'THÀNH PHỐ HỒ CHÍ MINH'.split('').map((c, i) => (
+          <p className="hero-kicker">{cover.kicker}</p>
+          <h1 className="hero-title" ref={titleRef} aria-label={cover.title}>
+            {cover.title.split('').map((c, i) => (
               <span key={i} aria-hidden="true">
                 {c === ' ' ? '\u00A0' : c}
               </span>
             ))}
           </h1>
-          <p className="hero-date">TP. Hồ Chí Minh, 10/2026</p>
+          <p className="hero-date">{cover.date}</p>
         </div>
       </div>
     </section>

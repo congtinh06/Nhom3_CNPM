@@ -52,6 +52,7 @@ export const ContactMap: React.FC<ContactMapProps> = () => {
         center={CONTACT_COORDS}
         zoom={16}
         scrollWheelZoom={false}
+        dragging={!L.Browser?.touch}
         style={{ width: '100%', height: '100%' }}
         attributionControl={false}
       >

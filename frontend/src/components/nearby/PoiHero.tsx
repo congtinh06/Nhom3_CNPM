@@ -20,11 +20,11 @@ export function estimatePoiDurationSeconds(
   activeDuration?: number,
   isCurrent?: boolean
 ): number {
-  if (isCurrent && activeDuration && activeDuration > 0) {
+  if (isCurrent && typeof activeDuration === 'number' && Number.isFinite(activeDuration) && activeDuration > 0) {
     return Math.round(activeDuration);
   }
   const rawAudio = poi.audio?.[lang];
-  if (typeof rawAudio === 'number' && rawAudio > 0) {
+  if (typeof rawAudio === 'number' && Number.isFinite(rawAudio) && rawAudio > 0) {
     return Math.round(rawAudio);
   }
   const fullParas = getNarration(poi, lang, 'full');

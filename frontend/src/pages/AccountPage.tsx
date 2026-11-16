@@ -38,6 +38,7 @@ export const AccountPage: React.FC = () => {
   const location = useLocation();
   const { lang, t } = useAccountI18n();
   const tabRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+  const signingOutRef = useRef(false);
 
   const tabFromHash = location.hash.replace(/^#/, '');
   const [active, setActive] = useState<TabId>(() =>
@@ -49,7 +50,7 @@ export const AccountPage: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    if (status === 'guest') {
+    if (status === 'guest' && !signingOutRef.current) {
       navigate('/dang-nhap', { state: { from: '/tai-khoan' }, replace: true });
     }
   }, [status, navigate]);
@@ -117,9 +118,10 @@ export const AccountPage: React.FC = () => {
   };
 
   const handleLogout = async () => {
+    signingOutRef.current = true;
     await logout();
     showToast(t.signedOut);
-    navigate('/');
+    navigate('/', { replace: true });
   };
 
   const isLoading = status === 'loading' || !user;

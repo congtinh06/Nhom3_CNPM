@@ -4,6 +4,7 @@ import { ArrowRight, Newspaper } from 'lucide-react';
 import { useNewsListQuery } from '../../api/news';
 import { StoryCard } from '../news/StoryCard';
 import { useNavbarLanguage } from '../../content/languages';
+import { tNews } from '../../content/newsI18n';
 import '../../styles/news.css';
 
 export const HomeNewsSection: React.FC = () => {
@@ -17,8 +18,8 @@ export const HomeNewsSection: React.FC = () => {
       <section className="s home-news-section" id="tin-tuc-trang-chu" aria-label="Tin tức du lịch">
         <div className="home-news-header">
           <div className="home-news-title-wrap">
-            <span className="home-news-eyebrow">CẬP NHẬT MỚI</span>
-            <h2 className="home-news-title">Tin tức & Câu chuyện Sài Gòn</h2>
+            <span className="home-news-eyebrow">{tNews(lang, 'homeNewsEyebrowAlt')}</span>
+            <h2 className="home-news-title">{tNews(lang, 'homeNewsTitle')}</h2>
           </div>
         </div>
         <div className="news-skeleton-featured" style={{ height: 220 }} />
@@ -37,16 +38,16 @@ export const HomeNewsSection: React.FC = () => {
           <div className="home-news-title-wrap">
             <span className="home-news-eyebrow">
               <Newspaper size={14} aria-hidden="true" />
-              <span>GÓC NHÌN & DI SẢN</span>
+              <span>{tNews(lang, 'homeNewsEyebrow')}</span>
             </span>
-            <h2 className="home-news-title">Tin tức & Câu chuyện Sài Gòn</h2>
+            <h2 className="home-news-title">{tNews(lang, 'homeNewsTitle')}</h2>
             <p className="home-news-desc">
-              Cập nhật đời sống, văn hóa di sản và những kinh nghiệm trải nghiệm mới nhất từ các nguồn báo chí uy tín.
+              {tNews(lang, 'homeNewsDesc')}
             </p>
           </div>
 
           <Link to="/tin-tuc" className="home-news-all-link">
-            <span>Xem tất cả tin tức</span>
+            <span>{tNews(lang, 'homeNewsAll')}</span>
             <ArrowRight size={16} aria-hidden="true" />
           </Link>
         </div>

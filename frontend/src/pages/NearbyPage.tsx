@@ -268,7 +268,7 @@ const PREMIUM_GATE_COPY: Record<
 };
 
 const fmtTime = (s: number): string => {
-  if (isNaN(s) || s < 0) return '0:00';
+  if (!Number.isFinite(s) || s < 0) return '0:00';
   return Math.floor(s / 60) + ':' + String(Math.floor(s % 60)).padStart(2, '0');
 };
 
@@ -622,7 +622,6 @@ export const NearbyPage: React.FC = () => {
 
   const [flyToUserToken, setFlyToUserToken] = useState<number>(0);
   const gpsToastShownRef = useRef<boolean>(false);
-  const gpsIntentRef = useRef<boolean>(false);
   const [collapsedPoiId, setCollapsedPoiId] = useState<string | null>(null);
   const [isPlayerHidden, setIsPlayerHidden] = useState<boolean>(false);
   const [isAutoEnabled, setIsAutoEnabled] = useState<boolean>(false);
@@ -949,12 +948,13 @@ export const NearbyPage: React.FC = () => {
     return null;
   }, [gpsError, userPos, sortedPois, currentLang, getPoiName]);
 
-  // After an explicit "My location" tap: if the visitor is inside the nearest
-  // stop radius, start that stop once even when automatic narration is off.
-  // Outside the radius the status line explains that listening is manual.
+  // Whenever a GPS fix arrives: if the visitor is inside the nearest stop's
+  // narration radius, start that stop automatically (once). Outside the radius
+  // listening stays manual. When the auto switch is ON, useAutoNarration owns
+  // this decision so the two paths never double-start.
+  const nearbyAutoStartedRef = useRef<Set<string>>(new Set());
   useEffect(() => {
-    if (!userPos || !gpsIntentRef.current) return;
-    gpsIntentRef.current = false;
+    if (!userPos || isAutoEnabled) return;
 
     let nearest: GeoPoi | null = null;
     let nearestDist = Infinity;
@@ -970,11 +970,12 @@ export const NearbyPage: React.FC = () => {
     const triggerRadius = nearest.triggerRadius ?? 60;
     if (
       nearestDist <= triggerRadius &&
-      !isAutoEnabled &&
       !isPlaying &&
       !isLoading &&
-      currentId !== nearest.id
+      currentId !== nearest.id &&
+      !nearbyAutoStartedRef.current.has(nearest.id)
     ) {
+      nearbyAutoStartedRef.current.add(nearest.id);
       setSelectedId(nearest.id);
       setActiveId(nearest.id);
       playPoi(nearest.id, true);
@@ -1411,9 +1412,52 @@ export const NearbyPage: React.FC = () => {
       ? `${(consecutiveListenedCount / Math.max(1, sortedPois.length)) * 100}%`
       : '0%';
 
-  const playerTotalSeconds = activeStopDuration > 0 ? activeStopDuration : duration || 120;
+  // Bottom player must always describe the stop that is ACTUALLY playing,
+  // not whichever stop happens to be selected. Otherwise the player label,
+  // thumbnail and timer point at a different stop than the audio.
+  const playerPoi = useMemo(() => {
+    if (currentId) {
+      return pois.find((poi) => poi.id === currentId) || activeSelectedPoi;
+    }
+    return activeSelectedPoi;
+  }, [currentId, pois, activeSelectedPoi]);
+
+  const playerIndex = useMemo(() => {
+    if (!playerPoi) return -1;
+    return sortedPois.findIndex((item) => item.poi.id === playerPoi.id);
+  }, [playerPoi, sortedPois]);
+
+  const playerStopSeconds = useMemo(() => {
+    if (!playerPoi) return 0;
+    return estimatePoiDurationSeconds(
+      playerPoi,
+      currentLang,
+      duration,
+      currentId === playerPoi.id
+    );
+  }, [playerPoi, currentLang, duration, currentId]);
+
+  const playerStopTime = useMemo(() => {
+    if (!playerPoi || currentId !== playerPoi.id) return 0;
+    if (activeSelectedPoi?.id === playerPoi.id) return effectiveStopTime;
+    return Math.min(playerStopSeconds, Math.max(0, currentTime));
+  }, [
+    playerPoi,
+    currentId,
+    activeSelectedPoi,
+    effectiveStopTime,
+    playerStopSeconds,
+    currentTime,
+  ]);
+
+  const playerTotalSeconds =
+    Number.isFinite(playerStopSeconds) && playerStopSeconds > 0
+      ? playerStopSeconds
+      : Number.isFinite(duration) && duration > 0
+      ? duration
+      : 120;
   const activeProgressPercent =
-    playerTotalSeconds > 0 ? Math.min(100, (effectiveStopTime / playerTotalSeconds) * 100) : 0;
+    playerTotalSeconds > 0 ? Math.min(100, (playerStopTime / playerTotalSeconds) * 100) : 0;
 
   return (
     <div className="nearby-sv-root" ref={rootRef}>
@@ -1482,15 +1526,11 @@ export const NearbyPage: React.FC = () => {
               {t(currentLang, 'heroEyebrow')}
             </p>
             <h1>
-              {currentLang === 'vi'
-                ? t('vi', 'heroDisplayTitle')
-                : t(currentLang, 'pageTitle')}
-              {currentLang === 'vi' && <span className="sr-only">{t('vi', 'pageTitle')}</span>}
+              {t(currentLang, 'heroDisplayTitle')}
+              <span className="sr-only">{t(currentLang, 'pageTitle')}</span>
             </h1>
             <p>
-              {currentLang === 'vi'
-                ? t('vi', 'heroDisplaySub')
-                : t(currentLang, 'pageSubtitle')}
+              {t(currentLang, 'heroDisplaySub')}
             </p>
             <div className="hero-cta">
               <button
@@ -1595,7 +1635,7 @@ export const NearbyPage: React.FC = () => {
                   </span>
                   {isItemListened ? (
                     <span className="sd-badge-heard">
-                      {currentLang === 'vi' ? 'Đã trải qua' : currentLang === 'en' ? 'Visited' : 'Đã nghe'}
+                      {currentLang === 'vi' ? 'Đã trải qua' : currentLang === 'en' ? 'Visited' : currentLang === 'ja' ? '訪問済み' : '방문 완료'}
                     </span>
                   ) : routeLegText ? (
                     <small>{routeLegText}</small>
@@ -1741,41 +1781,40 @@ export const NearbyPage: React.FC = () => {
                 showSelectedCard={false}
                 compactPopup
               />
+            </div>
 
-              <div className="tools">
-                <ToolbarControls
-                  myLocationBtnText={t(currentLang, 'myLocation')}
-                  autoNarrationText={t(currentLang, 'autoNarration')}
-                  isAutoEnabled={isAutoEnabled}
-                  onToggleAuto={() => {
-                    if (
-                      isPremiumLanguage(currentLang) &&
-                      !canAccessPoiLanguage(activeSelectedPoi?.numericId ?? null, currentLang)
-                    ) {
-                      warnAndOpenPremium(activeSelectedPoi);
-                      return;
-                    }
-                    unlockAudio();
-                    const nextVal = !isAutoEnabled;
-                    setIsAutoEnabled(nextVal);
-                    setAutoDirect(nextVal);
-                    if (nextVal && userPos) {
-                      checkAutoTrigger(userPos.lat, userPos.lng);
-                    }
-                    triggerToast(t(currentLang, nextVal ? 'toastAutoOn' : 'toastAutoOff'));
-                  }}
-                  onRequestGps={() => {
-                    gpsIntentRef.current = true;
-                    gpsToastShownRef.current = false;
-                    setFlyToUserToken((n) => n + 1);
-                    requestGps();
-                    triggerToast(t(currentLang, 'toastLocating'));
-                  }}
-                  currentLang={currentLang}
-                  isLocatingGps={isRequestingGps}
-                  statusMessage={statusMessage}
-                />
-              </div>
+            <div className="tools nearby-map-toolbar">
+              <ToolbarControls
+                myLocationBtnText={t(currentLang, 'myLocation')}
+                autoNarrationText={t(currentLang, 'autoNarration')}
+                isAutoEnabled={isAutoEnabled}
+                onToggleAuto={() => {
+                  if (
+                    isPremiumLanguage(currentLang) &&
+                    !canAccessPoiLanguage(activeSelectedPoi?.numericId ?? null, currentLang)
+                  ) {
+                    warnAndOpenPremium(activeSelectedPoi);
+                    return;
+                  }
+                  unlockAudio();
+                  const nextVal = !isAutoEnabled;
+                  setIsAutoEnabled(nextVal);
+                  setAutoDirect(nextVal);
+                  if (nextVal && userPos) {
+                    checkAutoTrigger(userPos.lat, userPos.lng);
+                  }
+                  triggerToast(t(currentLang, nextVal ? 'toastAutoOn' : 'toastAutoOff'));
+                }}
+                onRequestGps={() => {
+                  gpsToastShownRef.current = false;
+                  setFlyToUserToken((n) => n + 1);
+                  requestGps();
+                  triggerToast(t(currentLang, 'toastLocating'));
+                }}
+                currentLang={currentLang}
+                isLocatingGps={isRequestingGps}
+                statusMessage={statusMessage}
+              />
             </div>
           </div>
         </div>
@@ -1977,20 +2016,20 @@ export const NearbyPage: React.FC = () => {
           aria-valuenow={Math.round(activeProgressPercent)}
           tabIndex={0}
           onClick={(event) => {
-            if (!activeSelectedPoi || playerTotalSeconds <= 0) return;
+            if (!playerPoi || playerTotalSeconds <= 0) return;
             const rect = event.currentTarget.getBoundingClientRect();
             if (rect.width <= 0) return;
             const ratio = Math.max(0, Math.min(1, (event.clientX - rect.left) / rect.width));
-            handleSeek(activeSelectedPoi.id, Math.floor(ratio * playerTotalSeconds));
+            handleSeek(playerPoi.id, Math.floor(ratio * playerTotalSeconds));
           }}
           onKeyDown={(event) => {
-            if (!activeSelectedPoi || playerTotalSeconds <= 0) return;
+            if (!playerPoi || playerTotalSeconds <= 0) return;
             if (event.key === 'ArrowRight' || event.key === 'ArrowLeft') {
               event.preventDefault();
               const delta = event.key === 'ArrowRight' ? 5 : -5;
               handleSeek(
-                activeSelectedPoi.id,
-                Math.max(0, Math.min(playerTotalSeconds, effectiveStopTime + delta))
+                playerPoi.id,
+                Math.max(0, Math.min(playerTotalSeconds, playerStopTime + delta))
               );
             }
           }}
@@ -2000,10 +2039,10 @@ export const NearbyPage: React.FC = () => {
 
         <div className="wrap">
           <div className="now player-meta-block">
-            {activeSelectedPoi && (
+            {playerPoi && (
               <img
                 className="player-thumb"
-                src={resolveImagePath(activeSelectedPoi.image, activeSelectedPoi.slug)}
+                src={resolveImagePath(playerPoi.image, playerPoi.slug)}
                 alt=""
                 width={46}
                 height={46}
@@ -2019,17 +2058,17 @@ export const NearbyPage: React.FC = () => {
                 {notice ||
                   (isPlaying
                     ? t(currentLang, 'playerPlayingStop', {
-                        current: (activeIndex >= 0 ? activeIndex : 0) + 1,
+                        current: (playerIndex >= 0 ? playerIndex : 0) + 1,
                         total: pois.length,
                       })
                     : t(currentLang, 'playerStopPosition', {
-                        current: (activeIndex >= 0 ? activeIndex : 0) + 1,
+                        current: (playerIndex >= 0 ? playerIndex : 0) + 1,
                         total: pois.length,
                       }))}
               </small>
               <strong id="nowName" className="player-poi-title">
-                {activeSelectedPoi
-                  ? getPoiName(activeSelectedPoi)
+                {playerPoi
+                  ? getPoiName(playerPoi)
                   : t(currentLang, 'playerSelectToStart')}
               </strong>
             </div>
@@ -2041,8 +2080,8 @@ export const NearbyPage: React.FC = () => {
               className="ib player-skip-btn"
               aria-label={t(currentLang, 'rewind10Aria')}
               onClick={() => {
-                if (!activeSelectedPoi || playerTotalSeconds <= 0) return;
-                handleSeek(activeSelectedPoi.id, Math.max(0, effectiveStopTime - 10));
+                if (!playerPoi || playerTotalSeconds <= 0) return;
+                handleSeek(playerPoi.id, Math.max(0, playerStopTime - 10));
               }}
             >
               <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -2071,8 +2110,8 @@ export const NearbyPage: React.FC = () => {
               aria-label={isPlaying ? t(currentLang, 'pauseBtn') : t(currentLang, 'playBtn')}
               aria-pressed={isPlaying}
               onClick={() => {
-                if (activeSelectedPoi) {
-                  handleTogglePlayPoi(activeSelectedPoi.id);
+                if (playerPoi) {
+                  handleTogglePlayPoi(playerPoi.id);
                 }
               }}
             >
@@ -2103,8 +2142,8 @@ export const NearbyPage: React.FC = () => {
               className="ib player-skip-btn"
               aria-label={t(currentLang, 'forward10Aria')}
               onClick={() => {
-                if (!activeSelectedPoi || playerTotalSeconds <= 0) return;
-                handleSeek(activeSelectedPoi.id, Math.min(playerTotalSeconds, effectiveStopTime + 10));
+                if (!playerPoi || playerTotalSeconds <= 0) return;
+                handleSeek(playerPoi.id, Math.min(playerTotalSeconds, playerStopTime + 10));
               }}
             >
               <span className="player-skip-num">10</span>
@@ -2123,14 +2162,14 @@ export const NearbyPage: React.FC = () => {
             </button>
 
             <span className="tm" id="tm">
-              {fmtTime(effectiveStopTime)} / {fmtTime(playerTotalSeconds)}
+              {fmtTime(playerStopTime)} / {fmtTime(playerTotalSeconds)}
             </span>
           </div>
 
           <div className="lang" id="lang">
             {SUPPORTED_LANGUAGES.map((opt) => {
               const isLocked = canAccessPoiLanguage
-                ? !canAccessPoiLanguage(activeSelectedPoi?.numericId ?? activeSelectedPoi?.id, opt.code)
+                ? !canAccessPoiLanguage(playerPoi?.numericId ?? playerPoi?.id, opt.code)
                 : opt.code !== 'vi';
               const isActive = currentLang === opt.code;
 
@@ -2144,7 +2183,7 @@ export const NearbyPage: React.FC = () => {
                   onClick={() => {
                     if (isLocked) {
                       triggerToast(PREMIUM_GATE_COPY[opt.code].warning);
-                      warnAndOpenPremium(activeSelectedPoi, opt.code);
+                      warnAndOpenPremium(playerPoi, opt.code);
                     } else {
                       changeLanguage(opt.code);
                     }

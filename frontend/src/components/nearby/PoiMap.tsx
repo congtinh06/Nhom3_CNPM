@@ -351,12 +351,22 @@ const createMarkerIcon = (
   isActive: boolean,
   isHovered: boolean,
   isCurPlaying: boolean,
-  isListened: boolean
+  isListened: boolean,
+  currentLang: SupportedLanguage = 'vi'
 ) => {
   const activeClass = isActive ? 'is-selected' : '';
   const hoveredClass = isHovered ? 'is-hovered' : '';
   const playingClass = isCurPlaying ? 'is-playing' : '';
   const listenedClass = isListened ? 'is-heard' : '';
+  const listenedSuffix = isListened
+    ? currentLang === 'vi'
+      ? ' - Đã trải qua'
+      : currentLang === 'en'
+        ? ' - Visited'
+        : currentLang === 'ja'
+          ? ' - 訪問済み'
+          : ' - 방문 완료'
+    : '';
 
   // The label is always in the DOM and revealed by CSS hover/active state.
   // Keeping the icon markup stable is what prevents the Leaflet marker from
@@ -365,7 +375,7 @@ const createMarkerIcon = (
     className: 'nearby-marker-pin-wrapper',
     html: `
       <div class="nearby-gmap-marker-container ${activeClass} ${hoveredClass} ${playingClass} ${listenedClass}">
-        <div class="nearby-gmap-marker-label">${name}${isListened ? ' - Đã trải qua' : ''}</div>
+        <div class="nearby-gmap-marker-label">${name}${listenedSuffix}</div>
         <div class="nearby-gmap-marker-circle">
           <span class="nearby-gmap-marker-num">${num}</span>
           ${isListened ? '<span class="nearby-gmap-marker-check" aria-hidden="true"></span>' : ''}
@@ -419,8 +429,8 @@ const PoiMarkerComponent: React.FC<PoiMarkerProps> = ({
   const isCurPaused = poi.id === currentPlayingId && isPaused;
 
   const icon = useMemo(
-    () => createMarkerIcon(index + 1, poiName, isActive, isHovered, isCurPlaying, isListened),
-    [index, poiName, isActive, isHovered, isCurPlaying, isListened]
+    () => createMarkerIcon(index + 1, poiName, isActive, isHovered, isCurPlaying, isListened, currentLang),
+    [index, poiName, isActive, isHovered, isCurPlaying, isListened, currentLang]
   );
 
   return (
@@ -572,6 +582,8 @@ export const PoiMap: React.FC<PoiMapProps> = ({
           zoom={14}
           zoomControl={false}
           attributionControl={false}
+          scrollWheelZoom={false}
+          dragging={!L.Browser?.touch}
           className="nearby-gmap-canvas nearby-leaflet-map"
           style={{ width: '100%', height: '100%', background: '#EFE9DF', border: 'none' }}
         >
@@ -679,9 +691,23 @@ export const PoiMap: React.FC<PoiMapProps> = ({
             type="button"
             className="nearby-map-view-route-btn"
             onClick={handleViewFullRoute}
-            title={currentLang === 'vi' ? 'Xem toàn bộ lộ trình' : 'View full route'}
+            title={
+              currentLang === 'vi'
+                ? 'Xem toàn bộ lộ trình'
+                : currentLang === 'en'
+                  ? 'View full route'
+                  : currentLang === 'ja'
+                    ? 'ルート全体を表示'
+                    : '전체 경로 보기'
+            }
           >
-            {currentLang === 'vi' ? 'Xem toàn bộ lộ trình' : 'View full route'}
+            {currentLang === 'vi'
+              ? 'Xem toàn bộ lộ trình'
+              : currentLang === 'en'
+                ? 'View full route'
+                : currentLang === 'ja'
+                  ? 'ルート全体を表示'
+                  : '전체 경로 보기'}
           </button>
         )}
 

@@ -5976,3 +5976,24 @@ body:has(.nearby-sv-root),
   border-color: var(--acc, #C2410C);
   color: #FFFFFF;
 }
+
+.nearby-sv-root .map {
+  isolation: isolate;
+}
+
+.nearby-sv-root .mapcol .tools.nearby-map-toolbar {
+  position: static;
+  left: auto;
+  right: auto;
+  bottom: auto;
+  width: 100%;
+  margin: 12px auto 0;
+  justify-content: center;
+  z-index: auto;
+}
+
+@media (max-width: 640px) {
+  .nearby-sv-root .mapcol .tools.nearby-map-toolbar {
+    margin-top: 10px;
+  }
+}

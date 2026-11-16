@@ -57,6 +57,15 @@ h2 {
   text-transform: none;
 }
 
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-body, 'Be Vietnam Pro', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);
+  font-weight: 600;
+  margin: 0;
+}
+
 /* Tiêu đề chỉ dành cho trình đọc màn hình: vẫn có trong cây accessibility. */
 .sr-only {
   position: absolute;
@@ -1753,13 +1762,13 @@ select:focus-visible {
   letter-spacing: 0.02em;
 }
 
-.cd-body {
+.cd .cd-body {
   display: flex;
   flex-direction: column;
   margin-top: auto;
 }
 
-.cd-tag {
+.cd .cd-tag {
   font-size: 12px;
   font-weight: 500;
   color: rgba(255, 241, 199, 0.78);
@@ -1768,7 +1777,7 @@ select:focus-visible {
   margin-bottom: 6px;
 }
 
-.cd-title {
+.cd .cd-title {
   font-family: var(--font-display, Anton, Impact, sans-serif);
   font-weight: 400;
   text-transform: uppercase;
@@ -1780,7 +1789,7 @@ select:focus-visible {
   text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
 }
 
-.cd-desc {
+.cd .cd-desc {
   font-size: 13.5px;
   line-height: 1.5;
   color: rgba(255, 255, 255, 0.84);
@@ -1793,7 +1802,7 @@ select:focus-visible {
   min-height: 4.2em;
 }
 
-.cd-footer {
+.cd .cd-footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -2595,6 +2604,24 @@ dialog p {
   box-shadow: 0 0 0 2px rgba(138, 47, 18, 0.14);
 }
 
+/* Disable native Edge / IE / browser password reveal & clear buttons to prevent dual eye icons */
+input::-ms-reveal,
+input::-ms-clear {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+input::-webkit-contacts-auto-fill-button,
+input::-webkit-credentials-auto-fill-button {
+  visibility: hidden;
+  display: none !important;
+  pointer-events: none;
+  height: 0;
+  width: 0;
+  margin: 0;
+}
+
 .af-input-wrap {
   position: relative;
   display: block;
@@ -2617,6 +2644,7 @@ dialog p {
   color: #6f6259;
   cursor: pointer;
   transition: background 0.15s ease, color 0.15s ease;
+  z-index: 2;
 }
 
 .af-input-wrap .af-eye:hover {
@@ -2630,7 +2658,7 @@ dialog p {
 }
 
 .af-input-wrap input {
-  padding-right: 38px;
+  padding-right: 42px !important;
 }
 
 .af-field-err {
@@ -2673,15 +2701,16 @@ dialog p {
   color: var(--brown);
   font: inherit;
   font-size: 13px;
-  font-weight: 500;
-  text-decoration: underline;
-  text-underline-offset: 3px;
+  font-weight: 600;
+  text-decoration: none;
   cursor: pointer;
-  transition: color 0.15s ease;
+  transition: color 0.15s ease, text-decoration 0.15s ease;
 }
 
 .af-link:hover {
   color: #5c1e09;
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 .af-link:focus-visible {
@@ -2819,12 +2848,14 @@ dialog p {
 .af-alt a {
   color: var(--brown);
   font-weight: 600;
-  text-decoration: underline;
-  text-underline-offset: 3px;
+  text-decoration: none;
+  transition: color 0.15s ease, text-decoration 0.15s ease;
 }
 
 .af-alt a:hover {
   color: #5c1e09;
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 .auth-note {
@@ -5682,19 +5713,25 @@ dialog p {
 .af-guest-link {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  background: none;
-  border: none;
+  justify-content: center;
+  gap: 6px;
+  background: transparent;
+  border: 1px solid transparent;
   color: var(--fb-accent, #c2410c);
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
-  text-decoration: underline;
-  text-underline-offset: 3px;
+  text-decoration: none;
+  padding: 4px 10px;
+  border-radius: 999px;
+  transition: all 0.18s ease;
 }
 
 .af-guest-link:hover {
   color: #9a3412;
+  background: rgba(194, 65, 12, 0.08);
+  border-color: rgba(194, 65, 12, 0.2);
+  text-decoration: none;
 }
 
 @media (max-width: 480px) {

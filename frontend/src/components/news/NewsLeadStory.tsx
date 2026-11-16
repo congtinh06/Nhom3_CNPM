@@ -18,8 +18,9 @@ export const NewsLeadStory: React.FC<NewsLeadStoryProps> = ({ item, lang = 'vi' 
   const categoryMeta = NEWS_CATEGORIES[item.category] || NEWS_CATEGORIES['diem-den'];
   const formattedDate = formatNewsDate(item.publishedAt, lang);
   const readingTime = formatReadingTime(item.readingTime || item.readingMinutes || 3, lang);
+  const photoPrefix = lang === 'en' ? 'Photo: ' : lang === 'ja' ? '写真: ' : lang === 'ko' ? '사진: ' : 'Ảnh: ';
   const captionText = item.imageCredit
-    ? `Ảnh: ${item.imageCredit}`
+    ? `${photoPrefix}${item.imageCredit}`
     : (item.source && item.source.trim().toLowerCase() !== 'echora' ? item.source : '');
 
   return (

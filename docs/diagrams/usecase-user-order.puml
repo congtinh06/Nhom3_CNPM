@@ -1,82 +1,44 @@
 @startuml
 !theme plain
-skinparam defaultFontName "Times New Roman"
-skinparam defaultFontSize 11
-skinparam monochrome true
 skinparam shadowing false
-skinparam roundCorner 0
+skinparam backgroundColor white
 skinparam packageStyle rectangle
-skinparam handwritten false
-skinparam ArrowColor #000000
-skinparam ActorBorderColor #000000
-skinparam ComponentBorderColor #000000
-skinparam DatabaseBorderColor #000000
-skinparam InterfaceBorderColor #000000
-skinparam ParticipantBorderColor #000000
-skinparam SequenceLifeLineBorderColor #000000
-skinparam UsecaseBorderColor #000000
-skinparam StateBorderColor #000000
-skinparam ClassBorderColor #000000
-
-title HÌNH 3.5. SƠ ĐỒ USE CASE PHÂN HỆ NGƯỜI DÙNG, GIỎ HÀNG & THANH TOÁN
-
+skinparam usecase {
+  BackgroundColor white
+  BorderColor #26374A
+  FontColor #172536
+}
+skinparam actor {
+  BorderColor #26374A
+  FontColor #172536
+}
+skinparam ArrowColor #52657A
+skinparam defaultFontName "Arial"
+skinparam defaultFontSize 13
 left to right direction
 
-actor "Khách vãng lai\n(Visitor)" as Visitor
-actor "Người dùng đã đăng ký\n(Registered User)" as RegUser
-actor "Cổng thanh toán VNPAY" as VNPAY
-actor "Hệ thống VietQR NAPAS" as VietQR
-actor "Máy chủ Google OAuth2" as Google
+title Use Case — G04: Đơn hàng và quyền truy cập
+actor "Người dùng" as User
+actor "Quản trị viên" as Admin
+actor "Cổng VNPAY / VietQR" as Pay
 
-rectangle "Phân hệ Người dùng, Giỏ hàng & Thanh toán" {
-  usecase "UC-10: Đăng ký tài khoản người dùng" as UC10
-  usecase "UC-11: Xác thực tài khoản qua email" as UC11
-  usecase "UC-12: Yêu cầu đặt lại mật khẩu" as UC12
-  usecase "UC-13: Đăng nhập bằng email và mật khẩu" as UC13
-  usecase "UC-14: Đăng nhập nhanh bằng tài khoản Google" as UC14
-  usecase "UC-15: Đăng nhập bằng quét mã QR trên web" as UC15
-  usecase "UC-16: Quản lý thông tin hồ sơ cá nhân" as UC16
-  usecase "UC-17: Đăng xuất khỏi hệ thống" as UC17
-
-  usecase "UC-18: Quản lý giỏ hàng quà lưu niệm" as UC18
-  usecase "UC-19: Đặt hàng quà lưu niệm" as UC19
-  usecase "UC-20: Mua gói nâng cấp ngoại ngữ Premium" as UC20
-  usecase "UC-21: Thanh toán đơn hàng qua cổng VNPAY" as UC21
-  usecase "UC-22: Thanh toán đơn hàng qua chuyển khoản VietQR" as UC22
-  usecase "UC-23: Hủy đơn hàng ở trạng thái PENDING" as UC23
-  usecase "UC-24: Tra cứu lịch sử đơn hàng cá nhân" as UC24
-  usecase "UC-46: Kích hoạt quyền truy cập bằng mã Claim Code" as UC46
-
-  usecase "Xoay vòng Refresh Token (Token Rotation)" as TokenRotation
+rectangle "Echora · Đơn hàng và quyền truy cập" {
+  usecase "UC10\nQuản lý giỏ hàng" as UC10
+  usecase "UC11\nĐặt hàng sản phẩm" as UC11
+  usecase "UC12\nMua quyền thuyết minh" as UC12
+  usecase "UC13\nThanh toán đơn hàng" as UC13
+  usecase "UC14\nQuản lý đơn hàng cá nhân" as UC14
+  usecase "UC15\nQuản lý đơn hàng của khách" as UC15
 }
-
-Visitor --> UC10
-Visitor --> UC11
-Visitor --> UC12
-Visitor --> UC13
-Visitor --> UC14
-Visitor --> UC15
-Visitor --> UC46
-
-RegUser --> UC16
-RegUser --> UC17
-RegUser --> UC18
-RegUser --> UC19
-RegUser --> UC20
-RegUser --> UC21
-RegUser --> UC22
-RegUser --> UC23
-RegUser --> UC24
-
-UC14 ..> Google : <<xác thực ID Token>>
-UC21 ..> VNPAY : <<chuyển hướng & IPN>>
-UC22 ..> VietQR : <<tạo mã NAPAS>>
-
-UC13 ..> TokenRotation : <<include>>
-UC19 ..> UC18 : <<include>>
-UC19 ..> UC21 : <<extend>>
-UC19 ..> UC22 : <<extend>>
-UC20 ..> UC21 : <<extend>>
-UC20 ..> UC22 : <<extend>>
-
+User --> UC10
+User --> UC11
+User --> UC12
+User --> UC13
+Pay --> UC13
+User --> UC14
+Admin --> UC15
+UC13 ..> UC11 : <<extend>>
+[thanh toán trực tuyến]
+UC13 ..> UC12 : <<extend>>
+[thanh toán trực tuyến]
 @enduml

@@ -199,23 +199,17 @@ describe('FoodBeveragePage - trang Quà lưu niệm', () => {
     expect(await screen.findByRole('button', { name: 'Đã thêm ✓' })).toBeInTheDocument();
   });
 
-  it('hiển thị gợi ý điểm vừa nghe từ echora_listened_pois và ẩn khi chưa nghe điểm nào', async () => {
+  it('không còn hiển thị gợi ý điểm vừa nghe gây xao nhãng', async () => {
     localStorage.setItem('echora_listened_pois', JSON.stringify(['poi-4']));
 
     renderPage('/am-thuc');
     await screen.findByRole('heading', { name: 'Nam châm Chợ Bến Thành' });
 
-    const hintBtn = await screen.findByRole('button', {
-      name: /Xem 1 món gắn với điểm này/i,
-    });
-    fireEvent.click(hintBtn);
-
-    await waitFor(() => {
-      expect(screen.getByRole('heading', { name: 'Nam châm Chợ Bến Thành' })).toBeInTheDocument();
-      expect(
-        screen.queryByRole('heading', { name: 'Tranh mạ vàng Dinh Độc Lập' })
-      ).not.toBeInTheDocument();
-    });
+    expect(
+      screen.queryByRole('button', {
+        name: /món gắn với điểm này/i,
+      })
+    ).not.toBeInTheDocument();
   });
 
   it('hiển thị phân trang số khi danh mục có hơn 8 món quà lưu niệm', async () => {

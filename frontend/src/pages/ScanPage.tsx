@@ -38,8 +38,124 @@ import { usePremium, buildPremiumPath, buildPoiPremiumPath } from '../context/Pr
 import { unlockAudio } from '../lib/audioUnlock';
 import { getAnalyticsSessionId } from '../lib/analytics';
 import { detectDeviceType } from '../lib/device';
+import { useNavbarLanguage } from '../content/languages';
 import { PoiDetail, SupportedLanguage, TriggerType } from '../types';
 import '../styles/scan.css';
+
+const SCAN_I18N = {
+  vi: {
+    heroEyebrow: 'Thuyết minh tự động',
+    heroTitle: 'Quét mã QR',
+    heroIntro: 'Quét mã tại điểm tham quan để nghe thuyết minh ngay trên điện thoại. Tiếng Việt miễn phí cho mọi du khách.',
+    cameraOpen: 'Mở camera quét mã',
+    cameraClose: 'Tắt camera',
+    cameraActiveHint: 'Đang quét, đưa mã QR vào giữa khung hình',
+    cameraInactiveHint: 'Đưa mã QR trên bảng hiệu vào khung hình',
+    cameraScanning: 'Đang quét mã QR từ camera...',
+    orEnterCode: 'hoặc nhập mã',
+    inputPlaceholder: 'Nhập mã QR (ví dụ: qr-dinh-doc-lap-01)',
+    lookupBtn: 'Tra cứu mã',
+    lookingUp: 'Đang tra cứu...',
+    tipPhone: 'Mở bằng điện thoại để dùng được camera quét mã.',
+    tipListen: 'Bấm "Nghe thuyết minh" sau khi quét để nghe ngay.',
+    tipFree: 'Không cần tải ứng dụng, không cần đăng nhập.',
+    guestNote: 'Quý khách đang tham quan với tư cách Khách. Thuyết minh tiếng Việt miễn phí; bản dịch tiếng Anh, Nhật, Hàn cần đăng nhập và mở khóa Premium.',
+    login: 'Đăng nhập',
+    register: 'Đăng ký',
+    loadingPoi: 'Đang tải thông tin điểm du lịch từ mã QR...',
+    pauseAudio: 'Dừng thuyết minh',
+    playAudio: 'Nghe thuyết minh',
+    tapToPlay: 'Bấm để nghe',
+    chooseLang: 'Chọn ngôn ngữ',
+    needPremium: 'cần Premium',
+    lockedLangHint: 'Chỉ tiếng Việt được nghe miễn phí. Mở khóa {langs} bằng gói Premium hoặc gói thuyết minh của điểm này.',
+    unlockBtn: 'Mở khóa',
+  },
+  en: {
+    heroEyebrow: 'Digital Audio Guide',
+    heroTitle: 'Scan QR Code',
+    heroIntro: 'Scan the QR code at any attraction to listen to the audio guide on your phone. Vietnamese is free for all visitors.',
+    cameraOpen: 'Open camera to scan',
+    cameraClose: 'Turn off camera',
+    cameraActiveHint: 'Scanning, align the QR code inside the frame',
+    cameraInactiveHint: 'Point your camera at the QR code on the sign board',
+    cameraScanning: 'Scanning QR code with camera...',
+    orEnterCode: 'or enter code manually',
+    inputPlaceholder: 'Enter QR code (e.g. qr-dinh-doc-lap-01)',
+    lookupBtn: 'Look up code',
+    lookingUp: 'Looking up...',
+    tipPhone: 'Open on your mobile phone to use the camera scanner.',
+    tipListen: 'Tap "Listen to narration" after scanning to listen immediately.',
+    tipFree: 'No app download needed, no sign-in required.',
+    guestNote: 'You are visiting as a Guest. Vietnamese is free; English, Japanese, and Korean require sign-in and Premium unlock.',
+    login: 'Sign in',
+    register: 'Sign up',
+    loadingPoi: 'Loading attraction details from QR code...',
+    pauseAudio: 'Pause narration',
+    playAudio: 'Listen to narration',
+    tapToPlay: 'Tap to listen',
+    chooseLang: 'Choose language',
+    needPremium: 'Premium required',
+    lockedLangHint: 'Only Vietnamese is free. Unlock {langs} with a Premium plan or this landmark pack.',
+    unlockBtn: 'Unlock',
+  },
+  ja: {
+    heroEyebrow: '自動音声ガイド',
+    heroTitle: 'QRコードをスキャン',
+    heroIntro: '観光スポットのQRコードを読み取って、スマートフォンで音声ガイドをお楽しみください。ベトナム語は無料です。',
+    cameraOpen: 'カメラでQRを読み取る',
+    cameraClose: 'カメラを停止',
+    cameraActiveHint: 'スキャン中、枠内にQRコードを合わせてください',
+    cameraInactiveHint: '現地の案内板にあるQRコードを枠内に収めてください',
+    cameraScanning: 'カメラからQRコードをスキャン中...',
+    orEnterCode: 'またはコードを入力',
+    inputPlaceholder: 'QRコードを入力（例：qr-dinh-doc-lap-01）',
+    lookupBtn: 'コードを検索',
+    lookingUp: '検索中...',
+    tipPhone: 'スマートフォンでアクセスするとカメラでスキャンできます。',
+    tipListen: 'スキャン後に「音声ガイドを聴く」を押して再生します。',
+    tipFree: 'アプリのインストールやログインは不要です。',
+    guestNote: 'ゲストとして利用中です。ベトナム語は無料です。英語、日本語、韓国語の利用にはログインとプレミアムの解除が必要です。',
+    login: 'ログイン',
+    register: '新規登録',
+    loadingPoi: 'QRコードからスポット情報を取得しています...',
+    pauseAudio: '音声を一時停止',
+    playAudio: '音声ガイドを聴く',
+    tapToPlay: 'タップして再生',
+    chooseLang: '言語を選択',
+    needPremium: 'プレミアムが必要',
+    lockedLangHint: 'ベトナム語のみ無料です。プレミアムまたは個別パッケージで{langs}をアンロックできます。',
+    unlockBtn: 'アンロック',
+  },
+  ko: {
+    heroEyebrow: '디지털 오디오 가이드',
+    heroTitle: 'QR 코드 스캔',
+    heroIntro: '명소의 QR 코드를 스캔하여 스마트폰에서 바로 오디오 가이드를 들어보세요. 베트남어는 모든 방문객에게 무료입니다.',
+    cameraOpen: '카메라로 QR 스캔',
+    cameraClose: '카메라 끄기',
+    cameraActiveHint: '스캔 중입니다. 화면 중앙 프레임에 QR 코드를 맞춰주세요',
+    cameraInactiveHint: '안내판의 QR 코드를 프레임 안에 비춰주세요',
+    cameraScanning: '카메라로 QR 코드를 스캔하고 있습니다...',
+    orEnterCode: '또는 코드 직접 입력',
+    inputPlaceholder: 'QR 코드 입력 (예: qr-dinh-doc-lap-01)',
+    lookupBtn: '코드 조회',
+    lookingUp: '조회 중...',
+    tipPhone: '스마트폰으로 접속하시면 카메라로 QR을 스캔할 수 있습니다.',
+    tipListen: '스캔 후 "오디오 가이드 듣기"를 눌러 즉시 감상하세요.',
+    tipFree: '앱 설치나 로그인 없이 바로 이용 가능합니다.',
+    guestNote: '게스트 모드로 이용 중입니다. 베트남어는 무료이며, 영어/일본어/한국어는 로그인 및 프리미엄 잠금 해제가 필요합니다.',
+    login: '로그인',
+    register: '회원가입',
+    loadingPoi: 'QR 코드에서 명소 정보를 불러오는 중입니다...',
+    pauseAudio: '오디오 일시정지',
+    playAudio: '오디오 가이드 듣기',
+    tapToPlay: '탭하여 재생',
+    chooseLang: '언어 선택',
+    needPremium: '프리미엄 필요',
+    lockedLangHint: '베트남어만 무료로 청취 가능합니다. 프리미엄 플랜 또는 개별 패키지로 {langs}을 잠금 해제하세요.',
+    unlockBtn: '잠금 해제',
+  },
+};
 
 // Vietnamese narration is free for everyone. English / Japanese / Korean need
 // Premium (or a purchase of this specific POI), so the list is filtered against
@@ -158,15 +274,22 @@ export const ScanPage: React.FC = () => {
   const { status } = useAuth();
   const isGuest = status === 'guest';
   const { canAccessPoiLanguage } = usePremium();
+  const { lang: navLang } = useNavbarLanguage();
+  const tScan = SCAN_I18N[navLang] || SCAN_I18N.vi;
 
   const [inputToken, setInputToken] = useState<string>(token ?? '');
   const [poiDetail, setPoiDetail] = useState<PoiDetail | null>(null);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  // Mặc định tiếng Việt: đây là ngôn ngữ duy nhất miễn phí. Người dùng Premium
-  // có thể chuyển sang EN/JA/KO bằng các chip ngôn ngữ bên dưới.
-  const [lang, setLang] = useState<SupportedLanguage>('vi');
+  // Mặc định ngôn ngữ theo thanh điều hướng
+  const [lang, setLang] = useState<SupportedLanguage>(navLang || 'vi');
+
+  useEffect(() => {
+    if (navLang) {
+      setLang(navLang);
+    }
+  }, [navLang]);
 
   const [cameraActive, setCameraActive] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
@@ -509,11 +632,10 @@ export const ScanPage: React.FC = () => {
       <span className="scan-hero-icon" aria-hidden="true">
         <QrCode size={30} strokeWidth={1.6} />
       </span>
-      <span className="scan-eyebrow">Thuyết minh tự động</span>
-      <h2>Quét mã QR</h2>
+      <span className="scan-eyebrow">{tScan.heroEyebrow}</span>
+      <h2>{tScan.heroTitle}</h2>
       <p className="scan-intro">
-        Quét mã tại điểm tham quan để nghe thuyết minh ngay trên điện thoại.
-        Tiếng Việt miễn phí cho mọi du khách.
+        {tScan.heroIntro}
       </p>
 
       <button
@@ -525,11 +647,11 @@ export const ScanPage: React.FC = () => {
           <Camera size={22} strokeWidth={1.75} />
         </span>
         <span className="scan-camera-btn-text">
-          <strong>{cameraActive ? 'Tắt camera' : 'Mở camera quét mã'}</strong>
+          <strong>{cameraActive ? tScan.cameraClose : tScan.cameraOpen}</strong>
           <small>
             {cameraActive
-              ? 'Đang quét, đưa mã QR vào giữa khung hình'
-              : 'Đưa mã QR trên bảng hiệu vào khung hình'}
+              ? tScan.cameraActiveHint
+              : tScan.cameraInactiveHint}
           </small>
         </span>
       </button>
@@ -539,40 +661,40 @@ export const ScanPage: React.FC = () => {
       {cameraActive && (
         <div className="scan-camera-frame">
           <video ref={videoRef} className="scan-camera-video" muted playsInline />
-          <p className="scan-camera-note">Đang quét mã QR từ camera...</p>
+          <p className="scan-camera-note">{tScan.cameraScanning}</p>
         </div>
       )}
 
       <div className="scan-divider" aria-hidden="true">
-        <span>hoặc nhập mã</span>
+        <span>{tScan.orEnterCode}</span>
       </div>
 
       <form onSubmit={handleSubmit} className="scan-form">
         <input
           type="text"
-          aria-label="hoặc nhập mã QR"
-          placeholder="Nhập mã QR (ví dụ: qr-dinh-doc-lap-01)"
+          aria-label={tScan.orEnterCode}
+          placeholder={tScan.inputPlaceholder}
           value={inputToken}
           onChange={(e) => setInputToken(e.target.value)}
           className="scan-input"
         />
         <button type="submit" className="scan-submit-btn" disabled={loading}>
-          {loading ? 'Đang tra cứu...' : 'Tra cứu mã'}
+          {loading ? tScan.lookingUp : tScan.lookupBtn}
         </button>
       </form>
 
       <ul className="scan-tips">
         <li>
           <Smartphone size={17} strokeWidth={1.7} aria-hidden="true" />
-          <span>Mở bằng điện thoại để dùng được camera quét mã.</span>
+          <span>{tScan.tipPhone}</span>
         </li>
         <li>
           <Volume2 size={17} strokeWidth={1.7} aria-hidden="true" />
-          <span>Bấm “Nghe thuyết minh” sau khi quét để nghe ngay.</span>
+          <span>{tScan.tipListen}</span>
         </li>
         <li>
           <ShieldCheck size={17} strokeWidth={1.7} aria-hidden="true" />
-          <span>Không cần tải ứng dụng, không cần đăng nhập.</span>
+          <span>{tScan.tipFree}</span>
         </li>
       </ul>
     </header>
@@ -590,11 +712,7 @@ export const ScanPage: React.FC = () => {
         <div className="scan-guest-bar" role="note">
           <span className="scan-guest-text">
             <Eye size={15} strokeWidth={1.75} aria-hidden="true" />
-            <span>
-              Quý khách đang tham quan với tư cách <strong>Khách</strong>. Thuyết
-              minh tiếng Việt miễn phí; bản dịch tiếng Anh, Nhật, Hàn cần đăng nhập
-              và mở khóa Premium.
-            </span>
+            <span>{tScan.guestNote}</span>
           </span>
           <span className="scan-guest-auth">
             <button
@@ -602,21 +720,21 @@ export const ScanPage: React.FC = () => {
               className="scan-guest-link"
               onClick={() => navigate('/dang-nhap', { state: { backgroundLocation: location } })}
             >
-              Đăng nhập
+              {tScan.login}
             </button>
             <button
               type="button"
               className="scan-guest-link is-strong"
               onClick={() => navigate('/dang-ky', { state: { backgroundLocation: location } })}
             >
-              Đăng ký
+              {tScan.register}
             </button>
           </span>
         </div>
       )}
       {!poiDetail && renderLanding()}
 
-      {loading && <p className="cn">Đang tải thông tin điểm du lịch từ mã QR...</p>}
+      {loading && <p className="cn">{tScan.loadingPoi}</p>}
 
       {errorMessage && (
         <div className="scan-error" role="alert">
@@ -674,17 +792,17 @@ export const ScanPage: React.FC = () => {
                   {isPlaying(poiDetail.id) ? (
                     <>
                       <Pause size={18} strokeWidth={1.75} aria-hidden="true" />
-                      Dừng thuyết minh
+                      {tScan.pauseAudio}
                     </>
                   ) : (
                     <>
                       <Volume2 size={18} strokeWidth={1.75} aria-hidden="true" />
-                      {pendingPlay ? 'Bấm để nghe' : 'Nghe thuyết minh'}
+                      {pendingPlay ? tScan.tapToPlay : tScan.playAudio}
                     </>
                   )}
                 </button>
 
-                <div className="scan-lang-chips" role="group" aria-label="Chọn ngôn ngữ">
+                <div className="scan-lang-chips" role="group" aria-label={tScan.chooseLang}>
                   {SCAN_SPEECH_LANGS.map((l) => {
                     const locked = !canListenLanguage(l);
                     return (
@@ -695,10 +813,10 @@ export const ScanPage: React.FC = () => {
                           locked ? 'is-locked' : ''
                         }`}
                         aria-pressed={lang === l}
-                        aria-label={locked ? `${l.toUpperCase()} (cần Premium)` : undefined}
+                        aria-label={locked ? `${l.toUpperCase()} (${tScan.needPremium})` : undefined}
                         title={
                           locked
-                            ? 'Ngôn ngữ này cần Premium hoặc mua gói của điểm này'
+                            ? tScan.needPremium
                             : undefined
                         }
                         onClick={() => {
@@ -734,9 +852,7 @@ export const ScanPage: React.FC = () => {
                 <p className="scan-premium-note">
                   <Lock size={14} strokeWidth={1.9} aria-hidden="true" />
                   <span>
-                    Chỉ tiếng Việt được nghe miễn phí. Mở khóa{' '}
-                    {lockedLanguages.map((l) => l.toUpperCase()).join(', ')} bằng gói
-                    Premium hoặc gói thuyết minh của điểm này.
+                    {tScan.lockedLangHint.replace('{langs}', lockedLanguages.map((l) => l.toUpperCase()).join(', '))}
                   </span>
                   <button
                     type="button"
@@ -746,7 +862,7 @@ export const ScanPage: React.FC = () => {
                       )
                     }
                   >
-                    Mở khóa
+                    {tScan.unlockBtn}
                   </button>
                 </p>
               )}

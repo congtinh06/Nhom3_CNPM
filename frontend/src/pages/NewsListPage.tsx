@@ -4,6 +4,7 @@ import { RefreshCw, Search, X } from 'lucide-react';
 import { useNewsListQuery } from '../api/news';
 import { useDocumentMeta } from '../hooks/useDocumentMeta';
 import { useNavbarLanguage } from '../content/languages';
+import { SupportedLanguage } from '../types';
 import { tNews, NewsTranslation } from '../content/newsI18n';
 import { getCategoryLabel } from '../components/news/newsFormatters';
 import { NewsLeadStory } from '../components/news/NewsLeadStory';
@@ -27,14 +28,70 @@ const CATEGORY_OPTIONS: CategoryFilterOption[] = [
   { key: 've-dep', i18nKey: 'categoryVeDep' },
 ];
 
-const STOPS = [
-  { name: 'Bảo tàng Chứng tích Chiến tranh', slug: 'bao-tang-chung-tich-chien-tranh' },
-  { name: 'Nhà thờ Đức Bà Sài Gòn', slug: 'nha-tho-duc-ba' },
-  { name: 'Chùa Bà Thiên Hậu', slug: 'chua-ba-thien-hau' },
-  { name: 'Cầu Ba Son', slug: 'cau-ba-son' },
-  { name: 'Bưu điện Trung tâm Sài Gòn', slug: 'buu-dien-trung-tam' },
-  { name: 'Dinh Độc Lập', slug: 'dinh-doc-lap' },
-  { name: 'Chợ Bến Thành', slug: 'cho-ben-thanh' },
+const STOPS: { slug: string; names: Record<SupportedLanguage, string> }[] = [
+  {
+    slug: 'bao-tang-chung-tich-chien-tranh',
+    names: {
+      vi: 'Bảo tàng Chứng tích Chiến tranh',
+      en: 'War Remnants Museum',
+      ja: '戦争証跡博物館',
+      ko: '전쟁증적박물관',
+    },
+  },
+  {
+    slug: 'nha-tho-duc-ba',
+    names: {
+      vi: 'Nhà thờ Đức Bà Sài Gòn',
+      en: 'Notre Dame Cathedral of Saigon',
+      ja: 'サイゴン大聖堂',
+      ko: '사이공 노트르담 대성당',
+    },
+  },
+  {
+    slug: 'chua-ba-thien-hau',
+    names: {
+      vi: 'Chùa Bà Thiên Hậu',
+      en: 'Ba Thien Hau Pagoda',
+      ja: '天后宮（ティエンハウ寺）',
+      ko: '바티엔하우 사원',
+    },
+  },
+  {
+    slug: 'cau-ba-son',
+    names: {
+      vi: 'Cầu Ba Son',
+      en: 'Ba Son Bridge',
+      ja: 'バーソン橋',
+      ko: '바손 다리',
+    },
+  },
+  {
+    slug: 'buu-dien-trung-tam',
+    names: {
+      vi: 'Bưu điện Trung tâm Sài Gòn',
+      en: 'Saigon Central Post Office',
+      ja: 'サイゴン中央郵便局',
+      ko: '사이공 중앙우체국',
+    },
+  },
+  {
+    slug: 'dinh-doc-lap',
+    names: {
+      vi: 'Dinh Độc Lập',
+      en: 'Independence Palace',
+      ja: '統一会堂',
+      ko: '통일궁',
+    },
+  },
+  {
+    slug: 'cho-ben-thanh',
+    names: {
+      vi: 'Chợ Bến Thành',
+      en: 'Ben Thanh Market',
+      ja: 'ベンタイン市場',
+      ko: '벤탄 시장',
+    },
+  },
 ];
 
 const norm = (str: string) =>
@@ -189,7 +246,7 @@ export const NewsListPage: React.FC = () => {
           </div>
           <div className="nl-header-search">
             <label htmlFor="news-search-input" className="sr-only">
-              Tìm bài viết
+              {tNews(lang, 'searchLabel')}
             </label>
             <div className="nl-search-box">
               <Search size={18} className="nl-search-icon" aria-hidden="true" />
@@ -197,7 +254,7 @@ export const NewsListPage: React.FC = () => {
                 id="news-search-input"
                 type="search"
                 className="nl-search-input"
-                placeholder="Tìm bài viết…"
+                placeholder={tNews(lang, 'searchPlaceholder')}
                 autoComplete="off"
                 value={searchQuery}
                 onChange={(e) => handleSearchChange(e.target.value)}
@@ -207,7 +264,7 @@ export const NewsListPage: React.FC = () => {
                   type="button"
                   className="nl-search-clear"
                   onClick={handleClearSearch}
-                  aria-label="Xóa tìm kiếm"
+                  aria-label={tNews(lang, 'clearSearch')}
                 >
                   <X size={16} />
                 </button>
@@ -255,22 +312,22 @@ export const NewsListPage: React.FC = () => {
         {(categoryParam !== 'all' || poiParam || searchQuery) && (
           <div className="nl-filter-status">
             <span>
-              Đang lọc theo: <strong>{activeCategoryLabel}</strong>
+              {tNews(lang, 'filteringBy')}: <strong>{activeCategoryLabel}</strong>
               {poiParam ? ` (#${poiParam})` : ''}
-              {searchQuery ? ` ("${searchQuery}")` : ''} ({sortedFilteredItems.length} bài viết)
+              {searchQuery ? ` ("${searchQuery}")` : ''} ({sortedFilteredItems.length} {tNews(lang, 'articlesCount')})
             </span>
             <button
               type="button"
               className="nl-filter-clear-btn"
               onClick={handleClearFilters}
             >
-              Xóa bộ lọc
+              {tNews(lang, 'clearFilters')}
             </button>
           </div>
         )}
 
         {isLoading && (
-          <div className="nl-skeleton-wrap" aria-busy="true" aria-label="Đang tải tin tức">
+          <div className="nl-skeleton-wrap" aria-busy="true" aria-label={tNews(lang, 'loading')}>
             <div className="nl-skeleton-lead" />
             <div className="nl-skeleton-row" />
             <div className="nl-skeleton-row" />
@@ -279,7 +336,7 @@ export const NewsListPage: React.FC = () => {
 
         {isError && !isLoading && (
           <div className="nl-state-box" role="alert">
-            <h2 className="nl-state-title">Không thể tải tin tức</h2>
+            <h2 className="nl-state-title">{tNews(lang, 'errorLoadTitle')}</h2>
             <p className="nl-state-desc">
               {error?.message || tNews(lang, 'errorLoad')}
             </p>
@@ -295,10 +352,10 @@ export const NewsListPage: React.FC = () => {
 
         {!isLoading && !isError && sortedFilteredItems.length === 0 && (
           <div className="nl-state-box">
-            <h2 className="nl-state-title">Chưa có bài viết phù hợp</h2>
+            <h2 className="nl-state-title">{tNews(lang, 'noArticlesTitle')}</h2>
             <p className="nl-state-desc">
               {poiParam
-                ? 'Không có bài viết nào liên kết với điểm tham quan này.'
+                ? tNews(lang, 'noArticlesForPoi')
                 : tNews(lang, 'emptyFilterMessage')}
             </p>
             <button
@@ -318,8 +375,8 @@ export const NewsListPage: React.FC = () => {
             </section>
 
             {sideArticles.length > 0 && (
-              <section className="nl-top-side" aria-label="Tin nổi bật khác">
-                <h2 className="nl-side-heading">Tin nổi bật</h2>
+              <section className="nl-top-side" aria-label={lang === 'vi' ? 'Tin nổi bật khác' : tNews(lang, 'featured')}>
+                <h2 className="nl-side-heading">{tNews(lang, 'featured')}</h2>
                 <div className="nl-side-list">
                   {sideArticles.map((item) => (
                     <NewsSideItem key={item.id} item={item} lang={lang} />
@@ -331,9 +388,9 @@ export const NewsListPage: React.FC = () => {
         )}
 
         {!isLoading && !isError && feedArticles.length > 0 && (
-          <section id="news-feed-section" className="nl-feed-section" aria-label="Danh sách bài viết">
+          <section id="news-feed-section" className="nl-feed-section" aria-label={lang === 'vi' ? 'Danh sách bài viết' : tNews(lang, 'latest')}>
             <div className="nl-feed-header">
-              <h2 className="nl-feed-title">Mới nhất</h2>
+              <h2 className="nl-feed-title">{tNews(lang, 'latest')}</h2>
             </div>
             <div className="nl-feed-list">
               {feedArticles.map((item) => (
@@ -351,7 +408,7 @@ export const NewsListPage: React.FC = () => {
                     document.getElementById('news-feed-section')?.scrollIntoView({ behavior: 'smooth' });
                   }}
                 >
-                  Trước
+                  {tNews(lang, 'prev')}
                 </button>
                 {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
                   <button
@@ -376,7 +433,7 @@ export const NewsListPage: React.FC = () => {
                     document.getElementById('news-feed-section')?.scrollIntoView({ behavior: 'smooth' });
                   }}
                 >
-                  Sau
+                  {tNews(lang, 'next')}
                 </button>
               </nav>
             )}
@@ -387,27 +444,30 @@ export const NewsListPage: React.FC = () => {
         <section className="nl-stops-section" aria-labelledby="nl-stops-heading">
           <div className="nl-stops-header">
             <h2 id="nl-stops-heading" className="nl-stops-title">
-              Đọc theo điểm dừng
+              {tNews(lang, 'readByStop')}
             </h2>
             <p className="nl-stops-desc">
-              Mỗi điểm trong hành trình có bài viết đi kèm. Đọc trước khi đi, hoặc nghe thuyết minh ngay tại chỗ.
+              {tNews(lang, 'readByStopDesc')}
             </p>
           </div>
           <div className="nl-stops-list">
             {STOPS.map((stop, index) => {
+              const stopName = stop.names[lang] || stop.names.vi || '';
+              const stopVi = stop.names.vi || '';
               const stopCount = allItems.filter(
                 (a) =>
                   a.relatedPoiSlugs?.includes(stop.slug) ||
-                  norm(a.title + ' ' + (a.summary || '')).includes(norm(stop.name))
+                  (stopVi && norm(a.title + ' ' + (a.summary || '')).includes(norm(stopVi))) ||
+                  (stopName && norm(a.title + ' ' + (a.summary || '')).includes(norm(stopName)))
               ).length;
               return (
                 <div key={stop.slug} className="nl-stop-row">
                   <div className="nl-stop-info">
                     <strong className="nl-stop-name">
-                      {index + 1}. {stop.name}
+                      {index + 1}. {stopName}
                     </strong>
                     <span className="nl-stop-count">
-                      {stopCount > 0 ? `${stopCount} bài viết` : 'Sắp có bài'}
+                      {stopCount > 0 ? `${stopCount} ${tNews(lang, 'articles')}` : tNews(lang, 'comingSoon')}
                     </span>
                   </div>
                   <div className="nl-stop-actions">
@@ -417,11 +477,11 @@ export const NewsListPage: React.FC = () => {
                         className="nl-stop-read-btn"
                         onClick={() => handleSelectPoi(stop.slug)}
                       >
-                        Đọc bài
+                        {tNews(lang, 'readArticle')}
                       </button>
                     )}
                     <Link to={`/nearby?poi=${stop.slug}`} className="nl-stop-audio-link">
-                      Nghe thuyết minh
+                      {tNews(lang, 'listenTour')}
                     </Link>
                   </div>
                 </div>
@@ -434,33 +494,33 @@ export const NewsListPage: React.FC = () => {
         <section className="nl-sub-section" aria-labelledby="nl-sub-heading">
           <div className="nl-sub-content">
             <h2 id="nl-sub-heading" className="nl-sub-title">
-              Nhận bài mới mỗi tuần
+              {tNews(lang, 'newsletterTitle')}
             </h2>
             <p className="nl-sub-desc">
-              Câu chuyện di sản và mẹo khám phá Sài Gòn, gửi thẳng vào hộp thư của bạn.
+              {tNews(lang, 'newsletterDesc')}
             </p>
           </div>
           <form className="nl-sub-form" onSubmit={handleSubscribe}>
             <label htmlFor="nl-sub-email" className="nl-sub-label">
-              Email của bạn
+              {tNews(lang, 'newsletterEmail')}
             </label>
             <div className="nl-sub-input-row">
               <input
                 id="nl-sub-email"
                 type="email"
                 required
-                placeholder="ban@vidu.com"
+                placeholder={tNews(lang, 'newsletterEmailPlaceholder')}
                 className="nl-sub-input"
                 value={subscribeEmail}
                 onChange={(e) => setSubscribeEmail(e.target.value)}
               />
               <button type="submit" className="nl-sub-btn">
-                Đăng ký
+                {tNews(lang, 'newsletterBtn')}
               </button>
             </div>
             {isSubscribed && (
               <p className="nl-sub-success" role="status">
-                Cảm ơn bạn, chúng tôi đã ghi nhận email.
+                {tNews(lang, 'newsletterSuccess')}
               </p>
             )}
           </form>
@@ -470,14 +530,14 @@ export const NewsListPage: React.FC = () => {
         <section className="nl-cta-section" aria-labelledby="nl-cta-heading">
           <div className="nl-cta-content">
             <h2 id="nl-cta-heading" className="nl-cta-title">
-              Muốn nghe thay vì đọc?
+              {tNews(lang, 'ctaListenTitle')}
             </h2>
             <p className="nl-cta-desc">
-              Mỗi điểm dừng có một đoạn thuyết minh ngắn, nghe được bằng bốn ngôn ngữ.
+              {tNews(lang, 'ctaListenDesc')}
             </p>
           </div>
           <Link to="/nearby" className="nl-cta-btn">
-            Đi tới Điểm du lịch
+            {tNews(lang, 'ctaListenBtn')}
           </Link>
         </section>
         </main>

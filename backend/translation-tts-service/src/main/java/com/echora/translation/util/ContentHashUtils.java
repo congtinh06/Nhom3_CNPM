@@ -20,6 +20,22 @@ public final class ContentHashUtils {
         String cleanHist = clean(historicalSignificance);
 
         String raw = cleanLang + SEPARATOR + cleanTitle + SEPARATOR + cleanSummary + SEPARATOR + cleanDesc + SEPARATOR + cleanHist;
+        return sha256(raw);
+    }
+
+    /**
+     * Hash cho audio thuyết minh. Audio chỉ đọc đúng phần "description" mà UI
+     * hiển thị trong khung đọc, nên hash chỉ cần phụ thuộc vào language + description.
+     * Dùng chung công thức ở content-service và translation-tts-service để hai bên
+     * đối chiếu được contentHash khi nhận event audio.
+     */
+    public static String computeNarrationHash(String targetLang, String description) {
+        String cleanLang = clean(targetLang).toLowerCase(Locale.ROOT);
+        String raw = "narration-v1" + SEPARATOR + cleanLang + SEPARATOR + clean(description);
+        return sha256(raw);
+    }
+
+    private static String sha256(String raw) {
         try {
             MessageDigest md = MessageDigest.getInstance("SHA-256");
             byte[] digest = md.digest(raw.getBytes(StandardCharsets.UTF_8));

@@ -62,8 +62,8 @@ class PoiAudioUpdateServiceTest {
     @Test
     @DisplayName("applyAudioGenerating: hash khớp -> chuyển GENERATING, xóa audio cũ")
     void testApplyAudioGenerating_matchingHash_setsGenerating() {
-        String currentHash = ContentHashUtils.computeHash(
-                "en", "Tiêu đề tiếng Việt V2", "Tóm tắt V2", "Mô tả V2", "Ý nghĩa V2");
+        String currentHash = ContentHashUtils.computeNarrationHash(
+                "en", "Mô tả V2");
         PoiTranslation existing = PoiTranslation.builder()
                 .id(20L).poi(poi).languageCode("en")
                 .title("Old").summary("Old").description("Old")
@@ -93,8 +93,8 @@ class PoiAudioUpdateServiceTest {
     @Test
     @DisplayName("applyAudioGenerating: hash cũ -> bỏ qua, không hạ cấp bản mới")
     void testApplyAudioGenerating_staleHash_isIgnored() {
-        String staleHash = ContentHashUtils.computeHash(
-                "en", "Tiêu đề V1", "Tóm tắt V1", "Mô tả V1", "Ý nghĩa V1");
+        String staleHash = ContentHashUtils.computeNarrationHash(
+                "en", "Mô tả V1");
 
         poiAudioUpdateService.applyAudioGenerating(PoiAudioProgressEvent.builder()
                 .poiId(100L)
@@ -110,8 +110,8 @@ class PoiAudioUpdateServiceTest {
     @DisplayName("applyAudioReady: sửa nội dung 2 lần liên tiếp, event của lần 1 có contentHash cũ đến sau thì bị bỏ qua")
     void testApplyAudioReady_StaleEventFromPreviousVersion_IsIgnored() {
         // Hash của phiên bản 1 cũ
-        String staleHashV1 = ContentHashUtils.computeHash(
-                "en", "Tiêu đề tiếng Việt V1", "Tóm tắt V1", "Mô tả V1", "Ý nghĩa V1");
+        String staleHashV1 = ContentHashUtils.computeNarrationHash(
+                "en", "Mô tả V1");
 
         PoiAudioReadyEvent staleEvent = PoiAudioReadyEvent.builder()
                 .poiId(100L)
@@ -136,8 +136,8 @@ class PoiAudioUpdateServiceTest {
     @DisplayName("applyAudioReady: contentHash khớp với phiên bản tiếng Việt hiện tại -> lưu bản dịch READY thành công")
     void testApplyAudioReady_MatchingContentHash_SavesTranslation() {
         // Hash khớp với phiên bản 2 hiện tại trong DB
-        String currentHashV2 = ContentHashUtils.computeHash(
-                "en", "Tiêu đề tiếng Việt V2", "Tóm tắt V2", "Mô tả V2", "Ý nghĩa V2");
+        String currentHashV2 = ContentHashUtils.computeNarrationHash(
+                "en", "Mô tả V2");
 
         PoiAudioReadyEvent freshEvent = PoiAudioReadyEvent.builder()
                 .poiId(100L)
@@ -225,8 +225,8 @@ class PoiAudioUpdateServiceTest {
     @Test
     @DisplayName("applyAudioFailed: failed có text, hash khớp -> FAILED_TTS như hiện tại")
     void testApplyAudioFailed_MatchingContentHash_SavesFailedTts() {
-        String currentHashV2 = ContentHashUtils.computeHash(
-                "en", "Tiêu đề tiếng Việt V2", "Tóm tắt V2", "Mô tả V2", "Ý nghĩa V2");
+        String currentHashV2 = ContentHashUtils.computeNarrationHash(
+                "en", "Mô tả V2");
 
         PoiAudioFailedEvent event = PoiAudioFailedEvent.builder()
                 .poiId(100L)
@@ -258,8 +258,8 @@ class PoiAudioUpdateServiceTest {
     @Test
     @DisplayName("applyAudioFailed: failed không text trên bản PENDING có text cũ -> status FAILED, không phải FAILED_TTS, giữ nguyên text")
     void testApplyAudioFailed_NoTextOnPendingWithOldText_SetsStatusFailed() {
-        String currentHashV2 = ContentHashUtils.computeHash(
-                "en", "Tiêu đề tiếng Việt V2", "Tóm tắt V2", "Mô tả V2", "Ý nghĩa V2");
+        String currentHashV2 = ContentHashUtils.computeNarrationHash(
+                "en", "Mô tả V2");
 
         // Bản dịch en đã tồn tại (đang PENDING từ đợt update trước, có text cũ)
         PoiTranslation existingPending = PoiTranslation.builder()
@@ -302,8 +302,8 @@ class PoiAudioUpdateServiceTest {
     @Test
     @DisplayName("applyAudioFailed: failed đến sau khi bản dịch đã READY cùng hash -> bỏ qua, không gọi save")
     void testApplyAudioFailed_ArrivesAfterReadyWithSameHash_IsIgnored() {
-        String currentHashV2 = ContentHashUtils.computeHash(
-                "en", "Tiêu đề tiếng Việt V2", "Tóm tắt V2", "Mô tả V2", "Ý nghĩa V2");
+        String currentHashV2 = ContentHashUtils.computeNarrationHash(
+                "en", "Mô tả V2");
 
         // Bản dịch en đã READY với cùng hash
         PoiTranslation existingReady = PoiTranslation.builder()
@@ -335,8 +335,8 @@ class PoiAudioUpdateServiceTest {
     @Test
     @DisplayName("applyAudioFailed: event của phiên bản cũ (stale hash) gửi đến sau khi đã cập nhật -> bị bỏ qua")
     void testApplyAudioFailed_StaleEventFromPreviousVersion_IsIgnored() {
-        String staleHashV1 = ContentHashUtils.computeHash(
-                "en", "Tiêu đề tiếng Việt V1", "Tóm tắt V1", "Mô tả V1", "Ý nghĩa V1");
+        String staleHashV1 = ContentHashUtils.computeNarrationHash(
+                "en", "Mô tả V1");
 
         PoiAudioFailedEvent staleEvent = PoiAudioFailedEvent.builder()
                 .poiId(100L)

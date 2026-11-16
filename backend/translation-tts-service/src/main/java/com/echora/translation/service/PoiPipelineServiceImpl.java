@@ -86,20 +86,11 @@ public class PoiPipelineServiceImpl implements PoiPipelineService {
         // Ngôn ngữ có văn bản do người viết (MANUAL) được dùng nguyên văn, không dịch máy.
         AuthoredPoiText authored = resolveAuthoredText(event, lang);
 
-        // 4. Compute contentHash: authored -> from that language's own text; otherwise from Vietnamese source
-        String contentHash = (authored != null)
-                ? ContentHashUtils.computeHash(
-                        lang,
-                        authored.getTitle(),
-                        authored.getSummary(),
-                        authored.getDescription(),
-                        authored.getHistoricalSignificance())
-                : ContentHashUtils.computeHash(
-                        lang,
-                        event.getTitle(),
-                        event.getSummary(),
-                        event.getDescription(),
-                        event.getHistoricalSignificance());
+        // 4. Hash the narration text that is actually spoken/shown (description only).
+        // Title/summary/historicalSignificance are shown elsewhere in the UI (hero/intro),
+        // so including them here made the audio drift away from the reading body.
+        String sourceDescription = (authored != null) ? authored.getDescription() : event.getDescription();
+        String contentHash = ContentHashUtils.computeNarrationHash(lang, sourceDescription);
 
         // 5. Idempotency on translation_job. Admin force regeneration reopens a DONE job.
         TranslationJob job = getOrCreateJob(event.getPoiId(), lang, contentHash);
@@ -207,8 +198,9 @@ public class PoiPipelineServiceImpl implements PoiPipelineService {
             }
         }
 
-        // 8. TTS & Audio Storage (D1-Fix Q3: include title, summary, description, historicalSignificance)
-        String spokenText = TtsTextBuilder.buildText(targetTitle, targetSummary, targetDescription, targetHistorical);
+        // 8. TTS & Audio Storage: speak exactly the description rendered in the reading
+        // section (title/summary already appear in the hero and must not be duplicated).
+        String spokenText = TtsTextBuilder.buildNarrationText(targetDescription);
         eventPublisher.publishAudioProgress(PoiAudioProgressEvent.builder()
                 .poiId(event.getPoiId())
                 .languageCode(lang)

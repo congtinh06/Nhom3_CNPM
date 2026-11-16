@@ -54,4 +54,12 @@ class ContentHashUtilsTest {
         );
         assertEquals("11e77a810cd32c8753d49d1f7e219ab5480e7034702cb05728ec094ca3420699", hash);
     }
+
+    @Test
+    @DisplayName("Narration hash: depends only on language + description, shared with content-service")
+    void testNarrationHash_descriptionOnly() {
+        String hash = ContentHashUtils.computeNarrationHash("en", "  Mô tả  ");
+        assertEquals("04cf13e6e3d82006111124487b653111718446c09ca97a80709f6eaa33829409", hash);
+        assertEquals(hash, ContentHashUtils.computeNarrationHash("EN", "Mô tả"));
+    }
 }

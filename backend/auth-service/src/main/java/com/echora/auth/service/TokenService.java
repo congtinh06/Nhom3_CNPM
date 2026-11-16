@@ -26,6 +26,12 @@ public class TokenService {
         return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
     }
 
+    /** Sinh mã OTP gồm 6 chữ số ngẫu nhiên cho xác thực email. */
+    public String newOtp() {
+        int code = RANDOM.nextInt(1_000_000);
+        return String.format("%06d", code);
+    }
+
     public String sha256Hex(String value) {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");

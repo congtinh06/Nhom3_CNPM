@@ -734,7 +734,10 @@ public class AuthServiceImpl implements AuthService {
 
     private String createEmailVerificationToken(User user) {
         emailVerificationTokenRepository.deleteAllForUser(user.getId());
-        String rawToken = tokenService.newToken();
+        String rawToken = tokenService.newOtp();
+        while (emailVerificationTokenRepository.findByTokenHash(tokenService.sha256Hex(rawToken)).isPresent()) {
+            rawToken = tokenService.newOtp();
+        }
         LocalDateTime now = LocalDateTime.now();
         emailVerificationTokenRepository.save(EmailVerificationToken.builder()
                 .user(user)
