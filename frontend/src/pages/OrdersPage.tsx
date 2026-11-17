@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import {
   RefreshCw,
   ShoppingBag,
@@ -17,7 +17,11 @@ import { BackendOrder } from '../types';
 import { StatusBadge } from '../components/orders/StatusBadge';
 import '../styles/orders.css';
 
-export const OrdersPage: React.FC = () => {
+interface OrdersPageProps {
+  embedded?: boolean;
+}
+
+export const OrdersPage: React.FC<OrdersPageProps> = ({ embedded = false }) => {
   const navigate = useNavigate();
   const { reorderItems, openCart } = useCart();
   const { showToast } = useToast();
@@ -47,9 +51,9 @@ export const OrdersPage: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    window.scrollTo(0, 0);
+    if (!embedded) window.scrollTo(0, 0);
     loadOrderHistory();
-  }, [loadOrderHistory]);
+  }, [embedded, loadOrderHistory]);
 
   // Reset detail body scroll position to top when switching orders
   useEffect(() => {
@@ -120,16 +124,19 @@ export const OrdersPage: React.FC = () => {
   };
 
   const selectedOrder = orders.find((o) => o.orderCode === selectedCode) || orders[0] || null;
+  const MainElement = embedded ? 'div' : 'main';
 
   return (
-    <div className="orders-page-container">
-      <main className="orders-main-section">
+    <div className={`orders-page-container${embedded ? ' orders-embedded-container' : ''}`}>
+      <MainElement className="orders-main-section">
         {/* Header like checkout: Back link + H1 Playfair Display */}
         <div className="orders-header-row">
-          <Link to="/" className="orders-back-link">
-            <ArrowLeft size={15} strokeWidth={2} aria-hidden="true" />
-            <span>Trang chủ</span>
-          </Link>
+          {!embedded && (
+            <button type="button" className="orders-back-link" onClick={() => navigate('/')}>
+              <ArrowLeft size={15} strokeWidth={2} aria-hidden="true" />
+              <span>Trang chủ</span>
+            </button>
+          )}
           <h1 className="orders-page-title">{t.shop.orderHistory}</h1>
         </div>
 
@@ -164,7 +171,7 @@ export const OrdersPage: React.FC = () => {
                 role="region"
                 aria-label={`Danh sách đơn (${orders.length})`}
                 tabIndex={0}
-                data-lenis-prevent
+                data-lenis-prevent={!embedded ? '' : undefined}
               >
                 {orders.map((o) => {
                   const isSelected = selectedOrder?.orderCode === o.orderCode;
@@ -229,7 +236,7 @@ export const OrdersPage: React.FC = () => {
                     role="region"
                     aria-label="Chi tiết đơn hàng"
                     tabIndex={0}
-                    data-lenis-prevent
+                    data-lenis-prevent={!embedded ? '' : undefined}
                   >
                     {/* Khối thông tin chi tiết: Tinted grid */}
                     <div className="order-meta-info-grid">
@@ -380,7 +387,7 @@ export const OrdersPage: React.FC = () => {
             </div>
           </div>
         )}
-      </main>
+      </MainElement>
 
       {/* Modal xác nhận hủy đơn */}
       {confirmCancelModal && (

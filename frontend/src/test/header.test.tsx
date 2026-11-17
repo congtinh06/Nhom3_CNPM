@@ -167,7 +167,7 @@ describe('Header Navigation Redesign', () => {
       expect(registerBtn).not.toHaveClass('hd-auth--solid');
     });
 
-    it('đã đăng nhập: thay Đăng nhập/Đăng ký bằng tên người dùng kèm menu Đơn hàng của tôi và Đăng xuất', async () => {
+    it('đã đăng nhập: thay Đăng nhập/Đăng ký bằng tên người dùng kèm menu tài khoản và Đăng xuất', async () => {
       vi.mocked(authApi.refresh).mockResolvedValue({
         accessToken: 'tok',
         expiresIn: 900,
@@ -192,10 +192,7 @@ describe('Header Navigation Redesign', () => {
       const accountMenu = await screen.findByRole('menu', { name: 'Tùy chọn người dùng' }, { timeout: 3000 });
       expect(accountMenu).toBeInTheDocument();
 
-      // Mục Đơn hàng của tôi
-      const ordersLink = await screen.findByRole('menuitem', { name: 'Đơn hàng của tôi' }, { timeout: 3000 });
-      expect(ordersLink).toBeInTheDocument();
-      expect(ordersLink).toHaveAttribute('href', '/don-hang');
+      expect(screen.queryByRole('menuitem', { name: 'Đơn hàng của tôi' })).not.toBeInTheDocument();
 
       // Mục Đăng xuất
       const logoutBtn = screen.getByRole('menuitem', { name: 'Đăng xuất' });

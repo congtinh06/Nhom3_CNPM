@@ -28,9 +28,11 @@ export const AccountFeedback: React.FC = () => {
     {loading && <p className="ac-muted">Đang tải hội thoại…</p>}
     {!loading && error && <p className="ac-error">{error}</p>}
     {!loading && !error && threads.length === 0 && <p className="ac-muted">Chưa có hội thoại nào được gắn với tài khoản. Tin nhắn gửi trước khi đăng nhập sẽ xuất hiện sau khi đăng nhập trên cùng trình duyệt.</p>}
-    {!loading && !error && threads.map((thread) => <article key={thread.ticket} style={{ border: '1px solid var(--border, #e5e7eb)', borderRadius: 12, padding: 16, marginBottom: 16 }}>
-      <header style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}><strong>Mã {thread.ticket}</strong><span>{thread.status === 'REPLIED' ? 'Đã có phản hồi' : 'Đang chờ phản hồi'}</span></header>
-      <div aria-live="polite">{thread.messages.map((message) => <p key={message.id} style={{ whiteSpace: 'pre-wrap', padding: 12, borderRadius: 8, background: message.sender === 'ADMIN' ? '#eff6ff' : '#f5f5f4' }}><b>{message.sender === 'ADMIN' ? 'Echora' : 'Bạn'}:</b> {message.content}<br/><small>{new Date(message.createdAt).toLocaleString('vi-VN')}</small></p>)}</div>
+    {!loading && !error && threads.map((thread) => <article key={thread.ticket} className="ac-feedback-thread">
+      <header className="ac-feedback-thread-head">
+        <span>{thread.status === 'REPLIED' ? 'Đã có phản hồi' : 'Đang chờ phản hồi'}</span>
+      </header>
+      <div aria-live="polite">{thread.messages.map((message) => <p key={message.id} className={`ac-feedback-message${message.sender === 'ADMIN' ? ' is-admin' : ''}`}><b>{message.sender === 'ADMIN' ? 'Echora' : 'Bạn'}:</b> {message.content}<br/><small>{new Date(message.createdAt).toLocaleString('vi-VN')}</small></p>)}</div>
     </article>)}
   </AccountSection>;
 };

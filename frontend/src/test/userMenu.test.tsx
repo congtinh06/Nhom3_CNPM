@@ -95,12 +95,11 @@ describe('UserMenu', () => {
     });
   });
 
-  it('liên kết đơn hàng trỏ tới đúng route', async () => {
+  it('không hiển thị liên kết đơn hàng trong menu tài khoản', async () => {
     renderUserMenu();
 
     await openMenu();
-    const ordersLink = screen.getByRole('menuitem', { name: 'Đơn hàng của tôi' });
-    expect(ordersLink).toHaveAttribute('href', '/don-hang');
+    expect(screen.queryByRole('menuitem', { name: 'Đơn hàng của tôi' })).not.toBeInTheDocument();
   });
 
   it('liên kết tài khoản trỏ tới đúng route', async () => {
@@ -125,19 +124,15 @@ describe('UserMenu', () => {
 
     const trigger = await openMenu();
     const accountLink = screen.getByRole('menuitem', { name: 'Tài khoản của tôi' });
-    const ordersLink = screen.getByRole('menuitem', { name: 'Đơn hàng của tôi' });
     const signOutBtn = screen.getByRole('menuitem', { name: 'Đăng xuất' });
 
     fireEvent.keyDown(trigger, { key: 'ArrowDown' });
     expect(accountLink).toHaveFocus();
 
     fireEvent.keyDown(accountLink, { key: 'ArrowDown' });
-    expect(ordersLink).toHaveFocus();
-
-    fireEvent.keyDown(ordersLink, { key: 'ArrowDown' });
     expect(signOutBtn).toHaveFocus();
 
     fireEvent.keyDown(signOutBtn, { key: 'ArrowUp' });
-    expect(ordersLink).toHaveFocus();
+    expect(accountLink).toHaveFocus();
   });
 });

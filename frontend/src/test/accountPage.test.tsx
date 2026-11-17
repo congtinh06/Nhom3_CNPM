@@ -5,6 +5,7 @@ import { AccountPage } from '../pages/AccountPage';
 import { AuthProvider } from '../context/AuthContext';
 import { PremiumProvider } from '../context/PremiumContext';
 import { ToastProvider } from '../context/ToastContext';
+import { CartProvider } from '../context/CartContext';
 import { authApi } from '../api/auth';
 import { getMyOrders } from '../services/orderService';
 import { tokenStore } from '../api/tokenStore';
@@ -57,11 +58,13 @@ function renderAccount() {
   return render(
     <MemoryRouter initialEntries={['/tai-khoan']}>
       <ToastProvider>
-        <AuthProvider>
-          <PremiumProvider>
-            <AccountPage />
-          </PremiumProvider>
-        </AuthProvider>
+        <CartProvider>
+          <AuthProvider>
+            <PremiumProvider>
+              <AccountPage />
+            </PremiumProvider>
+          </AuthProvider>
+        </CartProvider>
       </ToastProvider>
     </MemoryRouter>
   );
@@ -109,26 +112,30 @@ describe('AccountPage', () => {
     });
   });
 
-  it('hiển thị danh sách đơn hàng gần đây', async () => {
+  it('hiển thị lịch sử đơn hàng trong tài khoản', async () => {
     vi.mocked(getMyOrders).mockResolvedValue([MOCK_ORDER]);
 
     renderAccount();
 
-    const ordersTab = await screen.findByRole('tab', { name: 'Đơn hàng' });
+    const ordersTab = await screen.findByRole('tab', { name: 'Lịch sử đơn hàng' });
     fireEvent.click(ordersTab);
 
-    expect(await screen.findByText('SV-20260115-1000')).toBeInTheDocument();
-    expect(screen.getByText('55.000đ')).toBeInTheDocument();
-    expect(screen.getByText('Đang xử lý')).toBeInTheDocument();
+    expect((await screen.findAllByText('SV-20260115-1000')).length).toBeGreaterThan(1);
+    expect(screen.getAllByText('55.000đ').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Đang xử lý').length).toBeGreaterThan(0);
+    expect(screen.getByRole('region', { name: 'Danh sách đơn (1)' }))
+      .not.toHaveAttribute('data-lenis-prevent');
+    expect(screen.getByRole('region', { name: 'Chi tiết đơn hàng' }))
+      .not.toHaveAttribute('data-lenis-prevent');
   });
 
   it('báo trống khi người dùng chưa có đơn hàng', async () => {
     renderAccount();
 
-    const ordersTab = await screen.findByRole('tab', { name: 'Đơn hàng' });
+    const ordersTab = await screen.findByRole('tab', { name: 'Lịch sử đơn hàng' });
     fireEvent.click(ordersTab);
 
-    expect(await screen.findByText('Bạn chưa có đơn hàng nào.')).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Bạn chưa có đơn hàng nào' })).toBeInTheDocument();
   });
 
   it('báo lỗi khi mật khẩu xác nhận không khớp', async () => {
@@ -175,35 +182,14 @@ describe('AccountPage', () => {
     });
   });
 
-  it('đổi ngôn ngữ hiển thị sang tiếng Anh', async () => {
-    renderAccount();
-
-    const prefTab = await screen.findByRole('tab', { name: 'Tùy chọn' });
-    fireEvent.click(prefTab);
-
-    fireEvent.click(await screen.findByRole('button', { name: /English/i }));
-
-    expect(await screen.findByText('My account')).toBeInTheDocument();
-  });
-
-  it('chuyển tab sẽ hiển thị panel tương ứng và ẩn các panel khác', async () => {
+  it('ẩn các mục Bảo mật và Tùy chọn khỏi menu tài khoản', async () => {
     renderAccount();
 
     expect(await screen.findByRole('heading', { level: 2, name: 'Hồ sơ cá nhân' })).toBeInTheDocument();
     expect(screen.queryByRole('heading', { level: 2, name: 'Bảo mật tài khoản' })).not.toBeInTheDocument();
     expect(screen.queryByRole('heading', { level: 2, name: 'Tùy chọn hiển thị' })).not.toBeInTheDocument();
-
-    const securityTab = screen.getByRole('tab', { name: 'Bảo mật' });
-    fireEvent.click(securityTab);
-
-    expect(await screen.findByRole('heading', { level: 2, name: 'Bảo mật tài khoản' })).toBeInTheDocument();
-    expect(screen.queryByRole('heading', { level: 2, name: 'Hồ sơ cá nhân' })).not.toBeInTheDocument();
-
-    const prefTab = screen.getByRole('tab', { name: 'Tùy chọn' });
-    fireEvent.click(prefTab);
-
-    expect(await screen.findByRole('heading', { level: 2, name: 'Tùy chọn hiển thị' })).toBeInTheDocument();
-    expect(screen.queryByRole('heading', { level: 2, name: 'Bảo mật tài khoản' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('tab', { name: 'Bảo mật' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('tab', { name: 'Tùy chọn' })).not.toBeInTheDocument();
   });
 
   it('hiển thị quyền Premium trong tab Premium', async () => {

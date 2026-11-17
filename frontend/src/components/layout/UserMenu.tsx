@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { ChevronDown, LogOut, ShieldCheck, ShoppingBag, User } from 'lucide-react';
+import { ChevronDown, LogOut, ShieldCheck, User } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useNavbarLanguage } from '../../content/languages';
 import { useAccountI18n } from '../account/accountI18n';
@@ -99,12 +99,6 @@ export const UserMenu: React.FC = () => {
     navigate('/tai-khoan');
   };
 
-  const handleOrdersClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
-    e.preventDefault();
-    setIsOpen(false);
-    navigate('/don-hang');
-  };
-
   const handleAdminClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
     e.preventDefault();
     setIsOpen(false);
@@ -163,23 +157,10 @@ export const UserMenu: React.FC = () => {
             <span>{accountT.menuLabel}</span>
           </a>
 
-          <a
-            ref={(el) => {
-              itemRefs.current[1] = el;
-            }}
-            href="/don-hang"
-            role="menuitem"
-            className="um-item"
-            onClick={handleOrdersClick}
-          >
-            <ShoppingBag size={15} strokeWidth={1.9} aria-hidden="true" className="gm-action-icon" />
-            <span>{t.auth.myOrders}</span>
-          </a>
-
           {isAdmin && (
             <a
               ref={(el) => {
-                itemRefs.current[2] = el;
+                itemRefs.current[1] = el;
               }}
               href="/quan-tri"
               role="menuitem"
@@ -196,11 +177,11 @@ export const UserMenu: React.FC = () => {
           <button
             ref={(el) => {
               if (isAdmin) {
-                itemRefs.current[3] = el;
-                itemRefs.current.length = 4;
-              } else {
                 itemRefs.current[2] = el;
                 itemRefs.current.length = 3;
+              } else {
+                itemRefs.current[1] = el;
+                itemRefs.current.length = 2;
               }
             }}
             type="button"

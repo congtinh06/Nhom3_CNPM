@@ -32,7 +32,6 @@ const QrHandoffReceivePage = lazy(() => import('./pages/QrHandoffReceivePage'));
 const PremiumPage = lazy(() => import('./pages/PremiumPage'));
 // Trang chủ và các trang nặng được tải lười để chunk index ban đầu nhẹ.
 const HomePage = lazy(() => import('./pages/HomePage').then((m) => ({ default: m.HomePage })));
-const OrdersPage = lazy(() => import('./pages/OrdersPage'));
 const ScanPage = lazy(() => import('./pages/ScanPage'));
 const QrLoginScanPage = lazy(() => import('./pages/QrLoginScanPage'));
 const NotFoundPage = lazy(() =>
@@ -224,7 +223,7 @@ const AppContent: React.FC = () => {
               path="/don-hang"
               element={
                 <RequireAuth>
-                  <OrdersPage />
+                  <Navigate to="/tai-khoan#orders" replace />
                 </RequireAuth>
               }
             />
