@@ -103,7 +103,7 @@ function formatShortSessionTime(value: string | null | undefined): string {
   const minutes = String(date.getMinutes()).padStart(2, '0');
   const day = String(date.getDate()).padStart(2, '0');
   const month = String(date.getMonth() + 1).padStart(2, '0');
-  return `${hours}:${minutes} · ${day}/${month}`;
+  return `${hours}:${minutes} - ${day}/${month}`;
 }
 
 function formatBucket(value: string): string {
@@ -355,7 +355,7 @@ const QrAnalyticsPage: React.FC = () => {
             </div>
             {metaParts.length > 0 && (
               <div className="qr-session-user-sub">
-                {metaParts.join(' · ')}
+                {metaParts.join(' - ')}
               </div>
             )}
           </div>
@@ -817,7 +817,7 @@ const QrAnalyticsPage: React.FC = () => {
                       title="Trang trước"
                       aria-label="Trang trước"
                     >
-                      ‹
+                      &lt;
                     </button>
                     <span className="qr-session-page-num">
                       {(sessionPage.number ?? sessionPageIndex) + 1}/{sessionPage.totalPages || 1}
@@ -830,7 +830,7 @@ const QrAnalyticsPage: React.FC = () => {
                       title="Trang sau"
                       aria-label="Trang sau"
                     >
-                      ›
+                      &gt;
                     </button>
                   </div>
                 </div>
