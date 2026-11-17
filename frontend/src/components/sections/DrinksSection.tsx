@@ -12,7 +12,7 @@ export const DrinksSection: React.FC = () => {
   const { showToast } = useToast();
 
   const handleAdd = (drink: Drink) => {
-    addToCart(drink.id);
+    if (!addToCart(drink.id)) return;
     showToast(`Đã thêm ${drink.name} vào giỏ`);
     (window as unknown as { __pop?: () => void }).__pop?.();
   };

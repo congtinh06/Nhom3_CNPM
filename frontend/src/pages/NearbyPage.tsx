@@ -1429,7 +1429,7 @@ export const NearbyPage: React.FC = () => {
   const handleAddSouvenirToCart = useCallback(
     (product: Product) => {
       if (!product.isActive) return;
-      addToCart(product, 1);
+      if (!addToCart(product, 1)) return;
       triggerToast(t(currentLang, 'toastAddedToCart', { name: product.name }));
       (window as unknown as { __pop?: () => void }).__pop?.();
     },

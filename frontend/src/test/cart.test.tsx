@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
 import React from 'react';
 import { CartProvider, useCart } from '../context/CartContext';
@@ -6,6 +6,10 @@ import { CartProvider, useCart } from '../context/CartContext';
 describe('CartContext', () => {
   beforeEach(() => {
     localStorage.clear();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
   const wrapper = ({ children }: { children: React.ReactNode }) => (
@@ -101,6 +105,68 @@ describe('CartContext', () => {
     expect(result.current.cartItems).toHaveLength(0);
   });
 
+  it('asks before adding more than five total items and keeps the cart unchanged when declined', () => {
+    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(false);
+    const { result } = renderHook(() => useCart(), { wrapper });
+    const product = {
+      id: 101,
+      slug: 'souvenir',
+      name: 'Quà lưu niệm',
+      category: 'SOUVENIR' as const,
+      shortDescription: '',
+      description: '',
+      price: 10000,
+      imagePath: '/img/souvenir.jpg',
+      isActive: true,
+      sortOrder: 1,
+    };
+
+    act(() => {
+      expect(result.current.addToCart(product, 5)).toBe(true);
+    });
+
+    expect(result.current.totalCount).toBe(5);
+    expect(confirm).not.toHaveBeenCalled();
+
+    act(() => {
+      expect(result.current.addToCart(product)).toBe(false);
+    });
+
+    expect(confirm).toHaveBeenCalledOnce();
+    expect(confirm).toHaveBeenCalledWith(
+      'Bạn đang đặt quá nhiều sản phẩm (hơn 5 sản phẩm). Bạn có chắc là muốn đặt thêm không?'
+    );
+    expect(result.current.totalCount).toBe(5);
+  });
+
+  it('adds more than five items when the user confirms the warning', () => {
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+    const { result } = renderHook(() => useCart(), { wrapper });
+
+    act(() => {
+      expect(result.current.addToCart(0, 6)).toBe(true);
+    });
+
+    expect(result.current.totalCount).toBe(6);
+  });
+
+  it('confirms a bulk reorder once using the combined item quantity', () => {
+    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(false);
+    const { result } = renderHook(() => useCart(), { wrapper });
+
+    act(() => {
+      expect(
+        result.current.reorderItems([
+          { key: 101, quantity: 3, name: 'Quà A', price: 10000 },
+          { key: 102, quantity: 3, name: 'Quà B', price: 10000 },
+        ])
+      ).toBe(false);
+    });
+
+    expect(confirm).toHaveBeenCalledOnce();
+    expect(result.current.totalCount).toBe(0);
+  });
+
   it('restores products and quantities from localStorage', () => {
     localStorage.setItem('cart', JSON.stringify({ 200: 3 }));
     localStorage.setItem(
@@ -139,4 +205,3 @@ describe('CartContext', () => {
     expect(stored).toHaveProperty('0');
   });
 });
-

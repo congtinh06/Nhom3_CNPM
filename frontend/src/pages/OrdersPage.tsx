@@ -118,7 +118,7 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({ embedded = false }) => {
       name: it.productName,
       price: it.unitPrice,
     }));
-    reorderItems(itemsToReorder);
+    if (!reorderItems(itemsToReorder)) return;
     showToast('Đã thêm lại các món vào giỏ hàng');
     openCart();
   };

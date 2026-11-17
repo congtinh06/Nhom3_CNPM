@@ -388,7 +388,7 @@ const SouvenirGridCard: React.FC<SouvenirGridCardProps> = ({
 export const FoodBeveragePage: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { addToCart, openCart } = useCart();
+  const { addToCart, reorderItems, openCart } = useCart();
   const { isPremium, hasAnyPurchase } = usePremium();
   const { showToast } = useToast();
   const { isFavorite, toggleFavorite } = useFavorites();
@@ -792,12 +792,13 @@ export const FoodBeveragePage: React.FC = () => {
   }, [currentPage]);
 
   const handleAddToCart = useCallback(
-    (product: Product, e?: React.MouseEvent) => {
+    (product: Product, e?: React.MouseEvent): boolean => {
       e?.stopPropagation();
-      if (!product.isActive) return;
-      addToCart(product, 1);
+      if (!product.isActive) return false;
+      if (!addToCart(product, 1)) return false;
       showToast(st(lang, 'toastAdded', { name: product.name }));
       (window as unknown as { __pop?: () => void }).__pop?.();
+      return true;
     },
     [addToCart, lang, showToast]
   );
@@ -816,7 +817,7 @@ export const FoodBeveragePage: React.FC = () => {
 
   const handleQuickAdd = useCallback(
     (product: Product, e?: React.MouseEvent) => {
-      handleAddToCart(product, e);
+      if (!handleAddToCart(product, e)) return;
       setJustAddedId(product.id);
       if (justAddedTimerRef.current) {
         clearTimeout(justAddedTimerRef.current);
@@ -826,16 +827,26 @@ export const FoodBeveragePage: React.FC = () => {
     [handleAddToCart]
   );
 
-  // "Thêm cả bộ" của bộ quà: thêm lần lượt từng món vào giỏ rồi mở giỏ hàng
+  // "Thêm cả bộ" xác nhận một lần theo tổng số lượng của cả bộ quà.
   const handleAddSet = useCallback(
     (set: GiftSet) => {
-      for (const item of set.items) {
-        addToCart(item, 1);
-      }
+      const added = reorderItems(
+        set.items.map((item) => ({
+          key: item.id,
+          quantity: 1,
+          name: item.name,
+          price: Number(item.price),
+          slug: item.slug,
+          category: item.category,
+          imagePath: item.imagePath,
+          poiSlug: item.poiSlug,
+        }))
+      );
+      if (!added) return;
       showToast(st(lang, 'setAdded', { count: set.items.length }));
       (window as unknown as { __pop?: () => void }).__pop?.();
     },
-    [addToCart, lang, showToast]
+    [reorderItems, lang, showToast]
   );
 
   // Nút "Xem bộ sưu tập <điểm>" của dòng ".desti": gộp bộ sưu tập về điểm đó rồi cuộn lên lưới
@@ -885,7 +896,7 @@ export const FoodBeveragePage: React.FC = () => {
 
   const handleQuickViewAddToCart = useCallback(() => {
     if (!quickViewProduct) return;
-    addToCart(quickViewProduct, quickViewQty);
+    if (!addToCart(quickViewProduct, quickViewQty)) return;
     showToast(st(lang, 'toastAdded', { name: quickViewProduct.name }));
     closeQuickView();
     openCart();

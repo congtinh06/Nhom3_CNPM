@@ -272,7 +272,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ category: 
 
   const handleAddToCart = () => {
     if (!product || !product.isActive) return;
-    addToCart(product, quantity);
+    if (!addToCart(product, quantity)) return;
     showToast(`Đã thêm vào giỏ: ${quantity} × ${product.name}`);
     setAddedAnimation(true);
     setTimeout(() => setAddedAnimation(false), 1200);
@@ -282,7 +282,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ category: 
 
   const handleBuyNow = () => {
     if (!product || !product.isActive) return;
-    addToCart(product, quantity);
+    if (!addToCart(product, quantity)) return;
     (window as unknown as { __pop?: () => void }).__pop?.();
     if (!isAuthenticated) {
       navigate('/dang-nhap', {
@@ -568,7 +568,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ category: 
                   onToggleFavorite={toggleFavorite}
                   onAddToCart={(p, e) => {
                     e.stopPropagation();
-                    addToCart(p, 1);
+                    if (!addToCart(p, 1)) return;
                     showToast(
                       lang === 'en'
                         ? `Added to cart: 1 × ${p.name}`

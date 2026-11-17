@@ -90,7 +90,7 @@ export const SouvenirStrip: React.FC<SouvenirStripProps> = ({ poiSlug, lang }) =
   const handleAddToCart = (product: Product, e?: React.MouseEvent) => {
     e?.stopPropagation();
     if (!product.isActive) return;
-    addToCart(product, 1);
+    if (!addToCart(product, 1)) return;
     showToast(`Đã thêm vào giỏ hàng: ${product.name}`);
     (window as unknown as { __pop?: () => void }).__pop?.();
   };

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { drinksList } from '../content/staticSections';
 import { defaultProducts } from '../content/defaultProducts';
 import { CartItem, Drink, Product, ProductCategory } from '../types';
@@ -21,7 +21,7 @@ interface CartContextValue {
   discountAmount: number;
   totalAmount: number;
   cartItems: CartItem[];
-  addToCart: (item: number | Product, quantity?: number) => void;
+  addToCart: (item: number | Product, quantity?: number) => boolean;
   updateQuantity: (id: number, quantity: number) => void;
   removeFromCart: (id: number) => void;
   decreaseQuantity: (id: number) => void;
@@ -37,7 +37,7 @@ interface CartContextValue {
       imagePath?: string;
       poiSlug?: string | null;
     }[]
-  ) => void;
+  ) => boolean;
   isCartOpen: boolean;
   openCart: () => void;
   closeCart: () => void;
@@ -47,6 +47,12 @@ const CartContext = createContext<CartContextValue | null>(null);
 
 const STORAGE_KEY = 'cart';
 const META_STORAGE_KEY = 'cart_meta';
+const MAX_CART_QUANTITY_WITHOUT_CONFIRMATION = 5;
+
+const confirmLargeCartAddition = (): boolean =>
+  window.confirm(
+    'Bạn đang đặt quá nhiều sản phẩm (hơn 5 sản phẩm). Bạn có chắc là muốn đặt thêm không?'
+  );
 
 const loadSavedCart = (): Record<number, number> => {
   try {
@@ -178,6 +184,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const totalCount = useMemo(() => {
     return cartItems.reduce((sum, item) => sum + item.quantity, 0);
   }, [cartItems]);
+  const cartCountRef = useRef(totalCount);
+  cartCountRef.current = totalCount;
 
   // Dọn các khóa giỏ hàng không còn phân giải được (sản phẩm đã bị xóa) cùng metadata của chúng.
   useEffect(() => {
@@ -224,8 +232,16 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const totalAmount = subtotalAmount - discountAmount;
 
-  const addToCart = useCallback((item: number | Product, quantity: number = 1) => {
+  const addToCart = useCallback((item: number | Product, quantity: number = 1): boolean => {
     const addQty = Math.max(1, Math.floor(quantity));
+    if (
+      cartCountRef.current + addQty > MAX_CART_QUANTITY_WITHOUT_CONFIRMATION &&
+      !confirmLargeCartAddition()
+    ) {
+      return false;
+    }
+
+    cartCountRef.current += addQty;
     if (typeof item === 'number') {
       const drinkId = item;
       setCart((prev) => ({
@@ -250,6 +266,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         [product.id]: (prev[product.id] ?? 0) + addQty,
       }));
     }
+    return true;
   }, []);
 
   const updateQuantity = useCallback((id: number, quantity: number) => {
@@ -313,7 +330,19 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         imagePath?: string;
         poiSlug?: string | null;
       }[]
-    ) => {
+    ): boolean => {
+      const addedCount = items.reduce(
+        (sum, item) => sum + Math.max(0, Math.floor(item.quantity)),
+        0
+      );
+      if (
+        cartCountRef.current + addedCount > MAX_CART_QUANTITY_WITHOUT_CONFIRMATION &&
+        !confirmLargeCartAddition()
+      ) {
+        return false;
+      }
+
+      cartCountRef.current += addedCount;
       setCart((prev) => {
         const next = { ...prev };
         items.forEach((it) => {
@@ -337,6 +366,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         });
         return next;
       });
+      return true;
     },
     []
   );
@@ -382,6 +412,5 @@ export const useCart = (): CartContextValue => {
 // (e.g. in unit tests) without crashing.
 export const useCartOptional = (): Pick<CartContextValue, 'addToCart'> => {
   const ctx = useContext(CartContext);
-  return { addToCart: ctx ? ctx.addToCart : () => {} };
+  return { addToCart: ctx ? ctx.addToCart : () => true };
 };
-
