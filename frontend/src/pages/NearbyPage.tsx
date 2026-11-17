@@ -31,6 +31,8 @@ import { SupportedLanguage } from '../types';
 import { useAutoNarration, haversine } from '../hooks/useAutoNarration';
 import { useNearbyAudio, splitTranscriptIntoSentences } from '../hooks/useNearbyAudio';
 import { getSharedAudio, unlockAudio } from '../lib/audioUnlock';
+import { getAnalyticsSessionId } from '../lib/analytics';
+import { detectDeviceType } from '../lib/device';
 import {
   t,
   formatDistance,
@@ -548,6 +550,8 @@ export const NearbyPage: React.FC = () => {
 
   const rootRef = useRef<HTMLDivElement>(null);
   const heroRef = useRef<HTMLDivElement>(null);
+  // Đảm bảo mỗi lần mở trang do quét QR chỉ ghi nhận 1 sự kiện SCAN.
+  const qrScanTrackedRef = useRef(false);
 
   const [apiPois, setApiPois] = useState<GeoPoi[] | null>(null);
   const [apiFailed, setApiFailed] = useState(false);
@@ -1107,7 +1111,45 @@ export const NearbyPage: React.FC = () => {
       setActiveId(matched.id);
       scrollActiveStopIntoView(matched.id);
     }
-  }, [pois, location.search, scrollActiveStopIntoView]);
+
+    // QR in "QR nghe audio" trỏ tới /diem-du-lich?stop=<slug>&src=qr. Trang này
+    // không đi qua ScanPage nên phải tự ghi sự kiện SCAN, nếu không trang quản
+    // trị sẽ luôn báo "Chưa có lượt quét QR audio".
+    if (matched && params.get('src') === 'qr' && !qrScanTrackedRef.current) {
+      const poiNumericId =
+        matched.numericId ?? (/^\d+$/.test(matched.id) ? Number(matched.id) : null);
+      if (poiNumericId != null) {
+        qrScanTrackedRef.current = true;
+        const sessionId = getAnalyticsSessionId();
+        const dedupeKey = `sv:qr_scan:${sessionId}:${poiNumericId}`;
+        let alreadyTracked = false;
+        try {
+          alreadyTracked = sessionStorage.getItem(dedupeKey) === '1';
+        } catch {
+          // sessionStorage không khả dụng: bỏ qua chống trùng.
+        }
+        if (!alreadyTracked) {
+          try {
+            sessionStorage.setItem(dedupeKey, '1');
+          } catch {
+            // sessionStorage không khả dụng: bỏ qua chống trùng.
+          }
+          void api
+            .recordAnalyticsEvent({
+              eventType: 'SCAN',
+              poiId: poiNumericId,
+              languageCode: currentLang,
+              triggerType: 'QR',
+              deviceType: detectDeviceType(),
+              sessionId,
+            })
+            .catch(() => {
+              // Analytics lỗi tạm thời không chặn trải nghiệm xem điểm.
+            });
+        }
+      }
+    }
+  }, [pois, location.search, scrollActiveStopIntoView, currentLang]);
 
   const handleTogglePlayPoi = useCallback(
     (poiId: string) => {

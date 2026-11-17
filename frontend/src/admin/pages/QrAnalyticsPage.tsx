@@ -21,7 +21,6 @@ import {
   fetchLoginSessions,
   fetchLoginStatsWithPrevious,
 } from '../api/qrApi';
-import { AdminPagination } from '../components/AdminPagination';
 import { DataTable, Column } from '../components/DataTable';
 import { EmptyState } from '../components/EmptyState';
 import { ErrorState } from '../components/ErrorState';
@@ -93,8 +92,19 @@ const EMPTY_SESSION_PAGE: QrLoginSessionPage = {
   totalElements: 0,
   totalPages: 0,
   number: 0,
-  size: 8,
+  size: 5,
 };
+
+function formatShortSessionTime(value: string | null | undefined): string {
+  if (!value) return '-';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  return `${hours}:${minutes} · ${day}/${month}`;
+}
 
 function formatBucket(value: string): string {
   if (value.length >= 13) {
@@ -176,7 +186,7 @@ const QrAnalyticsPage: React.FC = () => {
 
     fetchLoginSessions(period.current, {
       page: sessionPageIndex,
-      size: 8,
+      size: 5,
       status: sessionStatus ?? undefined,
     })
       .then((page) => {
@@ -205,11 +215,10 @@ const QrAnalyticsPage: React.FC = () => {
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [selectedSession]);
 
-  const goTab = (nextTab: QrTab) => {
+  useEffect(() => {
     setSessionPageIndex(0);
     setSessionStatus(null);
-    navigate(nextTab === 'audio' ? '/quan-tri/qr/audio' : '/quan-tri/qr/tai-khoan');
-  };
+  }, [tab]);
 
   const changeRange = (nextRange: RangeKey) => {
     setRange(nextRange);
@@ -308,52 +317,60 @@ const QrAnalyticsPage: React.FC = () => {
     {
       key: 'createdAt',
       title: 'Thời gian',
-      render: (session) => formatDateTime(session.createdAt),
-    },
-    {
-      key: 'user',
-      title: 'Người dùng',
-      render: (session) =>
-        session.user ? (
-          <span className="adm-table-strong">{session.user.fullName || session.user.email}</span>
-        ) : session.status?.toLowerCase().startsWith('guest') ? (
-          <span className="adm-cell-sub">Khách (chưa có tài khoản)</span>
-        ) : (
-          <span className="adm-cell-sub">Chưa xác định</span>
-        ),
-    },
-    {
-      key: 'device',
-      title: 'Thiết bị',
-      render: (session) => session.deviceLabel,
-    },
-    {
-      key: 'status',
-      title: 'Trạng thái',
+      width: '110px',
       render: (session) => (
-        <span className={`qr-status-chip qr-status-${session.status.toLowerCase()}`}>
-          {statusLabel(session.status)}
+        <span className="qr-session-time">
+          {formatShortSessionTime(session.createdAt)}
         </span>
       ),
     },
     {
-      key: 'ip',
-      title: 'IP',
-      width: '124px',
-      render: (session) => <span className="qr-ip">{maskIp(session.createdIp)}</span>,
+      key: 'user',
+      title: 'Người dùng',
+      render: (session) => {
+        const userName = session.user
+          ? session.user.fullName || session.user.email
+          : session.status?.toLowerCase().startsWith('guest')
+          ? 'Khách (chưa có tài khoản)'
+          : 'Chưa xác định';
+        const maskedIpStr = session.createdIp ? maskIp(session.createdIp) : '';
+        const metaParts = [session.deviceLabel, maskedIpStr].filter(Boolean);
+
+        return (
+          <div
+            className="qr-session-user-cell"
+            onClick={() => setSelectedSession(session)}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                setSelectedSession(session);
+              }
+            }}
+            title="Nhấn để xem chi tiết phiên"
+          >
+            <div className="adm-table-strong qr-session-user-name">
+              {userName}
+            </div>
+            {metaParts.length > 0 && (
+              <div className="qr-session-user-sub">
+                {metaParts.join(' · ')}
+              </div>
+            )}
+          </div>
+        );
+      },
     },
     {
-      key: 'detail',
-      title: '',
+      key: 'status',
+      title: 'Trạng thái',
       align: 'right',
+      width: '120px',
       render: (session) => (
-        <button
-          type="button"
-          className="adm-btn adm-btn-secondary adm-btn-sm"
-          onClick={() => setSelectedSession(session)}
-        >
-          Chi tiết
-        </button>
+        <span className={`qr-status-chip qr-status-${session.status.toLowerCase()}`}>
+          {statusLabel(session.status)}
+        </span>
       ),
     },
   ];
@@ -430,7 +447,10 @@ const QrAnalyticsPage: React.FC = () => {
 
   const isAccount = tab === 'account';
   const noLoginData = !statsLoading && (!loginStats || loginStats.totals.created === 0);
-  const noAudioData = !statsLoading && (!audioStats || audioStats.totals.scans === 0);
+  const noAudioData =
+    !statsLoading &&
+    (!audioStats ||
+      (audioStats.totals.scans === 0 && audioStats.totals.audioPlays === 0));
   const showDevHint = import.meta.env.DEV;
 
   const accountView = (
@@ -634,104 +654,104 @@ const QrAnalyticsPage: React.FC = () => {
         </div>
       </div>
 
-      <div className="adm-split-grid qr-chart-grid">
-        <div className="adm-card">
-          <div className="adm-card-head-row">
-            <div>
-              <h2 className="adm-card-title">Phễu chuyển đổi</h2>
-              <p className="adm-card-subtitle">Tỷ lệ rơi rụng giữa các bước</p>
-            </div>
-          </div>
-          <div className="qr-funnel">
-            {funnelSteps.map((step, index) => (
-              <div key={step.label} className="qr-funnel-row">
-                <span>{step.label}</span>
-                <div className="qr-funnel-track">
-                  <div
-                    className="qr-funnel-fill"
-                    style={{
-                      width: `${Math.max(4, (step.value / Math.max(1, funnelSteps[0]?.value ?? 1)) * 100)}%`,
-                      backgroundColor: step.color,
-                    }}
-                  />
-                </div>
-                <strong>{formatNumber(step.value)}</strong>
-                {index > 0 && (
-                  <small className="qr-funnel-rate">
-                    {formatPercent(
-                      (step.value / Math.max(1, funnelSteps[index - 1]?.value ?? 1)) * 100
-                    )}
-                  </small>
-                )}
-              </div>
-            ))}
-          </div>
-          <div className="qr-mini-stats">
-            <div>
-              <span>Quét sang xác nhận</span>
-              <strong>{formatPercent(loginStats?.rates.approvalRate ?? 0)}</strong>
-            </div>
-            <div>
-              <span>TB thời gian quét</span>
-              <strong>{formatDuration(loginStats?.durations.averageScanSeconds ?? 0)}</strong>
-            </div>
-            <div>
-              <span>TB thời gian đăng nhập</span>
-              <strong>{formatDuration(loginStats?.durations.averageLoginSeconds ?? 0)}</strong>
-            </div>
+      <div className="adm-card qr-funnel-card">
+        <div className="adm-card-head-row">
+          <div>
+            <h2 className="adm-card-title">Phễu chuyển đổi</h2>
+            <p className="adm-card-subtitle">Tỷ lệ rơi rụng giữa các bước</p>
           </div>
         </div>
-
-        <div className="adm-card">
-          <h2 className="adm-card-title">Thiết bị tạo mã</h2>
-          <div className="qr-chart-wrap qr-chart-bars">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart
-                data={loginDeviceData.slice(0, 6)}
-                layout="vertical"
-                margin={{ top: 4, right: 16, left: 4, bottom: 0 }}
-              >
-                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#E7E5E4" />
-                <XAxis type="number" allowDecimals={false} tick={{ fontSize: 11 }} />
-                <YAxis
-                  type="category"
-                  dataKey="name"
-                  width={130}
-                  tick={{ fontSize: 11 }}
-                  tickLine={false}
-                  axisLine={false}
+        <div className="qr-funnel">
+          {funnelSteps.map((step, index) => (
+            <div key={step.label} className="qr-funnel-row">
+              <span>{step.label}</span>
+              <div className="qr-funnel-track">
+                <div
+                  className="qr-funnel-fill"
+                  style={{
+                    width: `${Math.max(4, (step.value / Math.max(1, funnelSteps[0]?.value ?? 1)) * 100)}%`,
+                    backgroundColor: step.color,
+                  }}
                 />
-                <Tooltip />
-                <Bar dataKey="count" name="Số phiên" fill={SERIES_COLORS.created} radius={[0, 4, 4, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+              </div>
+              <strong>{formatNumber(step.value)}</strong>
+              {index > 0 && (
+                <small className="qr-funnel-rate">
+                  {formatPercent(
+                    (step.value / Math.max(1, funnelSteps[index - 1]?.value ?? 1)) * 100
+                  )}
+                </small>
+              )}
+            </div>
+          ))}
+        </div>
+        <div className="qr-mini-stats">
+          <div>
+            <span>Quét sang xác nhận</span>
+            <strong>{formatPercent(loginStats?.rates.approvalRate ?? 0)}</strong>
+          </div>
+          <div>
+            <span>TB thời gian quét</span>
+            <strong>{formatDuration(loginStats?.durations.averageScanSeconds ?? 0)}</strong>
+          </div>
+          <div>
+            <span>TB thời gian đăng nhập</span>
+            <strong>{formatDuration(loginStats?.durations.averageLoginSeconds ?? 0)}</strong>
           </div>
         </div>
       </div>
 
-      <div className="adm-split-grid qr-chart-grid">
-        <div className="adm-card">
-          <div className="adm-card-head-row">
-            <div>
-              <h2 className="adm-card-title">Top người dùng QR</h2>
-              <p className="adm-card-subtitle">Số lần đăng nhập thành công</p>
+      <div className="qr-bottom-split-grid">
+        <div className="qr-left-col">
+          <div className="adm-card">
+            <div className="adm-card-head-row">
+              <div>
+                <h2 className="adm-card-title">Top người dùng QR</h2>
+                <p className="adm-card-subtitle">Số lần đăng nhập thành công</p>
+              </div>
+            </div>
+            <div className="qr-rank-list">
+              {(loginStats?.topUsers ?? []).length === 0 ? (
+                <p className="qr-muted">Chưa có người dùng nào đăng nhập bằng QR.</p>
+              ) : (
+                loginStats?.topUsers.slice(0, 5).map((user, index) => (
+                  <div key={user.userId} className="qr-rank-row">
+                    <span className="qr-rank-index">{index + 1}</span>
+                    <div>
+                      <strong>{user.fullName || user.email}</strong>
+                      <small>{user.email}</small>
+                    </div>
+                    <b>{formatNumber(user.count)}</b>
+                  </div>
+                ))
+              )}
             </div>
           </div>
-          <div className="qr-rank-list">
-            {(loginStats?.topUsers ?? []).length === 0 ? (
-              <p className="qr-muted">Chưa có người dùng nào đăng nhập bằng QR.</p>
-            ) : (
-              loginStats?.topUsers.slice(0, 5).map((user, index) => (
-                <div key={user.userId} className="qr-rank-row">
-                  <span className="qr-rank-index">{index + 1}</span>
-                  <div>
-                    <strong>{user.fullName || user.email}</strong>
-                    <small>{user.email}</small>
-                  </div>
-                  <b>{formatNumber(user.count)}</b>
-                </div>
-              ))
-            )}
+
+          <div className="adm-card">
+            <h2 className="adm-card-title">Thiết bị tạo mã</h2>
+            <div className="qr-chart-wrap qr-chart-bars">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={loginDeviceData.slice(0, 6)}
+                  layout="vertical"
+                  margin={{ top: 4, right: 16, left: 4, bottom: 0 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#E7E5E4" />
+                  <XAxis type="number" allowDecimals={false} tick={{ fontSize: 11 }} />
+                  <YAxis
+                    type="category"
+                    dataKey="name"
+                    width={130}
+                    tick={{ fontSize: 11 }}
+                    tickLine={false}
+                    axisLine={false}
+                  />
+                  <Tooltip />
+                  <Bar dataKey="count" name="Số phiên" fill={SERIES_COLORS.created} radius={[0, 4, 4, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
           </div>
         </div>
 
@@ -749,7 +769,10 @@ const QrAnalyticsPage: React.FC = () => {
               <button
                 type="button"
                 className="adm-btn adm-btn-secondary adm-btn-sm"
-                onClick={() => setSessionStatus(null)}
+                onClick={() => {
+                  setSessionStatus(null);
+                  setSessionPageIndex(0);
+                }}
               >
                 Xoá lọc
               </button>
@@ -780,14 +803,38 @@ const QrAnalyticsPage: React.FC = () => {
                 }
                 ariaLabel="Bảng phiên đăng nhập QR gần đây"
               />
-              <AdminPagination
-                page={sessionPage.number ?? sessionPageIndex}
-                totalPages={sessionPage.totalPages ?? 0}
-                totalElements={sessionPage.totalElements ?? 0}
-                unitLabel="phiên"
-                onPageChange={setSessionPageIndex}
-                disabled={sessionsLoading}
-              />
+              {sessionPage.totalElements > 0 && (
+                <div className="qr-session-pagination">
+                  <span className="qr-session-page-info">
+                    Hiển thị {sessionPageIndex * 5 + 1}-{Math.min((sessionPageIndex + 1) * 5, sessionPage.totalElements)} / {sessionPage.totalElements}
+                  </span>
+                  <div className="qr-session-page-actions">
+                    <button
+                      type="button"
+                      className="qr-session-page-btn"
+                      onClick={() => setSessionPageIndex((prev) => Math.max(0, prev - 1))}
+                      disabled={sessionPageIndex <= 0 || sessionsLoading}
+                      title="Trang trước"
+                      aria-label="Trang trước"
+                    >
+                      ‹
+                    </button>
+                    <span className="qr-session-page-num">
+                      {(sessionPage.number ?? sessionPageIndex) + 1}/{sessionPage.totalPages || 1}
+                    </span>
+                    <button
+                      type="button"
+                      className="qr-session-page-btn"
+                      onClick={() => setSessionPageIndex((prev) => prev + 1)}
+                      disabled={sessionPageIndex >= (sessionPage.totalPages ?? 1) - 1 || sessionsLoading}
+                      title="Trang sau"
+                      aria-label="Trang sau"
+                    >
+                      ›
+                    </button>
+                  </div>
+                </div>
+              )}
             </>
           )}
         </div>
@@ -1043,9 +1090,13 @@ const QrAnalyticsPage: React.FC = () => {
     <div className="adm-page qr-admin-page">
       <div className="adm-page-head">
         <div>
-          <h1 className="adm-page-title">QR &amp; Thống kê</h1>
+          <h1 className="adm-page-title">
+            {isAccount ? 'QR tài khoản' : 'QR nghe audio'}
+          </h1>
           <p className="adm-page-desc">
-            Theo dõi hiệu quả QR đăng nhập và lượt quét QR nghe thuyết minh tại các điểm đến.
+            {isAccount
+              ? 'Theo dõi phiên đăng nhập bằng mã QR trên máy tính, tỷ lệ quét và xác thực.'
+              : 'Theo dõi lượt quét QR nghe thuyết minh tại các điểm đến du lịch.'}
             {lastUpdated && (
               <span className="adm-live-updated">
                 {' '}Cập nhật lúc {lastUpdated.toLocaleTimeString('vi-VN', { hour12: false })}
@@ -1069,26 +1120,9 @@ const QrAnalyticsPage: React.FC = () => {
       </div>
 
       <div className="qr-admin-toolbar">
-        <div className="qr-admin-tabs" role="tablist" aria-label="Loại QR">
-          <button
-            type="button"
-            role="tab"
-            aria-selected={isAccount}
-            className={`qr-admin-tab ${isAccount ? 'is-active' : ''}`}
-            onClick={() => goTab('account')}
-          >
-            QR tài khoản
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={!isAccount}
-            className={`qr-admin-tab ${!isAccount ? 'is-active' : ''}`}
-            onClick={() => goTab('audio')}
-          >
-            QR nghe audio
-          </button>
-        </div>
+        <span className="qr-admin-toolbar-label">
+          {isAccount ? 'Thống kê phiên đăng nhập QR' : 'Thống kê lượt quét QR thuyết minh'}
+        </span>
 
         <div className="qr-range-tabs" role="group" aria-label="Khoảng thời gian">
           {RANGE_OPTIONS.map((option) => (

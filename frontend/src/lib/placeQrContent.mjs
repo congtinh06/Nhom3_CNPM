@@ -29,6 +29,8 @@ const TOKEN_TO_SLUG = {
  *
  * Quét mã QR dẫn trực tiếp vào giao diện web đầy đủ của điểm tham quan (/diem-du-lich?stop=<slug>),
  * hiển thị bản đồ tương tác, thanh nghe âm thanh, lộ trình gợi ý và bài thuyết minh.
+ * Tham số `src=qr` đánh dấu lượt mở trang đến từ mã QR để trang điểm thuyết minh
+ * ghi nhận sự kiện SCAN cho thống kê "QR nghe audio" ở trang quản trị.
  * @param {string | null | undefined} baseUrl
  * @param {string | null | undefined} qrToken
  * @param {string | null | undefined} slug
@@ -40,6 +42,6 @@ export function buildPlaceQrContent(baseUrl, qrToken, slug) {
   const targetSlug = explicitSlug || TOKEN_TO_SLUG[token] || token;
   if (!targetSlug) return '';
   const prefix = normalizeQrBaseUrl(baseUrl);
-  const path = `/diem-du-lich?stop=${encodeURIComponent(targetSlug)}`;
+  const path = `/diem-du-lich?stop=${encodeURIComponent(targetSlug)}&src=qr`;
   return prefix ? `${prefix}${path}` : path;
 }

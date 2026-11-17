@@ -28,10 +28,7 @@ import {
   UserRoleValue,
   UserStatusValue,
   USER_PROVIDER_LABELS,
-  USER_ROLE_LABELS,
-  USER_STATUS_LABELS,
 } from '../types/user';
-import { StatusBadge } from '../components/StatusBadge';
 import { ErrorState } from '../components/ErrorState';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { FormSection } from '../components/FormSection';
@@ -244,7 +241,7 @@ export const UserDetailPage: React.FC = () => {
         </div>
       )}
 
-      <div className="adm-form-grid">
+      <div className="adm-form-grid adm-user-detail-grid">
         <FormSection title="Thông tin tài khoản">
 
           <dl className="adm-detail-list">
@@ -276,20 +273,6 @@ export const UserDetailPage: React.FC = () => {
               <dt>Ngày tạo</dt>
               <dd>{formatDateTime(user.createdAt)}</dd>
             </div>
-            <div className="adm-detail-row">
-              <dt>Trạng thái tài khoản</dt>
-              <dd>
-                <StatusBadge status={user.status} />
-              </dd>
-            </div>
-            <div className="adm-detail-row">
-              <dt>Gói dịch vụ (Plan)</dt>
-              <dd>
-                <StatusBadge variant={user.plan === 'PREMIUM' && user.premiumActive !== false ? 'neutral' : 'muted'}>
-                  {user.plan === 'PREMIUM' && user.premiumActive !== false ? 'Premium' : 'Free'}
-                </StatusBadge>
-              </dd>
-            </div>
             {user.plan === 'PREMIUM' && (
               <>
                 <div className="adm-detail-row">
@@ -319,117 +302,115 @@ export const UserDetailPage: React.FC = () => {
         </FormSection>
 
         <div className="adm-form-side">
-          <FormSection title="Gói dịch vụ & Quyền lợi Premium">
-            <p className="adm-field-helper" style={{ marginBottom: '12px' }}>
-              Gói hiện tại:{' '}
-              <strong>
-                {user.plan === 'PREMIUM' && user.premiumActive !== false
-                  ? 'Nâng cao (Premium)'
-                  : 'Miễn phí (Free)'}
-              </strong>
-            </p>
-            <div className="adm-action-row" style={{ flexWrap: 'wrap', gap: '8px' }}>
-              <select
-                className="adm-select"
-                value={planDraft}
-                onChange={(e) => setPlanDraft(e.target.value as UserPlanValue)}
-                disabled={submitting}
-                aria-label="Chọn gói dịch vụ"
-              >
-                <option value="FREE">Miễn phí (Free)</option>
-                <option value="PREMIUM">Nâng cao (Premium)</option>
-              </select>
-              {planDraft === 'PREMIUM' && (
+          <FormSection title="Quản lý tài khoản" className="adm-user-mgmt-card">
+            <div className="adm-mgmt-group">
+              <label className="adm-mgmt-label" htmlFor="user-plan-select">Gói dịch vụ</label>
+              <div className="adm-mgmt-row">
                 <select
+                  id="user-plan-select"
                   className="adm-select"
-                  value={durationDaysDraft}
-                  onChange={(e) => setDurationDaysDraft(Number(e.target.value))}
+                  value={planDraft}
+                  onChange={(e) => setPlanDraft(e.target.value as UserPlanValue)}
                   disabled={submitting}
-                  aria-label="Thời hạn gói Premium"
-                  style={{ width: '140px' }}
+                  aria-label="Chọn gói dịch vụ"
                 >
-                  <option value={30}>30 ngày</option>
-                  <option value={90}>90 ngày</option>
-                  <option value={365}>1 năm (365 ngày)</option>
-                  <option value={3650}>10 năm</option>
+                  <option value="FREE">Miễn phí (Free)</option>
+                  <option value="PREMIUM">Nâng cao (Premium)</option>
                 </select>
-              )}
-              <button
-                type="button"
-                className="adm-btn adm-btn-primary"
-                onClick={() =>
-                  setPendingAction({
-                    kind: 'plan',
-                    value: planDraft,
-                    durationDays: durationDaysDraft,
-                  })
-                }
-                disabled={submitting || (!planDirty && planDraft === 'FREE')}
-              >
-                Cập nhật gói
-              </button>
+                {planDraft === 'PREMIUM' && (
+                  <select
+                    className="adm-select"
+                    value={durationDaysDraft}
+                    onChange={(e) => setDurationDaysDraft(Number(e.target.value))}
+                    disabled={submitting}
+                    aria-label="Thời hạn gói Premium"
+                    style={{ width: '130px', flex: '0 0 130px' }}
+                  >
+                    <option value={30}>30 ngày</option>
+                    <option value={90}>90 ngày</option>
+                    <option value={365}>1 năm (365 ngày)</option>
+                    <option value={3650}>10 năm</option>
+                  </select>
+                )}
+                <button
+                  type="button"
+                  className="adm-btn adm-btn-primary"
+                  onClick={() =>
+                    setPendingAction({
+                      kind: 'plan',
+                      value: planDraft,
+                      durationDays: durationDaysDraft,
+                    })
+                  }
+                  disabled={submitting || (!planDirty && planDraft === 'FREE')}
+                >
+                  Cập nhật gói
+                </button>
+              </div>
+              <p className="adm-field-helper" style={{ margin: '6px 0 0', fontSize: '12px', lineHeight: 1.45 }}>
+                Tài khoản Premium được mở khóa toàn bộ tính năng: nghe audio thuyết minh đa ngôn
+                ngữ (Anh, Nhật, Hàn), mở khóa chi tiết các phân đoạn và giảm giá quà lưu niệm.
+              </p>
             </div>
-            <p className="adm-field-helper" style={{ marginTop: '12px' }}>
-              Tài khoản Premium được mở khóa toàn bộ tính năng: nghe audio thuyết minh đa ngôn
-              ngữ (Anh, Nhật, Hàn), mở khóa chi tiết các phân đoạn và giảm giá quà lưu niệm.
-            </p>
-          </FormSection>
 
-          <FormSection title="Vai trò">
-            <p className="adm-field-helper" style={{ marginBottom: '12px' }}>
-              Vai trò hiện tại: <strong>{USER_ROLE_LABELS[user.role]}</strong>
-            </p>
-            <div className="adm-action-row">
-              <select
-                className="adm-select"
-                value={roleDraft}
-                onChange={(e) => setRoleDraft(e.target.value as UserRoleValue)}
-                disabled={isSelf || submitting}
-                aria-label="Chọn vai trò"
-              >
-                <option value="USER">Du khách</option>
-                <option value="ADMIN">Quản trị viên</option>
-              </select>
-              <button
-                type="button"
-                className="adm-btn adm-btn-primary"
-                onClick={() => setPendingAction({ kind: 'role', value: roleDraft })}
-                disabled={isSelf || submitting || !roleDirty}
-              >
-                Cập nhật vai trò
-              </button>
-            </div>
-          </FormSection>
+            <div className="adm-mgmt-divider" />
 
-          <FormSection title="Trạng thái tài khoản">
-            <p className="adm-field-helper" style={{ marginBottom: '12px' }}>
-              Trạng thái hiện tại: <strong>{USER_STATUS_LABELS[user.status]}</strong>
-            </p>
-            <div className="adm-action-row">
-              <select
-                className="adm-select"
-                value={statusDraft}
-                onChange={(e) => setStatusDraft(e.target.value as UserStatusValue)}
-                disabled={isSelf || submitting}
-                aria-label="Chọn trạng thái tài khoản"
-              >
-                <option value="ACTIVE">Hoạt động</option>
-                <option value="PENDING">Chờ xác thực</option>
-                <option value="BLOCKED">Đã khóa</option>
-              </select>
-              <button
-                type="button"
-                className="adm-btn adm-btn-primary"
-                onClick={() => setPendingAction({ kind: 'status', value: statusDraft })}
-                disabled={isSelf || submitting || !statusDirty}
-              >
-                Cập nhật trạng thái
-              </button>
+            <div className="adm-mgmt-group">
+              <label className="adm-mgmt-label" htmlFor="user-role-select">Vai trò</label>
+              <div className="adm-mgmt-row">
+                <select
+                  id="user-role-select"
+                  className="adm-select"
+                  value={roleDraft}
+                  onChange={(e) => setRoleDraft(e.target.value as UserRoleValue)}
+                  disabled={isSelf || submitting}
+                  aria-label="Chọn vai trò"
+                >
+                  <option value="USER">Du khách</option>
+                  <option value="ADMIN">Quản trị viên</option>
+                </select>
+                <button
+                  type="button"
+                  className="adm-btn adm-btn-primary"
+                  onClick={() => setPendingAction({ kind: 'role', value: roleDraft })}
+                  disabled={isSelf || submitting || !roleDirty}
+                >
+                  Cập nhật vai trò
+                </button>
+              </div>
             </div>
-            <p className="adm-field-helper" style={{ marginTop: '12px' }}>
-              Khóa hoặc hạ cấp tài khoản sẽ thu hồi toàn bộ phiên đăng nhập. Access token đã cấp
-              vẫn có hiệu lực tối đa 15 phút.
-            </p>
+
+            <div className="adm-mgmt-divider" />
+
+            <div className="adm-mgmt-group">
+              <label className="adm-mgmt-label" htmlFor="user-status-select">Trạng thái tài khoản</label>
+              <div className="adm-mgmt-row">
+                <select
+                  id="user-status-select"
+                  className="adm-select"
+                  value={statusDraft}
+                  onChange={(e) => setStatusDraft(e.target.value as UserStatusValue)}
+                  disabled={isSelf || submitting}
+                  aria-label="Chọn trạng thái tài khoản"
+                >
+                  <option value="ACTIVE">Hoạt động</option>
+                  <option value="PENDING">Chờ xác thực</option>
+                  <option value="BLOCKED">Đã khóa</option>
+                </select>
+                <button
+                  type="button"
+                  className="adm-btn adm-btn-primary"
+                  onClick={() => setPendingAction({ kind: 'status', value: statusDraft })}
+                  disabled={isSelf || submitting || !statusDirty}
+                >
+                  Cập nhật trạng thái
+                </button>
+              </div>
+              <p className="adm-field-helper" style={{ margin: '6px 0 0', fontSize: '12px', lineHeight: 1.45 }}>
+                Khóa hoặc hạ cấp tài khoản sẽ thu hồi toàn bộ phiên đăng nhập. Access token đã cấp
+                vẫn có hiệu lực tối đa 15 phút.
+              </p>
+            </div>
           </FormSection>
         </div>
       </div>

@@ -18,13 +18,22 @@ export function getAnalyticsSessionId(): string {
 }
 
 /**
- * Lượt truy cập này đến từ quét mã QR (trang /qr/:token hay /quet-ma)
- * hay từ người dùng tự mở web (DIRECT).
+ * Lượt truy cập này đến từ quét mã QR (trang /qr/:token, /quet-ma hoặc link
+ * /diem-du-lich?stop=...&src=qr do QR điểm du lịch tạo ra) hay từ người dùng
+ * tự mở web (DIRECT).
  */
-export function getVisitTrigger(pathname: string): VisitTrigger {
-  return pathname.startsWith('/qr/') || pathname.startsWith('/quet-ma')
-    ? 'QR'
-    : 'DIRECT';
+export function getVisitTrigger(pathname: string, search = ''): VisitTrigger {
+  if (pathname.startsWith('/qr/') || pathname.startsWith('/quet-ma')) {
+    return 'QR';
+  }
+  try {
+    if (new URLSearchParams(search).get('src') === 'qr') {
+      return 'QR';
+    }
+  } catch {
+    // search không hợp lệ: coi như truy cập trực tiếp.
+  }
+  return 'DIRECT';
 }
 
 /**

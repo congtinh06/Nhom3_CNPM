@@ -80,7 +80,7 @@ const AppContent: React.FC = () => {
       .recordAnalyticsEvent({
         eventType: 'VISIT',
         languageCode: getClientLanguage(),
-        triggerType: getVisitTrigger(location.pathname),
+        triggerType: getVisitTrigger(location.pathname, location.search),
         sessionId: getAnalyticsSessionId(),
       })
       .catch(() => {

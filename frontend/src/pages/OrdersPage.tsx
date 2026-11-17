@@ -89,8 +89,8 @@ export const OrdersPage: React.FC = () => {
         );
         showToast(t.shop.cancelSuccess);
       }
-    } catch {
-      showToast('Không thể hủy đơn hàng vào lúc này.');
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : 'Không thể hủy đơn hàng vào lúc này.');
     } finally {
       setCancellingCode(null);
     }

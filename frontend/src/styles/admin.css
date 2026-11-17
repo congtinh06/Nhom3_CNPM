@@ -101,15 +101,15 @@
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
 }
 
 .adm-nav-section + .adm-nav-section {
-  margin-top: 18px;
+  margin-top: 12px;
 }
 
 .adm-nav-section-label {
-  margin: 0 0 8px;
+  margin: 0 0 4px;
   padding: 0 12px;
   font-size: 10.5px;
   font-weight: 700;
@@ -141,7 +141,7 @@
   align-items: center;
   justify-content: flex-start;
   gap: 10px;
-  padding: 9px 12px;
+  padding: 6.5px 12px;
   border-radius: 4px;
   font-size: 13.5px;
   font-weight: 500;
@@ -216,7 +216,7 @@
 /* Submenu */
 .adm-nav-submenu {
   list-style: none;
-  margin: 3px 0 6px;
+  margin: 2px 0 4px;
   padding: 0 0 0 28px;
   display: flex;
   flex-direction: column;
@@ -232,7 +232,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 7px 10px;
+  padding: 5px 10px;
   border-radius: 4px;
   font-size: 13px;
   font-weight: 500;
@@ -2441,15 +2441,22 @@
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 0;
 }
 
 .adm-detail-row {
   display: flex;
   justify-content: space-between;
+  align-items: center;
   gap: 16px;
+  min-height: 40px;
+  padding: 8px 0;
   border-bottom: 1px solid var(--fb-border-subtle, #F5F5F4);
-  padding-bottom: 8px;
+  box-sizing: border-box;
+}
+
+.adm-detail-row:last-child {
+  border-bottom: none;
 }
 
 .adm-detail-row dt {
@@ -2477,6 +2484,64 @@
 .adm-action-row .adm-select {
   flex: 1 1 auto;
   min-width: 160px;
+}
+
+/* User Detail Page optimization */
+.adm-user-detail-grid {
+  grid-template-columns: 1fr 400px;
+  align-items: start;
+}
+
+@media (max-width: 1024px) {
+  .adm-user-detail-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.adm-user-mgmt-card {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.adm-mgmt-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.adm-mgmt-label {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--fb-text-primary, #1C1917);
+}
+
+.adm-mgmt-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.adm-mgmt-row .adm-select {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 38px;
+  font-size: 13.5px;
+}
+
+.adm-mgmt-row .adm-btn {
+  flex-shrink: 0;
+  white-space: nowrap;
+  height: 38px;
+  padding: 0 14px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.adm-mgmt-divider {
+  height: 1px;
+  background-color: var(--fb-border-subtle, #F5F5F4);
+  margin: 2px 0;
 }
 
 @media (max-width: 640px) {
@@ -2515,7 +2580,7 @@
   /* Mật độ hiển thị (mặc định: thoáng) — bám thang 4/8/12/16/24/32 */
   --adm-cell-py: 14px;
   --adm-cell-px: 16px;
-  --adm-card-pad: 24px;
+  --adm-card-pad: 20px;
   --adm-gap: 24px;
 }
 
@@ -2800,7 +2865,7 @@
 .adm-density-compact {
   --adm-cell-py: 8px;
   --adm-cell-px: 14px;
-  --adm-card-pad: 16px;
+  --adm-card-pad: 14px;
   --adm-gap: 16px;
 }
 
@@ -2814,6 +2879,34 @@
 
 .adm-density-compact .adm-card {
   gap: 12px;
+}
+
+.adm-density-compact .adm-detail-row {
+  min-height: 34px;
+  padding: 5px 0;
+}
+
+.adm-density-compact .adm-mgmt-row .adm-select {
+  height: 34px;
+  font-size: 13px;
+}
+
+.adm-density-compact .adm-mgmt-row .adm-btn {
+  height: 34px;
+  padding: 0 12px;
+  font-size: 12.5px;
+}
+
+.adm-density-compact .adm-user-mgmt-card {
+  gap: 12px;
+}
+
+.adm-density-compact .adm-nav-link {
+  padding: 5px 12px;
+}
+
+.adm-density-compact .adm-nav-sublink {
+  padding: 4px 10px;
 }
 
 /* Nút chuyển mật độ trên header */
