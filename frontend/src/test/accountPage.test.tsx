@@ -134,8 +134,7 @@ describe('AccountPage', () => {
   it('báo lỗi khi mật khẩu xác nhận không khớp', async () => {
     renderAccount();
 
-    const securityTab = await screen.findByRole('tab', { name: 'Bảo mật' });
-    fireEvent.click(securityTab);
+    fireEvent.click(await screen.findByRole('button', { name: 'Đổi mật khẩu' }));
 
     fireEvent.change(await screen.findByLabelText('Mật khẩu mới'), {
       target: { value: 'Matkhau@123' },
@@ -154,8 +153,7 @@ describe('AccountPage', () => {
 
     renderAccount();
 
-    const securityTab = await screen.findByRole('tab', { name: 'Bảo mật' });
-    fireEvent.click(securityTab);
+    fireEvent.click(await screen.findByRole('button', { name: 'Đổi mật khẩu' }));
 
     fireEvent.change(await screen.findByLabelText('Mật khẩu hiện tại'), {
       target: { value: 'Matkhau@123' },

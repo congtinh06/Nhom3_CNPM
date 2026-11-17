@@ -202,7 +202,7 @@ export const AccountPremium: React.FC = () => {
                   <Link
                     className="ac-premium-poi-item"
                     to={`/diem-du-lich?stop=${encodeURIComponent(stopQuery)}`}
-                    aria-label={`${poiName} – ${poiOverrides.listen}`}
+                    aria-label={`${poiName}: ${poiOverrides.listen}`}
                   >
                     <span className="ac-premium-poi-icon" aria-hidden="true">
                       <MapPin size={14} strokeWidth={1.9} />

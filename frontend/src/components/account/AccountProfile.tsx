@@ -229,16 +229,16 @@ export const AccountProfile: React.FC = () => {
 
         <div className="ac-stats">
           <div className="ac-stat">
-            <span className="ac-stat-value">{ordersLoading ? '—' : stats.total}</span>
+            <span className="ac-stat-value">{ordersLoading ? '-' : stats.total}</span>
             <span className="ac-stat-label">{t.quickStatsOrders}</span>
           </div>
           <div className="ac-stat">
-            <span className="ac-stat-value">{ordersLoading ? '—' : stats.active}</span>
+            <span className="ac-stat-value">{ordersLoading ? '-' : stats.active}</span>
             <span className="ac-stat-label">{t.quickStatsActive}</span>
           </div>
           <div className="ac-stat">
             <span className="ac-stat-value">
-              {ordersLoading ? '—' : formatPrice(stats.spent)}
+              {ordersLoading ? '-' : formatPrice(stats.spent)}
             </span>
             <span className="ac-stat-label">{t.quickStatsSpent}</span>
           </div>
