@@ -87,10 +87,10 @@ export const SouvenirStrip: React.FC<SouvenirStripProps> = ({ poiSlug, lang }) =
     if (index > maxIndex) setIndex(maxIndex);
   }, [maxIndex, index]);
 
-  const handleAddToCart = (product: Product, e?: React.MouseEvent) => {
+  const handleAddToCart = async (product: Product, e?: React.MouseEvent) => {
     e?.stopPropagation();
     if (!product.isActive) return;
-    addToCart(product, 1);
+    if (!(await addToCart(product, 1))) return;
     showToast(`Đã thêm vào giỏ hàng: ${product.name}`);
     (window as unknown as { __pop?: () => void }).__pop?.();
   };

@@ -113,14 +113,14 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({ embedded = false }) => {
     }
   };
 
-  const handleReorder = (order: BackendOrder) => {
+  const handleReorder = async (order: BackendOrder) => {
     const itemsToReorder = order.items.map((it) => ({
       key: it.productId,
       quantity: it.quantity,
       name: it.productName,
       price: it.unitPrice,
     }));
-    reorderItems(itemsToReorder);
+    if (!(await reorderItems(itemsToReorder))) return;
     showToast('Đã thêm lại các món vào giỏ hàng');
     openCart();
   };

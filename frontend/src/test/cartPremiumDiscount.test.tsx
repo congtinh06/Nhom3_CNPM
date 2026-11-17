@@ -41,12 +41,12 @@ describe('CartContext Premium souvenir discount', () => {
     premiumState.isPremium = true;
   });
 
-  it('discounts only souvenir lines and keeps the original subtotal', () => {
+  it('discounts only souvenir lines and keeps the original subtotal', async () => {
     const { result } = renderHook(() => useCart(), { wrapper });
 
-    act(() => {
-      result.current.addToCart(souvenir, 2);
-      result.current.addToCart(food, 1);
+    await act(async () => {
+      await result.current.addToCart(souvenir, 2);
+      await result.current.addToCart(food, 1);
     });
 
     expect(result.current.subtotalAmount).toBe(130000);
@@ -54,12 +54,12 @@ describe('CartContext Premium souvenir discount', () => {
     expect(result.current.totalAmount).toBe(120000);
   });
 
-  it('does not discount anything for non-Premium members', () => {
+  it('does not discount anything for non-Premium members', async () => {
     premiumState.isPremium = false;
     const { result } = renderHook(() => useCart(), { wrapper });
 
-    act(() => {
-      result.current.addToCart(souvenir, 2);
+    await act(async () => {
+      await result.current.addToCart(souvenir, 2);
     });
 
     expect(result.current.subtotalAmount).toBe(100000);

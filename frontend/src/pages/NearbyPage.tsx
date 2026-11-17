@@ -1427,9 +1427,9 @@ export const NearbyPage: React.FC = () => {
   }, [souvenirProducts, syncSouvenirNav]);
 
   const handleAddSouvenirToCart = useCallback(
-    (product: Product) => {
+    async (product: Product) => {
       if (!product.isActive) return;
-      addToCart(product, 1);
+      if (!(await addToCart(product, 1))) return;
       triggerToast(t(currentLang, 'toastAddedToCart', { name: product.name }));
       (window as unknown as { __pop?: () => void }).__pop?.();
     },

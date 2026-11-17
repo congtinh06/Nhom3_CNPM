@@ -1,10 +1,11 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { drinksList } from '../content/staticSections';
 import { defaultProducts } from '../content/defaultProducts';
 import { CartItem, Drink, Product, ProductCategory } from '../types';
 import { usePremium } from './PremiumContext';
 import { applySouvenirDiscount, isSouvenirDiscountEligible } from '../utils/pricing';
 import { resolveOrderItemImage } from '../content/productAdapter';
+import './cart-confirmation.css';
 
 export interface CartItemMeta {
   name: string;
@@ -22,7 +23,7 @@ interface CartContextValue {
   discountAmount: number;
   totalAmount: number;
   cartItems: CartItem[];
-  addToCart: (item: number | Product, quantity?: number) => void;
+  addToCart: (item: number | Product, quantity?: number) => Promise<boolean>;
   updateQuantity: (id: number, quantity: number) => void;
   removeFromCart: (id: number) => void;
   decreaseQuantity: (id: number) => void;
@@ -38,7 +39,7 @@ interface CartContextValue {
       imagePath?: string;
       poiSlug?: string | null;
     }[]
-  ) => void;
+  ) => Promise<boolean>;
   isCartOpen: boolean;
   openCart: () => void;
   closeCart: () => void;
@@ -48,6 +49,7 @@ const CartContext = createContext<CartContextValue | null>(null);
 
 const STORAGE_KEY = 'cart';
 const META_STORAGE_KEY = 'cart_meta';
+const MAX_CART_QUANTITY_WITHOUT_CONFIRMATION = 5;
 
 const loadSavedCart = (): Record<number, number> => {
   try {
@@ -108,6 +110,37 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [cart, setCart] = useState<Record<number, number>>(loadSavedCart);
   const [itemMeta, setItemMeta] = useState<Record<number, CartItemMeta>>(loadSavedMeta);
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [isLargeItemConfirmationOpen, setIsLargeItemConfirmationOpen] = useState(false);
+  const cartRef = useRef(cart);
+  const confirmationResolverRef = useRef<((confirmed: boolean) => void) | null>(null);
+  const confirmationDialogRef = useRef<HTMLDialogElement>(null);
+  cartRef.current = cart;
+
+  useEffect(() => {
+    const dialog = confirmationDialogRef.current;
+    if (!dialog) return;
+    if (isLargeItemConfirmationOpen && !dialog.open) {
+      dialog.showModal();
+    } else if (!isLargeItemConfirmationOpen && dialog.open) {
+      dialog.close();
+    }
+  }, [isLargeItemConfirmationOpen]);
+
+  const requestLargeItemConfirmation = useCallback(
+    () =>
+      new Promise<boolean>((resolve) => {
+        confirmationResolverRef.current = resolve;
+        setIsLargeItemConfirmationOpen(true);
+      }),
+    []
+  );
+
+  const resolveLargeItemConfirmation = useCallback((confirmed: boolean) => {
+    setIsLargeItemConfirmationOpen(false);
+    const resolve = confirmationResolverRef.current;
+    confirmationResolverRef.current = null;
+    resolve?.(confirmed);
+  }, []);
 
   useEffect(() => {
     try {
@@ -240,8 +273,20 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const totalAmount = subtotalAmount - discountAmount;
 
-  const addToCart = useCallback((item: number | Product, quantity: number = 1) => {
+  const addToCart = useCallback(async (item: number | Product, quantity: number = 1): Promise<boolean> => {
     const addQty = Math.max(1, Math.floor(quantity));
+    if (
+      addQty > MAX_CART_QUANTITY_WITHOUT_CONFIRMATION &&
+      !(await requestLargeItemConfirmation())
+    ) {
+      return false;
+    }
+
+    const itemId = typeof item === 'number' ? item : item.id;
+    cartRef.current = {
+      ...cartRef.current,
+      [itemId]: (cartRef.current[itemId] ?? 0) + addQty,
+    };
     if (typeof item === 'number') {
       const drinkId = item;
       setCart((prev) => ({
@@ -271,10 +316,18 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         [product.id]: (prev[product.id] ?? 0) + addQty,
       }));
     }
-  }, []);
+    return true;
+  }, [requestLargeItemConfirmation]);
 
   const updateQuantity = useCallback((id: number, quantity: number) => {
     const targetQty = Math.floor(quantity);
+    const next = { ...cartRef.current };
+    if (targetQty <= 0) {
+      delete next[id];
+    } else {
+      next[id] = targetQty;
+    }
+    cartRef.current = next;
     setCart((prev) => {
       if (targetQty <= 0) {
         const next = { ...prev };
@@ -289,6 +342,13 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const decreaseQuantity = useCallback((id: number) => {
+    const next = { ...cartRef.current };
+    if (!next[id] || next[id] <= 1) {
+      delete next[id];
+    } else {
+      next[id] -= 1;
+    }
+    cartRef.current = next;
     setCart((prev) => {
       const current = prev[id];
       if (!current || current <= 1) {
@@ -304,6 +364,9 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const removeFromCart = useCallback((id: number) => {
+    const nextCart = { ...cartRef.current };
+    delete nextCart[id];
+    cartRef.current = nextCart;
     setCart((prev) => {
       const next = { ...prev };
       delete next[id];
@@ -318,12 +381,13 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const clearCart = useCallback(() => {
+    cartRef.current = {};
     setCart({});
     setItemMeta({});
   }, []);
 
   const reorderItems = useCallback(
-    (
+    async (
       items: {
         key: number;
         quantity: number;
@@ -334,7 +398,26 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         imagePath?: string;
         poiSlug?: string | null;
       }[]
-    ) => {
+    ): Promise<boolean> => {
+      const addedByItem = new Map<number, number>();
+      items.forEach((item) => {
+        addedByItem.set(
+          item.key,
+          (addedByItem.get(item.key) ?? 0) + Math.max(0, Math.floor(item.quantity))
+        );
+      });
+      const exceedsItemLimit = [...addedByItem].some(
+        ([, quantity]) => quantity > MAX_CART_QUANTITY_WITHOUT_CONFIRMATION
+      );
+      if (exceedsItemLimit && !(await requestLargeItemConfirmation())) {
+        return false;
+      }
+
+      const nextCart = { ...cartRef.current };
+      items.forEach((item) => {
+        nextCart[item.key] = (nextCart[item.key] ?? 0) + item.quantity;
+      });
+      cartRef.current = nextCart;
       setCart((prev) => {
         const next = { ...prev };
         items.forEach((it) => {
@@ -363,8 +446,9 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         });
         return next;
       });
+      return true;
     },
-    []
+    [requestLargeItemConfirmation]
   );
 
   const openCart = useCallback(() => setIsCartOpen(true), []);
@@ -391,6 +475,30 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }}
     >
       {children}
+      <dialog
+        ref={confirmationDialogRef}
+        className="cart-confirmation-dialog"
+        role="alertdialog"
+        aria-labelledby="cart-confirmation-title"
+        aria-describedby="cart-confirmation-message"
+        onCancel={(event) => {
+          event.preventDefault();
+          resolveLargeItemConfirmation(false);
+        }}
+      >
+        <h2 id="cart-confirmation-title">Số lượng sản phẩm nhiều</h2>
+        <p id="cart-confirmation-message">
+          Món này đã vượt quá 5 sản phẩm. Bạn có chắc là muốn đặt thêm không?
+        </p>
+        <div className="cart-confirmation-actions">
+          <button type="button" className="cart-confirmation-cancel" autoFocus onClick={() => resolveLargeItemConfirmation(false)}>
+            Hủy
+          </button>
+          <button type="button" className="cart-confirmation-accept" onClick={() => resolveLargeItemConfirmation(true)}>
+            Vẫn thêm
+          </button>
+        </div>
+      </dialog>
     </CartContext.Provider>
   );
 };
@@ -408,6 +516,5 @@ export const useCart = (): CartContextValue => {
 // (e.g. in unit tests) without crashing.
 export const useCartOptional = (): Pick<CartContextValue, 'addToCart'> => {
   const ctx = useContext(CartContext);
-  return { addToCart: ctx ? ctx.addToCart : () => {} };
+  return { addToCart: ctx ? ctx.addToCart : async () => true };
 };
-
