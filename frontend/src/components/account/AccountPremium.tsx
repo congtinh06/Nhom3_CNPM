@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Crown, Headphones, Languages, Lock, MapPin, QrCode, ShieldCheck } from 'lucide-react';
 import { usePremium } from '../../context/PremiumContext';
 import { api } from '../../api/client';
@@ -8,26 +8,30 @@ import { useAccountI18n } from './accountI18n';
 import { formatAccountDate } from './accountFormatters';
 import { SupportedLanguage } from '../../types';
 
-const POI_OVERRIDES: Record<SupportedLanguage, { title: string; note: string; empty: string }> = {
+const POI_OVERRIDES: Record<SupportedLanguage, { title: string; note: string; empty: string; listen: string }> = {
   vi: {
     title: 'Điểm thuyết minh đã mở khóa',
     note: 'Gói ngoại ngữ riêng cho từng điểm (365 ngày từ ngày mua).',
     empty: 'Bạn chưa mua gói riêng cho điểm nào.',
+    listen: 'Nghe thuyết minh',
   },
   en: {
     title: 'Unlocked narration stops',
     note: 'Per-stop foreign-language package (365 days from purchase).',
     empty: "You haven't bought any per-stop package yet.",
+    listen: 'Listen to narration',
   },
   ja: {
     title: '解除済みのナレーションスポット',
     note: 'スポットごとの外国語パッケージ（購入日から365日）。',
     empty: 'まだスポット単位のパッケージを購入していません。',
+    listen: '音声ガイドを聞く',
   },
   ko: {
     title: '해제된 해설 명소',
     note: '명소별 외국어 패키지(구매일로부터 365일)。',
     empty: '아직 명소별 패키지를 구매하지 않았습니다.',
+    listen: '해설 듣기',
   },
 };
 
@@ -44,6 +48,7 @@ export const AccountPremium: React.FC = () => {
 
   // Tên POI cho gói mua lẻ (nguồn chung với trang du khách); lỗi mạng thì hiện id.
   const [poiNames, setPoiNames] = useState<Record<number, string>>({});
+  const [poiSlugs, setPoiSlugs] = useState<Record<number, string>>({});
   useEffect(() => {
     if (purchasedPois.length === 0) return;
     if (import.meta.env.MODE === 'test') return;
@@ -53,11 +58,14 @@ export const AccountPremium: React.FC = () => {
       .getPoiGuides()
       .then((guides) => {
         if (!cancelled) {
-          const map: Record<number, string> = {};
+          const names: Record<number, string> = {};
+          const slugs: Record<number, string> = {};
           guides.forEach((guide) => {
-            map[guide.id] = guide.name;
+            names[guide.id] = guide.name;
+            if (guide.slug) slugs[guide.id] = guide.slug;
           });
-          setPoiNames(map);
+          setPoiNames(names);
+          setPoiSlugs(slugs);
         }
       })
       .catch(() => {
@@ -186,19 +194,31 @@ export const AccountPremium: React.FC = () => {
           <p className="ac-premium-pois-empty">{poiOverrides.empty}</p>
         ) : (
           <ul className="ac-premium-poi-list">
-            {purchasedPois.map((poi) => (
-              <li key={poi.poiId} className="ac-premium-poi-item">
-                <span className="ac-premium-poi-icon" aria-hidden="true">
-                  <MapPin size={14} strokeWidth={1.9} />
-                </span>
-                <span className="ac-premium-poi-name">
-                  {poiNames[poi.poiId] ?? `POI #${poi.poiId}`}
-                </span>
-                <span className="ac-premium-poi-expiry">
-                  {formatAccountDate(poi.expiresAt, lang)}
-                </span>
-              </li>
-            ))}
+            {purchasedPois.map((poi) => {
+              const poiName = poiNames[poi.poiId] ?? `POI #${poi.poiId}`;
+              const stopQuery = poiSlugs[poi.poiId] || String(poi.poiId);
+              return (
+                <li key={poi.poiId}>
+                  <Link
+                    className="ac-premium-poi-item"
+                    to={`/diem-du-lich?stop=${encodeURIComponent(stopQuery)}`}
+                    aria-label={`${poiName} – ${poiOverrides.listen}`}
+                  >
+                    <span className="ac-premium-poi-icon" aria-hidden="true">
+                      <MapPin size={14} strokeWidth={1.9} />
+                    </span>
+                    <span className="ac-premium-poi-name">{poiName}</span>
+                    <span className="ac-premium-poi-expiry">
+                      {formatAccountDate(poi.expiresAt, lang)}
+                    </span>
+                    <span className="ac-premium-poi-play" aria-hidden="true">
+                      <Headphones size={14} strokeWidth={1.9} />
+                      <span className="ac-premium-poi-play-text">{poiOverrides.listen}</span>
+                    </span>
+                  </Link>
+                </li>
+              );
+            })}
           </ul>
         )}
       </div>
