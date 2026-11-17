@@ -1,0 +1,57 @@
+.cart-confirmation-dialog {
+  width: min(440px, calc(100% - 32px));
+  padding: 28px;
+  border: 1px solid #e8dfd2;
+  border-radius: 18px;
+  background: #fffdf8;
+  box-shadow: 0 24px 80px rgb(0 0 0 / 28%);
+  color: #251a13;
+}
+
+.cart-confirmation-dialog::backdrop {
+  background: rgb(20 16 13 / 58%);
+}
+
+.cart-confirmation-dialog h2 {
+  margin: 0 0 10px;
+  font-size: 21px;
+}
+
+.cart-confirmation-dialog p {
+  margin: 0;
+  color: #65584e;
+  line-height: 1.6;
+}
+
+.cart-confirmation-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 24px;
+}
+
+.cart-confirmation-actions button {
+  min-height: 42px;
+  padding: 0 18px;
+  border: 1px solid #ded2c3;
+  border-radius: 10px;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.cart-confirmation-cancel {
+  background: #fff;
+  color: #43352b;
+}
+
+.cart-confirmation-accept {
+  border-color: #bf4510 !important;
+  background: #bf4510;
+  color: #fff;
+}
+
+.cart-confirmation-actions button:focus-visible {
+  outline: 3px solid #e8a47f;
+  outline-offset: 2px;
+}

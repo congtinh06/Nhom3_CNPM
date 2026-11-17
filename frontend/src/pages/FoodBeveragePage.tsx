@@ -792,10 +792,10 @@ export const FoodBeveragePage: React.FC = () => {
   }, [currentPage]);
 
   const handleAddToCart = useCallback(
-    (product: Product, e?: React.MouseEvent): boolean => {
+    async (product: Product, e?: React.MouseEvent): Promise<boolean> => {
       e?.stopPropagation();
       if (!product.isActive) return false;
-      if (!addToCart(product, 1)) return false;
+      if (!(await addToCart(product, 1))) return false;
       showToast(st(lang, 'toastAdded', { name: product.name }));
       (window as unknown as { __pop?: () => void }).__pop?.();
       return true;
@@ -816,8 +816,8 @@ export const FoodBeveragePage: React.FC = () => {
   }, []);
 
   const handleQuickAdd = useCallback(
-    (product: Product, e?: React.MouseEvent) => {
-      if (!handleAddToCart(product, e)) return;
+    async (product: Product, e?: React.MouseEvent) => {
+      if (!(await handleAddToCart(product, e))) return;
       setJustAddedId(product.id);
       if (justAddedTimerRef.current) {
         clearTimeout(justAddedTimerRef.current);
@@ -829,8 +829,8 @@ export const FoodBeveragePage: React.FC = () => {
 
   // "Thêm cả bộ" xác nhận một lần theo tổng số lượng của cả bộ quà.
   const handleAddSet = useCallback(
-    (set: GiftSet) => {
-      const added = reorderItems(
+    async (set: GiftSet) => {
+      const added = await reorderItems(
         set.items.map((item) => ({
           key: item.id,
           quantity: 1,
@@ -894,9 +894,9 @@ export const FoodBeveragePage: React.FC = () => {
     [handleOpenDetailPage]
   );
 
-  const handleQuickViewAddToCart = useCallback(() => {
+  const handleQuickViewAddToCart = useCallback(async () => {
     if (!quickViewProduct) return;
-    if (!addToCart(quickViewProduct, quickViewQty)) return;
+    if (!(await addToCart(quickViewProduct, quickViewQty))) return;
     showToast(st(lang, 'toastAdded', { name: quickViewProduct.name }));
     closeQuickView();
     openCart();

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { renderHook, act, waitFor } from '@testing-library/react';
+import { fireEvent, renderHook, act, waitFor, screen } from '@testing-library/react';
 import React from 'react';
 import { CartProvider, useCart } from '../context/CartContext';
 
@@ -16,31 +16,31 @@ describe('CartContext', () => {
     React.createElement(CartProvider, null, children)
   );
 
-  it('adds items, updates quantities and calculates total amount correctly', () => {
+  it('adds items, updates quantities and calculates total amount correctly', async () => {
     const { result } = renderHook(() => useCart(), { wrapper });
 
     expect(result.current.totalCount).toBe(0);
     expect(result.current.totalAmount).toBe(0);
 
     // Add item 0: Cà phê sữa đá (29000)
-    act(() => {
-      result.current.addToCart(0);
+    await act(async () => {
+      await result.current.addToCart(0);
     });
 
     expect(result.current.totalCount).toBe(1);
     expect(result.current.totalAmount).toBe(29000);
 
     // Add item 0 again
-    act(() => {
-      result.current.addToCart(0);
+    await act(async () => {
+      await result.current.addToCart(0);
     });
 
     expect(result.current.totalCount).toBe(2);
     expect(result.current.totalAmount).toBe(58000);
 
     // Add item 1: Bạc xỉu (32000)
-    act(() => {
-      result.current.addToCart(1);
+    await act(async () => {
+      await result.current.addToCart(1);
     });
 
     expect(result.current.totalCount).toBe(3);
@@ -63,7 +63,7 @@ describe('CartContext', () => {
     expect(result.current.totalAmount).toBe(0);
   });
 
-  it('supports adding Product objects and removes items by id', () => {
+  it('supports adding Product objects and removes items by id', async () => {
     const { result } = renderHook(() => useCart(), { wrapper });
 
     const sampleFood = {
@@ -79,8 +79,8 @@ describe('CartContext', () => {
       sortOrder: 1,
     };
 
-    act(() => {
-      result.current.addToCart(sampleFood, 2);
+    await act(async () => {
+      await result.current.addToCart(sampleFood, 2);
     });
 
     expect(result.current.totalCount).toBe(2);
@@ -105,8 +105,7 @@ describe('CartContext', () => {
     expect(result.current.cartItems).toHaveLength(0);
   });
 
-  it('asks before adding more than five total items and keeps the cart unchanged when declined', () => {
-    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(false);
+  it('does not ask for fewer than six of the same product even when the cart has many different items', async () => {
     const { result } = renderHook(() => useCart(), { wrapper });
     const product = {
       id: 101,
@@ -121,49 +120,119 @@ describe('CartContext', () => {
       sortOrder: 1,
     };
 
-    act(() => {
-      expect(result.current.addToCart(product, 5)).toBe(true);
+    await act(async () => {
+      expect(await result.current.addToCart(product, 3)).toBe(true);
     });
 
-    expect(result.current.totalCount).toBe(5);
-    expect(confirm).not.toHaveBeenCalled();
-
-    act(() => {
-      expect(result.current.addToCart(product)).toBe(false);
+    await act(async () => {
+      expect(await result.current.addToCart({ ...product, id: 102 }, 3)).toBe(true);
     });
-
-    expect(confirm).toHaveBeenCalledOnce();
-    expect(confirm).toHaveBeenCalledWith(
-      'Bạn đang đặt quá nhiều sản phẩm (hơn 5 sản phẩm). Bạn có chắc là muốn đặt thêm không?'
-    );
-    expect(result.current.totalCount).toBe(5);
-  });
-
-  it('adds more than five items when the user confirms the warning', () => {
-    vi.spyOn(window, 'confirm').mockReturnValue(true);
-    const { result } = renderHook(() => useCart(), { wrapper });
-
-    act(() => {
-      expect(result.current.addToCart(0, 6)).toBe(true);
-    });
-
     expect(result.current.totalCount).toBe(6);
+    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
   });
 
-  it('confirms a bulk reorder once using the combined item quantity', () => {
-    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(false);
+  it('allows exactly five of one product without showing the confirmation', async () => {
     const { result } = renderHook(() => useCart(), { wrapper });
+    const product = {
+      id: 101,
+      slug: 'souvenir',
+      name: 'Quà lưu niệm',
+      category: 'SOUVENIR' as const,
+      shortDescription: '',
+      description: '',
+      price: 10000,
+      imagePath: '/img/souvenir.jpg',
+      isActive: true,
+      sortOrder: 1,
+    };
 
-    act(() => {
-      expect(
-        result.current.reorderItems([
-          { key: 101, quantity: 3, name: 'Quà A', price: 10000 },
-          { key: 102, quantity: 3, name: 'Quà B', price: 10000 },
-        ])
-      ).toBe(false);
+    await act(async () => {
+      await result.current.addToCart(product, 3);
+      expect(await result.current.addToCart(product, 2)).toBe(true);
     });
 
-    expect(confirm).toHaveBeenCalledOnce();
+    expect(result.current.cart[101]).toBe(5);
+    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
+  });
+
+  it('shows an in-app confirmation when adding would exceed five of the same product', async () => {
+    const { result } = renderHook(() => useCart(), { wrapper });
+    const product = {
+      id: 101,
+      slug: 'souvenir',
+      name: 'Quà lưu niệm',
+      category: 'SOUVENIR' as const,
+      shortDescription: '',
+      description: '',
+      price: 10000,
+      imagePath: '/img/souvenir.jpg',
+      isActive: true,
+      sortOrder: 1,
+    };
+
+    await act(async () => {
+      await result.current.addToCart(product, 3);
+    });
+
+    let addition!: Promise<boolean>;
+    act(() => {
+      addition = result.current.addToCart(product, 3);
+    });
+    expect(await screen.findByRole('alertdialog')).toHaveTextContent(
+      'Món này đã vượt quá 5 sản phẩm. Bạn có chắc là muốn đặt thêm không?'
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Hủy' }));
+    await act(async () => {
+      expect(await addition).toBe(false);
+    });
+    expect(result.current.cart[101]).toBe(3);
+    expect(result.current.totalCount).toBe(3);
+  });
+
+  it('adds the product after the in-app confirmation is accepted', async () => {
+    const { result } = renderHook(() => useCart(), { wrapper });
+    const product = {
+      id: 101,
+      slug: 'souvenir',
+      name: 'Quà lưu niệm',
+      category: 'SOUVENIR' as const,
+      shortDescription: '',
+      description: '',
+      price: 10000,
+      imagePath: '/img/souvenir.jpg',
+      isActive: true,
+      sortOrder: 1,
+    };
+
+    let addition!: Promise<boolean>;
+    act(() => {
+      addition = result.current.addToCart(product, 6);
+    });
+    await screen.findByRole('alertdialog');
+    fireEvent.click(screen.getByRole('button', { name: 'Vẫn thêm' }));
+    await act(async () => {
+      expect(await addition).toBe(true);
+    });
+
+    expect(result.current.cart[101]).toBe(6);
+    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
+  });
+
+  it('confirms a bulk reorder when one product exceeds five and leaves the cart unchanged when canceled', async () => {
+    const { result } = renderHook(() => useCart(), { wrapper });
+
+    let reorder!: Promise<boolean>;
+    act(() => {
+      reorder = result.current.reorderItems([
+        { key: 101, quantity: 6, name: 'Quà A', price: 10000 },
+      ]);
+    });
+
+    await screen.findByRole('alertdialog');
+    fireEvent.click(screen.getByRole('button', { name: 'Hủy' }));
+    await act(async () => {
+      expect(await reorder).toBe(false);
+    });
     expect(result.current.totalCount).toBe(0);
   });
 

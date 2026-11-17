@@ -282,7 +282,7 @@ export const CartDialog: React.FC = () => {
                         type="button"
                         className="cd-qty-btn"
                         aria-label={`Tăng số lượng ${item.name}`}
-                        onClick={() => addToCart(item.id)}
+                        onClick={() => void addToCart(item.id)}
                       >
                         <Plus size={12} strokeWidth={2} aria-hidden="true" />
                       </button>

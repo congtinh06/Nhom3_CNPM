@@ -270,9 +270,9 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ category: 
     product?.category
   );
 
-  const handleAddToCart = () => {
+  const handleAddToCart = async () => {
     if (!product || !product.isActive) return;
-    if (!addToCart(product, quantity)) return;
+    if (!(await addToCart(product, quantity))) return;
     showToast(`Đã thêm vào giỏ: ${quantity} × ${product.name}`);
     setAddedAnimation(true);
     setTimeout(() => setAddedAnimation(false), 1200);
@@ -280,9 +280,9 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ category: 
     (window as unknown as { __pop?: () => void }).__pop?.();
   };
 
-  const handleBuyNow = () => {
+  const handleBuyNow = async () => {
     if (!product || !product.isActive) return;
-    if (!addToCart(product, quantity)) return;
+    if (!(await addToCart(product, quantity))) return;
     (window as unknown as { __pop?: () => void }).__pop?.();
     if (!isAuthenticated) {
       navigate('/dang-nhap', {
@@ -566,9 +566,9 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ category: 
                   product={relItem}
                   isFavorited={isFavorite(relItem.id)}
                   onToggleFavorite={toggleFavorite}
-                  onAddToCart={(p, e) => {
+                  onAddToCart={async (p, e) => {
                     e.stopPropagation();
-                    if (!addToCart(p, 1)) return;
+                    if (!(await addToCart(p, 1))) return;
                     showToast(
                       lang === 'en'
                         ? `Added to cart: 1 × ${p.name}`

@@ -11,8 +11,8 @@ export const DrinksSection: React.FC = () => {
   const { addToCart } = useCart();
   const { showToast } = useToast();
 
-  const handleAdd = (drink: Drink) => {
-    if (!addToCart(drink.id)) return;
+  const handleAdd = async (drink: Drink) => {
+    if (!(await addToCart(drink.id))) return;
     showToast(`Đã thêm ${drink.name} vào giỏ`);
     (window as unknown as { __pop?: () => void }).__pop?.();
   };

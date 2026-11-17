@@ -4,6 +4,7 @@ import { defaultProducts } from '../content/defaultProducts';
 import { CartItem, Drink, Product, ProductCategory } from '../types';
 import { usePremium } from './PremiumContext';
 import { applySouvenirDiscount, isSouvenirDiscountEligible } from '../utils/pricing';
+import './cart-confirmation.css';
 
 export interface CartItemMeta {
   name: string;
@@ -21,7 +22,7 @@ interface CartContextValue {
   discountAmount: number;
   totalAmount: number;
   cartItems: CartItem[];
-  addToCart: (item: number | Product, quantity?: number) => boolean;
+  addToCart: (item: number | Product, quantity?: number) => Promise<boolean>;
   updateQuantity: (id: number, quantity: number) => void;
   removeFromCart: (id: number) => void;
   decreaseQuantity: (id: number) => void;
@@ -37,7 +38,7 @@ interface CartContextValue {
       imagePath?: string;
       poiSlug?: string | null;
     }[]
-  ) => boolean;
+  ) => Promise<boolean>;
   isCartOpen: boolean;
   openCart: () => void;
   closeCart: () => void;
@@ -48,11 +49,6 @@ const CartContext = createContext<CartContextValue | null>(null);
 const STORAGE_KEY = 'cart';
 const META_STORAGE_KEY = 'cart_meta';
 const MAX_CART_QUANTITY_WITHOUT_CONFIRMATION = 5;
-
-const confirmLargeCartAddition = (): boolean =>
-  window.confirm(
-    'Bạn đang đặt quá nhiều sản phẩm (hơn 5 sản phẩm). Bạn có chắc là muốn đặt thêm không?'
-  );
 
 const loadSavedCart = (): Record<number, number> => {
   try {
@@ -113,6 +109,37 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [cart, setCart] = useState<Record<number, number>>(loadSavedCart);
   const [itemMeta, setItemMeta] = useState<Record<number, CartItemMeta>>(loadSavedMeta);
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [isLargeItemConfirmationOpen, setIsLargeItemConfirmationOpen] = useState(false);
+  const cartRef = useRef(cart);
+  const confirmationResolverRef = useRef<((confirmed: boolean) => void) | null>(null);
+  const confirmationDialogRef = useRef<HTMLDialogElement>(null);
+  cartRef.current = cart;
+
+  useEffect(() => {
+    const dialog = confirmationDialogRef.current;
+    if (!dialog) return;
+    if (isLargeItemConfirmationOpen && !dialog.open) {
+      dialog.showModal();
+    } else if (!isLargeItemConfirmationOpen && dialog.open) {
+      dialog.close();
+    }
+  }, [isLargeItemConfirmationOpen]);
+
+  const requestLargeItemConfirmation = useCallback(
+    () =>
+      new Promise<boolean>((resolve) => {
+        confirmationResolverRef.current = resolve;
+        setIsLargeItemConfirmationOpen(true);
+      }),
+    []
+  );
+
+  const resolveLargeItemConfirmation = useCallback((confirmed: boolean) => {
+    setIsLargeItemConfirmationOpen(false);
+    const resolve = confirmationResolverRef.current;
+    confirmationResolverRef.current = null;
+    resolve?.(confirmed);
+  }, []);
 
   useEffect(() => {
     try {
@@ -184,8 +211,6 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const totalCount = useMemo(() => {
     return cartItems.reduce((sum, item) => sum + item.quantity, 0);
   }, [cartItems]);
-  const cartCountRef = useRef(totalCount);
-  cartCountRef.current = totalCount;
 
   // Dọn các khóa giỏ hàng không còn phân giải được (sản phẩm đã bị xóa) cùng metadata của chúng.
   useEffect(() => {
@@ -232,16 +257,20 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const totalAmount = subtotalAmount - discountAmount;
 
-  const addToCart = useCallback((item: number | Product, quantity: number = 1): boolean => {
+  const addToCart = useCallback(async (item: number | Product, quantity: number = 1): Promise<boolean> => {
     const addQty = Math.max(1, Math.floor(quantity));
+    const itemId = typeof item === 'number' ? item : item.id;
     if (
-      cartCountRef.current + addQty > MAX_CART_QUANTITY_WITHOUT_CONFIRMATION &&
-      !confirmLargeCartAddition()
+      (cartRef.current[itemId] ?? 0) + addQty > MAX_CART_QUANTITY_WITHOUT_CONFIRMATION &&
+      !(await requestLargeItemConfirmation())
     ) {
       return false;
     }
 
-    cartCountRef.current += addQty;
+    cartRef.current = {
+      ...cartRef.current,
+      [itemId]: (cartRef.current[itemId] ?? 0) + addQty,
+    };
     if (typeof item === 'number') {
       const drinkId = item;
       setCart((prev) => ({
@@ -267,10 +296,17 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }));
     }
     return true;
-  }, []);
+  }, [requestLargeItemConfirmation]);
 
   const updateQuantity = useCallback((id: number, quantity: number) => {
     const targetQty = Math.floor(quantity);
+    const next = { ...cartRef.current };
+    if (targetQty <= 0) {
+      delete next[id];
+    } else {
+      next[id] = targetQty;
+    }
+    cartRef.current = next;
     setCart((prev) => {
       if (targetQty <= 0) {
         const next = { ...prev };
@@ -285,6 +321,13 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const decreaseQuantity = useCallback((id: number) => {
+    const next = { ...cartRef.current };
+    if (!next[id] || next[id] <= 1) {
+      delete next[id];
+    } else {
+      next[id] -= 1;
+    }
+    cartRef.current = next;
     setCart((prev) => {
       const current = prev[id];
       if (!current || current <= 1) {
@@ -300,6 +343,9 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const removeFromCart = useCallback((id: number) => {
+    const nextCart = { ...cartRef.current };
+    delete nextCart[id];
+    cartRef.current = nextCart;
     setCart((prev) => {
       const next = { ...prev };
       delete next[id];
@@ -314,12 +360,13 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const clearCart = useCallback(() => {
+    cartRef.current = {};
     setCart({});
     setItemMeta({});
   }, []);
 
   const reorderItems = useCallback(
-    (
+    async (
       items: {
         key: number;
         quantity: number;
@@ -330,19 +377,27 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         imagePath?: string;
         poiSlug?: string | null;
       }[]
-    ): boolean => {
-      const addedCount = items.reduce(
-        (sum, item) => sum + Math.max(0, Math.floor(item.quantity)),
-        0
+    ): Promise<boolean> => {
+      const addedByItem = new Map<number, number>();
+      items.forEach((item) => {
+        addedByItem.set(
+          item.key,
+          (addedByItem.get(item.key) ?? 0) + Math.max(0, Math.floor(item.quantity))
+        );
+      });
+      const exceedsItemLimit = [...addedByItem].some(
+        ([key, quantity]) =>
+          (cartRef.current[key] ?? 0) + quantity > MAX_CART_QUANTITY_WITHOUT_CONFIRMATION
       );
-      if (
-        cartCountRef.current + addedCount > MAX_CART_QUANTITY_WITHOUT_CONFIRMATION &&
-        !confirmLargeCartAddition()
-      ) {
+      if (exceedsItemLimit && !(await requestLargeItemConfirmation())) {
         return false;
       }
 
-      cartCountRef.current += addedCount;
+      const nextCart = { ...cartRef.current };
+      items.forEach((item) => {
+        nextCart[item.key] = (nextCart[item.key] ?? 0) + item.quantity;
+      });
+      cartRef.current = nextCart;
       setCart((prev) => {
         const next = { ...prev };
         items.forEach((it) => {
@@ -368,7 +423,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
       return true;
     },
-    []
+    [requestLargeItemConfirmation]
   );
 
   const openCart = useCallback(() => setIsCartOpen(true), []);
@@ -395,6 +450,30 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }}
     >
       {children}
+      <dialog
+        ref={confirmationDialogRef}
+        className="cart-confirmation-dialog"
+        role="alertdialog"
+        aria-labelledby="cart-confirmation-title"
+        aria-describedby="cart-confirmation-message"
+        onCancel={(event) => {
+          event.preventDefault();
+          resolveLargeItemConfirmation(false);
+        }}
+      >
+        <h2 id="cart-confirmation-title">Số lượng sản phẩm nhiều</h2>
+        <p id="cart-confirmation-message">
+          Món này đã vượt quá 5 sản phẩm. Bạn có chắc là muốn đặt thêm không?
+        </p>
+        <div className="cart-confirmation-actions">
+          <button type="button" className="cart-confirmation-cancel" autoFocus onClick={() => resolveLargeItemConfirmation(false)}>
+            Hủy
+          </button>
+          <button type="button" className="cart-confirmation-accept" onClick={() => resolveLargeItemConfirmation(true)}>
+            Vẫn thêm
+          </button>
+        </div>
+      </dialog>
     </CartContext.Provider>
   );
 };
@@ -412,5 +491,5 @@ export const useCart = (): CartContextValue => {
 // (e.g. in unit tests) without crashing.
 export const useCartOptional = (): Pick<CartContextValue, 'addToCart'> => {
   const ctx = useContext(CartContext);
-  return { addToCart: ctx ? ctx.addToCart : () => true };
+  return { addToCart: ctx ? ctx.addToCart : async () => true };
 };
