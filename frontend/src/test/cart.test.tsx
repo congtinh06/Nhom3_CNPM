@@ -105,7 +105,7 @@ describe('CartContext', () => {
     expect(result.current.cartItems).toHaveLength(0);
   });
 
-  it('does not ask for fewer than six of the same product even when the cart has many different items', async () => {
+  it('does not ask for four selected items when two of the same product are already in the cart', async () => {
     const { result } = renderHook(() => useCart(), { wrapper });
     const product = {
       id: 101,
@@ -121,13 +121,11 @@ describe('CartContext', () => {
     };
 
     await act(async () => {
-      expect(await result.current.addToCart(product, 3)).toBe(true);
+      await result.current.addToCart(product, 2);
+      expect(await result.current.addToCart(product, 4)).toBe(true);
     });
 
-    await act(async () => {
-      expect(await result.current.addToCart({ ...product, id: 102 }, 3)).toBe(true);
-    });
-    expect(result.current.totalCount).toBe(6);
+    expect(result.current.cart[101]).toBe(6);
     expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
   });
 
@@ -155,7 +153,7 @@ describe('CartContext', () => {
     expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
   });
 
-  it('shows an in-app confirmation when adding would exceed five of the same product', async () => {
+  it('shows an in-app confirmation when the selected quantity is greater than five', async () => {
     const { result } = renderHook(() => useCart(), { wrapper });
     const product = {
       id: 101,
@@ -170,13 +168,9 @@ describe('CartContext', () => {
       sortOrder: 1,
     };
 
-    await act(async () => {
-      await result.current.addToCart(product, 3);
-    });
-
     let addition!: Promise<boolean>;
     act(() => {
-      addition = result.current.addToCart(product, 3);
+      addition = result.current.addToCart(product, 6);
     });
     expect(await screen.findByRole('alertdialog')).toHaveTextContent(
       'Món này đã vượt quá 5 sản phẩm. Bạn có chắc là muốn đặt thêm không?'
@@ -185,8 +179,8 @@ describe('CartContext', () => {
     await act(async () => {
       expect(await addition).toBe(false);
     });
-    expect(result.current.cart[101]).toBe(3);
-    expect(result.current.totalCount).toBe(3);
+    expect(result.current.cart[101]).toBeUndefined();
+    expect(result.current.totalCount).toBe(0);
   });
 
   it('adds the product after the in-app confirmation is accepted', async () => {

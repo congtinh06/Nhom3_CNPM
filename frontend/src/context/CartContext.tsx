@@ -259,14 +259,14 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const addToCart = useCallback(async (item: number | Product, quantity: number = 1): Promise<boolean> => {
     const addQty = Math.max(1, Math.floor(quantity));
-    const itemId = typeof item === 'number' ? item : item.id;
     if (
-      (cartRef.current[itemId] ?? 0) + addQty > MAX_CART_QUANTITY_WITHOUT_CONFIRMATION &&
+      addQty > MAX_CART_QUANTITY_WITHOUT_CONFIRMATION &&
       !(await requestLargeItemConfirmation())
     ) {
       return false;
     }
 
+    const itemId = typeof item === 'number' ? item : item.id;
     cartRef.current = {
       ...cartRef.current,
       [itemId]: (cartRef.current[itemId] ?? 0) + addQty,
@@ -386,8 +386,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         );
       });
       const exceedsItemLimit = [...addedByItem].some(
-        ([key, quantity]) =>
-          (cartRef.current[key] ?? 0) + quantity > MAX_CART_QUANTITY_WITHOUT_CONFIRMATION
+        ([, quantity]) => quantity > MAX_CART_QUANTITY_WITHOUT_CONFIRMATION
       );
       if (exceedsItemLimit && !(await requestLargeItemConfirmation())) {
         return false;
