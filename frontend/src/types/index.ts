@@ -471,3 +471,7 @@ export interface ChangePasswordPayload {
   newPassword: string;
   confirmPassword: string;
 }
+
+export interface UpdateProfilePayload {
+  fullName: string;
+}

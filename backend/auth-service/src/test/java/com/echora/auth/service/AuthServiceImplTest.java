@@ -6,6 +6,7 @@ import com.echora.auth.dto.LoginRequest;
 import com.echora.auth.dto.MessageResponse;
 import com.echora.auth.dto.RegisterRequest;
 import com.echora.auth.dto.ResetPasswordRequest;
+import com.echora.auth.dto.UpdateProfileRequest;
 import com.echora.auth.dto.VerifyEmailRequest;
 import com.echora.auth.entity.EmailVerificationToken;
 import com.echora.auth.entity.RefreshToken;
@@ -144,6 +145,36 @@ class AuthServiceImplTest {
                             .build();
                     return new RefreshTokenService.Issued("new-raw-token", created, Duration.ofDays(7));
                 });
+    }
+
+    // -------------------------------------------------------------- PROFILE
+
+    @Test
+    @DisplayName("Cập nhật hồ sơ chỉ thay đổi họ tên của chính người dùng")
+    void updateProfileUpdatesTrimmedFullName() {
+        User user = activeUser();
+        when(userRepository.findById(42L)).thenReturn(Optional.of(user));
+
+        var response = service.updateProfile(42L, UpdateProfileRequest.builder()
+                .fullName("  Nguyễn Văn B  ")
+                .build());
+
+        assertThat(response.getFullName()).isEqualTo("Nguyễn Văn B");
+        assertThat(user.getFullName()).isEqualTo("Nguyễn Văn B");
+        verify(userRepository).save(user);
+    }
+
+    @Test
+    @DisplayName("Từ chối họ tên quá ngắn khi cập nhật hồ sơ")
+    void updateProfileRejectsShortFullName() {
+        when(userRepository.findById(42L)).thenReturn(Optional.of(activeUser()));
+
+        assertThatThrownBy(() -> service.updateProfile(42L, UpdateProfileRequest.builder()
+                .fullName(" ")
+                .build()))
+                .isInstanceOf(FieldValidationException.class)
+                .satisfies(ex -> assertThat(((FieldValidationException) ex).getDetails())
+                        .containsKey("fullName"));
     }
 
     // --------------------------------------------------------------- REGISTER

@@ -599,17 +599,6 @@ export const Header: React.FC = () => {
                   >
                     <span>{t.scanPoiQr}</span>
                   </a>
-                  <a
-                    href="/don-hang"
-                    className="mobile-sub-item"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      closeAllMenus();
-                      navigate('/don-hang');
-                    }}
-                  >
-                    <span>{t.auth.myOrders}</span>
-                  </a>
                   <button
                     type="button"
                     className="mobile-sub-item mobile-logout-btn"

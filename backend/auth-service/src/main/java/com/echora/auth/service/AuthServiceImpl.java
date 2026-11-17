@@ -15,6 +15,7 @@ import com.echora.auth.dto.RegisterRequest;
 import com.echora.auth.dto.ResetPasswordRequest;
 import com.echora.auth.dto.UserResponse;
 import com.echora.auth.dto.UserPoiEntitlementResponse;
+import com.echora.auth.dto.UpdateProfileRequest;
 import com.echora.auth.dto.VerifyEmailRequest;
 import com.echora.auth.entity.EmailVerificationToken;
 import com.echora.auth.entity.PasswordResetToken;
@@ -225,6 +226,27 @@ public class AuthServiceImpl implements AuthService {
 
         log.info("Đăng nhập thành công userId={}", user.getId());
         return buildResult(user, accessToken, issued);
+    }
+
+    // -------------------------------------------------------------- PROFILE
+
+    @Override
+    @Transactional
+    public UserResponse updateProfile(Long userId, UpdateProfileRequest request) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("Không tìm thấy tài khoản."));
+
+        String fullName = request == null || request.getFullName() == null
+                ? ""
+                : request.getFullName().trim();
+        if (fullName.length() < 2 || fullName.length() > 150) {
+            throw new FieldValidationException(Map.of(
+                    "fullName", "Họ và tên phải từ 2 đến 150 ký tự."));
+        }
+
+        user.setFullName(fullName);
+        user.setUpdatedAt(LocalDateTime.now());
+        return UserResponse.from(userRepository.save(user));
     }
 
     // ----------------------------------------------------------- LOGIN GOOGLE
