@@ -32,6 +32,9 @@ export type HomeKey =
   | 'feat3Desc'
   | 'feat4Title'
   | 'feat4Desc'
+  | 'feat1AutoChip'
+  | 'feat2ScanCta'
+  | 'feat2ScanSub'
   | 'faqTitle'
   | 'faqSubtitle'
   | 'faq1Q'
@@ -86,6 +89,9 @@ export const HOME_DICTIONARY: Record<SupportedLanguage, Record<HomeKey, string>>
     feat3Desc: 'Tiếng Việt, English, 日本語 và 한국어 cho mỗi điểm dừng.',
     feat4Title: 'Bản đồ tuyến đường',
     feat4Desc: 'Xem các điểm dừng và đường đi trên bản đồ tương tác.',
+    feat1AutoChip: 'Tự động phát',
+    feat2ScanCta: 'Quét để nghe',
+    feat2ScanSub: 'Mở thuyết minh ngay tại điểm dừng',
     faqTitle: 'Câu hỏi thường gặp',
     faqSubtitle: 'Vài điều nên biết trước khi bắt đầu.',
     faq1Q: 'Vì sao đôi lúc không nghe được tiếng Việt?',
@@ -146,6 +152,9 @@ export const HOME_DICTIONARY: Record<SupportedLanguage, Record<HomeKey, string>>
     feat3Desc: 'Vietnamese, English, Japanese and Korean for every stop.',
     feat4Title: 'Route map',
     feat4Desc: 'See all the stops and the walking route on an interactive map.',
+    feat1AutoChip: 'Plays automatically',
+    feat2ScanCta: 'Scan to listen',
+    feat2ScanSub: 'Open the narration right at the stop',
     faqTitle: 'Frequently asked questions',
     faqSubtitle: 'A few things to know before you start.',
     faq1Q: 'Why is the Vietnamese voice sometimes missing?',
@@ -206,6 +215,9 @@ export const HOME_DICTIONARY: Record<SupportedLanguage, Record<HomeKey, string>>
     feat3Desc: '各スポットをベトナム語・英語・日本語・韓国語で聴けます。',
     feat4Title: 'ルートマップ',
     feat4Desc: '地図上でスポットと徒歩ルートを確認できます。',
+    feat1AutoChip: '自動再生',
+    feat2ScanCta: 'スキャンして聴く',
+    feat2ScanSub: 'スポットでそのまま解説を開く',
     faqTitle: 'よくある質問',
     faqSubtitle: '始める前に知っておきたいこと。',
     faq1Q: 'ベトナム語の音声が聞こえないことがあるのはなぜですか？',
@@ -266,6 +278,9 @@ export const HOME_DICTIONARY: Record<SupportedLanguage, Record<HomeKey, string>>
     feat3Desc: '모든 명소를 베트남어, 영어, 일본어, 한국어로 들을 수 있습니다.',
     feat4Title: '경로 지도',
     feat4Desc: '지도에서 명소와 도보 경로를 확인하세요.',
+    feat1AutoChip: '자동 재생',
+    feat2ScanCta: '스캔해서 듣기',
+    feat2ScanSub: '명소에서 바로 해설 열기',
     faqTitle: '자주 묻는 질문',
     faqSubtitle: '시작하기 전에 알아 두면 좋은 내용입니다.',
     faq1Q: '베트남어 음성이 들리지 않을 때가 있는 이유는 무엇인가요?',

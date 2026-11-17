@@ -480,7 +480,10 @@ export const NewsListPage: React.FC = () => {
                         {tNews(lang, 'readArticle')}
                       </button>
                     )}
-                    <Link to={`/nearby?poi=${stop.slug}`} className="nl-stop-audio-link">
+                    <Link
+                      to={`/diem-du-lich?stop=${encodeURIComponent(stop.slug)}`}
+                      className="nl-stop-audio-link"
+                    >
                       {tNews(lang, 'listenTour')}
                     </Link>
                   </div>
@@ -536,7 +539,7 @@ export const NewsListPage: React.FC = () => {
               {tNews(lang, 'ctaListenDesc')}
             </p>
           </div>
-          <Link to="/nearby" className="nl-cta-btn">
+          <Link to="/diem-du-lich" className="nl-cta-btn">
             {tNews(lang, 'ctaListenBtn')}
           </Link>
         </section>

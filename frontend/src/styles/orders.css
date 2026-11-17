@@ -279,6 +279,29 @@
   color: #1C1917 !important;
 }
 
+.order-summary-items-preview-wrap {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  min-width: 0 !important;
+}
+
+.order-summary-thumbs {
+  display: flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  flex-shrink: 0 !important;
+}
+
+.order-summary-thumb {
+  width: 28px !important;
+  height: 28px !important;
+  border-radius: 4px !important;
+  object-fit: cover !important;
+  background-color: #F5F5F4 !important;
+  border: 1px solid #E7E5E4 !important;
+}
+
 .order-summary-items-preview {
   font-size: 13px !important;
   color: #57534E !important;
@@ -287,6 +310,7 @@
   overflow: hidden !important;
   text-overflow: ellipsis !important;
   line-height: 1.4 !important;
+  flex: 1 1 auto !important;
 }
 
 /* Right Column: Order Detail Card */
@@ -464,7 +488,7 @@
 /* Item rows as grid: 1fr name, 56px qty right-aligned, 120px subtotal right-aligned tabular-nums */
 .order-item-table-row {
   display: grid !important;
-  grid-template-columns: 1fr 56px 120px !important;
+  grid-template-columns: 48px 1fr 56px 120px !important;
   align-items: center !important;
   gap: 12px !important;
   font-size: 13.5px !important;
@@ -474,6 +498,35 @@
 
 .order-item-table-row:last-child {
   border-bottom: none !important;
+}
+
+.order-item-media {
+  width: 48px !important;
+  height: 48px !important;
+  border-radius: 6px !important;
+  overflow: hidden !important;
+  background-color: #F5F5F4 !important;
+  border: 1px solid #E7E5E4 !important;
+  flex-shrink: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.order-item-thumb {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  display: block !important;
+}
+
+.order-item-thumb-placeholder {
+  width: 100% !important;
+  height: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  color: #A8A29E !important;
 }
 
 .item-name-info {
@@ -881,9 +934,16 @@
     gap: 8px !important;
   }
 
-  .orders-embedded-container .order-item-table-row {
-    grid-template-columns: minmax(0, 1fr) 40px 92px !important;
+  .orders-embedded-container .order-item-table-row,
+  .order-item-table-row {
+    grid-template-columns: 40px minmax(0, 1fr) 40px 92px !important;
     gap: 8px !important;
+  }
+
+  .orders-embedded-container .order-item-media,
+  .order-item-media {
+    width: 40px !important;
+    height: 40px !important;
   }
 
   .orders-back-link {

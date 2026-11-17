@@ -1585,10 +1585,6 @@
   .adm-content {
     padding: 20px 16px 36px;
   }
-
-  .adm-form-grid {
-    grid-template-columns: 1fr;
-  }
 }
 
 /* --------------------------------------------------------------------------
@@ -1926,9 +1922,15 @@
 
 .adm-form-grid {
   display: grid;
-  grid-template-columns: 1fr 340px;
+  grid-template-columns: minmax(0, 1fr) 340px;
   gap: 24px;
   align-items: start;
+}
+
+@media (max-width: 992px) {
+  .adm-form-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 .adm-form-section {

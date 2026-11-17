@@ -99,8 +99,7 @@
   font-family: inherit;
   font-size: 14px;
   color: var(--pr-ink);
-  text-decoration: underline;
-  text-underline-offset: 4px;
+  text-decoration: none;
   padding: 2px 4px;
   border-radius: 4px;
   transition: color 0.15s ease;
@@ -413,8 +412,7 @@ dl.payment-kv dd {
   font-family: inherit;
   font-size: 14.5px;
   color: var(--pr-ink);
-  text-decoration: underline;
-  text-underline-offset: 4px;
+  text-decoration: none;
   min-height: 40px;
   padding: 4px 2px;
   display: inline-flex;
@@ -432,6 +430,10 @@ dl.payment-kv dd {
 
 .payment-link-arr:hover {
   color: var(--pr-acc);
+}
+
+.payment-link-arr:hover::after {
+  transform: translateX(4px);
 }
 
 .payment-link-arr:hover::after {
@@ -675,6 +677,153 @@ dl.payment-kv dd {
 @keyframes spin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
+}
+
+/* ==========================================================================
+   STATUS BANNER & CANCELLED/UNPAID ELEMENTS FOR TWO-COLUMN RESULT
+   ========================================================================== */
+
+.payment-status-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 20px 22px;
+  border-radius: var(--pr-r);
+  border: 1px solid transparent;
+  box-sizing: border-box;
+}
+
+.payment-status-banner.status-cancelled {
+  background-color: #FFF7ED;
+  border-color: #FED7AA;
+  color: #9A3412;
+}
+
+.payment-status-banner.status-failed {
+  background-color: #FEF2F2;
+  border-color: #FECACA;
+  color: #991B1B;
+}
+
+[data-theme="dark"] .payment-status-banner.status-cancelled {
+  background-color: rgba(154, 52, 18, 0.15);
+  border-color: rgba(251, 146, 60, 0.3);
+  color: #FDBA74;
+}
+
+[data-theme="dark"] .payment-status-banner.status-failed {
+  background-color: rgba(153, 27, 27, 0.15);
+  border-color: rgba(239, 68, 68, 0.3);
+  color: #FCA5A5;
+}
+
+.status-banner-icon {
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.status-banner-body h3 {
+  margin: 0 0 6px 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: inherit;
+  font-family: var(--pr-sans);
+  line-height: 1.3;
+}
+
+.status-banner-body p {
+  margin: 0;
+  font-size: 14.5px;
+  line-height: 1.55;
+  color: inherit;
+  opacity: 0.95;
+}
+
+/* Item badge in products list */
+.payment-it-nm-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.payment-item-badge {
+  font-size: 11.5px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  line-height: 1.3;
+  display: inline-block;
+  letter-spacing: 0.01em;
+}
+
+.payment-item-badge.badge-cancelled {
+  background-color: #FFEDD5;
+  color: #C2410C;
+  border: 1px solid #FED7AA;
+}
+
+.payment-item-badge.badge-unpaid {
+  background-color: #FEE2E2;
+  color: #DC2626;
+  border: 1px solid #FECACA;
+}
+
+[data-theme="dark"] .payment-item-badge.badge-cancelled {
+  background-color: rgba(194, 65, 12, 0.2);
+  color: #FDBA74;
+  border-color: rgba(251, 146, 60, 0.3);
+}
+
+[data-theme="dark"] .payment-item-badge.badge-unpaid {
+  background-color: rgba(220, 38, 38, 0.2);
+  color: #FCA5A5;
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+.payment-pay-method-status {
+  color: #DC2626;
+  font-weight: 500;
+}
+
+[data-theme="dark"] .payment-pay-method-status {
+  color: #F87171;
+}
+
+/* Secondary button in summary panel */
+.payment-sec-btn {
+  background: #ffffff;
+  color: var(--pr-ink);
+  border: 1px solid var(--pr-line);
+  padding: 12px 22px;
+  border-radius: var(--pr-r);
+  font-weight: 500;
+  font-size: 15px;
+  min-height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  cursor: pointer;
+  margin-bottom: 12px;
+  transition: background 0.15s ease, border-color 0.15s ease;
+  font-family: inherit;
+  width: 100%;
+}
+
+.payment-sec-btn:hover {
+  background: var(--pr-bg2);
+  border-color: var(--pr-mut);
+}
+
+[data-theme="dark"] .payment-sec-btn {
+  background: #26221F;
+  color: var(--pr-ink);
+  border-color: var(--pr-line);
+}
+
+[data-theme="dark"] .payment-sec-btn:hover {
+  background: #332D29;
 }
 
 /* ==========================================================================

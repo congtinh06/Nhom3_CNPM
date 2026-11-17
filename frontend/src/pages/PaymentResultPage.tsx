@@ -6,14 +6,20 @@ import {
   ArrowRight,
   RefreshCw,
   CreditCard,
+  AlertCircle,
 } from 'lucide-react';
-import { getOrderByCode, confirmMockPayment } from '../services/orderService';
+import {
+  getOrderByCode,
+  confirmMockPayment,
+  createVnPayPayment,
+} from '../services/orderService';
 import { authApi } from '../api/auth';
 import { api } from '../api/client';
 import { usePremium } from '../context/PremiumContext';
 import { useNavbarLanguage } from '../content/languages';
 import { formatPrice } from '../utils/formatters';
 import { BackendOrder } from '../types';
+import { resolveOrderItemImage } from '../content/productAdapter';
 import '../styles/paymentResult.css';
 
 type PaymentOutcome = 'pending' | 'success' | 'failed' | 'cancelled';
@@ -92,6 +98,7 @@ export const PaymentResultPage: React.FC = () => {
   const [orderNotFound, setOrderNotFound] = useState(false);
   const [loading, setLoading] = useState(true);
   const [processingAction, setProcessingAction] = useState(false);
+  const [retryingPayment, setRetryingPayment] = useState(false);
   const [copied, setCopied] = useState(false);
   const [outcome, setOutcome] = useState<PaymentOutcome>(
     method === 'COD' ? 'success' : queryOutcome
@@ -647,72 +654,7 @@ export const PaymentResultPage: React.FC = () => {
     );
   }
 
-  // Failed / Cancelled state for general orders
-  if (outcome === 'failed' || outcome === 'cancelled') {
-    return (
-      <div className="payment-result-page">
-        <div className="wrap">
-          <div className="payment-steps">
-            <span>Giỏ hàng</span>
-            <i aria-hidden="true" />
-            <span>Thanh toán</span>
-            <i aria-hidden="true" />
-            <b>Hoàn tất</b>
-          </div>
-
-          <div className="result-card result-failed">
-            <div className="result-icon-wrap failed" aria-hidden="true">
-              <XCircle size={32} strokeWidth={2.2} />
-            </div>
-            <h1 className="result-title">{t.shop.paymentFailed}</h1>
-            <p className="result-subtitle">
-              {outcome === 'cancelled'
-                ? 'Giao dịch đã được hủy theo yêu cầu của bạn.'
-                : 'Giao dịch thanh toán chưa thể hoàn tất. Đơn hàng của bạn vẫn được lưu ở trạng thái chờ thanh toán.'}
-            </p>
-
-            <div className="result-info-box">
-              <div className="info-row">
-                <span>Mã đơn hàng:</span>
-                <b className="order-code-badge">{orderCode || order?.orderCode}</b>
-              </div>
-              {order && (
-                <div className="info-row">
-                  <span>Số tiền:</span>
-                  <b className="result-total-amount">{formatPrice(order.totalAmount)}</b>
-                </div>
-              )}
-            </div>
-
-            <div className="result-actions-row">
-              <button
-                type="button"
-                className="result-primary-btn"
-                onClick={() => {
-                  if (method === 'MOCK_GATEWAY') {
-                    setOutcome('pending');
-                  } else {
-                    navigate('/don-hang');
-                  }
-                }}
-              >
-                <RefreshCw size={15} strokeWidth={2} aria-hidden="true" />
-                <span>Thử thanh toán lại</span>
-              </button>
-
-              <button
-                type="button"
-                className="result-secondary-btn"
-                onClick={() => navigate('/don-hang')}
-              >
-                <span>{t.shop.orderHistory}</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  const isFailedOrCancelled = outcome === 'failed' || outcome === 'cancelled';
 
   // Determine timeline active classes
   const statusUpper = (order?.status || '').toUpperCase();
@@ -732,6 +674,37 @@ export const PaymentResultPage: React.FC = () => {
   const subtotal = order?.subtotal ?? order?.totalAmount ?? 0;
   const totalAmount = order?.totalAmount ?? 0;
 
+  const handleRetryPayment = async () => {
+    const code = displayOrderCode || orderCode;
+    if (!code) {
+      navigate('/don-hang');
+      return;
+    }
+
+    const payMethod = order?.paymentMethod || method;
+    if (payMethod === 'VNPAY') {
+      try {
+        setRetryingPayment(true);
+        const paymentUrl = await createVnPayPayment(code);
+        if (paymentUrl) {
+          window.location.href = paymentUrl;
+          return;
+        }
+      } catch (err) {
+        console.error('Không thể tạo liên kết thanh toán VNPAY:', err);
+      } finally {
+        setRetryingPayment(false);
+      }
+    } else if (payMethod === 'VIETQR') {
+      navigate(`/thanh-toan/qr/${encodeURIComponent(code)}`);
+      return;
+    } else if (payMethod === 'MOCK_GATEWAY') {
+      setOutcome('pending');
+      return;
+    }
+    navigate('/don-hang');
+  };
+
   return (
     <div className="payment-result-page">
       <main className="wrap">
@@ -744,7 +717,11 @@ export const PaymentResultPage: React.FC = () => {
         </div>
 
         <h1 className="payment-result-h1">
-          {order?.receiverName
+          {outcome === 'cancelled'
+            ? 'Giao dịch thanh toán đã bị hủy'
+            : outcome === 'failed'
+            ? 'Thanh toán không thành công'
+            : order?.receiverName
             ? `Cảm ơn ${order.receiverName}, đơn hàng đã được ghi nhận`
             : `Cảm ơn ${receiverName}, đơn hàng đã được ghi nhận`}
         </h1>
@@ -766,45 +743,142 @@ export const PaymentResultPage: React.FC = () => {
           <span>Đặt lúc {formattedOrderTime}</span>
           <br />
           <span className="meta-note">
-            Chúng tôi sẽ liên hệ xác nhận trước khi giao hàng.
+            {outcome === 'cancelled'
+              ? 'Giao dịch đã được hủy theo yêu cầu của bạn. Đơn hàng vẫn được lưu lại để bạn có thể thanh toán lại bất cứ lúc nào.'
+              : outcome === 'failed'
+              ? 'Giao dịch thanh toán chưa thể hoàn tất. Đơn hàng của bạn vẫn được lưu lại để bạn thử thanh toán lại.'
+              : 'Chúng tôi sẽ liên hệ xác nhận trước khi giao hàng.'}
           </span>
         </p>
 
         <div className="payment-result-two">
           <div>
-            {/* Section 1: Tiến trình đơn hàng */}
-            <section className="payment-sec">
-              <div className="payment-eta">
-                <h2>Tiến trình đơn hàng</h2>
-                <span>
-                  Dự kiến giao: <b>{estimatedDelivery}</b>
-                </span>
-              </div>
-              <div className="payment-tl">
-                <div className="d">
-                  Đã đặt hàng
-                  <small>{formattedShortDate}</small>
+            {/* Section 1: Thông báo trạng thái hoặc Tiến trình đơn hàng */}
+            {isFailedOrCancelled ? (
+              <section className="payment-sec">
+                <div
+                  className={`payment-status-banner ${
+                    outcome === 'cancelled' ? 'status-cancelled' : 'status-failed'
+                  }`}
+                >
+                  <div className="status-banner-icon" aria-hidden="true">
+                    {outcome === 'cancelled' ? (
+                      <AlertCircle size={28} strokeWidth={2.2} />
+                    ) : (
+                      <XCircle size={28} strokeWidth={2.2} />
+                    )}
+                  </div>
+                  <div className="status-banner-body">
+                    <h3>
+                      {outcome === 'cancelled'
+                        ? 'Giao dịch đã bị hủy'
+                        : 'Thanh toán không thành công'}
+                    </h3>
+                    <p>
+                      {outcome === 'cancelled'
+                        ? 'Bạn đã hủy yêu cầu thanh toán hoặc thời gian chờ thanh toán đã hết hạn. Các sản phẩm dưới đây vẫn được lưu trong đơn hàng, bạn có thể nhấn "Thử thanh toán lại" để tiếp tục thanh toán.'
+                        : 'Cổng thanh toán chưa ghi nhận được tiền hoặc giao dịch bị gián đoạn. Bạn có thể nhấn "Thử thanh toán lại" để tiếp tục hoàn tất đơn hàng này.'}
+                    </p>
+                  </div>
                 </div>
-                <div className={step2Class}>Chờ xác nhận</div>
-                <div className={step3Class}>Đóng gói</div>
-                <div className={step4Class}>Đang giao</div>
-                <div className={step5Class}>Đã nhận</div>
-              </div>
-            </section>
+              </section>
+            ) : (
+              <section className="payment-sec">
+                <div className="payment-eta">
+                  <h2>Tiến trình đơn hàng</h2>
+                  <span>
+                    Dự kiến giao: <b>{estimatedDelivery}</b>
+                  </span>
+                </div>
+                <div className="payment-tl">
+                  <div className="d">
+                    Đã đặt hàng
+                    <small>{formattedShortDate}</small>
+                  </div>
+                  <div className={step2Class}>Chờ xác nhận</div>
+                  <div className={step3Class}>Đóng gói</div>
+                  <div className={step4Class}>Đang giao</div>
+                  <div className={step5Class}>Đã nhận</div>
+                </div>
+              </section>
+            )}
 
             {/* Section 2: Sản phẩm */}
             <section className="payment-sec">
-              <h2>Sản phẩm ({itemsCount})</h2>
+              <h2>
+                {isFailedOrCancelled
+                  ? `Sản phẩm (${itemsCount})`
+                  : `Sản phẩm (${itemsCount})`}
+              </h2>
               {items.length > 0 ? (
-                items.map((item, idx) => (
-                  <div className="payment-it" key={item.productId ?? idx}>
-                    <div className="payment-th">
-                      {item.imagePath ? (
-                        <img
-                          src={item.imagePath}
-                          alt={item.productName}
-                          loading="lazy"
-                        />
+                items.map((item, idx) => {
+                  const resolvedImg = resolveOrderItemImage(item);
+                  return (
+                    <div className="payment-it" key={item.productId ?? idx}>
+                      <div className="payment-th">
+                        {resolvedImg ? (
+                          <img
+                            src={resolvedImg}
+                            alt={item.productName}
+                            loading="lazy"
+                          />
+                        ) : (
+                          <svg
+                            viewBox="0 0 320 200"
+                            preserveAspectRatio="xMidYMid slice"
+                            aria-hidden="true"
+                          >
+                            <circle cx="262" cy="52" r="16" fill="var(--pr-acc, #C2410C)" />
+                            <g
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="3"
+                              strokeLinejoin="round"
+                              transform="translate(0 10)"
+                            >
+                              <path d="M60 150V108H260V150M80 108V84H240V108M110 84V62H210V84M130 150v-24h60v24" />
+                            </g>
+                          </svg>
+                        )}
+                      </div>
+                      <div>
+                        <div className="payment-it-nm-row">
+                          <span className="payment-it-nm">
+                            {item.productName}
+                          </span>
+                          {isFailedOrCancelled && (
+                            <span
+                              className={`payment-item-badge ${
+                                outcome === 'cancelled'
+                                  ? 'badge-cancelled'
+                                  : 'badge-unpaid'
+                              }`}
+                            >
+                              {outcome === 'cancelled'
+                                ? 'Đã hủy'
+                                : 'Chưa thanh toán'}
+                            </span>
+                          )}
+                        </div>
+                        <small>
+                          Số lượng: {item.quantity}
+                          <span className="meta-sep" aria-hidden="true" />
+                          {formatPrice(item.unitPrice)}
+                        </small>
+                      </div>
+                      <b>{formatPrice(item.quantity * item.unitPrice)}</b>
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="payment-it">
+                  <div className="payment-th">
+                    {(() => {
+                      const fallbackImg = resolveOrderItemImage({
+                        productName: order?.note || 'Quà lưu niệm Sài Gòn',
+                      });
+                      return fallbackImg ? (
+                        <img src={fallbackImg} alt="Sản phẩm" loading="lazy" />
                       ) : (
                         <svg
                           viewBox="0 0 320 200"
@@ -822,44 +896,27 @@ export const PaymentResultPage: React.FC = () => {
                             <path d="M60 150V108H260V150M80 108V84H240V108M110 84V62H210V84M130 150v-24h60v24" />
                           </g>
                         </svg>
-                      )}
-                    </div>
-                    <div>
-                      <div className="payment-it-nm">
-                        {item.productName}
-                      </div>
-                      <small>
-                        Số lượng: {item.quantity}
-                        <span className="meta-sep" aria-hidden="true" />
-                        {formatPrice(item.unitPrice)}
-                      </small>
-                    </div>
-                    <b>{formatPrice(item.quantity * item.unitPrice)}</b>
-                  </div>
-                ))
-              ) : (
-                <div className="payment-it">
-                  <div className="payment-th">
-                    <svg
-                      viewBox="0 0 320 200"
-                      preserveAspectRatio="xMidYMid slice"
-                      aria-hidden="true"
-                    >
-                      <circle cx="262" cy="52" r="16" fill="var(--pr-acc, #C2410C)" />
-                      <g
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="3"
-                        strokeLinejoin="round"
-                        transform="translate(0 10)"
-                      >
-                        <path d="M60 150V108H260V150M80 108V84H240V108M110 84V62H210V84M130 150v-24h60v24" />
-                      </g>
-                    </svg>
+                      );
+                    })()}
                   </div>
                   <div>
-                    <div className="payment-it-nm">
-                      {order?.note || 'Quà lưu niệm Sài Gòn'}
+                    <div className="payment-it-nm-row">
+                      <span className="payment-it-nm">
+                        {order?.note || 'Quà lưu niệm Sài Gòn'}
+                      </span>
+                      {isFailedOrCancelled && (
+                        <span
+                          className={`payment-item-badge ${
+                            outcome === 'cancelled'
+                              ? 'badge-cancelled'
+                              : 'badge-unpaid'
+                          }`}
+                        >
+                          {outcome === 'cancelled'
+                            ? 'Đã hủy'
+                            : 'Chưa thanh toán'}
+                        </span>
+                      )}
                     </div>
                     <small>Số lượng: 1</small>
                   </div>
@@ -915,15 +972,51 @@ export const PaymentResultPage: React.FC = () => {
                   : order?.paymentMethod === 'VNPAY'
                   ? 'Cổng thanh toán VNPAY'
                   : 'Thanh toán tiền mặt khi nhận hàng'}
+                {isFailedOrCancelled && (
+                  <span className="payment-pay-method-status">
+                    {' '}(Chưa thanh toán)
+                  </span>
+                )}
               </p>
               <div className="payment-acts">
-                <button
-                  type="button"
-                  className="payment-go-btn"
-                  onClick={() => navigate('/don-hang')}
-                >
-                  Xem đơn hàng của tôi
-                </button>
+                {isFailedOrCancelled ? (
+                  <>
+                    <button
+                      type="button"
+                      className="payment-go-btn"
+                      disabled={retryingPayment}
+                      onClick={handleRetryPayment}
+                    >
+                      <RefreshCw
+                        size={16}
+                        strokeWidth={2}
+                        className={retryingPayment ? 'spin-icon' : ''}
+                        aria-hidden="true"
+                        style={{ marginRight: 8 }}
+                      />
+                      <span>
+                        {retryingPayment
+                          ? 'Đang tạo liên kết...'
+                          : 'Thử thanh toán lại'}
+                      </span>
+                    </button>
+                    <button
+                      type="button"
+                      className="payment-sec-btn"
+                      onClick={() => navigate('/don-hang')}
+                    >
+                      Xem đơn hàng của tôi
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    type="button"
+                    className="payment-go-btn"
+                    onClick={() => navigate('/don-hang')}
+                  >
+                    Xem đơn hàng của tôi
+                  </button>
+                )}
                 <button
                   type="button"
                   className="payment-link-arr"

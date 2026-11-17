@@ -266,7 +266,7 @@
   background: none;
   border: none;
   color: var(--nl-accent, #C2410C);
-  text-decoration: underline;
+  text-decoration: none;
   cursor: pointer;
   padding: 0;
   font-family: var(--nl-sans);
@@ -321,12 +321,17 @@
   overflow: hidden;
   border-radius: 10px;
   background-color: var(--nl-border, #DED2BF);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
 }
 
 .nl-lead-img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  object-position: center center;
   display: block;
   border-radius: 10px;
   transition: transform 600ms cubic-bezier(0.16, 1, 0.3, 1);
@@ -456,7 +461,7 @@
 
 .nl-side-link {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: 16px;
   color: inherit;
@@ -501,12 +506,17 @@
   border-radius: 8px;
   background-color: var(--nl-border, #DED2BF);
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
 }
 
 .nl-side-img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  object-position: center center;
   display: block;
   border-radius: 8px;
   transition: transform 600ms cubic-bezier(0.16, 1, 0.3, 1);
@@ -596,12 +606,17 @@
   background-color: var(--nl-border, #DED2BF);
   flex-shrink: 0;
   border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
 }
 
 .nl-row-img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  object-position: center center;
   display: block;
   border-radius: 10px;
   transition: transform 600ms cubic-bezier(0.16, 1, 0.3, 1);
@@ -859,11 +874,10 @@
   border: 0;
   cursor: pointer;
   color: var(--nl-ink, #201B16);
-  text-decoration: underline;
-  text-underline-offset: 4px;
+  text-decoration: none;
   font-size: 14.5px;
   font-weight: 500;
-  padding: 0;
+  padding: 4px 0;
   transition: color 0.15s ease;
 }
 
@@ -873,11 +887,12 @@
 
 .nl-stop-audio-link {
   color: var(--nl-ink, #201B16);
-  text-decoration: underline;
-  text-underline-offset: 4px;
+  text-decoration: none;
   font-size: 14.5px;
+  font-weight: 500;
   display: inline-flex;
   align-items: center;
+  padding: 4px 0;
   transition: color 0.15s ease;
 }
 
@@ -893,7 +908,7 @@
 }
 
 .nl-stop-audio-link:hover::after {
-  transform: translateX(3px);
+  transform: translateX(4px);
 }
 
 /* Section: Nhận bài mới mỗi tuần */
@@ -939,14 +954,28 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  border-bottom: 1px solid var(--nl-ink, #201B16);
-  padding-bottom: 4px;
-  transition: border-bottom-color 0.2s ease;
+  background: var(--nl-bg-surface, #F5EFE6);
+  border: 1px solid var(--nl-border, #DED2BF);
+  border-radius: 8px;
+  padding: 4px 6px 4px 16px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
 }
 
 .nl-sub-input-row:focus-within {
-  border-bottom-color: var(--nl-accent, #C2410C);
-  box-shadow: 0 1px 0 var(--nl-accent, #C2410C);
+  border-color: var(--nl-accent, #C2410C);
+  box-shadow: 0 0 0 3px rgba(194, 65, 12, 0.12);
+  background: #ffffff;
+}
+
+[data-theme="dark"] .nl-sub-input-row {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+[data-theme="dark"] .nl-sub-input-row:focus-within {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: var(--nl-accent, #FB923C);
+  box-shadow: 0 0 0 3px rgba(251, 146, 60, 0.15);
 }
 
 .nl-sub-input {
@@ -954,8 +983,8 @@
   min-width: 0;
   background: none;
   border: 0;
-  padding: 10px 0;
-  font-size: 16px;
+  padding: 8px 0;
+  font-size: 15px;
   color: var(--nl-ink, #201B16);
   font-family: inherit;
 }
@@ -969,11 +998,10 @@
   border: 0;
   cursor: pointer;
   color: var(--nl-ink, #201B16);
-  text-decoration: underline;
-  text-underline-offset: 4px;
+  text-decoration: none;
   font-weight: 600;
   font-size: 15px;
-  padding: 0 4px;
+  padding: 6px 10px;
   display: inline-flex;
   align-items: center;
   transition: color 0.15s ease;
@@ -992,7 +1020,7 @@
 }
 
 .nl-sub-btn:hover::after {
-  transform: translateX(3px);
+  transform: translateX(4px);
 }
 
 .nl-sub-success {

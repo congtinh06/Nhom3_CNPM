@@ -10,6 +10,7 @@ import com.echora.order.entity.Order;
 import com.echora.order.entity.OrderStatus;
 import com.echora.order.entity.Payment;
 import com.echora.order.entity.PaymentMethod;
+import com.echora.order.entity.PaymentProvider;
 import com.echora.order.entity.PaymentStatus;
 import com.echora.order.exception.BadRequestException;
 import com.echora.order.exception.ForbiddenException;
@@ -410,5 +411,42 @@ class OrderServiceTest {
         assertThatThrownBy(() -> orderService.confirmPayment(ORDER_CODE))
                 .isInstanceOf(BadRequestException.class)
                 .hasMessageContaining("Đơn hàng đã hủy, không thể xác nhận thanh toán");
+    }
+
+    @Test
+    @DisplayName("handleVnPayReturn: cancelled payment redirects to the frontend origin stored on the payment")
+    void handleVnPayReturn_UsesStoredFrontendOrigin() {
+        Order order = Order.builder()
+                .id(7L)
+                .orderCode(ORDER_CODE)
+                .userId(USER_ID)
+                .paymentMethod(PaymentMethod.VNPAY)
+                .status(OrderStatus.PENDING_PAYMENT)
+                .paymentStatus(PaymentStatus.PENDING)
+                .totalAmount(new BigDecimal("100000"))
+                .items(Collections.emptyList())
+                .build();
+        Payment payment = Payment.builder()
+                .id(9L)
+                .order(order)
+                .provider(PaymentProvider.VNPAY)
+                .txnRef("TXN-1")
+                .amount(new BigDecimal("100000"))
+                .status(PaymentStatus.PENDING)
+                .frontendOrigin("http://localhost:5173")
+                .build();
+
+        when(vnPayService.verify(any())).thenReturn(Optional.of(new VnPayService.VnPayCallback(
+                "TXN-1", new BigDecimal("100000"), "24", "02", null, null)));
+        when(paymentRepository.findByTxnRef("TXN-1")).thenReturn(Optional.of(payment));
+        when(orderRepository.save(any(Order.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(vnPayService.buildFrontendResultUrl(ORDER_CODE, "cancelled", "http://localhost:5173"))
+                .thenReturn("http://localhost:5173/thanh-toan/ket-qua?status=cancelled");
+
+        String redirect = orderService.handleVnPayReturn(Map.of("vnp_TxnRef", "TXN-1"));
+
+        assertThat(redirect).isEqualTo("http://localhost:5173/thanh-toan/ket-qua?status=cancelled");
+        assertThat(order.getStatus()).isEqualTo(OrderStatus.CANCELLED);
+        assertThat(payment.getStatus()).isEqualTo(PaymentStatus.FAILED);
     }
 }

@@ -16,8 +16,51 @@ function normalize(input: string): string {
     .trim();
 }
 
+const defaultById = new Map<number, Product>(defaultProducts.map((p) => [p.id, p]));
 const defaultBySlug = new Map<string, Product>(defaultProducts.map((p) => [p.slug, p]));
 const defaultByName = new Map<string, Product>(defaultProducts.map((p) => [normalize(p.name), p]));
+
+/**
+ * Tìm hình ảnh đại diện cho món trong giỏ hàng/đơn hàng từ id/productId, name/productName hoặc imagePath/imageUrl sẵn có.
+ */
+export function resolveOrderItemImage(item?: {
+  id?: number;
+  productId?: number;
+  name?: string;
+  productName?: string;
+  imagePath?: string;
+  imageUrl?: string;
+}): string | undefined {
+  if (!item) return undefined;
+  const directPath = item.imagePath || item.imageUrl;
+  if (directPath && !directPath.includes('placeholder')) {
+    return directPath;
+  }
+  const id = item.productId ?? item.id;
+  if (id) {
+    const prod = defaultById.get(id);
+    if (prod?.imagePath && !prod.imagePath.includes('placeholder')) {
+      return prod.imagePath;
+    }
+  }
+  const name = item.productName || item.name;
+  if (name) {
+    const norm = normalize(name);
+    const prod = defaultByName.get(norm);
+    if (prod?.imagePath && !prod.imagePath.includes('placeholder')) {
+      return prod.imagePath;
+    }
+
+    const partial = defaultProducts.find((p) => {
+      const pNorm = normalize(p.name);
+      return pNorm === norm || norm.includes(pNorm) || pNorm.includes(norm);
+    });
+    if (partial?.imagePath && !partial.imagePath.includes('placeholder')) {
+      return partial.imagePath;
+    }
+  }
+  return undefined;
+}
 
 export function enrichProduct(product: Product): Product {
   const meta = defaultBySlug.get(product.slug) || defaultByName.get(normalize(product.name));

@@ -4,6 +4,7 @@ import { defaultProducts } from '../content/defaultProducts';
 import { CartItem, Drink, Product, ProductCategory } from '../types';
 import { usePremium } from './PremiumContext';
 import { applySouvenirDiscount, isSouvenirDiscountEligible } from '../utils/pricing';
+import { resolveOrderItemImage } from '../content/productAdapter';
 
 export interface CartItemMeta {
   name: string;
@@ -136,6 +137,11 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const key = Number(keyStr);
         const meta = itemMeta[key];
         if (meta) {
+          const resolvedImg = resolveOrderItemImage({
+            productId: key,
+            productName: meta.name,
+            imagePath: meta.imagePath,
+          });
           return {
             id: key,
             name: meta.name,
@@ -143,21 +149,31 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
             quantity: qty,
             slug: meta.slug,
             category: meta.category,
-            imagePath: meta.imagePath,
+            imagePath: resolvedImg || meta.imagePath,
             poiSlug: meta.poiSlug,
           };
         }
         const drink = drinksMap.get(key);
         if (drink) {
+          const resolvedImg = resolveOrderItemImage({
+            productId: key,
+            productName: drink.name,
+          });
           return {
             id: key,
             name: drink.name,
             price: drink.price,
             quantity: qty,
+            imagePath: resolvedImg,
           };
         }
         const defaultProd = defaultProducts.find((p) => p.id === key);
         if (defaultProd) {
+          const resolvedImg = resolveOrderItemImage({
+            productId: defaultProd.id,
+            productName: defaultProd.name,
+            imagePath: defaultProd.imagePath,
+          });
           return {
             id: key,
             name: defaultProd.name,
@@ -165,7 +181,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
             quantity: qty,
             slug: defaultProd.slug,
             category: defaultProd.category,
-            imagePath: defaultProd.imagePath,
+            imagePath: resolvedImg || defaultProd.imagePath,
             poiSlug: defaultProd.poiSlug,
           };
         }
@@ -234,6 +250,11 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }));
     } else {
       const product = item;
+      const resolvedImg = resolveOrderItemImage({
+        productId: product.id,
+        productName: product.name,
+        imagePath: product.imagePath,
+      });
       setItemMeta((prev) => ({
         ...prev,
         [product.id]: {
@@ -241,7 +262,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
           price: Number(product.price),
           slug: product.slug,
           category: product.category,
-          imagePath: product.imagePath,
+          imagePath: resolvedImg || product.imagePath,
           poiSlug: product.poiSlug ?? undefined,
         },
       }));
@@ -325,12 +346,17 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const next = { ...prev };
         items.forEach((it) => {
           if (it.name && typeof it.price === 'number') {
+            const resolvedImg = resolveOrderItemImage({
+              productId: it.key,
+              productName: it.name,
+              imagePath: it.imagePath,
+            });
             next[it.key] = {
               name: it.name,
               price: it.price,
               slug: it.slug,
               category: it.category,
-              imagePath: it.imagePath,
+              imagePath: resolvedImg || it.imagePath,
               poiSlug: it.poiSlug,
             };
           }

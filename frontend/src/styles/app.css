@@ -264,6 +264,10 @@ select:focus-visible {
   font-weight: 600;
 }
 
+.nav-link.active:hover {
+  color: #FFD2B0;
+}
+
 .hd :focus-visible {
   outline: 2px solid var(--accent-on-dark, #FB923C);
   outline-offset: 2px;
@@ -1455,6 +1459,38 @@ select:focus-visible {
 .food .tb {
   border-color: var(--heading-accent);
   color: var(--heading-accent);
+}
+
+.ph-link,
+.food-link {
+  display: block;
+  min-width: 0;
+  color: inherit;
+  text-decoration: none;
+}
+
+.ph-link .ph img,
+.food-link .ph img {
+  transition: transform 0.45s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+.ph-link:hover .ph img,
+.ph-link:focus-visible .ph img,
+.food-link:hover .ph img,
+.food-link:focus-visible .ph img {
+  transform: scale(1.045);
+}
+
+.ph-link:hover .ph span,
+.food-link:hover .ph span {
+  color: #ffffff;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.45);
+}
+
+.ph-link:focus-visible,
+.food-link:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
 }
 
 /* 6. Drinks */

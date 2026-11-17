@@ -1,5 +1,5 @@
 import React, { Suspense, lazy, useEffect } from 'react';
-import { BrowserRouter, Routes, Route, useLocation, Navigate, useParams } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useLocation, Navigate, useParams, useSearchParams } from 'react-router-dom';
 import { ToastProvider } from './context/ToastContext';
 import { CartProvider } from './context/CartContext';
 import { AuthProvider } from './context/AuthContext';
@@ -55,6 +55,12 @@ const PoiRedirect: React.FC = () => {
   const { slug, token } = useParams<{ slug?: string; token?: string }>();
   const target = slug || token;
   return <Navigate to={target ? `/diem-du-lich?stop=${encodeURIComponent(target)}` : '/diem-du-lich'} replace />;
+};
+
+const NearbyRedirect: React.FC = () => {
+  const [searchParams] = useSearchParams();
+  const stop = searchParams.get('stop') || searchParams.get('poi') || searchParams.get('slug');
+  return <Navigate to={stop ? `/diem-du-lich?stop=${encodeURIComponent(stop)}` : '/diem-du-lich'} replace />;
 };
 
 // Legacy souvenir URLs now forward into the "Quà lưu niệm" page at /am-thuc.
@@ -173,6 +179,8 @@ const AppContent: React.FC = () => {
             {/* Core Navigation Routes */}
             <Route path="/diem-du-lich" element={<NearbyPage />} />
             <Route path="/diem-du-lich/:slug" element={<PoiRedirect />} />
+            <Route path="/nearby" element={<NearbyRedirect />} />
+            <Route path="/nearby/:slug" element={<PoiRedirect />} />
             <Route path="/thuyet-minh" element={<NearbyPage />} />
             <Route path="/gan-toi" element={<NearbyPage />} />
             {/* "Quà lưu niệm" page (trước đây là trang Ẩm thực) */}

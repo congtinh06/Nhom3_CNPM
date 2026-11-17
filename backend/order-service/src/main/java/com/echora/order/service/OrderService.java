@@ -25,6 +25,7 @@ import com.echora.order.exception.NotFoundException;
 import com.echora.order.exception.ServiceUnavailableException;
 import com.echora.order.repository.OrderRepository;
 import com.echora.order.repository.PaymentRepository;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -37,6 +38,9 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
+import org.springframework.web.context.request.RequestAttributes;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -640,13 +644,14 @@ public class OrderService {
         }
 
         Order order = payment.getOrder();
+        String frontendOrigin = payment.getFrontendOrigin();
         boolean amountMatches = payment.getAmount().compareTo(callback.amount()) == 0;
         boolean success = isSuccessfulPayment(callback) && amountMatches;
 
         if (order.getStatus() == OrderStatus.PAID || order.getPaymentStatus() == PaymentStatus.SUCCESS) {
             orderEntitlementService.enqueue(order);
             orderEntitlementService.grantNow(order);
-            return vnPayService.buildFrontendResultUrl(order.getOrderCode(), "success");
+            return vnPayService.buildFrontendResultUrl(order.getOrderCode(), "success", frontendOrigin);
         }
 
         if (success) {
@@ -656,7 +661,7 @@ public class OrderService {
         }
 
         String status = success ? "success" : resultStatus(callback);
-        return vnPayService.buildFrontendResultUrl(order.getOrderCode(), status);
+        return vnPayService.buildFrontendResultUrl(order.getOrderCode(), status, frontendOrigin);
     }
 
     @Transactional
@@ -714,6 +719,7 @@ public class OrderService {
                 .txnRef(order.getOrderCode() + "-" + System.currentTimeMillis())
                 .amount(order.getTotalAmount())
                 .status(PaymentStatus.PENDING)
+                .frontendOrigin(currentFrontendOrigin())
                 .build();
         paymentRepository.save(payment);
 
@@ -906,6 +912,23 @@ public class OrderService {
         }
         String trimmed = key.trim();
         return trimmed.length() > 80 ? trimmed.substring(0, 80) : trimmed;
+    }
+
+    /**
+     * Lay origin frontend tu request hien tai (Origin, fallback Referer) de redirect
+     * ket qua VNPAY ve dung moi truong: localhost khi dev, Vercel khi production.
+     */
+    private static String currentFrontendOrigin() {
+        RequestAttributes attributes = RequestContextHolder.getRequestAttributes();
+        if (!(attributes instanceof ServletRequestAttributes servletAttributes)) {
+            return null;
+        }
+        HttpServletRequest request = servletAttributes.getRequest();
+        String origin = VnPayService.sanitizeOrigin(request.getHeader("Origin"));
+        if (origin != null) {
+            return origin;
+        }
+        return VnPayService.sanitizeOrigin(request.getHeader("Referer"));
     }
 
     private static String sanitizeIp(String ipAddress) {

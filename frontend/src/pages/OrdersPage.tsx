@@ -7,6 +7,7 @@ import {
   CreditCard,
   RotateCcw,
   Ban,
+  Package,
 } from 'lucide-react';
 import { getMyOrders, cancelBackendOrder, createVnPayPayment } from '../services/orderService';
 import { useCart } from '../context/CartContext';
@@ -15,6 +16,7 @@ import { useNavbarLanguage } from '../content/languages';
 import { formatPrice } from '../utils/formatters';
 import { BackendOrder } from '../types';
 import { StatusBadge } from '../components/orders/StatusBadge';
+import { resolveOrderItemImage } from '../content/productAdapter';
 import '../styles/orders.css';
 
 interface OrdersPageProps {
@@ -208,9 +210,25 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({ embedded = false }) => {
                         <b className="order-summary-amount">{formatPrice(o.totalAmount)}</b>
                       </div>
 
-                      <p className="order-summary-items-preview">
-                        {o.items.map((it) => `${it.productName} (${it.quantity})`).join(', ')}
-                      </p>
+                      <div className="order-summary-items-preview-wrap">
+                        <div className="order-summary-thumbs" aria-hidden="true">
+                          {o.items.slice(0, 3).map((it, i) => {
+                            const thumb = resolveOrderItemImage(it);
+                            return thumb ? (
+                              <img
+                                key={i}
+                                src={thumb}
+                                alt=""
+                                className="order-summary-thumb"
+                                loading="lazy"
+                              />
+                            ) : null;
+                          })}
+                        </div>
+                        <p className="order-summary-items-preview">
+                          {o.items.map((it) => `${it.productName} (${it.quantity})`).join(', ')}
+                        </p>
+                      </div>
                     </article>
                   );
                 })}
@@ -289,20 +307,37 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({ embedded = false }) => {
                     <div className="order-items-section">
                       <h3 className="order-items-heading">Món đã đặt</h3>
                       <div className="order-items-table">
-                        {selectedOrder.items.map((item, idx) => (
-                          <div key={idx} className="order-item-table-row">
-                            <div className="item-name-info">
-                              <span className="item-name">{item.productName}</span>
-                              <span className="item-unit-price">
-                                {formatPrice(item.unitPrice)}
-                              </span>
+                        {selectedOrder.items.map((item, idx) => {
+                          const itemImg = resolveOrderItemImage(item);
+                          return (
+                            <div key={idx} className="order-item-table-row">
+                              <div className="order-item-media">
+                                {itemImg ? (
+                                  <img
+                                    src={itemImg}
+                                    alt={item.productName}
+                                    className="order-item-thumb"
+                                    loading="lazy"
+                                  />
+                                ) : (
+                                  <div className="order-item-thumb-placeholder" aria-hidden="true">
+                                    <Package size={18} strokeWidth={1.75} />
+                                  </div>
+                                )}
+                              </div>
+                              <div className="item-name-info">
+                                <span className="item-name">{item.productName}</span>
+                                <span className="item-unit-price">
+                                  {formatPrice(item.unitPrice)}
+                                </span>
+                              </div>
+                              <span className="item-qty">× {item.quantity}</span>
+                              <b className="item-subtotal">
+                                {formatPrice(item.unitPrice * item.quantity)}
+                              </b>
                             </div>
-                            <span className="item-qty">× {item.quantity}</span>
-                            <b className="item-subtotal">
-                              {formatPrice(item.unitPrice * item.quantity)}
-                            </b>
-                          </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     </div>
                   </div>

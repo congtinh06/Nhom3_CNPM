@@ -46,6 +46,9 @@ public class Payment {
     @Column(name = "bank_code", length = 50)
     private String bankCode;
 
+    @Column(name = "frontend_origin", length = 200)
+    private String frontendOrigin;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     @Builder.Default
     private LocalDateTime createdAt = LocalDateTime.now();

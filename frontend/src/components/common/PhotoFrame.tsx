@@ -31,7 +31,7 @@ export const PhotoFrame: React.FC<PhotoFrameProps> = ({
     </div>
   );
   if (link) {
-    return <Link to={link} style={{ textDecoration: 'none', color: 'inherit' }}>{inner}</Link>;
+    return <Link to={link} className="ph-link" style={{ textDecoration: 'none', color: 'inherit' }}>{inner}</Link>;
   }
   return inner;
 };

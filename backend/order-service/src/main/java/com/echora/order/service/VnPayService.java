@@ -11,11 +11,13 @@ import org.springframework.web.util.UriComponentsBuilder;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.math.BigDecimal;
+import java.net.URI;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.TreeMap;
@@ -29,6 +31,8 @@ public class VnPayService {
     private static final String VERSION = "2.1.0";
     private static final String COMMAND = "pay";
     private static final String CURRENCY = "VND";
+    private static final String RETURN_API_PATH = "/api/orders/vnpay/return";
+    private static final String RESULT_PATH = "/thanh-toan/ket-qua";
 
     private final String tmnCode;
     private final String hashSecret;
@@ -85,7 +89,7 @@ public class VnPayService {
         params.put("vnp_OrderInfo", "Thanh toan don hang " + order.getOrderCode());
         params.put("vnp_OrderType", orderType);
         params.put("vnp_Locale", locale);
-        params.put("vnp_ReturnUrl", returnUrl);
+        params.put("vnp_ReturnUrl", effectiveReturnUrl(payment.getFrontendOrigin()));
         params.put("vnp_IpAddr", ipAddress);
         params.put("vnp_CreateDate", now.format(VNPAY_TIME));
         params.put("vnp_ExpireDate", expireAt.atZone(ZoneId.systemDefault())
@@ -143,13 +147,56 @@ public class VnPayService {
     }
 
     public String buildFrontendResultUrl(String orderCode, String status) {
-        return UriComponentsBuilder.fromUriString(frontendResultUrl)
+        return buildFrontendResultUrl(orderCode, status, null);
+    }
+
+    public String buildFrontendResultUrl(String orderCode, String status, String frontendOrigin) {
+        String base = notBlank(frontendOrigin) ? frontendOrigin + RESULT_PATH : frontendResultUrl;
+        return UriComponentsBuilder.fromUriString(base)
                 .queryParam("orderCode", orderCode)
                 .queryParam("method", "VNPAY")
                 .queryParam("status", status)
                 .build()
                 .encode()
                 .toUriString();
+    }
+
+    private String effectiveReturnUrl(String frontendOrigin) {
+        if (notBlank(frontendOrigin)) {
+            return frontendOrigin + RETURN_API_PATH;
+        }
+        return returnUrl;
+    }
+
+    /**
+     * Chuan hoa gia tri Origin/Referer thanh scheme://host[:port].
+     * Tra ve null neu khong hop le de tranh open redirect.
+     */
+    public static String sanitizeOrigin(String raw) {
+        if (raw == null || raw.isBlank()) {
+            return null;
+        }
+        try {
+            URI uri = URI.create(raw.trim());
+            String scheme = uri.getScheme();
+            if (scheme == null) {
+                return null;
+            }
+            scheme = scheme.toLowerCase(Locale.ROOT);
+            if (!"http".equals(scheme) && !"https".equals(scheme)) {
+                return null;
+            }
+            String host = uri.getHost();
+            if (host == null || host.isBlank()) {
+                return null;
+            }
+            int port = uri.getPort();
+            boolean defaultPort = (port == 80 && "http".equals(scheme))
+                    || (port == 443 && "https".equals(scheme));
+            return port < 0 || defaultPort ? scheme + "://" + host : scheme + "://" + host + ":" + port;
+        } catch (RuntimeException ex) {
+            return null;
+        }
     }
 
     private String buildQuery(Map<String, String> sortedParams) {

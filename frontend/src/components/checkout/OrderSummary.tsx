@@ -5,6 +5,7 @@ import { useNavbarLanguage } from '../../content/languages';
 import { getSpotName } from '../../content/souvenirSpots';
 import { usePremium } from '../../context/PremiumContext';
 import { applySouvenirDiscount } from '../../utils/pricing';
+import { resolveOrderItemImage } from '../../content/productAdapter';
 import { ProductCategory } from '../../types';
 
 export interface OrderSummaryItem {
@@ -100,18 +101,29 @@ export function OrderSummary({
               {groupItems.map((item) => (
                 <div key={item.id} className="co-item">
                   <div className="co-item-main">
-                    {item.imageUrl ? (
-                      <img
-                        src={item.imageUrl}
-                        alt={item.name}
-                        className="co-item-thumb"
-                        loading="lazy"
-                      />
-                    ) : (
-                      <span className="co-item-thumb co-item-thumb-empty" aria-hidden="true">
-                        <Utensils size={18} />
-                      </span>
-                    )}
+                    {(() => {
+                      const itemThumb = resolveOrderItemImage(item);
+                      return itemThumb ? (
+                        <img
+                          src={itemThumb}
+                          alt={item.name}
+                          className="co-item-thumb"
+                          loading="lazy"
+                          onError={(e) => {
+                            e.currentTarget.style.display = 'none';
+                            const placeholder = e.currentTarget.nextElementSibling as HTMLElement | null;
+                            if (placeholder) placeholder.style.display = 'inline-flex';
+                          }}
+                        />
+                      ) : null;
+                    })()}
+                    <span
+                      className="co-item-thumb co-item-thumb-empty"
+                      aria-hidden="true"
+                      style={{ display: resolveOrderItemImage(item) ? 'none' : 'inline-flex' }}
+                    >
+                      <Utensils size={18} />
+                    </span>
                     <div className="co-item-info">
                       <span className="co-item-name">{item.name}</span>
                       <span className="co-item-price">

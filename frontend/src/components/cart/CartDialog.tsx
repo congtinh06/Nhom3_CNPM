@@ -9,6 +9,7 @@ import { CartItem } from '../../types';
 import { formatPrice as formatPriceUtil } from '../../utils/formatters';
 import { usePremium } from '../../context/PremiumContext';
 import { applySouvenirDiscount, isSouvenirDiscountEligible } from '../../utils/pricing';
+import { resolveOrderItemImage } from '../../content/productAdapter';
 import '../../styles/cart-drawer.css';
 
 export const formatPrice = (n: number): string => {
@@ -227,20 +228,31 @@ export const CartDialog: React.FC = () => {
               <div key={item.id} className="cd-item-row">
                 {/* Thumbnail 72x72 */}
                 <div className="cd-thumb-wrap">
-                  {item.imagePath ? (
-                    <img
-                      src={item.imagePath}
-                      alt={item.name}
-                      className="cd-item-thumb"
-                      width="72"
-                      height="72"
-                      loading="lazy"
-                    />
-                  ) : (
-                    <div className="cd-thumb-placeholder" aria-hidden="true">
-                      <span>SG</span>
-                    </div>
-                  )}
+                  {(() => {
+                    const resolvedThumb = resolveOrderItemImage(item);
+                    return resolvedThumb ? (
+                      <img
+                        src={resolvedThumb}
+                        alt={item.name}
+                        className="cd-item-thumb"
+                        width="72"
+                        height="72"
+                        loading="lazy"
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                          const placeholder = e.currentTarget.nextElementSibling as HTMLElement | null;
+                          if (placeholder) placeholder.style.display = 'flex';
+                        }}
+                      />
+                    ) : null;
+                  })()}
+                  <div
+                    className="cd-thumb-placeholder"
+                    aria-hidden="true"
+                    style={{ display: resolveOrderItemImage(item) ? 'none' : 'flex' }}
+                  >
+                    <span>SG</span>
+                  </div>
                 </div>
 
                 {/* Main Content */}
