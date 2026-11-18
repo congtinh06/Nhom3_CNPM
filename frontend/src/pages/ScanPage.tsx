@@ -273,6 +273,7 @@ export const ScanPage: React.FC = () => {
   const location = useLocation();
   const { status } = useAuth();
   const isGuest = status === 'guest';
+  const isAuthenticated = status === 'authenticated';
   const { canAccessPoiLanguage } = usePremium();
   const { lang: navLang } = useNavbarLanguage();
   const tScan = SCAN_I18N[navLang] || SCAN_I18N.vi;
@@ -411,7 +412,7 @@ export const ScanPage: React.FC = () => {
           scanTriggerRef.current = triggerType;
 
           const scanKey = `${triggerType}:${detail.id}`;
-          if (lastRecordedScanRef.current !== scanKey) {
+          if (isAuthenticated && lastRecordedScanRef.current !== scanKey) {
             lastRecordedScanRef.current = scanKey;
             void api
               .recordAnalyticsEvent({
@@ -464,7 +465,7 @@ export const ScanPage: React.FC = () => {
           setLoading(false);
         });
     },
-    [canAccessPoiLanguage, lang, playAudio]
+    [canAccessPoiLanguage, lang, playAudio, isAuthenticated]
   );
 
   useEffect(() => {

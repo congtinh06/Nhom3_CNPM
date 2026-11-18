@@ -2,7 +2,7 @@ import React, { Suspense, lazy, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, useLocation, Navigate, useParams, useSearchParams } from 'react-router-dom';
 import { ToastProvider } from './context/ToastContext';
 import { CartProvider } from './context/CartContext';
-import { AuthProvider } from './context/AuthContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import { PremiumProvider } from './context/PremiumContext';
 import { Header } from './components/layout/Header';
 import { Footer } from './components/layout/Footer';
@@ -75,17 +75,22 @@ const AppContent: React.FC = () => {
   useSmoothScroll();
   useScrollRestoration();
   const location = useLocation();
+  const { status: authStatus } = useAuth();
 
-  // Đếm 1 lượt truy cập website (VISIT) mỗi phiên tab — phục vụ dashboard
+  // Đếm 1 lượt truy cập website (VISIT) mỗi phiên tab - phục vụ dashboard
   // quản trị realtime. Trang /quan-tri (admin) không được tính là lượt truy cập.
+  // Lượt từ QR (/qr/..., /quet-ma, ?src=qr) chỉ được tính sau khi đã đăng nhập.
   useEffect(() => {
     if (location.pathname.startsWith('/quan-tri')) return;
+    if (authStatus === 'loading') return;
+    const triggerType = getVisitTrigger(location.pathname, location.search);
+    if (triggerType === 'QR' && authStatus !== 'authenticated') return;
     if (!markVisitRecorded()) return;
     void api
       .recordAnalyticsEvent({
         eventType: 'VISIT',
         languageCode: getClientLanguage(),
-        triggerType: getVisitTrigger(location.pathname, location.search),
+        triggerType,
         sessionId: getAnalyticsSessionId(),
       })
       .catch(() => {
@@ -93,7 +98,7 @@ const AppContent: React.FC = () => {
       });
     // Chỉ chạy một lần mỗi phiên tab (markVisitRecorded tự chống lặp StrictMode).
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [authStatus]);
 
   // Heartbeat hiện diện: VISIT chỉ gửi 1 lần khi mở tab, nên nếu khách ngồi xem
   // quá 5 phút thì dashboard admin sẽ tưởng đã offline. Gửi heartbeat mỗi phút

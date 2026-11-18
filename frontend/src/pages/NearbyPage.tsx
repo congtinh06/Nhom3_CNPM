@@ -1134,7 +1134,12 @@ export const NearbyPage: React.FC = () => {
     // QR in "QR nghe audio" trỏ tới /diem-du-lich?stop=<slug>&src=qr. Trang này
     // không đi qua ScanPage nên phải tự ghi sự kiện SCAN, nếu không trang quản
     // trị sẽ luôn báo "Chưa có lượt quét QR audio".
-    if (matched && params.get('src') === 'qr' && !qrScanTrackedRef.current) {
+    if (
+      matched &&
+      params.get('src') === 'qr' &&
+      !qrScanTrackedRef.current &&
+      isAuthenticated
+    ) {
       const poiNumericId =
         matched.numericId ?? (/^\d+$/.test(matched.id) ? Number(matched.id) : null);
       if (poiNumericId != null) {
@@ -1168,7 +1173,7 @@ export const NearbyPage: React.FC = () => {
         }
       }
     }
-  }, [pois, location.search, scrollActiveStopIntoView, currentLang]);
+  }, [pois, location.search, scrollActiveStopIntoView, currentLang, isAuthenticated]);
 
   const handleTogglePlayPoi = useCallback(
     (poiId: string) => {
