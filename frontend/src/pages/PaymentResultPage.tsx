@@ -16,7 +16,10 @@ import {
 import { authApi } from '../api/auth';
 import { api } from '../api/client';
 import { usePremium } from '../context/PremiumContext';
-import { useNavbarLanguage } from '../content/languages';
+import {
+  consumePendingPremiumLanguage,
+  useNavbarLanguage,
+} from '../content/languages';
 import { formatPrice } from '../utils/formatters';
 import { BackendOrder } from '../types';
 import { resolveOrderItemImage } from '../content/productAdapter';
@@ -80,7 +83,7 @@ function formatEstimatedDelivery(dateObj: Date): string {
 export const PaymentResultPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { t } = useNavbarLanguage();
+  const { t, changeLanguage } = useNavbarLanguage();
   const { refreshEntitlement } = usePremium();
 
   const vnpCode = searchParams.get('vnp_ResponseCode');
@@ -149,7 +152,7 @@ export const PaymentResultPage: React.FC = () => {
 
   const isPoiOrder = order?.orderType === 'POI';
   const isPremiumOrder = order?.orderType === 'PREMIUM' || isPoiOrder;
-
+  
 
   useEffect(() => {
     if (orderNotFound || outcome !== 'pending' || orderPollExpired || !orderCode) return;
@@ -217,6 +220,8 @@ export const PaymentResultPage: React.FC = () => {
               } catch {
                 // Ignore
               }
+              const pendingLanguage = consumePendingPremiumLanguage();
+              if (pendingLanguage) changeLanguage(pendingLanguage);
               return;
             }
           }
@@ -230,6 +235,8 @@ export const PaymentResultPage: React.FC = () => {
             } catch {
               // Token refreshes on next call
             }
+            const pendingLanguage = consumePendingPremiumLanguage();
+            if (pendingLanguage) changeLanguage(pendingLanguage);
             return;
           }
         }
@@ -250,7 +257,14 @@ export const PaymentResultPage: React.FC = () => {
       cancelled = true;
       if (timer) window.clearTimeout(timer);
     };
-  }, [isPremiumOrder, isPoiOrder, order?.poiId, outcome, refreshEntitlement]);
+  }, [
+    isPremiumOrder,
+    isPoiOrder,
+    order?.poiId,
+    outcome,
+    refreshEntitlement,
+    changeLanguage,
+  ]);
 
   const handleSimulatePayment = async (nextOutcome: 'SUCCESS' | 'FAILED') => {
     if (!orderCode) return;

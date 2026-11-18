@@ -176,6 +176,28 @@ describe('adminClient & normalizeAdminError', () => {
       });
       expect(normalizeAdminError(legacy).details).toEqual({ slug: 'Slug bị trùng' });
     });
+
+    it('giữ nguyên lỗi đã chuẩn hóa thay vì trả về lỗi không xác định', () => {
+      const axios400 = new AxiosError('Bad Request', 'ERR_BAD_REQUEST', undefined, undefined, {
+        status: 400,
+        statusText: 'Bad Request',
+        data: {
+          detail: 'Validation failed',
+          errors: { triggerRadiusMeters: 'triggerRadiusMeters must be <= 5000' },
+        },
+        headers: {},
+        config: { headers: new AxiosHeaders() },
+      });
+      const normalized = normalizeAdminError(axios400);
+      const normalizedAgain = normalizeAdminError(normalized);
+
+      expect(normalizedAgain).toBe(normalized);
+      expect(normalizedAgain.status).toBe(400);
+      expect(normalizedAgain.details).toEqual({
+        triggerRadiusMeters: 'triggerRadiusMeters must be <= 5000',
+      });
+      expect(normalizedAgain.message).not.toBe('Đã xảy ra lỗi không xác định.');
+    });
   });
 
   describe('Request Interceptor', () => {

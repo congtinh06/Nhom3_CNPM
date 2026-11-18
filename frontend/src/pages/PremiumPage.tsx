@@ -6,12 +6,18 @@ import {
   getPremiumVideo,
   youtubeEmbedUrl,
 } from '../content/premiumVideos';
-import { useNavbarLanguage } from '../content/languages';
+import {
+  clearPendingPremiumLanguage,
+  consumePendingPremiumLanguage,
+  savePendingPremiumLanguage,
+  useNavbarLanguage,
+} from '../content/languages';
 import { useAuth } from '../context/AuthContext';
 import {
   usePremium,
   PREMIUM_LANGUAGES,
   buildPremiumPath,
+  buildPoiPremiumPath,
 } from '../context/PremiumContext';
 import {
   createPremiumOrder,
@@ -206,6 +212,16 @@ export const PremiumPage: React.FC = () => {
   const requestedPoiId =
     Number.isFinite(requestedPoiIdRaw) && requestedPoiIdRaw > 0 ? requestedPoiIdRaw : null;
 
+  const appliedPaidLanguageRef = useRef<string | null>(null);
+  const checkoutInFlightRef = useRef(false);
+  const applyRequestedLanguageAfterPayment = useCallback(() => {
+    const pendingLanguage = consumePendingPremiumLanguage();
+    const language = requestedLanguage ?? pendingLanguage;
+    if (!language || appliedPaidLanguageRef.current === language) return;
+    appliedPaidLanguageRef.current = language;
+    changeLanguage(language);
+  }, [changeLanguage, requestedLanguage]);
+
   const [poiSearch, setPoiSearch] = useState('');
 
   const spotlightPoi = useMemo(() => {
@@ -230,6 +246,7 @@ export const PremiumPage: React.FC = () => {
       setPendingOrderCode(null);
       setPollingStatus('idle');
       setNotice('');
+      applyRequestedLanguageAfterPayment();
       return;
     }
 
@@ -243,6 +260,7 @@ export const PremiumPage: React.FC = () => {
 
     if (queryStatus === 'cancelled' || vnpResponseCode === '24') {
       clearPendingPremiumOrder();
+      clearPendingPremiumLanguage();
       setPendingOrderCode(null);
       setPollingStatus('cancelled');
       setNotice(copy.paymentCancelled);
@@ -251,6 +269,7 @@ export const PremiumPage: React.FC = () => {
 
     if (queryStatus === 'failed' || (vnpResponseCode && vnpResponseCode !== '00')) {
       clearPendingPremiumOrder();
+      clearPendingPremiumLanguage();
       setPendingOrderCode(null);
       setPollingStatus('failed');
       setNotice(copy.paymentFailed);
@@ -277,8 +296,10 @@ export const PremiumPage: React.FC = () => {
         if (order && (order.status === 'PAID' || order.paymentStatus === 'SUCCESS')) {
           await refreshEntitlement();
           if (cancelled) return;
+          applyRequestedLanguageAfterPayment();
         } else if (order && (order.status === 'CANCELLED' || order.paymentStatus === 'FAILED')) {
           clearPendingPremiumOrder();
+          clearPendingPremiumLanguage();
           setPendingOrderCode(null);
           setPollingStatus(order.status === 'CANCELLED' ? 'cancelled' : 'failed');
           setNotice(
@@ -308,6 +329,7 @@ export const PremiumPage: React.FC = () => {
     searchParams,
     isPremium,
     refreshEntitlement,
+    applyRequestedLanguageAfterPayment,
     copy.paymentCancelled,
     copy.paymentFailed,
     copy.pendingTimedOut,
@@ -406,10 +428,11 @@ export const PremiumPage: React.FC = () => {
       handleBackToTour();
       return;
     }
-    if (requestedLanguage) {
-      changeLanguage(requestedLanguage);
-    }
+    if (checkoutInFlightRef.current) return;
+    checkoutInFlightRef.current = true;
+
     if (!isAuthenticated) {
+      checkoutInFlightRef.current = false;
       navigate('/dang-nhap', {
         state: {
           backgroundLocation: location,
@@ -419,6 +442,7 @@ export const PremiumPage: React.FC = () => {
       return;
     }
 
+    if (requestedLanguage) savePendingPremiumLanguage(requestedLanguage);
     setNotice('');
     setIsSubmitting(true);
     try {
@@ -433,10 +457,12 @@ export const PremiumPage: React.FC = () => {
       window.location.assign(paymentUrl);
     } catch (error) {
       clearPendingPremiumOrder();
+      clearPendingPremiumLanguage();
       setPendingOrderCode(null);
       setPollingStatus('idle');
       setNotice(error instanceof Error ? error.message : copy.paymentError);
       setIsSubmitting(false);
+      checkoutInFlightRef.current = false;
     }
   };
 
@@ -450,6 +476,7 @@ export const PremiumPage: React.FC = () => {
 
   const handleRetryCheckout = () => {
     clearPendingPremiumOrder();
+    clearPendingPremiumLanguage();
     setPendingOrderCode(null);
     setPollingStatus('idle');
     setNotice('');
@@ -457,6 +484,7 @@ export const PremiumPage: React.FC = () => {
   };
 
   const handlePoiCheckout = async (poiId: number, method: PoiPaymentMethod) => {
+    if (poiCheckout !== null) return;
     setPoiMenuOpen(null);
     if (canAccessPoi(poiId)) {
       navigate(returnTo || '/diem-du-lich');
@@ -466,12 +494,13 @@ export const PremiumPage: React.FC = () => {
       navigate('/dang-nhap', {
         state: {
           backgroundLocation: location,
-          from: `/nang-cap?poi=${poiId}${returnTo ? `&returnTo=${encodeURIComponent(returnTo)}` : ''}`,
+          from: buildPoiPremiumPath(poiId, returnTo, requestedLanguage ?? undefined),
         },
       });
       return;
     }
 
+    if (requestedLanguage) savePendingPremiumLanguage(requestedLanguage);
     setNotice('');
     setPoiCheckout(poiId);
     try {
@@ -488,6 +517,7 @@ export const PremiumPage: React.FC = () => {
         state: { from: returnTo || '/diem-du-lich' },
       });
     } catch (error) {
+      clearPendingPremiumLanguage();
       setNotice(error instanceof Error ? error.message : copy.paymentError);
       setPoiCheckout(null);
     }

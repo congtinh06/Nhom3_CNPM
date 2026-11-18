@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { MemoryRouter, Routes, Route } from 'react-router-dom';
+import { MemoryRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { PoiFormPage } from '../admin/pages/PoiFormPage';
 import { poiApi } from '../admin/api/poiApi';
 import { AdminPoiDetail, PoiDetail } from '../admin/types/poi';
@@ -92,6 +92,11 @@ const mockCreated: PoiDetail = {
   audioStatus: 'PENDING',
 };
 
+const LocationProbe = () => {
+  const location = useLocation();
+  return <div data-testid="list-location-state">{JSON.stringify(location.state ?? null)}</div>;
+};
+
 describe('PoiFormPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -110,7 +115,12 @@ describe('PoiFormPage', () => {
           <Route path="/quan-tri/diem-thuyet-minh/:id" element={<PoiFormPage />} />
           <Route
             path="/quan-tri/diem-thuyet-minh"
-            element={<div data-testid="poi-list-page">Danh sách điểm thuyết minh</div>}
+            element={
+              <div data-testid="poi-list-page">
+                Danh sách điểm thuyết minh
+                <LocationProbe />
+              </div>
+            }
           />
         </Routes>
       </MemoryRouter>
@@ -418,7 +428,7 @@ describe('PoiFormPage', () => {
     expect(screen.getByText('Có thay đổi chưa lưu')).toBeInTheDocument();
   });
 
-  it('gợi ý bán kính chỉ hiện khi giá trị khác mặc định 50', async () => {
+  it('gợi ý bán kính kèm mặc định và giới hạn tối đa', async () => {
     vi.mocked(poiApi.getAdminPoiDetail).mockResolvedValue({
       ...mockDetail,
       triggerRadiusMeters: 50,
@@ -427,12 +437,115 @@ describe('PoiFormPage', () => {
     await awaitEditLoaded();
 
     expect(screen.queryByText(/Khác mặc định/)).not.toBeInTheDocument();
+    expect(screen.getByText('Mặc định 50 m; tối đa 5000 m')).toBeInTheDocument();
 
     fireEvent.change(screen.getByLabelText(/bán kính kích hoạt/i), {
       target: { value: '80' },
     });
 
-    expect(screen.getByText('Khác mặc định (50 m)')).toBeInTheDocument();
+    expect(screen.getByText('Khác mặc định (50 m); tối đa 5000 m')).toBeInTheDocument();
+    expect(screen.getByLabelText(/bán kính kích hoạt/i)).toHaveAttribute('max', '5000');
+    expect(screen.getByLabelText(/bán kính kích hoạt/i)).toHaveAttribute('step', '1');
+  });
+
+  it('hiển thị quy ước bắt buộc và đánh dấu các trường không bắt buộc', async () => {
+    renderCreate();
+    await awaitFormLoaded();
+
+    expect(screen.getByText(/Các trường có dấu \*/)).toBeInTheDocument();
+    expect(screen.getAllByText('Không bắt buộc').length).toBeGreaterThanOrEqual(5);
+  });
+
+  it('gửi bán kính kích hoạt đã nhập và chặn giá trị ngoài khoảng cho phép', async () => {
+    vi.mocked(poiApi.createPoi).mockResolvedValueOnce(mockCreated);
+    renderCreate();
+    await awaitFormLoaded();
+    fillRequired();
+
+    fireEvent.change(screen.getByLabelText(/bán kính kích hoạt/i), {
+      target: { value: '120' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /tạo điểm thuyết minh/i }));
+
+    await waitFor(() => {
+      expect(poiApi.createPoi).toHaveBeenCalledWith(
+        expect.objectContaining({ triggerRadiusMeters: 120 })
+      );
+      expect(screen.getByTestId('poi-list-page')).toBeInTheDocument();
+    });
+  });
+
+  it('chặn bán kính kích hoạt vượt quá 5000 hoặc không phải số nguyên', async () => {
+    renderCreate();
+    await awaitFormLoaded();
+    fillRequired();
+
+    fireEvent.change(screen.getByLabelText(/bán kính kích hoạt/i), {
+      target: { value: '5001' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /tạo điểm thuyết minh/i }));
+
+    expect(
+      await screen.findByText('Bán kính kích hoạt phải là số nguyên từ 1 đến 5000 mét')
+    ).toBeInTheDocument();
+    expect(poiApi.createPoi).not.toHaveBeenCalled();
+
+    fireEvent.change(screen.getByLabelText(/bán kính kích hoạt/i), {
+      target: { value: '50.5' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /tạo điểm thuyết minh/i }));
+
+    expect(
+      await screen.findByText('Bán kính kích hoạt phải là số nguyên từ 1 đến 5000 mét')
+    ).toBeInTheDocument();
+    expect(poiApi.createPoi).not.toHaveBeenCalled();
+  });
+
+  it('chặn mã điểm có ký tự không hợp lệ trước khi gửi', async () => {
+    renderCreate();
+    await awaitFormLoaded();
+    fillRequired();
+
+    fireEvent.change(screen.getByLabelText(/mã điểm/i), { target: { value: 'BEN THANH' } });
+    fireEvent.click(screen.getByRole('button', { name: /tạo điểm thuyết minh/i }));
+
+    expect(
+      await screen.findByText('Mã điểm chỉ được chứa chữ, số, dấu gạch dưới hoặc dấu gạch ngang')
+    ).toBeInTheDocument();
+    expect(poiApi.createPoi).not.toHaveBeenCalled();
+  });
+
+  it('hiện đúng lỗi từ backend đã được chuẩn hóa thay vì lỗi không xác định', async () => {
+    renderCreate();
+    await awaitFormLoaded();
+    fillRequired();
+
+    vi.mocked(poiApi.createPoi).mockRejectedValueOnce({
+      status: 400,
+      message: 'Validation failed',
+      details: { triggerRadiusMeters: 'triggerRadiusMeters must be <= 5000' },
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: /tạo điểm thuyết minh/i }));
+
+    expect(await screen.findByText('Bán kính kích hoạt tối đa 5000 mét')).toBeInTheDocument();
+    expect(screen.queryByText(/Đã xảy ra lỗi không xác định/)).not.toBeInTheDocument();
+  });
+
+  it('điều hướng kèm thông tin POI vừa tạo để danh sách hiển thị', async () => {
+    vi.mocked(poiApi.createPoi).mockResolvedValueOnce(mockCreated);
+    renderCreate();
+    await awaitFormLoaded();
+    fillRequired();
+
+    fireEvent.click(screen.getByRole('button', { name: /tạo điểm thuyết minh/i }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('list-location-state')).toHaveTextContent('"createdPoiId":10');
+      expect(screen.getByTestId('list-location-state')).toHaveTextContent(
+        '"createdPoiName":"Chợ Bến Thành"'
+      );
+    });
   });
 
   it('chỉ hiện đếm ký tự khi đã dùng hơn 80% giới hạn', async () => {

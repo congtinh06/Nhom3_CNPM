@@ -115,9 +115,11 @@ describe('PoiListPage', () => {
     mockList(mockRows);
   });
 
-  const renderComponent = () =>
+  const renderComponent = (state?: unknown) =>
     render(
-      <MemoryRouter initialEntries={['/quan-tri/diem-thuyet-minh']}>
+      <MemoryRouter
+        initialEntries={[{ pathname: '/quan-tri/diem-thuyet-minh', state }]}
+      >
         <Routes>
           <Route path="/quan-tri/diem-thuyet-minh" element={<PoiListPage />} />
           <Route path="/quan-tri/diem-thuyet-minh/moi" element={<div>Trang tạo mới</div>} />
@@ -139,11 +141,24 @@ describe('PoiListPage', () => {
       expect(poiApi.getAdminPois).toHaveBeenCalledWith({
         page: 0,
         size: 10,
+        sort: 'id,desc',
         search: undefined,
         zoneId: undefined,
         routeId: undefined,
       });
     });
+  });
+
+  it('hiện POI vừa tạo ở đầu danh sách và thông báo tạo thành công', async () => {
+    const createdRow: AdminPoiListItem = { ...mockRows[0]!, id: 10, name: 'POI vừa tạo' };
+    mockList([createdRow, ...mockRows]);
+    renderComponent({ createdPoiId: 10, createdPoiName: 'POI vừa tạo' });
+
+    expect(await screen.findByText('Đã tạo điểm thuyết minh "POI vừa tạo".')).toBeInTheDocument();
+    expect(screen.getByText('POI vừa tạo')).toBeInTheDocument();
+    expect(poiApi.getAdminPois).toHaveBeenCalledWith(
+      expect.objectContaining({ sort: 'id,desc', page: 0 })
+    );
   });
 
   it('hiển thị danh sách điểm kèm khu vực, tuyến, trạng thái và tóm tắt thuyết minh', async () => {

@@ -1420,6 +1420,39 @@ export function setStoredLanguage(lang: SupportedLanguage): void {
   window.dispatchEvent(new CustomEvent(LANG_CHANGE_EVENT, { detail: lang }));
 }
 
+const PENDING_PREMIUM_LANGUAGE_KEY = 'echora:pending_premium_language';
+const PENDING_PREMIUM_LANGUAGES = ['en', 'ja', 'ko'] as const;
+
+export function savePendingPremiumLanguage(lang: SupportedLanguage): void {
+  if (!(PENDING_PREMIUM_LANGUAGES as readonly string[]).includes(lang)) return;
+  try {
+    sessionStorage.setItem(PENDING_PREMIUM_LANGUAGE_KEY, lang);
+  } catch {
+    return;
+  }
+}
+
+export function consumePendingPremiumLanguage(): SupportedLanguage | null {
+  try {
+    const saved = sessionStorage.getItem(PENDING_PREMIUM_LANGUAGE_KEY);
+    sessionStorage.removeItem(PENDING_PREMIUM_LANGUAGE_KEY);
+    if (saved && (PENDING_PREMIUM_LANGUAGES as readonly string[]).includes(saved)) {
+      return saved as SupportedLanguage;
+    }
+  } catch {
+    return null;
+  }
+  return null;
+}
+
+export function clearPendingPremiumLanguage(): void {
+  try {
+    sessionStorage.removeItem(PENDING_PREMIUM_LANGUAGE_KEY);
+  } catch {
+    return;
+  }
+}
+
 export function useNavbarLanguage() {
   const [lang, setLangState] = useState<SupportedLanguage>(getStoredLanguage);
 

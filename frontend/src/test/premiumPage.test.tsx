@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { PremiumPage } from '../pages/PremiumPage';
-import { PremiumProvider } from '../context/PremiumContext';
+import { PremiumProvider, buildPoiPremiumPath } from '../context/PremiumContext';
 import { getStoredLanguage, setStoredLanguage } from '../content/languages';
 import { createPremiumOrder, getOrderByCode } from '../services/orderService';
 import { BackendOrder, PoiGuide } from '../types';
@@ -218,7 +218,7 @@ describe('PremiumPage', () => {
     ).toBeInTheDocument();
   });
 
-  it('keeps the requested language and starts a VNPAY checkout', async () => {
+  it('does not switch language before payment is completed', async () => {
     renderPremium('/nang-cap?lang=en&returnTo=/diem-du-lich');
 
     expect(screen.getByText(/Bạn đã chọn ngôn ngữ cần Premium/i)).toBeInTheDocument();
@@ -230,8 +230,65 @@ describe('PremiumPage', () => {
     await waitFor(() => {
       expect(createPremiumOrder).toHaveBeenCalledTimes(1);
     });
-    expect(getStoredLanguage()).toBe('en');
+    expect(getStoredLanguage()).toBe('vi');
     expect(localStorage.getItem('echora:premium')).toBeNull();
+    expect(sessionStorage.getItem('echora:pending_premium_language')).toBe('en');
+  });
+
+  it('applies the requested language only after Premium entitlement is active', async () => {
+    authState.plan = 'PREMIUM';
+    authState.premiumActive = true;
+    authState.premiumExpiresAt = '2027-10-21T00:00:00';
+
+    renderPremium('/nang-cap?lang=ja&returnTo=/diem-du-lich');
+
+    await waitFor(() => {
+      expect(getStoredLanguage()).toBe('ja');
+    });
+  });
+
+  it('applies the language saved before payment when VNPAY returns without lang', async () => {
+    authState.plan = 'PREMIUM';
+    authState.premiumActive = true;
+    authState.premiumExpiresAt = '2027-10-21T00:00:00';
+    vi.mocked(getOrderByCode).mockResolvedValueOnce({
+      id: 1,
+      orderCode: 'SV-PREMIUM-1000',
+      totalAmount: 500000,
+      status: 'PAID',
+      paymentStatus: 'SUCCESS',
+      receiverName: 'Echora Premium',
+      phone: '0000000000',
+      address: 'Goi ky thuat so',
+      items: [],
+      createdAt: '2026-10-21T00:00:00',
+      updatedAt: '2026-10-21T00:00:00',
+      orderType: 'PREMIUM',
+    } as BackendOrder);
+    sessionStorage.setItem('echora:pending_premium_order', 'SV-PREMIUM-1000');
+    sessionStorage.setItem('echora:pending_premium_language', 'ko');
+
+    renderPremium('/nang-cap?orderCode=SV-PREMIUM-1000&status=success');
+
+    await waitFor(() => {
+      expect(getStoredLanguage()).toBe('ko');
+    });
+    expect(sessionStorage.getItem('echora:pending_premium_language')).toBeNull();
+  });
+
+  it('ignores duplicate checkout clicks while creating an order', async () => {
+    renderPremium('/nang-cap?lang=en');
+
+    const payButton = screen.getAllByRole('button', {
+      name: 'Thanh toán 500.000đ qua VNPAY',
+    })[0]!;
+    fireEvent.click(payButton);
+    fireEvent.click(payButton);
+
+    await waitFor(() => {
+      expect(createPremiumOrder).toHaveBeenCalledTimes(1);
+    });
+    expect(getStoredLanguage()).toBe('vi');
   });
 
   it('renders active entitlement state on Premium card when user is premium', async () => {
@@ -287,6 +344,12 @@ describe('PremiumPage', () => {
     expect(screen.getByRole('button', { name: 'Thử lại' })).toBeInTheDocument();
   });
 
+  it('keeps the requested language in the POI purchase deep link', () => {
+    expect(buildPoiPremiumPath(30002, '/diem-du-lich', 'en')).toBe(
+      '/nang-cap?poi=30002&lang=en&returnTo=%2Fdiem-du-lich'
+    );
+  });
+
   it('routes guests through sign-in before creating a Premium order', () => {
     authState.isAuthenticated = false;
     authState.status = 'guest';
@@ -298,5 +361,6 @@ describe('PremiumPage', () => {
 
     expect(screen.getByText('Trang đăng nhập')).toBeInTheDocument();
     expect(createPremiumOrder).not.toHaveBeenCalled();
+    expect(getStoredLanguage()).toBe('vi');
   });
 });

@@ -6,6 +6,7 @@ export interface FormFieldProps {
   error?: string;
   helperText?: string;
   required?: boolean;
+  optional?: boolean;
   children: React.ReactNode;
 }
 
@@ -15,6 +16,7 @@ export const FormField: React.FC<FormFieldProps> = ({
   error,
   helperText,
   required = false,
+  optional = false,
   children,
 }) => {
   return (
@@ -23,6 +25,9 @@ export const FormField: React.FC<FormFieldProps> = ({
         {label}
         {required && <span className="adm-required-mark" aria-hidden="true">*</span>}
       </label>
+      {optional && !required && (
+        <span className="adm-optional-mark">Không bắt buộc</span>
+      )}
       <div className="adm-form-control-wrap">
         {children}
       </div>

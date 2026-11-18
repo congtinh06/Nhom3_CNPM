@@ -1000,6 +1000,13 @@
   color: #B3261E;
 }
 
+.adm-optional-mark {
+  align-self: flex-start;
+  margin-top: -2px;
+  font-size: 11px;
+  color: var(--fb-text-secondary, #78716C);
+}
+
 .adm-form-control-wrap {
   width: 100%;
 }

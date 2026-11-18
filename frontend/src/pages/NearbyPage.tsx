@@ -492,10 +492,17 @@ export const NearbyPage: React.FC = () => {
     [showToast]
   );
 
-  const openPremiumForLanguage = useCallback(() => {
-    const returnTo = `${window.location.pathname}${window.location.search}`;
-    navigate(buildPremiumPath(currentLang, returnTo));
-  }, [currentLang, navigate]);
+  const navigateToRegister = useCallback(
+    (from: string) => {
+      navigate('/dang-ky', {
+        state: {
+          backgroundLocation: location,
+          from,
+        },
+      });
+    },
+    [location, navigate]
+  );
 
   const warnAndOpenPremium = useCallback(
     (poi?: GeoPoi | null, targetLang?: SupportedLanguage) => {
@@ -503,18 +510,25 @@ export const NearbyPage: React.FC = () => {
       triggerToast(PREMIUM_GATE_COPY[langToCheck]?.warning || PREMIUM_GATE_COPY[currentLang].warning);
       const returnTo = `${window.location.pathname}${window.location.search}`;
       const targetNumericId = poi?.numericId ?? (poi?.id ? normalizePoiId(poi.id) : null);
-      if (
+      const targetPath =
         targetNumericId &&
         isPremiumLanguage(langToCheck) &&
         !canAccessPoi(targetNumericId)
-      ) {
-        navigate(buildPoiPremiumPath(targetNumericId, returnTo));
+          ? buildPoiPremiumPath(targetNumericId, returnTo, langToCheck)
+          : buildPremiumPath(langToCheck, returnTo);
+
+      if (!isAuthenticated) {
+        navigateToRegister(targetPath);
         return;
       }
-      navigate(buildPremiumPath(langToCheck, returnTo));
+      navigate(targetPath);
     },
-    [currentLang, canAccessPoi, navigate, triggerToast]
+    [currentLang, canAccessPoi, isAuthenticated, navigate, navigateToRegister, triggerToast]
   );
+
+  const openPremiumForLanguage = useCallback(() => {
+    warnAndOpenPremium();
+  }, [warnAndOpenPremium]);
 
   useEffect(() => {
     document.documentElement.lang = currentLang;
@@ -527,8 +541,13 @@ export const NearbyPage: React.FC = () => {
     if (!langParam || appliedLanguageQueryRef.current === langParam) return;
     if (!SUPPORTED_LANGUAGES.some((option) => option.code === langParam)) return;
     appliedLanguageQueryRef.current = langParam;
-    changeLanguage(langParam as SupportedLanguage);
-  }, [changeLanguage]);
+    const targetLang = langParam as SupportedLanguage;
+    if (isPremiumLanguage(targetLang) && !canAccessLanguage(targetLang)) {
+      warnAndOpenPremium(undefined, targetLang);
+      return;
+    }
+    changeLanguage(targetLang);
+  }, [canAccessLanguage, changeLanguage, warnAndOpenPremium]);
 
   useEffect(() => {
     if (import.meta.env.MODE === 'test') return;
@@ -2224,7 +2243,6 @@ export const NearbyPage: React.FC = () => {
                   className={isLocked ? 'lock' : ''}
                   onClick={() => {
                     if (isLocked) {
-                      triggerToast(PREMIUM_GATE_COPY[opt.code].warning);
                       warnAndOpenPremium(playerPoi, opt.code);
                     } else {
                       changeLanguage(opt.code);

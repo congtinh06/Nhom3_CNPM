@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { poiApi } from '../api/poiApi';
 import { normalizeAdminError } from '../api/adminClient';
 import {
@@ -20,6 +20,7 @@ import {
 } from '../utils/poiStatus';
 import { EmptyState } from '../components/EmptyState';
 import { ErrorState } from '../components/ErrorState';
+import { AdminAlert } from '../components/AdminAlert';
 import { AdminToolbar } from '../components/AdminToolbar';
 import { AdminPagination } from '../components/AdminPagination';
 
@@ -27,6 +28,8 @@ const PAGE_SIZE = 10;
 
 export const PoiListPage: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const createdPoiName = (location.state as { createdPoiName?: string } | null)?.createdPoiName;
   const [rows, setRows] = useState<AdminPoiListItem[]>([]);
   const [zones, setZones] = useState<PoiZoneOption[]>([]);
   const [routes, setRoutes] = useState<PoiRouteOption[]>([]);
@@ -35,6 +38,13 @@ export const PoiListPage: React.FC = () => {
   const [needsAttentionCount, setNeedsAttentionCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [successNotice, setSuccessNotice] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!createdPoiName) return;
+    setSuccessNotice(`Đã tạo điểm thuyết minh "${createdPoiName}".`);
+    window.history.replaceState({}, '', `${location.pathname}${location.search}`);
+  }, [createdPoiName, location.pathname, location.search]);
 
   const [searchInput, setSearchInput] = useState('');
   const [search, setSearch] = useState('');
@@ -90,6 +100,7 @@ export const PoiListPage: React.FC = () => {
     const listParams: Parameters<typeof poiApi.getAdminPois>[0] = {
       page,
       size: PAGE_SIZE,
+      sort: 'id,desc',
       ...baseParams,
     };
     if (statusFilter) listParams.overallStatus = statusFilter;
@@ -397,6 +408,14 @@ export const PoiListPage: React.FC = () => {
             {POI_STATUS_LABEL.NEEDS_ATTENTION}: {needsAttentionCount} điểm
           </button>
         </p>
+      )}
+
+      {successNotice && (
+        <AdminAlert
+          variant="success"
+          message={successNotice}
+          onClose={() => setSuccessNotice(null)}
+        />
       )}
 
       {error ? (

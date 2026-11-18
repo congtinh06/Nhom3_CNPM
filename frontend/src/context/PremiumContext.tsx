@@ -312,12 +312,16 @@ export function buildPremiumPath(
 /** Endpoint mua lẻ của PremiumPage: /nang-cap?poi=<id>&returnTo=... */
 export function buildPoiPremiumPath(
   poiId: number | string | null | undefined,
-  returnTo?: string | null
+  returnTo?: string | null,
+  language?: SupportedLanguage
 ): string {
   const params = new URLSearchParams();
   const id = normalizePoiId(poiId);
   if (id !== null) {
     params.set('poi', String(id));
+  }
+  if (language && isPremiumLanguage(language)) {
+    params.set('lang', language);
   }
   if (returnTo && returnTo.startsWith('/') && !returnTo.startsWith('//')) {
     params.set('returnTo', returnTo);

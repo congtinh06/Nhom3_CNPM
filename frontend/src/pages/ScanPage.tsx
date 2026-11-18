@@ -320,13 +320,21 @@ export const ScanPage: React.FC = () => {
     (language: SupportedLanguage) => {
       stopAudio();
       const returnTo = `${location.pathname}${location.search}`;
-      navigate(
-        poiDetail
-          ? buildPoiPremiumPath(poiDetail.id, returnTo)
-          : buildPremiumPath(language, returnTo)
-      );
+      const targetPath = poiDetail
+        ? buildPoiPremiumPath(poiDetail.id, returnTo, language)
+        : buildPremiumPath(language, returnTo);
+      if (isGuest) {
+        navigate('/dang-ky', {
+          state: {
+            backgroundLocation: location,
+            from: targetPath,
+          },
+        });
+        return;
+      }
+      navigate(targetPath);
     },
-    [location.pathname, location.search, navigate, poiDetail, stopAudio]
+    [isGuest, location, navigate, poiDetail, stopAudio]
   );
 
   const handleResolveQr = useCallback(

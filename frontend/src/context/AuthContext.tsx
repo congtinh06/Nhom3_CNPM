@@ -35,6 +35,35 @@ export function resetAuthBootstrapForTests(): void {
   bootstrapPromises.clear();
 }
 
+const QR_LOGIN_SESSION_STORAGE_KEY = 'echora_qr_login_session_v1';
+
+function cancelPendingQrSession(): void {
+  if (typeof window === 'undefined') return;
+  try {
+    const raw = window.sessionStorage.getItem(QR_LOGIN_SESSION_STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw) as {
+        session?: { sessionId?: string; exchangeToken?: string; status?: string };
+      };
+      const sessionId = parsed?.session?.sessionId;
+      const exchangeToken = parsed?.session?.exchangeToken;
+      const status = parsed?.session?.status;
+      if (sessionId && exchangeToken && status === 'PENDING') {
+        void authApi.cancelQrSession(sessionId, exchangeToken).catch(() => {
+          // Huy phien that bai khong duoc chan luong dang nhap thu cong.
+        });
+      }
+    }
+  } catch {
+    // Bo qua du lieu QR tam thoi khong hop le.
+  }
+  try {
+    window.sessionStorage.removeItem(QR_LOGIN_SESSION_STORAGE_KEY);
+  } catch {
+    // Trinh duyet co the chan sessionStorage.
+  }
+}
+
 function bootstrapSession(scope: AuthScope): Promise<AuthSession | null> {
   const existing = bootstrapPromises.get(scope);
   if (existing) return existing;
@@ -118,6 +147,7 @@ const AuthProviderInner: React.FC<{ children: React.ReactNode; scope: AuthScope 
   useEffect(() => {
     if (scope === 'user' && status === 'authenticated') {
       exitGuestMode();
+      cancelPendingQrSession();
     }
   }, [scope, status]);
 
@@ -133,6 +163,7 @@ const AuthProviderInner: React.FC<{ children: React.ReactNode; scope: AuthScope 
         setStatus('guest');
         throw new Error('Tài khoản quản trị không thể đăng nhập ở giao diện người dùng.');
       }
+      cancelPendingQrSession();
       tokenStore.set(session.accessToken, scope);
       setUser(session.user);
       setStatus('authenticated');
@@ -153,6 +184,7 @@ const AuthProviderInner: React.FC<{ children: React.ReactNode; scope: AuthScope 
         setStatus('guest');
         throw new Error('Tài khoản quản trị không thể đăng nhập ở giao diện người dùng.');
       }
+      cancelPendingQrSession();
       tokenStore.set(session.accessToken, scope);
       setUser(session.user);
       setStatus('authenticated');

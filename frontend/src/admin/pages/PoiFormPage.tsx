@@ -96,7 +96,11 @@ const BACKEND_FIELD_MESSAGES: Record<string, string> = {
   'zoneId is required': 'Khu vực không được để trống',
   'categoryId is required': 'Danh mục không được để trống',
   'code is required': 'Mã điểm không được để trống',
+  'code must be at most 50 characters': 'Mã điểm tối đa 50 ký tự',
+  'code may only contain letters, digits, underscore and hyphen':
+    'Mã điểm chỉ được chứa chữ, số, dấu gạch dưới hoặc dấu gạch ngang',
   'qrToken is required': 'Mã QR không được để trống',
+  'qrToken must be at most 100 characters': 'Mã QR tối đa 100 ký tự',
   'name is required': 'Tên điểm không được để trống',
   'name must be at most 255 characters': 'Tên điểm tối đa 255 ký tự',
   'latitude is required': 'Vĩ độ không được để trống',
@@ -106,6 +110,8 @@ const BACKEND_FIELD_MESSAGES: Record<string, string> = {
   'longitude must be >= -180': 'Kinh độ phải lớn hơn hoặc bằng -180',
   'longitude must be <= 180': 'Kinh độ phải nhỏ hơn hoặc bằng 180',
   'triggerRadiusMeters must be >= 1': 'Bán kính kích hoạt phải lớn hơn hoặc bằng 1',
+  'triggerRadiusMeters must be <= 5000': 'Bán kính kích hoạt tối đa 5000 mét',
+  'premiumPrice must be >= 0': 'Giá mở khóa phải là số không âm',
   'address must be at most 500 characters': 'Địa chỉ tối đa 500 ký tự',
   'thumbnailUrl must be at most 500 characters': 'Đường dẫn ảnh tối đa 500 ký tự',
   'title is required': 'Tiêu đề không được để trống',
@@ -117,16 +123,25 @@ const BACKEND_FIELD_MESSAGES: Record<string, string> = {
 };
 
 const DEFAULT_TRIGGER_RADIUS = 50;
+const MAX_TRIGGER_RADIUS = 5000;
+const CODE_PATTERN = /^[A-Za-z0-9_-]+$/;
+const HCMC_LAT_MIN = 10.3;
+const HCMC_LAT_MAX = 11.2;
+const HCMC_LNG_MIN = 106.3;
+const HCMC_LNG_MAX = 107.1;
 
 /** Chỉ hiện đếm ký tự khi người dùng đã dùng hơn 80% giới hạn cho phép. */
 function counterHint(value: string, max: number): string | undefined {
   return value.length > max * 0.8 ? `${value.length}/${max} ký tự` : undefined;
 }
 
-function radiusHint(value: string): string | undefined {
+function radiusHint(value: string): string {
   const trimmed = value.trim();
-  if (!trimmed || trimmed === String(DEFAULT_TRIGGER_RADIUS)) return undefined;
-  return `Khác mặc định (${DEFAULT_TRIGGER_RADIUS} m)`;
+  if (!trimmed) return `Để trống = ${DEFAULT_TRIGGER_RADIUS} m (1 đến ${MAX_TRIGGER_RADIUS} m)`;
+  if (trimmed === String(DEFAULT_TRIGGER_RADIUS)) {
+    return `Mặc định ${DEFAULT_TRIGGER_RADIUS} m; tối đa ${MAX_TRIGGER_RADIUS} m`;
+  }
+  return `Khác mặc định (${DEFAULT_TRIGGER_RADIUS} m); tối đa ${MAX_TRIGGER_RADIUS} m`;
 }
 
 const ThumbnailPreview: React.FC<{ url: string; alt: string }> = ({ url, alt }) => {
@@ -221,6 +236,9 @@ function resolveSubmitError(norm: AdminApiError): { fieldErrors?: Record<string,
     }
     if (/already used in route/i.test(msg)) {
       return { general: 'Thứ tự điểm dừng đã được dùng trong tuyến này.' };
+    }
+    if (/Tọa độ POI phải nằm|Bán kính kích hoạt phải trong khoảng/.test(msg)) {
+      return { general: msg };
     }
     return { general: 'Dữ liệu không hợp lệ. Vui lòng kiểm tra lại các trường bắt buộc.' };
   }
@@ -365,6 +383,8 @@ export const PoiFormPage: React.FC = () => {
         newErrors.code = 'Mã điểm không được để trống';
       } else if (formValues.code.trim().length > 50) {
         newErrors.code = 'Mã điểm tối đa 50 ký tự';
+      } else if (!CODE_PATTERN.test(formValues.code.trim())) {
+        newErrors.code = 'Mã điểm chỉ được chứa chữ, số, dấu gạch dưới hoặc dấu gạch ngang';
       }
       if (!formValues.qrToken.trim()) {
         newErrors.qrToken = 'Mã QR không được để trống';
@@ -395,6 +415,8 @@ export const PoiFormPage: React.FC = () => {
       newErrors.latitude = 'Vĩ độ không được để trống';
     } else if (isNaN(lat) || lat < -90 || lat > 90) {
       newErrors.latitude = 'Vĩ độ phải là số trong khoảng -90 đến 90';
+    } else if (lat < HCMC_LAT_MIN || lat > HCMC_LAT_MAX) {
+      newErrors.latitude = `Vĩ độ phải nằm trong TP.HCM (${HCMC_LAT_MIN} đến ${HCMC_LAT_MAX})`;
     }
 
     const lng = parseFloat(formValues.longitude);
@@ -402,12 +424,14 @@ export const PoiFormPage: React.FC = () => {
       newErrors.longitude = 'Kinh độ không được để trống';
     } else if (isNaN(lng) || lng < -180 || lng > 180) {
       newErrors.longitude = 'Kinh độ phải là số trong khoảng -180 đến 180';
+    } else if (lng < HCMC_LNG_MIN || lng > HCMC_LNG_MAX) {
+      newErrors.longitude = `Kinh độ phải nằm trong TP.HCM (${HCMC_LNG_MIN} đến ${HCMC_LNG_MAX})`;
     }
 
     if (formValues.triggerRadiusMeters.trim()) {
-      const radius = parseInt(formValues.triggerRadiusMeters, 10);
-      if (isNaN(radius) || radius < 1) {
-        newErrors.triggerRadiusMeters = 'Bán kính kích hoạt phải là số lớn hơn hoặc bằng 1';
+      const radius = Number(formValues.triggerRadiusMeters);
+      if (!Number.isInteger(radius) || radius < 1 || radius > MAX_TRIGGER_RADIUS) {
+        newErrors.triggerRadiusMeters = `Bán kính kích hoạt phải là số nguyên từ 1 đến ${MAX_TRIGGER_RADIUS} mét`;
       }
     }
 
@@ -476,7 +500,7 @@ export const PoiFormPage: React.FC = () => {
       latitude: parseFloat(formValues.latitude),
       longitude: parseFloat(formValues.longitude),
       triggerRadiusMeters: formValues.triggerRadiusMeters.trim()
-        ? parseInt(formValues.triggerRadiusMeters, 10)
+        ? Number(formValues.triggerRadiusMeters)
         : undefined,
       premiumPrice: formValues.premiumPrice.trim()
         ? parseFloat(formValues.premiumPrice)
@@ -507,9 +531,18 @@ export const PoiFormPage: React.FC = () => {
           code: formValues.code.trim(),
           qrToken: formValues.qrToken.trim(),
         };
-        await poiApi.createPoi(payload);
+        const created = await poiApi.createPoi(payload);
+        navigate('/quan-tri/diem-thuyet-minh', {
+          replace: true,
+          state: {
+            createdPoiId: created?.id,
+            createdPoiName: created?.name || payload.name,
+          },
+        });
       }
-      navigate('/quan-tri/diem-thuyet-minh', { replace: true });
+      if (isEditMode) {
+        navigate('/quan-tri/diem-thuyet-minh', { replace: true });
+      }
     } catch (err) {
       const norm = normalizeAdminError(err);
       if (norm.status === 409 && isEditMode) {
@@ -638,7 +671,9 @@ export const PoiFormPage: React.FC = () => {
               htmlFor="code"
               required
               error={errors.code}
-              helperText={counterHint(formValues.code, 50)}
+              helperText={
+                counterHint(formValues.code, 50) ?? 'Chữ, số, _ hoặc -; tối đa 50 ký tự.'
+              }
             >
               <input
                 id="code"
@@ -684,7 +719,7 @@ export const PoiFormPage: React.FC = () => {
             htmlFor="latitude"
             required
             error={errors.latitude}
-            helperText="Số trong khoảng -90 đến 90."
+            helperText={`TP.HCM: ${HCMC_LAT_MIN} đến ${HCMC_LAT_MAX}.`}
           >
             <input
               id="latitude"
@@ -705,7 +740,7 @@ export const PoiFormPage: React.FC = () => {
             htmlFor="longitude"
             required
             error={errors.longitude}
-            helperText="Số trong khoảng -180 đến 180."
+            helperText={`TP.HCM: ${HCMC_LNG_MIN} đến ${HCMC_LNG_MAX}.`}
           >
             <input
               id="longitude"
@@ -727,6 +762,7 @@ export const PoiFormPage: React.FC = () => {
           <FormField
             label="Bán kính kích hoạt (mét)"
             htmlFor="triggerRadiusMeters"
+            optional
             error={errors.triggerRadiusMeters}
             helperText={radiusHint(formValues.triggerRadiusMeters)}
           >
@@ -735,6 +771,8 @@ export const PoiFormPage: React.FC = () => {
               name="triggerRadiusMeters"
               type="number"
               min={1}
+              max={MAX_TRIGGER_RADIUS}
+              step={1}
               className="adm-input"
               value={formValues.triggerRadiusMeters}
               onChange={handleInputChange}
@@ -746,6 +784,7 @@ export const PoiFormPage: React.FC = () => {
           <FormField
             label="Giá mở khóa lẻ (VNĐ)"
             htmlFor="premiumPrice"
+            optional
             error={errors.premiumPrice}
             helperText="Để trống = áp dụng giá mặc định (20.000đ)"
           >
@@ -768,6 +807,7 @@ export const PoiFormPage: React.FC = () => {
       <FormField
         label="Địa chỉ"
         htmlFor="address"
+        optional
         error={errors.address}
         helperText={counterHint(formValues.address, 500)}
       >
@@ -787,6 +827,7 @@ export const PoiFormPage: React.FC = () => {
       <FormField
         label="Ảnh đại diện"
         htmlFor="thumbnailUrl"
+        optional
         error={errors.thumbnailUrl}
         helperText={counterHint(formValues.thumbnailUrl, 500)}
       >
@@ -851,6 +892,7 @@ export const PoiFormPage: React.FC = () => {
           <FormField
             label="Thứ tự điểm dừng"
             htmlFor="stopOrder"
+            optional
             error={errors.stopOrder}
             helperText="Chỉ nhập khi đã chọn tuyến."
           >
@@ -1036,6 +1078,9 @@ export const PoiFormPage: React.FC = () => {
         </div>
       ) : (
         <form onSubmit={handleSubmit} className="adm-form-container" noValidate>
+          <p className="adm-form-hint">
+            Các trường có dấu * là bắt buộc; các trường không có dấu * là không bắt buộc.
+          </p>
           {isEditMode ? (
             <>
               <AdminTabs

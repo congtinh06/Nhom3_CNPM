@@ -68,6 +68,7 @@ describe('poiApi', () => {
       name: 'Chợ Bến Thành',
       latitude: 10.7725,
       longitude: 106.698,
+      triggerRadiusMeters: 120,
       title: 'Chợ Bến Thành',
       summary: 'Khu chợ biểu tượng',
       description: 'Chi tiết',

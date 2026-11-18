@@ -19,19 +19,41 @@ import { ToastProvider } from '../context/ToastContext';
 
 import { defaultMockVoices } from './setup';
 
+const premiumState = vi.hoisted(() => ({
+  isPremium: true,
+  canAccessLanguage: (_language: string): boolean => true,
+  canAccessPoi: (_poiId: number | string | null | undefined): boolean => true,
+  canAccessPoiLanguage: (
+    _poiId: number | string | null | undefined,
+    _language: string
+  ): boolean => true,
+}));
+
 vi.mock('../context/PremiumContext', () => ({
   usePremium: () => ({
-    isPremium: true,
-    plan: 'PREMIUM',
+    isPremium: premiumState.isPremium,
+    plan: premiumState.isPremium ? 'PREMIUM' : 'FREE',
     premiumExpiresAt: null,
-    canAccessLanguage: () => true,
-    canAccessPoi: () => true,
-    canAccessPoiLanguage: () => true,
+    entitlementStatus: 'ready',
+    entitlementError: null,
+    purchasedPoiIds: [],
+    unlockedPoiIds: [],
+    hasAnyPurchase: premiumState.isPremium,
+    purchasedPois: [],
+    canAccessLanguage: premiumState.canAccessLanguage,
+    canAccessPoi: premiumState.canAccessPoi,
+    canAccessPoiLanguage: premiumState.canAccessPoiLanguage,
     refreshEntitlement: vi.fn(),
   }),
-  buildPremiumPath: () => '/nang-cap',
-  buildPoiPremiumPath: () => '/nang-cap',
+  buildPremiumPath: (language?: string) =>
+    language ? `/nang-cap?lang=${language}` : '/nang-cap',
+  buildPoiPremiumPath: (poiId: number | string) => `/nang-cap?poi=${poiId}`,
   isPremiumLanguage: (language: string) => language !== 'vi',
+  normalizePoiId: (poiId: number | string | null | undefined) => {
+    if (typeof poiId === 'number') return poiId > 0 ? poiId : null;
+    const value = Number(poiId ?? '');
+    return Number.isFinite(value) && value > 0 ? value : null;
+  },
 }));
 
 // Mock react-leaflet components since jsdom doesn't support canvas/WebGL
@@ -70,6 +92,10 @@ describe('NearbyPage - Clean Multilingual & Audio Narration Integration', () => 
     localStorage.clear();
     window.history.replaceState(null, '', '/diem-du-lich');
     setStoredLanguage('vi');
+    premiumState.isPremium = true;
+    premiumState.canAccessLanguage = () => true;
+    premiumState.canAccessPoi = () => true;
+    premiumState.canAccessPoiLanguage = () => true;
 
     // Mock speechSynthesis
     window.speechSynthesis = {
@@ -118,6 +144,44 @@ describe('NearbyPage - Clean Multilingual & Audio Narration Integration', () => 
       expect(document.documentElement.lang).toBe('ja');
     });
     expect(getStoredLanguage()).toBe('ja');
+  });
+
+  it('shows register and keeps Vietnamese when a guest requests a locked language deep link', async () => {
+    premiumState.isPremium = false;
+    premiumState.canAccessLanguage = (language) => language === 'vi';
+    premiumState.canAccessPoiLanguage = (_poiId, language) => language === 'vi';
+    window.history.replaceState(null, '', '/diem-du-lich?stop=buu-dien-trung-tam&lang=en');
+
+    render(
+      <BrowserRouter>
+        <NearbyPage />
+      </BrowserRouter>
+    );
+
+    await waitFor(() => {
+      expect(window.location.pathname).toBe('/dang-ky');
+    });
+    expect(getStoredLanguage()).toBe('vi');
+  });
+
+  it('shows register instead of switching language when a guest taps a locked language chip', () => {
+    premiumState.isPremium = false;
+    premiumState.canAccessLanguage = (language) => language === 'vi';
+    premiumState.canAccessPoiLanguage = (_poiId, language) => language === 'vi';
+    window.history.replaceState(null, '', '/diem-du-lich');
+
+    const { container } = render(
+      <BrowserRouter>
+        <NearbyPage />
+      </BrowserRouter>
+    );
+    const englishChip = container.querySelector('.lang button[data-l="EN"]') as HTMLButtonElement | null;
+
+    expect(englishChip).not.toBeNull();
+    fireEvent.click(englishChip!);
+
+    expect(window.location.pathname).toBe('/dang-ky');
+    expect(getStoredLanguage()).toBe('vi');
   });
 
   it('switches to English: updates all UI labels, POI names, and triggers English narration speech', () => {

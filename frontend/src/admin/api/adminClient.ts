@@ -60,6 +60,12 @@ adminClient.interceptors.response.use(
   }
 );
 
+function isNormalizedAdminError(error: unknown): error is AdminApiError {
+  if (!error || typeof error !== 'object') return false;
+  const candidate = error as Partial<AdminApiError>;
+  return typeof candidate.status === 'number' && typeof candidate.message === 'string';
+}
+
 export function normalizeAdminError(error: unknown): AdminApiError {
   if (axios.isAxiosError(error)) {
     const status = error.response?.status || 0;
@@ -112,6 +118,10 @@ export function normalizeAdminError(error: unknown): AdminApiError {
       message: serverMessage || error.message || 'Đã xảy ra lỗi khi kết nối máy chủ.',
       details,
     };
+  }
+
+  if (isNormalizedAdminError(error)) {
+    return error;
   }
 
   if (error instanceof Error) {
