@@ -553,14 +553,6 @@ export const PremiumPage: React.FC = () => {
               <div className="spotlight-content">
                 <div className="spotlight-header">
                   <h2 className="spotlight-title">{spotlightPoi.name}</h2>
-                  <div className="premium-language-badges spotlight-languages">
-                    <span className="is-free">VI</span>
-                    {PREMIUM_LANGUAGES.map((language) => (
-                      <span key={language} className="is-locked" title={LANGUAGE_NAMES[language]}>
-                        {language.toUpperCase()}
-                      </span>
-                    ))}
-                  </div>
                 </div>
                 <p className="spotlight-desc">{poiCopy.validityNote}</p>
                 <div className="spotlight-footer">
@@ -1077,22 +1069,6 @@ export const PremiumPage: React.FC = () => {
                       <div className="premium-poi-body">
                         <h3>{poi.name}</h3>
                         <p className="premium-poi-category">{category}</p>
-                        <div className="premium-poi-languages">
-                          <span className="is-free" title={copy.freeLabel}>VI</span>
-                          {PREMIUM_LANGUAGES.map((language) => (
-                            <span
-                              key={language}
-                              className={unlocked ? 'is-open' : 'is-locked'}
-                              title={
-                                unlocked
-                                  ? LANGUAGE_NAMES[language]
-                                  : `${LANGUAGE_NAMES[language]} - ${copy.premiumLabel}`
-                              }
-                            >
-                              {language.toUpperCase()}
-                            </span>
-                          ))}
-                        </div>
                         {video && unlocked && (
                           <button
                             type="button"

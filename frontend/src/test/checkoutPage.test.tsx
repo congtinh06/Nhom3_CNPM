@@ -95,9 +95,10 @@ describe('CheckoutPage (redesigned)', () => {
     seedCart();
     renderPage();
 
-    expect(await screen.findByText('Chuyển khoản VietQR')).toBeInTheDocument();
+    expect(screen.queryByText('Chuyển khoản VietQR')).toBeNull();
+    expect(await screen.findByText('Cổng thanh toán VNPAY')).toBeInTheDocument();
     expect(
-      screen.getByText('Quét mã QR để thanh toán sau khi đặt hàng.')
+      screen.getByText(/Chuyển sang cổng VNPAY để thanh toán/)
     ).toBeInTheDocument();
     expect(
       screen.getByText('Thanh toán thử trong môi trường demo, không phát sinh giao dịch thật.')

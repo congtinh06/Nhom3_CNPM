@@ -60,34 +60,6 @@ export function PaymentSection({
         </label>
 
         <label
-          htmlFor="payment-vietqr"
-          className={`co-pay-option ${
-            selectedMethod === 'VIETQR' ? 'is-selected' : ''
-          } ${disabled ? 'is-disabled' : ''}`}
-        >
-          <input
-            id="payment-vietqr"
-            type="radio"
-            name="paymentMethod"
-            value="VIETQR"
-            checked={selectedMethod === 'VIETQR'}
-            onChange={() => onChange('VIETQR')}
-            disabled={disabled}
-            className="co-pay-input"
-          />
-          <span className="co-radio" aria-hidden="true">
-            <span className="co-radio-dot" />
-          </span>
-          <span className="co-pay-text">
-            <span className="co-pay-title">
-              <CreditCard size={16} strokeWidth={2} aria-hidden="true" />
-              {c.vietQrTitle}
-            </span>
-            <span className="co-pay-desc">{c.vietQrDesc}</span>
-          </span>
-        </label>
-
-        <label
           htmlFor="payment-vnpay"
           className={`co-pay-option ${
             selectedMethod === 'VNPAY' ? 'is-selected' : ''
