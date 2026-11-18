@@ -1,10 +1,10 @@
 $word = New-Object -ComObject Word.Application
 $word.Visible = $false
-$docPath = "F:\Nhom3_CNPM\FocusedUseCases (1).doc"
+$docPath = "F:\Nhom3_CNPM\docs\FocusedUseCases.doc"
 $txtOut = "F:\Nhom3_CNPM\scratch\focused_doc_text.txt"
 
 try {
-    Write-Output "Opening FocusedUseCases (1).doc in Word COM..."
+    Write-Output "Opening docs\FocusedUseCases.doc in Word COM..."
     # Open read-only
     $doc = $word.Documents.Open($docPath, $false, $true)
     Write-Output "Opened successfully! Paragraphs count: $($doc.Paragraphs.Count)"

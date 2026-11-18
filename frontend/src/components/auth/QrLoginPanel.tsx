@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { AlertCircle, CheckCircle2, Eye, Loader2, RefreshCw, ShieldCheck } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Loader2, RefreshCw, ShieldCheck } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import { authApi } from '../../api/auth';
 import { normalizeApiError } from '../../api/errors';
@@ -11,8 +11,6 @@ import { AccountLoginQr } from './AccountLoginQr';
 
 interface QrLoginPanelProps {
   onSuccess: () => void;
-  /** Được gọi khi thiết bị di động quét mã ở chế độ Khách (không đăng nhập thật). */
-  onGuestSuccess?: () => void;
   compact?: boolean;
 }
 
@@ -83,7 +81,7 @@ const requestQrSession = (): Promise<QrLoginSession> => {
   return pendingQrSessionRequest;
 };
 
-export const QrLoginPanel: React.FC<QrLoginPanelProps> = ({ onSuccess, onGuestSuccess, compact = false }) => {
+export const QrLoginPanel: React.FC<QrLoginPanelProps> = ({ onSuccess, compact = false }) => {
   const { t } = useNavbarLanguage();
   const { completeQrLogin, status: authStatus } = useAuth();
   const alreadyAuthenticated = authStatus === 'authenticated';
@@ -101,7 +99,6 @@ export const QrLoginPanel: React.FC<QrLoginPanelProps> = ({ onSuccess, onGuestSu
   const statusRef = useRef<QrLoginStatus | null>(initialSession?.session.status ?? null);
   const deadlineRef = useRef(initialSession?.expiresAt ?? 0);
   const exchangeStarted = useRef(false);
-  const guestHandled = useRef(false);
   const createRun = useRef(0);
 
   const createSession = useCallback(async () => {
@@ -118,7 +115,6 @@ export const QrLoginPanel: React.FC<QrLoginPanelProps> = ({ onSuccess, onGuestSu
     statusRef.current = null;
     deadlineRef.current = 0;
     exchangeStarted.current = false;
-    guestHandled.current = false;
     clearStoredQrSession();
     try {
       const created = await requestQrSession();
@@ -170,8 +166,7 @@ export const QrLoginPanel: React.FC<QrLoginPanelProps> = ({ onSuccess, onGuestSu
   }, [alreadyAuthenticated, authStatus, createSession]);
 
   useEffect(() => {
-    // Máy đã đăng nhập thật thì tuyệt đối không được xử lý GUEST_APPROVED nữa,
-    // tránh việc quét nhầm làm thiết bị đang có tài khoản bị chuyển sang Khách.
+    // Thiết bị đã đăng nhập thật thì không poll phiên QR đăng nhập nào nữa.
     if (alreadyAuthenticated || !session || !status || !LIVE_STATUSES.includes(status)) {
       return;
     }
@@ -193,19 +188,6 @@ export const QrLoginPanel: React.FC<QrLoginPanelProps> = ({ onSuccess, onGuestSu
         } else {
           clearStoredQrSession();
           setSecondsLeft(0);
-        }
-
-        if (result.status === 'GUEST_APPROVED' && !guestHandled.current) {
-          // Thiet bi di dong chua co tai khoan: may tinh chuyen sang che do Khach,
-          // KHONG doi lay token, KHONG danh dau la "dang nhap thanh cong".
-          guestHandled.current = true;
-          window.clearInterval(timer);
-          window.setTimeout(() => {
-            if (onGuestSuccess) {
-              onGuestSuccess();
-            }
-          }, 400);
-          return;
         }
 
         if (result.status === 'APPROVED' && !exchangeStarted.current) {
@@ -240,7 +222,6 @@ export const QrLoginPanel: React.FC<QrLoginPanelProps> = ({ onSuccess, onGuestSu
     status,
     completeQrLogin,
     onSuccess,
-    onGuestSuccess,
     t.auth.qrError,
   ]);
 
@@ -268,7 +249,6 @@ export const QrLoginPanel: React.FC<QrLoginPanelProps> = ({ onSuccess, onGuestSu
   const isDenied = status === 'DENIED';
   const isCancelled = status === 'CANCELLED';
   const isGuestApproved = status === 'GUEST_APPROVED';
-
   if (alreadyAuthenticated) {
     // Thiết bị đã đăng nhập: thay mã QR đăng nhập bằng mã QR tài khoản để
     // điện thoại quét và đăng nhập cùng tài khoản này.
@@ -344,9 +324,13 @@ export const QrLoginPanel: React.FC<QrLoginPanelProps> = ({ onSuccess, onGuestSu
         )}
 
         {isGuestApproved && !error && (
-          <div className="auth-qr-state" role="status">
-            <Eye size={30} strokeWidth={1.7} aria-hidden="true" />
-            <p>{t.auth.qrGuestPanelWaiting}</p>
+          <div className="auth-qr-state" role="alert">
+            <AlertCircle size={30} strokeWidth={1.8} aria-hidden="true" />
+            <p>{t.auth.qrLoginRequired}</p>
+            <button type="button" className="auth-qr-refresh" onClick={() => void createSession()}>
+              <RefreshCw size={15} aria-hidden="true" />
+              <span>{t.auth.qrRefresh}</span>
+            </button>
           </div>
         )}
 

@@ -36,13 +36,6 @@ export function resolveOrderItemImage(item?: {
   if (directPath && !directPath.includes('placeholder')) {
     return directPath;
   }
-  const id = item.productId ?? item.id;
-  if (id) {
-    const prod = defaultById.get(id);
-    if (prod?.imagePath && !prod.imagePath.includes('placeholder')) {
-      return prod.imagePath;
-    }
-  }
   const name = item.productName || item.name;
   if (name) {
     const norm = normalize(name);
@@ -50,7 +43,16 @@ export function resolveOrderItemImage(item?: {
     if (prod?.imagePath && !prod.imagePath.includes('placeholder')) {
       return prod.imagePath;
     }
-
+  }
+  const id = item.productId ?? item.id;
+  if (id) {
+    const prod = defaultById.get(id);
+    if (prod?.imagePath && !prod.imagePath.includes('placeholder')) {
+      return prod.imagePath;
+    }
+  }
+  if (name) {
+    const norm = normalize(name);
     const partial = defaultProducts.find((p) => {
       const pNorm = normalize(p.name);
       return pNorm === norm || norm.includes(pNorm) || pNorm.includes(norm);

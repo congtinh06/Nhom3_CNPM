@@ -506,7 +506,7 @@ const QrAnalyticsPage: React.FC = () => {
         />
       </div>
 
-      <div className="adm-split-grid qr-chart-grid">
+      <div className="adm-split-grid qr-chart-grid qr-chart-grid-split">
         <div className="adm-card qr-chart-card qr-chart-wide">
           <div className="adm-card-head-row">
             <div>
@@ -886,7 +886,7 @@ const QrAnalyticsPage: React.FC = () => {
         />
       </div>
 
-      <div className="adm-split-grid qr-chart-grid">
+      <div className="adm-split-grid qr-chart-grid qr-chart-grid-split">
         <div className="adm-card qr-chart-card qr-chart-wide">
           <div className="adm-card-head-row">
             <div>
@@ -1155,7 +1155,7 @@ const QrAnalyticsPage: React.FC = () => {
               </div>
             ))}
           </div>
-          <div className="adm-split-grid qr-chart-grid">
+          <div className="adm-split-grid qr-chart-grid qr-chart-grid-split">
             <div className="adm-card qr-chart-wide">
               <div className="qr-skeleton-block" />
             </div>

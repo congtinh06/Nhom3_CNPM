@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MemoryRouter, Routes, Route, useLocation } from 'react-router-dom';
 
 import { authApi } from '../api/auth';
@@ -17,6 +17,14 @@ vi.mock('../api/auth', () => ({
     forgotPassword: vi.fn(),
     resendVerification: vi.fn(),
   },
+}));
+
+vi.mock('../components/auth/QrLoginPanel', () => ({
+  QrLoginPanel: ({ onSuccess }: { onSuccess: () => void }) => (
+    <button type="button" onClick={onSuccess}>
+      Mô phỏng quét QR
+    </button>
+  ),
 }));
 
 function LocationProbe() {
@@ -46,6 +54,7 @@ function TestModalHarness({
               <Route path="/dang-nhap" element={<AuthModal />} />
               <Route path="/dang-ky" element={<AuthModal />} />
               <Route path="/quen-mat-khau" element={<AuthModal />} />
+              <Route path="/tai-khoan" element={<div>Trang tài khoản</div>} />
             </Routes>
           </CartProvider>
         </ToastProvider>
@@ -58,6 +67,10 @@ describe('AuthModal', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     sessionStorage.clear();
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
   });
 
   describe('Banner chế độ Khách', () => {
@@ -200,5 +213,34 @@ describe('AuthModal', () => {
     fireEvent.click(closeBtn);
 
     expect(screen.getByTestId('location-path')).not.toHaveTextContent('/thanh-toan');
+  });
+
+  it('đăng nhập QR thành công: đóng form và mở thẳng trang tài khoản', async () => {
+    vi.stubGlobal('matchMedia', (query: string) => ({
+      matches: true,
+      media: query,
+      onchange: null,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    }));
+
+    render(
+      <TestModalHarness
+        historyEntries={[
+          { pathname: '/dang-nhap', state: { backgroundLocation: { pathname: '/' } } },
+        ]}
+      />
+    );
+
+    fireEvent.click(await screen.findByRole('tab', { name: 'Quét mã QR' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Mô phỏng quét QR' }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('location-path')).toHaveTextContent('/tai-khoan');
+    });
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 });

@@ -37,7 +37,6 @@ vi.mock('../api/auth', () => ({
     createQrSession: vi.fn(),
     qrSessionStatus: vi.fn(),
     scanQrLogin: vi.fn(),
-    guestScanQrLogin: vi.fn(),
     approveQrLogin: vi.fn(),
     denyQrLogin: vi.fn(),
     exchangeQrSession: vi.fn(),
@@ -179,7 +178,6 @@ describe('QrHandoffReceivePage', () => {
       await screen.findByRole('heading', { name: 'Nhận đăng nhập từ máy tính' })
     ).toBeInTheDocument();
     // Không gọi nhầm API quét mã của luồng đăng nhập máy tính.
-    expect(authApi.guestScanQrLogin).not.toHaveBeenCalled();
     expect(authApi.scanQrLogin).not.toHaveBeenCalled();
   });
 });

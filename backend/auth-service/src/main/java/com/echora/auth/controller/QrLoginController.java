@@ -69,13 +69,6 @@ public class QrLoginController {
                 request.getQrToken(), currentUserId(), clientIpResolver.resolve(httpRequest), userAgent(httpRequest)));
     }
 
-    @PostMapping("/api/auth/qr/sessions/guest-scan")
-    public ResponseEntity<QrScanResponse> guestScan(@Valid @RequestBody QrScanRequest request,
-                                                    HttpServletRequest httpRequest) {
-        return ResponseEntity.ok(qrLoginService.guestScan(
-                request.getQrToken(), clientIpResolver.resolve(httpRequest), userAgent(httpRequest)));
-    }
-
     @PostMapping("/api/auth/qr/sessions/approve")
     public ResponseEntity<QrScanResponse> approve(@Valid @RequestBody QrScanRequest request,
                                                   HttpServletRequest httpRequest) {

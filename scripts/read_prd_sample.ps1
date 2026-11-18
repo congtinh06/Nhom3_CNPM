@@ -1,6 +1,6 @@
 $word = New-Object -ComObject Word.Application
 $word.Visible = $false
-$pdfPath = "F:\Nhom3_CNPM\Product Requirements Document (PRD)_.pdf"
+$pdfPath = "F:\Nhom3_CNPM\docs\Product_Requirements_Document.pdf"
 $txtPath = "F:\Nhom3_CNPM\scratch\prd_sample_extracted.txt"
 
 try {

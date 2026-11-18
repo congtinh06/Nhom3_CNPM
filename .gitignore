@@ -97,3 +97,9 @@ frontend/scripts/*.png
 
 # Local artifacts
 .freebuff/
+
+# Repo cleanup (2026-11): local secrets, logs and backups
+.env.*
+!.env.example
+*.err
+_local_backup/

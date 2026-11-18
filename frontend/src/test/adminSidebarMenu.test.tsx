@@ -105,24 +105,22 @@ describe('Sidebar quản trị: xổ xuống, thu gọn và bàn phím', () => {
     );
   });
 
-  it('mục "Sắp có" bị vô hiệu hóa và không điều hướng', () => {
+  it('đã xóa các mục "Sắp có" khỏi menu', () => {
     renderSidebar('/quan-tri/tong-quan');
 
-    const gallery = screen.getByText('Thư viện ảnh').closest('.adm-nav-link');
-    expect(gallery?.tagName).toBe('DIV');
-    expect(gallery).toHaveAttribute('aria-disabled', 'true');
-    expect(gallery).toHaveTextContent('Sắp có');
-    expect(screen.queryByRole('link', { name: /thư viện ảnh/i })).not.toBeInTheDocument();
+    expect(screen.queryByText('Thư viện ảnh')).not.toBeInTheDocument();
+    expect(screen.queryByText('Nhật ký thao tác')).not.toBeInTheDocument();
+    expect(screen.queryByText('Cài đặt')).not.toBeInTheDocument();
+    expect(screen.queryByText('Sắp có')).not.toBeInTheDocument();
     expect(screen.getByRole('link', { name: /đơn hàng/i })).toHaveAttribute(
       'href',
       '/quan-tri/don-hang'
     );
 
     fireEvent.click(screen.getByRole('button', { name: /quà lưu niệm/i }));
-    const upcomingChild = screen.getByText('Danh mục').closest('.adm-nav-sublink');
-    expect(upcomingChild?.tagName).toBe('DIV');
-    expect(upcomingChild).toHaveAttribute('aria-disabled', 'true');
-    expect(screen.queryByRole('link', { name: /danh mục/i })).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /sản phẩm/i })).toBeInTheDocument();
+    expect(screen.queryByText('Danh mục')).not.toBeInTheDocument();
+    expect(screen.queryByText('Sản phẩm nổi bật')).not.toBeInTheDocument();
   });
 
   it('ẩn toàn bộ menu với vai trò không phải quản trị viên', () => {

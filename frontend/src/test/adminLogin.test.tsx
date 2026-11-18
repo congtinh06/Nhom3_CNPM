@@ -65,7 +65,11 @@ describe('AdminLoginPage', () => {
     expect(passwordInput).toHaveAttribute('type', 'password');
     expect(passwordInput).toHaveAttribute('placeholder', 'Nhập mật khẩu quản trị');
     expect(screen.getByRole('button', { name: 'Đăng nhập' })).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /hiện mật khẩu|ẩn mật khẩu/i })).not.toBeInTheDocument();
+    const togglePassword = screen.getByRole('button', { name: 'Hiện mật khẩu' });
+    expect(togglePassword).toHaveAttribute('aria-pressed', 'false');
+    fireEvent.click(togglePassword);
+    expect(passwordInput).toHaveAttribute('type', 'text');
+    expect(screen.getByRole('button', { name: 'Ẩn mật khẩu' })).toBeInTheDocument();
     expect(screen.queryByText(/audio guide/i)).not.toBeInTheDocument();
   });
 

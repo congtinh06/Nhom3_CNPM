@@ -127,9 +127,15 @@ Nhom3_CNPM/
 │   └── seed-46-users.sql         # (Tùy chọn) Seed thêm người dùng mẫu vào echora_auth_db
 ├── docs/
 │   ├── PRD.md                    # Đặc tả yêu cầu sản phẩm (Product Requirements Document)
+│   ├── ECHORA_REPORT_EN.docx     # Báo cáo đồ án (bản tiếng Anh)
+│   ├── FocusedUseCases.doc       # Đặc tả Use Case trọng tâm
+│   ├── Product_Requirements_Document.pdf
+│   ├── technical_report_UC_traceability.xlsx
+│   ├── AUDIT_REPORT.md
 │   ├── diagrams/                 # Sơ đồ Mermaid (kiến trúc, ERD, luồng nghiệp vụ)
 │   ├── images/                   # Ảnh sơ đồ đã render (PNG/SVG)
 │   └── report/                   # Báo cáo đồ án môn học (tài liệu nội bộ, không đưa lên Git)
+├── scripts/                      # Script tiện ích (bootstrap, ngrok QR, backup...)
 ├── docker-compose.yml            # Khởi chạy toàn bộ hạ tầng CSDL, Broker và Microservices
 ├── .env.example                  # Mẫu cấu hình biến môi trường
 └── README.md                     # Hướng dẫn tổng quan dự án

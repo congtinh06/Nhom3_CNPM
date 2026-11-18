@@ -25,21 +25,17 @@ describe('Cấu hình menu quản trị', () => {
     expect(new Set(paths).size).toBe(paths.length);
   });
 
-  it('mục Sắp có không có đường dẫn, mục thường có đường dẫn và bắt đầu bằng /quan-tri', () => {
+  it('mọi mục đều có đường dẫn bắt đầu bằng /quan-tri, không còn mục "Sắp có"', () => {
     for (const item of allItems) {
       if (item.children) {
         expect(item.path).toBeUndefined();
         expect(item.children.length).toBeGreaterThan(0);
         for (const child of item.children) {
-          if (child.isUpcoming) {
-            expect(child.path).toBeUndefined();
-          } else {
-            expect(child.path).toMatch(/^\/quan-tri\//);
-          }
+          expect(child.isUpcoming).toBeFalsy();
+          expect(child.path).toMatch(/^\/quan-tri\//);
         }
-      } else if (item.isUpcoming) {
-        expect(item.path).toBeUndefined();
       } else {
+        expect(item.isUpcoming).toBeFalsy();
         expect(item.path).toMatch(/^\/quan-tri\//);
       }
     }
@@ -60,7 +56,6 @@ describe('Cấu hình menu quản trị', () => {
     expect(pois?.children?.map((c) => c.label)).toEqual([
       'Danh sách điểm',
       'Bản dịch và audio',
-      'Đoạn và ảnh',
       'Mã QR',
       'Nhật ký xử lý lỗi',
     ]);
@@ -74,11 +69,12 @@ describe('Cấu hình menu quản trị', () => {
     expect(pois?.children?.find((c) => c.id === 'pois-error-log')?.path).toBe(
       '/quan-tri/diem-thuyet-minh/nhat-ky-loi'
     );
-    expect(pois?.children?.find((c) => c.id === 'pois-segments')?.isUpcoming).toBe(true);
     const food = allItems.find((i) => i.id === 'food');
     expect(food?.label).toBe('Quà lưu niệm');
+    expect(food?.children?.map((c) => c.label)).toEqual(['Sản phẩm']);
     expect(food?.children?.[0]).toMatchObject({ label: 'Sản phẩm', matchSearch: 'category=SOUVENIR' });
     const users = allItems.find((i) => i.id === 'users');
+    expect(users?.children?.map((c) => c.label)).toEqual(['Tài khoản']);
     expect(users?.children?.[0]).toMatchObject({ label: 'Tài khoản', path: '/quan-tri/nguoi-dung' });
   });
 

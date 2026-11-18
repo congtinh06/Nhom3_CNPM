@@ -1389,6 +1389,49 @@
   color: #6B7280;
 }
 
+.adm-password-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.adm-password-wrap .adm-password-input {
+  padding-right: 40px;
+}
+
+.adm-password-eye {
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: #6B7280;
+  cursor: pointer;
+}
+
+.adm-password-eye:hover:not(:disabled) {
+  color: var(--fb-accent, #C2410C);
+  background-color: rgba(194, 65, 12, 0.08);
+}
+
+.adm-password-eye:focus-visible {
+  outline: 2px solid var(--fb-accent, #C2410C);
+  outline-offset: 1px;
+}
+
+.adm-password-eye:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
 .adm-login-submit {
   width: 100%;
   margin-top: 2px;

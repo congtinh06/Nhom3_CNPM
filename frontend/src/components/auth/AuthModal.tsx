@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { CheckCircle2, Eye, X } from 'lucide-react';
 import { useNavbarLanguage } from '../../content/languages';
@@ -120,6 +120,18 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     }, 900);
   }, [navigateAfterAuth, showToast, t.auth.loginSuccess]);
 
+  // Đăng nhập bằng QR trên điện thoại: đóng ngay form và mở trang người dùng,
+  // không đi qua màn hình "đăng nhập thành công" trung gian.
+  const handleQrLoginSuccess = useCallback(() => {
+    if (redirectTimerRef.current) {
+      window.clearTimeout(redirectTimerRef.current);
+      redirectTimerRef.current = null;
+    }
+    setLoginSuccess(false);
+    showToast(t.auth.loginSuccess);
+    navigate('/tai-khoan', { replace: true });
+  }, [navigate, showToast, t.auth.loginSuccess]);
+
   // Dọn timer nếu modal bị unmount trước khi chuyển trang.
   useEffect(() => {
     return () => {
@@ -131,14 +143,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       }
     };
   }, []);
-
-  // Guest QR handler: điện thoại quét ở chế độ khách -> đánh dấu đang dùng thử
-  // với tư cách Khách, đóng modal, giữ guest (KHÔNG set token nào).
-  const handleGuestSuccess = useCallback(() => {
-    enterGuestMode();
-    showToast(t.auth.qrGuestTransferred);
-    navigateAfterAuth();
-  }, [showToast, t.auth.qrGuestTransferred, navigateAfterAuth]);
 
   // "Tiếp tục với tư cách Khách": chọn chế độ Khách từ modal đăng nhập.
   const handleContinueAsGuest = useCallback(() => {
@@ -173,7 +177,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   }, [isStandalone, location.state, navigate]);
 
   // Lock body scroll and save active element (with scrollbar compensation to prevent layout jump)
-  useEffect(() => {
+  useLayoutEffect(() => {
     lastActiveElementRef.current = document.activeElement as HTMLElement | null;
 
     const originalOverflow = document.body.style.overflow;
@@ -306,7 +310,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               {currentView === 'login' && (
                 <LoginForm
                   onSuccess={handleLoginSuccess}
-                  onGuestSuccess={handleGuestSuccess}
+                  onQrSuccess={handleQrLoginSuccess}
+                  onContinueAsGuest={handleContinueAsGuest}
                   onSwitchToRegister={handleSwitchToRegister}
                   onSwitchToForgot={handleSwitchToForgot}
                 />

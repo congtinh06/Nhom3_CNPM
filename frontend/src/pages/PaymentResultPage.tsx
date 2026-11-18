@@ -150,6 +150,31 @@ export const PaymentResultPage: React.FC = () => {
     void loadOrder();
   }, [loadOrder]);
 
+  const [catalogImages, setCatalogImages] = useState<Record<number, string>>({});
+
+  useEffect(() => {
+    const controller = new AbortController();
+    api
+      .getProducts({ size: 200, sortBy: 'sortOrder' }, controller.signal)
+      .then((page) => {
+        const next: Record<number, string> = {};
+        for (const product of page?.content ?? []) {
+          if (
+            product?.id &&
+            product.imagePath &&
+            !product.imagePath.includes('placeholder')
+          ) {
+            next[product.id] = product.imagePath;
+          }
+        }
+        setCatalogImages(next);
+      })
+      .catch(() => {
+        // Giữ ảnh dự phòng từ catalog tĩnh khi API không khả dụng.
+      });
+    return () => controller.abort();
+  }, []);
+
   const isPoiOrder = order?.orderType === 'POI';
   const isPremiumOrder = order?.orderType === 'PREMIUM' || isPoiOrder;
   
@@ -826,7 +851,11 @@ export const PaymentResultPage: React.FC = () => {
               </h2>
               {items.length > 0 ? (
                 items.map((item, idx) => {
-                  const resolvedImg = resolveOrderItemImage(item);
+                  const catalogImg = item.productId
+                    ? catalogImages[item.productId]
+                    : undefined;
+                  const resolvedImg =
+                    catalogImg || resolveOrderItemImage(item);
                   return (
                     <div className="payment-it" key={item.productId ?? idx}>
                       <div className="payment-th">

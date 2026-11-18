@@ -1,12 +1,12 @@
 $word = New-Object -ComObject Word.Application
 $word.Visible = $false
-$docPath = "F:\Nhom3_CNPM\FocusedUseCases (1).doc"
+$docPath = "F:\Nhom3_CNPM\docs\FocusedUseCases.doc"
 $outDir = "F:\Nhom3_CNPM\scratch\sample_focused_images"
 
 try {
     if (-not (Test-Path $outDir)) { New-Item -ItemType Directory -Path $outDir }
     $doc = $word.Documents.Open($docPath, $false, $true)
-    Write-Output "Extracting shapes from FocusedUseCases (1).doc..."
+    Write-Output "Extracting shapes from docs\FocusedUseCases.doc..."
     
     # Save as HTML to easily dump all embedded images
     $htmlPath = "F:\Nhom3_CNPM\scratch\sample_focused_html\focused.html"

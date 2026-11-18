@@ -11,7 +11,7 @@ param(
     de dien thoai quet ma QR tren trang "Diem du lich" (/diem-du-lich).
 
 .EXAMPLE
-    .\start-ngrok-qr.bat
+    .\scripts\start-ngrok-qr.bat
     powershell -ExecutionPolicy Bypass -File scripts/start-ngrok-qr.ps1
     powershell -ExecutionPolicy Bypass -File scripts/start-ngrok-qr.ps1 -Port 8088
     powershell -ExecutionPolicy Bypass -File scripts/start-ngrok-qr.ps1 -Domain "ten-mien-tinh.ngrok-free.dev"

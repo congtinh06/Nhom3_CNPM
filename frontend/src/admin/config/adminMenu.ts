@@ -76,13 +76,11 @@ export const ADMIN_MENU: AdminMenuGroup[] = [
         // Menu con của "Điểm thuyết minh":
         // - pois-list: trang danh sách (PoiListPage)
         // - pois-i18n: trang bản dịch & audio (PoiTranslationsPage)
-        // - pois-segments: đang phát triển (cần backend cho đoạn/ảnh)
         // - pois-qr: trang mã QR (PoiQrListPage)
         // - pois-error-log: trang nhật ký lỗi (PoiErrorLogPage)
         children: [
           { id: 'pois-list', label: 'Danh sách điểm', path: '/quan-tri/diem-thuyet-minh' },
           { id: 'pois-i18n', label: 'Bản dịch và audio', path: '/quan-tri/diem-thuyet-minh/ban-dich' },
-          { id: 'pois-segments', label: 'Đoạn và ảnh', isUpcoming: true },
           { id: 'pois-qr', label: 'Mã QR', path: '/quan-tri/diem-thuyet-minh/ma-qr' },
           { id: 'pois-error-log', label: 'Nhật ký xử lý lỗi', path: '/quan-tri/diem-thuyet-minh/nhat-ky-loi' },
         ],
@@ -117,8 +115,6 @@ export const ADMIN_MENU: AdminMenuGroup[] = [
             path: '/quan-tri/san-pham',
             matchSearch: 'category=SOUVENIR',
           },
-          { id: 'food-categories', label: 'Danh mục', isUpcoming: true },
-          { id: 'food-featured', label: 'Sản phẩm nổi bật', isUpcoming: true },
         ],
       },
       {
@@ -127,14 +123,7 @@ export const ADMIN_MENU: AdminMenuGroup[] = [
         icon: 'news',
         children: [
           { id: 'news-articles', label: 'Bài viết', path: '/quan-tri/tin-tuc' },
-          { id: 'news-topics', label: 'Chuyên mục', isUpcoming: true },
         ],
-      },
-      {
-        id: 'gallery',
-        label: 'Thư viện ảnh',
-        icon: 'gallery',
-        isUpcoming: true,
       },
     ],
   },
@@ -173,11 +162,8 @@ export const ADMIN_MENU: AdminMenuGroup[] = [
         icon: 'users',
         children: [
           { id: 'users-accounts', label: 'Tài khoản', path: '/quan-tri/nguoi-dung' },
-          { id: 'users-roles', label: 'Vai trò và quyền', isUpcoming: true },
         ],
       },
-      { id: 'audit-logs', label: 'Nhật ký thao tác', icon: 'logs', isUpcoming: true },
-      { id: 'settings', label: 'Cài đặt', icon: 'settings', isUpcoming: true },
     ],
   },
 ];

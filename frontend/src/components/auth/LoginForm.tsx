@@ -11,8 +11,10 @@ import { QrLoginPanel } from './QrLoginPanel';
 
 interface LoginFormProps {
   onSuccess: () => void;
-  /** Được gọi khi điện thoại quét mã ở chế độ Khách (đóng modal, giữ guest). */
-  onGuestSuccess?: () => void;
+  /** Đăng nhập bằng QR thành công (mặc định dùng chung onSuccess). */
+  onQrSuccess?: () => void;
+  /** "Tiếp tục với tư cách Khách": đóng modal và bật chế độ Khách. */
+  onContinueAsGuest?: () => void;
   onSwitchToRegister: () => void;
   onSwitchToForgot: () => void;
   autoFocusEmail?: boolean;
@@ -20,7 +22,8 @@ interface LoginFormProps {
 
 export const LoginForm: React.FC<LoginFormProps> = ({
   onSuccess,
-  onGuestSuccess,
+  onQrSuccess,
+  onContinueAsGuest,
   onSwitchToRegister,
   onSwitchToForgot,
   autoFocusEmail = true,
@@ -146,6 +149,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
             label={t.auth.passwordLabel}
             value={password}
             onChange={setPassword}
+            placeholder="Nhập mật khẩu"
             autoComplete="current-password"
             required
           />
@@ -209,12 +213,12 @@ export const LoginForm: React.FC<LoginFormProps> = ({
           </button>
         </p>
 
-        {onGuestSuccess && !guestMode && (
+        {onContinueAsGuest && !guestMode && (
           <div className="auth-guest-alt">
             <button
               type="button"
               className="af-guest-link"
-              onClick={onGuestSuccess}
+              onClick={onContinueAsGuest}
             >
               <Eye size={14} strokeWidth={1.8} aria-hidden="true" />
               <span>{t.auth.guestContinue}</span>
@@ -231,14 +235,14 @@ export const LoginForm: React.FC<LoginFormProps> = ({
         >
           <p className="auth-modal-intro auth-qr-tab-intro">{t.auth.qrSubtitle}</p>
           <div className="auth-qr-desktop-only">
-            <QrLoginPanel onSuccess={onSuccess} onGuestSuccess={onGuestSuccess} compact />
+            <QrLoginPanel onSuccess={onQrSuccess ?? onSuccess} compact />
           </div>
           <p className="auth-qr-mobile-hint">{t.auth.qrMobileScanHint}</p>
-          {onGuestSuccess && !guestMode && (
+          {onContinueAsGuest && !guestMode && (
             <button
               type="button"
               className="tb auth-guest-quick-btn"
-              onClick={onGuestSuccess}
+              onClick={onContinueAsGuest}
             >
               <Eye size={15} strokeWidth={1.8} aria-hidden="true" />
               <span>{t.auth.guestContinue}</span>

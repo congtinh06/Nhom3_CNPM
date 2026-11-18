@@ -329,6 +329,8 @@ dl.payment-kv dd {
 .payment-sum {
   position: sticky;
   top: 96px;
+  align-self: start;
+  min-width: 0;
 }
 
 .payment-sum-sec {
@@ -830,15 +832,13 @@ dl.payment-kv dd {
    RESPONSIVE
    ========================================================================== */
 
-@media (max-width: 960px) {
+@media (max-width: 1100px) {
   .payment-result-two {
-    grid-template-columns: 1fr;
-    gap: 24px;
+    gap: 40px;
   }
-  .payment-sum {
-    position: static;
-    order: -1;
-  }
+}
+
+@media (max-width: 960px) {
   .payment-tl {
     grid-template-columns: 1fr;
     gap: 0;
@@ -856,6 +856,17 @@ dl.payment-kv dd {
   }
   .payment-tl div::before {
     top: 3px;
+  }
+}
+
+@media (max-width: 820px) {
+  .payment-result-two {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+  .payment-sum {
+    position: static;
+    order: -1;
   }
 }
 

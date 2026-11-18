@@ -8,7 +8,6 @@ import {
 } from './AdminNavIcon';
 import {
   getVisibleAdminMenu,
-  isMenuChildActive,
   isMenuItemActive,
   resolveAdminMenuMatch,
   type AdminMenuItem,
@@ -65,7 +64,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
     [location.pathname, location.search]
   );
 
-  const activeParentId = currentMatch?.item?.children && currentMatch.item.children.length > 1
+  const activeParentId = currentMatch?.item?.children && currentMatch.item.children.length > 0
     ? currentMatch.item.id
     : null;
 
@@ -188,51 +187,9 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
   };
 
   const renderItem = (item: AdminMenuItem) => {
-    const hasMultipleChildren = Boolean(item.children && item.children.length > 1);
-    const hasSingleChild = Boolean(item.children && item.children.length === 1);
+    const hasChildren = Boolean(item.children && item.children.length > 0);
 
-    if (hasSingleChild) {
-      const child = item.children![0]!;
-      if (child.isUpcoming || !child.path) {
-        return (
-          <li key={item.id} className="adm-nav-item">
-            <div
-              className="adm-nav-link adm-nav-link-disabled"
-              aria-disabled="true"
-              title={isCollapsed ? `${child.label} (Sắp có)` : 'Tính năng đang trong lộ trình phát triển'}
-            >
-              <span className="adm-nav-icon" aria-hidden="true">
-                <AdminNavIcon id={item.icon} />
-              </span>
-              {!isCollapsed && <span className="adm-nav-label">{child.label}</span>}
-              {!isCollapsed && <span className="adm-nav-badge">Sắp có</span>}
-            </div>
-          </li>
-        );
-      }
-
-      const active = isMenuChildActive(child, location.pathname, location.search);
-      const fullPath = child.path + (child.matchSearch ? `?${child.matchSearch}` : '');
-
-      return (
-        <li key={item.id} className="adm-nav-item">
-          <NavLink
-            to={fullPath}
-            className={`adm-nav-link ${active ? 'adm-nav-link-active' : ''}`}
-            onClick={onClose}
-            aria-current={active ? 'page' : undefined}
-            title={isCollapsed ? child.label : undefined}
-          >
-            <span className="adm-nav-icon" aria-hidden="true">
-              <AdminNavIcon id={item.icon} />
-            </span>
-            {!isCollapsed && <span className="adm-nav-label">{child.label}</span>}
-          </NavLink>
-        </li>
-      );
-    }
-
-    if (hasMultipleChildren) {
+    if (hasChildren) {
       const isOpen = openItemId === item.id;
       const isParentActive = isMenuItemActive(item, location.pathname, location.search);
       const isPopoverOpen = isCollapsed && activePopoverId === item.id;

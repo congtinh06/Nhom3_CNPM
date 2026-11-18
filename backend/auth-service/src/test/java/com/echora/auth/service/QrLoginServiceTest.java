@@ -9,7 +9,6 @@ import com.echora.auth.entity.UserStatus;
 import com.echora.auth.exception.BadRequestException;
 import com.echora.auth.exception.ConflictException;
 import com.echora.auth.exception.ForbiddenException;
-import com.echora.auth.exception.NotFoundException;
 import com.echora.auth.repository.QrLoginSessionRepository;
 import com.echora.auth.repository.UserRepository;
 import com.echora.auth.security.JwtService;
@@ -91,67 +90,6 @@ class QrLoginServiceTest {
     private void stubFindSession(QrLoginSession session) {
         when(qrLoginSessionRepository.findByQrTokenHash(tokenService.sha256Hex(RAW_QR_TOKEN)))
                 .thenReturn(Optional.of(session));
-    }
-
-    // ---------------------------------------------------------------- GUEST SCAN
-
-    @Test
-    @DisplayName("guestScan chuyển phiên PENDING sang GUEST_APPROVED và không gán user")
-    void guestScanPendingBecomesGuestApproved() {
-        QrLoginSession session = liveSession(QrLoginStatus.PENDING);
-        stubFindSession(session);
-
-        QrScanResponse response = service.guestScan(RAW_QR_TOKEN, IP, USER_AGENT);
-
-        assertThat(response.getStatus()).isEqualTo(QrLoginStatus.GUEST_APPROVED);
-        assertThat(session.getStatus()).isEqualTo(QrLoginStatus.GUEST_APPROVED);
-        assertThat(session.getUser()).isNull();
-        assertThat(session.getScannedAt()).isNotNull();
-        assertThat(session.getApprovedIp()).isEqualTo(IP);
-        verify(qrLoginSessionRepository).save(session);
-    }
-
-    @Test
-    @DisplayName("guestScan idempotent khi phiên đã ở GUEST_APPROVED")
-    void guestScanIdempotent() {
-        QrLoginSession session = liveSession(QrLoginStatus.GUEST_APPROVED);
-        stubFindSession(session);
-
-        QrScanResponse response = service.guestScan(RAW_QR_TOKEN, IP, USER_AGENT);
-
-        assertThat(response.getStatus()).isEqualTo(QrLoginStatus.GUEST_APPROVED);
-        assertThat(session.getStatus()).isEqualTo(QrLoginStatus.GUEST_APPROVED);
-        verify(qrLoginSessionRepository, never()).save(any(QrLoginSession.class));
-    }
-
-    @Test
-    @DisplayName("guestScan từ chối phiên đã bị chiếm bởi luồng tài khoản thật")
-    void guestScanRejectsNonLiveSession() {
-        for (QrLoginStatus status : new QrLoginStatus[] {
-                QrLoginStatus.SCANNED, QrLoginStatus.APPROVED, QrLoginStatus.DENIED,
-                QrLoginStatus.CONSUMED, QrLoginStatus.CANCELLED }) {
-            QrLoginSession session = liveSession(status);
-            stubFindSession(session);
-            assertThatThrownBy(() -> service.guestScan(RAW_QR_TOKEN, IP, USER_AGENT))
-                    .isInstanceOf(ConflictException.class)
-                    .hasMessageContaining("khong con hieu luc");
-        }
-    }
-
-    @Test
-    @DisplayName("guestScan báo lỗi khi phiên hết hạn và khi không tìm thấy token")
-    void guestScanRejectsExpiredOrUnknownToken() {
-        QrLoginSession expired = liveSession(QrLoginStatus.PENDING);
-        expired.setExpiresAt(LocalDateTime.now().minusSeconds(1));
-        stubFindSession(expired);
-        assertThatThrownBy(() -> service.guestScan(RAW_QR_TOKEN, IP, USER_AGENT))
-                .isInstanceOf(BadRequestException.class)
-                .hasMessageContaining("het han");
-
-        assertThatThrownBy(() -> service.guestScan("  ", IP, USER_AGENT))
-                .isInstanceOf(BadRequestException.class);
-        assertThatThrownBy(() -> service.guestScan("token-no-anywhere", IP, USER_AGENT))
-                .isInstanceOf(NotFoundException.class);
     }
 
     // -------------------------------------------------- LUỒNG TÀI KHOẢN THẬT

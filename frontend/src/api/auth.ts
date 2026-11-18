@@ -92,9 +92,6 @@ export const authApi = {
   scanQrLogin: (qrToken: string): Promise<QrScanResponse> =>
     post<QrScanResponse>('/api/auth/qr/sessions/scan', { qrToken }),
 
-  guestScanQrLogin: (qrToken: string): Promise<QrScanResponse> =>
-    post<QrScanResponse>('/api/auth/qr/sessions/guest-scan', { qrToken }),
-
   approveQrLogin: (qrToken: string): Promise<QrScanResponse> =>
     post<QrScanResponse>('/api/auth/qr/sessions/approve', { qrToken }),
 

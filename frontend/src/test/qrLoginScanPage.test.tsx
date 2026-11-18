@@ -27,7 +27,6 @@ vi.mock('../api/auth', () => ({
     createQrSession: vi.fn(() => new Promise(() => {})),
     qrSessionStatus: vi.fn(),
     scanQrLogin: vi.fn(),
-    guestScanQrLogin: vi.fn(),
     approveQrLogin: vi.fn(),
     denyQrLogin: vi.fn(),
     exchangeQrSession: vi.fn(),
@@ -112,7 +111,6 @@ describe('QrLoginScanPage', () => {
     expect(screen.getByRole('link', { name: /^Đăng nhập$/i })).toBeInTheDocument();
 
     // Khách không được chuyển sang chế độ Khách cho luồng QR đăng nhập.
-    expect(authApi.guestScanQrLogin).not.toHaveBeenCalled();
     expect(authApi.scanQrLogin).not.toHaveBeenCalled();
     expect(authApi.approveQrLogin).not.toHaveBeenCalled();
   });
@@ -134,7 +132,6 @@ describe('QrLoginScanPage', () => {
     await submitManualToken('http://localhost:5173/quet-qr-dang-nhap?t=tok-url-1');
 
     await waitFor(() => expect(authApi.scanQrLogin).toHaveBeenCalledWith('tok-url-1'));
-    expect(authApi.guestScanQrLogin).not.toHaveBeenCalled();
   });
 
   it('tài khoản thật đã xác thực email quét mã sẽ tới màn hình xác nhận rồi duyệt', async () => {
@@ -193,16 +190,15 @@ describe('QrLoginScanPage', () => {
   });
 });
 
-describe('QrLoginPanel - chế độ khách', () => {
+describe('QrLoginPanel - chỉ đăng nhập bằng tài khoản thật', () => {
   beforeEach(() => {
     vi.resetAllMocks();
     tokenStore.clear();
     vi.mocked(authApi.refresh).mockRejectedValue({ response: { status: 401 } });
   });
 
-  it('khi poll thấy GUEST_APPROVED sẽ gọi onGuestSuccess và không exchange token', async () => {
-    // Thiết bị đang hiện QR chưa đăng nhập (khách). Điện thoại khách quét mã
-    // khiến phiên chuyển GUEST_APPROVED.
+  it('khi poll thấy GUEST_APPROVED sẽ không đăng nhập và yêu cầu tài khoản thật', async () => {
+    // Phiên GUEST_APPROVED chỉ còn từ dữ liệu cũ: không được coi là đăng nhập.
     vi.mocked(authApi.createQrSession).mockResolvedValue({
       sessionId: '22222222-2222-2222-2222-222222222222',
       qrToken: 'qr-raw',
@@ -221,21 +217,24 @@ describe('QrLoginPanel - chế độ khách', () => {
     });
 
     const onSuccess = vi.fn();
-    const onGuestSuccess = vi.fn();
 
     render(
       <AuthProvider>
-        <QrLoginPanel onSuccess={onSuccess} onGuestSuccess={onGuestSuccess} />
+        <QrLoginPanel onSuccess={onSuccess} />
       </AuthProvider>
     );
 
-    await waitFor(() => expect(onGuestSuccess).toHaveBeenCalled(), { timeout: 5000 });
+    expect(
+      await screen.findByText(/Bạn cần đăng nhập trên thiết bị này trước khi quét mã/i, undefined, {
+        timeout: 5000,
+      })
+    ).toBeInTheDocument();
 
     expect(authApi.exchangeQrSession).not.toHaveBeenCalled();
     expect(onSuccess).not.toHaveBeenCalled();
   });
 
-  it('thiết bị đã có tài khoản thật hiển thị QR đăng nhập nhanh, không xử lý chế độ Khách', async () => {
+  it('thiết bị đã có tài khoản thật hiển thị QR đăng nhập nhanh, không có luồng khách', async () => {
     vi.mocked(authApi.refresh).mockResolvedValue({
       accessToken: 'access.token',
       expiresIn: 900,
@@ -257,11 +256,9 @@ describe('QrLoginPanel - chế độ khách', () => {
       status: 'APPROVED',
     });
 
-    const onGuestSuccess = vi.fn();
-
     render(
       <AuthProvider>
-        <QrLoginPanel onSuccess={vi.fn()} onGuestSuccess={onGuestSuccess} />
+        <QrLoginPanel onSuccess={vi.fn()} />
       </AuthProvider>
     );
 
@@ -275,8 +272,6 @@ describe('QrLoginPanel - chế độ khách', () => {
     // Không lộ email/tên và không bao giờ chuyển thiết bị sang chế độ Khách.
     expect(screen.queryByText('a@example.com')).not.toBeInTheDocument();
     expect(screen.queryByText('Nguyễn Văn A')).not.toBeInTheDocument();
-    expect(authApi.guestScanQrLogin).not.toHaveBeenCalled();
     expect(authApi.exchangeQrSession).not.toHaveBeenCalled();
-    expect(onGuestSuccess).not.toHaveBeenCalled();
   });
 });
