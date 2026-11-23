@@ -136,10 +136,6 @@ export const AccountPage: React.FC = () => {
 
         {!isLoading && user && (
           <div className="ac-head-meta">
-            <span className={`ac-head-chip${isPremium ? ' is-premium' : ''}`}>
-              <Crown size={15} strokeWidth={1.9} aria-hidden="true" />
-              {isPremium ? t.planPremium : t.planFree}
-            </span>
             <span className="ac-head-chip">
               <CalendarDays size={15} strokeWidth={1.9} aria-hidden="true" />
               {t.memberSince} {memberSince}
@@ -160,7 +156,9 @@ export const AccountPage: React.FC = () => {
                 {initials}
               </div>
               <div className="ac-identity-copy">
-                <span className="ac-identity-name">{user.fullName || user.email}</span>
+                <span className="ac-identity-name" title={user.fullName || user.email}>
+                  {user.fullName || user.email}
+                </span>
                 <span className="ac-identity-email" title={user.email}>{user.email}</span>
                 <span className={`ac-plan-pill${isPremium ? ' is-premium' : ''}`}>
                   {isPremium ? t.planPremium : t.planFree}

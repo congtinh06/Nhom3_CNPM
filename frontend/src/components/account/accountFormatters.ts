@@ -1,4 +1,5 @@
 import { SupportedLanguage } from '../../types';
+import { parseApiDate } from '../../utils/formatters';
 import { accountLocale } from './accountI18n';
 
 export function formatAccountDate(
@@ -6,8 +7,8 @@ export function formatAccountDate(
   lang: SupportedLanguage = 'vi'
 ): string {
   if (!value) return '-';
-  const date = value instanceof Date ? value : new Date(value);
-  if (Number.isNaN(date.getTime())) return '-';
+  const date = parseApiDate(value);
+  if (!date) return '-';
 
   const locale = accountLocale(lang);
   const formatter = new Intl.DateTimeFormat(locale, {

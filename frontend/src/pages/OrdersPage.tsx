@@ -13,7 +13,7 @@ import { getMyOrders, cancelBackendOrder, createVnPayPayment } from '../services
 import { useCart } from '../context/CartContext';
 import { useToast } from '../context/ToastContext';
 import { useNavbarLanguage } from '../content/languages';
-import { formatPrice } from '../utils/formatters';
+import { formatPrice, parseApiDate } from '../utils/formatters';
 import { BackendOrder } from '../types';
 import { StatusBadge } from '../components/orders/StatusBadge';
 import { resolveOrderItemImage } from '../content/productAdapter';
@@ -132,15 +132,15 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({ embedded = false }) => {
     <div className={`orders-page-container${embedded ? ' orders-embedded-container' : ''}`}>
       <MainElement className="orders-main-section">
         {/* Header like checkout: Back link + H1 Playfair Display */}
-        <div className="orders-header-row">
-          {!embedded && (
+        {!embedded && (
+          <div className="orders-header-row">
             <button type="button" className="orders-back-link" onClick={() => navigate('/')}>
               <ArrowLeft size={15} strokeWidth={2} aria-hidden="true" />
               <span>Trang chủ</span>
             </button>
-          )}
-          <h1 className="orders-page-title">{t.shop.orderHistory}</h1>
-        </div>
+            <h1 className="orders-page-title">{t.shop.orderHistory}</h1>
+          </div>
+        )}
 
         {loading ? (
           <div className="orders-loading-box">
@@ -177,6 +177,10 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({ embedded = false }) => {
               >
                 {orders.map((o) => {
                   const isSelected = selectedOrder?.orderCode === o.orderCode;
+                  const thumbs = o.items
+                    .slice(0, 3)
+                    .map((it) => resolveOrderItemImage(it))
+                    .filter((src): src is string => Boolean(src));
 
                   return (
                     <article
@@ -192,42 +196,38 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({ embedded = false }) => {
                       }}
                       aria-pressed={isSelected}
                     >
-                      <div className="order-summary-top">
-                        <span className="order-summary-code">{o.orderCode}</span>
-                        <StatusBadge status={o.status} />
-                      </div>
-
-                      <div className="order-summary-meta">
-                        <span className="order-summary-date">
-                          {new Date(o.createdAt).toLocaleDateString('vi-VN', {
-                            year: 'numeric',
-                            month: '2-digit',
-                            day: '2-digit',
-                            hour: '2-digit',
-                            minute: '2-digit',
-                          })}
-                        </span>
-                        <b className="order-summary-amount">{formatPrice(o.totalAmount)}</b>
-                      </div>
-
-                      <div className="order-summary-items-preview-wrap">
+                      {thumbs.length > 0 && (
                         <div className="order-summary-thumbs" aria-hidden="true">
-                          {o.items.slice(0, 3).map((it, i) => {
-                            const thumb = resolveOrderItemImage(it);
-                            return thumb ? (
-                              <img
-                                key={i}
-                                src={thumb}
-                                alt=""
-                                className="order-summary-thumb"
-                                loading="lazy"
-                              />
-                            ) : null;
-                          })}
+                          {thumbs.map((thumb, i) => (
+                            <img
+                              key={i}
+                              src={thumb}
+                              alt=""
+                              className="order-summary-thumb"
+                              loading="lazy"
+                            />
+                          ))}
                         </div>
-                        <p className="order-summary-items-preview">
-                          {o.items.map((it) => `${it.productName} (${it.quantity})`).join(', ')}
-                        </p>
+                      )}
+
+                      <div className="order-summary-body">
+                        <div className="order-summary-top">
+                          <span className="order-summary-code">{o.orderCode}</span>
+                          <StatusBadge status={o.status} />
+                        </div>
+
+                        <div className="order-summary-meta">
+                          <span className="order-summary-date">
+                            {parseApiDate(o.createdAt)?.toLocaleDateString('vi-VN', {
+                              year: 'numeric',
+                              month: '2-digit',
+                              day: '2-digit',
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            }) || '-'}
+                          </span>
+                          <b className="order-summary-amount">{formatPrice(o.totalAmount)}</b>
+                        </div>
                       </div>
                     </article>
                   );
@@ -261,7 +261,7 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({ embedded = false }) => {
                       <div className="order-meta-row">
                         <span className="order-meta-label">{t.shop.orderDate}:</span>
                         <span className="order-meta-value">
-                          {new Date(selectedOrder.createdAt).toLocaleString('vi-VN')}
+                          {parseApiDate(selectedOrder.createdAt)?.toLocaleString('vi-VN') || '-'}
                         </span>
                       </div>
 

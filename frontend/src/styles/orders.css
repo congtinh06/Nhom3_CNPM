@@ -219,6 +219,10 @@
 
 /* Order Summary Item */
 .order-summary-item {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  gap: 10px !important;
   background-color: #FFFFFF !important;
   border: 1.5px solid #E7E5E4 !important;
   border-radius: 12px !important;
@@ -229,6 +233,11 @@
   box-shadow: none !important;
   outline: none !important;
   flex-shrink: 0 !important;
+}
+
+.order-summary-body {
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
 }
 
 .order-summary-item:hover {
@@ -823,77 +832,224 @@
   background-color: #F5F5F4 !important;
 }
 
-/* Larger text for the order history embedded in the account page. */
-.orders-embedded-container .orders-page-title {
-  font-size: clamp(28px, 4vw, 36px) !important;
+/* Compact order history inside the account panel */
+.orders-embedded-container .orders-layout-grid {
+  gap: 18px !important;
 }
 
 .orders-embedded-container .orders-panel-heading {
-  font-size: 21px !important;
+  font-family: "Be Vietnam Pro", -apple-system, BlinkMacSystemFont, sans-serif !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0 !important;
+  color: #78716C !important;
+  margin: 0 0 8px 0 !important;
+}
+
+.orders-embedded-container .orders-list {
+  gap: 0 !important;
+  padding-right: 0 !important;
 }
 
 .orders-embedded-container .order-summary-item {
-  padding: 20px !important;
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  gap: 12px !important;
+  padding: 12px 10px !important;
+  border: 0 !important;
+  border-left: 2px solid transparent !important;
+  border-bottom: 1px solid #EEE7DF !important;
+  border-radius: 0 !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+}
+
+.orders-embedded-container .order-summary-item:last-child {
+  border-bottom: 0 !important;
+}
+
+.orders-embedded-container .order-summary-item:hover {
+  border-left-color: transparent !important;
+  background-color: #FAF7F0 !important;
+}
+
+.orders-embedded-container .order-summary-item.active {
+  border-left-color: #C2410C !important;
+  background-color: #FAF7F0 !important;
+}
+
+.orders-embedded-container .order-summary-thumbs {
+  gap: 3px !important;
+}
+
+.orders-embedded-container .order-summary-thumb {
+  width: 36px !important;
+  height: 36px !important;
+  border-radius: 4px !important;
+}
+
+.orders-embedded-container .order-summary-top {
+  margin-bottom: 4px !important;
 }
 
 .orders-embedded-container .order-summary-code {
-  font-size: 16px !important;
+  font-size: 14px !important;
 }
 
-.orders-embedded-container .order-summary-meta,
-.orders-embedded-container .order-summary-date,
-.orders-embedded-container .order-summary-items-preview {
-  font-size: 15px !important;
+.orders-embedded-container .order-summary-meta {
+  margin-bottom: 0 !important;
+}
+
+.orders-embedded-container .order-summary-date {
+  font-size: 12px !important;
 }
 
 .orders-embedded-container .order-summary-amount {
-  font-size: 17px !important;
+  font-size: 14.5px !important;
 }
 
 .orders-embedded-container .status-badge,
 .orders-embedded-container .order-status-badge {
-  font-size: 14px !important;
+  font-size: 12px !important;
+  border-radius: 8px !important;
+  padding: 3px 8px !important;
+}
+
+.orders-embedded-container .order-detail-card {
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  background-color: transparent !important;
+}
+
+.orders-embedded-container .order-detail-header {
+  padding: 4px 0 12px 0 !important;
+  border-bottom: 1px solid #EEE7DF !important;
+  background-color: transparent !important;
 }
 
 .orders-embedded-container .order-detail-kicker {
-  font-size: 15px !important;
+  display: none !important;
 }
 
 .orders-embedded-container .order-detail-code {
-  font-size: 22px !important;
-}
-
-.orders-embedded-container .order-meta-label,
-.orders-embedded-container .order-meta-value,
-.orders-embedded-container .order-note-text {
-  font-size: 15px !important;
-}
-
-.orders-embedded-container .order-items-heading {
-  font-size: 19px !important;
-}
-
-.orders-embedded-container .order-item-table-row,
-.orders-embedded-container .item-qty,
-.orders-embedded-container .item-subtotal,
-.orders-embedded-container .total-label {
   font-size: 16px !important;
 }
 
-.orders-embedded-container .item-unit-price {
+.orders-embedded-container .order-detail-header .status-badge {
+  display: none !important;
+}
+
+.orders-embedded-container .order-detail-body {
+  padding: 16px 0 !important;
+}
+
+.orders-embedded-container .order-meta-info-grid {
+  gap: 0 !important;
+  margin-bottom: 18px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background-color: transparent !important;
+}
+
+.orders-embedded-container .order-meta-row {
+  grid-template-columns: 160px minmax(0, 1fr) !important;
+  gap: 12px !important;
+  padding: 8px 0 !important;
+  border-bottom: 1px solid #F0EAE1 !important;
+}
+
+.orders-embedded-container .order-meta-row:last-child {
+  border-bottom: 0 !important;
+  padding-bottom: 0 !important;
+}
+
+.orders-embedded-container .order-meta-label {
+  font-size: 13.5px !important;
+}
+
+.orders-embedded-container .order-meta-value,
+.orders-embedded-container .order-note-text {
   font-size: 14px !important;
+}
+
+.orders-embedded-container .order-items-heading {
+  font-family: "Be Vietnam Pro", -apple-system, BlinkMacSystemFont, sans-serif !important;
+  font-size: 15px !important;
+  font-weight: 600 !important;
+  margin: 0 0 8px 0 !important;
+}
+
+.orders-embedded-container .order-items-table {
+  gap: 0 !important;
+}
+
+.orders-embedded-container .order-item-table-row {
+  grid-template-columns: 56px minmax(0, 1fr) 48px 110px !important;
+  gap: 12px !important;
+  padding: 10px 0 !important;
+  border-bottom: 1px solid #F0EAE1 !important;
+  font-size: 14px !important;
+}
+
+.orders-embedded-container .order-item-table-row > * {
+  min-width: 0 !important;
+}
+
+.orders-embedded-container .order-item-media {
+  width: 56px !important;
+  height: 56px !important;
+}
+
+.orders-embedded-container .item-name {
+  font-size: 15px !important;
+}
+
+.orders-embedded-container .item-unit-price {
+  font-size: 12.5px !important;
+}
+
+.orders-embedded-container .item-qty,
+.orders-embedded-container .item-subtotal {
+  font-size: 14.5px !important;
+}
+
+.orders-embedded-container .order-detail-footer {
+  padding: 14px 0 0 0 !important;
+  border-top: 1px solid #EEE7DF !important;
+  border-radius: 0 !important;
+  background-color: transparent !important;
+}
+
+.orders-embedded-container .order-detail-total-bar {
+  margin-bottom: 12px !important;
+}
+
+.orders-embedded-container .total-label {
+  font-size: 14.5px !important;
+}
+
+.orders-embedded-container .total-amount {
+  font-size: 21px !important;
+}
+
+.orders-embedded-container .order-actions-bar {
+  gap: 8px !important;
 }
 
 .orders-embedded-container .order-reorder-btn,
 .orders-embedded-container .order-pay-now-btn,
 .orders-embedded-container .order-cancel-btn {
-  font-size: 15px !important;
+  padding: 8px 14px !important;
+  font-size: 13.5px !important;
 }
 
 /* Vung cham 44px cho danh sach don hang (mobile) */
 @media (max-width: 767px) {
   .orders-embedded-container .orders-layout-grid {
-    gap: 22px !important;
+    gap: 16px !important;
   }
 
   .orders-embedded-container .orders-list {
@@ -906,53 +1062,55 @@
   }
 
   .orders-embedded-container .order-summary-code {
-    font-size: 14px !important;
+    font-size: 13.5px !important;
     overflow-wrap: anywhere !important;
   }
 
   .orders-embedded-container .order-summary-item {
-    padding: 16px !important;
-  }
-
-  .orders-embedded-container .order-detail-header,
-  .orders-embedded-container .order-detail-footer {
-    padding-inline: 16px !important;
-  }
-
-  .orders-embedded-container .order-detail-body {
-    padding: 16px !important;
-    max-height: none !important;
-    overflow: visible !important;
-  }
-
-  .orders-embedded-container .order-meta-info-grid {
-    padding: 12px !important;
+    padding: 12px 8px !important;
   }
 
   .orders-embedded-container .order-meta-row {
-    grid-template-columns: minmax(100px, 0.75fr) minmax(0, 1.25fr) !important;
+    grid-template-columns: minmax(110px, 0.8fr) minmax(0, 1.2fr) !important;
     gap: 8px !important;
   }
 
   .orders-embedded-container .order-item-table-row,
   .order-item-table-row {
-    grid-template-columns: 40px minmax(0, 1fr) 40px 92px !important;
+    grid-template-columns: 48px minmax(0, 1fr) 40px 84px !important;
     gap: 8px !important;
   }
 
   .orders-embedded-container .order-item-media,
   .order-item-media {
-    width: 40px !important;
-    height: 40px !important;
-  }
-
-  .orders-back-link {
-    display: inline-flex;
-    align-items: center;
-    min-height: 44px;
+    width: 48px !important;
+    height: 48px !important;
   }
 
   .order-reorder-btn {
     min-height: 44px;
+  }
+}
+
+@media (max-width: 480px) {
+  .orders-embedded-container .order-meta-row {
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 2px !important;
+  }
+
+  .orders-embedded-container .order-meta-label {
+    color: #78716C !important;
+  }
+
+  .orders-embedded-container .order-item-table-row,
+  .order-item-table-row {
+    grid-template-columns: 44px minmax(0, 1fr) 32px 72px !important;
+    gap: 6px !important;
+  }
+
+  .orders-embedded-container .order-item-media,
+  .order-item-media {
+    width: 44px !important;
+    height: 44px !important;
   }
 }

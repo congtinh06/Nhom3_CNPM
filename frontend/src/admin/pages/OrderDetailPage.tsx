@@ -24,6 +24,8 @@ type PendingAction =
   | { kind: 'reject-payment' }
   | { kind: 'status'; value: AdminOrderStatus };
 
+import { parseApiDate } from '../utils/format';
+
 function formatCurrency(value: number): string {
   return `${Number(value || 0).toLocaleString('vi-VN')} đ`;
 }
@@ -31,7 +33,8 @@ function formatCurrency(value: number): string {
 function formatDateTime(value?: string | null): string {
   if (!value) return '-';
   try {
-    return new Date(value).toLocaleString('vi-VN');
+    const d = parseApiDate(value);
+    return d ? d.toLocaleString('vi-VN') : '-';
   } catch {
     return '-';
   }

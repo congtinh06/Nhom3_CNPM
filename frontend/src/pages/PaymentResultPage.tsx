@@ -20,7 +20,7 @@ import {
   consumePendingPremiumLanguage,
   useNavbarLanguage,
 } from '../content/languages';
-import { formatPrice } from '../utils/formatters';
+import { formatPrice, parseApiDate } from '../utils/formatters';
 import { BackendOrder } from '../types';
 import { resolveOrderItemImage } from '../content/productAdapter';
 import '../styles/paymentResult.css';
@@ -321,8 +321,8 @@ export const PaymentResultPage: React.FC = () => {
 
   const orderDateObj = useMemo(() => {
     if (order?.createdAt) {
-      const d = new Date(order.createdAt);
-      if (!isNaN(d.getTime())) return d;
+      const d = parseApiDate(order.createdAt);
+      if (d) return d;
     }
     return new Date();
   }, [order?.createdAt]);

@@ -21,10 +21,28 @@ export const formatPriceWithSpace = (amount: number): string => {
   return amount.toLocaleString('vi-VN') + ' đ';
 };
 
+export const parseApiDate = (dateVal?: string | number | Date | null): Date | null => {
+  if (!dateVal) return null;
+  if (dateVal instanceof Date) return Number.isNaN(dateVal.getTime()) ? null : dateVal;
+  if (typeof dateVal === 'number') {
+    const d = new Date(dateVal);
+    return Number.isNaN(d.getTime()) ? null : d;
+  }
+  const str = String(dateVal).trim();
+  if (!str) return null;
+  // If ISO date-time string without timezone (e.g. "2026-11-23T15:00:59" from backend UTC),
+  // append 'Z' so JS Date parses it as UTC and automatically converts to client's local timezone.
+  const normalized = str.includes('T') && !str.endsWith('Z') && !/[+-]\d{2}:?\d{2}$/.test(str)
+    ? `${str}Z`
+    : str;
+  const d = new Date(normalized);
+  return Number.isNaN(d.getTime()) ? null : d;
+};
+
 export const formatDateTime = (dateStr?: string | number | Date | null): string => {
   if (!dateStr) return '';
-  const d = new Date(dateStr);
-  if (isNaN(d.getTime())) return String(dateStr);
+  const d = parseApiDate(dateStr);
+  if (!d) return String(dateStr);
   return d.toLocaleString('vi-VN', {
     day: '2-digit',
     month: '2-digit',
