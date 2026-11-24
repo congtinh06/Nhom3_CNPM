@@ -128,6 +128,7 @@ export type NearbyKey =
   | 'qrShowBtn'
   | 'qrListenOnPhone'
   | 'qrCloseAria'
+  | 'qrAutoCloseIn'
   | 'myLocationLocating'
   | 'simPanelTitle'
   | 'simPickStopLabel'
@@ -508,6 +509,7 @@ export const NEARBY_DICTIONARY: Record<SupportedLanguage, Record<NearbyKey, stri
     qrShowBtn: 'Hiện mã QR',
     qrListenOnPhone: 'Nghe trên điện thoại',
     qrCloseAria: 'Đóng mã QR',
+    qrAutoCloseIn: 'Tự động đóng sau {seconds} giây',
     myLocationLocating: 'Đang xác định vị trí...',
     simPanelTitle: 'Giả lập vị trí',
     simPickStopLabel: 'Chọn một điểm dừng',
@@ -772,6 +774,7 @@ export const NEARBY_DICTIONARY: Record<SupportedLanguage, Record<NearbyKey, stri
     qrShowBtn: 'Show QR code',
     qrListenOnPhone: 'Listen on your phone',
     qrCloseAria: 'Close QR code',
+    qrAutoCloseIn: 'Closes automatically in {seconds}s',
     myLocationLocating: 'Locating...',
     simPanelTitle: 'Simulate location',
     simPickStopLabel: 'Pick a stop',
@@ -1035,6 +1038,7 @@ export const NEARBY_DICTIONARY: Record<SupportedLanguage, Record<NearbyKey, stri
     qrShowBtn: 'QR 코드 표시',
     qrListenOnPhone: '휴대폰으로 듣기',
     qrCloseAria: 'QR 코드 닫기',
+    qrAutoCloseIn: '{seconds}초 후 자동으로 닫힙니다',
     myLocationLocating: '위치 확인 중...',
     simPanelTitle: '위치 시뮬레이션',
     simPickStopLabel: '명소 선택',
@@ -1298,6 +1302,7 @@ export const NEARBY_DICTIONARY: Record<SupportedLanguage, Record<NearbyKey, stri
     qrShowBtn: 'QRコードを表示',
     qrListenOnPhone: 'スマートフォンで聴く',
     qrCloseAria: 'QRコードを閉じる',
+    qrAutoCloseIn: '{seconds}秒後に自動的に閉じます',
     myLocationLocating: '位置情報を取得中...',
     simPanelTitle: '位置シミュレーション',
     simPickStopLabel: 'スポットを選択',
@@ -1347,6 +1352,7 @@ export const UNREVIEWED_CJK_KEYS: NearbyKey[] = [
   'qrShowBtn',
   'qrListenOnPhone',
   'qrCloseAria',
+  'qrAutoCloseIn',
   'myLocationLocating',
   'simPanelTitle',
   'simPickStopLabel',
