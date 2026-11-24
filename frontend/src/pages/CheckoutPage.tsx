@@ -266,7 +266,7 @@ export function CheckoutPage() {
           </div>
         ) : (
           <>
-            <div className="co-grid">
+            <div className="co-grid" data-reveal>
               <div className="co-left">
                 {serverError && (
                   <div className="checkout-alert-error" role="alert">

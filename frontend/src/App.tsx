@@ -12,6 +12,7 @@ import { AuthModal } from './components/auth/AuthModal';
 import { RequireAuth } from './components/auth/RequireAuth';
 
 import { useSmoothScroll } from './hooks/useSmoothScroll';
+import { useScrollReveal } from './hooks/useScrollReveal';
 import { useScrollRestoration } from './hooks/useScrollRestoration';
 import { api } from './api/client';
 import { detectDeviceType } from './lib/device';
@@ -73,6 +74,7 @@ const SouvenirSlugRedirect: React.FC = () => {
 
 const AppContent: React.FC = () => {
   useSmoothScroll();
+  useScrollReveal();
   useScrollRestoration();
   const location = useLocation();
   const { status: authStatus } = useAuth();

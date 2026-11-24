@@ -892,3 +892,8 @@ dl.payment-kv dd {
     min-height: 44px;
   }
 }
+
+/* Smooth hover: secondary payment actions. */
+.payment-sec-btn {
+  transition: background .2s ease, border-color .2s ease, color .2s ease;
+}

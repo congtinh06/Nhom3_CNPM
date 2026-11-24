@@ -135,7 +135,7 @@ export const ContactPage: React.FC = () => {
         <main className="contact-container">
         <div className="contact-grid">
           {/* Cột trái: Thông tin liên hệ & Bản đồ */}
-          <div className="contact-info-col">
+          <div className="contact-info-col" data-reveal>
             {/* Card thông tin liên hệ */}
             <section className="contact-card contact-info-card" aria-labelledby="contact-info-heading">
               <h2 id="contact-info-heading" className="contact-section-title">
@@ -211,14 +211,14 @@ export const ContactPage: React.FC = () => {
                 </a>
               </div>
 
-              <div className="contact-map-wrapper">
+              <div className="contact-map-wrapper" data-lenis-prevent>
                 <ContactMap />
               </div>
             </section>
           </div>
 
           {/* Cột phải: Biểu mẫu gửi tin nhắn */}
-          <div className="contact-form-col">
+          <div className="contact-form-col" data-reveal>
             <section className="contact-card contact-form-card" aria-labelledby="contact-form-heading">
               <h2 id="contact-form-heading" className="contact-section-title">
                 {c.formHeading}
@@ -406,7 +406,7 @@ export const ContactPage: React.FC = () => {
 
         {/* 3 Thẻ Hướng dẫn & Lưu ý */}
         <section className="contact-help-section" aria-label={c.helpSectionTitle}>
-          <div className="contact-help-grid">
+          <div className="contact-help-grid" data-reveal>
             <div className="contact-help-card">
               <h3 className="contact-help-title">{c.helpGuide1Title}</h3>
               <p className="contact-help-text">
@@ -433,7 +433,7 @@ export const ContactPage: React.FC = () => {
           <h2 id="contact-fix-heading" className="contact-section-title">
             {c.fixSectionTitle}
           </h2>
-          <div className="contact-fix-grid">
+          <div className="contact-fix-grid" data-reveal>
             <div className="contact-fix-card">
               <h3 className="contact-fix-title">{c.fix1Title}</h3>
               <p className="contact-fix-text">
@@ -456,7 +456,7 @@ export const ContactPage: React.FC = () => {
         </section>
 
         {/* Để chúng tôi hỗ trợ nhanh hơn */}
-        <section className="contact-aid-section" aria-labelledby="contact-aid-heading">
+        <section className="contact-aid-section" aria-labelledby="contact-aid-heading" data-reveal>
           <h2 id="contact-aid-heading" className="contact-section-title">
             {c.aidSectionTitle}
           </h2>
@@ -488,7 +488,7 @@ export const ContactPage: React.FC = () => {
         </section>
 
         {/* Câu hỏi thường gặp */}
-        <section className="contact-faq-section" aria-labelledby="contact-faq-heading">
+        <section className="contact-faq-section" aria-labelledby="contact-faq-heading" data-reveal>
           <div className="contact-faq-layout">
             <div className="contact-faq-header">
               <h2 id="contact-faq-heading" className="contact-section-title">

@@ -582,3 +582,12 @@
     font-size: 0.75rem;
   }
 }
+
+/* Smooth hover: category chip and sidebar links. */
+.nd-category-label {
+  transition: color .2s ease;
+}
+
+.nd-sidebar-link .nd-sidebar-item-title {
+  transition: color .2s ease;
+}

@@ -1520,3 +1520,20 @@ body:has(.premium-page) #up:hover {
     min-height: 44px;
   }
 }
+
+/* Smooth hover: controls that used to snap between states. */
+.premium-plan-perk-link,
+.premium-video-source a {
+  transition: border-color .2s ease, color .2s ease;
+}
+
+.premium-btn-primary,
+.premium-btn-outline,
+.premium-notice-retry-btn,
+.premium-poi-popover button {
+  transition: background-color .2s ease, border-color .2s ease, color .2s ease;
+}
+
+.premium-poi-search-clear {
+  transition: color .2s ease, background-color .2s ease;
+}

@@ -568,7 +568,7 @@ export const PremiumPage: React.FC = () => {
         )}
 
         {spotlightPoi && !canAccessPoi(spotlightPoi.id) && (
-          <section className="premium-spotlight-card" aria-label={poiCopy.requestedNote}>
+          <section className="premium-spotlight-card" aria-label={poiCopy.requestedNote} data-reveal>
             <p className="premium-spotlight-label">{poiCopy.requestedNote}</p>
             <div className="spotlight-main">
               <div className="spotlight-media">
@@ -632,7 +632,7 @@ export const PremiumPage: React.FC = () => {
           </p>
         )}
 
-        <section className="premium-plan" aria-labelledby="premium-plan-title">
+        <section className="premium-plan" aria-labelledby="premium-plan-title" data-reveal>
           <div className="premium-section-head">
             <h2 id="premium-plan-title">{copy.benefitsTitle}</h2>
             <p className="premium-lead">{copy.benefitsSubtitle}</p>
@@ -807,7 +807,7 @@ export const PremiumPage: React.FC = () => {
         </section>
 
         {/* 1. So sánh Miễn phí và Premium */}
-        <section className="premium-hairline-section premium-comparison-section" aria-labelledby="premium-compare-title">
+        <section className="premium-hairline-section premium-comparison-section" aria-labelledby="premium-compare-title" data-reveal>
           <h2 id="premium-compare-title" className="premium-serif-section-title">
             {lang === 'en'
               ? 'Free vs Premium comparison'
@@ -862,7 +862,7 @@ export const PremiumPage: React.FC = () => {
         </section>
 
         {/* 2. Chọn gói nào cho chuyến đi của bạn? */}
-        <section className="premium-hairline-section premium-choice-section" aria-labelledby="premium-choice-title">
+        <section className="premium-hairline-section premium-choice-section" aria-labelledby="premium-choice-title" data-reveal>
           <h2 id="premium-choice-title" className="premium-serif-section-title">
             {lang === 'en'
               ? 'Which option fits your journey?'
@@ -930,7 +930,7 @@ export const PremiumPage: React.FC = () => {
         </section>
 
         {/* 3. Nghe thử ngôn ngữ trước khi mua */}
-        <section className="premium-hairline-section premium-sample-section" aria-labelledby="premium-sample-title">
+        <section className="premium-hairline-section premium-sample-section" aria-labelledby="premium-sample-title" data-reveal>
           <div className="premium-sample-intro">
             <h2 id="premium-sample-title" className="premium-serif-section-title">
               {lang === 'en'
@@ -1018,6 +1018,7 @@ export const PremiumPage: React.FC = () => {
             id="premium-poi-purchase"
             className="premium-stops poi-purchase-section"
             aria-labelledby="premium-poi-purchase-title"
+            data-reveal
           >
             <div className="premium-section-head">
               <h2 id="premium-poi-purchase-title">{poiCopy.title}</h2>

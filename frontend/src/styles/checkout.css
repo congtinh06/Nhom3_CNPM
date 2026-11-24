@@ -1080,3 +1080,10 @@ body:has(.checkout-page-container) #up,
     min-height: 44px !important;
   }
 }
+
+/* Smooth hover: checkout controls. */
+.checkout-page-container .checkout-voucher-toggle,
+.checkout-page-container .summary-qty-btn,
+.checkout-page-container .checkout-order-submit-btn {
+  transition: background-color .2s ease, border-color .2s ease, color .2s ease;
+}

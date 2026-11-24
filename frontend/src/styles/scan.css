@@ -699,3 +699,11 @@ section.scan-page .scan-hero h2 {
   }
 }
 
+/* Smooth hover: scan page actions. */
+.scan-guest-link {
+  transition: opacity .2s ease, color .2s ease;
+}
+
+.scan-submit-btn {
+  transition: background .2s ease, border-color .2s ease, color .2s ease;
+}

@@ -369,7 +369,7 @@ export const NewsListPage: React.FC = () => {
         )}
 
         {!isLoading && !isError && heroArticle && (
-          <div className="nl-top-block">
+          <div className="nl-top-block" data-reveal>
             <section className="nl-top-lead" aria-label="Bài viết tiêu điểm">
               <NewsLeadStory item={heroArticle} lang={lang} />
             </section>
@@ -388,7 +388,7 @@ export const NewsListPage: React.FC = () => {
         )}
 
         {!isLoading && !isError && feedArticles.length > 0 && (
-          <section id="news-feed-section" className="nl-feed-section" aria-label={lang === 'vi' ? 'Danh sách bài viết' : tNews(lang, 'latest')}>
+          <section id="news-feed-section" className="nl-feed-section" aria-label={lang === 'vi' ? 'Danh sách bài viết' : tNews(lang, 'latest')} data-reveal>
             <div className="nl-feed-header">
               <h2 className="nl-feed-title">{tNews(lang, 'latest')}</h2>
             </div>

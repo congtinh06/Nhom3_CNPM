@@ -149,7 +149,7 @@ export const AccountPage: React.FC = () => {
           <p className="ac-muted">{t.loading}</p>
         </div>
       ) : (
-        <div className="ac-shell">
+        <div className="ac-shell" data-reveal>
           <aside className="ac-aside">
             <div className="ac-identity">
               <div className="ac-avatar" aria-hidden="true">

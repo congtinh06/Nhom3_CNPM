@@ -1114,3 +1114,12 @@
     height: 44px !important;
   }
 }
+
+/* Smooth hover: order rows and the cancel action. */
+.order-summary-item {
+  transition: border-color .2s ease, background-color .2s ease;
+}
+
+.order-cancel-btn {
+  transition: background-color .2s ease, border-color .2s ease, color .2s ease;
+}

@@ -1248,3 +1248,13 @@
     transition: none;
   }
 }
+
+/* Smooth hover: account buttons and links. */
+.ac-card-link {
+  transition: color .2s ease;
+}
+
+.ac-btn-primary,
+.ac-btn-ghost {
+  transition: background-color .2s ease, border-color .2s ease, color .2s ease, box-shadow .2s ease;
+}

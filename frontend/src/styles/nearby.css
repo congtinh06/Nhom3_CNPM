@@ -5997,3 +5997,18 @@ body:has(.nearby-sv-root),
     margin-top: 10px;
   }
 }
+
+/* Smooth hover: map controls, stop rows and player buttons. */
+.nearby-sv-root .nearby-map-view-route-btn,
+.nearby-sv-root .tile-error-retry-btn,
+.nearby-sv-root .selected-card-close-btn,
+.nearby-sv-root .detail-play-btn,
+.player-close-btn {
+  transition: background .2s ease, border-color .2s ease, color .2s ease, box-shadow .2s ease;
+}
+
+.nearby-sv-root .stop-row-thumb,
+.nearby-sv-root .stop-number-badge,
+.nearby-sv-root .stop-row-chevron {
+  transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease, color .2s ease;
+}

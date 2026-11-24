@@ -21,7 +21,6 @@ const isNativeScrollRoute = (pathname: string): boolean => {
     pathname.startsWith('/diem-du-lich') ||
     pathname.startsWith('/thuyet-minh') ||
     pathname.startsWith('/gan-toi') ||
-    pathname.startsWith('/lien-he') ||
     pathname.startsWith('/van-hoa') ||
     pathname.startsWith('/culture') ||
     pathname.startsWith('/kham-pha') ||
