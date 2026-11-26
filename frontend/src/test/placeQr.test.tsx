@@ -1,5 +1,5 @@
-import { describe, it, expect, afterEach, vi } from 'vitest';
-import { render } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
+import { afterEach, beforeEach, describe, it, expect, vi } from 'vitest';
 import { PlaceQR, isQrAvailable, resolveQrBaseUrl } from '../components/common/PlaceQR';
 
 describe('PlaceQR - availability, origin and sample mode (Hạng mục 3)', () => {
@@ -35,5 +35,66 @@ describe('PlaceQR - availability, origin and sample mode (Hạng mục 3)', () =
 
     vi.stubEnv('VITE_QR_BASE_URL', '   ');
     expect(resolveQrBaseUrl()).toBe(window.location.origin);
+  });
+});
+
+describe('PlaceQR - one-minute expiry', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('hides the QR after the lifetime and can generate a fresh one', () => {
+    const poi = { qrToken: 'qr-ben-thanh-01' };
+    const { container } = render(<PlaceQR poi={poi} lang="vi" expiresInSeconds={60} />);
+
+    expect(screen.getByRole('timer')).toHaveTextContent('Mã hết hạn sau 60s');
+    expect(container.querySelector('canvas')).not.toBeNull();
+
+    act(() => {
+      vi.advanceTimersByTime(60_000);
+    });
+
+    expect(screen.getByText('Mã QR đã hết hạn')).toBeInTheDocument();
+    expect(container.querySelector('canvas')).toBeNull();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Tạo mã mới' }));
+
+    expect(screen.getByRole('timer')).toHaveTextContent('Mã hết hạn sau 60s');
+    expect(container.querySelector('canvas')).not.toBeNull();
+  });
+
+  it('generates a fresh QR automatically a few seconds after expiry', () => {
+    const poi = { qrToken: 'qr-ben-thanh-01' };
+    const { container } = render(
+      <PlaceQR poi={poi} lang="vi" showActions expiresInSeconds={60} />
+    );
+
+    act(() => {
+      vi.advanceTimersByTime(60_000);
+    });
+    expect(screen.getByText('Mã QR đã hết hạn')).toBeInTheDocument();
+
+    act(() => {
+      vi.advanceTimersByTime(3_000);
+    });
+    expect(screen.queryByText('Mã QR đã hết hạn')).toBeNull();
+    expect(screen.getByRole('timer')).toHaveTextContent('Mã hết hạn sau 60s');
+    expect(container.querySelector('canvas')).not.toBeNull();
+  });
+
+  it('never expires when no lifetime is provided', () => {
+    const poi = { qrToken: 'qr-ben-thanh-01' };
+    const { container } = render(<PlaceQR poi={poi} lang="vi" />);
+
+    act(() => {
+      vi.advanceTimersByTime(120_000);
+    });
+
+    expect(screen.queryByText('Mã QR đã hết hạn')).toBeNull();
+    expect(container.querySelector('canvas')).not.toBeNull();
   });
 });

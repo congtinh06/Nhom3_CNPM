@@ -4,7 +4,7 @@ import { GeoPoi } from '../../pages/NearbyPage';
 import { SupportedLanguage } from '../../types';
 import { splitTranscriptIntoSentences } from '../../hooks/useNearbyAudio';
 import { t } from '../../content/nearbyI18n';
-import { PlaceQR, isQrAvailable } from '../common/PlaceQR';
+import { POI_QR_LIFETIME_SECONDS, PlaceQR, isQrAvailable } from '../common/PlaceQR';
 
 export const resolveImagePath = (imgPath?: string, slug?: string): string => {
   const base = import.meta.env.BASE_URL || '/';
@@ -455,6 +455,7 @@ export const PoiCard = React.memo<PoiCardProps>(function PoiCard({
               lang={currentLang}
               label={displayName}
               showActions
+              expiresInSeconds={POI_QR_LIFETIME_SECONDS}
             />
           </div>
         </div>

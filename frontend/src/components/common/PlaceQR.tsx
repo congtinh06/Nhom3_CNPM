@@ -1,4 +1,4 @@
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { QRCodeCanvas } from 'qrcode.react';
 import { buildPlaceQrContent } from '../../lib/placeQrContent.mjs';
 import { resolveQrBaseUrl } from '../../lib/qrOrigin';
@@ -29,9 +29,20 @@ export interface PlaceQRProps {
   className?: string;
   showHint?: boolean;
   showActions?: boolean;
+  /** When set, the QR expires after this many seconds and must be refreshed. */
+  expiresInSeconds?: number;
+  /** Hide the countdown when the parent already displays one. */
+  showCountdown?: boolean;
+  onExpire?: () => void;
 }
 
 const SAMPLE_TOKEN_PREFIX = 'sample_qr_';
+
+/** A POI QR shown in the app is only valid for one minute. */
+export const POI_QR_LIFETIME_SECONDS = 60;
+
+/** Brief expired state before a fresh QR is generated automatically. */
+const QR_REFRESH_DELAY_MS = 3000;
 
 /** Minimum edge length (px) of the exported PNG, per the QR spec. */
 const EXPORT_SIZE = 1024;
@@ -71,12 +82,65 @@ export const PlaceQR: React.FC<PlaceQRProps> = ({
   className = '',
   showHint = true,
   showActions = false,
+  expiresInSeconds = 0,
+  showCountdown = true,
+  onExpire,
 }) => {
   const codeRef = useRef<HTMLDivElement | null>(null);
   const exportRef = useRef<HTMLDivElement | null>(null);
   const [copied, setCopied] = useState(false);
+  const [expired, setExpired] = useState(false);
+  const [secondsLeft, setSecondsLeft] = useState(expiresInSeconds);
+  const [generation, setGeneration] = useState(0);
+  const onExpireRef = useRef(onExpire);
+
+  useEffect(() => {
+    onExpireRef.current = onExpire;
+  }, [onExpire]);
 
   const content = buildPoiQrUrl(poi);
+  const lifetime = Number.isFinite(expiresInSeconds) && expiresInSeconds > 0 ? expiresInSeconds : 0;
+
+  // Deadline-based countdown: a busy main thread cannot extend the QR lifetime.
+  useEffect(() => {
+    if (!lifetime || !content) {
+      setExpired(false);
+      return undefined;
+    }
+
+    const deadline = Date.now() + lifetime * 1000;
+    let fired = false;
+    const tick = () => {
+      const remaining = Math.max(0, Math.ceil((deadline - Date.now()) / 1000));
+      setSecondsLeft(remaining);
+      if (remaining <= 0 && !fired) {
+        fired = true;
+        setExpired(true);
+        setCopied(false);
+        onExpireRef.current?.();
+      }
+    };
+
+    setSecondsLeft(lifetime);
+    setExpired(false);
+    tick();
+    const timer = window.setInterval(tick, 250);
+    return () => {
+      fired = true;
+      window.clearInterval(timer);
+    };
+  }, [lifetime, content, generation]);
+
+  const handleRefresh = useCallback(() => {
+    setGeneration((value) => value + 1);
+  }, []);
+
+  // Show that the code died, then quietly issue a fresh one with a new minute.
+  useEffect(() => {
+    if (!expired || !lifetime) return undefined;
+    const timer = window.setTimeout(handleRefresh, QR_REFRESH_DELAY_MS);
+    return () => window.clearTimeout(timer);
+  }, [expired, lifetime, handleRefresh]);
 
   const handleDownload = useCallback(() => {
     if (!content) return;
@@ -138,6 +202,24 @@ export const PlaceQR: React.FC<PlaceQRProps> = ({
 
   if (!content) return null;
 
+  if (expired) {
+    return (
+      <div
+        className={`place-qr ${className}`.trim()}
+        data-qr-token={poi?.qrToken}
+        data-qr-expired="true"
+      >
+        <div className="place-qr-expired" role="status">
+          <p className="place-qr-expired-text">{t(lang, 'qrExpired')}</p>
+          <p className="place-qr-expired-hint">{t(lang, 'qrRefreshingSoon')}</p>
+          <button type="button" className="place-qr-action" onClick={handleRefresh}>
+            {t(lang, 'qrRefresh')}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className={`place-qr ${className}`.trim()} data-qr-token={poi?.qrToken}>
       <div className="place-qr-code" ref={codeRef}>
@@ -151,6 +233,11 @@ export const PlaceQR: React.FC<PlaceQRProps> = ({
         />
       </div>
       {showHint && <p className="place-qr-hint">{t(lang, 'qrScanHint')}</p>}
+      {lifetime > 0 && showCountdown && (
+        <p className="place-qr-expiry" role="timer">
+          {t(lang, 'qrExpiresIn', { seconds: secondsLeft })}
+        </p>
+      )}
       {showActions && (
         <div className="place-qr-actions">
           <button type="button" className="place-qr-action" onClick={handleDownload}>

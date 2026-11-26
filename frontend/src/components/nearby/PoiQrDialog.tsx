@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { X } from 'lucide-react';
 import { GeoPoi } from '../../pages/NearbyPage';
 import { SupportedLanguage } from '../../types';
-import { PlaceQR, buildPoiQrUrl } from '../common/PlaceQR';
+import { POI_QR_LIFETIME_SECONDS, PlaceQR, buildPoiQrUrl } from '../common/PlaceQR';
 import { t } from '../../content/nearbyI18n';
 
 interface PoiQrDialogProps {
@@ -12,8 +12,8 @@ interface PoiQrDialogProps {
   onClose: () => void;
 }
 
-/** The dialog dismisses itself after this many seconds. */
-export const QR_AUTO_CLOSE_SECONDS = 30;
+/** The dialog lives exactly as long as the one-minute QR it displays. */
+export const QR_AUTO_CLOSE_SECONDS = POI_QR_LIFETIME_SECONDS;
 
 /**
  * Compact "listen on your phone" dialog: one ~160px QR code plus the small
@@ -140,6 +140,7 @@ export const PoiQrDialog: React.FC<PoiQrDialogProps> = ({
           orderNumber={poi.stopOrder}
           showHint
           showActions
+          expiresInSeconds={POI_QR_LIFETIME_SECONDS}
           className="nearby-qr-code"
         />
 

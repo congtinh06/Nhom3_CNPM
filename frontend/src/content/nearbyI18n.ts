@@ -129,6 +129,10 @@ export type NearbyKey =
   | 'qrListenOnPhone'
   | 'qrCloseAria'
   | 'qrAutoCloseIn'
+  | 'qrExpiresIn'
+  | 'qrExpired'
+  | 'qrRefresh'
+  | 'qrRefreshingSoon'
   | 'myLocationLocating'
   | 'simPanelTitle'
   | 'simPickStopLabel'
@@ -510,6 +514,10 @@ export const NEARBY_DICTIONARY: Record<SupportedLanguage, Record<NearbyKey, stri
     qrListenOnPhone: 'Nghe trên điện thoại',
     qrCloseAria: 'Đóng mã QR',
     qrAutoCloseIn: 'Tự động đóng sau {seconds} giây',
+    qrExpiresIn: 'Mã hết hạn sau {seconds}s',
+    qrExpired: 'Mã QR đã hết hạn',
+    qrRefresh: 'Tạo mã mới',
+    qrRefreshingSoon: 'Đang tạo mã mới sau 3 giây...',
     myLocationLocating: 'Đang xác định vị trí...',
     simPanelTitle: 'Giả lập vị trí',
     simPickStopLabel: 'Chọn một điểm dừng',
@@ -775,6 +783,10 @@ export const NEARBY_DICTIONARY: Record<SupportedLanguage, Record<NearbyKey, stri
     qrListenOnPhone: 'Listen on your phone',
     qrCloseAria: 'Close QR code',
     qrAutoCloseIn: 'Closes automatically in {seconds}s',
+    qrExpiresIn: 'QR expires in {seconds}s',
+    qrExpired: 'QR code expired',
+    qrRefresh: 'Refresh QR',
+    qrRefreshingSoon: 'Generating a new QR in 3 seconds...',
     myLocationLocating: 'Locating...',
     simPanelTitle: 'Simulate location',
     simPickStopLabel: 'Pick a stop',
@@ -1039,6 +1051,10 @@ export const NEARBY_DICTIONARY: Record<SupportedLanguage, Record<NearbyKey, stri
     qrListenOnPhone: '휴대폰으로 듣기',
     qrCloseAria: 'QR 코드 닫기',
     qrAutoCloseIn: '{seconds}초 후 자동으로 닫힙니다',
+    qrExpiresIn: '{seconds}초 후 QR 코드 만료',
+    qrExpired: 'QR 코드가 만료되었습니다',
+    qrRefresh: 'QR 다시 만들기',
+    qrRefreshingSoon: '3초 후 새 QR 코드를 생성합니다...',
     myLocationLocating: '위치 확인 중...',
     simPanelTitle: '위치 시뮬레이션',
     simPickStopLabel: '명소 선택',
@@ -1303,6 +1319,10 @@ export const NEARBY_DICTIONARY: Record<SupportedLanguage, Record<NearbyKey, stri
     qrListenOnPhone: 'スマートフォンで聴く',
     qrCloseAria: 'QRコードを閉じる',
     qrAutoCloseIn: '{seconds}秒後に自動的に閉じます',
+    qrExpiresIn: '{seconds}秒でQRコードが失効します',
+    qrExpired: 'QRコードの有効期限が切れました',
+    qrRefresh: 'QRを再生成',
+    qrRefreshingSoon: '3秒後に新しいQRコードを生成します...',
     myLocationLocating: '位置情報を取得中...',
     simPanelTitle: '位置シミュレーション',
     simPickStopLabel: 'スポットを選択',
@@ -1353,6 +1373,10 @@ export const UNREVIEWED_CJK_KEYS: NearbyKey[] = [
   'qrListenOnPhone',
   'qrCloseAria',
   'qrAutoCloseIn',
+  'qrExpiresIn',
+  'qrExpired',
+  'qrRefresh',
+  'qrRefreshingSoon',
   'myLocationLocating',
   'simPanelTitle',
   'simPickStopLabel',

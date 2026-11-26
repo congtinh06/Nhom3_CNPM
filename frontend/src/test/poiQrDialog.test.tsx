@@ -6,6 +6,7 @@ import type { GeoPoi } from '../pages/NearbyPage';
 // The QR canvas needs a real 2D context, which jsdom does not provide. The
 // countdown behaviour is what this file checks, so stub the QR block out.
 vi.mock('../components/common/PlaceQR', () => ({
+  POI_QR_LIFETIME_SECONDS: 60,
   PlaceQR: () => <div data-testid="place-qr" />,
   buildPoiQrUrl: () => 'https://echora.test/qr/ben-thanh',
 }));
@@ -53,7 +54,7 @@ describe('PoiQrDialog auto-close countdown', () => {
       vi.advanceTimersByTime(5000);
     });
 
-    expect(screen.getByRole('timer')).toHaveTextContent('25 giây');
+    expect(screen.getByRole('timer')).toHaveTextContent(`${QR_AUTO_CLOSE_SECONDS - 5} giây`);
   });
 
   it('closes itself once the countdown reaches zero', () => {
