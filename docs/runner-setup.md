@@ -28,7 +28,16 @@ Runner chạy trong phiên đăng nhập của chủ máy để dùng được D
 
 - Nhãn: mặc định `self-hosted`, `Windows`, `X64`; thêm `echora`.
 - `cd.yml` dùng `runs-on: [self-hosted, echora]`.
-- Repo variables: `HEALTH_URL` (`https://<id>.ngrok-free.dev/actuator/health`, ngrok trỏ gateway 18080), `DEPLOY_DIR` (ví dụ `F:\Nhom3_CNPM`).
+- Repo variables: `HEALTH_URL` (URL công khai qua ngrok dùng cho smoke test, ví dụ
+  `https://<id>.ngrok-free.dev/api/content/products?size=1&sortBy=sortOrder`), `DEPLOY_DIR`
+  (ví dụ `F:\echora-deploy`).
+- Tunnel ngrok phải trỏ vào **frontend container** (`FRONTEND_HOST_PORT`, mặc định `8088`),
+  không trỏ vào Vite dev `5173`: nginx của frontend phục vụ cả SPA lẫn proxy `/api/**`
+  sang gateway, và container luôn chạy sau deploy. Nếu tunnel trỏ vào Vite mà Vite đã tắt,
+  ngrok trả `502 Bad Gateway`.
+- Job `deploy` có step `Ensure public tunnel points at the deployed frontend`
+  (`scripts/deploy/ensure-ngrok-tunnel.ps1`) tự kiểm tra và khởi động lại ngrok đúng port
+  trước khi chạy smoke test.
 
 ## 4. Cài đặt repo
 

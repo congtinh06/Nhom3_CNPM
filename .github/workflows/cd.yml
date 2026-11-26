@@ -316,6 +316,35 @@ jobs:
           printf '%s' "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_ACTOR" --password-stdin
           bash scripts/deploy/deploy-local.sh
 
+      # Ngrok là tunnel do chủ máy tự bật. Nếu nó trỏ vào Vite dev (5173) mà Vite
+      # đã tắt, ngrok trả 502 và smoke test fail dù stack đã deploy xong. Step này
+      # tự trỏ tunnel về container frontend (8088) - port luôn sống sau deploy.
+      - name: Ensure public tunnel points at the deployed frontend
+        if: success()
+        shell: powershell
+        env:
+          HEALTH_URL: ${{ secrets.HEALTH_URL }}
+          FRONTEND_HOST_PORT: ${{ vars.FRONTEND_HOST_PORT }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if (-not $env:HEALTH_URL) {
+            throw "secrets.HEALTH_URL is required for the public smoke test."
+          }
+          $publicHost = ([uri]$env:HEALTH_URL).Host
+          $port = 8088
+          if ($env:FRONTEND_HOST_PORT -match '^\d+$') {
+            $port = [int]$env:FRONTEND_HOST_PORT
+          } else {
+            $envFile = Join-Path $env:DEPLOY_DIR '.env'
+            if (Test-Path $envFile) {
+              $line = Select-String -Path $envFile -Pattern '^FRONTEND_HOST_PORT=' | Select-Object -Last 1
+              if ($line -and ($line.Line -split '=', 2)[1].Trim() -match '^\d+$') {
+                $port = [int](($line.Line -split '=', 2)[1].Trim())
+              }
+            }
+          }
+          & (Join-Path $env:GITHUB_WORKSPACE 'scripts/deploy/ensure-ngrok-tunnel.ps1') -PublicHost $publicHost -Port $port
+
       - name: Smoke test public URL
         id: smoke
         if: success()
@@ -328,10 +357,14 @@ jobs:
           temp_body="$temp_dir/smoke-body-$GITHUB_RUN_ID.txt"
           trap 'rm -f "$temp_body"' EXIT
 
+          http_code=000
           for attempt in $(seq 1 12); do
             rm -f "$temp_body"
-            if curl -fsS --max-time 10 -H "ngrok-skip-browser-warning: 1" -o "$temp_body" "$HEALTH_URL" && grep -q '"content"' "$temp_body"; then
-              echo "Smoke test OK."
+            # Không dùng -f: cần giữ body/thân lỗi để in ra khi fail.
+            http_code="$(curl -sS --max-time 10 -H "ngrok-skip-browser-warning: 1" \
+              -o "$temp_body" -w '%{http_code}' "$HEALTH_URL" || true)"
+            if [ "$http_code" = "200" ] && grep -Eq '"(content|status)"' "$temp_body"; then
+              echo "Smoke test OK (HTTP ${http_code})."
               exit 0
             fi
             sleep 5
@@ -341,7 +374,12 @@ jobs:
           if [ -f "$temp_body" ]; then
             last_bytes="$(wc -c < "$temp_body" | tr -d ' ')"
           fi
-          echo "Smoke test FAILED after 12 attempts (last body size: ${last_bytes} bytes)." >&2
+          echo "::error::Smoke test FAILED after 12 attempts (last HTTP ${http_code}, body ${last_bytes} bytes). Nếu là 502, kiểm tra tunnel ngrok trên máy runner: ngrok phải trỏ vào 127.0.0.1:8088."
+          echo "Smoke test FAILED after 12 attempts (last HTTP ${http_code}, body ${last_bytes} bytes)." >&2
+          if [ -s "$temp_body" ]; then
+            head -c 500 "$temp_body" >&2 || true
+            echo >&2
+          fi
           exit 1
 
       - name: Write deploy summary
