@@ -47,22 +47,28 @@ describe('PlaceQR - one-minute expiry', () => {
     vi.useRealTimers();
   });
 
-  it('hides the QR after the lifetime and can generate a fresh one', () => {
+  it('blurs the QR after the lifetime, shows a warning and can generate a fresh one', () => {
     const poi = { qrToken: 'qr-ben-thanh-01' };
     const { container } = render(<PlaceQR poi={poi} lang="vi" expiresInSeconds={60} />);
 
     expect(screen.getByRole('timer')).toHaveTextContent('Mã hết hạn sau 60s');
     expect(container.querySelector('canvas')).not.toBeNull();
+    expect(container.querySelector('.place-qr')).not.toHaveAttribute('data-qr-expired');
 
     act(() => {
       vi.advanceTimersByTime(60_000);
     });
 
     expect(screen.getByText('Mã QR đã hết hạn')).toBeInTheDocument();
-    expect(container.querySelector('canvas')).toBeNull();
+    expect(screen.getByText('Đang tạo mã mới sau 3 giây...')).toBeInTheDocument();
+    // Mã cũ vẫn còn trong DOM nhưng bị làm mờ + phủ lớp cảnh báo, không quét được.
+    expect(container.querySelector('canvas')).not.toBeNull();
+    expect(container.querySelector('.place-qr')).toHaveAttribute('data-qr-expired', 'true');
+    expect(screen.queryByRole('timer')).toBeNull();
 
     fireEvent.click(screen.getByRole('button', { name: 'Tạo mã mới' }));
 
+    expect(screen.queryByText('Mã QR đã hết hạn')).toBeNull();
     expect(screen.getByRole('timer')).toHaveTextContent('Mã hết hạn sau 60s');
     expect(container.querySelector('canvas')).not.toBeNull();
   });

@@ -1,10 +1,10 @@
 import { act, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { PoiQrDialog, QR_AUTO_CLOSE_SECONDS } from '../components/nearby/PoiQrDialog';
+import { PoiQrDialog } from '../components/nearby/PoiQrDialog';
 import type { GeoPoi } from '../pages/NearbyPage';
 
 // The QR canvas needs a real 2D context, which jsdom does not provide. The
-// countdown behaviour is what this file checks, so stub the QR block out.
+// dialog behaviour is what this file checks, so stub the QR block out.
 vi.mock('../components/common/PlaceQR', () => ({
   POI_QR_LIFETIME_SECONDS: 60,
   PlaceQR: () => <div data-testid="place-qr" />,
@@ -31,7 +31,7 @@ const poi = {
 
 const getPoiName = (target: GeoPoi) => target.name.vi;
 
-describe('PoiQrDialog auto-close countdown', () => {
+describe('PoiQrDialog lifetime', () => {
   beforeEach(() => {
     vi.useFakeTimers();
   });
@@ -40,37 +40,24 @@ describe('PoiQrDialog auto-close countdown', () => {
     vi.useRealTimers();
   });
 
-  it('keeps the remaining seconds in the accessibility tree', () => {
-    render(
-      <PoiQrDialog poi={poi} currentLang="vi" getPoiName={getPoiName} onClose={vi.fn()} />
-    );
+  it('renders the QR block and keeps the dialog open', () => {
+    render(<PoiQrDialog poi={poi} currentLang="vi" getPoiName={getPoiName} onClose={vi.fn()} />);
 
     expect(screen.getByRole('dialog')).toBeInTheDocument();
-    expect(screen.getByRole('timer')).toHaveTextContent(
-      `Tự động đóng sau ${QR_AUTO_CLOSE_SECONDS} giây`
-    );
-
-    act(() => {
-      vi.advanceTimersByTime(5000);
-    });
-
-    expect(screen.getByRole('timer')).toHaveTextContent(`${QR_AUTO_CLOSE_SECONDS - 5} giây`);
+    expect(screen.getByTestId('place-qr')).toBeInTheDocument();
   });
 
-  it('closes itself once the countdown reaches zero', () => {
+  it('does not auto-close at the QR lifetime: the expired warning stays visible', () => {
     const onClose = vi.fn();
     render(<PoiQrDialog poi={poi} currentLang="vi" getPoiName={getPoiName} onClose={onClose} />);
 
     act(() => {
-      vi.advanceTimersByTime(QR_AUTO_CLOSE_SECONDS * 1000 - 1000);
+      vi.advanceTimersByTime(60_000);
     });
+
+    // PoiQrDialog không tự đóng; PlaceQR hiện lớp "mã đã hết hạn" + nút tạo lại.
     expect(onClose).not.toHaveBeenCalled();
-
-    act(() => {
-      vi.advanceTimersByTime(1000);
-    });
-
-    expect(onClose).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
   });
 
   it('does not fire onClose after unmounting early', () => {
@@ -89,15 +76,5 @@ describe('PoiQrDialog auto-close countdown', () => {
     });
 
     expect(onClose).not.toHaveBeenCalled();
-  });
-
-  it('localises the countdown text', () => {
-    render(
-      <PoiQrDialog poi={poi} currentLang="en" getPoiName={getPoiName} onClose={vi.fn()} />
-    );
-
-    expect(screen.getByRole('timer')).toHaveTextContent(
-      `Closes automatically in ${QR_AUTO_CLOSE_SECONDS}s`
-    );
   });
 });
