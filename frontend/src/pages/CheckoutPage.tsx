@@ -142,6 +142,7 @@ export function CheckoutPage() {
 
     if (!agreedTerms) return;
 
+    console.log('hello');
     setSubmitting(true);
     const idempotencyKey = generateUUID();
 
@@ -160,16 +161,16 @@ export function CheckoutPage() {
         formData.deliveryTime === 'morning'
           ? c.deliveryTimeMorning
           : formData.deliveryTime === 'afternoon'
-          ? c.deliveryTimeAfternoon
-          : formData.deliveryTime === 'evening'
-          ? c.deliveryTimeEvening
-          : '';
+            ? c.deliveryTimeAfternoon
+            : formData.deliveryTime === 'evening'
+              ? c.deliveryTimeEvening
+              : '';
 
       const noteParts = [
         formData.deliverToOther
           ? `Người nhận: ${formData.otherReceiverName.trim()} - ${cleanPhone(
-              formData.otherReceiverPhone
-            )}`
+            formData.otherReceiverPhone
+          )}`
           : '',
         deliveryTimeLabel ? `${c.deliveryTimeLabel}: ${deliveryTimeLabel}` : '',
         formData.note.trim(),
