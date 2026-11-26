@@ -47,55 +47,55 @@
   <path class="flow" d="M984 211V185"/>
   <text class="small" x="210" y="137">push / PR</text>
 
-  <rect x="24" y="252" width="1232" height="190" rx="12" fill="#fff" stroke="#d7e1e5"/>
-  <text class="row" x="42" y="280">CD · MAIN</text>
-  <path class="flow" d="M1140 211V264H127V294"/>
-  <text class="small" x="634" y="258">merge main</text>
+  <rect x="24" y="270" width="1232" height="202" rx="12" fill="#fff" stroke="#d7e1e5"/>
+  <text class="row" x="42" y="300">CD · MAIN</text>
+  <path class="flow" d="M1140 211V278H127V308"/>
+  <text class="small" x="600" y="273">merge main</text>
 
-  <rect class="card" x="40" y="300" width="175" height="70" rx="8"/>
-  <use href="#icon-githubactions" x="56" y="322" width="26" height="26" class="accent"/>
-  <text class="label" x="94" y="343">Verify CI</text>
-  <rect class="card" x="245" y="300" width="175" height="70" rx="8"/>
-  <use href="#icon-docker" x="260" y="322" width="28" height="26" class="accent"/>
-  <text class="label" x="296" y="343">Build Images</text>
-  <rect class="card" x="450" y="300" width="175" height="70" rx="8"/>
-  <use href="#icon-github" x="468" y="322" width="26" height="26" class="accent"/>
-  <text class="label" x="506" y="343">GHCR</text>
-  <rect class="card" x="655" y="300" width="175" height="70" rx="8"/>
-  <use href="#icon-docker" x="672" y="322" width="28" height="26" class="accent"/>
-  <text class="label" x="708" y="343">Deploy</text>
-  <rect class="card" x="860" y="300" width="175" height="70" rx="8"/>
-  <use href="#icon-ngrok" x="878" y="322" width="28" height="26" class="accent"/>
-  <text class="label" x="916" y="343">ngrok</text>
-  <rect class="card" x="1065" y="300" width="175" height="70" rx="8"/>
-  <use href="#icon-githubactions" x="1080" y="322" width="26" height="26" class="accent"/>
-  <text class="label" x="1118" y="343">Smoke Test</text>
-  <path class="flow" d="M215 335H245"/>
-  <path class="flow" d="M420 335H450"/>
-  <path class="flow" d="M625 335H655"/>
-  <path class="flow" d="M830 335H860"/>
-  <path class="flow" d="M1035 335H1065"/>
+  <rect class="card" x="40" y="318" width="175" height="70" rx="8"/>
+  <use href="#icon-githubactions" x="56" y="340" width="26" height="26" class="accent"/>
+  <text class="label" x="94" y="361">Verify CI</text>
+  <rect class="card" x="245" y="318" width="175" height="70" rx="8"/>
+  <use href="#icon-docker" x="260" y="340" width="28" height="26" class="accent"/>
+  <text class="label" x="296" y="361">Build Images</text>
+  <rect class="card" x="450" y="318" width="175" height="70" rx="8"/>
+  <use href="#icon-github" x="468" y="340" width="26" height="26" class="accent"/>
+  <text class="label" x="506" y="361">GHCR</text>
+  <rect class="card" x="655" y="318" width="175" height="70" rx="8"/>
+  <use href="#icon-docker" x="672" y="340" width="28" height="26" class="accent"/>
+  <text class="label" x="708" y="361">Deploy</text>
+  <rect class="card" x="860" y="318" width="175" height="70" rx="8"/>
+  <use href="#icon-ngrok" x="878" y="340" width="28" height="26" class="accent"/>
+  <text class="label" x="916" y="361">ngrok</text>
+  <rect class="card" x="1065" y="318" width="175" height="70" rx="8"/>
+  <use href="#icon-githubactions" x="1080" y="340" width="26" height="26" class="accent"/>
+  <text class="label" x="1118" y="361">Smoke Test</text>
+  <path class="flow" d="M215 353H245"/>
+  <path class="flow" d="M420 353H450"/>
+  <path class="flow" d="M625 353H655"/>
+  <path class="flow" d="M830 353H860"/>
+  <path class="flow" d="M1035 353H1065"/>
 
-  <rect x="24" y="456" width="1232" height="184" rx="12" fill="#fff" stroke="#d7e1e5"/>
-  <text class="row" x="42" y="484">TRUY CẬP</text>
-  <rect class="card" x="110" y="520" width="205" height="72" rx="8"/>
-  <use href="#icon-vercel" x="130" y="542" width="26" height="26" class="accent"/>
-  <text class="label" x="170" y="563">Vercel</text>
-  <rect class="card" x="370" y="520" width="205" height="72" rx="8"/>
-  <use href="#icon-ngrok" x="390" y="542" width="28" height="26" class="accent"/>
-  <text class="label" x="430" y="563">Tunnel</text>
-  <rect class="card" x="630" y="520" width="205" height="72" rx="8"/>
-  <use href="#icon-docker" x="648" y="542" width="28" height="26" class="accent"/>
-  <text class="label" x="688" y="563">Frontend</text>
-  <rect class="card" x="890" y="520" width="205" height="72" rx="8"/>
-  <use href="#icon-docker" x="908" y="542" width="28" height="26" class="accent"/>
-  <text class="label" x="948" y="563">API Gateway</text>
-  <path class="flow" d="M315 556H370"/>
-  <path class="flow" d="M575 556H630"/>
-  <path class="flow" d="M835 556H890"/>
+  <rect x="24" y="490" width="1232" height="166" rx="12" fill="#fff" stroke="#d7e1e5"/>
+  <text class="row" x="42" y="520">TRUY CẬP</text>
+  <rect class="card" x="110" y="548" width="205" height="72" rx="8"/>
+  <use href="#icon-vercel" x="130" y="570" width="26" height="26" class="accent"/>
+  <text class="label" x="170" y="591">Vercel</text>
+  <rect class="card" x="370" y="548" width="205" height="72" rx="8"/>
+  <use href="#icon-ngrok" x="390" y="570" width="28" height="26" class="accent"/>
+  <text class="label" x="430" y="591">Tunnel</text>
+  <rect class="card" x="630" y="548" width="205" height="72" rx="8"/>
+  <use href="#icon-docker" x="648" y="570" width="28" height="26" class="accent"/>
+  <text class="label" x="688" y="591">Frontend</text>
+  <rect class="card" x="890" y="548" width="205" height="72" rx="8"/>
+  <use href="#icon-docker" x="908" y="570" width="28" height="26" class="accent"/>
+  <text class="label" x="948" y="591">API Gateway</text>
+  <path class="flow" d="M315 584H370"/>
+  <path class="flow" d="M575 584H630"/>
+  <path class="flow" d="M835 584H890"/>
 
-  <rect x="965" y="390" width="220" height="68" rx="8" fill="#fff" stroke="#0f766e" stroke-width="1.7" stroke-dasharray="7 5"/>
-  <use href="#icon-githubactions" x="984" y="411" width="26" height="26" class="accent"/>
-  <text class="label" x="1023" y="432">Rollback Drill</text>
-  <text class="small" x="975" y="384">manual workflow</text>
+  <rect x="965" y="400" width="220" height="56" rx="8" fill="#fff" stroke="#0f766e" stroke-width="1.7" stroke-dasharray="7 5"/>
+  <use href="#icon-githubactions" x="984" y="415" width="26" height="26" class="accent"/>
+  <text class="label" x="1023" y="436">Rollback Drill</text>
+  <text class="small" x="965" y="393">manual workflow</text>
 </svg>

@@ -33,21 +33,21 @@
 
   <rect x="24" y="294" width="1152" height="206" rx="12" fill="#fff" stroke="#d7e1e5"/>
   <text class="section" x="44" y="323">2 · SỰ KIỆN THUYẾT MINH</text>
-  <rect class="card" x="95" y="363" width="240" height="86" rx="8"/>
-  <use href="#icon-spring" x="117" y="393" width="26" height="26" class="accent"/>
-  <text class="label" x="155" y="397">content-service</text><text class="small" x="155" y="421">phát POI events</text>
-  <rect class="card" x="466" y="351" width="250" height="110" rx="8"/>
-  <use href="#icon-rabbitmq" x="488" y="392" width="26" height="26" class="accent"/>
-  <text class="label" x="526" y="393">RabbitMQ</text><text class="small" x="526" y="417">echora.topic</text>
-  <rect class="card" x="847" y="363" width="250" height="86" rx="8"/>
-  <use href="#icon-spring" x="867" y="393" width="26" height="26" class="accent"/>
-  <text class="label" x="905" y="397">translation-tts</text><text class="small" x="905" y="421">dịch · tạo audio</text>
-  <path class="arrow" d="M335 389H466"/><path class="arrow" d="M716 389H847"/>
-  <path class="arrow" d="M847 433H716"/><path class="arrow" d="M466 433H335"/>
-  <text class="small" x="351" y="379">poi.created / poi.updated</text>
-  <text class="small" x="723" y="379">event</text>
-  <text class="small" x="726" y="456">audio progress / ready / failed</text>
-  <text class="small" x="351" y="456">trạng thái audio</text>
+  <rect class="card" x="72" y="359" width="242" height="100" rx="8"/>
+  <use href="#icon-spring" x="92" y="396" width="26" height="26" class="accent"/>
+  <text class="label" x="130" y="400">content-service</text><text class="small" x="130" y="424">phát POI events</text>
+  <rect class="card" x="475" y="359" width="250" height="100" rx="8"/>
+  <use href="#icon-rabbitmq" x="495" y="396" width="26" height="26" class="accent"/>
+  <text class="label" x="533" y="400">RabbitMQ</text><text class="small" x="533" y="424">echora.topic</text>
+  <rect class="card" x="886" y="359" width="242" height="100" rx="8"/>
+  <use href="#icon-spring" x="906" y="396" width="26" height="26" class="accent"/>
+  <text class="label" x="944" y="400">translation-tts</text><text class="small" x="944" y="424">dịch · tạo audio</text>
+  <path class="arrow" d="M314 391H475"/><path class="arrow" d="M725 391H886"/>
+  <path class="arrow" d="M886 431H725"/><path class="arrow" d="M475 431H314"/>
+  <text class="small" x="328" y="379">poi.created / poi.updated</text>
+  <text class="small" x="778" y="379">event</text>
+  <text class="small" x="764" y="454">audio progress / ready / failed</text>
+  <text class="small" x="330" y="454">trạng thái audio</text>
 
   <rect x="24" y="520" width="1152" height="106" rx="12" fill="#fff" stroke="#d7e1e5"/>
   <text class="section" x="44" y="549">3 · THỐNG KÊ (LUỒNG RIÊNG)</text>
