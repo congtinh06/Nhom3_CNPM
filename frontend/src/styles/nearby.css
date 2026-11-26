@@ -3173,15 +3173,29 @@ body:has(.nearby-sv-root):has(.nearby-sticky-player-bar.is-open) .ftr {
   font-weight: 600;
 }
 
+.place-qr-code {
+  position: relative;
+}
+
+.place-qr[data-qr-expired='true'] .place-qr-code canvas {
+  filter: blur(5px);
+  opacity: 0.35;
+  pointer-events: none;
+}
+
 .place-qr-expired {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
-  padding: 14px 18px;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px;
   border: 1px dashed rgba(120, 100, 85, 0.4);
-  border-radius: 10px;
-  background: rgba(120, 100, 85, 0.06);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.82);
 }
 
 .place-qr-expired-text {

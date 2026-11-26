@@ -202,26 +202,12 @@ export const PlaceQR: React.FC<PlaceQRProps> = ({
 
   if (!content) return null;
 
-  if (expired) {
-    return (
-      <div
-        className={`place-qr ${className}`.trim()}
-        data-qr-token={poi?.qrToken}
-        data-qr-expired="true"
-      >
-        <div className="place-qr-expired" role="status">
-          <p className="place-qr-expired-text">{t(lang, 'qrExpired')}</p>
-          <p className="place-qr-expired-hint">{t(lang, 'qrRefreshingSoon')}</p>
-          <button type="button" className="place-qr-action" onClick={handleRefresh}>
-            {t(lang, 'qrRefresh')}
-          </button>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className={`place-qr ${className}`.trim()} data-qr-token={poi?.qrToken}>
+    <div
+      className={`place-qr ${className}`.trim()}
+      data-qr-token={poi?.qrToken}
+      data-qr-expired={expired ? 'true' : undefined}
+    >
       <div className="place-qr-code" ref={codeRef}>
         <QRCodeCanvas
           value={content}
@@ -231,14 +217,24 @@ export const PlaceQR: React.FC<PlaceQRProps> = ({
           bgColor="#ffffff"
           fgColor="#000000"
         />
+        {expired && (
+          // Hết 60s: làm mờ mã cũ và phủ lớp cảnh báo, kèm nút tạo mã mới.
+          <div className="place-qr-expired" role="status" aria-live="polite">
+            <p className="place-qr-expired-text">{t(lang, 'qrExpired')}</p>
+            <p className="place-qr-expired-hint">{t(lang, 'qrRefreshingSoon')}</p>
+            <button type="button" className="place-qr-action" onClick={handleRefresh}>
+              {t(lang, 'qrRefresh')}
+            </button>
+          </div>
+        )}
       </div>
-      {showHint && <p className="place-qr-hint">{t(lang, 'qrScanHint')}</p>}
-      {lifetime > 0 && showCountdown && (
+      {!expired && showHint && <p className="place-qr-hint">{t(lang, 'qrScanHint')}</p>}
+      {!expired && lifetime > 0 && showCountdown && (
         <p className="place-qr-expiry" role="timer">
           {t(lang, 'qrExpiresIn', { seconds: secondsLeft })}
         </p>
       )}
-      {showActions && (
+      {!expired && showActions && (
         <div className="place-qr-actions">
           <button type="button" className="place-qr-action" onClick={handleDownload}>
             {t(lang, 'qrDownload')}

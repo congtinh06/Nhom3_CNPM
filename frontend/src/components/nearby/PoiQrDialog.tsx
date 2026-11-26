@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import { X } from 'lucide-react';
 import { GeoPoi } from '../../pages/NearbyPage';
 import { SupportedLanguage } from '../../types';
@@ -12,14 +12,11 @@ interface PoiQrDialogProps {
   onClose: () => void;
 }
 
-/** The dialog lives exactly as long as the one-minute QR it displays. */
-export const QR_AUTO_CLOSE_SECONDS = POI_QR_LIFETIME_SECONDS;
-
 /**
  * Compact "listen on your phone" dialog: one ~160px QR code plus the small
- * download / copy / share actions. Closes on Esc, a backdrop click, or
- * automatically once the on-screen countdown reaches zero; returns focus to
- * whatever triggered it.
+ * download / copy / share actions. Closes on Esc or a backdrop click; the QR
+ * itself expires after one minute and the dialog stays open to show the
+ * "expired" warning plus the regenerate button.
  */
 export const PoiQrDialog: React.FC<PoiQrDialogProps> = ({
   poi,
@@ -29,14 +26,12 @@ export const PoiQrDialog: React.FC<PoiQrDialogProps> = ({
 }) => {
   const closeBtnRef = useRef<HTMLButtonElement | null>(null);
   const previouslyFocusedRef = useRef<HTMLElement | null>(null);
-  // Keep the latest onClose in a ref so the countdown / key handlers never
-  // restart just because the parent re-rendered.
+  // Keep the latest onClose in a ref so the key handlers never restart just
+  // because the parent re-rendered.
   const onCloseRef = useRef(onClose);
   useEffect(() => {
     onCloseRef.current = onClose;
   }, [onClose]);
-
-  const [secondsLeft, setSecondsLeft] = useState(QR_AUTO_CLOSE_SECONDS);
 
   const poiName = getPoiName(poi);
 
@@ -69,30 +64,6 @@ export const PoiQrDialog: React.FC<PoiQrDialogProps> = ({
       }
     };
   }, []);
-
-  // Countdown: measured against a deadline so a busy main thread cannot make
-  // the dialog linger longer than promised.
-  useEffect(() => {
-    let closed = false;
-    const deadline = Date.now() + QR_AUTO_CLOSE_SECONDS * 1000;
-
-    const tick = () => {
-      const remaining = Math.max(0, Math.ceil((deadline - Date.now()) / 1000));
-      setSecondsLeft(remaining);
-      if (remaining <= 0 && !closed) {
-        closed = true;
-        onCloseRef.current();
-      }
-    };
-
-    setSecondsLeft(QR_AUTO_CLOSE_SECONDS);
-    const timer = window.setInterval(tick, 200);
-
-    return () => {
-      closed = true;
-      window.clearInterval(timer);
-    };
-  }, [poi.id]);
 
   const handleShare = useCallback(() => {
     const url = buildPoiQrUrl(poi);
@@ -147,11 +118,6 @@ export const PoiQrDialog: React.FC<PoiQrDialogProps> = ({
         <button type="button" className="nearby-qr-share" onClick={handleShare}>
           {t(currentLang, 'qrShare')}
         </button>
-
-        {/* The remaining time drives the auto-close but stays visually hidden. */}
-        <p className="nearby-qr-countdown sr-only" role="timer">
-          {t(currentLang, 'qrAutoCloseIn', { seconds: secondsLeft })}
-        </p>
       </div>
     </div>
   );
