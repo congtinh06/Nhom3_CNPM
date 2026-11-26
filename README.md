@@ -1,464 +1,124 @@
-# ECHORA — NỀN TẢNG HƯỚNG DẪN VIÊN DU LỊCH ĐA NGÔN NGỮ TỰ ĐỘNG
-## Multilingual Automated Tourist Audio Guide & Local Experience Platform
+# Echora
 
-[![Vite Build](https://img.shields.io/badge/Vite-5.4.21-646CFF?logo=vite&logoColor=white)](https://vitejs.dev/)
-[![React 18](https://img.shields.io/badge/React-18.3.1-61DAFB?logo=react&logoColor=black)](https://react.dev/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.5.3-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![Spring Boot](https://img.shields.io/badge/Spring_Boot-3.3.4-6DB33F?logo=springboot&logoColor=white)](https://spring.io/projects/spring-boot)
-[![SQL Server 2022](https://img.shields.io/badge/SQL_Server-2022-CC292B?logo=microsoftsqlserver&logoColor=white)](https://www.microsoft.com/sql-server)
-[![RabbitMQ](https://img.shields.io/badge/RabbitMQ-3.13-FF6600?logo=rabbitmq&logoColor=white)](https://www.rabbitmq.com/)
-[![Leaflet](https://img.shields.io/badge/Leaflet-1.9.4-199900?logo=leaflet&logoColor=white)](https://leafletjs.com/)
-[![Vitest](https://img.shields.io/badge/Vitest-635_Tests_Passed-green?logo=vitest&logoColor=white)](https://vitest.dev/)
-[![Backend Tests](https://img.shields.io/badge/Maven-840_Tests_Passed-green?logo=apachemaven&logoColor=white)](https://maven.apache.org/)
-[![Frontend CI](https://github.com/congtinh06/Nhom3_CNPM/actions/workflows/frontend-ci.yml/badge.svg)](https://github.com/congtinh06/Nhom3_CNPM/actions/workflows/frontend-ci.yml)
-[![CD](https://github.com/congtinh06/Nhom3_CNPM/actions/workflows/cd.yml/badge.svg)](https://github.com/congtinh06/Nhom3_CNPM/actions/workflows/cd.yml)
+## 1. Giới thiệu
 
-> **Tài liệu kỹ thuật:** [Kiến trúc](docs/ARCHITECTURE.md) · [Bảo mật](docs/SECURITY.md) · [CI/CD pipeline](docs/cicd-pipeline.md) · [Runner setup](docs/runner-setup.md) · [Kịch bản demo](docs/DEMO_SCRIPT.md) · [Q&A bảo vệ](docs/DEFENSE_QA.md)
+Echora là đồ án nhóm của học phần Software Engineering tại Saigon University, được lưu trong repo [Nhom3_CNPM](https://github.com/congtinh06/Nhom3_CNPM). Ứng dụng giúp du khách tìm hiểu các điểm tham quan phổ biến ở Thành phố Hồ Chí Minh qua bản đồ, vị trí GPS, mã QR và nội dung thuyết minh âm thanh nhiều ngôn ngữ. Hệ thống có thêm chức năng quản lý tài khoản, quyền nghe, sản phẩm địa phương và đơn hàng. [Bản demo](https://nhom3-cnpm.vercel.app) chỉ hoạt động khi máy deploy và tunnel ngrok đang chạy.
 
----
+## 2. Kiến trúc và luồng xử lý
 
+![Sơ đồ kiến trúc Echora](docs/images/architecture-readme.svg)
 
+Yêu cầu từ giao diện đi qua API Gateway đến các dịch vụ vị trí và nội dung; location-service gọi content-service qua REST để phân giải vị trí hoặc mã QR. Khi POI được tạo hay cập nhật, content-service phát event qua RabbitMQ exchange echora.topic để translation-tts-service dịch và tạo audio; dịch vụ này gửi event trạng thái về content-service. Analytics nhận và xử lý event qua luồng RabbitMQ riêng.
 
-## 1. Giới thiệu dự án (Overview)
+Các cổng dưới đây là cổng bên trong mạng Docker; Compose mặc định chỉ publish API Gateway và frontend ra máy host.
 
-**Echora** là giải pháp nền tảng du lịch số thông minh hỗ trợ du khách khám phá di sản và văn hóa đô thị Thành phố Hồ Chí Minh. Hệ thống kết hợp công nghệ định vị vệ tinh GPS, bản đồ tương tác mã nguồn mở **Leaflet + OpenStreetMap**, mã QR tại điểm dừng tham quan, cùng cơ chế **thuyết minh âm thanh tự động đa ngôn ngữ** (`vi`, `en`, `ja`, `ko`).
+| Service | Vai trò | Cổng nội bộ |
+|---|---|---:|
+| api-gateway | Định tuyến API | 8080 |
+| auth-service | Tài khoản và xác thực | 8086 |
+| content-service | Điểm tham quan và nội dung | 8085 |
+| location-service | GPS, lân cận và QR | 8082 |
+| translation-tts-service | Bản dịch và audio | 8083 |
+| analytics-service | Nhận event thống kê | 8081 |
+| order-service | Đơn hàng và quyền nghe | 8087 |
 
-Bên cạnh trải nghiệm audio tour, hệ thống tích hợp phân hệ **Văn hóa ẩm thực & Quà lưu niệm địa phương**, cho phép du khách khám phá các món ăn đặc trưng Sài Gòn, lưu giỏ hàng và trải nghiệm quy trình đặt hàng, thanh toán trực tuyến thuận tiện.
+Các routing key của luồng nội dung/audio gồm poi.created, poi.updated, poi.audio.progress, poi.audio.ready và poi.audio.failed. Các queue tương ứng là poi.created.queue, poi.updated.queue, poi.audio.progress.queue, poi.audio.ready.queue và poi.audio.failed.queue. Analytics dùng exchange echora.analytics, routing key analytics.event và queue analytics.event.queue. Các queue lỗi được chuyển qua dead-letter exchange.
 
-### Tính năng cốt lõi
+## 3. Công nghệ
 
-1. **Bản đồ Di sản Tương tác (Leaflet + OpenStreetMap)**:
-   - Hiển thị trực quan các điểm di sản trung tâm (Dinh Độc Lập, Nhà thờ Đức Bà, Bưu điện Trung tâm, Chợ Bến Thành, Bảo tàng Chứng tích Chiến tranh).
-   - Tự động hiển thị bán kính kích hoạt Geofence và vị trí GPS thực tế của du khách.
-2. **Thuyết minh Tự động & Đồng bộ Đa ngữ (Auto Narration & Multilingual Sync)**:
-   - Tự động kích hoạt bài thuyết minh khi du khách bước vào vùng ảnh hưởng (bán kính 40–55m).
-   - Chống phát lặp âm thanh trong vòng 10 phút, hàng đợi phát tuần tự không chồng chéo.
-   - Hỗ trợ 4 ngôn ngữ (`vi`, `en`, `ja`, `ko`) với cơ chế bù trừ từ điển thông minh khi dịch tự động gặp sự cố.
-3. **Chế độ Thử nghiệm Tọa độ (GPS Simulation Mode)**:
-   - Cho phép chọn vị trí mẫu giả lập (Sát di sản ≈10m, giữa tour, xa tour) để kiểm thử luồng tự động thuyết minh trực tiếp trên trình duyệt mà không cần di chuyển ngoài thực địa.
-4. **Khám phá Ẩm thực & Quà lưu niệm**:
-   - Danh mục món ăn, thức uống đặc trưng; trang chi tiết sản phẩm; giỏ hàng lưu trữ cục bộ và quy trình đặt hàng an toàn.
-5. **Bảo mật Xác thực Kép (JWT & HttpOnly Cookie)**:
-   - Phân quyền theo vai trò (`USER`, `ADMIN`); Access Token ngắn hạn lưu trong bộ nhớ và Refresh Token xoay vòng (Rotation) lưu trong HttpOnly Cookie chống tấn công XSS/CSRF.
+| Thành phần | Công nghệ |
+|---|---|
+| Giao diện | React, TypeScript, Vite, Leaflet |
+| Backend services | Java 17, Spring Boot 3.3.4 |
+| API Gateway | Spring Cloud Gateway |
+| Giao tiếp nội bộ | REST, OpenFeign, RabbitMQ |
+| Cơ sở dữ liệu | Microsoft SQL Server 2022, năm database nghiệp vụ |
+| Đóng gói và phục vụ giao diện | Docker Compose, Nginx |
+| CI/CD | GitHub Actions, GitHub Container Registry (GHCR), runner tự host |
+| Demo web | Vercel, cấu hình chuyển tiếp API qua tunnel ngrok |
 
----
+## 4. Cài đặt và chạy
 
-## 2. Kiến trúc hệ thống (Architecture)
+### Yêu cầu
 
-Hệ thống được thiết kế theo kiến trúc Microservices phân tán, các dịch vụ nghiệp vụ vận hành độc lập và liên lạc qua REST API cùng Message Broker:
+- Docker Desktop hoặc Docker Engine có Docker Compose v2.
+- Node.js 20 để tạo cấu hình và chạy script kiểm tra môi trường.
 
-```
-                            ┌──────────────────────────────────────────────┐
-                            │      Frontend SPA (React 18 + TS + Vite)     │
-                            │  Bản đồ Leaflet, Web Speech Audio, Giỏ hàng  │
-                            └──────────────────────┬───────────────────────┘
-                                                   │ HTTP / REST
-                                                   ▼
-                            ┌──────────────────────────────────────────────┐
-                            │            api-gateway (Spring Cloud)        │
-                            │  CORS, JWT Filter, Rate Limiting, Logging    │
-                            │           Cổng Host: 18080                   │
-                            └───────┬──────────────┬──────────────┬────────┘
-                                    │              │              │
-       ┌────────────────────────────┼──────────────┼──────────────┼────────────────────────┐
-       ▼                            ▼              ▼              ▼                        ▼
-┌──────────────────┐  ┌──────────────────┐┌──────────────────┐┌──────────────────┐┌──────────────────┐
-│   auth-service   │  │ content-service  ││ location-service ││translation-tts-  ││ analytics-service│
-│   (Port: 8086)   │  │ (Port: 8085)     ││ (Port: 8082)     ││service (Port:8083││ (Port: 8081)     │
-│ - JWT / Cookie   │  │ - POI, Lộ trình  ││ - GPS Haversine, ││ - Dịch tự động   ││ - Thu thập sự    │
-│ - Xác thực email │  │ - Món ăn/Ẩm thực ││   quét mã QR     ││ - edge-tts audio ││   kiện du lịch   │
-└────────┬─────────┘  └────────┬─────────┘└────────┬─────────┘└────────┬─────────┘└────────┬─────────┘
-         │                     │                   │                   │                   │
-         │                     │  AMQP Topic Exchange                  │                   │
-         │                     ├──────────────────────────────────────▶│                   │
-         │                     │ (poi.created / poi.updated)           │                   │
-         │                     │◀──────────────────────────────────────┤                   │
-         │                     │ (audio.ready / audio.failed)          │                   ▼
-         │                     └───────────────────────────────────────┼────────▶ RabbitMQ Broker
-         ▼                                                             ▼           Port: 5672
-   Microsoft SQL Server 2022                                           ▼           Dashboard: 15800
-   Host: 1433 (5 CSDL phân lập:
-   auth, content, translation, analytics, order)
-```
+### Khởi động toàn bộ hệ thống
 
-> Ngoài các dịch vụ trong sơ đồ, hệ thống còn có **`order-service`** (Port: `8087`) phụ trách giỏ hàng, đơn hàng và thanh toán VNPAY.
+Chạy các lệnh sau từ thư mục gốc:
 
-### 3.1. Contract API (OpenAPI / Swagger gộp tại Gateway)
-
-- Mọi backend service nghiệp vụ tích hợp `springdoc-openapi-starter-webmvc-ui:2.6.0` và API Gateway tích hợp `springdoc-openapi-starter-webflux-ui:2.6.0`.
-- API Gateway điều hướng `/v3/api-docs/<service>` tới từng service tương ứng (`RewritePath`) và cung cấp Swagger UI gộp tại `/swagger-ui/index.html` với danh sách chọn cả 6 microservices:
-  - **Auth Service**: `/v3/api-docs/auth` (30 public paths - xác thực, tài khoản, đổi mật khẩu, admin user, phiên QR)
-  - **Content Service**: `/v3/api-docs/content` (40 public paths - POI, danh mục, tin tức, sản phẩm, lộ trình, admin POI/audio)
-  - **Location Service**: `/v3/api-docs/location` (3 public paths - GPS geofence, quét QR, lân cận, định vị)
-  - **Translation & TTS Service**: `/v3/api-docs/translation` (1 public path - phát luồng âm thanh audio thuyết minh)
-  - **Analytics Service**: `/v3/api-docs/analytics` (6 public paths - sự kiện tương tác du khách, quét QR, xu hướng)
-  - **Order Service**: `/v3/api-docs/order` (18 public paths - đơn hàng, giỏ hàng, thanh toán VNPAY/VietQR)
-- Toàn bộ endpoint nội bộ (`/internal/**`, mang `X-Internal-Api-Key`) được ẩn (`@Hidden` và cấu hình lọc) khỏi tài liệu công khai.
-- Kiểm soát môi trường: Tài liệu OpenAPI được bật ở môi trường phát triển cục bộ (`ECHORA_DOCS_ENABLED=true`) và mặc định tắt trên môi trường deploy/production (`ECHORA_DOCS_ENABLED=false`). Khi tắt, gateway trả về mã lỗi 404 ProblemDetail (`RFC 7807`) và không làm lộ cấu trúc hệ thống.
-
-```text
-Cổng host mặc định:
-- api-gateway: 18080 (điều khiển qua GATEWAY_PORT trong .env)
-- frontend:    8088  (điều khiển qua FRONTEND_HOST_PORT trong .env)
-- mssql:       1433
-- rabbitmq:    5672 | dashboard 15800
-```
-
----
-
-## 3. Cấu trúc thư mục dự án
-
-```text
-Nhom3_CNPM/
-├── backend/
-│   ├── api-gateway/              # Cổng Gateway: kiểm soát an ninh, điều hướng, Rate Limit
-│   ├── auth-service/             # Xác thực người dùng, cấp phát JWT và Refresh Token
-│   ├── content-service/          # Quản lý điểm tham quan (POI), lộ trình, sản phẩm ẩm thực
-│   ├── location-service/         # Xử lý tính toán khoảng cách GPS (Haversine) và mã QR
-│   ├── translation-tts-service/  # Xử lý dịch thuật đa ngữ và tổng hợp âm thanh AI
-│   ├── analytics-service/        # Tiếp nhận sự kiện nghe thuyết minh bất đồng bộ
-│   └── order-service/            # Giỏ hàng, đơn hàng và thanh toán VNPAY
-├── frontend/
-│   ├── src/                      # Mã nguồn React SPA (bản đồ, trình phát audio, giỏ hàng)
-│   ├── package.json              # Danh mục dependencies Frontend
-│   └── vite.config.ts            # Cấu hình đóng gói Vite
-├── docker/
-│   ├── init-databases.sql        # Khởi tạo 5 CSDL + 5 login riêng biệt trên SQL Server
-│   └── seed-46-users.sql         # (Tùy chọn) Seed thêm người dùng mẫu vào echora_auth_db
-├── docs/
-│   ├── PRD.md                    # Đặc tả yêu cầu sản phẩm (Product Requirements Document)
-│   ├── ECHORA_REPORT_EN.docx     # Báo cáo đồ án (bản tiếng Anh)
-│   ├── FocusedUseCases.doc       # Đặc tả Use Case trọng tâm
-│   ├── Product_Requirements_Document.pdf
-│   ├── technical_report_UC_traceability.xlsx
-│   ├── AUDIT_REPORT.md
-│   ├── diagrams/                 # Sơ đồ Mermaid (kiến trúc, ERD, luồng nghiệp vụ)
-│   ├── images/                   # Ảnh sơ đồ đã render (PNG/SVG)
-│   └── report/                   # Báo cáo đồ án môn học (tài liệu nội bộ, không đưa lên Git)
-├── scripts/                      # Script tiện ích (bootstrap, ngrok QR, backup...)
-├── docker-compose.yml            # Khởi chạy toàn bộ hạ tầng CSDL, Broker và Microservices
-├── .env.example                  # Mẫu cấu hình biến môi trường
-└── README.md                     # Hướng dẫn tổng quan dự án
-```
-
----
-
-## 4. HƯỚNG DẪN CHẠY DỰ ÁN TRÊN MÁY (QUICK START GUIDE)
-
-Phần này hướng dẫn chi tiết cách chạy toàn bộ hệ thống bằng câu lệnh Terminal đơn giản, nhanh gọn.
-
-### 4.1. Điều kiện tiên quyết (Prerequisites)
-1. **Git**: Đã cài đặt trên máy ([Tải Git](https://git-scm.com/downloads)).
-2. **Docker Desktop**: Đã cài đặt và đang ở trạng thái **Running** ([Tải Docker Desktop](https://www.docker.com/products/docker-desktop/)).
-3. **Node.js 18+ & npm**: Cần thiết nếu muốn chạy riêng Frontend chế độ phát triển ([Tải Node.js](https://nodejs.org/)).
-
----
-
-### 4.2. Bước 1: Kéo mã nguồn mới nhất (Git Clone / Pull)
-Mở Terminal (PowerShell trên Windows hoặc Terminal trên macOS/Linux):
-
-```bash
-# 1. Tải mã nguồn về máy (nếu chưa clone)
-git clone https://github.com/congtinh06/Nhom3_CNPM.git
-
-# 2. Di chuyển vào thư mục dự án
-cd Nhom3_CNPM
-
-# 3. Kéo code mới nhất từ nhánh chính
-git checkout main
-git pull origin main
-```
-
-*(Mẹo: Nếu gặp xung đột do có file chỉnh sửa dở dang, chạy: `git stash` $\rightarrow$ `git pull origin main` $\rightarrow$ `git stash pop`)*
-
----
-
-### 4.3. Bước 2: Thiết lập file cấu hình môi trường (.env)
-
-**Cách khuyến nghị — một lệnh, secret ngẫu nhiên:**
-
-```powershell
-# Windows PowerShell (từ thư mục gốc repo)
-powershell -ExecutionPolicy Bypass -File scripts/bootstrap.ps1
-```
-
-```bash
-# Linux / macOS / Git Bash
-bash scripts/bootstrap.sh
-```
-
-Script `scripts/bootstrap.ps1|sh` sẽ: sinh `.env` + `frontend/.env`, kiểm tra cấu hình bằng `scripts/check-env.mjs`, rồi chạy `docker compose up -d --build`. Không cần sửa tay file `.env`.
-
-**Cách thủ công (nếu muốn tự chỉnh cấu hình):**
-
-```powershell
-node scripts/setup-env.mjs     # sinh .env với secret ngẫu nhiên
-node scripts/check-env.mjs     # kiểm tra trước khi chạy
-```
-
-> **Ghi chú:** `.env.example` chứa placeholder hợp lệ để `Copy-Item .env.example .env` vẫn khởi động được ở local. Tuyệt đối không dùng nguyên trạng cho production. `JWT_SECRET` phải dài tối thiểu 32 ký tự, nếu không `auth-service` sẽ từ chối khởi động (fail-closed).
-
----
-
-### 4.4. Bước 3: Khởi động toàn bộ hệ thống với Docker Compose
-Đảm bảo **Docker Desktop đang bật** (trạng thái Engine Running màu xanh), sau đó mở Terminal tại thư mục dự án và chạy lệnh:
-
-```bash
-# Build và chạy ngầm toàn bộ dịch vụ (lần đầu có thể mất 2-4 phút tải images)
+~~~sh
+node scripts/setup-env.mjs
+node scripts/check-env.mjs
 docker compose up -d --build
-
-# Kiểm tra trạng thái các container
 docker compose ps
-```
+~~~
 
-*Kết quả đạt yêu cầu:* Toàn bộ các dịch vụ hiển thị trạng thái `Up` hoặc `Up (healthy)`. File `init-databases.sql` sẽ tự động khởi tạo 5 CSDL độc lập trên SQL Server ngay trong lần chạy đầu tiên.
+Script setup-env tạo file .env và frontend/.env nếu chưa có, sinh các secret cục bộ và không in giá trị secret ra màn hình. Giữ các file này ở máy chạy; không đưa chúng lên Git. Compose khởi tạo SQL Server, RabbitMQ, các backend service, API Gateway và frontend.
 
-> **Quan trọng về mật khẩu CSDL:** `MSSQL_SA_PASSWORD` chỉ được áp dụng khi volume `mssql-data` còn trống (lần chạy đầu). Nếu máy đã từng chạy với mật khẩu khác rồi mới sửa `.env`, SQL Server vẫn giữ mật khẩu cũ. Khi đó phải xoá volume và khởi tạo lại: `docker compose down -v` rồi `docker compose up -d --build` (lệnh này xoá toàn bộ dữ liệu CSDL hiện có).
+### Cổng truy cập
 
-**Các lệnh hỗ trợ quản lý Docker:**
-```bash
-# Xem log trực tiếp của hệ thống (nhấn Ctrl+C để thoát)
-docker compose logs -f
-
-# Xem log riêng một dịch vụ cụ thể
-docker compose logs -f api-gateway
-
-# Dừng hệ thống (vẫn giữ nguyên dữ liệu trong CSDL)
-docker compose down
-
-# Khởi động lại hệ thống sạch từ đầu (xóa toàn bộ CSDL và dựng lại mới)
-docker compose down -v
-docker compose up -d --build
-```
-
-#### Nâng cấp từ bản cũ (Docker hardening — NHIỆM VỤ 1.2)
-
-Từ phiên bản này, các service backend chạy bằng user/group **`app` (uid/gid 10001)** và frontend chạy bằng **`nginx` (uid 101)**. Nếu máy bạn đã từng chạy bản cũ, các volume `audio-storage-data` và `product-uploads-data` được tạo bởi `root` sẽ khiến service không ghi được file (`Permission denied`). Chọn một trong hai cách sau:
-
-```bash
-# 1) Giữ dữ liệu cũ: chown lại volume cho uid/gid 10001
-docker compose down
-docker run --rm -v nhom3_cnpm_audio-storage-data:/data alpine chown -R 10001:10001 /data
-docker run --rm -v nhom3_cnpm_product-uploads-data:/data alpine chown -R 10001:10001 /data
-docker compose up -d --build
-
-# 2) Không cần dữ liệu cũ: xoá volume để Docker tạo lại với đúng owner
-docker compose down
-docker volume rm nhom3_cnpm_audio-storage-data nhom3_cnpm_product-uploads-data
-docker compose up -d --build
-```
-
-> Tên volume có tiền tố tên project Compose. Nếu project của bạn khác `nhom3_cnpm`, xem tên thật bằng `docker volume ls` rồi thay vào lệnh trên. Chỉ cần chown/xoá các volume liên quan tới file (audio, ảnh sản phẩm); volume CSDL `mssql-data` giữ nguyên.
-
----
-
-### 4.5. Bước 4: Kiểm tra các cổng và địa chỉ truy cập
-Sau khi hệ thống khởi động thành công, bạn mở trình duyệt truy cập:
-
-| Phân hệ / Dịch vụ | Đường dẫn (URL) | Tài khoản / Ghi chú |
+| Thành phần | Địa chỉ máy host mặc định | Bind |
 |---|---|---|
-| **Ứng dụng Web (Frontend Docker)** | `http://localhost:8088` | Giao diện du khách & bản đồ di sản |
-| **Giao diện Dev (Hot Reload)** | `http://localhost:5173` | Chạy khi gõ `npm run dev` ở thư mục frontend |
-| **Trang Quản trị (Admin)** | `http://localhost:8088/quan-tri` | Đăng nhập bằng tài khoản Quản trị viên (xem mục 5) |
-| **Cổng API Gateway** | `http://localhost:18080/actuator/health` | Kiểm tra sức khỏe toàn bộ microservices |
-| **Bảng quản trị RabbitMQ** | `http://localhost:15800` | User: `echora_app` / Pass: `<xem RABBITMQ_DEFAULT_PASS trong .env>` |
-| **Cơ sở dữ liệu SQL Server** | `localhost:1433` | User: `sa` / Pass: `<xem MSSQL_SA_PASSWORD trong .env>` |
+| Giao diện | http://localhost:8088 | 0.0.0.0 |
+| API Gateway | http://localhost:18080 | 127.0.0.1 |
+| SQL Server | localhost:1401 | 127.0.0.1 |
+| RabbitMQ AMQP | localhost:5672 | 127.0.0.1 |
+| RabbitMQ Management | http://localhost:15800 | 127.0.0.1 |
 
-> **Ghi chú về cổng API Gateway:** `docker-compose.yml` ánh xạ cổng host `${GATEWAY_PORT}` (mặc định `18080`) vào cổng `8080` bên trong container, tránh xung đột với cổng `8080` thường bị tiến trình nội bộ của Windows chiếm dụng. Muốn đổi cổng host, sửa `GATEWAY_PORT` trong `.env` rồi chạy lại `docker compose up -d`; Vite dev proxy cũng đang trỏ tới `http://localhost:18080`.
+Đã chạy Docker Compose config với .env.example và giá trị kiểm tra tạm thời cho các biến bắt buộc để tránh đọc .env. Kết quả của service frontend là host_ip 0.0.0.0, published 8088, target 8080, protocol tcp.
 
-> **Ghi chú về cổng Frontend:** container frontend dùng `nginxinc/nginx-unprivileged` chạy bằng uid 101 nên **lắng nghe cổng nội bộ `8080`** (không phải `80`). `docker-compose.yml` chỉ publish ra host qua `${FRONTEND_HOST_PORT}` (mặc định `8088` → `8080`). Khi gọi trực tiếp từ trình duyệt luôn dùng `http://localhost:8088`.
+### Cấu hình dev và thanh toán
 
----
+Để gọi trực tiếp từng backend từ máy phát triển, chạy:
 
-### 4.5b. Cấu trúc Hàng đợi RabbitMQ & Dead-Letter Queue (DLQ)
-Hệ thống sử dụng RabbitMQ để xử lý bất đồng bộ các sự kiện phân tích du khách và tiến trình tổng hợp audio:
+~~~sh
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build
+~~~
 
-| Dịch vụ | Exchange | Hàng đợi chính | Dead-Letter Exchange (DLX) | Dead-Letter Queue (DLQ) |
-|---|---|---|---|---|
-| **Analytics Service** | `echora.analytics` (topic, key: `analytics.event`) | `analytics.event.queue` | `echora.analytics.dlx` (direct) | `analytics.event.dlq` (key: `analytics.event.dlq`) |
-| **Translation TTS** | `echora.topic` (topic) | `poi.created.queue`, `poi.updated.queue` | `echora.dlx` (direct) | `poi.dlq` |
+> **Chỉ dùng docker-compose.dev.yml ở máy local.** Overlay này publish các cổng backend trên mọi network interface và bật payment mock. Không dùng overlay này khi deploy.
 
-> **Lưu ý xử lý lỗi PRECONDITION_FAILED (thao tác 1 lần khi cập nhật hàng đợi):**
-> Nếu broker RabbitMQ đã tồn tại hàng đợi `analytics.event.queue` từ phiên bản cũ (chưa được cấu hình đối số Dead-Letter Exchange `x-dead-letter-exchange`), việc khởi động `analytics-service` có thể báo lỗi `PRECONDITION_FAILED - inequivalent arg 'x-dead-letter-exchange'`.
-> Để khắc phục:
-> 1. Truy cập RabbitMQ Management tại `http://localhost:15800` (đăng nhập bằng tài khoản `echora_app`).
-> 2. Vào tab **Queues**, chọn hàng đợi `analytics.event.queue`.
-> 3. Kéo xuống mục **Delete / Purge**, chọn **Delete Queue**.
-> 4. Chạy lại `analytics-service` (`docker compose restart --no-deps analytics-service`); Spring AMQP sẽ tự động khởi tạo lại hàng đợi với đầy đủ cấu hình DLX & DLQ.
+VNPAY và VietQR đã được triển khai trong mã nguồn nhưng cần cấu hình; thanh toán end-to-end chưa được xác minh. Mock thanh toán tắt theo mặc định trong docker-compose.yml và được bật trong docker-compose.dev.yml. VNPAY cần cấu hình merchant và thông tin ký từ nhà cung cấp; cấu hình sandbox chưa được xác minh. VietQR có luồng xác nhận demo và xác nhận thủ công từ admin; không mô tả đây là xác nhận giao dịch tự động.
 
----
+Trong cấu hình demo, frontend/vercel.json đang ghi trực tiếp URL tunnel cho các route API và ảnh sản phẩm. scripts/start-demo.ps1 hướng dẫn cập nhật URL trong file này và có thể đã cũ. README không đưa URL tunnel cụ thể.
 
-### 4.6. Bước 5: Thao tác CSDL SQL Server 2022 qua Terminal
-CSDL SQL Server 2022 đã được đóng gói sẵn trong container `mssql` (lắng nghe cổng `1433`). Bạn có thể thực thi truy vấn trực tiếp qua Terminal (thay `$MSSQL_SA_PASSWORD` bằng mật khẩu đã cấu hình trong `.env`):
+## 5. CI/CD
 
-```bash
-# 1. Liệt kê danh sách các CSDL trong hệ thống:
-docker exec -it mssql /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "$MSSQL_SA_PASSWORD" -C -Q "SELECT name FROM sys.databases;"
+![Sơ đồ CI/CD Echora](docs/images/ci-cd.svg)
 
-# 2. Xem các bảng dữ liệu trong CSDL nội dung du lịch (echora_content_db):
-docker exec -it mssql /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "$MSSQL_SA_PASSWORD" -C -d echora_content_db -Q "SELECT name FROM sys.tables;"
+| Bước | Việc thực hiện | Workflow hoặc file |
+|---|---|---|
+| 7 backend CI | Chạy Maven test và build Docker image để kiểm tra; không push image | auth-service.yml, content-service.yml, location-service.yml, translation-tts-service.yml, analytics-service.yml, order-service.yml, api-gateway.yml |
+| Frontend CI | Lint, test, kiểm tra route SPA, build và smoke test bản preview | frontend-ci.yml |
+| Kiểm tra cấu hình | Kiểm tra .env.example, bootstrap và cấu hình Docker Compose | config-check.yml |
+| Build và publish | Khi push lên main, xác minh CI liên quan, build tám image và publish tag latest cùng tag theo commit lên GHCR | cd.yml |
+| Deploy | Runner tự host đồng bộ checkout, pull image, cập nhật Compose, kiểm tra health, đảm bảo tunnel và chạy smoke test URL công khai | cd.yml, scripts/deploy/deploy-local.sh, scripts/deploy/ensure-ngrok-tunnel.ps1 |
+| Kiểm tra rollback | Workflow thủ công để thử rollback khi tag image không tồn tại | cd-rollback-drill.yml, scripts/deploy/deploy-local.sh |
+| Phục vụ demo web | Build frontend bằng Vite; cấu hình route SPA và chuyển tiếp API/ảnh sản phẩm qua tunnel | frontend/vercel.json |
 
-# 3. Xem danh sách 7 điểm du lịch kèm bán kính kích hoạt tự động (35m - 60m):
-docker exec -it mssql /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "$MSSQL_SA_PASSWORD" -C -d echora_content_db -Q "SELECT id, name, trigger_radius_meters FROM dbo.poi;"
+Các workflow CI chạy theo push hoặc pull request trên những nhánh và đường dẫn được khai báo trong từng workflow. CD chạy khi push lên main; tag v* cũng kích hoạt build và publish image nhưng không chạy job deploy. Deploy cần runner tự host có nhãn echora cùng cấu hình môi trường deploy.
 
-# 4. Mở cửa sổ dòng lệnh SQL tương tác trực tiếp (SQL Shell):
-docker exec -it mssql /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "$MSSQL_SA_PASSWORD" -C
-# (Trong shell: gõ lệnh SQL kết thúc bằng GO để thực thi, gõ QUIT để thoát)
-```
+## 6. Cấu trúc thư mục
 
-> **Tùy chọn seed thêm người dùng mẫu:** `docker/seed-46-users.sql` thêm các tài khoản `dukhach24@echora.vn` … `dukhach46@echora.vn` vào bảng `dbo.users` của `echora_auth_db` (chạy được trên cả PowerShell):
-```bash
-docker cp docker/seed-46-users.sql mssql:/tmp/seed-46-users.sql
-docker exec -it mssql /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "$MSSQL_SA_PASSWORD" -C -d echora_auth_db -i /tmp/seed-46-users.sql
-```
+~~~text
+.
+├── backend/                 # API Gateway và sáu backend service
+├── docker/                  # Script khởi tạo cơ sở dữ liệu
+├── docs/
+│   └── images/              # Sơ đồ dùng trong tài liệu
+├── frontend/                # Giao diện React
+├── scripts/                 # Bootstrap, kiểm tra cấu hình và deploy
+├── .github/workflows/       # CI, CD và kiểm tra cấu hình
+├── docker-compose.yml       # Stack chạy mặc định
+├── docker-compose.dev.yml   # Overlay dành cho phát triển local
+└── docker-compose.deploy.yml # Overlay dùng image GHCR khi deploy
+~~~
 
----
+## 7. Nhóm thực hiện
 
-### 4.7. Bước 6: Chạy riêng giao diện phát triển Frontend (Tùy chọn)
-Nếu bạn cần chỉnh sửa giao diện web và muốn thấy thay đổi tức thì với Hot Reload của Vite:
-
-```bash
-# 1. Di chuyển vào thư mục frontend
-cd frontend
-
-# 2. Cài đặt các thư viện phụ thuộc
-npm install
-
-# 3. Chạy môi trường phát triển (Dev Server)
-npm run dev
-```
-Truy cập giao diện phát triển tại: **http://localhost:5173**
-
----
-
-### 4.8. Xử lý sự cố thường gặp (Troubleshooting)
-1. **Lỗi `JWT_SECRET is required`**: Chưa có file `.env`. Hãy chạy `Copy-Item .env.example .env` (hoặc `cp .env.example .env`) rồi khởi động lại.
-2. **Lỗi `Port ... already in use`**: Cổng `18080`, `1433` hoặc `15800` đang bị ứng dụng khác chiếm dụng. Kiểm tra tiến trình bằng lệnh: `netstat -ano | findstr :18080`.
-3. **Container thoát hoặc unhealthy**: Xem chi tiết nguyên nhân lỗi qua: `docker compose logs <tên_service>`.
-4. **Không kết nối được Docker**: Kiểm tra xem ứng dụng **Docker Desktop** đã được mở và khởi động hoàn tất hay chưa.
-5. **Sai mật khẩu CSDL dù đã sửa `.env`**: volume `mssql-data` vẫn giữ mật khẩu của lần khởi tạo đầu tiên. Chạy `docker compose down -v` rồi `docker compose up -d --build` để khởi tạo lại (mất dữ liệu cũ).
-6. **Code không đồng bộ sau khi pull**: kiểm tra đang ở nhánh `main` (`git branch --show-current`), không còn thay đổi chưa commit (`git status`) và đã pull mới nhất (`git pull origin main`). Các nhánh `feat/*`, `fix/*`, `vercel-test` có thể đang lỗi thời so với `main`.
-
----
-
-## 5. Tài khoản & Mật khẩu hệ thống
-
-Tài liệu này **không lưu** mật khẩu, hash, token hay khóa bí mật. Mọi giá trị nhạy cảm phải được khai báo trong `.env` (không commit) và sinh ngẫu nhiên theo hướng dẫn ở đầu `.env.example`.
-
-Tài khoản seed chỉ được tạo khi đặt biến môi trường tương ứng:
-- `ADMIN_SEED_EMAIL` + `ADMIN_SEED_PASSWORD`: tạo tài khoản ADMIN đầu tiên (chỉ khi cả hai đã đặt).
-- `SEED_TEST_USER_EMAIL` + `SEED_TEST_USER_PASSWORD`: tạo tài khoản USER kiểm thử (để trống để bỏ qua).
-
-Để tạo thêm ADMIN, dùng chức năng quản lý người dùng trong `/quan-tri` bằng tài khoản ADMIN hiện có, hoặc đổi `ADMIN_SEED_EMAIL`/`ADMIN_SEED_PASSWORD` sang email mới rồi khởi động lại `auth-service` (seeder chỉ tạo khi email chưa tồn tại).
-
-Lưu ý bảo mật: ở môi trường **deploy/prod**, auth-service không cho khởi động khi
-`mật khẩu ADMIN` đang để trống hoặc bằng giá trị mặc định (`ChangeMe_Admin123`); thông báo
-lỗi `AUTH_SEED: ...` sẽ xuất hiện và service sẽ fail-fast. Script deploy (`docker-compose.deploy.yml`,
-`.github/workflows/cd.yml`) luôn tắt seed ở production.
-
-### Tài khoản demo Premium (nghe audio EN/JA/KO)
-
-`EntitlementFilter` của content-service chỉ cho `lang=vi` miễn phí; `en`, `ja`, `ko` yêu cầu
-plan `PREMIUM` đang hoạt động hoặc mua lẻ đúng POI. Tài khoản ADMIN seed hiện là `FREE`
-nên **không** nghe được ba ngoại ngữ này.
-
-Seeder của auth-service tạo (và luôn bảo đảm) một tài khoản demo Premium từ biến môi trường:
-
-- `DEMO_PREMIUM_EMAIL` — gợi ý trong `.env.example`: `demo.premium@echora.test`
-- `DEMO_PREMIUM_PASSWORD` — lấy từ `.env` (`.env.example` có placeholder `ChangeMe_DemoPremium123`)
-- `ECHORA_SEED_DEMO` — cờ bật/tắt seed demo (`true` = seed, `false` mặc định = tắt)
-
-Tài khoản demo Premium **chỉ được seed khi biến môi trường `ECHORA_SEED_DEMO=true**
-(đọc trong auth-service qua cờ `app.demo-premium.seed-enabled`).
-
-**Cách tạo tài khoản demo cho máy local:**
-
-```bash
-# 1. Sao chép .env.example -> .env, điền DEMO_PREMIUM_EMAIL / DEMO_PREMIUM_PASSWORD của bạn.
-# 2. Bật seed demo (có thể đặt cả 2: trong .env thêm dòng "ECHORA_SEED_DEMO=true" hoặc export trước khi compose up):
-#    PowerShell:  $env:ECHORA_SEED_DEMO="true"
-#    bash:         export ECHORA_SEED_DEMO=true
-# 3. Khởi động lại auth-service:
-docker compose up -d --build auth-service
-```
-
-Sau khi seed, đăng nhập tại `http://localhost:8088/dang-nhap` bằng email trên và đúng mật khẩu
-`DEMO_PREMIUM_PASSWORD` trong `.env`. Tài khoản được đặt `ACTIVE`, `USER`, `PREMIUM`
-(hạn dùng +10 năm) mỗi khi auth-service khởi động, nên dựng lại stack vẫn dùng được.
-
-> [!WARNING]
-> **Khuyến cáo bảo mật môi trường thực tế**: Các mật khẩu mẫu từng xuất hiện trong tài liệu mẫu hoặc lịch sử git (như mật khẩu seed ban đầu) tuyệt đối **không** được dùng trên môi trường staging hoặc production. Bắt buộc phải thay đổi toàn bộ mật khẩu (`ADMIN_SEED_PASSWORD`, `DEMO_PREMIUM_PASSWORD`, mật khẩu database, v.v.) thành mật khẩu mạnh, an toàn qua biến môi trường thực tế trước khi triển khai hệ thống. Profile deploy sẽ tự động từ chối khởi động nếu phát hiện mật khẩu mặc định.
-
-Lưu ý: nếu không đặt `ECHORA_SEED_DEMO=true`, auth-service sẽ **bỏ qua** seed demo Premium
-(ngày mặc định là tắt seed để tránh tạo tài khoản lạ trên môi trường mới).
-
-Kiểm tra nhanh sau khi đăng nhập (thay `<token>` bằng access token nhận từ `/api/auth/login`):
-
-```powershell
-$headers = @{ Authorization = "Bearer <token>" }
-$poi = Invoke-RestMethod "http://localhost:18080/api/content/pois/1?lang=en" -Headers $headers
-Invoke-WebRequest $poi.audioUrl -Headers $headers -OutFile "$env:TEMP\poi1-en.mp3"
-(Get-Item "$env:TEMP\poi1-en.mp3").Length
-```
-
-Thông tin VNPAY Sandbox (mã website, hash secret, thẻ test) tra cứu tại tài liệu chính thức của VNPAY; không lưu trong repo.
-
----
-
-## 6. Kiểm thử tự động (Automated Testing)
-
-Dự án tích hợp bộ kiểm thử tự động toàn diện đảm bảo độ ổn định và chất lượng mã nguồn:
-
-### Kiểm thử Frontend (Vitest & React Testing Library)
-```bash
-cd frontend
-
-# Chạy toàn bộ 79 test suites (635 unit & integration tests)
-npm test
-
-# Kiểm tra danh sách route SPA khớp giữa App.tsx, nginx.conf và vercel.json
-npm run check:spa-routes
-
-# Kiểm tra kiểu TypeScript và biên dịch bundle
-npm run build
-```
-
-### Kiểm thử Backend (Maven)
-```bash
-# Chạy unit test cho từng phân hệ microservice
-mvn -f backend/content-service/pom.xml test
-mvn -f backend/location-service/pom.xml test
-mvn -f backend/translation-tts-service/pom.xml test
-mvn -f backend/analytics-service/pom.xml test
-mvn -f backend/auth-service/pom.xml test
-mvn -f backend/order-service/pom.xml test
-mvn -f backend/api-gateway/pom.xml test
-```
-
-Backend hiện có **840 tests passed (0 failures, 0 errors)**: content 246, translation-tts 106, auth 136, analytics 69, location 44, api-gateway 185, order 54. Frontend có **79 file test với 635 test** (Vitest + React Testing Library). Toàn bộ 6 service nghiệp vụ đều tích hợp kiểm tra quy tắc phân lớp kiến trúc Spring MVC bằng ArchUnit. Repo có 10 workflow trong `.github/workflows/` (7 microservice, frontend, `config-check` kiểm tra clean-machine bootstrap, và `cd` build/push image + deploy khi cấu hình secret).
-
-### Kiểm tra trạng thái audio trước demo
-```powershell
-$env:ECHORA_BASE_URL = 'http://localhost:18080'
-$env:ECHORA_ADMIN_TOKEN = '<token ADMIN>'
-pwsh -File scripts/check-audio-status.ps1
-```
-
-Script chỉ gửi GET tới `/api/content/admin/audio/status` và in ma trận POI × ngôn ngữ (READY/PENDING/FAILED...). Các endpoint quản trị audio khác đều yêu cầu Bearer token ADMIN:
-- `GET /api/content/admin/audio/status`
-- `POST /api/content/admin/pois/{id}/audio/regenerate` (tùy chọn `?languages=vi,en`)
-- `POST /api/content/admin/audio/regenerate` (tạo lại cho mọi ngôn ngữ chưa READY)
-
-### Dữ liệu mẫu khi demo offline
-Frontend mặc định gọi API thật. Chỉ khi đặt `VITE_USE_SAMPLE_DATA=true` (hoặc chạy test) mới dùng fixture cho Tin tức và Điểm du lịch gần bạn; không bật biến này trên production.
-
----
-
-## 7. Thông tin đồ án (Project Information)
-
-* **Học phần**: Công nghệ Phần mềm (CNPM) — Nhóm 3
-* **Đề tài**: Nền tảng hướng dẫn viên du lịch số tự động thuyết minh di sản Sài Gòn (Echora)
-* **Kho mã nguồn (GitHub)**: [https://github.com/congtinh06/Nhom3_CNPM](https://github.com/congtinh06/Nhom3_CNPM)
-* **Tài liệu đặc tả sản phẩm**: [docs/PRD.md](docs/PRD.md)
-* **Sơ đồ kiến trúc, ERD, luồng nghiệp vụ**: [docs/diagrams/](docs/diagrams/) (Mermaid) và ảnh render tại [docs/images/](docs/images/)
-* **Báo cáo đồ án (Word/PDF)**: tài liệu nội bộ trong `docs/report/`, không đưa lên GitHub theo `.gitignore` (`*.docx`, `*.pdf`).
+| STT | Họ và tên | MSSV | Công việc | Đóng góp |
+|---:|---|---:|---|---:|
+| 1 | Dang Huu Dang Tam | 3124411265 | TODO | TODO |
+| 2 | Dang Dao Dat Thanh | 3124411274 | TODO | TODO |
+| 3 | Huynh Cong Tinh | 3124411315 | TODO | TODO |
