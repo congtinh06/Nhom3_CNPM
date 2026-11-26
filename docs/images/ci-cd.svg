@@ -1,0 +1,101 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 680" role="img" aria-labelledby="title desc">
+  <title id="title">Echora CI/CD</title>
+  <desc id="desc">CI workflows, image publishing and deployment, plus the user access path.</desc>
+  <!-- Brand paths embedded from the simple-icons npm package, version 16.38.1. -->
+  <defs>
+    <marker id="arrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto">
+      <path d="M0 0 9 4.5 0 9Z" fill="#55717E"/>
+    </marker>
+    <symbol id="icon-githubactions" viewBox="0 0 24 24"><path d="M10.984 13.836a.5.5 0 0 1-.353-.146l-.745-.743a.5.5 0 1 1 .706-.708l.392.391 1.181-1.18a.5.5 0 0 1 .708.707l-1.535 1.533a.504.504 0 0 1-.354.146zm9.353-.147l1.534-1.532a.5.5 0 0 0-.707-.707l-1.181 1.18-.392-.391a.5.5 0 1 0-.706.708l.746.743a.497.497 0 0 0 .706-.001zM4.527 7.452l2.557-1.585A1 1 0 0 0 7.09 4.17L4.533 2.56A1 1 0 0 0 3 3.406v3.196a1.001 1.001 0 0 0 1.527.85zm2.03-2.436L4 6.602V3.406l2.557 1.61zM24 12.5c0 1.93-1.57 3.5-3.5 3.5a3.503 3.503 0 0 1-3.46-3h-2.08a3.503 3.503 0 0 1-3.46 3 3.502 3.502 0 0 1-3.46-3h-.558c-.972 0-1.85-.399-2.482-1.042V17c0 1.654 1.346 3 3 3h.04c.244-1.693 1.7-3 3.46-3 1.93 0 3.5 1.57 3.5 3.5S13.43 24 11.5 24a3.502 3.502 0 0 1-3.46-3H8c-2.206 0-4-1.794-4-4V9.899A5.008 5.008 0 0 1 0 5c0-2.757 2.243-5 5-5s5 2.243 5 5a5.005 5.005 0 0 1-4.952 4.998A2.482 2.482 0 0 0 7.482 12h.558c.244-1.693 1.7-3 3.46-3a3.502 3.502 0 0 1 3.46 3h2.08a3.503 3.503 0 0 1 3.46-3c1.93 0 3.5 1.57 3.5 3.5zm-15 8c0 1.378 1.122 2.5 2.5 2.5s2.5-1.122 2.5-2.5-1.122-2.5-2.5-2.5S9 19.122 9 20.5zM5 9c2.206 0 4-1.794 4-4S7.206 1 5 1 1 2.794 1 5s1.794 4 4 4zm9 3.5c0-1.378-1.122-2.5-2.5-2.5S9 11.122 9 12.5s1.122 2.5 2.5 2.5 2.5-1.122 2.5-2.5zm9 0c0-1.378-1.122-2.5-2.5-2.5S18 11.122 18 12.5s1.122 2.5 2.5 2.5 2.5-1.122 2.5-2.5zm-13 8a.5.5 0 1 0 1 0 .5.5 0 0 0-1 0zm2 0a.5.5 0 1 0 1 0 .5.5 0 0 0-1 0zm12 0c0 1.93-1.57 3.5-3.5 3.5a3.503 3.503 0 0 1-3.46-3.002c-.007.001-.013.005-.021.005l-.506.017h-.017a.5.5 0 0 1-.016-.999l.506-.017c.018-.002.035.006.052.007A3.503 3.503 0 0 1 20.5 17c1.93 0 3.5 1.57 3.5 3.5zm-1 0c0-1.378-1.122-2.5-2.5-2.5S18 19.122 18 20.5s1.122 2.5 2.5 2.5 2.5-1.122 2.5-2.5z"/></symbol>
+    <symbol id="icon-docker" viewBox="0 0 24 24"><path d="M13.983 11.078h2.119a.186.186 0 00.186-.185V9.006a.186.186 0 00-.186-.186h-2.119a.185.185 0 00-.185.185v1.888c0 .102.083.185.185.185m-2.954-5.43h2.118a.186.186 0 00.186-.186V3.574a.186.186 0 00-.186-.185h-2.118a.185.185 0 00-.185.185v1.888c0 .102.082.185.185.185m0 2.716h2.118a.187.187 0 00.186-.186V6.29a.186.186 0 00-.186-.185h-2.118a.185.185 0 00-.185.185v1.887c0 .102.082.185.185.186m-2.93 0h2.12a.186.186 0 00.184-.186V6.29a.185.185 0 00-.185-.185H8.1a.185.185 0 00-.185.185v1.887c0 .102.083.185.185.186m-2.964 0h2.119a.186.186 0 00.185-.186V6.29a.185.185 0 00-.185-.185H5.136a.186.186 0 00-.186.185v1.887c0 .102.084.185.186.186m5.893 2.715h2.118a.186.186 0 00.186-.185V9.006a.186.186 0 00-.186-.186h-2.118a.185.185 0 00-.185.185v1.888c0 .102.082.185.185.185m-2.93 0h2.12a.185.185 0 00.184-.185V9.006a.185.185 0 00-.184-.186h-2.12a.185.185 0 00-.184.185v1.888c0 .102.083.185.185.185m-2.964 0h2.119a.185.185 0 00.185-.185V9.006a.185.185 0 00-.184-.186h-2.12a.186.186 0 00-.186.186v1.887c0 .102.084.185.186.185m-2.92 0h2.12a.185.185 0 00.184-.185V9.006a.185.185 0 00-.184-.186h-2.12a.185.185 0 00-.184.185v1.888c0 .102.082.185.185.185M23.763 9.89c-.065-.051-.672-.51-1.954-.51-.338.001-.676.03-1.01.087-.248-1.7-1.653-2.53-1.716-2.566l-.344-.199-.226.327c-.284.438-.49.922-.612 1.43-.23.97-.09 1.882.403 2.661-.595.332-1.55.413-1.744.42H.751a.751.751 0 00-.75.748 11.376 11.376 0 00.692 4.062c.545 1.428 1.355 2.48 2.41 3.124 1.18.723 3.1 1.137 5.275 1.137.983.003 1.963-.086 2.93-.266a12.248 12.248 0 003.823-1.389c.98-.567 1.86-1.288 2.61-2.136 1.252-1.418 1.998-2.997 2.553-4.4h.221c1.372 0 2.215-.549 2.68-1.009.309-.293.55-.65.707-1.046l.098-.288Z"/></symbol>
+    <symbol id="icon-github" viewBox="0 0 24 24"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></symbol>
+    <symbol id="icon-vercel" viewBox="0 0 24 24"><path d="m12 1.608 12 20.784H0Z"/></symbol>
+    <symbol id="icon-ngrok" viewBox="0 0 24 24"><path d="M18.951 7.598v6.713h1.463v-1.69l1.61 1.69H24v-.08l-2.123-2.153 2.002-1.846v-.07H21.95l-1.537 1.496v-4.06zm-2.93 2.41a2.626 2.626 0 00-1.787.635 2.049 2.049 0 00-.703 1.556c-.002.75.311 1.287.7 1.643.526.478 1.221.626 1.767.623.666 0 1.34-.195 1.805-.62.521-.483.713-1.029.713-1.607 0-.73-.31-1.247-.71-1.603-.553-.475-1.202-.628-1.785-.627zm-9.062.039c-1.188-.005-2.1.977-2.104 2.25-.004 1.296.908 2.108 2.032 2.096.664.002.983-.244 1.308-.541v1.193h-1.37l-1.03 1.158v.2H9.66v-6.24H8.195v.435c-.381-.408-.772-.542-1.236-.551zm-4.805.11l-.691.786v-.771H0v4.15h1.463v-2.799c.547.002 1.023-.002 1.49-.003v2.802h1.465v-2.595c-.004-.547-.1-.819-.307-1.061a1.431 1.431 0 00-.914-.51zm8.114.005v4.15h1.468l.002-2.779h1.065l1.164-1.314v-.057h-1.598l-.635.715v-.715zm-2.946 1.115c.504 0 .96.444.948.948a.956.956 0 01-.948.945c-.523 0-.931-.403-.947-.945-.002-.52.443-.94.947-.948zm8.703.001c.525 0 .94.434.944.95-.027.544-.42.95-.944.95s-.934-.417-.95-.95a.955.955 0 01.95-.95z"/></symbol>
+  </defs>
+  <style>
+    text{font-family:Arial,Helvetica,sans-serif;fill:#17313d}
+    .title{font-size:30px;font-weight:700}
+    .row{font-size:16px;font-weight:700;letter-spacing:1px;fill:#0f766e}
+    .label{font-size:17px;font-weight:600}
+    .small{font-size:14px;fill:#55717e}
+    .card{fill:#fff;stroke:#cbd8de;stroke-width:1.5}
+    .flow{stroke:#55717e;stroke-width:2;fill:none;marker-end:url(#arrow)}
+    .rail{stroke:#9aabb2;stroke-width:1.5;fill:none}
+    .accent{fill:#0f766e}
+  </style>
+  <rect width="1280" height="680" fill="#f7fafb"/>
+  <text class="title" x="40" y="49">Echora · CI/CD</text>
+
+  <rect x="24" y="68" width="1232" height="172" rx="12" fill="#fff" stroke="#d7e1e5"/>
+  <text class="row" x="42" y="96">CI · PUSH / PR</text>
+  <rect class="card" x="42" y="116" width="165" height="68" rx="8"/>
+  <use href="#icon-github" x="60" y="137" width="26" height="26" class="accent"/>
+  <text class="label" x="98" y="158">GitHub</text>
+
+  <rect class="card" x="278" y="116" width="260" height="68" rx="8"/>
+  <use href="#icon-githubactions" x="298" y="137" width="26" height="26" class="accent"/>
+  <text class="label" x="337" y="158">7 Backend CI</text>
+  <rect class="card" x="566" y="116" width="260" height="68" rx="8"/>
+  <use href="#icon-githubactions" x="586" y="137" width="26" height="26" class="accent"/>
+  <text class="label" x="625" y="158">Frontend CI</text>
+  <rect class="card" x="854" y="116" width="260" height="68" rx="8"/>
+  <use href="#icon-githubactions" x="874" y="137" width="26" height="26" class="accent"/>
+  <text class="label" x="913" y="158">Config Check</text>
+  <path class="flow" d="M207 150H235V211H408V185"/>
+  <path class="rail" d="M408 211H984M696 211V185M984 211V185"/>
+  <path class="flow" d="M696 211V185"/>
+  <path class="flow" d="M984 211V185"/>
+  <text class="small" x="210" y="137">push / PR</text>
+
+  <rect x="24" y="252" width="1232" height="190" rx="12" fill="#fff" stroke="#d7e1e5"/>
+  <text class="row" x="42" y="280">CD · MAIN</text>
+  <path class="flow" d="M1140 211V264H127V294"/>
+  <text class="small" x="634" y="258">merge main</text>
+
+  <rect class="card" x="40" y="300" width="175" height="70" rx="8"/>
+  <use href="#icon-githubactions" x="56" y="322" width="26" height="26" class="accent"/>
+  <text class="label" x="94" y="343">Verify CI</text>
+  <rect class="card" x="245" y="300" width="175" height="70" rx="8"/>
+  <use href="#icon-docker" x="260" y="322" width="28" height="26" class="accent"/>
+  <text class="label" x="296" y="343">Build Images</text>
+  <rect class="card" x="450" y="300" width="175" height="70" rx="8"/>
+  <use href="#icon-github" x="468" y="322" width="26" height="26" class="accent"/>
+  <text class="label" x="506" y="343">GHCR</text>
+  <rect class="card" x="655" y="300" width="175" height="70" rx="8"/>
+  <use href="#icon-docker" x="672" y="322" width="28" height="26" class="accent"/>
+  <text class="label" x="708" y="343">Deploy</text>
+  <rect class="card" x="860" y="300" width="175" height="70" rx="8"/>
+  <use href="#icon-ngrok" x="878" y="322" width="28" height="26" class="accent"/>
+  <text class="label" x="916" y="343">ngrok</text>
+  <rect class="card" x="1065" y="300" width="175" height="70" rx="8"/>
+  <use href="#icon-githubactions" x="1080" y="322" width="26" height="26" class="accent"/>
+  <text class="label" x="1118" y="343">Smoke Test</text>
+  <path class="flow" d="M215 335H245"/>
+  <path class="flow" d="M420 335H450"/>
+  <path class="flow" d="M625 335H655"/>
+  <path class="flow" d="M830 335H860"/>
+  <path class="flow" d="M1035 335H1065"/>
+
+  <rect x="24" y="456" width="1232" height="184" rx="12" fill="#fff" stroke="#d7e1e5"/>
+  <text class="row" x="42" y="484">TRUY CẬP</text>
+  <rect class="card" x="110" y="520" width="205" height="72" rx="8"/>
+  <use href="#icon-vercel" x="130" y="542" width="26" height="26" class="accent"/>
+  <text class="label" x="170" y="563">Vercel</text>
+  <rect class="card" x="370" y="520" width="205" height="72" rx="8"/>
+  <use href="#icon-ngrok" x="390" y="542" width="28" height="26" class="accent"/>
+  <text class="label" x="430" y="563">Tunnel</text>
+  <rect class="card" x="630" y="520" width="205" height="72" rx="8"/>
+  <use href="#icon-docker" x="648" y="542" width="28" height="26" class="accent"/>
+  <text class="label" x="688" y="563">Frontend</text>
+  <rect class="card" x="890" y="520" width="205" height="72" rx="8"/>
+  <use href="#icon-docker" x="908" y="542" width="28" height="26" class="accent"/>
+  <text class="label" x="948" y="563">API Gateway</text>
+  <path class="flow" d="M315 556H370"/>
+  <path class="flow" d="M575 556H630"/>
+  <path class="flow" d="M835 556H890"/>
+
+  <rect x="965" y="390" width="220" height="68" rx="8" fill="#fff" stroke="#0f766e" stroke-width="1.7" stroke-dasharray="7 5"/>
+  <use href="#icon-githubactions" x="984" y="411" width="26" height="26" class="accent"/>
+  <text class="label" x="1023" y="432">Rollback Drill</text>
+  <text class="small" x="975" y="384">manual workflow</text>
+</svg>
